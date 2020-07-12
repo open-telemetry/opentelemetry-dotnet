@@ -130,16 +130,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
-                var response = context.Response;
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
-
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-
-                var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
-                if (!string.IsNullOrEmpty(statusDescription))
+                if (this.TryGetGrpcMethod(activity, out var grpcMethod))
                 {
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
+                    this.AddGrpcAttributes(activity, grpcMethod, context);
+                }
+                else
+                {
+                    var response = context.Response;
+                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+
+                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+
+                    var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
+                    if (!string.IsNullOrEmpty(statusDescription))
+                    {
+                        activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
+                    }
                 }
             }
 
@@ -226,6 +233,31 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             return builder.ToString();
+        }
+
+        private bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
+        {
+            grpcMethod = Dependencies.GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+            return !string.IsNullOrEmpty(grpcMethod);
+        }
+
+        private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        {
+            // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
+            // activity.DisplayName = grpcMethod?.Trim('/');
+
+            activity.AddTag(SpanAttributeConstants.RpcSystem, "grpc");
+
+            if (Dependencies.GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
+            {
+                activity.AddTag(SpanAttributeConstants.RpcService, rpcService);
+                activity.AddTag(SpanAttributeConstants.RpcMethod, rpcMethod);
+            }
+
+            activity.AddTag(SpanAttributeConstants.NetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.AddTag(SpanAttributeConstants.NetPeerPort, context.Connection.RemotePort.ToString());
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, Dependencies.GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }
 }
