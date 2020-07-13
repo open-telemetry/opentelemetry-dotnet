@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         {
             while (true)
             {
-                if (this.stopHandle.WaitOne(this.options.MaxFlushInterval))
+                if (this.stopHandle.WaitOne(this.options.FlushInterval))
                 {
                     break;
                 }

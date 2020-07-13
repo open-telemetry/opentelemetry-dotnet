@@ -17,8 +17,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+
+using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
+
 using StackExchange.Redis;
 
 namespace Samples
@@ -49,7 +52,11 @@ namespace Samples
                         o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);
                     })
-                    .AddRedisInstrumentation(connection)
+                    .AddRedisInstrumentation(connection, options =>
+                    {
+                        // changing flushinterval from 10s to 5s
+                        options.FlushInterval = TimeSpan.FromSeconds(5);
+                    })
                     .AddActivitySource("redis-test"));
 
             ActivitySource activitySource = new ActivitySource("redis-test");

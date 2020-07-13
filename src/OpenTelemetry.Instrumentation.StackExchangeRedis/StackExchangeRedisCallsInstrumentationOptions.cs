@@ -26,6 +26,6 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// <summary>
         /// Gets or sets the maximum time that should elapse between flushing the internal buffer of Redis profiling sessions and creating <see cref="Activity"/> objects. Default value: 00:00:10.
         /// </summary>
-        public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
+        public TimeSpan FlushInterval { get; set; } = TimeSpan.FromSeconds(10);
     }
 }
