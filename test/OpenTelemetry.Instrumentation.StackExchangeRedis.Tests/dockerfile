@@ -6,7 +6,6 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
-ARG TEST_FILTER=CategoryName!=RedisIntegrationTests
 WORKDIR /src
 COPY ["NuGet.config", ""] # Needed for the .NET 5 preview packages. Won't be needed in the future.
 COPY ["test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj", "test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/"]
@@ -17,7 +16,6 @@ RUN dotnet restore "test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/
 COPY . .
 WORKDIR "/src/test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests"
 RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /build -p:IntegrationBuild=true --no-restore
-RUN dotnet test "/build/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.dll" --filter "${TEST_FILTER}"
 
 FROM base AS final
 WORKDIR /test
