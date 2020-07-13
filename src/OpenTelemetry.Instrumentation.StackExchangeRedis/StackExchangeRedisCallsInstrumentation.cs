@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     /// <summary>
     /// Redis calls instrumentation.
     /// </summary>
-    public class StackExchangeRedisCallsInstrumentation : IDisposable
+    internal class StackExchangeRedisCallsInstrumentation : IDisposable
     {
         internal const string RedisDatabaseIndexKeyName = "db.redis.database_index";
         internal const string RedisFlagsKeyName = "db.redis.flags";
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// </summary>
         /// <param name="connection"><see cref="ConnectionMultiplexer"/> to instrument.</param>
         /// <param name="options">Configuration options for redis instrumentation.</param>
-        internal StackExchangeRedisCallsInstrumentation(ConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
+        public StackExchangeRedisCallsInstrumentation(ConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
         {
             if (connection == null)
             {
