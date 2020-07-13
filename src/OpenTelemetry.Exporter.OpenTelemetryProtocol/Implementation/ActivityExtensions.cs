@@ -143,7 +143,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     continue;
                 }
 
-                var resource = activity.GetResource() ?? Resource.Empty;
+                var resource = activity.GetResource();
                 if (!result.TryGetValue(resource, out var libraryToSpans))
                 {
                     libraryToSpans = new Dictionary<ActivitySource, List<OtlpTrace.Span>>();
