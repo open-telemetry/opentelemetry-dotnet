@@ -22,7 +22,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(Configuration)'=='Release'">
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(Configuration)'=='Release' and '$(MinVerVersion)'!=''">
     <PropertyGroup>
       <RevisionNumber>$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
       <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>
