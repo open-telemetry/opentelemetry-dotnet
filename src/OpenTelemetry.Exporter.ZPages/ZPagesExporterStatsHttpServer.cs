@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
         private readonly ZPagesExporter exporter;
-        private readonly ZPagesSpanProcessor spanProcessor;
+        private readonly ZPagesProcessor spanProcessor;
         private readonly HttpListener httpListener = new HttpListener();
         private readonly object lck = new object();
 
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// </summary>
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         /// <param name="spanProcessor">The <see cref="SimpleSpanProcessor"/> instance.</param>
-        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter, ZPagesSpanProcessor spanProcessor)
+        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter, ZPagesProcessor spanProcessor)
         {
             this.exporter = exporter;
             this.spanProcessor = spanProcessor;
@@ -137,14 +137,14 @@ namespace OpenTelemetry.Exporter.ZPages
                                              "<th>Average Latency in last minute (ms)</th><th>Average Latency in last hour (ms)</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
                                              "<tbody>");
 
-                            ConcurrentDictionary<string, ZPagesSpanInformation> currentHourSpanList = ZPagesSpans.CurrentHourSpanList;
-                            ConcurrentDictionary<string, ZPagesSpanInformation> currentMinuteSpanList = ZPagesSpans.CurrentMinuteSpanList;
+                            ConcurrentDictionary<string, ZPagesActivityAggregate> currentHourSpanList = ZPagesActivityTracker.CurrentHourList;
+                            ConcurrentDictionary<string, ZPagesActivityAggregate> currentMinuteSpanList = ZPagesActivityTracker.CurrentMinuteList;
 
                             // Put span information in each row of the table
                             foreach (var spanName in currentHourSpanList.Keys)
                             {
-                                ZPagesSpanInformation minuteSpanInformation = new ZPagesSpanInformation();
-                                ZPagesSpanInformation hourSpanInformation = new ZPagesSpanInformation();
+                                ZPagesActivityAggregate minuteSpanInformation = new ZPagesActivityAggregate();
+                                ZPagesActivityAggregate hourSpanInformation = new ZPagesActivityAggregate();
                                 long countInLastMinute = 0;
                                 long countInLastHour = 0;
                                 long averageLatencyInLastMinute = 0;
@@ -155,17 +155,17 @@ namespace OpenTelemetry.Exporter.ZPages
                                 if (currentMinuteSpanList.ContainsKey(spanName))
                                 {
                                     currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
-                                    countInLastMinute = minuteSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
+                                    countInLastMinute = minuteSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
                                     averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
                                     errorCountInLastMinute = minuteSpanInformation.ErrorCount;
                                 }
 
                                 currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
-                                countInLastHour = hourSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
+                                countInLastHour = hourSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
                                 averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
                                 errorCountInLastHour = hourSpanInformation.ErrorCount;
 
-                                long totalAverageLatency = ZPagesSpans.TotalSpanLatency[spanName] / ZPagesSpans.TotalEndedSpanCount[spanName];
+                                long totalAverageLatency = ZPagesActivityTracker.TotalLatency[spanName] / ZPagesActivityTracker.TotalEndedCount[spanName];
 
                                 DateTimeOffset dateTimeOffset;
 
@@ -175,9 +175,9 @@ namespace OpenTelemetry.Exporter.ZPages
                                 dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
 #endif
 
-                                writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesSpans.TotalSpanCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
+                                writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesActivityTracker.TotalCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
                                                  "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +
-                                                 "<td>" + ZPagesSpans.TotalSpanErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + dateTimeOffset + " GMT" + "</td></tr>");
+                                                 "<td>" + ZPagesActivityTracker.TotalErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + dateTimeOffset + " GMT" + "</td></tr>");
                             }
 
                             writer.WriteLine("</tbody></table>");
