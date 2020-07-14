@@ -66,6 +66,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
                 });
 
+            // This following is done just to set Resource to Activity.
+            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                .AddActivitySource(sources[0].Name)
+                .AddActivitySource(sources[1].Name)
+                .SetResource(resource));
+
             var activities = new List<Activity>();
             Activity activity = null;
             const int numOfSpans = 10;
@@ -78,8 +84,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
-                activity.SetResource(resource);
-
                 activities.Add(activity);
             }
 
