@@ -24,11 +24,7 @@ using Opentelemetry.Proto.Common.V1;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
-<<<<<<< rajrang/status
 using OpenTelemetry.Trace;
-=======
-using OpenTelemetry.Trace;
->>>>>>> master
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -64,17 +60,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-<<<<<<< rajrang/status
             var resource = new Resources.Resource(
                 new List<KeyValuePair<string, object>>
                 {
                     new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
-=======
-            var resource = new Resources.Resource(
-                new List<KeyValuePair<string, object>>
-                {
-                    new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
->>>>>>> master
                 });
 
             var activities = new List<Activity>();
