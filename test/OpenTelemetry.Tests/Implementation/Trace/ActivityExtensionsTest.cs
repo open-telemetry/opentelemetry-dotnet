@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Test
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
-            activity.SetStatus(Status.NotFound, "Not Found");
+            activity.SetStatus(Status.NotFound.WithDescription("Not Found"));
             activity?.Stop();
 
             var status = activity.GetStatus();
@@ -67,6 +67,34 @@ namespace OpenTelemetry.Trace.Test
             activity?.Stop();
 
             Assert.True(activity.GetStatus().CanonicalCode.Equals(Status.Cancelled.CanonicalCode));
+        }
+
+        [Fact]
+        public void GetStatusWithNoStatusInActivity()
+        {
+            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                                                   .AddActivitySource(ActivitySourceName));
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity?.Stop();
+
+            Assert.False(activity.GetStatus().IsValid);
+        }
+
+        [Fact(Skip = "Activity does not support UpdateTag now. Enable once .NET Activity support SetTag method.")]
+        public void LastSetStatusWins()
+        {
+            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                                                   .AddActivitySource(ActivitySourceName));
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetStatus(Status.Cancelled);
+            activity.SetStatus(Status.Ok);
+            activity?.Stop();
+
+            Assert.True(activity.GetStatus().IsOk);
         }
     }
 }

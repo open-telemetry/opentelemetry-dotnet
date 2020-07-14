@@ -27,31 +27,32 @@ namespace OpenTelemetry.Trace
     {
         /// <summary>
         /// Sets the status of activity execution.
-        /// Activity class in .NET does support 'Status'.
-        /// This extension provides a workaround to store Status as special tags with key name of ot.status_code and ot.status_descriptionkeys.
+        /// Activity class in .NET does not support 'Status'.
+        /// This extension provides a workaround to store Status as special tags with key name of ot.status_code and ot.status_description.
         /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
-        /// <param name="description">Status Description.</param>
-        public static void SetStatus(this Activity activity, Status status, string description = null)
+        public static void SetStatus(this Activity activity, Status status)
         {
             activity?.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, description ?? status.Description);
+            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
         /// <summary>
         /// Gets the status of activity execution.
+        /// Activity class in .NET does not support 'Status'.
+        /// This extension provides a workaround to retrieve Status from special tags with key name ot.status_code and ot.status_description.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <returns>Activity execution status.</returns>
         public static Status GetStatus(this Activity activity)
         {
-            var statusCode = activity?.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
+            var statusCanonicalCode = activity?.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
             var statusDescription = activity?.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
-            bool success = Enum.TryParse(statusCode, out StatusCanonicalCode statusCanonicalCode);
 
-            return success ? new Status(statusCanonicalCode, statusDescription) : default;
+            var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
+            return status.IsValid ? status.WithDescription(statusDescription) : status;
         }
     }
 }
