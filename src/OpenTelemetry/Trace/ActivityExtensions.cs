@@ -29,16 +29,6 @@ namespace OpenTelemetry.Trace
         /// Checks whether activity needs to be created and tracked.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
-        /// <param name="resource">Resource to set to.</param>
-        public static void SetResource(this Activity activity, Resource resource)
-        {
-            activity.SetCustomProperty(ResourcePropertyName, resource);
-        }
-
-        /// <summary>
-        /// Checks whether activity needs to be created and tracked.
-        /// </summary>
-        /// <param name="activity">Activity instance.</param>
         /// <returns>The resource.</returns>
         public static Resource GetResource(this Activity activity)
         {
@@ -50,6 +40,16 @@ namespace OpenTelemetry.Trace
             {
                 return Resource.Empty;
             }
+        }
+
+        /// <summary>
+        /// Checks whether activity needs to be created and tracked.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="resource">Resource to set to.</param>
+        internal static void SetResource(this Activity activity, Resource resource)
+        {
+            activity.SetCustomProperty(ResourcePropertyName, resource);
         }
     }
 }
