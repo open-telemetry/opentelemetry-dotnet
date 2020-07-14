@@ -1,7 +1,8 @@
 # CI build with the upload to MyGet
 
 variables:
-  DotNetVersion: "3.1.101"
+  DotNetVersion2: "2.1.x"
+  DotNetVersion3: "3.1.x"
 
 trigger:
   branches:
@@ -16,9 +17,14 @@ pool:
 
 steps:
 - task: UseDotNet@2
-  displayName: force use of desired dotnet version
+  displayName: force use of dotnet 2.1.x
   inputs:
-    version: $(DotNetVersion)
+    version: $(DotNetVersion2)
+
+- task: UseDotNet@2
+  displayName: force use of dotnet 3.1.x
+  inputs:
+    version: $(DotNetVersion3)
 
 # "restore" is run automatically by "build"
 - task: VSBuild@1

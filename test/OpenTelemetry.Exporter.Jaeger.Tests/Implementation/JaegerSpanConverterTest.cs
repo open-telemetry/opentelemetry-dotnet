@@ -290,7 +290,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             // The last tag should be ot.status_code in this case
             tag = tags[tags.Length - 1];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
-            Assert.Equal("ot.status_code", tag.Key);
+            Assert.Equal(SpanAttributeConstants.StatusCodeKey, tag.Key);
             Assert.Equal("Ok", tag.VStr);
 
             var logs = jaegerSpan.Logs.ToArray();
