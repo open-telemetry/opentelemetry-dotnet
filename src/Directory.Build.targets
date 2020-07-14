@@ -2,7 +2,7 @@
   <Import Project="..\Directory.Build.targets" Condition="Exists('..\Directory.Build.targets')" />
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" Condition="'$(IntegrationBuild)' != 'true'">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

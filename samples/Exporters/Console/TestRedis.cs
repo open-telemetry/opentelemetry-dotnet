@@ -17,9 +17,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
+
 using StackExchange.Redis;
 
 namespace Samples
@@ -28,8 +30,19 @@ namespace Samples
     {
         internal static object Run(string zipkinUri)
         {
-            // connect to the server
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
+            /*
+             * Setup redis service inside local docker.
+             * docker run --name opentelemetry-redis-test -d -p 6379:6379 redis
+             *
+             * If you face any issue with the first command, do the following ones:
+             * docker exec -it opentelemetry-redis-test sh
+             * redis-cli
+             * set bind 0.0.0.0
+             * save
+             */
+
+            // connect to the redis server. The default port 6379 will be used.
+            var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
@@ -39,13 +52,11 @@ namespace Samples
                         o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);
                     })
-                    // TODO: Uncomment when we change Redis to Activity mode
-                    // .AddInstrumentation(t =>
-                    // {
-                    //    var instrumentation = new StackExchangeRedisCallsInstrumentation(t);
-                    //    connection.RegisterProfiler(instrumentation.GetProfilerSessionsFactory());
-                    //    return instrumentation;
-                    // })
+                    .AddRedisInstrumentation(connection, options =>
+                    {
+                        // changing flushinterval from 10s to 5s
+                        options.FlushInterval = TimeSpan.FromSeconds(5);
+                    })
                     .AddActivitySource("redis-test"));
 
             ActivitySource activitySource = new ActivitySource("redis-test");
@@ -88,8 +99,8 @@ namespace Samples
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.AddTag("ot.status", SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
-                    activity.AddTag("ot.status_description", e.ToString());
+                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
                 }
 
                 // Annotate our activity to capture metadata about our operation
