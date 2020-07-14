@@ -135,7 +135,7 @@ namespace OpenTelemetry.Trace.Export.Test
             var exported = this.WaitForActivities(activityExporter, 20, TimeSpan.FromSeconds(2));
 
             Assert.Equal(activities.Count, exported.Length);
-            Assert.InRange(exportStartTimes.Count, 10, 20);
+            Assert.InRange(exportStartTimes.Count, 2, 20);
 
             for (int i = 1; i < exportStartTimes.Count - 1; i++)
             {
