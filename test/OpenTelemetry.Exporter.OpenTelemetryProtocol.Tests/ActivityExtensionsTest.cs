@@ -78,7 +78,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
-                activity.SetResource(resource);
+
+                // TODO: Refactor this tests to properly set resource without
+                // doing it directly on activity.
+                activity.SetCustomProperty("ot.resource", resource);
 
                 activities.Add(activity);
             }
