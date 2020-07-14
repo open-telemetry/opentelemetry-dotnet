@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -33,15 +34,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     public class SqlEventSourceTests
     {
         /*
-            To run the integration tests, set the ot.SqlConnectionString machine-level environment variable to a valid Sql Server connection string.
+            To run the integration tests, set the OT_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
 
             To use Docker...
              1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
-             2) Set ot.SqlConnectionString as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
+             2) Set OT_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
          */
 
-        private const string SqlConnectionStringEnvVarName = "ot.SqlConnectionString";
-        private static readonly string SqlConnectionString = Environment.GetEnvironmentVariable(SqlConnectionStringEnvVarName, EnvironmentVariableTarget.Machine);
+        private const string SqlConnectionStringEnvVarName = "OT_SQLCONNECTIONSTRING";
+        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
 
         [Trait("CategoryName", "SqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
