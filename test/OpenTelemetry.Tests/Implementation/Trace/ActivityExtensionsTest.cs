@@ -76,13 +76,13 @@ namespace OpenTelemetry.Trace.Test
                                        .AddActivitySource(ActivitySourceName));
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
+
             activity.SetStatus(default);
             activity?.Stop();
 
             // does not throw
             activity.SetStatus(default);
 
-            Assert.False(activity.GetStatus().IsValid);
             Assert.Equal(default, activity.GetStatus());
         }
     }
