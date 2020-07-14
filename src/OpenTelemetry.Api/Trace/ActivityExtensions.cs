@@ -25,18 +25,18 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class ActivityExtensions
     {
-        private const string StatusCodeKey = "ot.status_code";
-        private const string StatusDescriptionKey = "ot.status_description";
-
         /// <summary>
         /// Sets the status of activity execution.
+        /// Activity class in .NET does support 'Status'.
+        /// This extension provides a workaround to store Status as special tags with key name of ot.status_code and ot.status_descriptionkeys.
+        /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
         public static void SetStatus(this Activity activity, Status status)
         {
-            activity?.AddTag(StatusCodeKey, status.CanonicalCode.ToString());
-            activity?.AddTag(StatusDescriptionKey, status.Description);
+            activity?.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
         /// <summary>
@@ -46,12 +46,11 @@ namespace OpenTelemetry.Trace
         /// <returns>Activity execution status.</returns>
         public static Status GetStatus(this Activity activity)
         {
-            var statusCode = activity?.Tags.FirstOrDefault(k => k.Key == StatusCodeKey).Value;
-            var statusDescription = activity?.Tags.FirstOrDefault(d => d.Key == StatusDescriptionKey).Value;
+            var statusCode = activity?.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
+            var statusDescription = activity?.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+            bool success = Enum.TryParse(statusCode, out StatusCanonicalCode statusCanonicalCode);
 
-            Enum.TryParse(statusCode, out StatusCanonicalCode statusCanonicalCode);
-
-            return new Status(statusCanonicalCode, statusDescription);
+            return success ? new Status(statusCanonicalCode, statusDescription) : default;
         }
     }
 }
