@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
@@ -67,6 +68,16 @@ namespace OpenTelemetry.Trace.Test
             activity?.Stop();
 
             Assert.True(activity.GetStatus().CanonicalCode.Equals(Status.Cancelled.CanonicalCode));
+        }
+
+        [Fact]
+        public void GetOrSetStatusThrowsExceptionOnNullActivity()
+        {
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            Assert.Throws<ArgumentNullException>(() => activity.SetStatus(Status.Ok));
+            Assert.Throws<ArgumentNullException>(() => activity.GetStatus());
+            activity?.Stop();
         }
 
         [Fact]

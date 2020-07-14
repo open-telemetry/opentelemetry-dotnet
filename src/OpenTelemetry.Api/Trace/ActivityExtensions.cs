@@ -35,8 +35,13 @@ namespace OpenTelemetry.Trace
         /// <param name="status">Activity execution status.</param>
         public static void SetStatus(this Activity activity, Status status)
         {
-            activity?.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
         /// <summary>
@@ -48,8 +53,13 @@ namespace OpenTelemetry.Trace
         /// <returns>Activity execution status.</returns>
         public static Status GetStatus(this Activity activity)
         {
-            var statusCanonicalCode = activity?.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
-            var statusDescription = activity?.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            var statusCanonicalCode = activity.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
+            var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
             return status.IsValid ? status.WithDescription(statusDescription) : status;
