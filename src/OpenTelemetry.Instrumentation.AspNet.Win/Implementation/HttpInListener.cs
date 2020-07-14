@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         private readonly ActivitySourceAdapter activitySource;
 
         public HttpInListener(string name, AspNetInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base(name, null)
+            : base(name)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.activitySource = activitySource;

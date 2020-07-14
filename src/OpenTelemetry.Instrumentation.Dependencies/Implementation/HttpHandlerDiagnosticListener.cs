@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base("HttpHandlerDiagnosticListener", null)
+            : base("HttpHandlerDiagnosticListener")
         {
             var framework = Assembly
                 .GetEntryAssembly()?

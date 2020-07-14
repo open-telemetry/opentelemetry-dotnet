@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
-            : base("Grpc.Net.Client", null)
+            : base("Grpc.Net.Client")
         {
             if (activitySource == null)
             {
