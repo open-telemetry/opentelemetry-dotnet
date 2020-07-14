@@ -132,8 +132,6 @@ namespace OpenTelemetry.Trace.Configuration
 
         public void Dispose()
         {
-            this.listener.Dispose();
-
             foreach (var item in this.instrumentations)
             {
                 if (item is IDisposable disposable)
@@ -148,6 +146,11 @@ namespace OpenTelemetry.Trace.Configuration
             {
                 disposableProcessor.Dispose();
             }
+
+            // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
+            // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
+            // sessions that were open.
+            this.listener.Dispose();
         }
 
         internal static ActivityDataRequest ComputeActivityDataRequest(

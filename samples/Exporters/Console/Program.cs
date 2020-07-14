@@ -38,7 +38,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),

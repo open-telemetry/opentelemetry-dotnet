@@ -24,5 +24,5 @@ using System.Runtime.CompilerServices;
 #else
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Jaeger.Tests")]
 [assembly: InternalsVisibleTo("Benchmarks")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2] // Used by Moq.
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")] // Used by Moq.
 #endif
