@@ -24,6 +24,7 @@ using Opentelemetry.Proto.Common.V1;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -59,6 +60,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
+            var resource = new Resources.Resource(
+                new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
+                });
+
             var activities = new List<Activity>();
             Activity activity = null;
             const int numOfSpans = 10;
@@ -71,6 +78,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
+                activity.SetResource(resource);
 
                 activities.Add(activity);
             }
@@ -80,6 +88,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpResourceSpans = activities.ToOtlpResourceSpans();
 
             Assert.Single(otlpResourceSpans);
+            var oltpResource = otlpResourceSpans.First().Resource;
+            Assert.Equal(resource.Attributes.First().Key, oltpResource.Attributes.First().Key);
+            Assert.Equal(resource.Attributes.First().Value, oltpResource.Attributes.First().Value.StringValue);
 
             foreach (var instrumentationLibrarySpans in otlpResourceSpans.First().InstrumentationLibrarySpans)
             {
