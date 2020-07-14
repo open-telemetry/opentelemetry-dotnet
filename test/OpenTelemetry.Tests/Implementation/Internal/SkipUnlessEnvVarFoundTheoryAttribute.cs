@@ -16,16 +16,28 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.Dependencies.Tests
+namespace OpenTelemetry.Internal.Test
 {
     public class SkipUnlessEnvVarFoundTheoryAttribute : TheoryAttribute
     {
         public SkipUnlessEnvVarFoundTheoryAttribute(string environmentVariable)
         {
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(environmentVariable, EnvironmentVariableTarget.Machine)))
+            if (string.IsNullOrEmpty(GetEnvironmentVariable(environmentVariable)))
             {
                 this.Skip = $"Skipped because {environmentVariable} environment variable was not configured.";
             }
+        }
+
+        public static string GetEnvironmentVariable(string environmentVariableName)
+        {
+            string environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Process);
+
+            if (string.IsNullOrEmpty(environmentVariableValue))
+            {
+                environmentVariableValue = Environment.GetEnvironmentVariable(environmentVariableName, EnvironmentVariableTarget.Machine);
+            }
+
+            return environmentVariableValue;
         }
     }
 }
