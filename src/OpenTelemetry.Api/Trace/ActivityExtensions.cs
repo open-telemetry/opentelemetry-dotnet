@@ -33,10 +33,11 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
-        public static void SetStatus(this Activity activity, Status status)
+        /// <param name="description">Status Description.</param>
+        public static void SetStatus(this Activity activity, Status status, string description = null)
         {
             activity?.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            activity?.AddTag(SpanAttributeConstants.StatusDescriptionKey, description ?? status.Description);
         }
 
         /// <summary>

@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Test
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
-            activity.SetStatus(new Status(StatusCanonicalCode.NotFound, "Not Found"));
+            activity.SetStatus(Status.NotFound, "Not Found");
             activity?.Stop();
 
             var status = activity.GetStatus();
@@ -67,23 +67,6 @@ namespace OpenTelemetry.Trace.Test
             activity?.Stop();
 
             Assert.True(activity.GetStatus().CanonicalCode.Equals(Status.Cancelled.CanonicalCode));
-        }
-
-        [Fact]
-        public void BadArguments_SetInvalidStatus()
-        {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
-                                       .AddActivitySource(ActivitySourceName));
-            using var source = new ActivitySource(ActivitySourceName);
-            using var activity = source.StartActivity(ActivityName);
-
-            activity.SetStatus(default);
-            activity?.Stop();
-
-            // does not throw
-            activity.SetStatus(default);
-
-            Assert.Equal(default, activity.GetStatus());
         }
     }
 }
