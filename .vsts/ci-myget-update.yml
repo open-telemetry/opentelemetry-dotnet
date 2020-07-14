@@ -17,12 +17,12 @@ pool:
 
 steps:
 - task: UseDotNet@2
-  displayName: force use of desired dotnet version
+  displayName: force use of dotnet 2.1.x
   inputs:
     version: $(DotNetVersion2)
 
 - task: UseDotNet@2
-  displayName: force use of desired dotnet version
+  displayName: force use of dotnet 3.1.x
   inputs:
     version: $(DotNetVersion3)
 
