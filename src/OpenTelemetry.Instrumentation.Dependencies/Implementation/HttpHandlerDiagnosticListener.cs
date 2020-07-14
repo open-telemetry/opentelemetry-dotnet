@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            if (request.Headers.Contains("traceparent"))
+            if (this.options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h)))
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
