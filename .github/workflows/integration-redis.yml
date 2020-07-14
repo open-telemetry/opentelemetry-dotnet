@@ -1,0 +1,15 @@
+name: Redis Integration Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-compose-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run redis docker-compose.integration
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=redis_integration_tests --build
