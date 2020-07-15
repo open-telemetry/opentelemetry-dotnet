@@ -192,6 +192,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 rootActivity.Context,
                 links: childLinks);
 
+            childActivity.SetStatus(Status.NotFound);
+
             var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", attributes) };
             childActivity.AddEvent(childEvents[0]);
             childActivity.AddEvent(childEvents[1]);
@@ -207,6 +209,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(OtlpTrace.Span.Types.SpanKind.Client, otlpSpan.Kind);
             Assert.Equal(traceId, otlpSpan.TraceId);
             Assert.Equal(parentId, otlpSpan.ParentSpanId);
+            Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
+            Assert.Equal(Status.NotFound.Description ?? string.Empty, otlpSpan.Status.Message);
             Assert.Empty(otlpSpan.Attributes);
 
             Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
