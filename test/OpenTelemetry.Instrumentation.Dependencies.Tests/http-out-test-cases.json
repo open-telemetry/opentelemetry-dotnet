@@ -7,7 +7,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "example.com",
       "http.status_code": "200",
@@ -22,7 +21,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "POST",
       "http.host": "example.com",
       "http.status_code": "200",
@@ -38,7 +36,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "200",
@@ -54,7 +51,6 @@
     "spanStatusHasDescription": true,
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
       "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
@@ -69,7 +65,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "200",
@@ -85,7 +80,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "200",
@@ -101,7 +95,6 @@
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "399",
@@ -117,7 +110,6 @@
     "spanStatus": "INVALID_ARGUMENT",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "400",
@@ -133,7 +125,6 @@
     "spanStatus": "UNAUTHENTICATED",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "401",
@@ -149,7 +140,6 @@
     "spanStatus": "PERMISSION_DENIED",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "403",
@@ -165,7 +155,6 @@
     "spanStatus": "NOT_FOUND",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "404",
@@ -181,7 +170,6 @@
     "spanStatus": "RESOURCE_EXHAUSTED",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "429",
@@ -197,7 +185,6 @@
     "spanStatus": "UNIMPLEMENTED",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "501",
@@ -213,7 +200,6 @@
     "spanStatus": "UNAVAILABLE",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "503",
@@ -229,7 +215,6 @@
     "spanStatus": "DEADLINE_EXCEEDED",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "504",
@@ -245,7 +230,6 @@
     "spanStatus": "UNKNOWN",
     "spanKind": "Client",
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "600",
@@ -262,7 +246,6 @@
     "spanKind": "Client",
     "setHttpFlavor": true,
     "spanAttributes": {
-      "component": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
