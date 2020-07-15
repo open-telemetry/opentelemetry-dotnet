@@ -31,8 +31,8 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporter : ActivityExporter
     {
         internal readonly ZPagesExporterOptions Options;
-        private Timer minuteTimer;
-        private Timer hourTimer;
+        private readonly Timer minuteTimer;
+        private readonly Timer hourTimer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.

@@ -18,11 +18,11 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
 using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -103,13 +103,13 @@ namespace OpenTelemetry.Exporter.ZPages
                 ZPagesActivityTracker.TotalEndedCount[activity.DisplayName] = endedCount + 1;
 
                 // Increment the error count, if it applies in all applicable lists.
-                // if (!activity.Status.IsOk)
-                // {
-                //     minuteSpanInformation.ErrorCount++;
-                //     hourSpanInformation.ErrorCount++;
-                //     ZPagesActivities.TotalErrorCount.TryGetValue(activity.DisplayName, out var errorCount);
-                //     ZPagesActivities.TotalErrorCount[activity.DisplayName] = errorCount + 1;
-                // }
+                if (activity.GetStatus() != Status.Ok)
+                {
+                    minuteSpanInformation.ErrorCount++;
+                    hourSpanInformation.ErrorCount++;
+                    ZPagesActivityTracker.TotalErrorCount.TryGetValue(activity.DisplayName, out var errorCount);
+                    ZPagesActivityTracker.TotalErrorCount[activity.DisplayName] = errorCount + 1;
+                }
 
                 // Set the last updated timestamp.
                 minuteSpanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
