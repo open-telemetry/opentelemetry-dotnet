@@ -1,0 +1,23 @@
+# Start a sql container and then run OpenTelemetry sql integration tests.
+# This should be run from the root of the repo:
+#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.Dependencies.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build
+version: '3.1'
+
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Pass@word
+    ports:
+      - "1433:1433"
+
+  sql_integration_tests:
+    build:
+      context: .
+      dockerfile: ./test/OpenTelemetry.Instrumentation.Dependencies.Tests/dockerfile
+    command: --filter CategoryName=SqlIntegrationTests
+    environment:
+      - OT_SQLCONNECTIONSTRING=Data Source=sql; User ID=sa; Password=Pass@word
+    depends_on:
+      - sql
