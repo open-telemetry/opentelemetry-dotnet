@@ -31,6 +31,7 @@ namespace Samples
         /// dotnet run -p Exporters.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run -p Exporters.csproj jaeger -h localhost -p 6831
         /// dotnet run -p Exporters.csproj prometheus -i 15 -p 9184 -d 2
+        /// dotnet run -p Exporters.csproj otlp -e "localhost:55680"
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\).
