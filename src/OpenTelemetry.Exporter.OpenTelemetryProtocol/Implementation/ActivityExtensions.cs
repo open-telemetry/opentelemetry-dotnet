@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
                 ParentSpanId = parentSpanIdString,
 
-                // TODO: Status is still pending, need to pursue OTEL spec change.
+                Status = ToOtlpStatus(activity.GetStatus()),
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             foreach (var kvp in activity.Tags)
             {
                 var attribute = ToOtlpAttribute(kvp);
-                if (attribute != null)
+                if (attribute != null && attribute.Key != SpanAttributeConstants.StatusCodeKey && attribute.Key != SpanAttributeConstants.StatusDescriptionKey)
                 {
                     otlpSpan.Attributes.Add(attribute);
                 }
@@ -127,6 +127,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             // Activity does not limit number of attributes, events, links, etc so drop counts are always zero.
 
             return otlpSpan;
+        }
+
+        private static OtlpTrace.Status ToOtlpStatus(Status status)
+        {
+            if (!status.IsValid)
+            {
+                return null;
+            }
+
+            var otlpStatus = new Opentelemetry.Proto.Trace.V1.Status
+            {
+                // The numerical values of the two enumerations match, a simple cast is enough.
+                Code = (OtlpTrace.Status.Types.StatusCode)status.CanonicalCode,
+            };
+
+            if (!string.IsNullOrEmpty(status.Description))
+            {
+                otlpStatus.Message = status.Description;
+            }
+
+            return otlpStatus;
         }
 
         private static Dictionary<Resource, Dictionary<ActivitySource, List<OtlpTrace.Span>>> GroupByResourceAndLibrary(
