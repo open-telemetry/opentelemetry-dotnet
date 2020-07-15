@@ -41,7 +41,10 @@ namespace OpenTelemetry.Trace
             }
 
             activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            if (!string.IsNullOrEmpty(status.Description))
+            {
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            }
         }
 
         /// <summary>
@@ -62,7 +65,13 @@ namespace OpenTelemetry.Trace
             var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
-            return status.IsValid ? status.WithDescription(statusDescription) : status;
+
+            if (status.IsValid && !string.IsNullOrEmpty(statusDescription))
+            {
+                return status.WithDescription(statusDescription);
+            }
+
+            return status;
         }
     }
 }

@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
