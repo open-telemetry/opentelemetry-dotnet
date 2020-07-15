@@ -8,7 +8,8 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=Pass@word
+      # Note: This password is for the ephemeral sql instance running in the container used for tests. Nothing that needs to be handled securely.
+      - SA_PASSWORD=Pass@word18
     ports:
       - "1433:1433"
 
@@ -18,6 +19,6 @@ services:
       dockerfile: ./test/OpenTelemetry.Instrumentation.Dependencies.Tests/dockerfile
     command: --filter CategoryName=SqlIntegrationTests
     environment:
-      - OT_SQLCONNECTIONSTRING=Data Source=sql; User ID=sa; Password=Pass@word
+      - OTEL_SQLCONNECTIONSTRING=Data Source=sql; User ID=sa; Password=Pass@word18
     depends_on:
       - sql

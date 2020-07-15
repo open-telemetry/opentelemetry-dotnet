@@ -33,14 +33,14 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
     public class StackExchangeRedisCallsInstrumentationTests
     {
         /*
-            To run the integration tests, set the OT_REDISENDPOINT machine-level environment variable to a valid Redis endpoint.
+            To run the integration tests, set the OTEL_REDISENDPOINT machine-level environment variable to a valid Redis endpoint.
 
             To use Docker...
              1) Run: docker run -d --name redis -p 6379:6379 redis
-             2) Set OT_REDISENDPOINT as: localhost:6379
+             2) Set OTEL_REDISENDPOINT as: localhost:6379
          */
 
-        private const string RedisEndPointEnvVarName = "OT_REDISENDPOINT";
+        private const string RedisEndPointEnvVarName = "OTEL_REDISENDPOINT";
         private static readonly string RedisEndPoint = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(RedisEndPointEnvVarName);
 
         [Trait("CategoryName", "RedisIntegrationTests")]
