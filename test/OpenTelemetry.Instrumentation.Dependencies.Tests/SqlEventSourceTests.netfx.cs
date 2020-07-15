@@ -187,12 +187,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal("sql", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBSystem).Value);
 
             if (!enableConnectionLevelAttributes)
             {
-                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.PeerServiceKey).Value);
+                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
             }
             else
             {
@@ -200,11 +199,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                 {
-                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerName).Value);
+                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
                 }
                 else
                 {
-                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerIp).Value);
+                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIP).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
@@ -214,21 +213,21 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
                 {
-                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerPort).Value);
+                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
                 }
             }
 
-            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseNameKey).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBName).Value);
             Assert.Equal(commandType.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
             if (commandType == CommandType.StoredProcedure)
             {
                 if (captureText)
                 {
-                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
                 }
                 else
                 {
-                    Assert.DoesNotContain(activity.Tags, t => t.Key == SpanAttributeConstants.DatabaseStatementKey);
+                    Assert.DoesNotContain(activity.Tags, t => t.Key == SemanticConventions.AttributeDBStatement);
                 }
             }
 

@@ -83,14 +83,13 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
-                activity.AddTag(SpanAttributeConstants.HttpMethodKey, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
+                activity.AddTag(SemanticConventions.AttributeHTTPMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                activity.AddTag(SemanticConventions.AttributeHTTPHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SemanticConventions.AttributeHTTPURL, request.RequestUri.OriginalString);
 
                 if (this.options.SetHttpFlavor)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                    activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
             }
 
@@ -127,7 +126,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
                     // response could be null for DNS issues, timeouts, etc...
-                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                     activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
