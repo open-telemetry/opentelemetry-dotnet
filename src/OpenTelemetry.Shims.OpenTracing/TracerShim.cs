@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
 
@@ -23,15 +24,15 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
-        private readonly Trace.Tracer tracer;
-        private readonly ITextFormat textFormat;
+        private readonly ActivitySource activitySource;
+        private readonly ITextFormatActivity textFormat;
 
-        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
+        public TracerShim(ActivitySource activitySource, ITextFormatActivity textFormat)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
 
-            this.ScopeManager = new ScopeManagerShim(this.tracer);
+            this.ScopeManager = new ScopeManagerShim(this.activitySource);
         }
 
         /// <inheritdoc/>
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
         {
-            return new SpanBuilderShim(this.tracer, operationName);
+            return new ActivityBuilderShim(this.activitySource, operationName);
         }
 
         /// <inheritdoc/>
@@ -59,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            Trace.SpanContext spanContext = default;
+            ActivityContext activityContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -80,26 +81,26 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
+                activityContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            return !activityContext.IsValid() ? null : new ActivityContextShim(activityContext);
         }
 
         /// <inheritdoc/>
         public void Inject<TCarrier>(
-            global::OpenTracing.ISpanContext spanContext,
+            global::OpenTracing.ISpanContext activityContext,
             global::OpenTracing.Propagation.IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            if (spanContext is null)
+            if (activityContext is null)
             {
-                throw new ArgumentNullException(nameof(spanContext));
+                throw new ArgumentNullException(nameof(activityContext));
             }
 
-            if (!(spanContext is SpanContextShim shim))
+            if (!(activityContext is ActivityContextShim shim))
             {
-                throw new ArgumentException("context is not a valid SpanContextShim object");
+                throw new ArgumentException("context is not a valid ActivityContextShim object");
             }
 
             if (format is null)
@@ -114,7 +115,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                this.textFormat.Inject(shim.Context, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

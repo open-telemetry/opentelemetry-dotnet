@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using global::OpenTracing;
@@ -24,17 +25,17 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<Activity, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Activity, global::OpenTracing.IScope>();
 
-        private readonly Trace.Tracer tracer;
+        private readonly ActivitySource activitySource;
 
 #if DEBUG
         private int spanScopeTableCount;
 #endif
 
-        public ScopeManagerShim(Trace.Tracer tracer)
+        public ScopeManagerShim(ActivitySource source)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.activitySource = source ?? throw new ArgumentNullException(nameof(source));
         }
 
 #if DEBUG
@@ -46,36 +47,36 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             get
             {
-                var currentSpan = this.tracer.CurrentSpan;
-                if (currentSpan == null || !currentSpan.Context.IsValid)
+                var currentActivity = Activity.Current;
+                if (currentActivity == null || !currentActivity.Context.IsValid())
                 {
                     return null;
                 }
 
-                if (SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope))
+                if (SpanScopeTable.TryGetValue(currentActivity, out var openTracingScope))
                 {
                     return openTracingScope;
                 }
 
-                return new ScopeInstrumentation(currentSpan);
+                return new ScopeInstrumentation(currentActivity);
             }
         }
 
         /// <inheritdoc/>
         public global::OpenTracing.IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
-            if (!(span is SpanShim shim))
+            if (!(span is ActivityShim shim))
             {
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            var scope = this.tracer.WithSpan(shim.Span, false);
+            var scope = this.activitySource.StartActivity(shim.ActivityObj.OperationName);
 
             var instrumentation = new ScopeInstrumentation(
-                shim.Span,
+                shim.ActivityObj,
                 () =>
                 {
-                    var removed = SpanScopeTable.Remove(shim.Span);
+                    var removed = SpanScopeTable.Remove(shim.ActivityObj);
 #if DEBUG
                     if (removed)
                     {
@@ -85,7 +86,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     scope.Dispose();
                 });
 
-            SpanScopeTable.Add(shim.Span, instrumentation);
+            SpanScopeTable.Add(shim.ActivityObj, instrumentation);
 #if DEBUG
             Interlocked.Increment(ref this.spanScopeTableCount);
 #endif
@@ -97,9 +98,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             private readonly Action disposeAction;
 
-            public ScopeInstrumentation(TelemetrySpan span, Action disposeAction = null)
+            public ScopeInstrumentation(Activity activity, Action disposeAction = null)
             {
-                this.Span = new SpanShim(span);
+                this.Span = new ActivityShim(activity);
                 this.disposeAction = disposeAction;
             }
 
