@@ -66,6 +66,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
                 });
 
+            // This following is done just to set Resource to Activity.
+            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                .AddActivitySource(sources[0].Name)
+                .AddActivitySource(sources[1].Name)
+                .SetResource(resource));
+
             var activities = new List<Activity>();
             Activity activity = null;
             const int numOfSpans = 10;
@@ -78,8 +84,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
-                activity.SetResource(resource);
-
                 activities.Add(activity);
             }
 
@@ -188,6 +192,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 rootActivity.Context,
                 links: childLinks);
 
+            childActivity.SetStatus(Status.NotFound);
+
             var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", attributes) };
             childActivity.AddEvent(childEvents[0]);
             childActivity.AddEvent(childEvents[1]);
@@ -203,6 +209,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(OtlpTrace.Span.Types.SpanKind.Client, otlpSpan.Kind);
             Assert.Equal(traceId, otlpSpan.TraceId);
             Assert.Equal(parentId, otlpSpan.ParentSpanId);
+            Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
+            Assert.Equal(Status.NotFound.Description ?? string.Empty, otlpSpan.Status.Message);
             Assert.Empty(otlpSpan.Attributes);
 
             Assert.Equal(childEvents.Count, otlpSpan.Events.Count);

@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
     public class AspNetInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation.
+        /// Gets or sets <see cref="ITextFormatActivity"/> for context propagation.
         /// </summary>
         public ITextFormatActivity TextFormat { get; set; } = new TraceContextFormatActivity();
 

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Trace
@@ -22,6 +24,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class SpanHelper
     {
+        private static readonly Status DefaultStatus = default;
+
         private static readonly Dictionary<StatusCanonicalCode, string> StatusCanonicalCodeToStringCache = new Dictionary<StatusCanonicalCode, string>()
         {
             [StatusCanonicalCode.Ok] = StatusCanonicalCode.Ok.ToString(),
@@ -124,6 +128,44 @@ namespace OpenTelemetry.Trace
             }
 
             return newStatus;
+        }
+
+        /// <summary>
+        /// Helper method that returns Status from <see cref="StatusCanonicalCode"/> to save on allocations.
+        /// </summary>
+        /// <param name="statusCanonicalCode"><see cref="StatusCanonicalCode"/>.</param>
+        /// <returns>Resolved span <see cref="Status"/> for the Canonical status code.</returns>
+        public static Status ResolveCanonicalCodeToStatus(string statusCanonicalCode)
+        {
+            bool success = Enum.TryParse(statusCanonicalCode, out StatusCanonicalCode canonicalCode);
+
+            if (!success)
+            {
+                return DefaultStatus;
+            }
+
+            var status = canonicalCode switch
+            {
+                StatusCanonicalCode.Cancelled => Status.Cancelled,
+                StatusCanonicalCode.Unknown => Status.Unknown,
+                StatusCanonicalCode.InvalidArgument => Status.InvalidArgument,
+                StatusCanonicalCode.DeadlineExceeded => Status.DeadlineExceeded,
+                StatusCanonicalCode.NotFound => Status.NotFound,
+                StatusCanonicalCode.AlreadyExists => Status.AlreadyExists,
+                StatusCanonicalCode.PermissionDenied => Status.PermissionDenied,
+                StatusCanonicalCode.ResourceExhausted => Status.ResourceExhausted,
+                StatusCanonicalCode.FailedPrecondition => Status.FailedPrecondition,
+                StatusCanonicalCode.Aborted => Status.Aborted,
+                StatusCanonicalCode.OutOfRange => Status.OutOfRange,
+                StatusCanonicalCode.Unimplemented => Status.Unimplemented,
+                StatusCanonicalCode.Internal => Status.Internal,
+                StatusCanonicalCode.Unavailable => Status.Unavailable,
+                StatusCanonicalCode.DataLoss => Status.DataLoss,
+                StatusCanonicalCode.Unauthenticated => Status.Unauthenticated,
+                _ => Status.Ok,
+            };
+
+            return status;
         }
     }
 }
