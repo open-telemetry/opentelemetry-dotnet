@@ -64,14 +64,9 @@ namespace OpenTelemetry.Context.Propagation
                     return SpanContext.BlankRemote;
                 }
 
-                List<KeyValuePair<string, string>> tracestate = null;
                 var tracestateCollection = getter(carrier, TraceState);
-                if (tracestateCollection != null)
-                {
-                    this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
-                }
-
-                return new SpanContext(traceId, spanId, traceoptions, true, tracestate);
+                string tracestate = tracestateCollection.FirstOrDefault();
+                return new SpanContext(traceId, spanId, traceoptions, tracestate, true);
             }
             catch (Exception ex)
             {
@@ -108,7 +103,7 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, TraceParent, traceparent);
 
-            string tracestateStr = TracestateUtils.GetString(spanContext.Tracestate);
+            string tracestateStr = spanContext.Tracestate;
             if (tracestateStr.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);

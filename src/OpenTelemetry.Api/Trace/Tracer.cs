@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -23,58 +21,84 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Tracer to record distributed tracing information.
     /// </summary>
-    public abstract class Tracer
+    public class Tracer
     {
+        private ActivitySource activitySource;
+
+        internal Tracer(ActivitySource activitySource)
+        {
+            this.activitySource = activitySource;
+        }
+
         /// <summary>
         /// Gets the current span from the context.
         /// </summary>
-        public abstract TelemetrySpan CurrentSpan { get; }
-
-        /// <summary>
-        /// Activates the span on the current context.
-        /// </summary>
-        /// <param name="span">Span to associate with the current context.</param>
-        /// <param name="endSpanOnDispose">Flag indicating if span should end when scope is disposed.</param>
-        /// <returns>Disposable object to control span to current context association.</returns>
-        public abstract IDisposable WithSpan(TelemetrySpan span, bool endSpanOnDispose);
-
-        /// <summary>
-        /// Starts root span.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
-        /// <returns>Span instance.</returns>
-        public abstract TelemetrySpan StartRootSpan(string operationName, SpanKind kind, SpanCreationOptions options);
+        public TelemetrySpan CurrentSpan { get; }
 
         /// <summary>
         /// Starts span.
         /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="parent">Parent for new span.</param>
+        /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        public abstract TelemetrySpan StartSpan(string operationName, TelemetrySpan parent, SpanKind kind, SpanCreationOptions options);
+        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal)
+        {
+            if (!this.activitySource.HasListeners())
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
+
+            var activityKind = this.ConvertToActivityKind(kind);
+            var activity = this.activitySource.StartActivity(name, activityKind);
+            if (activity == null)
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
+
+            return new TelemetrySpan(activity);
+        }
 
         /// <summary>
         /// Starts span.
         /// </summary>
-        /// <param name="operationName">Span name.</param>
+        /// <param name="name">Span name.</param>
+        /// <param name="kind">Kind.</param>
         /// <param name="parent">Parent for new span.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="options">Advanced span creation options.</param>
         /// <returns>Span instance.</returns>
-        public abstract TelemetrySpan StartSpan(string operationName, in SpanContext parent, SpanKind kind, SpanCreationOptions options);
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent)
+        {
+            if (!this.activitySource.HasListeners())
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
 
-        /// <summary>
-        /// Starts span from auto-collected <see cref="Activity"/>.
-        /// </summary>
-        /// <param name="operationName">Span name.</param>
-        /// <param name="activity">Activity instance to create span from.</param>
-        /// <param name="kind">Kind.</param>
-        /// <param name="links">Links collection.</param>
-        /// <returns>Span scope instance.</returns>
-        public abstract TelemetrySpan StartSpanFromActivity(string operationName, Activity activity, SpanKind kind, IEnumerable<Link> links);
+            var activityKind = this.ConvertToActivityKind(kind);
+            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext);
+            if (activity == null)
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
+
+            return new TelemetrySpan(activity);
+        }
+
+        private ActivityKind ConvertToActivityKind(SpanKind kind)
+        {
+            switch (kind)
+            {
+                case SpanKind.Client:
+                    return ActivityKind.Client;
+                case SpanKind.Consumer:
+                    return ActivityKind.Consumer;
+                case SpanKind.Internal:
+                    return ActivityKind.Internal;
+                case SpanKind.Producer:
+                    return ActivityKind.Producer;
+                case SpanKind.Server:
+                    return ActivityKind.Server;
+                default:
+                    return ActivityKind.Internal;
+            }
+        }
     }
 }
