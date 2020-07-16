@@ -101,21 +101,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host);
+                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host + ":" + request.Host.Port);
+                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
+                activity.AddTag(SemanticConventions.AttributeHTTPURL, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                    activity.AddTag(SemanticConventions.AttributeHTTPUserAgent, userAgent);
                 }
             }
         }
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
+                        activity.AddTag(SemanticConventions.AttributeHTTPRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?

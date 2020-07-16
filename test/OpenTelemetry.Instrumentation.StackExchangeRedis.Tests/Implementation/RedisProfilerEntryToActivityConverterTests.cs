@@ -89,8 +89,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.DatabaseSystemKey);
-            Assert.Equal("redis", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDBSystem);
+            Assert.Equal("redis", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDBSystem).Value);
         }
 
         [Fact]
@@ -103,8 +103,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.DatabaseStatementKey);
-            Assert.Equal("SET", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDBStatement);
+            Assert.Equal("SET", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDBStatement).Value);
         }
 
         [Fact]
@@ -136,10 +136,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerIp);
-            Assert.Equal($"{address}.0.0.0", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerIp).Value);
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerPort);
-            Assert.Equal($"{port}", result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerPort).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerIP);
+            Assert.Equal($"{address}.0.0.0", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerIP).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
+            Assert.Equal($"{port}", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
 
         [Fact]
@@ -153,10 +153,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerName);
-            Assert.Equal(dnsEndPoint.Host, result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerName).Value);
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.NetPeerPort);
-            Assert.Equal(dnsEndPoint.Port.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.NetPeerPort).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerName);
+            Assert.Equal(dnsEndPoint.Host, result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerName).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
+            Assert.Equal(dnsEndPoint.Port.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
 
 #if !NET461
@@ -170,8 +170,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SpanAttributeConstants.PeerServiceKey);
-            Assert.Equal(unixEndPoint.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SpanAttributeConstants.PeerServiceKey).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributePeerService);
+            Assert.Equal(unixEndPoint.ToString(), result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributePeerService).Value);
         }
 #endif
     }

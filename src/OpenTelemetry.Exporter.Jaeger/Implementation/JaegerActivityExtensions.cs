@@ -25,9 +25,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            [SpanAttributeConstants.PeerServiceKey] = 0, // priority 0 (highest).
-            [SpanAttributeConstants.NetPeerName] = 1,
-            [SpanAttributeConstants.NetPeerIp] = 2,
+            [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
+            [SemanticConventions.AttributeNetPeerName] = 1,
+            [SemanticConventions.AttributeNetPeerIP] = 2,
             ["peer.hostname"] = 2,
             ["peer.address"] = 2,
             ["http.host"] = 3, // peer.service for Http.
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 // If priority = 0 that means peer.service was already included in tags.
                 if (jaegerTags.PeerServicePriority > 0)
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.PeerServiceKey, JaegerTagType.STRING, vStr: peerServiceName));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SemanticConventions.AttributePeerService, JaegerTagType.STRING, vStr: peerServiceName));
                 }
             }
 

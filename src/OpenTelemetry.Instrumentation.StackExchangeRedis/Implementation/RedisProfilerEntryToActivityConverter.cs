@@ -58,30 +58,30 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 // command.ElapsedTime;             // 00:00:32.4988020
 
                 activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
-                activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, "redis");
+                activity.AddTag(SemanticConventions.AttributeDBSystem, "redis");
                 activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
                 if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
-                    activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, command.Command);
+                    activity.AddTag(SemanticConventions.AttributeDBStatement, command.Command);
                 }
 
                 if (command.EndPoint != null)
                 {
                     if (command.EndPoint is IPEndPoint ipEndPoint)
                     {
-                        activity.AddTag(SpanAttributeConstants.NetPeerIp, ipEndPoint.Address.ToString());
-                        activity.AddTag(SpanAttributeConstants.NetPeerPort, ipEndPoint.Port.ToString());
+                        activity.AddTag(SemanticConventions.AttributeNetPeerIP, ipEndPoint.Address.ToString());
+                        activity.AddTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port.ToString());
                     }
                     else if (command.EndPoint is DnsEndPoint dnsEndPoint)
                     {
-                        activity.AddTag(SpanAttributeConstants.NetPeerName, dnsEndPoint.Host);
-                        activity.AddTag(SpanAttributeConstants.NetPeerPort, dnsEndPoint.Port.ToString());
+                        activity.AddTag(SemanticConventions.AttributeNetPeerName, dnsEndPoint.Host);
+                        activity.AddTag(SemanticConventions.AttributeNetPeerPort, dnsEndPoint.Port.ToString());
                     }
                     else
                     {
-                        activity.AddTag(SpanAttributeConstants.PeerServiceKey, command.EndPoint.ToString());
+                        activity.AddTag(SemanticConventions.AttributePeerService, command.EndPoint.ToString());
                     }
                 }
 
