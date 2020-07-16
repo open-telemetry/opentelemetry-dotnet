@@ -17,8 +17,9 @@ services:
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Instrumentation.Dependencies.Tests/dockerfile
-    command: --filter CategoryName=SqlIntegrationTests
+    entrypoint: ["bash", "-c", "/wait && dotnet test OpenTelemetry.Instrumentation.Dependencies.Tests.dll --filter CategoryName=SqlIntegrationTests"]
     environment:
       - OTEL_SQLCONNECTIONSTRING=Data Source=sql; User ID=sa; Password=Pass@word18
+      - WAIT_HOSTS=sql:1433
     depends_on:
       - sql

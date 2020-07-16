@@ -2,6 +2,8 @@
 # This should be run from the root of the repo:
 #  opentelemetry>docker build -f test\OpenTelemetry.Instrumentation.Dependencies.Tests\dockerfile .
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as build
 ARG PUBLISH_CONFIGURATION=Release
