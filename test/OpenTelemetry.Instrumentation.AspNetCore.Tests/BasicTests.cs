@@ -164,7 +164,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(spanProcessor, 4);
+                WaitForProcessorInvocations(spanProcessor, 2);
             }
 
             // begin and end was called once each.
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 () =>
                 {
                     Thread.Sleep(10);
-                    return spanProcessor.Invocations.Count >= 2;
+                    return spanProcessor.Invocations.Count >= invocationCount;
                 },
                 TimeSpan.FromSeconds(1)));
         }

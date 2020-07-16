@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -28,11 +28,11 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements ZPages exporter.
     /// </summary>
-    public class ZPagesExporter : SpanExporter
+    public class ZPagesExporter : ActivityExporter
     {
         internal readonly ZPagesExporterOptions Options;
-        private Timer minuteTimer;
-        private Timer hourTimer;
+        private readonly Timer minuteTimer;
+        private readonly Timer hourTimer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesExporter"/> class.
@@ -40,23 +40,25 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="options">Options for the exporter.</param>
         public ZPagesExporter(ZPagesExporterOptions options)
         {
+            ZPagesActivityTracker.RetentionTime = options.RetentionTime;
+
             this.Options = options;
 
             // Create a timer with one minute interval
             this.minuteTimer = new Timer(60000);
-            this.minuteTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentMinuteData);
+            this.minuteTimer.Elapsed += new ElapsedEventHandler(ZPagesActivityTracker.PurgeCurrentMinuteData);
             this.minuteTimer.Enabled = true;
 
             // Create a timer with one hour interval
             this.hourTimer = new Timer(3600000);
-            this.hourTimer.Elapsed += new ElapsedEventHandler(ZPagesSpans.PurgeCurrentHourData);
+            this.hourTimer.Elapsed += new ElapsedEventHandler(ZPagesActivityTracker.PurgeCurrentHourData);
             this.hourTimer.Enabled = true;
         }
 
         /// <inheritdoc />
-        public override Task<ExportResult> ExportAsync(IEnumerable<SpanData> batch, CancellationToken cancellationToken)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> batch, CancellationToken cancellationToken)
         {
-            var spanDatas = batch as SpanData[] ?? batch.ToArray();
+            // var spanDatas = batch as SpanData[] ?? batch.ToArray();
             return Task.FromResult(ExportResult.Success);
         }
 

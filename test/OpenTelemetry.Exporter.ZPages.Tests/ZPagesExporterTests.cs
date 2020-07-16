@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinExporterTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZPagesExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,33 +15,23 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
-using OpenTelemetry.Internal.Test;
+
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace.Export;
+
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Zipkin.Tests
+namespace OpenTelemetry.Exporter.ZPages.Tests
 {
-    public class ZipkinExporterTests : IDisposable
+    public class ZPagesExporterTests
     {
-        private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
-        private static readonly ConcurrentDictionary<Guid, string> Responses = new ConcurrentDictionary<Guid, string>();
-
-        private readonly IDisposable testServer;
-        private readonly string testServerHost;
-        private readonly int testServerPort;
-
-        static ZipkinExporterTests()
+        static ZPagesExporterTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
@@ -56,82 +46,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             ActivitySource.AddActivityListener(listener);
         }
 
-        public ZipkinExporterTests()
-        {
-            this.testServer = TestHttpServer.RunServer(
-                ctx => ProcessServerRequest(ctx),
-                out this.testServerHost,
-                out this.testServerPort);
-
-            static void ProcessServerRequest(HttpListenerContext context)
-            {
-                context.Response.StatusCode = 200;
-
-                using StreamReader readStream = new StreamReader(context.Request.InputStream);
-
-                string requestContent = readStream.ReadToEnd();
-
-                Responses.TryAdd(
-                    Guid.Parse(context.Request.QueryString["requestId"]),
-                    requestContent);
-
-                context.Response.OutputStream.Close();
-            }
-        }
-
-        public void Dispose()
-        {
-            this.testServer.Dispose();
-        }
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public async Task ZipkinExporterIntegrationTest(bool useShortTraceIds)
+        [Fact]
+        public async Task ZPagesExporter_Integration()
         {
             var batchActivity = new List<Activity> { CreateTestActivity() };
 
-            Guid requestId = Guid.NewGuid();
+            ZPagesExporter exporter = new ZPagesExporter(new ZPagesExporterOptions());
 
-            ZipkinExporter exporter = new ZipkinExporter(
-                new ZipkinExporterOptions
-                {
-                    Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
-                    UseShortTraceIds = useShortTraceIds,
-                });
-
-            await exporter.ExportAsync(batchActivity, CancellationToken.None).ConfigureAwait(false);
+            var exportResult = await exporter.ExportAsync(batchActivity, CancellationToken.None).ConfigureAwait(false);
+            Assert.Equal(ExportResult.Success, exportResult);
 
             await exporter.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
-
-            var activity = batchActivity[0];
-            var context = activity.Context;
-
-            var timestamp = activity.StartTimeUtc.ToEpochMicroseconds();
-            var eventTimestamp = activity.Events.First().Timestamp.ToEpochMicroseconds();
-
-            StringBuilder ipInformation = new StringBuilder();
-            if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv4))
-            {
-                ipInformation.Append($@",""ipv4"":""{exporter.LocalEndpoint.Ipv4}""");
-            }
-
-            if (!string.IsNullOrEmpty(exporter.LocalEndpoint.Ipv6))
-            {
-                ipInformation.Append($@",""ipv6"":""{exporter.LocalEndpoint.Ipv6}""");
-            }
-
-            var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
-
-            Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
-                Responses[requestId]);
         }
 
         [Fact]
-        public void UseZipkinExporterWithCustomActivityProcessor()
+        public void ZPagesExporter_CustomActivityProcessor()
         {
-            const string ActivitySourceName = "zipkin.test";
+            const string ActivitySourceName = "zpages.test";
             Guid requestId = Guid.NewGuid();
             TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
@@ -152,12 +83,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
-                            .UseZipkinExporter(
-                                o =>
-                            {
-                                o.ServiceName = "test-zipkin";
-                                o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
-                            }, p => p.AddProcessor((next) => testActivityProcessor)));
+                            .UseZPagesExporter(
+                                processorConfigure: p => p.AddProcessor((next) => testActivityProcessor)));
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Zipkin Activity");

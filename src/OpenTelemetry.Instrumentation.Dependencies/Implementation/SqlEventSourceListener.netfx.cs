@@ -29,14 +29,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// </summary>
     internal class SqlEventSourceListener : EventListener
     {
-        internal const string ActivitySourceName = "System.Data.SqlClient";
-        internal const string ActivityName = ActivitySourceName + ".Execute";
         internal const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
         internal const int BeginExecuteEventId = 1;
         internal const int EndExecuteEventId = 2;
-
-        private static readonly Version Version = typeof(SqlEventSourceListener).Assembly.GetName().Version;
-        private static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private readonly SqlClientInstrumentationOptions options;
         private EventSource eventSource;
@@ -102,9 +97,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            var activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            var activity = SqlClientDiagnosticListener.SqlClientActivitySource.StartActivity(SqlClientDiagnosticListener.ActivityName, ActivityKind.Client);
             if (activity == null)
             {
+                // There is no listener or it decided not to sample the current request.
                 return;
             }
 
@@ -114,10 +110,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
-
-                activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
-                activity.AddTag(SpanAttributeConstants.DatabaseNameKey, databaseName);
+                activity.AddTag(SemanticConventions.AttributeDBSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
+                activity.AddTag(SemanticConventions.AttributeDBName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
@@ -131,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                     if (this.options.CaptureStoredProcedureCommandName)
                     {
-                        activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, commandText);
+                        activity.AddTag(SemanticConventions.AttributeDBStatement, commandText);
                     }
                 }
             }
@@ -153,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
 
             var activity = Activity.Current;
-            if (activity?.Source != SqlClientActivitySource)
+            if (activity?.Source != SqlClientDiagnosticListener.SqlClientActivitySource)
             {
                 return;
             }

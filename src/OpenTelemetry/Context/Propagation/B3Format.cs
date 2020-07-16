@@ -19,14 +19,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
     /// B3 text propagator. See https://github.com/openzipkin/b3-propagation for the specification.
     /// </summary>
-    public sealed class B3Format : ITextFormat
+    public sealed class B3Format : ITextFormatActivity
     {
         internal static readonly string XB3TraceId = "X-B3-TraceId";
         internal static readonly string XB3SpanId = "X-B3-SpanId";
@@ -47,7 +46,6 @@ namespace OpenTelemetry.Context.Propagation
         internal static readonly string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
-        private static readonly SpanContext RemoteInvalidContext = new SpanContext(default, default, ActivityTraceFlags.None, true);
 
         private readonly bool singleHeader;
 
@@ -72,18 +70,18 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return RemoteInvalidContext;
+                return default;
             }
 
             if (getter == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return RemoteInvalidContext;
+                return default;
             }
 
             if (this.singleHeader)
@@ -97,9 +95,9 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(ActivityContext spanContext, T carrier, Action<T, string, string> setter)
         {
-            if (!spanContext.IsValid)
+            if (!spanContext.IsValid())
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
@@ -142,7 +140,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static SpanContext ExtractFromMultipleHeaders<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromMultipleHeaders<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -160,7 +158,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 ActivitySpanId spanId;
@@ -171,7 +169,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -181,35 +179,35 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new SpanContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions);
             }
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return RemoteInvalidContext;
+                return default;
             }
         }
 
-        private static SpanContext ExtractFromSingleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromSingleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
                 var header = getter(carrier, XB3Combined)?.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(header))
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 var parts = header.Split(XB3CombinedDelimiter);
                 if (parts.Length < 2 || parts.Length > 4)
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 var traceIdStr = parts[0];
                 if (string.IsNullOrWhiteSpace(traceIdStr))
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 if (traceIdStr.Length == 16)
@@ -223,7 +221,7 @@ namespace OpenTelemetry.Context.Propagation
                 var spanIdStr = parts[1];
                 if (string.IsNullOrWhiteSpace(spanIdStr))
                 {
-                    return RemoteInvalidContext;
+                    return default;
                 }
 
                 var spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
@@ -239,12 +237,12 @@ namespace OpenTelemetry.Context.Propagation
                     }
                 }
 
-                return new SpanContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions);
             }
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return RemoteInvalidContext;
+                return default;
             }
         }
     }
