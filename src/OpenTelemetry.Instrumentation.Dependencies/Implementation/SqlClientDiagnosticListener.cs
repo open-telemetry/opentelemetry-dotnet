@@ -92,9 +92,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
-                            activity.AddTag(SpanAttributeConstants.ComponentKey, "sql");
-                            activity.AddTag(SpanAttributeConstants.DatabaseSystemKey, MicrosoftSqlServerDatabaseSystemName);
-                            activity.AddTag(SpanAttributeConstants.DatabaseNameKey, (string)database);
+                            activity.AddTag(SemanticConventions.AttributeDBSystem, MicrosoftSqlServerDatabaseSystemName);
+                            activity.AddTag(SemanticConventions.AttributeDBName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 
@@ -106,7 +105,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                                         if (this.options.CaptureStoredProcedureCommandName)
                                         {
-                                            activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
+                                            activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
                                         }
 
                                         break;
@@ -115,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                                         if (this.options.CaptureTextCommandContent)
                                         {
-                                            activity.AddTag(SpanAttributeConstants.DatabaseStatementKey, (string)commandText);
+                                            activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
                                         }
 
                                         break;

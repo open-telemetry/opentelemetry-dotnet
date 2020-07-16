@@ -104,16 +104,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("localhost:", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value);
-            Assert.Equal("GET", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value);
+            Assert.Equal("localhost:", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value);
+            Assert.Equal("GET", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPMethod).Value);
             Assert.Equal(urlPath, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal($"http://localhost{urlPath}", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
-            Assert.Equal(statusCode.ToString(), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+            Assert.Equal($"http://localhost{urlPath}", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value);
+            Assert.Equal(statusCode.ToString(), span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPStatusCode).Value);
 
             Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
             Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
             this.ValidateTagValue(span, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
-            this.ValidateTagValue(span, SpanAttributeConstants.HttpUserAgentKey, userAgent);
+            this.ValidateTagValue(span, SemanticConventions.AttributeHTTPUserAgent, userAgent);
         }
 
         private void ValidateTagValue(Activity activity, string attribute, string expectedValue)

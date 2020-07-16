@@ -243,20 +243,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
             }
 
-            Assert.Equal("sql", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
-            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseNameKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
 
                     break;
@@ -264,17 +263,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
 
                     break;
             }
 
-            Assert.Equal(dataSource, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
+            Assert.Equal(dataSource, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable
