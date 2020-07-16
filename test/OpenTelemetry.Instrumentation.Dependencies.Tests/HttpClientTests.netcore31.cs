@@ -154,7 +154,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     ""spanStatus"": ""OK"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
-      ""component"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.status_code"": ""399"",

@@ -886,20 +886,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
         {
             Assert.NotNull(activity.Tags);
-            Assert.Equal("http", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value);
+            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPMethod).Value);
             if (hostNameAndPort != null)
             {
-                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value);
+                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value);
             }
 
-            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value);
-            Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpFlavorKey).Value);
+            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value);
+            Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPFlavor).Value);
         }
 
         private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)
         {
-            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPStatusCode).Value);
             Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 

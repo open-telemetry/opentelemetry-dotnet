@@ -177,7 +177,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     ""spanKind"": ""Client"",
     ""setHttpFlavor"": true,
     ""spanAttributes"": {
-      ""component"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.flavor"": ""2.0"",

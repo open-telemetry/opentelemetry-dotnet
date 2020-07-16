@@ -205,7 +205,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             Assert.Equal(
                 "200",
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpStatusCodeKey).Value);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPStatusCode).Value);
 
             Assert.Equal(
                 "Ok",
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
 
             var expectedUri = new Uri(url);
-            var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUrlKey).Value;
+            var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value;
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
 
@@ -235,24 +235,24 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 Assert.Equal(
                     expectedUri.Host,
-                    span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value as string);
             }
             else
             {
                 Assert.Equal(
                     $"{expectedUri.Host}:{expectedUri.Port}",
-                    span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpHostKey).Value as string);
+                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value as string);
             }
 
             Assert.Equal(
                 HttpContext.Current.Request.HttpMethod,
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpMethodKey).Value as string);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPMethod).Value as string);
             Assert.Equal(
                 HttpContext.Current.Request.Path,
                 span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
             Assert.Equal(
                 HttpContext.Current.Request.UserAgent,
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpUserAgentKey).Value as string);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPUserAgent).Value as string);
 
             Assert.Equal(expectedResource, span.GetResource());
         }

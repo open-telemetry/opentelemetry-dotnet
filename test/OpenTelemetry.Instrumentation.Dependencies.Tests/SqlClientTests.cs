@@ -116,20 +116,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
 
-            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseNameKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
 
                     break;
@@ -137,17 +136,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
                     }
 
                     break;
             }
 
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
+            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
         }
 
         [Theory]
@@ -204,11 +203,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             Assert.Equal("Unknown", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Equal("Boom!", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
-            Assert.Equal("sql", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseNameKey).Value);
-            Assert.Equal("SP_GetOrders", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.PeerServiceKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
+            Assert.Equal("SP_GetOrders", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable
