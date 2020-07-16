@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly ActivitySourceAdapter activitySource;
 
         public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base(name, null)
+            : base(name)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));

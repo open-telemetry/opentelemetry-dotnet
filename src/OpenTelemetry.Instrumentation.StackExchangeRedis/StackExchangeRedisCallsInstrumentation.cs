@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
     {
         internal const string RedisDatabaseIndexKeyName = "db.redis.database_index";
         internal const string RedisFlagsKeyName = "db.redis.flags";
-        internal const string ActivitySourceName = "StackExchange.Redis";
+        internal const string ActivitySourceName = "OpenTelemetry.StackExchange.Redis";
         internal const string ActivityName = ActivitySourceName + ".Execute";
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
