@@ -46,7 +46,7 @@ namespace Samples
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
-                    (ZPagesOptions options) => TestZPages.Run(),
+                    (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);

@@ -1,4 +1,4 @@
-﻿// <copyright file="ZPagesSpanInformation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZPagesActivityAggregate.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,32 +15,32 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation
 {
     /// <summary>
-    /// Stores the span information aggregated according to span name.
+    /// Stores the activity information aggregated according to activity name.
     /// </summary>
-    public class ZPagesSpanInformation
+    internal class ZPagesActivityAggregate
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZPagesSpanInformation"/> class.
+        /// Initializes a new instance of the <see cref="ZPagesActivityAggregate"/> class.
         /// </summary>
-        public ZPagesSpanInformation()
+        public ZPagesActivityAggregate()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZPagesSpanInformation"/> class when span data is provided.
+        /// Initializes a new instance of the <see cref="ZPagesActivityAggregate"/> class when activity data is provided.
         /// </summary>
-        /// <param name="spanData">Input span data to be used for initialization.</param>
-        public ZPagesSpanInformation(SpanData spanData)
+        /// <param name="activity">Input activity data to be used for initialization.</param>
+        public ZPagesActivityAggregate(Activity activity)
         {
-            this.Name = spanData.Name;
+            this.Name = activity.DisplayName;
             this.Count = 1;
             this.EndedCount = 0;
             this.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
@@ -50,32 +50,32 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         }
 
         /// <summary>
-        /// Gets or sets the name of the span.
+        /// Gets or sets the name of the activity.
         /// </summary>
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the total count of the span.
+        /// Gets or sets the total count of the activity.
         /// </summary>
         public long Count { get; set; }
 
         /// <summary>
-        /// Gets or sets the total count of the ended span.
+        /// Gets or sets the total count of the ended activity.
         /// </summary>
         public long EndedCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the total error count of the span.
+        /// Gets or sets the total error count of the activity.
         /// </summary>
         public long ErrorCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the total average latency of the span.
+        /// Gets or sets the total average latency of the activity.
         /// </summary>
         public long AvgLatencyTotal { get; set; }
 
         /// <summary>
-        /// Gets or sets the total latency of all spans.
+        /// Gets or sets the total latency of all activities.
         /// </summary>
         public long TotalLatency { get; set; }
 

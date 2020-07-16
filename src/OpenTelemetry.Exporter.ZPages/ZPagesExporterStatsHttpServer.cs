@@ -24,7 +24,6 @@ using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
 {
@@ -34,7 +33,6 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
         private readonly ZPagesExporter exporter;
-        private readonly ZPagesSpanProcessor spanProcessor;
         private readonly HttpListener httpListener = new HttpListener();
         private readonly object lck = new object();
 
@@ -45,11 +43,9 @@ namespace OpenTelemetry.Exporter.ZPages
         /// Initializes a new instance of the <see cref="ZPagesExporterStatsHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
-        /// <param name="spanProcessor">The <see cref="SimpleSpanProcessor"/> instance.</param>
-        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter, ZPagesSpanProcessor spanProcessor)
+        public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
             this.exporter = exporter;
-            this.spanProcessor = spanProcessor;
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
@@ -120,70 +116,66 @@ namespace OpenTelemetry.Exporter.ZPages
                     ctx.Response.StatusCode = 200;
                     ctx.Response.ContentType = ZPagesStatsBuilder.ContentType;
 
-                    using (Stream output = ctx.Response.OutputStream)
+                    using Stream output = ctx.Response.OutputStream;
+                    using var writer = new StreamWriter(output);
+                    writer.WriteLine("<!DOCTYPE html>");
+                    writer.WriteLine("<html><head><title>RPC Stats</title>" +
+                                     "<meta charset=\"utf-8\">" +
+                                     "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css\">" +
+                                     "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script>" +
+                                     "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\"></script>" +
+                                     "</head>");
+                    writer.WriteLine("<body><div class=\"col-sm-1\"></div><div class=\"container col-sm-10\"><div class=\"jumbotron table-responsive\"><h1>RPC Stats</h2>" +
+                                     "<table class=\"table table-bordered table-hover table-striped\">" +
+                                     "<thead><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency (ms)</th>" +
+                                     "<th>Average Latency in last minute (ms)</th><th>Average Latency in last hour (ms)</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
+                                     "<tbody>");
+
+                    ConcurrentDictionary<string, ZPagesActivityAggregate> currentHourSpanList = ZPagesActivityTracker.CurrentHourList;
+                    ConcurrentDictionary<string, ZPagesActivityAggregate> currentMinuteSpanList = ZPagesActivityTracker.CurrentMinuteList;
+
+                    // Put span information in each row of the table
+                    foreach (var spanName in currentHourSpanList.Keys)
                     {
-                        using (var writer = new StreamWriter(output))
+                        ZPagesActivityAggregate minuteSpanInformation = new ZPagesActivityAggregate();
+                        ZPagesActivityAggregate hourSpanInformation = new ZPagesActivityAggregate();
+                        long countInLastMinute = 0;
+                        long countInLastHour = 0;
+                        long averageLatencyInLastMinute = 0;
+                        long averageLatencyInLastHour = 0;
+                        long errorCountInLastMinute = 0;
+                        long errorCountInLastHour = 0;
+
+                        if (currentMinuteSpanList.ContainsKey(spanName))
                         {
-                            writer.WriteLine("<!DOCTYPE html>");
-                            writer.WriteLine("<html><head><title>RPC Stats</title>" +
-                                             "<meta charset=\"utf-8\">" +
-                                             "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css\">" +
-                                             "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script>" +
-                                             "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\"></script>" +
-                                             "</head>");
-                            writer.WriteLine("<body><div class=\"col-sm-1\"></div><div class=\"container col-sm-10\"><div class=\"jumbotron table-responsive\"><h1>RPC Stats</h2>" +
-                                             "<table class=\"table table-bordered table-hover table-striped\">" +
-                                             "<thead><tr><th>Span Name</th><th>Total Count</th><th>Count in last minute</th><th>Count in last hour</th><th>Average Latency (ms)</th>" +
-                                             "<th>Average Latency in last minute (ms)</th><th>Average Latency in last hour (ms)</th><th>Total Errors</th><th>Errors in last minute</th><th>Errors in last minute</th><th>Last Updated</th></tr></thead>" +
-                                             "<tbody>");
+                            currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
+                            countInLastMinute = minuteSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
+                            averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
+                            errorCountInLastMinute = minuteSpanInformation.ErrorCount;
+                        }
 
-                            ConcurrentDictionary<string, ZPagesSpanInformation> currentHourSpanList = ZPagesSpans.CurrentHourSpanList;
-                            ConcurrentDictionary<string, ZPagesSpanInformation> currentMinuteSpanList = ZPagesSpans.CurrentMinuteSpanList;
+                        currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
+                        countInLastHour = hourSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
+                        averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
+                        errorCountInLastHour = hourSpanInformation.ErrorCount;
 
-                            // Put span information in each row of the table
-                            foreach (var spanName in currentHourSpanList.Keys)
-                            {
-                                ZPagesSpanInformation minuteSpanInformation = new ZPagesSpanInformation();
-                                ZPagesSpanInformation hourSpanInformation = new ZPagesSpanInformation();
-                                long countInLastMinute = 0;
-                                long countInLastHour = 0;
-                                long averageLatencyInLastMinute = 0;
-                                long averageLatencyInLastHour = 0;
-                                long errorCountInLastMinute = 0;
-                                long errorCountInLastHour = 0;
+                        long totalAverageLatency = ZPagesActivityTracker.TotalLatency[spanName] / ZPagesActivityTracker.TotalEndedCount[spanName];
 
-                                if (currentMinuteSpanList.ContainsKey(spanName))
-                                {
-                                    currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
-                                    countInLastMinute = minuteSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
-                                    averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
-                                    errorCountInLastMinute = minuteSpanInformation.ErrorCount;
-                                }
-
-                                currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
-                                countInLastHour = hourSpanInformation.EndedCount + ZPagesSpans.ProcessingSpanList[spanName];
-                                averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
-                                errorCountInLastHour = hourSpanInformation.ErrorCount;
-
-                                long totalAverageLatency = ZPagesSpans.TotalSpanLatency[spanName] / ZPagesSpans.TotalEndedSpanCount[spanName];
-
-                                DateTimeOffset dateTimeOffset;
+                        DateTimeOffset dateTimeOffset;
 
 #if NET452
-                                dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
+                        dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
 #else
-                                dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
+                        dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
 #endif
 
-                                writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesSpans.TotalSpanCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
-                                                 "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +
-                                                 "<td>" + ZPagesSpans.TotalSpanErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + dateTimeOffset + " GMT" + "</td></tr>");
-                            }
-
-                            writer.WriteLine("</tbody></table>");
-                            writer.WriteLine("</div></div></body></html>");
-                        }
+                        writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesActivityTracker.TotalCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
+                                         "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +
+                                         "<td>" + ZPagesActivityTracker.TotalErrorCount[spanName] + "</td><td>" + errorCountInLastMinute + "</td><td>" + errorCountInLastHour + "</td><td>" + dateTimeOffset + " GMT" + "</td></tr>");
                     }
+
+                    writer.WriteLine("</tbody></table>");
+                    writer.WriteLine("</div></div></body></html>");
                 }
             }
             catch (OperationCanceledException)
