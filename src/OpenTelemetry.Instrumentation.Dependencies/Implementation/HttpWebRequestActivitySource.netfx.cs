@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// </remarks>
     internal sealed class HttpWebRequestActivitySource
     {
-        internal const string ActivitySourceName = "HttpWebRequest";
+        internal const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly HttpWebRequestActivitySource Instance = new HttpWebRequestActivitySource();

@@ -22,7 +22,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class SqlClientDiagnosticListener : ListenerHandler
     {
-        internal const string ActivitySourceName = "System.Data.SqlClient";
+        internal const string ActivitySourceName = "OpenTelemetry.SqlClient";
         internal const string ActivityName = ActivitySourceName + ".Execute";
 
         internal const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
