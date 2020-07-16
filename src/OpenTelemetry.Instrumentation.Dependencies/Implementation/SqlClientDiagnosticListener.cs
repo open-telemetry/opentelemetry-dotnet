@@ -22,6 +22,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class SqlClientDiagnosticListener : ListenerHandler
     {
+        internal const string ActivitySourceName = "OpenTelemetry.SqlClient";
+        internal const string ActivityName = ActivitySourceName + ".Execute";
+
         internal const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
         internal const string SqlMicrosoftBeforeExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandBefore";
 
@@ -33,6 +36,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         internal const string MicrosoftSqlServerDatabaseSystemName = "mssql";
 
+        private static readonly Version Version = typeof(SqlClientDiagnosticListener).Assembly.GetName().Version;
+#pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before SqlClientActivitySource otherwise null ref exception is thrown.
+        internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+#pragma warning restore SA1202 // Elements should be ordered by access
+
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
         private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
@@ -41,18 +49,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
         private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
         private readonly SqlClientInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base(sourceName, null)
+        public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
+            : base(sourceName)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
+            this.options = options ?? new SqlClientInstrumentationOptions();
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
-        {
-        }
+        public override bool SupportsNullActivity => true;
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
@@ -61,22 +65,26 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 case SqlDataBeforeExecuteCommand:
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
-                        var command = this.commandFetcher.Fetch(payload);
+                        // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
+                        activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+                        if (activity == null)
+                        {
+                            // There is no listener or it decided not to sample the current request.
+                            return;
+                        }
 
+                        var command = this.commandFetcher.Fetch(payload);
                         if (command == null)
                         {
                             InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
+                            activity.Stop();
                             return;
                         }
 
                         var connection = this.connectionFetcher.Fetch(command);
                         var database = this.databaseFetcher.Fetch(connection);
 
-                        // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-                        activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
                         activity.DisplayName = (string)database;
-
-                        this.activitySource.Start(activity);
 
                         if (activity.IsAllDataRequested)
                         {
@@ -122,28 +130,65 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 case SqlDataAfterExecuteCommand:
                 case SqlMicrosoftAfterExecuteCommand:
                     {
-                        this.activitySource.Stop(activity);
+                        if (activity == null)
+                        {
+                            InstrumentationEventSource.Log.NullActivity(name);
+                            return;
+                        }
+
+                        if (activity.Source != SqlClientActivitySource)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            if (activity.IsAllDataRequested)
+                            {
+                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                            }
+                        }
+                        finally
+                        {
+                            activity.Stop();
+                        }
                     }
 
                     break;
                 case SqlDataWriteCommandError:
                 case SqlMicrosoftWriteCommandError:
                     {
-                        if (activity.IsAllDataRequested)
+                        if (activity == null)
                         {
-                            if (this.exceptionFetcher.Fetch(payload) is Exception exception)
-                            {
-                                Status status = Status.Unknown;
-                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exception.Message);
-                            }
-                            else
-                            {
-                                InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
-                            }
+                            InstrumentationEventSource.Log.NullActivity(name);
+                            return;
                         }
 
-                        this.activitySource.Stop(activity);
+                        if (activity.Source != SqlClientActivitySource)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            if (activity.IsAllDataRequested)
+                            {
+                                if (this.exceptionFetcher.Fetch(payload) is Exception exception)
+                                {
+                                    Status status = Status.Unknown;
+                                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exception.Message);
+                                }
+                                else
+                                {
+                                    InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            activity.Stop();
+                        }
                     }
 
                     break;

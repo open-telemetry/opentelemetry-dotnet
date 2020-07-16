@@ -14,38 +14,26 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation
 {
     public abstract class ListenerHandler
     {
-        protected readonly Tracer Tracer;
-
-        public ListenerHandler(string sourceName, Tracer tracer)
+        public ListenerHandler(string sourceName)
         {
             this.SourceName = sourceName;
-            this.Tracer = tracer;
         }
 
         public string SourceName { get; }
 
-        public abstract void OnStartActivity(Activity activity, object payload);
+        public virtual bool SupportsNullActivity { get; } = false;
+
+        public virtual void OnStartActivity(Activity activity, object payload)
+        {
+        }
 
         public virtual void OnStopActivity(Activity activity, object payload)
         {
-            var span = this.Tracer.CurrentSpan;
-
-            if (span == null || !span.Context.IsValid)
-            {
-                InstrumentationEventSource.Log.NullOrBlankSpan("ListenerHandler.OnStopActivity");
-                return;
-            }
-
-            foreach (var tag in activity.Tags)
-            {
-                span.SetAttribute(tag.Key, tag.Value);
-            }
         }
 
         public virtual void OnException(Activity activity, object payload)
@@ -54,7 +42,6 @@ namespace OpenTelemetry.Instrumentation
 
         public virtual void OnCustom(string name, Activity activity, object payload)
         {
-            // if custom handler needs to react on other events - this method should be overridden
         }
     }
 }

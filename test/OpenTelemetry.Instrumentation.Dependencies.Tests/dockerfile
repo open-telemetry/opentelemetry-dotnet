@@ -1,0 +1,25 @@
+﻿# Create a container for running the OpenTelemetry dependency unit tests.
+# This should be run from the root of the repo:
+#  opentelemetry>docker build -f test\OpenTelemetry.Instrumentation.Dependencies.Tests\dockerfile .
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as build
+ARG PUBLISH_CONFIGURATION=Release
+ARG PUBLISH_FRAMEWORK=netcoreapp3.1
+WORKDIR /src
+COPY ["NuGet.config", ""] # Needed for the .NET 5 preview packages. Won't be needed in the future.
+COPY ["test/OpenTelemetry.Instrumentation.Dependencies.Tests/OpenTelemetry.Instrumentation.Dependencies.Tests.csproj", "test/OpenTelemetry.Instrumentation.Dependencies.Tests/"]
+COPY ["src/OpenTelemetry.Instrumentation.Dependencies/OpenTelemetry.Instrumentation.Dependencies.csproj", "src/OpenTelemetry.Instrumentation.Dependencies/"]
+COPY ["src/OpenTelemetry/OpenTelemetry.csproj", "src/OpenTelemetry/"]
+COPY ["src/OpenTelemetry.Api/OpenTelemetry.Api.csproj", "src/OpenTelemetry.Api/"]
+RUN dotnet restore "test/OpenTelemetry.Instrumentation.Dependencies.Tests/OpenTelemetry.Instrumentation.Dependencies.Tests.csproj" --configfile "NuGet.config"
+COPY . .
+WORKDIR "/src/test/OpenTelemetry.Instrumentation.Dependencies.Tests"
+RUN dotnet publish "OpenTelemetry.Instrumentation.Dependencies.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /build -p:IntegrationBuild=true --no-restore
+
+FROM base AS final
+WORKDIR /test
+COPY --from=build /build .
+ENTRYPOINT ["dotnet", "test", "OpenTelemetry.Instrumentation.Dependencies.Tests.dll"]

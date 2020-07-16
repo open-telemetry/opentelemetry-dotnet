@@ -34,14 +34,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     public class SqlEventSourceTests
     {
         /*
-            To run the integration tests, set the OT_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
+            To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
 
             To use Docker...
              1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
-             2) Set OT_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
+             2) Set OTEL_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
          */
 
-        private const string SqlConnectionStringEnvVarName = "OT_SQLCONNECTIONSTRING";
+        private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
         private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
 
         [Trait("CategoryName", "SqlIntegrationTests")]

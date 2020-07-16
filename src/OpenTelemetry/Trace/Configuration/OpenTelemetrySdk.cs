@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace.Configuration
                     activityProcessor.OnStart(activity);
                 },
 
-                // Callback when Activity is started.
+                // Callback when Activity is stopped.
                 ActivityStopped = activityProcessor.OnEnd,
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to

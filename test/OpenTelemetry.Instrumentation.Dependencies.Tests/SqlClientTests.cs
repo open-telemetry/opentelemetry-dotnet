@@ -18,6 +18,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 #if NET452
 using System.Data.SqlClient;
 #else
@@ -25,6 +26,7 @@ using Microsoft.Data.SqlClient;
 #endif
 using Moq;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -34,7 +36,18 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 {
     public class SqlClientTests : IDisposable
     {
+        /*
+            To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
+
+            To use Docker...
+             1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
+             2) Set OTEL_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
+         */
+
+        private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
         private const string TestConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Database=master";
+
+        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
@@ -46,6 +59,61 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public void Dispose()
         {
             this.fakeSqlClientDiagnosticSource.Dispose();
+        }
+
+        [Trait("CategoryName", "SqlIntegrationTests")]
+        [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
+        [InlineData(CommandType.Text, "select 1/1", false)]
+#if !NETFRAMEWORK
+        [InlineData(CommandType.Text, "select 1/1", false, true)]
+#endif
+        [InlineData(CommandType.Text, "select 1/0", false, false, true)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", false)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", true)]
+        public void SuccessfulCommandTest(
+            CommandType commandType,
+            string commandText,
+            bool captureStoredProcedureCommandName,
+            bool captureTextCommandContent = false,
+            bool isFailure = false)
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddSqlClientDependencyInstrumentation(options =>
+                {
+                    options.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
+                    options.CaptureTextCommandContent = captureTextCommandContent;
+                });
+            });
+
+            using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
+
+            sqlConnection.Open();
+
+            string dataSource = sqlConnection.DataSource;
+
+            sqlConnection.ChangeDatabase("master");
+
+            using SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection)
+            {
+                CommandType = commandType,
+            };
+
+            try
+            {
+                sqlCommand.ExecuteNonQuery();
+            }
+            catch
+            {
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count);
+
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, dataSource, activity);
         }
 
         [Theory]
@@ -61,7 +129,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent)
         {
-            var activity = new Activity("Current").AddBaggage("Stuff", "123");
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
             using (OpenTelemetrySdk.EnableOpenTelemetry(
@@ -70,12 +139,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                         {
                             opt.CaptureTextCommandContent = captureTextCommandContent;
                             opt.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
-                            })
+                        })
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
-                var sqlConnection = new SqlConnection(TestConnectionString);
-                var sqlCommand = sqlConnection.CreateCommand();
                 sqlCommand.CommandType = commandType;
                 sqlCommand.CommandText = commandText;
 
@@ -85,8 +152,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     Command = sqlCommand,
                     Timestamp = (long?)1000000L,
                 };
-
-                activity.Start();
 
                 this.fakeSqlClientDiagnosticSource.Write(
                     beforeCommand,
@@ -102,51 +167,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.fakeSqlClientDiagnosticSource.Write(
                     afterCommand,
                     afterExecuteEventData);
-                activity.Stop();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
-            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
-
-            Assert.Equal("master", span.DisplayName);
-            Assert.Equal(ActivityKind.Client, span.Kind);
-
-            // TODO: Should Ok status be assigned when no error occurs automatically?
-            // Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
-
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
-
-            switch (commandType)
-            {
-                case CommandType.StoredProcedure:
-                    if (captureStoredProcedureCommandName)
-                    {
-                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
-                    }
-                    else
-                    {
-                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
-                    }
-
-                    break;
-
-                case CommandType.Text:
-                    if (captureTextCommandContent)
-                    {
-                        Assert.Equal(commandText, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
-                    }
-                    else
-                    {
-                        Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
-                    }
-
-                    break;
-            }
-
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
+            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
         }
 
         [Theory]
@@ -154,16 +179,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError)]
         public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand)
         {
-            var activity = new Activity("Current").AddBaggage("Stuff", "123");
-            var spanProcessor = new Mock<ActivityProcessor>();
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
 
+            var spanProcessor = new Mock<ActivityProcessor>();
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();
-                var sqlConnection = new SqlConnection(TestConnectionString);
-                var sqlCommand = sqlConnection.CreateCommand();
                 sqlCommand.CommandText = "SP_GetOrders";
                 sqlCommand.CommandType = CommandType.StoredProcedure;
 
@@ -174,7 +198,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     Timestamp = (long?)1000000L,
                 };
 
-                activity.Start();
                 this.fakeSqlClientDiagnosticSource.Write(
                     beforeCommand,
                     beforeExecuteEventData);
@@ -190,23 +213,67 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 this.fakeSqlClientDiagnosticSource.Write(
                     errorCommand,
                     commandErrorEventData);
-
-                activity.Stop();
             }
 
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
 
-            var span = (Activity)spanProcessor.Invocations[0].Arguments[0];
+            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
+        }
 
-            Assert.Equal("master", span.DisplayName);
-            Assert.Equal(ActivityKind.Client, span.Kind);
+        private static void VerifyActivityData(
+            CommandType commandType,
+            string commandText,
+            bool captureStoredProcedureCommandName,
+            bool captureTextCommandContent,
+            bool isFailure,
+            string dataSource,
+            Activity activity)
+        {
+            Assert.Equal("master", activity.DisplayName);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
 
-            Assert.Equal("Unknown", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Equal("Boom!", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
-            Assert.Equal("master", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
-            Assert.Equal("SP_GetOrders", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
-            Assert.Equal("(localdb)\\MSSQLLocalDB", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
+            if (!isFailure)
+            {
+                Assert.Equal("Ok", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+            }
+            else
+            {
+                Assert.Equal("Unknown", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            }
+
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
+
+            switch (commandType)
+            {
+                case CommandType.StoredProcedure:
+                    if (captureStoredProcedureCommandName)
+                    {
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                    }
+                    else
+                    {
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                    }
+
+                    break;
+
+                case CommandType.Text:
+                    if (captureTextCommandContent)
+                    {
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                    }
+                    else
+                    {
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                    }
+
+                    break;
+            }
+
+            Assert.Equal(dataSource, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable
