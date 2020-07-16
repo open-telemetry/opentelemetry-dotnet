@@ -100,6 +100,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             var activity = SqlClientDiagnosticListener.SqlClientActivitySource.StartActivity(SqlClientDiagnosticListener.ActivityName, ActivityKind.Client);
             if (activity == null)
             {
+                // There is no listener or it decided not to sample the current request.
                 return;
             }
 

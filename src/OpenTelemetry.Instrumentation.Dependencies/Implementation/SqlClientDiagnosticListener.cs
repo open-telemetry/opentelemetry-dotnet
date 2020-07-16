@@ -65,26 +65,25 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 case SqlDataBeforeExecuteCommand:
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
-                        var command = this.commandFetcher.Fetch(payload);
+                        // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
+                        activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+                        if (activity == null)
+                        {
+                            // There is no listener or it decided not to sample the current request.
+                            return;
+                        }
 
+                        var command = this.commandFetcher.Fetch(payload);
                         if (command == null)
                         {
                             InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
+                            activity.Stop();
                             return;
                         }
 
                         var connection = this.connectionFetcher.Fetch(command);
                         var database = this.databaseFetcher.Fetch(connection);
 
-                        // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
-                        activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-                        if (activity == null)
-                        {
-                            return;
-                        }
-
-                        // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-                        activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
                         activity.DisplayName = (string)database;
 
                         if (activity.IsAllDataRequested)
