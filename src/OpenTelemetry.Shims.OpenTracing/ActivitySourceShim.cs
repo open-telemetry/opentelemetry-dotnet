@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerShim.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivitySourceShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,12 @@ using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public class TracerShim : global::OpenTracing.ITracer
+    public class ActivitySourceShim : global::OpenTracing.ITracer
     {
         private readonly ActivitySource activitySource;
         private readonly ITextFormatActivity textFormat;
 
-        public TracerShim(ActivitySource activitySource, ITextFormatActivity textFormat)
+        public ActivitySourceShim(ActivitySource activitySource, ITextFormatActivity textFormat)
         {
             this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));

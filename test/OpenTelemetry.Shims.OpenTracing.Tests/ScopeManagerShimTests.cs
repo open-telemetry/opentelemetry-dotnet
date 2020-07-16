@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using Moq;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -23,6 +24,27 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     public class ScopeManagerShimTests
     {
+        private const string ActivityName1 = "MyActivityName/1";
+        private const string ActivityName2 = "MyActivityName/2";
+        private const string ActivitySourceName = "defaultactivitysource";
+
+        private ActivitySource activitySource = default;
+
+        static ScopeManagerShimTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Fact]
         public void CtorArgumentValidation()
         {
@@ -32,36 +54,39 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracer = TracerFactoryBase.Default.GetTracer(null);
-            var shim = new ScopeManagerShim(tracer);
+            this.activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ScopeManagerShim(this.activitySource);
 
-            Assert.False(tracer.CurrentSpan.Context.IsValid);
+            Assert.Null(Activity.Current);
             Assert.Null(shim.Active);
         }
 
         [Fact]
         public void Active_IsNotNull()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
-            var openTracingSpan = new SpanShim(Defaults.GetOpenTelemetrySpanMock());
-            var scopeMock = new Mock<IDisposable>();
+            // var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            this.activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ScopeManagerShim(this.activitySource);
+            var openTracingSpan = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
 
-            tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
-            tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
+            // var scopeMock = new Mock<IDisposable>();
+
+            // tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
+            // tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
 
             var scope = shim.Activate(openTracingSpan, true);
             Assert.NotNull(scope);
 
             var activeScope = shim.Active;
             Assert.Equal(scope, activeScope);
+            openTracingSpan.Finish();
         }
 
         [Fact]
         public void Activate_SpanMustBeShim()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
+            this.activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ScopeManagerShim(this.activitySource);
 
             Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
         }
@@ -69,12 +94,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
-            var scopeMock = new Mock<IDisposable>();
-            var spanShim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
+            this.activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ScopeManagerShim(this.activitySource);
+            var spanShim = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
 
-            tracerMock.Setup(x => x.WithSpan(spanShim.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
+            // tracerMock.Setup(x => x.WithSpan(spanShim.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
 
             using (shim.Activate(spanShim, true))
             {
@@ -86,8 +110,20 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 #if DEBUG
             Assert.Equal(0, shim.SpanScopeTableCount);
 #endif
-            tracerMock.Verify(x => x.WithSpan(spanShim.Span, It.IsAny<bool>()), Times.Once);
-            scopeMock.Verify(x => x.Dispose(), Times.Once);
+
+            spanShim.Finish();
+
+            // tracerMock.Verify(x => x.WithSpan(spanShim.Span, It.IsAny<bool>()), Times.Once);
+            // scopeMock.Verify(x => x.Dispose(), Times.Once);
+        }
+
+        private Activity CreateSampledEndedSpan(string spanName)
+        {
+            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+
+            var activity = this.activitySource.StartActivity(spanName, ActivityKind.Internal, context);
+            activity?.Stop();
+            return activity;
         }
     }
 }

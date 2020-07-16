@@ -181,7 +181,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
             {
-                // this.ActivityObj.Status = value ? Activity.Status.Unknown : Activity.Status.Ok;
+                this.ActivityObj.SetStatus(value ? Status.Unknown : Status.Ok);
             }
             else
             {

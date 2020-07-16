@@ -150,6 +150,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder IgnoreActiveSpan()
         {
+            Activity.Current = null;
             this.ignoreActiveActivity = true;
             return this;
         }
@@ -167,7 +168,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
             else if (this.parentActivity != null || this.parentActivityContext.IsValid())
             {
-                activity = this.activitySource.StartActivity(this.activityName, this.activityKind, this.parentActivityContext);
+                activity = this.activitySource.StartActivity(this.activityName, this.activityKind, this.parentActivityContext, null, this.links, startTimestamp);
             }
             else if (this.parentActivity == null && !this.parentActivityContext.IsValid())
             {
@@ -177,7 +178,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     var currentActivity = Activity.Current;
                     if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(currentActivity.OperationName))
                     {
-                        activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null, null, this.links);
+                        activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null, null, this.links, startTimestamp);
 
                         // activity = Activity.Current;
                     }
@@ -186,7 +187,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (activity == null)
             {
-                activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null);
+                activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null, null, this.links, startTimestamp);
             }
 
             foreach (var kvp in this.attributes)
@@ -196,7 +197,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (this.error)
             {
-                // activity.Status = Activity.Status.Unknown;
+                activity.SetStatus(Status.Unknown);
             }
 
             return new ActivityShim(activity);

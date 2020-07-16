@@ -70,8 +70,6 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            var scope = this.activitySource.StartActivity(shim.ActivityObj.OperationName);
-
             var instrumentation = new ScopeInstrumentation(
                 shim.ActivityObj,
                 () =>
@@ -83,7 +81,6 @@ namespace OpenTelemetry.Shims.OpenTracing
                         Interlocked.Decrement(ref this.spanScopeTableCount);
                     }
 #endif
-                    scope.Dispose();
                 });
 
             SpanScopeTable.Add(shim.ActivityObj, instrumentation);

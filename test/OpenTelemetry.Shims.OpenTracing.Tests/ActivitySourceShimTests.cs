@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerShimTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivitySourceShimTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using global::OpenTracing;
 using global::OpenTracing.Propagation;
@@ -26,27 +27,29 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    public class TracerShimTests
+    public class ActivitySourceShimTests
     {
+        private const string ActivitySourceName = "defaultactivitysource";
+
         [Fact]
         public void CtorArgumentValidation()
         {
             // null tracer and text format
-            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceShim(null, null));
 
             // null tracer
-            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceShim(null, new TraceContextFormatActivity()));
 
             // null context format
             var tracerMock = new Mock<Trace.Tracer>();
-            Assert.Throws<ArgumentNullException>(() => new TracerShim(tracerMock.Object, null));
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceShim(new ActivitySource("test"), null));
         }
 
         [Fact]
         public void ScopeManager_NotNull()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             // Internals of the ScopeManagerShim tested elsewhere
             Assert.NotNull(shim.ScopeManager as ScopeManagerShim);
@@ -55,20 +58,20 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void BuildSpan_NotNull()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             // Internals of the SpanBuilderShim tested elsewhere
-            Assert.NotNull(shim.BuildSpan("foo") as SpanBuilderShim);
+            Assert.NotNull(shim.BuildSpan("foo") as ActivityBuilderShim);
         }
 
         [Fact]
         public void Inject_ArgumentValidation()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
-            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
             var mockFormat = new Mock<IFormat<ITextMap>>();
             var mockCarrier = new Mock<ITextMap>();
 
@@ -81,10 +84,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Inject_UnknownFormatIgnored()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
-            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
@@ -97,8 +100,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_ArgumentValidation()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
             Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
@@ -107,10 +110,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_UnknownFormatIgnored()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
-            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
@@ -123,8 +126,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_InvalidTraceParent()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-            var shim = new TracerShim(tracerMock.Object, new TraceContextFormat());
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             var mockCarrier = new Mock<ITextMap>();
 
@@ -136,7 +139,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             };
 
             mockCarrier.Setup(x => x.GetEnumerator()).Returns(carrierMap.GetEnumerator());
-            var spanContextShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as SpanContextShim;
+            var spanContextShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as ActivityContextShim;
 
             // Verify that the carrier was called
             mockCarrier.Verify(x => x.GetEnumerator(), Times.Once);
@@ -151,11 +154,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             var carrier = new TextMapCarrier();
 
-            var spanContextShim = new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
-            var format = new TraceContextFormat();
+            var format = new TraceContextFormatActivity();
 
-            var shim = new TracerShim(tracerMock.Object, format);
+            var activitySource = new ActivitySource(ActivitySourceName);
+            var shim = new ActivitySourceShim(activitySource, format);
 
             // first inject
             shim.Inject(spanContextShim, BuiltinFormats.TextMap, carrier);

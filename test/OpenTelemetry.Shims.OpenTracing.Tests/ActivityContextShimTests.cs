@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanContextShimTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivityContextShimTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,13 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    public class SpanContextShimTests
+    public class ActivityContextShimTests
     {
         [Fact]
         public void CtorArgumentValidation()
         {
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None, true)));
+            Assert.Throws<ArgumentException>(() => new ActivityContextShim(default));
+            Assert.Throws<ArgumentException>(() => new ActivityContextShim(new ActivityContext(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]
@@ -36,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.SpanContext.TraceId.ToString(), shim.TraceId);
+            Assert.Equal(shim.Context.TraceId.ToString(), shim.TraceId);
         }
 
         [Fact]
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.SpanContext.SpanId.ToString(), shim.SpanId);
+            Assert.Equal(shim.Context.SpanId.ToString(), shim.SpanId);
         }
 
         [Fact]
@@ -53,9 +52,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // TODO
         }
 
-        internal static SpanContextShim GetSpanContextShim()
+        internal static ActivityContextShim GetSpanContextShim()
         {
-            return new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            return new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         }
     }
 }
