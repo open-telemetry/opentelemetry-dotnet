@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using OpenTelemetry.Api.Utils;
 
 namespace OpenTelemetry.Trace
@@ -25,6 +26,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public sealed class Event
     {
+        internal ActivityEvent ActivityEvent;
         private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
                 new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
@@ -33,8 +35,8 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Event name.</param>
         public Event(string name)
-            : this(name, PreciseTimestamp.GetUtcNow(), EmptyAttributes)
         {
+            this.ActivityEvent = new ActivityEvent(name);
         }
 
         /// <summary>
@@ -43,8 +45,8 @@ namespace OpenTelemetry.Trace
         /// <param name="name">Event name.</param>
         /// <param name="timestamp">Event timestamp. Timestamp MUST only be used for the events that happened in the past, not at the moment of this call.</param>
         public Event(string name, DateTimeOffset timestamp)
-            : this(name, timestamp, EmptyAttributes)
         {
+            this.ActivityEvent = new ActivityEvent(name, timestamp);
         }
 
         /// <summary>
@@ -55,9 +57,7 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Event attributes.</param>
         public Event(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
-            this.Name = name ?? string.Empty;
-            this.Attributes = attributes ?? EmptyAttributes;
-            this.Timestamp = timestamp != default ? timestamp : PreciseTimestamp.GetUtcNow();
+            this.ActivityEvent = new ActivityEvent(name, timestamp, attributes);
         }
 
         /// <summary>
@@ -67,24 +67,40 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Event attributes.</param>
         public Event(string name, IDictionary<string, object> attributes)
         {
-            this.Name = name ?? string.Empty;
-            this.Attributes = attributes ?? EmptyAttributes;
-            this.Timestamp = PreciseTimestamp.GetUtcNow();
+            this.ActivityEvent = new ActivityEvent(name, attributes);
         }
 
         /// <summary>
         /// Gets the <see cref="Event"/> name.
         /// </summary>
-        public string Name { get; }
+        public string Name
+        {
+            get
+            {
+                return this.ActivityEvent.Name;
+            }
+        }
 
         /// <summary>
         /// Gets the <see cref="Event"/> timestamp.
         /// </summary>
-        public DateTimeOffset Timestamp { get; }
+        public DateTimeOffset Timestamp
+        {
+            get
+            {
+                return this.ActivityEvent.Timestamp;
+            }
+        }
 
         /// <summary>
-        /// Gets the <see cref="IDictionary{String, Object}"/> collection of attributes associated with the event.
+        /// Gets the collection of attributes associated with the event.
         /// </summary>
-        public IDictionary<string, object> Attributes { get; }
+        public IEnumerable<KeyValuePair<string, object>> Attributes
+        {
+            get
+            {
+                return this.ActivityEvent.Attributes;
+            }
+        }
     }
 }

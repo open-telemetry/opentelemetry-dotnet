@@ -101,22 +101,22 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds a single <see cref="ActivityEvent"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="name">Name of the <see cref="Event"/>.</param>
         public void AddEvent(string name)
         {
-            this.activity?.AddEvent(new ActivityEvent(name));
+            this.activity?.AddEvent(new Event(name).ActivityEvent);
         }
 
         /// <summary>
-        /// Adds a single <see cref="ActivityEvent"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="name">Name of the <see cref="Event"/>.</param>
         /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
         public void AddEvent(string name, DateTimeOffset timestamp)
         {
-            this.activity?.AddEvent(new ActivityEvent(name, timestamp));
+            this.activity?.AddEvent(new Event(name, timestamp).ActivityEvent);
         }
 
         /// <summary>
