@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -33,7 +34,13 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the current span from the context.
         /// </summary>
-        public TelemetrySpan CurrentSpan { get; }
+        public TelemetrySpan CurrentSpan
+        {
+            get
+            {
+                return new TelemetrySpan(Activity.Current);
+            }
+        }
 
         /// <summary>
         /// Starts span.
@@ -74,6 +81,32 @@ namespace OpenTelemetry.Trace
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext);
+            if (activity == null)
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
+
+            return new TelemetrySpan(activity);
+        }
+
+        /// <summary>
+        /// Starts span.
+        /// </summary>
+        /// <param name="name">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="attributes">Initial attributes for the span.</param>
+        /// <param name="links"> <see cref="ActivityLink"/> for the span.</param>
+        /// <returns>Span instance.</returns>
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<ActivityLink> links = null)
+        {
+            if (!this.activitySource.HasListeners())
+            {
+                return TelemetrySpan.NoOpInstance;
+            }
+
+            var activityKind = this.ConvertToActivityKind(kind);
+            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, links);
             if (activity == null)
             {
                 return TelemetrySpan.NoOpInstance;

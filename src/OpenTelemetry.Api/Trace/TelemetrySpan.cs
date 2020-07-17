@@ -23,9 +23,6 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
     /// a distributed trace and has result of execution, context of execution and other properties.</para>
-    ///
-    /// <para>This class is mostly write only. Span should not be used to exchange information. Only to add properties
-    /// to it for monitoring purposes. It will be converted to SpanData that is readable.</para>
     /// </summary>
     public class TelemetrySpan
     {
@@ -58,7 +55,13 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether this span will be recorded.
         /// </summary>
-        public bool IsRecording { get; }
+        public bool IsRecording
+        {
+            get
+            {
+                return (this.activity == null) ? false : this.activity.IsAllDataRequested;
+            }
+        }
 
         /// <summary>
         /// Sets the status of the span execution.
@@ -98,7 +101,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single <see cref="ActivityEvent"/> to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="name">Name of the <see cref="Event"/>.</param>
         public void AddEvent(string name)
@@ -107,7 +110,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single <see cref="ActivityEvent"/> to the <see cref="TelemetrySpan"/>.
         /// </summary>
         /// <param name="name">Name of the <see cref="Event"/>.</param>
         /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
