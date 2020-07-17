@@ -160,7 +160,7 @@ namespace Benchmarks.Exporter
             {
                 { "stringKey", "value" },
                 { "longKey", 1L },
-                { "longKey2", 1 },
+                { "longKey2", 1L },
                 { "doubleKey", 1D },
                 { "doubleKey2", 1F },
                 { "boolKey", true },
