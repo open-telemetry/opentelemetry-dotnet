@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace OpenTelemetry.Trace
 {
@@ -96,9 +97,9 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="parent">Parent for new span.</param>
         /// <param name="attributes">Initial attributes for the span.</param>
-        /// <param name="links"> <see cref="ActivityLink"/> for the span.</param>
+        /// <param name="links"> <see cref="Link"/> for the span.</param>
         /// <returns>Span instance.</returns>
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<ActivityLink> links = null)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null)
         {
             if (!this.activitySource.HasListeners())
             {
@@ -106,7 +107,18 @@ namespace OpenTelemetry.Trace
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
-            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, links);
+
+            IList<ActivityLink> activityLinks = null;
+            if (links != null && links.Count() > 0)
+            {
+                activityLinks = new List<ActivityLink>();
+                foreach (var link in links)
+                {
+                    activityLinks.Add(link.ActivityLink);
+                }
+            }
+
+            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, activityLinks);
             if (activity == null)
             {
                 return TelemetrySpan.NoOpInstance;
