@@ -107,5 +107,33 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.True(activity.GetStatus().IsOk);
         }
+
+        [Fact]
+        public void SetKindThrowsExceptionOnNullActivity()
+        {
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            Assert.Throws<ArgumentNullException>(() => activity.SetKind(ActivityKind.Client));
+            activity?.Stop();
+        }
+
+        [Theory]
+        [InlineData(ActivityKind.Client, ActivityKind.Client)]
+        [InlineData(ActivityKind.Consumer, ActivityKind.Consumer)]
+        [InlineData(ActivityKind.Internal, ActivityKind.Internal)]
+        [InlineData(ActivityKind.Producer, ActivityKind.Producer)]
+        [InlineData(ActivityKind.Server, ActivityKind.Server)]
+        public void SetKind(ActivityKind input, ActivityKind expected)
+        {
+            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+                                                   .AddActivitySource(ActivitySourceName));
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetKind(input);
+            activity?.Stop();
+
+            Assert.Equal(expected, activity.Kind);
+        }
     }
 }

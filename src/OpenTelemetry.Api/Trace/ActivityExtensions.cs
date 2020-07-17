@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace OpenTelemetry.Trace
 {
@@ -72,6 +73,33 @@ namespace OpenTelemetry.Trace
             }
 
             return status;
+        }
+
+        /// <summary>
+        /// Sets the kind of activity execution.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="kind">Activity execution kind.</param>
+        public static void SetKind(this Activity activity, ActivityKind kind)
+        {
+            if (activity == null)
+            {
+                throw new ArgumentNullException(nameof(activity));
+            }
+
+            SetKindProperty(activity, kind);
+        }
+
+#pragma warning disable SA1201 // Elements should appear in the correct order
+        internal static Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
+#pragma warning restore SA1201 // Elements should appear in the correct order
+
+        internal static Action<Activity, ActivityKind> CreateActivityKindSetter()
+        {
+            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
+            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
+            var body = Expression.Assign(Expression.Property(instance, "Kind"), propertyValue);
+            return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
         }
     }
 }
