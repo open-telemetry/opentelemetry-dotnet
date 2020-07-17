@@ -108,15 +108,6 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(activity.GetStatus().IsOk);
         }
 
-        [Fact]
-        public void SetKindThrowsExceptionOnNullActivity()
-        {
-            using var source = new ActivitySource(ActivitySourceName);
-            using var activity = source.StartActivity(ActivityName);
-            Assert.Throws<ArgumentNullException>(() => activity.SetKind(ActivityKind.Client));
-            activity?.Stop();
-        }
-
         [Theory]
         [InlineData(ActivityKind.Client, ActivityKind.Client)]
         [InlineData(ActivityKind.Consumer, ActivityKind.Consumer)]

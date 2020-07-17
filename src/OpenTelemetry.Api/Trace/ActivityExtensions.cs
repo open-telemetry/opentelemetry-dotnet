@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace
 {
@@ -80,21 +81,18 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="kind">Activity execution kind.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetKind(this Activity activity, ActivityKind kind)
         {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
-
-            SetKindProperty(activity, kind);
+            Debug.Assert(activity != null, "Activity should not be null");
+            setKindProperty(activity, kind);
         }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
-        internal static Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
+        private static Action<Activity, ActivityKind> setKindProperty = CreateActivityKindSetter();
 #pragma warning restore SA1201 // Elements should appear in the correct order
 
-        internal static Action<Activity, ActivityKind> CreateActivityKindSetter()
+        private static Action<Activity, ActivityKind> CreateActivityKindSetter()
         {
             ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
             ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
