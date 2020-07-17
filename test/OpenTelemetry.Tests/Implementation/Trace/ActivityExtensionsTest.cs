@@ -114,25 +114,6 @@ namespace OpenTelemetry.Trace.Test
         [InlineData(ActivityKind.Internal)]
         [InlineData(ActivityKind.Producer)]
         [InlineData(ActivityKind.Server)]
-        public void SetKind(ActivityKind inputOutput)
-        {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
-                                                   .AddActivitySource(ActivitySourceName));
-
-            using var source = new ActivitySource(ActivitySourceName);
-            using var activity = source.StartActivity(ActivityName);
-            activity.SetKind(inputOutput);
-            activity?.Stop();
-
-            Assert.Equal(inputOutput, activity.Kind);
-        }
-
-        [Theory]
-        [InlineData(ActivityKind.Client)]
-        [InlineData(ActivityKind.Consumer)]
-        [InlineData(ActivityKind.Internal)]
-        [InlineData(ActivityKind.Producer)]
-        [InlineData(ActivityKind.Server)]
         public void SetKindSimpleActivity(ActivityKind inputOutput)
         {
             var activity = new Activity("test-activity");
