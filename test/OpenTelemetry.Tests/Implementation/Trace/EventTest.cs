@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTelemetry.Utils;
 using Xunit;
 
@@ -35,7 +36,7 @@ namespace OpenTelemetry.Trace.Test
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
             var @event = new Event("MyEventText");
             Assert.Equal("MyEventText", @event.Name);
-            Assert.Equal(0, @event.Attributes.Count);
+            Assert.Empty(@event.Attributes);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 50);
         }
 
@@ -45,7 +46,7 @@ namespace OpenTelemetry.Trace.Test
             var approxTimestamp = PreciseTimestamp.GetUtcNow();
             var @event = new Event("MyEventText", (DateTimeOffset)default);
             Assert.Equal("MyEventText", @event.Name);
-            Assert.Equal(0, @event.Attributes.Count);
+            Assert.Empty(@event.Attributes);
             Assert.InRange(Math.Abs((approxTimestamp - @event.Timestamp).TotalMilliseconds), double.Epsilon, 50);
         }
 
@@ -55,7 +56,7 @@ namespace OpenTelemetry.Trace.Test
             var exactTimestamp = DateTime.UtcNow.AddSeconds(-100);
             var @event = new Event("MyEventText", exactTimestamp);
             Assert.Equal("MyEventText", @event.Name);
-            Assert.Equal(0, @event.Attributes.Count);
+            Assert.Empty(@event.Attributes);
             Assert.Equal(exactTimestamp, @event.Timestamp);
         }
 
@@ -106,7 +107,7 @@ namespace OpenTelemetry.Trace.Test
                 new Event(
                     "MyEventText", DateTime.UtcNow, new Dictionary<string, object>());
             Assert.Equal("MyEventText", @event.Name);
-            Assert.Equal(0, @event.Attributes.Count);
+            Assert.Empty(@event.Attributes);
         }
     }
 }
