@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace
         }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
-        private static Action<Activity, ActivityKind> setKindProperty = CreateActivityKindSetter();
+        private static readonly Action<Activity, ActivityKind> setKindProperty = CreateActivityKindSetter();
 #pragma warning restore SA1201 // Elements should appear in the correct order
 
         private static Action<Activity, ActivityKind> CreateActivityKindSetter()
