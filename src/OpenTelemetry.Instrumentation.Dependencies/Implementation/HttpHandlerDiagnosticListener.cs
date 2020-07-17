@@ -75,8 +75,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
             this.activitySource.Start(activity);

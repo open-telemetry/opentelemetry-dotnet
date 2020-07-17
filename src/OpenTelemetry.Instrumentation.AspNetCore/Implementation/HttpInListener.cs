@@ -90,8 +90,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+            activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
