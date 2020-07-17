@@ -85,11 +85,11 @@ namespace OpenTelemetry.Trace
         public static void SetKind(this Activity activity, ActivityKind kind)
         {
             Debug.Assert(activity != null, "Activity should not be null");
-            setKindProperty(activity, kind);
+            SetKindProperty(activity, kind);
         }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
-        private static readonly Action<Activity, ActivityKind> setKindProperty = CreateActivityKindSetter();
+        private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
 #pragma warning restore SA1201 // Elements should appear in the correct order
 
         private static Action<Activity, ActivityKind> CreateActivityKindSetter()
