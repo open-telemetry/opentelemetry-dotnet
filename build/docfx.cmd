@@ -1,8 +1,8 @@
 SETLOCAL
 SETLOCAL ENABLEEXTENSIONS
 
-type build\docfx.json > docfx.json
-type build\toc.yml > toc.yml
+type docs\docfx.json > docfx.json
+type docs\toc.yml > toc.yml
 docfx build docfx.json > docfx.log
 @IF NOT %ERRORLEVEL% == 0 (
   type docfx.log
