@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Dependencies.Tests
@@ -55,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var statusCode = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
 
-            Assert.Equal("Ok", statusCode);
+            Assert.Equal(StatusCanonicalCode.Ok, statusCode.CanonicalCode);
         }
     }
 }

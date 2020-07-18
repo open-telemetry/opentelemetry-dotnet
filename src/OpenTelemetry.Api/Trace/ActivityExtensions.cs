@@ -35,12 +35,10 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetStatus(this Activity activity, Status status)
         {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
+            Debug.Assert(activity != null, "Activity should not be null");
 
             activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
             if (!string.IsNullOrEmpty(status.Description))
@@ -56,12 +54,10 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <returns>Activity execution status.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status GetStatus(this Activity activity)
         {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
+            Debug.Assert(activity != null, "Activity should not be null");
 
             var statusCanonicalCode = activity.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
             var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;

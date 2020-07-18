@@ -71,16 +71,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void GetOrSetStatusThrowsExceptionOnNullActivity()
-        {
-            using var source = new ActivitySource(ActivitySourceName);
-            using var activity = source.StartActivity(ActivityName);
-            Assert.Throws<ArgumentNullException>(() => activity.SetStatus(Status.Ok));
-            Assert.Throws<ArgumentNullException>(() => activity.GetStatus());
-            activity?.Stop();
-        }
-
-        [Fact]
         public void GetStatusWithNoStatusInActivity()
         {
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
