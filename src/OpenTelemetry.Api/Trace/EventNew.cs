@@ -17,21 +17,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using OpenTelemetry.Api.Utils;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// A text annotation associated with a collection of attributes.
     /// </summary>
-    public sealed class EventNew
+    public readonly struct EventNew
     {
-        internal ActivityEvent ActivityEvent;
-        private static readonly ReadOnlyDictionary<string, object> EmptyAttributes =
-                new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
+        internal readonly ActivityEvent ActivityEvent;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventNew"/> class.
+        /// Initializes a new instance of the <see cref="EventNew"/> struct.
         /// </summary>
         /// <param name="name">EventNew name.</param>
         public EventNew(string name)
@@ -40,7 +37,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventNew"/> class.
+        /// Initializes a new instance of the <see cref="EventNew"/> struct.
         /// </summary>
         /// <param name="name">EventNew name.</param>
         /// <param name="timestamp">EventNew timestamp. Timestamp MUST only be used for the EventNews that happened in the past, not at the moment of this call.</param>
@@ -50,7 +47,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventNew"/> class.
+        /// Initializes a new instance of the <see cref="EventNew"/> struct.
         /// </summary>
         /// <param name="name">EventNew name.</param>
         /// <param name="timestamp">EventNew timestamp. Timestamp MUST only be used for the EventNews that happened in the past, not at the moment of this call.</param>
@@ -61,7 +58,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventNew"/> class.
+        /// Initializes a new instance of the <see cref="EventNew"/> struct.
         /// </summary>
         /// <param name="name">EventNew name.</param>
         /// <param name="attributes">EventNew attributes.</param>

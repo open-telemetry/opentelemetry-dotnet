@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
@@ -25,6 +26,14 @@ namespace Samples
     {
         internal static object Run(OpenTelemetryShimOptions options)
         {
+            var originalAct = new Activity("original").Start();
+            var cur = Activity.Current;
+
+            var newAct = new Activity("newone").Start();
+
+            Activity.Current = cur;
+            cur = Activity.Current;
+
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
@@ -32,10 +41,10 @@ namespace Samples
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
-            // The above line is required only in Applications
-            // which decide to use OT.
+            // The above line is required only in applications
+            // which decide to use OpenTelemetry.
 
-            // Following shows how to use the OpenTelemetryShim, which is a thing layer on top
+            // Following shows how to use the OpenTelemetryShim, which is a thin layer on top
             // of Activity and associated classes.
             var tracer = TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer");
             var span = tracer.StartSpan("parent span");

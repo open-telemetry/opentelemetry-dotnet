@@ -25,7 +25,6 @@ namespace OpenTelemetry.Trace
     public readonly struct LinkNew
     {
         internal readonly ActivityLink ActivityLink;
-        private static readonly IDictionary<string, object> EmptyAttributes = new Dictionary<string, object>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinkNew"/> struct.

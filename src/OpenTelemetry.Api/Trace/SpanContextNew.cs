@@ -27,11 +27,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public readonly struct SpanContextNew
     {
-        /// <summary>
-        /// A blank <see cref="SpanContextNew"/> that can be used for remote no-op operations.
-        /// </summary>
-        internal static readonly SpanContextNew BlankRemote = new SpanContextNew(default, default, ActivityTraceFlags.None, true, null);
-
         internal readonly ActivityContext ActivityContext;
 
         /// <summary>
@@ -42,10 +37,10 @@ namespace OpenTelemetry.Trace
         /// <param name="traceFlags">The <see cref="TraceFlags"/> to
         /// associate with the <see cref="SpanContextNew"/>.</param>
         /// <param name="isRemote">The value indicating whether this <see cref="SpanContextNew"/> was propagated from the remote parent.</param>
-        /// <param name="tracestate">The tracestate to associate with the <see cref="SpanContextNew"/>.</param>
-        public SpanContextNew(in ActivityTraceId traceId, in ActivitySpanId spanId, ActivityTraceFlags traceFlags, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> tracestate = null)
+        /// <param name="traceState">The traceState to associate with the <see cref="SpanContextNew"/>.</param>
+        public SpanContextNew(in ActivityTraceId traceId, in ActivitySpanId spanId, ActivityTraceFlags traceFlags, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> traceState = null)
         {
-            this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TracestateUtils.GetString(tracestate));
+            this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TracestateUtils.GetString(traceState));
         }
 
         /// <summary>
@@ -109,9 +104,9 @@ namespace OpenTelemetry.Trace
         public bool IsValid => this.IsTraceIdValid(this.TraceId) && this.IsSpanIdValid(this.SpanId);
 
         /// <summary>
-        /// Gets the <see cref="Tracestate"/> associated with this <see cref="SpanContextNew"/>.
+        /// Gets the <see cref="TraceState"/> associated with this <see cref="SpanContextNew"/>.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Tracestate
+        public IEnumerable<KeyValuePair<string, string>> TraceState
         {
             get
             {
@@ -120,9 +115,9 @@ namespace OpenTelemetry.Trace
                     return Enumerable.Empty<KeyValuePair<string, string>>();
                 }
 
-                var tracestateResult = new List<KeyValuePair<string, string>>();
-                TracestateUtils.AppendTracestate(this.ActivityContext.TraceState, tracestateResult);
-                return tracestateResult;
+                var traceStateResult = new List<KeyValuePair<string, string>>();
+                TracestateUtils.AppendTracestate(this.ActivityContext.TraceState, traceStateResult);
+                return traceStateResult;
             }
         }
 

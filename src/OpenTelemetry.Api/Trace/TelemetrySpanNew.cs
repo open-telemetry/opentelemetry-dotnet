@@ -28,8 +28,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TelemetrySpanNew : IDisposable
     {
-        internal static TelemetrySpanNew NoOpInstance = new TelemetrySpanNew(null);
-        private Activity activity;
+        internal static readonly TelemetrySpanNew NoopInstance = new TelemetrySpanNew(null);
+        private readonly Activity activity;
 
         internal TelemetrySpanNew(Activity activity)
         {
@@ -168,20 +168,20 @@ namespace OpenTelemetry.Trace
             this.activity?.Stop();
         }
 
-        /// <summary>
-        /// Makes the span as current.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Activate()
-        {
-            Activity.Current = this.activity;
-        }
-
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            this.End();
+            this.activity?.Dispose();
+        }
+
+        /// <summary>
+        /// Marks the span as current.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Activate()
+        {
+            Activity.Current = this.activity;
         }
     }
 }

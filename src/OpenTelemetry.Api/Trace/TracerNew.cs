@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerNew
     {
-        private ActivitySource activitySource;
+        private readonly ActivitySource activitySource;
 
         internal TracerNew(ActivitySource activitySource)
         {
@@ -62,14 +62,14 @@ namespace OpenTelemetry.Trace
             // Some discussions in Spec: https://github.com/open-telemetry/opentelemetry-specification/pull/485
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.activitySource.StartActivity(name, activityKind);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             return new TelemetrySpanNew(activity);
@@ -87,14 +87,14 @@ namespace OpenTelemetry.Trace
         {
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             return new TelemetrySpanNew(activity);
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Trace
         {
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Trace
             var activity = this.activitySource.StartActivity(name, activityKind, parentContext.ActivityContext, attributes, activityLinks, startTime);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoOpInstance;
+                return TelemetrySpanNew.NoopInstance;
             }
 
             return new TelemetrySpanNew(activity);
