@@ -34,7 +34,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
             return activity.Tags.FirstOrDefault(tag => tag.Key == GrpcMethodTagName).Value;
         }
 
-        public static string GetGrpcStatusCodeFromActivity(Activity activity)
+        public static Status GetGrpcStatusCodeFromActivity(Activity activity)
         {
             var status = Status.Unknown;
 
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
                 status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
             }
 
-            return SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode);
+            return status;
         }
 
         public static bool TryParseRpcServiceAndRpcMethod(string grpcMethod, out string rpcService, out string rpcMethod)

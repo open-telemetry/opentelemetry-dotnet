@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         {
                             if (activity.IsAllDataRequested)
                             {
-                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                                activity.SetStatus(Status.Ok);
                             }
                         }
                         finally
@@ -175,9 +175,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             {
                                 if (this.exceptionFetcher.Fetch(payload) is Exception exception)
                                 {
-                                    Status status = Status.Unknown;
-                                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exception.Message);
+                                    activity.SetStatus(Status.Unknown.WithDescription(exception.Message));
                                 }
                                 else
                                 {

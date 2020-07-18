@@ -159,19 +159,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     int compositeState = (int)eventData.Payload[1];
                     if ((compositeState & 0b001) == 0b001)
                     {
-                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok));
+                        activity.SetStatus(Status.Ok);
+                    }
+                    else if ((compositeState & 0b010) == 0b010)
+                    {
+                        activity.SetStatus(Status.Unknown.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
                     }
                     else
                     {
-                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Unknown));
-                        if ((compositeState & 0b010) == 0b010)
-                        {
-                            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, $"SqlExceptionNumber {eventData.Payload[2]} thrown.");
-                        }
-                        else
-                        {
-                            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, $"Unknown Sql failure.");
-                        }
+                        activity.SetStatus(Status.Unknown.WithDescription("Unknown Sql failure."));
                     }
                 }
             }
