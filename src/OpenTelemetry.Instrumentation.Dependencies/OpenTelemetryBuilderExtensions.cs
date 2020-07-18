@@ -29,27 +29,6 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for all supported activity sources.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddDependencyInstrumentation(this OpenTelemetryBuilder builder)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            builder.AddHttpClientDependencyInstrumentation();
-            builder.AddSqlClientDependencyInstrumentation();
-            builder.AddGrpcClientDependencyInstrumentation();
-#if NETFRAMEWORK
-            builder.AddHttpWebRequestDependencyInstrumentation();
-#endif
-            return builder;
-        }
-
-        /// <summary>
-        /// Enables the outgoing requests automatic data collection for all supported activity sources.
-        /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
         /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
@@ -76,22 +55,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for HttpClient.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
-            this OpenTelemetryBuilder builder)
-        {
-            return builder.AddHttpClientDependencyInstrumentation(null);
-        }
-
-        /// <summary>
-        /// Enables the outgoing requests automatic data collection for HttpClient.
-        /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder AddHttpClientDependencyInstrumentation(
             this OpenTelemetryBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
         {
             if (builder == null)
             {
@@ -109,22 +77,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for SqlClient.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
-            this OpenTelemetryBuilder builder)
-        {
-            return builder.AddSqlClientDependencyInstrumentation(null);
-        }
-
-        /// <summary>
-        /// Enables the outgoing requests automatic data collection for SqlClient.
-        /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
         /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder AddSqlClientDependencyInstrumentation(
             this OpenTelemetryBuilder builder,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
         {
             if (builder == null)
             {
@@ -134,10 +91,8 @@ namespace OpenTelemetry.Trace.Configuration
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(activitySource, sqlOptions));
-#if NETFRAMEWORK
-            builder.AddActivitySource(SqlEventSourceListener.ActivitySourceName);
-#endif
+            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(sqlOptions));
+            builder.AddActivitySource(SqlClientDiagnosticListener.ActivitySourceName);
 
             return builder;
         }

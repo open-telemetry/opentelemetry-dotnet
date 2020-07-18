@@ -45,6 +45,18 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
             try
             {
                 var traceparentCollection = getter(carrier, TraceParent);
@@ -64,6 +76,18 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return default;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return default;
+            }
+
             try
             {
                 var traceparentCollection = getter(carrier, TraceParent);

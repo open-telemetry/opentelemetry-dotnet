@@ -22,7 +22,7 @@ using System.Linq;
 using Google.Protobuf;
 
 using OpenTelemetry.Resources;
-
+using OpenTelemetry.Trace;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
                 ParentSpanId = parentSpanIdString,
 
-                // TODO: Status is still pending, need to pursue OTEL spec change.
+                Status = ToOtlpStatus(activity.GetStatus()),
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             foreach (var kvp in activity.Tags)
             {
                 var attribute = ToOtlpAttribute(kvp);
-                if (attribute != null)
+                if (attribute != null && attribute.Key != SpanAttributeConstants.StatusCodeKey && attribute.Key != SpanAttributeConstants.StatusDescriptionKey)
                 {
                     otlpSpan.Attributes.Add(attribute);
                 }
@@ -129,12 +129,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpSpan;
         }
 
+        private static OtlpTrace.Status ToOtlpStatus(Status status)
+        {
+            if (!status.IsValid)
+            {
+                return null;
+            }
+
+            var otlpStatus = new Opentelemetry.Proto.Trace.V1.Status
+            {
+                // The numerical values of the two enumerations match, a simple cast is enough.
+                Code = (OtlpTrace.Status.Types.StatusCode)status.CanonicalCode,
+            };
+
+            if (!string.IsNullOrEmpty(status.Description))
+            {
+                otlpStatus.Message = status.Description;
+            }
+
+            return otlpStatus;
+        }
+
         private static Dictionary<Resource, Dictionary<ActivitySource, List<OtlpTrace.Span>>> GroupByResourceAndLibrary(
             IEnumerable<Activity> activityBatch)
         {
-            // TODO: there is no Resource associated here, other SDKs associate it to the span, that's not an option here.
-            var fakeResource = Resource.Empty;
-
             var result = new Dictionary<Resource, Dictionary<ActivitySource, List<OtlpTrace.Span>>>();
             foreach (var activity in activityBatch)
             {
@@ -146,8 +164,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     continue;
                 }
 
-                // TODO: Retrieve resources for trace (not library/ActivitySource)
-                var resource = fakeResource;
+                var resource = activity.GetResource();
                 if (!result.TryGetValue(resource, out var libraryToSpans))
                 {
                     libraryToSpans = new Dictionary<ActivitySource, List<OtlpTrace.Span>>();

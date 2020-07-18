@@ -1114,7 +1114,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void SetAttribute_Array_Sets_Empty_String_For_Emtpy_Array()
+        public void SetAttribute_Array_Sets_Empty_String_For_Empty_Array()
         {
             var tracer = this.tracerFactory.GetTracer(null);
             var span = (SpanSdk)tracer.StartRootSpan(SpanName);

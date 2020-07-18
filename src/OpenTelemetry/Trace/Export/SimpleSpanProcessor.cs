@@ -73,6 +73,7 @@ namespace OpenTelemetry.Trace.Export
 #endif
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.Dispose(true);

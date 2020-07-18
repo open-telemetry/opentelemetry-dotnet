@@ -47,7 +47,6 @@ Approvers ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telem
 - [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 - [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 - [Liudmila Molkova](https://github.com/lmolkova), Microsoft
-- [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 - [Paulo Janotti](https://github.com/pjanotti), Splunk
 
 Triagers:
@@ -60,6 +59,7 @@ Maintainers ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-t
 
 - [Cijo Thomas](https://github.com/cijothomas), Microsoft
 - [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
+- [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 - [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*

@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// </remarks>
     internal static class HttpWebRequestActivitySource
     {
-        internal const string ActivitySourceName = "HttpWebRequest";
+        internal const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
@@ -99,14 +99,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
-                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
-                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
-
-                if (Options.SetHttpFlavor == true)
+                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHTTPHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SemanticConventions.AttributeHTTPURL, request.RequestUri.OriginalString);
+                if (Options.SetHttpFlavor)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                    activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 }
             }
         }
@@ -118,12 +116,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+                activity.SetStatus(
+                    SpanHelper
+                        .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                        .WithDescription(response.StatusDescription));
             }
         }
 
@@ -142,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 if (wexc.Response is HttpWebResponse response)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
                     status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode).WithDescription(response.StatusDescription);
                 }
@@ -182,8 +180,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 status = Status.Unknown.WithDescription(exception.Message);
             }
 
-            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            activity.SetStatus(status);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

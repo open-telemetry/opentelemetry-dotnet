@@ -128,6 +128,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(9, error);
         }
 
+        [Event(10, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
+        public void FailedToExtractContext(string error)
+        {
+            this.WriteEvent(10, error);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.

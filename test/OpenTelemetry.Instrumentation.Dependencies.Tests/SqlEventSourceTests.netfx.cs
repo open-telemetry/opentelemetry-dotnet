@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
+using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
@@ -33,15 +34,15 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
     public class SqlEventSourceTests
     {
         /*
-            To run the integration tests, set the ot.SqlConnectionString machine-level environment variable to a valid Sql Server connection string.
+            To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
 
             To use Docker...
              1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
-             2) Set ot.SqlConnectionString as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
+             2) Set OTEL_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
          */
 
-        private const string SqlConnectionStringEnvVarName = "ot.SqlConnectionString";
-        private static readonly string SqlConnectionString = Environment.GetEnvironmentVariable(SqlConnectionStringEnvVarName, EnvironmentVariableTarget.Machine);
+        private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
+        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
 
         [Trait("CategoryName", "SqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
@@ -186,12 +187,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal("sql", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.ComponentKey).Value);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseSystemKey).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBSystem).Value);
 
             if (!enableConnectionLevelAttributes)
             {
-                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.PeerServiceKey).Value);
+                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
             }
             else
             {
@@ -199,11 +199,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                 {
-                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerName).Value);
+                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
                 }
                 else
                 {
-                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerIp).Value);
+                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIP).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
@@ -213,21 +213,21 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
                 {
-                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.NetPeerPort).Value);
+                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
                 }
             }
 
-            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseNameKey).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBName).Value);
             Assert.Equal(commandType.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
             if (commandType == CommandType.StoredProcedure)
             {
                 if (captureText)
                 {
-                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementKey).Value);
+                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
                 }
                 else
                 {
-                    Assert.DoesNotContain(activity.Tags, t => t.Key == SpanAttributeConstants.DatabaseStatementKey);
+                    Assert.DoesNotContain(activity.Tags, t => t.Key == SemanticConventions.AttributeDBStatement);
                 }
             }
 

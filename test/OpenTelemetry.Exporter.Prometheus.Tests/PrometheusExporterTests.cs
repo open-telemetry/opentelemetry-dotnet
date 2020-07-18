@@ -177,7 +177,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             // Though the above are Prometheus Server requirements, we haven't enforced it in code.
             // This is because we have implemented Prometheus using a Push Controller, where
             // we accumulate metrics from each Push into exporter, and is used to construct
-            // out for /metrics call. Because of this, its possible that multiple Push has occured
+            // out for /metrics call. Because of this, its possible that multiple Push has occurred
             // before Prometheus server makes /metrics call. (i.e Prometheus scrape interval is much more
             // than Push interval scenario)
             // Once a pull model is implemented, we'll not have this issue and we need to add tests

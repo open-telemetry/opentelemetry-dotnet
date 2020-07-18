@@ -31,6 +31,7 @@ namespace Samples
         /// dotnet run -p Exporters.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run -p Exporters.csproj jaeger -h localhost -p 6831
         /// dotnet run -p Exporters.csproj prometheus -i 15 -p 9184 -d 2
+        /// dotnet run -p Exporters.csproj otlp -e "localhost:55680"
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\src\samples\Exporters\Console\).
@@ -38,14 +39,14 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
-                    (ZPagesOptions options) => TestZPages.Run(),
+                    (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);

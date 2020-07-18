@@ -17,19 +17,36 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
+
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 {
     public class JaegerUdpBatcherTests
     {
-        public const string TestPayloadBase64 = "goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVAhaAgLPexpa/BRaAnJw5GYwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVBkYCABgIbG9uZ0tleTIVBkYCABgJZG91YmxlS2V5FQInAAAAAAAA8D8AGApkb3VibGVLZXkyFQInAAAAAAAA8D8AGAdib29sS2V5FQQxABgJc3Bhbi5raW5kFQAYBmNsaWVudAAYDm90LnN0YXR1c19jb2RlFQAYAk9rABksFoCAs97Glr8FGSwYA2tleRUAGAV2YWx1ZQAYB21lc3NhZ2UVABgGRXZlbnQxAAAWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDIAAAAAAA==";
+        public const string TestPayloadBase64 = "goEBCWVtaXRCYXRjaBwcGAx0ZXN0IHByb2Nlc3MZHBgQdGVzdF9wcm9jZXNzX3RhZxUAGAp0ZXN0X3ZhbHVlAAAZHBab5cuG2OehhdwBFuPakI2n2cCVLhaAjfWp6NHt6dQBFrK5moSni5GXGBgETmFtZRkcFQAWm+XLhtjnoYXcARbj2pCNp9nAlS4W/Y6j+bqS9fbuAQAVABaAgLPexpa/BRYAGZwYCXN0cmluZ0tleRUAGAV2YWx1ZQAYB2xvbmdLZXkVABgBMQAYCGxvbmdLZXkyFQAYATEAGAlkb3VibGVLZXkVABgBMQAYCmRvdWJsZUtleTIVABgBMQAYB2Jvb2xLZXkVABgEVHJ1ZQAYDm90LnN0YXR1c19jb2RlFQAYAk9rABgJc3Bhbi5raW5kFQAYBmNsaWVudAAYDGxpYnJhcnkubmFtZRUAGBtDcmVhdGVUZXN0UGF5bG9hZEphZWdlclNwYW4AGSwWgICz3saWvwUZLBgDa2V5FQAYBXZhbHVlABgHbWVzc2FnZRUAGAZFdmVudDEAABaAgLPexpa/BRksGANrZXkVABgFdmFsdWUAGAdtZXNzYWdlFQAYBkV2ZW50MgAAAAAA";
+
+        static JaegerUdpBatcherTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
 
         internal static Process TestProcess { get; } = new Process("test process", new Dictionary<string, object> { { "test_process_tag", "test_value" } });
 
@@ -157,16 +174,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey2", 1F },
                 { "boolKey", true },
             };
-            var events = new List<Event>
+            var events = new List<ActivityEvent>
             {
-                new Event(
+                new ActivityEvent(
                     "Event1",
                     eventTimestamp,
                     new Dictionary<string, object>
                     {
                         { "key", "value" },
                     }),
-                new Event(
+                new ActivityEvent(
                     "Event2",
                     eventTimestamp,
                     new Dictionary<string, object>
@@ -177,23 +194,38 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var link = new Link(new SpanContext(
+            var activitySource = new ActivitySource(nameof(CreateTestPayloadJaegerSpan));
+
+            var tags = attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
+
+            var links = new[]
+            {
+                new ActivityLink(new ActivityContext(
                     traceId,
                     linkedSpanId,
-                    ActivityTraceFlags.Recorded));
+                    ActivityTraceFlags.Recorded)),
+            };
 
-            return new SpanData(
+            Activity activity = activitySource.StartActivity(
                 "Name",
-                new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded),
-                parentSpanId,
-                SpanKind.Client,
-                startTimestamp,
-                attributes,
-                events,
-                new[] { link, },
-                null,
-                Status.Ok,
-                endTimestamp).ToJaegerSpan();
+                ActivityKind.Client,
+                parentContext: default,
+                tags,
+                links,
+                startTime: startTimestamp);
+
+            typeof(Activity).GetField("_traceId", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(activity, traceId.ToHexString());
+            typeof(Activity).GetField("_spanId", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(activity, spanId.ToHexString());
+            typeof(Activity).GetField("_parentSpanId", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(activity, parentSpanId.ToHexString());
+
+            foreach (var @event in events)
+            {
+                activity.AddEvent(@event);
+            }
+
+            activity.SetStatus(Status.Ok);
+
+            return activity.ToJaegerSpan();
         }
 
         internal static JaegerSpan CreateTestJaegerSpan(
@@ -202,9 +234,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             bool addEvents = true,
             bool addLinks = true,
             Resource resource = null,
-            SpanKind kind = SpanKind.Client)
+            ActivityKind kind = ActivityKind.Client)
         {
-            return JaegerSpanConverterTest.CreateTestSpan(
+            return JaegerActivityConversionTest.CreateTestActivity(
                 setAttributes, additionalAttributes, addEvents, addLinks, resource, kind).ToJaegerSpan();
         }
     }

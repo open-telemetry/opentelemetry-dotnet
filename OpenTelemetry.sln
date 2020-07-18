@@ -9,6 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests", "test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B7408D66-487A-40E1-BDB7-BC17BD28F721}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		CHANGELOG.md = CHANGELOG.md
 		CONTRIBUTING.md = CONTRIBUTING.md
@@ -120,6 +121,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\dotnet-core-linux.yml = .github\workflows\dotnet-core-linux.yml
 		.github\workflows\dotnet-core-win.yml = .github\workflows\dotnet-core-win.yml
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+		.github\workflows\integration-redis.yml = .github\workflows\integration-redis.yml
+		.github\workflows\integration-sql.yml = .github\workflows\integration-sql.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C1542297-8763-4DF4-957C-489ED771C21D}"
@@ -137,6 +140,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcClient.Tests", "test\OpenTelemetry.Instrumentation.GrpcClient.Tests\OpenTelemetry.Instrumentation.GrpcClient.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.1", "test\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj", "{7CDA3F85-EA6F-45C4-B432-2559303355D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.ZPages.Tests", "test\OpenTelemetry.Exporter.ZPages.Tests\OpenTelemetry.Exporter.ZPages.Tests.csproj", "{98F9556B-116F-49B5-9211-BB1D418446FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -272,6 +277,10 @@ Global
 		{7CDA3F85-EA6F-45C4-B432-2559303355D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7CDA3F85-EA6F-45C4-B432-2559303355D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7CDA3F85-EA6F-45C4-B432-2559303355D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98F9556B-116F-49B5-9211-BB1D418446FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98F9556B-116F-49B5-9211-BB1D418446FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

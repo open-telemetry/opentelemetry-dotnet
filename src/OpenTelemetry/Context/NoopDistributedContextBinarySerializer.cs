@@ -24,6 +24,7 @@ namespace OpenTelemetry.Context
         internal static readonly DistributedContextBinarySerializerBase Instance = new NoopDistributedContextBinarySerializer();
         private static readonly byte[] EmptyByteArray = { };
 
+        /// <inheritdoc/>
         public override byte[] ToByteArray(DistributedContext context)
         {
             if (context.CorrelationContext.Entries is null)
@@ -34,6 +35,7 @@ namespace OpenTelemetry.Context
             return EmptyByteArray;
         }
 
+        /// <inheritdoc/>
         public override DistributedContext FromByteArray(byte[] bytes)
         {
             if (bytes == null)

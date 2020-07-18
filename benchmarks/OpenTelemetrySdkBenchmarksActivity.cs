@@ -24,7 +24,7 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarksActivity
     {
-        private readonly ActivitySource BenchMarkSource = new ActivitySource("BenchMark");
+        private readonly ActivitySource BenchmarkSource = new ActivitySource("Benchmark");
         private readonly ActivityContext ParentCtx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
         private readonly string ParentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
 
@@ -37,33 +37,21 @@ namespace Benchmarks
         }
 
         [Benchmark]
-        public Activity CreateActivity_NoOpProcessor()
-        {
-            return ActivityCreationScenarios.CreateActivity(this.BenchMarkSource);
-        }
+        public Activity CreateActivity_NoOpProcessor() => ActivityCreationScenarios.CreateActivity(this.BenchmarkSource);
 
         [Benchmark]
-        public Activity CreateActivity_WithParentContext_NoOpProcessor()
-        {
-            return ActivityCreationScenarios.CreateActivityFromParentContext(this.BenchMarkSource, ParentCtx);
-        }
+        public Activity CreateActivity_WithParentContext_NoOpProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.BenchmarkSource, ParentCtx);
 
         [Benchmark]
-        public Activity CreateActivity_WithParentId_NoOpProcessor()
-        {
-            return ActivityCreationScenarios.CreateActivityFromParentId(this.BenchMarkSource, ParentId);
-        }
+        public Activity CreateActivity_WithParentId_NoOpProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.BenchmarkSource, ParentId);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributes_NoOpProcessor()
-        {
-            return ActivityCreationScenarios.CreateActivityWithAttributes(this.BenchMarkSource);
-        }
+        public Activity CreateActivity_WithAttributes_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.BenchmarkSource);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributesAndCustomProp_NoOpProcessor()
-        {
-            return ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.BenchMarkSource);
-        }
+        public Activity CreateActivity_WithAttributesAndCustomProp_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.BenchmarkSource);
+
+        [Benchmark]
+        public Activity CreateActiviti_WithKind_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.BenchmarkSource);
     }
 }

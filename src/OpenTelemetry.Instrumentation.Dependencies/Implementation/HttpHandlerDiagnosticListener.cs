@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base("HttpHandlerDiagnosticListener", null)
+            : base("HttpHandlerDiagnosticListener")
         {
             var framework = Assembly
                 .GetEntryAssembly()?
@@ -75,22 +75,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.ComponentKey, "http");
-                activity.AddTag(SpanAttributeConstants.HttpMethodKey, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.AddTag(SpanAttributeConstants.HttpHostKey, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, request.RequestUri.OriginalString);
+                activity.AddTag(SemanticConventions.AttributeHTTPMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                activity.AddTag(SemanticConventions.AttributeHTTPHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SemanticConventions.AttributeHTTPURL, request.RequestUri.OriginalString);
 
                 if (this.options.SetHttpFlavor)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpFlavorKey, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                    activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
             }
 
@@ -112,14 +110,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     {
                         if (requestTaskStatus == TaskStatus.Canceled)
                         {
-                            Status status = Status.Cancelled;
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                            activity.SetStatus(Status.Cancelled);
                         }
                         else if (requestTaskStatus != TaskStatus.Faulted)
                         {
                             // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                            Status status = Status.Unknown;
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                            activity.SetStatus(Status.Unknown);
                         }
                     }
                 }
@@ -127,11 +123,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
                     // response could be null for DNS issues, timeouts, etc...
-                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.ReasonPhrase);
+                    activity.SetStatus(
+                        SpanHelper
+                            .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                            .WithDescription(response.ReasonPhrase));
                 }
             }
 
@@ -155,18 +152,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         switch (exception.SocketErrorCode)
                         {
                             case SocketError.HostNotFound:
-                                Status status = Status.InvalidArgument;
-                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
+                                activity.SetStatus(Status.InvalidArgument.WithDescription(exc.Message));
                                 return;
                         }
                     }
 
                     if (exc.InnerException != null)
                     {
-                        Status status = Status.Unknown;
-                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                        activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
+                        activity.SetStatus(Status.Unknown.WithDescription(exc.Message));
                     }
                 }
             }

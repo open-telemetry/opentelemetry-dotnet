@@ -17,8 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
+
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
@@ -123,7 +125,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoAttributes()
+        public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoAttributes()
         {
             var activity = CreateTestActivity(setAttributes: false);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
@@ -182,7 +184,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoEvents()
+        public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoEvents()
         {
             var activity = CreateTestActivity(addEvents: false);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
@@ -240,7 +242,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_ConvertSpanToJaegerSpan_NoLinks()
+        public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoLinks()
         {
             var activity = CreateTestActivity(addLinks: false);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
@@ -326,7 +328,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointOmittedByDefault()
+        public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointOmittedByDefault()
         {
             // Arrange
             var span = CreateTestActivity();
@@ -339,7 +341,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolution()
+        public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointResolution()
         {
             // Arrange
             var span = CreateTestActivity(
@@ -357,7 +359,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_GenerateSpan_PeerServiceNameIgnoredForServerSpan()
+        public void JaegerActivityConverterTest_GenerateJaegerSpan_PeerServiceNameIgnoredForServerSpan()
         {
             // Arrange
             var span = CreateTestActivity(
@@ -376,7 +378,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void JaegerSpanConverterTest_GenerateSpan_RemoteEndpointResolutionPriority()
+        public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointResolutionPriority()
         {
             // Arrange
             var span = CreateTestActivity(
