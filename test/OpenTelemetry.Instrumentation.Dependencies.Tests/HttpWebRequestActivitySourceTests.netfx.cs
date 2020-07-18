@@ -792,7 +792,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // Examine the result. Make sure we got all successful requests.
 
             // Just make sure some events are written, to confirm we successfully subscribed to it. We should have
-            // exactly 1 Start event per request and exaclty 1 Stop event per response (if request succeeded)
+            // exactly 1 Start event per request and exactly 1 Stop event per response (if request succeeded)
             var successfulTasks = tasks.Where(t => t.Value.Status == TaskStatus.RanToCompletion);
 
             Assert.Equal(tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));

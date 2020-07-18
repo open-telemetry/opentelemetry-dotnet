@@ -21,7 +21,7 @@ namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
     /// Text format wire context propagator. Helps to extract and inject context from textual
-    /// representation (typically http headers or metadata colleciton).
+    /// representation (typically http headers or metadata collection).
     /// </summary>
     public interface ITextFormat
     {
