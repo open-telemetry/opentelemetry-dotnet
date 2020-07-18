@@ -80,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+                activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
             }
 
             this.activitySource.Stop(activity);
