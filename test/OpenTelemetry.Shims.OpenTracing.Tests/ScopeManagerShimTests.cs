@@ -32,7 +32,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracer = TracerFactoryBase.Default.GetTracer(null);
+            var tracer = TracerProvider.GetTracer(null);
             var shim = new ScopeManagerShim(tracer);
 
             Assert.False(tracer.CurrentSpan.Context.IsValid);
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var openTracingSpan = new SpanShim(Defaults.GetOpenTelemetrySpanMock());
             var scopeMock = new Mock<IDisposable>();
 
-            tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
+            tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span)).Returns(openTracingSpan.Span);
             tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
 
             var scope = shim.Activate(openTracingSpan, true);
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var scopeMock = new Mock<IDisposable>();
             var spanShim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
 
-            tracerMock.Setup(x => x.WithSpan(spanShim.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
+            tracerMock.Setup(x => x.WithSpan(spanShim.Span)).Returns(spanShim.Span);
 
             using (shim.Activate(spanShim, true))
             {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 #if DEBUG
             Assert.Equal(0, shim.SpanScopeTableCount);
 #endif
-            tracerMock.Verify(x => x.WithSpan(spanShim.Span, It.IsAny<bool>()), Times.Once);
+            tracerMock.Verify(x => x.WithSpan(spanShim.Span), Times.Once);
             scopeMock.Verify(x => x.Dispose(), Times.Once);
         }
     }

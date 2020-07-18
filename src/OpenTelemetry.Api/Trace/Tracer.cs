@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -104,8 +105,24 @@ namespace OpenTelemetry.Trace
         /// <param name="parent">Parent for new span.</param>
         /// <param name="attributes">Initial attributes for the span.</param>
         /// <param name="links"> <see cref="Link"/> for the span.</param>
+        /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        {
+            return this.StartSpan(name, kind, parent.Context, attributes, links, startTime);
+        }
+
+        /// <summary>
+        /// Starts span.
+        /// </summary>
+        /// <param name="name">Span name.</param>
+        /// <param name="kind">Kind.</param>
+        /// <param name="parent">Parent for new span.</param>
+        /// <param name="attributes">Initial attributes for the span.</param>
+        /// <param name="links"> <see cref="Link"/> for the span.</param>
+        /// <param name="startTime"> Start time for the span.</param>
+        /// <returns>Span instance.</returns>
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.activitySource.HasListeners())
             {
@@ -124,13 +141,24 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, activityLinks);
+            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, activityLinks, startTime);
             if (activity == null)
             {
                 return TelemetrySpan.NoOpInstance;
             }
 
             return new TelemetrySpan(activity);
+        }
+
+        /// <summary>
+        /// Makes the given span as the current one.
+        /// </summary>
+        /// <param name="span">The span to be made current.</param>
+        /// <returns>The current span.</returns>
+        public TelemetrySpan WithSpan(TelemetrySpan span)
+        {
+            span.Activate();
+            return span;
         }
 
         private ActivityKind ConvertToActivityKind(SpanKind kind)

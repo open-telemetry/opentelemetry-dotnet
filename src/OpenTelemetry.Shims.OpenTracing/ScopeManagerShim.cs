@@ -69,7 +69,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            var scope = this.tracer.WithSpan(shim.Span, false);
+            var scope = this.tracer.WithSpan(shim.Span);
 
             var instrumentation = new ScopeInstrumentation(
                 shim.Span,

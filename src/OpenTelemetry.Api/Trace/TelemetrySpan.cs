@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -24,7 +25,7 @@ namespace OpenTelemetry.Trace
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
     /// a distributed trace and has result of execution, context of execution and other properties.</para>
     /// </summary>
-    public class TelemetrySpan
+    public class TelemetrySpan : IDisposable
     {
         internal static TelemetrySpan NoOpInstance = new TelemetrySpan(null);
         private Activity activity;
@@ -120,6 +121,27 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// </summary>
+        /// <param name="name">Name of the <see cref="Event"/>.</param>
+        /// <param name="attributes">Attributes for the <see cref="Event"/>.</param>
+        public void AddEvent(string name, IDictionary<string, object> attributes)
+        {
+            this.activity?.AddEvent(new Event(name, attributes).ActivityEvent);
+        }
+
+        /// <summary>
+        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// </summary>
+        /// <param name="name">Name of the <see cref="Event"/>.</param>
+        /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
+        /// <param name="attributes">Attributes for the <see cref="Event"/>.</param>
+        public void AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        {
+            this.activity?.AddEvent(new Event(name, timestamp, attributes).ActivityEvent);
+        }
+
+        /// <summary>
         /// End the span.
         /// </summary>
         public void End()
@@ -135,6 +157,20 @@ namespace OpenTelemetry.Trace
         {
             this.activity?.SetEndTime(endTimestamp.UtcDateTime);
             this.activity?.Stop();
+        }
+
+        /// <summary>
+        /// Makes the span as current.
+        /// </summary>
+        public void Activate()
+        {
+            Activity.Current = this.activity;
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.End();
         }
     }
 }
