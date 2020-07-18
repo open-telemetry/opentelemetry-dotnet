@@ -52,7 +52,7 @@ namespace Samples
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(promExporter);
             metricsHttpServer.Start();
 
-            // Creater Processor (called Batcher in Metric spec, this is still not decided)
+            // Create Processor (called Batcher in Metric spec, this is still not decided)
             var processor = new UngroupedBatcher();
 
             // MeterFactory is from where one can obtain Meters.

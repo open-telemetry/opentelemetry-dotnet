@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
                 OpenTelemetrySdkEventSource.Log.MeterCollectInvoked(this.meterName);
 
                 // collect all pending metric updates and send to batcher.
-                // must sync to prevent multiple Collect occuring at same time.
+                // must sync to prevent multiple Collect occurring at same time.
                 var boundInstrumentsToRemove = new List<LabelSet>();
                 foreach (var longCounter in this.longCounters)
                 {

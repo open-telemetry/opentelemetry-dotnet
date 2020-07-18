@@ -166,7 +166,7 @@ namespace OpenTelemetry.Trace
         public string Description { get; }
 
         /// <summary>
-        /// Gets a value indicating whether span completed sucessfully.
+        /// Gets a value indicating whether span completed successfully.
         /// </summary>
         public bool IsOk => this.CanonicalCode == StatusCanonicalCode.Ok;
 
