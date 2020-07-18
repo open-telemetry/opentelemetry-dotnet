@@ -1,0 +1,28 @@
+{
+  "build": {
+    "content": [
+      {
+        "files": [
+          "**.md",
+          "toc.yml"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "docs/**.png",
+          "samples/**.cs",
+          "src/**.cs"
+        ]
+      }
+    ],
+    "dest": "_site",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "noLangKeyword": false,
+    "keepFileLink": false,
+    "cleanupCacheHistory": true,
+    "disableGitFeatures": true
+  }
+}
