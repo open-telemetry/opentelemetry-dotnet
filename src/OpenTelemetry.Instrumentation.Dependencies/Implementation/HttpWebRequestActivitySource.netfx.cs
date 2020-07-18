@@ -117,10 +117,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+                activity.SetStatus(
+                    SpanHelper
+                        .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                        .WithDescription(response.StatusDescription));
             }
         }
 
@@ -179,8 +179,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 status = Status.Unknown.WithDescription(exception.Message);
             }
 
-            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            activity.SetStatus(status);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
