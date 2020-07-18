@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly SpanExporter exporter;
         private CancellationTokenSource cts;
         private volatile int currentQueueSize;
+        private object disposing = new object();
         private bool stopping = false;
 
         /// <summary>
@@ -159,7 +160,13 @@ namespace OpenTelemetry.Trace.Export
         {
             if (!this.stopping)
             {
-                this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).GetAwaiter().GetResult();
+                lock (this.disposing)
+                {
+                    if (!this.stopping)
+                    {
+                        this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).GetAwaiter().GetResult();
+                    }
+                }
             }
 
             if (isDisposing)
