@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -163,7 +164,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // standard numerical values, Nan, +Inf, and -Inf are valid values representing not a number,
                 // positive infinity, and negative infinity, respectively.
                 writer.Write(" ");
-                writer.Write(m.Value);
+                writer.Write(m.Value.ToString(CultureInfo.InvariantCulture));
                 writer.Write(" ");
 
                 // The timestamp is an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding
