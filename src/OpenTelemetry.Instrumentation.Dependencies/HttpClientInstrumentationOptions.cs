@@ -25,22 +25,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     public class HttpClientInstrumentationOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientInstrumentationOptions"/> class.
-        /// </summary>
-        public HttpClientInstrumentationOptions()
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientInstrumentationOptions"/> class.
-        /// </summary>
-        /// <param name="filterFunc">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal HttpClientInstrumentationOptions(Func<HttpRequestMessage, bool> filterFunc)
-        {
-            this.FilterFunc = filterFunc;
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether add HTTP version to a trace.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
@@ -53,7 +37,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Gets or sets an optional callback method for filtering HttpClient requests that are sent through the instrumentation.
         /// </summary>
-        internal Func<HttpRequestMessage, bool> FilterFunc { get; set; }
+        public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
         internal static bool IsInternalUrl(Uri requestUri)
         {

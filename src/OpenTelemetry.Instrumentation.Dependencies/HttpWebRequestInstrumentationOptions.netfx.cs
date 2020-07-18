@@ -26,22 +26,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     public class HttpWebRequestInstrumentationOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpWebRequestInstrumentationOptions"/> class.
-        /// </summary>
-        public HttpWebRequestInstrumentationOptions()
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="HttpWebRequestInstrumentationOptions"/> class.
-        /// </summary>
-        /// <param name="filterFunc">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal HttpWebRequestInstrumentationOptions(Func<HttpWebRequest, bool> filterFunc)
-        {
-            this.FilterFunc = filterFunc;
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether add HTTP version to a trace.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
@@ -54,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// <summary>
         /// Gets or sets an optional callback method for filtering HttpClient requests that are sent through the instrumentation.
         /// </summary>
-        internal Func<HttpWebRequest, bool> FilterFunc { get; set; }
+        public Func<HttpWebRequest, bool> FilterFunc { get; set; }
 
         internal bool EventFilter(HttpWebRequest request)
         {
