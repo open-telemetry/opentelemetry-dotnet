@@ -93,10 +93,12 @@ namespace OpenTelemetry.Trace.Export
             Task.Factory.StartNew(s => this.Worker((CancellationToken)s), this.cts.Token);
         }
 
+        /// <inheritdoc/>
         public override void OnStart(SpanData span)
         {
         }
 
+        /// <inheritdoc/>
         public override void OnEnd(SpanData span)
         {
             if (this.stopping)
@@ -118,6 +120,7 @@ namespace OpenTelemetry.Trace.Export
             this.exportQueue.Enqueue(span);
         }
 
+        /// <inheritdoc/>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             if (!this.stopping)
@@ -146,6 +149,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.Dispose(true);
