@@ -39,7 +39,7 @@ namespace Samples
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -48,6 +48,7 @@ namespace Samples
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
+                    (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
@@ -106,6 +107,13 @@ namespace Samples
 
     [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class ConsoleOptions
+    {
+        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
+        public bool DisplayAsJson { get; set; }
+    }
+
+    [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
+    internal class OpenTelemetryShimOptions
     {
         [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
         public bool DisplayAsJson { get; set; }
