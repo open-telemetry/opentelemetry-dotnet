@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
-        <PackageReference Include="MassTransit" Version="6.3.2" />
     </ItemGroup>
 
 </Project>

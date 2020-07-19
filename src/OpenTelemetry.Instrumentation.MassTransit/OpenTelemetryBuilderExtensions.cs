@@ -19,20 +19,6 @@ using OpenTelemetry.Instrumentation.MassTransit;
 
 namespace OpenTelemetry.Trace.Configuration
 {
-    /*
-     *
-        type OpenTelemetryBuilder with
-
-            member builder.AddMassTransitInstrumentation() =
-                if builder = null then
-                    nullArg "builder"
-
-                builder.AddInstrumentation(fun activitySource ->
-                    new MassTransitInstrumentation(activitySource)
-                )
-
-     */
-
     /// <summary>
     /// Extension methods to simplify registering of dependency instrumentation.
     /// </summary>

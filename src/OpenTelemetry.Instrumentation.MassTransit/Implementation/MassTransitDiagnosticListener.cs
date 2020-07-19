@@ -39,14 +39,17 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Implementation
 
                 switch (activity.OperationName)
                 {
-                    case "MassTransit.Consumer.Consume":
-                        activity.DisplayName = $"CONSUME {tags["consumer-type"]}";
-                        break;
                     case "MassTransit.Transport.Send":
                         activity.DisplayName = $"SEND {tags["peer.address"]}";
                         break;
                     case "MassTransit.Transport.Receive":
                         activity.DisplayName = $"RECV {tags["peer.address"]}";
+                        break;
+                    case "MassTransit.Consumer.Consume":
+                        activity.DisplayName = $"CONSUME {tags["consumer-type"]}";
+                        break;
+                    case "MassTransit.Consumer.Handle":
+                        activity.DisplayName = $"HANDLE {tags["peer.address"]}";
                         break;
                 }
             }

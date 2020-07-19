@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
     public class MassTransitInstrumentationTests
     {
         [Fact]
-        public async Task TestMassTransitInstrumentationOnConsume()
+        public async Task MassTransitInstrumentationConsumerAndHandlerTest()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
@@ -40,6 +40,7 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
             {
                 var harness = new InMemoryTestHarness();
                 var consumerHarness = harness.Consumer<TestConsumer>();
+                var handlerHarness = harness.Handler<TestMessage>();
                 await harness.Start();
                 try
                 {
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
 
                     Assert.True(harness.Consumed.Select<TestMessage>().Any());
                     Assert.True(consumerHarness.Consumed.Select<TestMessage>().Any());
+                    Assert.True(handlerHarness.Consumed.Select().Any());
                 }
                 finally
                 {
@@ -57,11 +59,12 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
                 }
             }
 
-            Assert.Equal(6, activityProcessor.Invocations.Count);
+            Assert.Equal(8, activityProcessor.Invocations.Count);
 
             var sends = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Transport.Send");
             var receives = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Transport.Receive");
             var consumes = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Consumer.Consume");
+            var handles = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Consumer.Handle");
 
             foreach (var activity in sends)
             {
@@ -76,6 +79,11 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
             foreach (var activity in consumes)
             {
                 Assert.Equal("CONSUME OpenTelemetry.Instrumentation.MassTransit.Tests.TestConsumer", activity.DisplayName);
+            }
+
+            foreach (var activity in handles)
+            {
+                Assert.Equal("HANDLE TestMessage/OpenTelemetry.Instrumentation.MassTransit.Tests", activity.DisplayName);
             }
         }
 
