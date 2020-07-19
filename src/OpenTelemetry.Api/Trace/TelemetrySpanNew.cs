@@ -26,6 +26,7 @@ namespace OpenTelemetry.Trace
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
     /// a distributed trace and has result of execution, context of execution and other properties.</para>
     /// </summary>
+    /// <remarks>Represents OpenTelemetry Span https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span.</remarks>
     public class TelemetrySpanNew : IDisposable
     {
         internal static readonly TelemetrySpanNew NoopInstance = new TelemetrySpanNew(null);
