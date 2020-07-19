@@ -52,7 +52,7 @@ namespace Samples
             span.UpdateName("parent span new name");
 
             var spanChild = tracer.StartSpan("child span");
-            spanChild.SetAttribute("ch", "value");
+            spanChild.AddEvent("sample event").SetAttribute("ch", "value").SetAttribute("more", "attributes");
             spanChild.End();
 
             span.End();

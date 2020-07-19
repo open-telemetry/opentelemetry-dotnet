@@ -84,13 +84,16 @@ namespace OpenTelemetry.Trace
         /// implementation.
         /// </summary>
         /// <param name="name">Name of the span.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateName(string name)
+        public TelemetrySpanNew UpdateName(string name)
         {
             if (this.activity != null)
             {
                 this.activity.DisplayName = name;
             }
+
+            return this;
         }
 
         /// <summary>
@@ -98,54 +101,64 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value. The value may be an <see cref="IEnumerable"/> of primitive types. An enumeration may be iterated multiple times.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetAttribute(string key, string value)
+        public TelemetrySpanNew SetAttribute(string key, string value)
         {
             this.activity?.AddTag(key, value);
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="EventNew"/> to the <see cref="TelemetrySpanNew"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpanNew"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
+        /// <param name="name">Name of the event.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddEvent(string name)
+        public TelemetrySpanNew AddEvent(string name)
         {
-            this.activity?.AddEvent(new EventNew(name).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="EventNew"/> to the <see cref="TelemetrySpanNew"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpanNew"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
+        /// <param name="name">Name of the event.</param>
+        /// <param name="timestamp">Timestamp of the event.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddEvent(string name, DateTimeOffset timestamp)
+        public TelemetrySpanNew AddEvent(string name, DateTimeOffset timestamp)
         {
-            this.activity?.AddEvent(new EventNew(name, timestamp).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, timestamp));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="EventNew"/> to the <see cref="TelemetrySpanNew"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpanNew"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        /// <param name="attributes">Attributes for the <see cref="Event"/>.</param>
+        /// <param name="name">Name of the event.</param>
+        /// <param name="attributes">Attributes for the event.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddEvent(string name, IDictionary<string, object> attributes)
+        public TelemetrySpanNew AddEvent(string name, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new EventNew(name, attributes).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, attributes));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="EventNew"/> to the <see cref="TelemetrySpanNew"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpanNew"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="EventNew"/>.</param>
-        /// <param name="timestamp">Timestamp of the <see cref="EventNew"/>.</param>
-        /// <param name="attributes">Attributes for the <see cref="EventNew"/>.</param>
+        /// <param name="name">Name of the event.</param>
+        /// <param name="timestamp">Timestamp of the event.</param>
+        /// <param name="attributes">Attributes for the event.</param>
+        /// <returns>The <see cref="TelemetrySpanNew"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        public TelemetrySpanNew AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new EventNew(name, timestamp, attributes).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, timestamp, attributes));
+            return this;
         }
 
         /// <summary>
