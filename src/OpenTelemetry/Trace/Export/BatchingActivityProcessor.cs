@@ -200,10 +200,14 @@ namespace OpenTelemetry.Trace.Export
                 {
                     using var cts = new CancellationTokenSource(this.exporterTimeout);
 
+                    var linkedCTS = cancellationToken.CanBeCanceled
+                        ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token)
+                        : null;
+
                     int exportedCount;
-                    using (var ct = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token))
+                    using (linkedCTS)
                     {
-                        exportedCount = await this.ExportBatchAsync(ct.Token).ConfigureAwait(false);
+                        exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
                     }
 
                     if (exportedCount == 0)
