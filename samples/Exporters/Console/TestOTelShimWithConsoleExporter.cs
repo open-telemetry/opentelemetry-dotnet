@@ -26,14 +26,6 @@ namespace Samples
     {
         internal static object Run(OpenTelemetryShimOptions options)
         {
-            var originalAct = new Activity("original").Start();
-            var cur = Activity.Current;
-
-            var newAct = new Activity("newone").Start();
-
-            Activity.Current = cur;
-            cur = Activity.Current;
-
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
