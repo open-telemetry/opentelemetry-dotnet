@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+        <Description>OpenTelemetry instrumentation for MassTransit</Description>
+        <PackageTags>$(PackageTags);distributed-tracing;MassTransit</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+        <PackageReference Include="MassTransit" Version="6.3.2" />
+    </ItemGroup>
+
+</Project>

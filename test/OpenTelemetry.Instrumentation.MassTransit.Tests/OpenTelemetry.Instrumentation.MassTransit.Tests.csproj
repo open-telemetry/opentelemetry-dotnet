@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>Unit test project for OpenTelemetry MassTransit instrumentation</Description>
+        <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit.TestFramework" Version="6.3.2" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+        <PackageReference Include="Moq" Version="4.14.5" />
+        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+        <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.MassTransit\OpenTelemetry.Instrumentation.MassTransit.csproj" />
+      <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    </ItemGroup>
+</Project>
