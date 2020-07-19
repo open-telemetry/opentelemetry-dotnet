@@ -5,29 +5,27 @@
 You may configure sampler of your choice
 
 ```csharp
- using (TracerFactory.Create(b => b
-            .SetSampler(new ProbabilitySampler(0.1))
-            .UseZipkin(options => {})
-            .SetResource(Resources.CreateServiceResource("my-service")))
-{
-
-}
+OpenTelemetrySdk.EnableOpenTelemetry(b => b
+    .AddActivitySource(ActivitySourceName)
+    .SetSampler(new ProbabilityActivitySampler(0.1))
+    .SetResource(Resources.Resources.CreateServiceResource("my-service"))
+    .UseZipkinExporter(options => {}));
 ```
 
-You can also implement custom sampler by implementing `ISampler` interface
+You can also implement a custom sampler and should subclass `ActivitySampler`
 
 ```csharp
-class MySampler : Sampler
+class MySampler : ActivitySampler
 {
     public override string Description { get; } = "my custom sampler";
 
-    public override Decision ShouldSample(SpanContext parentContext, ActivityTraceId traceId, ActivitySpanId spanId, string name,
-        IDictionary<string, object> attributes, IEnumerable<Link> links)
+    public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
     {
         bool sampledIn;
-        if (parentContext != null && parentContext.IsValid)
+        var parentContext = samplingParameters.ParentContext;
+        if (parentContext != null && parentContext.IsValid())
         {
-            sampledIn = (parentContext.TraceOptions & ActivityTraceFlags.Recorded) != 0;
+            sampledIn = (parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0;
         }
         else
         {
@@ -43,20 +41,22 @@ class MySampler : Sampler
 
 ### Tracing
 
-Exporters should subclass `SpanExporter` and implement `ExportAsync` and `Shutdown` methods.
-Depending on user's choice and load on the application `ExportAsync` may get called concurrently with zero or more spans.
-Exporters should expect to receive only sampled-in ended spans. Exporters must not throw. Exporters should not modify spans they receive (the same span may be exported again by different exporter).
+- Exporters should subclass `ActivityExporter` and implement `ExportAsync` and `ShutdownAsync` methods.
+- Depending on user's choice and load on the application `ExportAsync` may get called concurrently with zero or more activities.
+- Exporters should expect to receive only sampled-in ended activities.
+- Exporters must not throw.
+- Exporters should not modify activities they receive (the same activity may be exported again by different exporter).
 
 It's a good practice to make exporter `IDisposable` and shut it down in IDispose unless it was shut down explicitly. This helps when exporters are registered with dependency injection framework and their lifetime is tight to the app lifetime.
 
 ```csharp
-class MyExporter : SpanExporter
+class MyExporter : ActivityExporter, IDisposable
 {
-    public override Task<ExportResult> ExportAsync(IEnumerable<Span> batch, CancellationToken cancellationToken)
+    public override Task<ExportResult> ExportAsync(IEnumerable<Activity> batch, CancellationToken cancellationToken)
     {
-        foreach (var span in batch)
+        foreach (var activity in batch)
         {
-            Console.WriteLine($"[{span.StartTimestamp:o}] {span.Name} {span.Context.TraceId.ToHexString()} {span.Context.SpanId.ToHexString()}");
+            Console.WriteLine($"[{activity.StartTimeUtc:o}] {activity.DisplayName} {activity.Context.TraceId.ToHexString()} {activity.Context.SpanId.ToHexString()}");
         }
 
         return Task.FromResult(ExportResult.Success);
@@ -66,17 +66,24 @@ class MyExporter : SpanExporter
     {
         return Task.CompletedTask;
     }
+    
+    public void Dispose()
+    {
+        // ...
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        // ...
+    }
 }
 ```
 
-Users may configure the exporter similarly to other exporters.
-You should also provide additional methods to simplify configuration similarly to `UseZipkin` extension method.
+- Users may configure the exporter similarly to other exporters.
+- You should also provide additional methods to simplify configuration similarly to `UseZipkinExporter` extension method.
 
 ```csharp
-var exporter = new MyExporter();
-using (var tracerFactory = TracerFactory.Create(
-    builder => builder.AddProcessorPipeline(b => b.SetExporter(new MyExporter())))
-{
-    // ...
-}
+OpenTelemetrySdk.EnableOpenTelemetry(b => b
+    .AddActivitySource(ActivitySourceName)
+    .UseMyExporter();
 ```
