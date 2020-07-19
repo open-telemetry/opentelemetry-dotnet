@@ -183,7 +183,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(15, spanName);
         }
 
-        [Event(16, Message = "Exception occuring while invoking Metric Observer callback. '{0}' Exception: '{1}'", Level = EventLevel.Warning)]
+        [Event(16, Message = "Exception occurring while invoking Metric Observer callback. '{0}' Exception: '{1}'", Level = EventLevel.Warning)]
         public void MetricObserverCallbackError(string metricName, string exception)
         {
             this.WriteEvent(16, metricName, exception);
