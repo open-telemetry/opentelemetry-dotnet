@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
             }
         }
 
@@ -97,8 +97,9 @@ namespace OpenTelemetry.Trace.Export
             {
                 this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
-            catch
+            catch (Exception ex)
             {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
             }
 
             if (isDisposing)
@@ -111,7 +112,7 @@ namespace OpenTelemetry.Trace.Export
                     }
                     catch (Exception e)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), e);
                     }
                 }
             }

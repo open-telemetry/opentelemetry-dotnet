@@ -106,14 +106,7 @@ namespace OpenTelemetry.Trace.Export
 
             this.flushTimer.Elapsed += async (sender, args) =>
             {
-                try
-                {
-                    await this.FlushAsyncInternal(drain: false, CancellationToken.None).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("Flush", ex);
-                }
+                await this.FlushAsyncInternal(drain: false, CancellationToken.None).ConfigureAwait(false);
             };
         }
 
@@ -169,8 +162,9 @@ namespace OpenTelemetry.Trace.Export
             {
                 this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
-            catch
+            catch (Exception ex)
             {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
             }
 
             if (isDisposing && !this.isDisposed)
@@ -183,7 +177,7 @@ namespace OpenTelemetry.Trace.Export
                     }
                     catch (Exception e)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), e);
                     }
                 }
 
@@ -228,7 +222,7 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException("Flush", ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.FlushAsyncInternal), ex);
             }
             finally
             {
