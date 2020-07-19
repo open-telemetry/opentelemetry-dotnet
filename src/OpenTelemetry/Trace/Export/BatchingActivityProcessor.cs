@@ -44,7 +44,6 @@ namespace OpenTelemetry.Trace.Export
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly System.Timers.Timer flushTimer;
         private volatile int currentQueueSize;
-        private CancellationTokenSource cts;
         private bool isDisposed;
 
         /// <summary>
@@ -97,7 +96,6 @@ namespace OpenTelemetry.Trace.Export
             this.maxExportBatchSize = maxExportBatchSize;
 
             this.exportQueue = new ConcurrentQueue<Activity>();
-            this.cts = new CancellationTokenSource();
 
             this.flushTimer = new System.Timers.Timer
             {
@@ -108,7 +106,7 @@ namespace OpenTelemetry.Trace.Export
 
             this.flushTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsyncInternal(drain: false, this.cts.Token).ConfigureAwait(false);
+                await this.FlushAsyncInternal(drain: false, CancellationToken.None).ConfigureAwait(false);
             };
         }
 
@@ -185,15 +183,13 @@ namespace OpenTelemetry.Trace.Export
 
                 this.flushTimer.Dispose();
                 this.flushLock.Dispose();
-                this.cts.Dispose();
-                this.cts = null;
                 this.isDisposed = true;
             }
         }
 
         private async Task FlushAsyncInternal(bool drain, CancellationToken cancellationToken)
         {
-            await this.flushLock.WaitAsync().ConfigureAwait(false);
+            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -202,16 +198,22 @@ namespace OpenTelemetry.Trace.Export
                 var queueSize = this.currentQueueSize;
                 do
                 {
-                    var exported = await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
+                    using var cts = new CancellationTokenSource(this.exporterTimeout);
 
-                    if (exported == 0)
+                    int exportedCount;
+                    using (var ct = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token))
+                    {
+                        exportedCount = await this.ExportBatchAsync(ct.Token).ConfigureAwait(false);
+                    }
+
+                    if (exportedCount == 0)
                     {
                         // Break out of drain loop if nothing is being exported, likely means there is an issue
                         // and we don't want to deadlock.
                         break;
                     }
 
-                    queueSize -= exported;
+                    queueSize -= exportedCount;
                 }
 #pragma warning disable SA1009 // Closing parenthesis should be spaced correctly -> Spacing is for readability
                 while (
