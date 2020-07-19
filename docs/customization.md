@@ -42,7 +42,7 @@ class MySampler : ActivitySampler
 ### Tracing
 
 - Exporters should subclass `ActivityExporter` and implement `ExportAsync` and `ShutdownAsync` methods.
-Depending on user's choice and load on the application `ExportAsync` may get called concurrently with zero or more activities.
+- Depending on user's choice and load on the application `ExportAsync` may get called concurrently with zero or more activities.
 - Exporters should expect to receive only sampled-in ended activities.
 - Exporters must not throw.
 - Exporters should not modify activities they receive (the same activity may be exported again by different exporter).
