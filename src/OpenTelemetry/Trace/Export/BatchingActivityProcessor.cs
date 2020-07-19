@@ -44,6 +44,7 @@ namespace OpenTelemetry.Trace.Export
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly System.Timers.Timer flushTimer;
         private volatile int currentQueueSize;
+        private CancellationTokenSource cts;
         private bool isDisposed;
 
         /// <summary>
@@ -96,6 +97,7 @@ namespace OpenTelemetry.Trace.Export
             this.maxExportBatchSize = maxExportBatchSize;
 
             this.exportQueue = new ConcurrentQueue<Activity>();
+            this.cts = new CancellationTokenSource();
 
             this.flushTimer = new System.Timers.Timer
             {
@@ -106,7 +108,7 @@ namespace OpenTelemetry.Trace.Export
 
             this.flushTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsyncInternal(drain: false, CancellationToken.None).ConfigureAwait(false);
+                await this.FlushAsyncInternal(drain: false, this.cts.Token).ConfigureAwait(false);
             };
         }
 
@@ -183,7 +185,8 @@ namespace OpenTelemetry.Trace.Export
 
                 this.flushTimer.Dispose();
                 this.flushLock.Dispose();
-
+                this.cts.Dispose();
+                this.cts = null;
                 this.isDisposed = true;
             }
         }
