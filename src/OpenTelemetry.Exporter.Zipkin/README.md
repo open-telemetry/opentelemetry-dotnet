@@ -1,13 +1,21 @@
 # Zipkin Exporter for OpenTelemetry .NET
 
-Configure Zipkin exporter to see traces in Zipkin UI.
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Zipkin.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Zipkin.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin)
 
-1. Get Zipkin using [getting started
-   guide](https://zipkin.io/pages/quickstart.html).
-2. Configure `ZipkinTraceExporter` as below:
-3. See
-   [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
-   for example use.
+## Prerequisite
+
+* [Get Zipkin](https://zipkin.io/pages/quickstart.html)
+
+## Installation
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Zipkin
+```
+
+## Configuration
+
+Configure `ZipkinTraceExporter` as below:
 
 ```csharp
 using (var tracerFactory = TracerFactory.Create(builder => builder
@@ -30,3 +38,12 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
     }
 }
 ```
+
+See
+[sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
+for example use.
+
+## References
+
+* [OpenTelemetry Project](https://opentelemetry.io/)
+* [Zipkin](https://zipkin.io)
