@@ -18,6 +18,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace
 {
@@ -25,10 +26,11 @@ namespace OpenTelemetry.Trace
     /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
     /// a distributed trace and has result of execution, context of execution and other properties.</para>
     /// </summary>
+    /// <remarks>Represents OpenTelemetry Span https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span.</remarks>
     public class TelemetrySpan : IDisposable
     {
-        internal static TelemetrySpan NoOpInstance = new TelemetrySpan(null);
-        private Activity activity;
+        internal static readonly TelemetrySpan NoopInstance = new TelemetrySpan(null);
+        private readonly Activity activity;
 
         internal TelemetrySpan(Activity activity)
         {
@@ -83,12 +85,16 @@ namespace OpenTelemetry.Trace
         /// implementation.
         /// </summary>
         /// <param name="name">Name of the span.</param>
-        public void UpdateName(string name)
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan UpdateName(string name)
         {
             if (this.activity != null)
             {
                 this.activity.DisplayName = name;
             }
+
+            return this;
         }
 
         /// <summary>
@@ -96,54 +102,70 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="key">Attribute key.</param>
         /// <param name="value">Attribute value. The value may be an <see cref="IEnumerable"/> of primitive types. An enumeration may be iterated multiple times.</param>
-        public void SetAttribute(string key, string value)
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, string value)
         {
             this.activity?.AddTag(key, value);
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpan"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        public void AddEvent(string name)
+        /// <param name="name">Name of the event.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddEvent(string name)
         {
-            this.activity?.AddEvent(new Event(name).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpan"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
-        public void AddEvent(string name, DateTimeOffset timestamp)
+        /// <param name="name">Name of the event.</param>
+        /// <param name="timestamp">Timestamp of the event.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp)
         {
-            this.activity?.AddEvent(new Event(name, timestamp).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, timestamp));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpan"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        /// <param name="attributes">Attributes for the <see cref="Event"/>.</param>
-        public void AddEvent(string name, IDictionary<string, object> attributes)
+        /// <param name="name">Name of the event.</param>
+        /// <param name="attributes">Attributes for the event.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddEvent(string name, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new Event(name, attributes).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, attributes));
+            return this;
         }
 
         /// <summary>
-        /// Adds a single <see cref="Event"/> to the <see cref="TelemetrySpan"/>.
+        /// Adds a single Event to the <see cref="TelemetrySpan"/>.
         /// </summary>
-        /// <param name="name">Name of the <see cref="Event"/>.</param>
-        /// <param name="timestamp">Timestamp of the <see cref="Event"/>.</param>
-        /// <param name="attributes">Attributes for the <see cref="Event"/>.</param>
-        public void AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        /// <param name="name">Name of the event.</param>
+        /// <param name="timestamp">Timestamp of the event.</param>
+        /// <param name="attributes">Attributes for the event.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new Event(name, timestamp, attributes).ActivityEvent);
+            this.activity?.AddEvent(new ActivityEvent(name, timestamp, attributes));
+            return this;
         }
 
         /// <summary>
         /// End the span.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End()
         {
             this.activity?.Stop();
@@ -153,24 +175,27 @@ namespace OpenTelemetry.Trace
         /// End the span.
         /// </summary>
         /// <param name="endTimestamp">End timestamp.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End(DateTimeOffset endTimestamp)
         {
             this.activity?.SetEndTime(endTimestamp.UtcDateTime);
             this.activity?.Stop();
         }
 
-        /// <summary>
-        /// Makes the span as current.
-        /// </summary>
-        public void Activate()
-        {
-            Activity.Current = this.activity;
-        }
-
         /// <inheritdoc/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            this.End();
+            this.activity?.Dispose();
+        }
+
+        /// <summary>
+        /// Marks the span as current.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Activate()
+        {
+            Activity.Current = this.activity;
         }
     }
 }

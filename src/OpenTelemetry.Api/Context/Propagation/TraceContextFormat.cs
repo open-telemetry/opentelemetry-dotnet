@@ -53,7 +53,7 @@ namespace OpenTelemetry.Context.Propagation
                 // There must be a single traceparent
                 if (traceparentCollection == null || traceparentCollection.Count() != 1)
                 {
-                    return SpanContext.BlankRemote;
+                    return default;
                 }
 
                 var traceparent = traceparentCollection.First();
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 if (!traceparentParsed)
                 {
-                    return SpanContext.BlankRemote;
+                    return default;
                 }
 
                 List<KeyValuePair<string, string>> tracestate = null;
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
-            return SpanContext.BlankRemote;
+            return default;
         }
 
         /// <inheritdoc/>
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, TraceParent, traceparent);
 
-            string tracestateStr = TracestateUtils.GetString(spanContext.Tracestate);
+            string tracestateStr = TracestateUtils.GetString(spanContext.TraceState);
             if (tracestateStr.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);

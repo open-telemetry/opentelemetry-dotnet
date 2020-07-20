@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanContextNew.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanContext.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,35 +25,35 @@ namespace OpenTelemetry.Trace
     /// child <see cref="TelemetrySpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>
     /// and <see cref="ActivitySpanId"/> associated with the <see cref="TelemetrySpan"/> and a set of <see cref="TraceFlags"/>.
     /// </summary>
-    public readonly struct SpanContextNew
+    public readonly struct SpanContext
     {
         internal readonly ActivityContext ActivityContext;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SpanContextNew"/> struct with the given identifiers and options.
+        /// Initializes a new instance of the <see cref="SpanContext"/> struct with the given identifiers and options.
         /// </summary>
-        /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContextNew"/>.</param>
-        /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContextNew"/>.</param>
+        /// <param name="traceId">The <see cref="ActivityTraceId"/> to associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="spanId">The <see cref="ActivitySpanId"/> to associate with the <see cref="SpanContext"/>.</param>
         /// <param name="traceFlags">The <see cref="TraceFlags"/> to
-        /// associate with the <see cref="SpanContextNew"/>.</param>
-        /// <param name="isRemote">The value indicating whether this <see cref="SpanContextNew"/> was propagated from the remote parent.</param>
-        /// <param name="traceState">The traceState to associate with the <see cref="SpanContextNew"/>.</param>
-        public SpanContextNew(in ActivityTraceId traceId, in ActivitySpanId spanId, ActivityTraceFlags traceFlags, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> traceState = null)
+        /// associate with the <see cref="SpanContext"/>.</param>
+        /// <param name="isRemote">The value indicating whether this <see cref="SpanContext"/> was propagated from the remote parent.</param>
+        /// <param name="traceState">The traceState to associate with the <see cref="SpanContext"/>.</param>
+        public SpanContext(in ActivityTraceId traceId, in ActivitySpanId spanId, ActivityTraceFlags traceFlags, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> traceState = null)
         {
             this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TracestateUtils.GetString(traceState));
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SpanContextNew"/> struct with the given identifiers and options.
+        /// Initializes a new instance of the <see cref="SpanContext"/> struct with the given identifiers and options.
         /// </summary>
         /// <param name="activityContext">The activity context.</param>
-        internal SpanContextNew(in ActivityContext activityContext)
+        internal SpanContext(in ActivityContext activityContext)
         {
             this.ActivityContext = activityContext;
         }
 
         /// <summary>
-        /// Gets the <see cref="ActivityTraceId"/> associated with this <see cref="SpanContextNew"/>.
+        /// Gets the <see cref="ActivityTraceId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
         public ActivityTraceId TraceId
         {
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the <see cref="ActivitySpanId"/> associated with this <see cref="SpanContextNew"/>.
+        /// Gets the <see cref="ActivitySpanId"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
         public ActivitySpanId SpanId
         {
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the <see cref="ActivityTraceFlags"/> associated with this <see cref="SpanContextNew"/>.
+        /// Gets the <see cref="ActivityTraceFlags"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
         public ActivityTraceFlags TraceFlags
         {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets a value indicating whether this <see cref="SpanContextNew" />
+        /// Gets a value indicating whether this <see cref="SpanContext" />
         /// was propagated from a remote parent.
         /// </summary>
         public bool IsRemote
@@ -99,12 +99,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets a value indicating whether this <see cref="SpanContextNew"/> is valid.
+        /// Gets a value indicating whether this <see cref="SpanContext"/> is valid.
         /// </summary>
         public bool IsValid => this.IsTraceIdValid(this.TraceId) && this.IsSpanIdValid(this.SpanId);
 
         /// <summary>
-        /// Gets the <see cref="TraceState"/> associated with this <see cref="SpanContextNew"/>.
+        /// Gets the <see cref="TraceState"/> associated with this <see cref="SpanContext"/>.
         /// </summary>
         public IEnumerable<KeyValuePair<string, string>> TraceState
         {
@@ -122,18 +122,18 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Compare two <see cref="SpanContextNew"/> for equality.
+        /// Compare two <see cref="SpanContext"/> for equality.
         /// </summary>
         /// <param name="spanContextNew1">First SpanContextNew to compare.</param>
         /// <param name="spanContextNew2">Second SpanContextNew to compare.</param>
-        public static bool operator ==(SpanContextNew spanContextNew1, SpanContextNew spanContextNew2) => spanContextNew1.Equals(spanContextNew2);
+        public static bool operator ==(SpanContext spanContextNew1, SpanContext spanContextNew2) => spanContextNew1.Equals(spanContextNew2);
 
         /// <summary>
-        /// Compare two <see cref="SpanContextNew"/> for not equality.
+        /// Compare two <see cref="SpanContext"/> for not equality.
         /// </summary>
         /// <param name="spanContextNew1">First SpanContextNew to compare.</param>
         /// <param name="spanContextNew2">Second SpanContextNew to compare.</param>
-        public static bool operator !=(SpanContextNew spanContextNew1, SpanContextNew spanContextNew2) => !spanContextNew1.Equals(spanContextNew2);
+        public static bool operator !=(SpanContext spanContextNew1, SpanContext spanContextNew2) => !spanContextNew1.Equals(spanContextNew2);
 
         /// <inheritdoc/>
         public override int GetHashCode()

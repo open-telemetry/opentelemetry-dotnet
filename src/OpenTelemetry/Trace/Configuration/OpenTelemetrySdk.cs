@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Configuration
         public static OpenTelemetrySdk EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
         {
             var openTelemetryBuilder = new OpenTelemetryBuilder();
-            configureOpenTelemetryBuilder(openTelemetryBuilder);
+            configureOpenTelemetryBuilder?.Invoke(openTelemetryBuilder);
 
             var openTelemetrySDK = new OpenTelemetrySdk();
             ActivitySampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnActivitySampler();

@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace
 {
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class Tracer
     {
-        private ActivitySource activitySource;
+        private readonly ActivitySource activitySource;
 
         internal Tracer(ActivitySource activitySource)
         {
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Trace
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal)
         {
             // TODO: Open Question - should we have both StartSpan and StartActiveSpan?
@@ -60,14 +62,14 @@ namespace OpenTelemetry.Trace
             // Some discussions in Spec: https://github.com/open-telemetry/opentelemetry-specification/pull/485
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.activitySource.StartActivity(name, activityKind);
             if (activity == null)
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             return new TelemetrySpan(activity);
@@ -80,18 +82,19 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <param name="parent">Parent for new span.</param>
         /// <returns>Span instance.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent)
         {
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext);
             if (activity == null)
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             return new TelemetrySpan(activity);
@@ -102,14 +105,15 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
-        /// <param name="parent">Parent for new span.</param>
+        /// <param name="parentSpan">Parent for new span.</param>
         /// <param name="attributes">Initial attributes for the span.</param>
         /// <param name="links"> <see cref="Link"/> for the span.</param>
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartSpan(name, kind, parent.Context, attributes, links, startTime);
+            return this.StartSpan(name, kind, parentSpan.Context, attributes, links, startTime);
         }
 
         /// <summary>
@@ -117,16 +121,17 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
-        /// <param name="parent">Parent for new span.</param>
+        /// <param name="parentContext">Parent Context for new span.</param>
         /// <param name="attributes">Initial attributes for the span.</param>
         /// <param name="links"> <see cref="Link"/> for the span.</param>
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.activitySource.HasListeners())
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
@@ -141,10 +146,10 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var activity = this.activitySource.StartActivity(name, activityKind, parent.ActivityContext, attributes, activityLinks, startTime);
+            var activity = this.activitySource.StartActivity(name, activityKind, parentContext.ActivityContext, attributes, activityLinks, startTime);
             if (activity == null)
             {
-                return TelemetrySpan.NoOpInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             return new TelemetrySpan(activity);
@@ -155,12 +160,14 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="span">The span to be made current.</param>
         /// <returns>The current span.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan WithSpan(TelemetrySpan span)
         {
             span.Activate();
             return span;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ActivityKind ConvertToActivityKind(SpanKind kind)
         {
             switch (kind)
