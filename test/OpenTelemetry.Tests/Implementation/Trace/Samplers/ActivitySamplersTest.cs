@@ -55,9 +55,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void AlwaysOnSampler_GetDescription()
         {
-            // TODO: The name must be AlwaysOnSampler as per spec.
-            // We should correct it when we replace span sampler with this.
-            Assert.Equal("AlwaysOnActivitySampler", new AlwaysOnActivitySampler().Description);
+            Assert.Equal("AlwaysOnSampler", new AlwaysOnActivitySampler().Description);
         }
 
         [Theory]
@@ -82,9 +80,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void AlwaysOffSampler_GetDescription()
         {
-            // TODO: The name must be AlwaysOffSampler as per spec.
-            // We should correct it when we replace span sampler with this.
-            Assert.Equal("AlwaysOffActivitySampler", new AlwaysOffActivitySampler().Description);
+            Assert.Equal("AlwaysOffSampler", new AlwaysOffActivitySampler().Description);
         }
     }
 }
