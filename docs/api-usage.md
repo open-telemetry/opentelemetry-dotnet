@@ -4,11 +4,12 @@
 
 - [Getting Started](#getting-started)
   - [Introduction to OpenTelemetry .NET API](#introduction-to-opentelemetry-net-api)
-  - [Instrumenting a library/application with OpenTelemetry API](#instrumenting-a-libraryapplication-with-opentelemetry-api)
+  - [Instrumenting a library/application with .NET Activity API](#instrumenting-a-libraryapplication-with-net-activity-api)
     - [Basic usage](#basic-usage)
     - [Activity creation options](#activity-creation-options)
     - [Adding Events](#adding-events)
     - [Setting Status](#setting-status)
+  - [Instrumenting a library/application with OpenTelemetry.API Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
 
 ## Introduction to OpenTelemetry .NET API
 
@@ -16,11 +17,11 @@
 
 The `Activity` and associated classes are shipped as part of `System.Diagnostics.DiagnosticSource` nuget package. Version 5.0.0 of this package contains improvements to `Activity` class which makes it more closely aligned with OpenTelemetry [API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md).
 
-Even though `Activity` enables all the scenarios OpenTelemetry supports, users who are already familiar with OpenTelemetry terminology may find it easy to operate with that terminology. For instance, `StartSpan` may be preferred over `StartActivity`. To help with this transition, the OpenTelemetry.API package has shim classes to wrap around the .NET `Activity` classes.
+Even though `Activity` enables all the scenarios OpenTelemetry supports, users who are already familiar with OpenTelemetry terminology may find it easy to operate with that terminology. For instance, `StartSpan` may be preferred over `StartActivity`. To help with this transition, the OpenTelemetry.API package has [shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim) classes to wrap around the .NET `Activity` classes.
 
 The shim exist only in the API. OpenTelemetry SDK for .NET will be operating entirely with `Activity` only. Irrespective of whether shim classes or `Activity` is used for instrumentation, the end result would be same. i.e Processors/Exporters see the same data.
 
-## Instrumenting a library/application with OpenTelemetry API
+## Instrumenting a library/application with .NET Activity API
 
 ### Basic usage
 
@@ -144,3 +145,7 @@ Example:
     activity?.AddTag("ot.status_code", "status canonical code");
     activity?.AddTag("ot.status_description", "status description");
 ```
+
+## Instrumenting a library/application with OpenTelemetry.API Shim
+
+This section to be filled after shim is shipped.
