@@ -21,7 +21,8 @@ You can configure the `OtlpExporter` by following the directions below:
 * `Headers`: Optional headers for the connection.
 
 See the
-[`TestOtlpExporter.cs`](../../samples/Exporters/Console/TestOtlpExporter.cs) for an example of how to use the exporter.
+[`TestOtlpExporter.cs`](../../samples/Exporters/Console/TestOtlpExporter.cs)
+for an example of how to use the exporter.
 
 ## References
 
