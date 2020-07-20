@@ -31,6 +31,11 @@ namespace OpenTelemetry.Trace
 
         internal Tracer(ActivitySource activitySource)
         {
+            if (activitySource == null)
+            {
+                throw new ArgumentNullException(nameof(activitySource));
+            }
+
             this.activitySource = activitySource;
         }
 

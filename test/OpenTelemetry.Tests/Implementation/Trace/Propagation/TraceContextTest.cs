@@ -128,7 +128,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var ctx = f.Extract(headers, Getter);
 
             Assert.Empty(ctx.TraceState);
-            Assert.Equal(string.Empty, TracestateUtils.GetString(ctx.TraceState));
+            Assert.Equal(string.Empty, TraceStateUtils.GetString(ctx.TraceState));
         }
 
         [Fact]
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.Equal("k3", entries[2].Key);
             Assert.Equal("v3", entries[2].Value);
 
-            Assert.Equal("k1=v1,k2=v2,k3=v3", TracestateUtils.GetString(ctx.TraceState));
+            Assert.Equal("k1=v1,k2=v2,k3=v3", TraceStateUtils.GetString(ctx.TraceState));
         }
     }
 }
