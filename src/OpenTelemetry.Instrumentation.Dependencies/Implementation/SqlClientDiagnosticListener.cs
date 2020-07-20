@@ -102,7 +102,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 {
                                     case CommandType.StoredProcedure:
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
-                                        if (this.options.CaptureStoredProcedureCommandName)
+                                        if (this.options.SetStoredProcedureCommandName)
                                         {
                                             activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
                                         }
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
                                     case CommandType.Text:
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
-                                        if (this.options.CaptureTextCommandContent)
+                                        if (this.options.SetTextCommandContent)
                                         {
                                             activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
                                         }
