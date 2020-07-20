@@ -1,7 +1,10 @@
 # Getting Started
 
 - [Getting Started](#getting-started)
-  - [Introduction to OpenTelemetry .NET API](#introduction-to-opentelemetry-net-api)
+  - [OpenTelemetry API](#opentelemetry-api)
+    - [Tracer API](#tracer-api)
+    - [Metric API](#metric-api)
+  - [Introduction to OpenTelemetry .NET Tracer API](#introduction-to-opentelemetry-net-tracer-api)
   - [Instrumenting a library/application with .NET Activity API](#instrumenting-a-libraryapplication-with-net-activity-api)
     - [Basic usage](#basic-usage)
     - [Activity creation options](#activity-creation-options)
@@ -9,7 +12,19 @@
     - [Setting Status](#setting-status)
   - [Instrumenting a library/application with OpenTelemetry.API Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
 
-## Introduction to OpenTelemetry .NET API
+## OpenTelemetry API
+
+Application developers and library authors use OpenTelemetry API to instrument their application/library. The API only surfaces necessary abstractions to instrument an application/library. It does not address concerns like how telemetry is exported to a specific telemetry backend, how to sample the telemetry, etc. The API consists of [Tracer API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md), [Metric API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md), [Context and Propagation API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/context), and a set of [semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
+
+### Tracer API
+
+[Tracer API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md) allows users to generate [Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span), which represent a single operation within a trace. Spans can be nested to form a trace tree. Each trace contains a root span, which typically describes the entire operation and, optionally one or more sub-spans for its sub-operations.
+
+### Metric API
+
+[Metric API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md) allows users to capture measurements about the execution of a computer program at runtime. The Metric API is designed to process raw measurements, generally with the intent to produce continuous summaries of those measurements.
+
+## Introduction to OpenTelemetry .NET Tracer API
 
 .NET runtime had `Activity` class for a long time, which was meant to be used for tracing purposes and represents the equivalent of the OpenTelemetry [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span). OpenTelemetry .NET is reusing the existing `Activity` and associated classes to represent the OpenTelemetry `Span`. This means, users can instrument their applications/libraries to emit OpenTelemetry compatible traces by using just the .NET Runtime.
 
@@ -36,9 +51,9 @@ As mentioned in the introduction, the instrumentation API for OpenTelemetry .NET
 2. Create an `ActivitySource`, providing the name and version of the library/application being instrumented. `ActivitySource` instance is typically created once and is reused throughout the application/library.
 
 ```csharp
-    static ActivitySource activitySource = new ActivitySource("companyname.product.library", "semver1.0");
+    static ActivitySource activitySource = new ActivitySource("companyname.product.library", "semver1.0.0");
 ```
-    The above requires import of the `using System.Diagnostics;` namespace.
+    The above requires import of the `System.Diagnostics` namespace.
 
 3. Use the `ActivitySource` instance from above to create `Activity` instances, which represent a single operation within a trace. The parameter passed is the `DisplayName` of the activity.
 
