@@ -39,7 +39,9 @@ using (var tracerFactory = TracerFactory.Create(builder => builder
 }
 ```
 
-See [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs) for example use.
+See
+[sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
+for example use.
 
 ## References
 
