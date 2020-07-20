@@ -29,7 +29,8 @@ the following.
    2. Jaeger - Exports traces to [Jaeger](https://www.jaegertracing.io/)
    3. Zipkin- Exports traces to [Zipkin](https://zipkin.io/)
    4. zPages- Exports traces to [zPages](https://opencensus.io/zpages/)
-   5. Prometheus.- Exports metrics to [Prometheus](https://prometheus.io/)
+   5. OpenTelemetry Protocol - Exports traces using OpenTelemetry protocol to the OpenTelemetry Collector.
+   6. Prometheus.- Exports metrics to [Prometheus](https://prometheus.io/)
 4. Extensibility options for users to customize SDK.
 
 ## Basic usage
