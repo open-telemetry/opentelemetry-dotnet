@@ -1,16 +1,21 @@
 # ASP.NET Instrumentation
 
-Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express (if supported) to collect incoming request information.
+Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
+(if supported) to collect incoming request information.
 
-1. Add a reference to the `OpenTelemetry.Instrumentation.AspNet` package. Add any other instrumentations & exporters you will need.
+1. Add a reference to the `OpenTelemetry.Instrumentation.AspNet` package. Add
+   any other instrumentations & exporters you will need.
 
 2. Add the Microsoft telemetry module in your `Web.config`:
 
     ```xml
     <system.webServer>
-        <modules>
-          <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation" preCondition="integratedMode,managedHandler"/>
-        </modules>
+      <modules>
+        <add name="TelemetryCorrelationHttpModule"
+        type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule,
+        Microsoft.AspNet.TelemetryCorrelation"
+        preCondition="integratedMode,managedHandler" />
+      </modules>
     </system.webServer>
     ```
 

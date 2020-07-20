@@ -1,6 +1,7 @@
 # Using StackExchange.Redis instrumentation
 
-Outgoing calls to Redis made using `StackExchange.Redis` library can be automatically tracked.
+Outgoing calls to Redis made using `StackExchange.Redis` library can be
+automatically tracked.
 
 1. Install package to your project:
    [OpenTelemetry.Instrumentation.StackExchangeRedis](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.StackExchangeRedis)
@@ -18,4 +19,5 @@ Outgoing calls to Redis made using `StackExchange.Redis` library can be automati
         .SetResource(Resources.CreateServiceResource("my-service"));
     ```
 
-For a more detailed example see [TestRedis](../../samples/Exporters/Console/TestRedis.cs).
+For a more detailed example see
+[TestRedis](../../samples/Exporters/Console/TestRedis.cs).

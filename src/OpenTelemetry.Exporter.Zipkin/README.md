@@ -2,9 +2,12 @@
 
 Configure Zipkin exporter to see traces in Zipkin UI.
 
-1. Get Zipkin using [getting started guide](https://zipkin.io/pages/quickstart.html).
+1. Get Zipkin using [getting started
+   guide](https://zipkin.io/pages/quickstart.html).
 2. Configure `ZipkinTraceExporter` as below:
-3. See [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs) for example use.
+3. See
+   [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
+   for example use.
 
 ```csharp
 using (var tracerFactory = TracerFactory.Create(builder => builder

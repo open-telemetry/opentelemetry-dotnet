@@ -2,9 +2,12 @@
 
 Configure Prometheus exporter to have stats collected by Prometheus.
 
-1. Get Prometheus using [getting started guide](https://prometheus.io/docs/introduction/first_steps/).
+1. Get Prometheus using [getting started
+   guide](https://prometheus.io/docs/introduction/first_steps/).
 2. Start `PrometheusExporter` as below.
-3. See [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestPrometheus.cs) for example use.
+3. See
+   [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestPrometheus.cs)
+   for example use.
 
 ```csharp
 var exporter = new PrometheusExporter(

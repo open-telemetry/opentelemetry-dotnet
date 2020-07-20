@@ -16,4 +16,4 @@ jobs:
       run: sudo npm install -g markdownlint-cli
 
     - name: run markdownlint
-      run: markdownlint **/*.md --config build/markdownlint.json
+      run: markdownlint **/*.md
