@@ -16,15 +16,21 @@
 
 OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
 implements the Tracer API, the Metric API, and the Context API. OpenTelemetry
-SDK deals with concerns such as sampling the telemetry data, processing pipeline
-for the telemetry, exporting telemetry to a particular backend etc. The default
-implementation consists of the following.
+SDK deals with concerns such as sampling, processing pipeline, exporting
+telemetry to a particular backend etc. The default implementation consists of
+the following.
 
-1. Set of Samplers.
-2. SimpleProcessor which sends ended Activities to the exporter.
-3. BatchingProcessor which batches and sends Activities to the exporter.
-4. Exporters - Console, Jaeger, Zipkin, Zpages, Prometheus.
-5. Extensibility options for users to customize SDK.
+1. Set of [Built-in samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-samplers)
+2. Set of [Built-in processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors).
+   1. SimpleProcessor which sends Activities to the exporter without any batching.
+   2. BatchingProcessor which batches and sends Activities to the exporter.
+3. Set of [Built-in exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)
+   1. Console - Displays activities in console. Used for testing purposes.
+   2. Jaeger - Exports traces to [Jaeger](https://www.jaegertracing.io/)
+   3. Zipkin- Exports traces to [Zipkin](https://zipkin.io/)
+   4. zPages- Exports traces to [zPages](https://opencensus.io/zpages/)
+   5. Prometheus.- Exports metrics to [Prometheus](https://prometheus.io/)
+4. Extensibility options for users to customize SDK.
 
 ## Basic usage
 
