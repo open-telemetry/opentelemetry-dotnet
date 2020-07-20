@@ -19,8 +19,7 @@ using System.Globalization;
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
-    /// Otherwise, samples traces according to the specified probability.
+    /// Samples traces according to the specified probability.
     /// </summary>
     public sealed class ProbabilityActivitySampler : ActivitySampler
     {

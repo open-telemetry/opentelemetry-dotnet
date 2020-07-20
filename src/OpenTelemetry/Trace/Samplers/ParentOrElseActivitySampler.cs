@@ -18,10 +18,18 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
+    /// <summary>
+    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
+    /// Otherwise, samples root traces according to the specified delegate sampler.
+    /// </summary>
     public sealed class ParentOrElseActivitySampler : ActivitySampler
     {
         private readonly ActivitySampler delegateSampler;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ParentOrElseActivitySampler"/> class.
+        /// </summary>
+        /// <param name="delegateSampler">The <see cref="ActivitySampler"/> to be called to decide whether or not to sample a root trace.</param>
         public ParentOrElseActivitySampler(ActivitySampler delegateSampler)
         {
             this.delegateSampler = delegateSampler ?? throw new ArgumentNullException(nameof(delegateSampler));
