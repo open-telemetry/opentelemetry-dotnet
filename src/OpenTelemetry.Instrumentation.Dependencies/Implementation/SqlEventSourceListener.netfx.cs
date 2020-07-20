@@ -123,7 +123,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 else
                 {
                     activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
-                    if (this.options.CaptureStoredProcedureCommandName)
+                    if (this.options.SetStoredProcedureCommandName)
                     {
                         activity.AddTag(SemanticConventions.AttributeDBStatement, commandText);
                     }
