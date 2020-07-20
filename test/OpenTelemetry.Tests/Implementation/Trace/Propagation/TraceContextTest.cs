@@ -58,14 +58,14 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.True(ctx.IsValid);
             Assert.True((ctx.TraceFlags & ActivityTraceFlags.Recorded) != 0);
 
-            Assert.Equal(2, ctx.Tracestate.Count());
+            Assert.Equal(2, ctx.TraceState.Count());
 
-            var first = ctx.Tracestate.First();
+            var first = ctx.TraceState.First();
 
             Assert.Equal("congo", first.Key);
             Assert.Equal("lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4", first.Value);
 
-            var last = ctx.Tracestate.Last();
+            var last = ctx.TraceState.Last();
 
             Assert.Equal("rojo", last.Key);
             Assert.Equal($"00-{TraceId}-00f067aa0ba902b7-01", last.Value);
@@ -127,8 +127,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
-            Assert.Empty(ctx.Tracestate);
-            Assert.Equal(string.Empty, TracestateUtils.GetString(ctx.Tracestate));
+            Assert.Empty(ctx.TraceState);
+            Assert.Equal(string.Empty, TracestateUtils.GetString(ctx.TraceState));
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
-            var entries = ctx.Tracestate.ToArray();
+            var entries = ctx.TraceState.ToArray();
             Assert.Equal(3, entries.Length);
             Assert.Equal("k1", entries[0].Key);
             Assert.Equal("v1", entries[0].Value);
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             Assert.Equal("k3", entries[2].Key);
             Assert.Equal("v3", entries[2].Value);
 
-            Assert.Equal("k1=v1,k2=v2,k3=v3", TracestateUtils.GetString(ctx.Tracestate));
+            Assert.Equal("k1=v1,k2=v2,k3=v3", TracestateUtils.GetString(ctx.TraceState));
         }
     }
 }
