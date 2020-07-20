@@ -9,34 +9,31 @@ Status](https://github.com/open-telemetry/opentelemetry-dotnet/workflows/.NET%20
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
-## Installation
+## Getting Started
 
-This repository includes multiple installable packages, available on
-[NuGet](https://www.nuget.org/profiles/OpenTelemetry):
+This repository includes multiple installable components, available on
+[NuGet](https://www.nuget.org/profiles/OpenTelemetry).
 
-* The `OpenTelemetry.Api` package includes abstract classes and no-op
-  implementations for the [OpenTelemetry
-  specification](https://github.com/open-telemetry/opentelemetry-specification).
-* The `OpenTelemetry` package is the reference implementation of the API.
+Each package has its individual `README.md` file, which covers the instruction
+on how to install and how to get started. To find all the available components,
+please take a look at the [`src`](./src/) folder.
 
-Libraries that produce telemetry data should only depend on
-`OpenTelemetry.Api`, and defer the choice of the SDK to the application
-developer. Applications may depend on `OpenTelemetry` or another package that
-implements the API.
-
-**Please note** that this library is currently in _alpha_, and shouldn't
-generally be used in production environments.
-
-## Documentation
+Here are the most commonly used components:
 
 * [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
 * [OpenTelemetry .NET SDK](./docs/sdk-usage.md)
 * [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
-## Compatible Exporters
+Here are the exporters:
+
+* [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
+* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
-a list of exporters available.
+more exporters.
 
 ## Contributing
 
