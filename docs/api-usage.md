@@ -1,7 +1,5 @@
 # Getting Started
 
-[Instrumenting a library/application with OpenTelemetry API](#instrumenting-a-libraryapplication-with-opentelemetry-api)
-
 - [Getting Started](#getting-started)
   - [Introduction to OpenTelemetry .NET API](#introduction-to-opentelemetry-net-api)
   - [Instrumenting a library/application with .NET Activity API](#instrumenting-a-libraryapplication-with-net-activity-api)
@@ -144,6 +142,7 @@ Apart from providing name, timestamp and attributes can be provided by using cor
 ### Setting Status
 
 OpenTelemetry defines a concept called [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status) to be associated with `Activity`. There is no `Status` class in .NET, and hence `Status` is set to an `Activity` using the following special tags
+
 `ot.status_code` is the `Tag` name used to store the [Status Canonical Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#statuscanonicalcode).
 `ot.status_description` is the `Tag` name used to store the optional [Description](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#getdescription)
 
