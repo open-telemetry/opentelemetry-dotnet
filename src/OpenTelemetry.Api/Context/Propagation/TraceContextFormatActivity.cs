@@ -43,8 +43,51 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
         /// <inheritdoc/>
+        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
+            try
+            {
+                var traceparentCollection = getter(carrier, TraceParent);
+
+                // There must be a single traceparent
+                return traceparentCollection != null && traceparentCollection.Count() == 1;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+            }
+
+            // in case of exception indicate to upstream that there is no parseable context from the top
+            return false;
+        }
+
+        /// <inheritdoc/>
         public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return default;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return default;
+            }
+
             try
             {
                 var traceparentCollection = getter(carrier, TraceParent);
