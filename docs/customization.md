@@ -66,7 +66,7 @@ class MyExporter : ActivityExporter, IDisposable
     {
         return Task.CompletedTask;
     }
-    
+
     public void Dispose()
     {
         // ...

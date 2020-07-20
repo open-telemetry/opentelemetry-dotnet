@@ -13,7 +13,7 @@ on how to become a [**Member**](https://github.com/open-telemetry/community/blob
 [**Approver**](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver)
 and [**Maintainer**](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
 
-# Find a Buddy and get Started Quickly!
+## Find a Buddy and get Started Quickly
 
 If you are looking for someone to help you find a starting point and be a resource for your first contribution, join our
 Gitter and find a buddy!
@@ -96,13 +96,13 @@ pull requests (PRs).
 To create a new PR, fork the project in GitHub and clone the upstream repo:
 
 ```sh
-$ git clone https://github.com/open-telemetry/opentelemetry-dotnet.git
+git clone https://github.com/open-telemetry/opentelemetry-dotnet.git
 ```
 
 Add your fork as an origin:
 
 ```sh
-$ git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
+git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
 ```
 
 Run tests:
@@ -131,6 +131,7 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 ### How to Get PRs Merged
 
 A PR is considered to be **ready to merge** when:
+
 * It has received approval from [Approvers](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).
   / [Maintainers](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
 * Major feedbacks are resolved.
@@ -143,7 +144,7 @@ Any Maintainer can merge the PR once it is **ready to merge**. Note, that some P
 
 ## Design Choices
 
-As with other OpenTelemetry clients, opentelemetry-dotnet follows the 
+As with other OpenTelemetry clients, opentelemetry-dotnet follows the
 [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification).
 
 It's especially valuable to read through the [library guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/library-guidelines.md).
@@ -156,10 +157,10 @@ use cases are clear, but the method to satisfy those uses cases are not.
 As such, contributions should provide functionality and behavior that
 conforms to the specification, but the interface and structure is flexible.
 
-It is preferable to have contributions follow the idioms of the language 
+It is preferable to have contributions follow the idioms of the language
 rather than conform to specific API names or argument patterns in the spec.
 
-For a deeper discussion, see: https://github.com/open-telemetry/opentelemetry-specification/issues/165
+For a deeper discussion, see [this spec issue](https://github.com/open-telemetry/opentelemetry-specification/issues/165).
 
 ## Style Guide
 

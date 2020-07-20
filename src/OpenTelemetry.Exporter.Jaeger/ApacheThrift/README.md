@@ -1,4 +1,4 @@
-﻿# Open Telemetry - Jaeger Exporter - Apache Thrift 
+﻿# Open Telemetry - Jaeger Exporter - Apache Thrift
 
 This folder contains a stripped-down fork of the [ApacheThrift 0.13.0.1](https://www.nuget.org/packages/ApacheThrift/0.13.0.1) library from the [apache/thrift](https://github.com/apache/thrift/tree/0.13.0) repo. Only the client bits we need to transmit spans to Jaeger using the compact Thrift protocol over UDP are included. Removing the other stuff (mainly the server bits) allowed us to also remove all of the dependencies ApacheThrift requires with the exception of `System.Threading.Tasks.Extensions` (needed for .NET Standard 2.0 target only).
 
@@ -12,7 +12,7 @@ Ideally we would consume the official package but these issues made it difficult
 Changes:
 
 * Everything made internal.
-* Added https://github.com/apache/thrift/pull/2093.
-* Added https://github.com/apache/thrift/pull/2057.
+* Added [PR#2093](https://github.com/apache/thrift/pull/2093).
+* Added [PR#2057](https://github.com/apache/thrift/pull/2057).
 
 Other than those changes, files included are in their entirety. Meaning, if we used anything out of a .cs file in the Thrift repo, the whole file was included. For example, in `TCompactProtocol` there are a bunch of "Read" operations. We don't use those, but they were left in.

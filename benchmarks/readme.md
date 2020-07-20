@@ -1,4 +1,6 @@
-﻿Use the following example to run Benchmarks from command line:
+﻿# OpenTelemetry SDK Benchmark
+
+Use the following example to run Benchmarks from command line:
 (change parameters as necessary)
 
 1. navigate to opentelemetry-dotnet\src\benchmarks directory and run the following
