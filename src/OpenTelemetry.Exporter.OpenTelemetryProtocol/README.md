@@ -6,6 +6,10 @@
 The OTLP (OpenTelemetry Protocol) exporter communicates to an OpenTelemetry
 Collector through a gRPC protocol.
 
+## Prerequisite
+
+* [Get OpenTelemetry Collector](https://opentelemetry.io/docs/collector/about/)
+
 ## Installation
 
 ```shell
