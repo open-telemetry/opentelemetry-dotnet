@@ -215,9 +215,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using (OpenTelemetrySdk.EnableOpenTelemetry(
                    (builder) =>
                    builder.AddHttpClientDependencyInstrumentation(
-                       (opt) => opt.EventFilter = (activityName, arg1, _) => !(activityName == "System.Net.Http.HttpRequestOut" &&
-                                                                                        arg1 is HttpRequestMessage request &&
-                                                                                        request.RequestUri.OriginalString.Contains(this.url)))
+                       (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();

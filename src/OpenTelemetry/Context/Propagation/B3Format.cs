@@ -70,6 +70,43 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
+        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
+            try
+            {
+                if (this.singleHeader)
+                {
+                    var header = getter(carrier, XB3Combined)?.FirstOrDefault();
+                    return !string.IsNullOrWhiteSpace(header);
+                }
+                else
+                {
+                    var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
+                    var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
+
+                    return traceIdStr != null && spanIdStr != null;
+                }
+            }
+            catch (Exception e)
+            {
+                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
+                return false;
+            }
+        }
+
+        /// <inheritdoc/>
         public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)

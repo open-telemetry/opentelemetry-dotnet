@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics
                          * Additional notes:
                          * This lock is never taken for bound instruments, and they offer the fastest performance.
                          * This lock is only taken for those labelsets which are marked CandidateForRemoval.
-                         * It means the the 1st time a labelset is re-encountered after two Collect() has occured,
+                         * It means the the 1st time a labelset is re-encountered after two Collect() has occurred,
                          * this lock must be taken. Subsequent usage of this labelset before the next two Collect()
                          * will already have status promoted, and no lock is taken.
                          * In effect, the lock is only taken for those labelsets
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics
                 if (this.counterBoundInstruments.TryGetValue(labelSet, out var boundInstrument))
                 {
                     // Check status again, inside lock as an instrument update
-                    // might have occured which promoted this record.
+                    // might have occurred which promoted this record.
                     if (boundInstrument.Status == RecordStatus.CandidateForRemoval)
                     {
                         this.counterBoundInstruments.Remove(labelSet);

@@ -28,6 +28,12 @@ namespace Benchmarks.Tracing
             return activity;
         }
 
+        public static Activity CreateActivityWithKind(ActivitySource source)
+        {
+            var activity = source.StartActivity("name", ActivityKind.Client);
+            return activity;
+        }
+
         public static Activity CreateActivityFromParentContext(ActivitySource source, ActivityContext parentCtx)
         {
             var activity = source.StartActivity("name", ActivityKind.Internal, parentCtx);

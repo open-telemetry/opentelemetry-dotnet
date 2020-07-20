@@ -25,25 +25,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     public class HttpClientInstrumentationOptions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientInstrumentationOptions"/> class.
-        /// </summary>
-        public HttpClientInstrumentationOptions()
-        {
-            this.EventFilter = DefaultFilter;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientInstrumentationOptions"/> class.
-        /// </summary>
-        /// <param name="eventFilter">Custom filtering predicate for DiagnosticSource events, if any.</param>
-        internal HttpClientInstrumentationOptions(Func<string, object, object, bool> eventFilter)
-        {
-            // TODO This API is unusable and likely to change, let's not expose it for now.
-
-            this.EventFilter = eventFilter;
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether add HTTP version to a trace.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
@@ -54,54 +35,55 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         public ITextFormatActivity TextFormat { get; set; } = new TraceContextFormatActivity();
 
         /// <summary>
-        /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
+        /// Gets or sets an optional callback method for filtering HttpClient requests that are sent through the instrumentation.
         /// </summary>
-        internal Func<string, object, object, bool> EventFilter { get; set; }
+        public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
-        private static bool DefaultFilter(string activityName, object arg1, object unused)
+        internal static bool IsInternalUrl(Uri requestUri)
         {
-            // TODO: there is some preliminary consensus that we should introduce 'terminal' spans or context.
-            // exporters should ensure they set it
+            var originalString = requestUri.OriginalString;
 
-            if (IsHttpOutgoingPostRequest(activityName, arg1, out Uri requestUri))
+            // zipkin
+            if (originalString.Contains(":9411/api/v2/spans"))
             {
-                var originalString = requestUri.OriginalString;
+                return true;
+            }
 
-                // zipkin
-                if (originalString.Contains(":9411/api/v2/spans"))
+            // applicationinsights
+            if (originalString.StartsWith("https://dc.services.visualstudio") ||
+                originalString.StartsWith("https://rt.services.visualstudio") ||
+                originalString.StartsWith("https://dc.applicationinsights") ||
+                originalString.StartsWith("https://live.applicationinsights") ||
+                originalString.StartsWith("https://quickpulse.applicationinsights"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        internal bool EventFilter(string activityName, object arg1)
+        {
+            if (TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage))
+            {
+                Uri requestUri;
+                if (requestMessage.Method == HttpMethod.Post && (requestUri = requestMessage.RequestUri) != null)
                 {
-                    return false;
+                    if (IsInternalUrl(requestUri))
+                    {
+                        return false;
+                    }
                 }
 
-                // applicationinsights
-                if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                    originalString.StartsWith("https://rt.services.visualstudio") ||
-                    originalString.StartsWith("https://dc.applicationinsights") ||
-                    originalString.StartsWith("https://live.applicationinsights") ||
-                    originalString.StartsWith("https://quickpulse.applicationinsights"))
-                {
-                    return false;
-                }
+                return this.FilterFunc?.Invoke(requestMessage) ?? true;
             }
 
             return true;
         }
 
-        private static bool IsHttpOutgoingPostRequest(string activityName, object arg1, out Uri requestUri)
+        private static bool TryParseHttpRequestMessage(string activityName, object arg1, out HttpRequestMessage requestMessage)
         {
-            if (activityName == "System.Net.Http.HttpRequestOut")
-            {
-                if (arg1 is HttpRequestMessage request &&
-                    request.RequestUri != null &&
-                    request.Method == HttpMethod.Post)
-                {
-                    requestUri = request.RequestUri;
-                    return true;
-                }
-            }
-
-            requestUri = null;
-            return false;
+            return (requestMessage = arg1 as HttpRequestMessage) != null && activityName == "System.Net.Http.HttpRequestOut";
         }
     }
 }
