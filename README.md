@@ -11,12 +11,13 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Installation
 
-This repository includes multiple installable packages. The `OpenTelemetry.Api`
-package includes abstract classes and no-op implementations for the
-[OpenTelemetry API
-specification](https://github.com/open-telemetry/opentelemetry-specification).
+This repository includes multiple installable packages, available on
+[NuGet](https://www.nuget.org/profiles/OpenTelemetry):
 
-The `OpenTelemetry` package is the reference implementation of the API.
+* The `OpenTelemetry.Api` package includes abstract classes and no-op
+  implementations for the [OpenTelemetry
+  specification](https://github.com/open-telemetry/opentelemetry-specification).
+* The `OpenTelemetry` package is the reference implementation of the API.
 
 Libraries that produce telemetry data should only depend on
 `OpenTelemetry.Api`, and defer the choice of the SDK to the application
@@ -26,18 +27,11 @@ implements the API.
 **Please note** that this library is currently in _alpha_, and shouldn't
 generally be used in production environments.
 
-The API and SDK packages are available on the following NuGet feeds:
-
-* [MyGet V2](https://www.myget.org/F/opentelemetry/api/v2)
-* [MyGet V3](https://www.myget.org/F/opentelemetry/api/v3/index.json)
-
 ## Documentation
 
-[OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
-
-[OpenTelemetry .NET SDK](./docs/sdk-usage.md)
-
-[OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
+* [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
+* [OpenTelemetry .NET SDK](./docs/sdk-usage.md)
+* [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
 ## Compatible Exporters
 
