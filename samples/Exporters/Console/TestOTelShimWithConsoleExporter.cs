@@ -32,8 +32,8 @@ namespace Samples
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
-            // The above line is required only in Applications
-            // which decide to use OT.
+            // The above line is required only in applications
+            // which decide to use Open Telemetry.
 
             var tracer = TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer");
             var span = tracer.StartSpan("parent span");
@@ -41,7 +41,7 @@ namespace Samples
             span.UpdateName("parent span new name");
 
             var spanChild = tracer.StartSpan("child span");
-            spanChild.SetAttribute("ch", "value");
+            spanChild.AddEvent("sample event").SetAttribute("ch", "value").SetAttribute("more", "attributes");
             spanChild.End();
 
             span.End();
