@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddSqlClientDependencyInstrumentation(options =>
                 {
-                    options.CaptureStoredProcedureCommandName = captureText;
+                    options.SetStoredProcedureCommandName = captureText;
                 });
             });
 
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddSqlClientDependencyInstrumentation(options =>
                 {
-                    options.CaptureStoredProcedureCommandName = captureText;
+                    options.SetStoredProcedureCommandName = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 });
             });
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SqlClientInstrumentationOptions.MicrosoftSqlServerDatabaseInstanceName).Value);
+                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBMSSQLInstanceName).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
