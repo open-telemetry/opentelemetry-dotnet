@@ -29,9 +29,9 @@ namespace OpenTelemetry.Trace
         /// <param name="name">Name identifying the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library.</param>
         /// <returns>Tracer instance.</returns>
-        public static Tracer GetTracer(string name, string version = null)
+        public static TracerNew GetTracer(string name, string version = null)
         {
-            return new Tracer(new ActivitySource(name, version));
+            return new TracerNew(new ActivitySource(name, version));
         }
     }
 }
