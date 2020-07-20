@@ -74,10 +74,10 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
-        public void CancelWithExporterTimeoutMilliSeconds()
+        public void CancelWithExporterTimeoutMilliseconds()
         {
             var activityExporter = new TestActivityExporter(null);
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(0), 1);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(0), 1);
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
                             .SetSampler(new AlwaysOnActivitySampler())
@@ -289,9 +289,9 @@ namespace OpenTelemetry.Trace.Export.Test
                 }
 
                 // Get the shutdown event.
-                // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
+                // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
                 // TODO: Expose event ids as internal, so tests can access them more reliably.
-                var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
+                var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
 
                 int droppedCount = 0;
                 if (shutdownEvent != null)
@@ -411,9 +411,9 @@ namespace OpenTelemetry.Trace.Export.Test
             }
 
             // Get the shutdown event.
-            // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
+            // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
             // TODO: Expose event ids as internal, so tests can access them more reliably.
-            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
+            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
 
             int droppedCount = 0;
             if (shutdownEvent != null)

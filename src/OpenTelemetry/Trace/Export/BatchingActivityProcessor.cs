@@ -89,6 +89,11 @@ namespace OpenTelemetry.Trace.Export
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
+            if (scheduledDelay <= TimeSpan.FromMilliseconds(0))
+            {
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelay));
+            }
+
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.maxQueueSize = maxQueueSize;
             this.scheduledDelay = scheduledDelay;
