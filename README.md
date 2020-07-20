@@ -33,7 +33,11 @@ The API and SDK packages are available on the following NuGet feeds:
 
 ## Documentation
 
-The online documentation is available at TBD.
+[OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
+
+[OpenTelemetry .NET SDK](./docs/sdk-usage.md)
+
+[OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
 ## Compatible Exporters
 
