@@ -98,13 +98,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             parent.Stop();
         }
 
-        /* TBD: ActivitySource doesn't support custom format TraceIds.
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpWebRequest>(It.IsAny<SpanContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-                .Callback<SpanContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+            var textFormat = new Mock<ITextFormatActivity>();
+            textFormat.Setup(m => m.Inject(It.IsAny<ActivityContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<ActivityContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
@@ -114,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddHttpWebRequestDependencyInstrumentation();
+                b.AddHttpWebRequestDependencyInstrumentation(options => options.TextFormat = textFormat.Object);
             });
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
@@ -145,7 +144,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal("k1=v1,k2=v2", tracestate);
 
             parent.Stop();
-        }*/
+        }
 
         [Fact]
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
@@ -171,20 +170,16 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Assert.Equal(0, activityProcessor.Invocations.Count);
         }
 
-        [Fact(Skip = "HttpWebRequest instrumentation has no way to pass options and no ability to filter now.")]
+        [Fact]
         public async Task HttpDependenciesInstrumentationFiltersOutRequests()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = OpenTelemetrySdk.EnableOpenTelemetry(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddHttpWebRequestDependencyInstrumentation();
+                b.AddHttpWebRequestDependencyInstrumentation(
+                    c => c.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url));
             });
-
-            var options = new HttpClientInstrumentationOptions((activityName, arg1, _)
-                => !(activityName == HttpWebRequestActivitySource.ActivityName &&
-                arg1 is HttpWebRequest request &&
-                request.RequestUri.OriginalString.Contains(this.url)));
 
             using var c = new HttpClient();
             await c.GetAsync(this.url);
