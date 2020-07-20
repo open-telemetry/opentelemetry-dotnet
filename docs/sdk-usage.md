@@ -41,9 +41,9 @@ console application, and have the traces displayed in the console.
    package to your it.
 
     ```xml
-        <ItemGroup>
-            <PackageReference Include="OpenTelemetry.Exporter.Console" Version="0.3.0" />
-        </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="OpenTelemetry.Exporter.Console" Version="0.3.0" />
+    </ItemGroup>
     ```
 
 2. At the beginning of the application, enable OpenTelemetry Sdk with
