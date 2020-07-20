@@ -12,6 +12,17 @@ Collector through a gRPC protocol.
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ```
 
+## Configuration
+
+You can configure the `OtlpExporter` by following the directions below:
+
+* `Endpoint`: Target to which the exporter is going to send traces or metrics.
+* `Credentials`: Client-side channel credentials.
+* `Headers`: Optional headers for the connection.
+
+See the
+[`TestOtlpExporter.cs`](../../samples/Exporters/Console/TestOtlpExporter.cs) for an example of how to use the exporter.
+
 ## References
 
 * [OpenTelemetry

@@ -43,7 +43,7 @@ namespace Samples
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                    (PrometheusOptions options) => TestPrometheus.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
+                    (PrometheusOptions options) => TestPrometheusExporter.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
