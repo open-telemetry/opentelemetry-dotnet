@@ -36,10 +36,6 @@ namespace Samples
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
                                                 (p) => p.AddProcessor((next) => new MyProcessor(next))));
 
-            using var openTelemetry1 = OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
-
             // The above line is required only in Applications
             // which decide to use OT.
 
