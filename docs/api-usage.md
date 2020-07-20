@@ -29,53 +29,59 @@ As mentioned in the introduction, the instrumentation API for OpenTelemetry .NET
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version 5.0.0-preview.7.20308.13 or above to your application or library.
 
-    ```xml
+```xml
     <ItemGroup>
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0-preview.7.20308.13" />
     </ItemGroup>
-    ```
+```
 
 2. Create an `ActivitySource`, providing the name and version of the library/application being instrumented. `ActivitySource` instance is typically created once and is reused throughout the application/library.
 
-    ```csharp
+```csharp
     static ActivitySource activitySource = new ActivitySource("companyname.product.library", "semver1.0");
-    ```
+```
     The above requires import of the `using System.Diagnostics;` namespace.
 
-3. Use the `ActivitySource` instance from above to create `Activity` instances, which represent a single operation within a trace. The only parameter passed is the `DisplayName` of the activity.
+3. Use the `ActivitySource` instance from above to create `Activity` instances, which represent a single operation within a trace. The parameter passed is the `DisplayName` of the activity.
 
-    ```csharp
+```csharp
     var activity = source.StartActivity("ActivityName");
-    ```
+```
 
-    If there are no listeners interested in this activity, the activity above will be null. Ensure that all subsequent calls using activity is protected with a null check.
+    If there are no listeners interested in this activity, the activity above will be null. Ensure that all subsequent calls using this activity is protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions). It is highly recommended to check `activity.IsAllDataRequested`, before populating any tags which are not readily available.
 
-    ```csharp
+```csharp
     parent?.AddTag("http.method", "GET");
     if (parent?.IsAllDataRequested ?? false)
     {
         parent.AddTag("http.url", "http://www.mywebsite.com");
     }
-    ```
+```
 
 5. Perform application/library logic.
 
 6. Stop the activity when done.
 
-    ```csharp
+```csharp
     activity?.Stop();
-    ```
+```
 
-`Activity` implements `IDisposable`, and hence it can be used with `using` block, which ensures activity gets stopped upon disposal.
+Alternately, as `Activity` implements `IDisposable`, it can be used with a `using` block, which ensures activity gets stopped upon disposal. This is shown below.
+```csharp
+    using (var activity = source.StartActivity("ActivityName")
+    {
+        parent?.AddTag("http.method", "GET");
+    } // Activity gets stopped automatically at end of this block during dispose.
+```
 
 The above showed the basic usage of instrumenting using `Activity`. The following sections describes
 more features.
 
 ### Activity creation options
 
-Basic usage example above showed how `StartActivity` method can be used to start an `Activity`. The started activity will automatically becomes the `Current` activity. It is important to note that the `StartActivity` returns `null`, if no listeners are interested in the activity to be created. This happens when the final application does not use OpenTelemetry, or when OpenTelemetry samplers chose not to sample this activity.
+Basic usage example above showed how `StartActivity` method can be used to start an `Activity`. The started activity will automatically becomes the `Current` activity. It is important to note that the `StartActivity` returns `null`, if no listeners are interested in the activity to be created. This happens when the final application does not enable OpenTelemetry, or when OpenTelemetry samplers chose not to sample this activity.
 
 `StartActivity` has many overloads to control the activity creation.
 1. `ActivityKind`
@@ -102,6 +108,7 @@ As `ActivityContext` follows the [W3C Trace-Context](https://w3c.github.io/trace
 ```
 
 3. Initial Tags
+   
    `Tags` in `Activity` represents the OpenTelemetry [Span Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes). Earlier sample showed the usage of `AddTag` method of `Activity` to add tags. It is also possible to provide an initial set of tags during activity creation, as shown below.
 
 ```csharp
@@ -112,6 +119,7 @@ As `ActivityContext` follows the [W3C Trace-Context](https://w3c.github.io/trace
 ```
 
 4. Activity Links
+   
    Apart from the parent-child relation, activities can be linked using `ActivityLinks` which represent the OpenTelemetry [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans). The linked activities must be provided during the creation time, as shown below.
 
 ```csharp
