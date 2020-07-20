@@ -16,6 +16,7 @@
 using System;
 using System.Net.Http;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Dependencies
 {
@@ -25,17 +26,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     public class HttpClientInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a value indicating whether add HTTP version to a trace.
+        /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHTTPFlavor"/> tag. Default value: False.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormatActivity"/> for context propagation.
+        /// Gets or sets <see cref="ITextFormatActivity"/> for context propagation. Default value: <see cref="TraceContextFormatActivity"/>.
         /// </summary>
         public ITextFormatActivity TextFormat { get; set; } = new TraceContextFormatActivity();
 
         /// <summary>
-        /// Gets or sets an optional callback method for filtering HttpClient requests that are sent through the instrumentation.
+        /// Gets or sets an optional callback method for filtering <see cref="HttpRequestMessage"/> requests that are sent through the instrumentation.
         /// </summary>
         public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
