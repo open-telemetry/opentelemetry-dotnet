@@ -34,16 +34,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     /// Inspired from the System.Diagnostics.DiagnosticSource.HttpHandlerDiagnosticListener class which has some bugs and feature gaps.
     /// See https://github.com/dotnet/runtime/pull/33732 for details.
     /// </remarks>
-    internal sealed class HttpWebRequestActivitySource
+    internal static class HttpWebRequestActivitySource
     {
         internal const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
-        internal static readonly HttpWebRequestActivitySource Instance = new HttpWebRequestActivitySource();
+        internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
         private const string CorrelationContextHeaderName = "Correlation-Context";
-        private const string TraceParentHeaderName = "traceparent";
-        private const string TraceStateHeaderName = "tracestate";
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -76,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static Func<HttpWebResponse, bool> isWebSocketResponseAccessor;
         private static Func<HttpWebResponse, string> connectionGroupNameAccessor;
 
-        internal HttpWebRequestActivitySource()
+        static HttpWebRequestActivitySource()
         {
             try
             {
@@ -104,7 +102,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
                 activity.AddTag(SemanticConventions.AttributeHTTPHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.AddTag(SemanticConventions.AttributeHTTPURL, request.RequestUri.OriginalString);
-                activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                if (Options.SetHttpFlavor)
+                {
+                    activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                }
             }
         }
 
@@ -185,18 +186,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            // do not inject header if it was injected already
-            // perhaps tracing systems wants to override it
-            if (request.Headers.Get(TraceParentHeaderName) == null)
-            {
-                request.Headers.Add(TraceParentHeaderName, activity.Id);
-
-                string traceState = activity.TraceStateString;
-                if (traceState != null)
-                {
-                    request.Headers.Add(TraceStateHeaderName, traceState);
-                }
-            }
+            Options.TextFormat.Inject(activity.Context, request, (r, k, v) => r.Headers.Add(k, v));
 
             if (request.Headers.Get(CorrelationContextHeaderName) == null)
             {
@@ -220,11 +210,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => request.Headers.Get(TraceParentHeaderName) != null;
+            => Options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h));
 
         private static void ProcessRequest(HttpWebRequest request)
         {
-            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request))
+            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request) || !Options.EventFilter(request))
             {
                 // No subscribers to the ActivitySource or this request was instrumented by previous
                 // ProcessRequest, such is the case with redirect responses where the same request is sent again.

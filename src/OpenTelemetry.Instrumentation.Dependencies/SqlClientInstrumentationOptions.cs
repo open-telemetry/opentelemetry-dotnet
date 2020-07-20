@@ -27,8 +27,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     /// </summary>
     public class SqlClientInstrumentationOptions
     {
-        internal const string MicrosoftSqlServerDatabaseInstanceName = "db.mssql.instance_name";
-
         /*
          * Match...
          *  serverName
@@ -41,20 +39,20 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should capture the names of <see cref="CommandType.StoredProcedure"/> commands. Default value: True.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDBStatement"/> tag. Default value: True.
         /// </summary>
-        public bool CaptureStoredProcedureCommandName { get; set; } = true;
+        public bool SetStoredProcedureCommandName { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should capture the text of <see cref="CommandType.Text"/> commands. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDBStatement"/> tag. Default value: False.
         /// </summary>
-        public bool CaptureTextCommandContent { get; set; }
+        public bool SetTextCommandContent { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attributes. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
         /// </summary>
         /// <remarks>
-        /// The default behavior is to set the SqlConnection DataSource as the peer.service tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the net.peer.name or net.peer.ip tag, the instance name will be sent as the db.mssql.instance_name tag, and the port will be sent as the net.peer.port tag if it is not 1433 (the default port).
+        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIP"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDBMSSQLInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; } = false;
 
@@ -134,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    sqlActivity.AddTag(MicrosoftSqlServerDatabaseInstanceName, connectionDetails.InstanceName);
+                    sqlActivity.AddTag(SemanticConventions.AttributeDBMSSQLInstanceName, connectionDetails.InstanceName);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))

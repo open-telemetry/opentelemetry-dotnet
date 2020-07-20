@@ -119,15 +119,21 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for .NET Framework HttpWebRequest activity source.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureOptions">HttpWebRequest configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddHttpWebRequestDependencyInstrumentation(this OpenTelemetryBuilder builder)
+        public static OpenTelemetryBuilder AddHttpWebRequestDependencyInstrumentation(
+            this OpenTelemetryBuilder builder,
+            Action<HttpWebRequestInstrumentationOptions> configureOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
+            HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions();
+            configureOptions?.Invoke(options);
+
+            HttpWebRequestActivitySource.Options = options;
 
             builder.AddActivitySource(HttpWebRequestActivitySource.ActivitySourceName);
 

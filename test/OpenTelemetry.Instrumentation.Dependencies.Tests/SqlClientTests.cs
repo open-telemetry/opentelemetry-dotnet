@@ -83,8 +83,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddSqlClientDependencyInstrumentation(options =>
                 {
-                    options.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
-                    options.CaptureTextCommandContent = captureTextCommandContent;
+                    options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
+                    options.SetTextCommandContent = captureTextCommandContent;
                 });
             });
 
@@ -137,8 +137,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                     (builder) => builder.AddSqlClientDependencyInstrumentation(
                         (opt) =>
                         {
-                            opt.CaptureTextCommandContent = captureTextCommandContent;
-                            opt.CaptureStoredProcedureCommandName = captureStoredProcedureCommandName;
+                            opt.SetTextCommandContent = captureTextCommandContent;
+                            opt.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                         })
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
