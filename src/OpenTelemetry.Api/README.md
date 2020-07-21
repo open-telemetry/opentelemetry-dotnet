@@ -55,7 +55,7 @@ entire operation and, optionally one or more sub-spans for its sub-operations.
 [Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md)
 allows users to capture measurements about the execution of a computer program
-at runtime. The Metric API is designed to process raw measurements, generally
+at runtime. The Metrics API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
 
 ## Introduction to OpenTelemetry .NET Tracing API
