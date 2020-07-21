@@ -52,14 +52,14 @@ console application, and have the traces displayed in the console.
     </ItemGroup>
     ```
 
-2. At the beginning of the application, enable OpenTelemetry Sdk with
+2. At the beginning of the application, enable OpenTelemetry SDK with
    ConsoleExporter as shown below. It also configures to collect activities from
    the source named "companyname.product.library".
 
     ```csharp
-    using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
-        (builder) => builder.AddActivitySource("companyname.product.library")
-            .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
+    using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
+        .AddActivitySource("companyname.product.library")
+        .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
     ```
 
 3. Generate some activities in the application as shown below.
