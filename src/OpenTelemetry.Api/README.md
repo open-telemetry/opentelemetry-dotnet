@@ -3,6 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 
+* [Installation](#installation)
 * [Introduction](#introduction)
   * [Tracing API](#tracing-api)
   * [Metrics API](#metrics-api)
@@ -17,6 +18,12 @@
 * [Instrumenting a library/application with OpenTelemetry.API
   Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
 * [References](#references)
+
+## Installation
+
+```shell	
+dotnet add package OpenTelemetry.Api	
+```
 
 ## Introduction
 

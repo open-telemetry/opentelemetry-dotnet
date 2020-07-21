@@ -3,7 +3,8 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
 
-* [Introduction](#Introduction)
+* [Installation](#installation)
+* [Introduction](#introduction)
 * [Basic usage](#basic-usage)
 * [Advanced usage scenarios](#advanced-usage-scenarios)
   * [Customize Exporter](#customize-exporter)
@@ -13,6 +14,12 @@
     Processor](#filtering-and-enriching-activities-using-processor)
   * [OpenTelemetry Instrumentation](#opentelemetry-instrumentation)
 * [References](#references)
+
+## Installation
+
+```shell	
+dotnet add package OpenTelemetry	
+```
 
 ## Introduction
 
