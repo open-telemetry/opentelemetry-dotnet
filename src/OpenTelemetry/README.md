@@ -5,7 +5,6 @@
 
 * [Installation](#installation)
 * [Getting started](#getting-started)
-* [OpenTelemetry SDK](#opentelemetry-sdk)
 * [Basic usage](#basic-usage)
 * [Advanced usage scenarios](#advanced-usage-scenarios)
   * [Customize Exporter](#customize-exporter)
