@@ -1,0 +1,48 @@
+name: docs
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  docfx:
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v2
+
+    - name: install docfx
+      run: choco install docfx -y
+
+    - name: run .\build\docfx.cmd
+      shell: cmd
+      run: .\build\docfx.cmd
+
+  markdownlint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v2
+
+    - name: install markdownlint-cli
+      run: sudo npm install -g markdownlint-cli
+
+    - name: run markdownlint
+      run: markdownlint .
+
+  misspell:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v2
+
+    - name: install misspell
+      run: |
+        curl -L -o ./install-misspell.sh https://git.io/misspell
+        sh ./install-misspell.sh
+
+    - name: run misspell
+      run: ./bin/misspell -error .

@@ -22,7 +22,7 @@ You can configure the `ConsoleExporter` by following the directions below:
 * `DisplayAsJson`: Boolean to show data as JSON.
 
 See the
-[`TestConsoleExporter.cs`](../../samples/Exporters/Console/TestConsoleExporter.cs)
+[`TestConsoleExporter.cs`](../../samples/Console/TestConsoleExporter.cs)
 for an example of how to use the exporter.
 
 ## References
