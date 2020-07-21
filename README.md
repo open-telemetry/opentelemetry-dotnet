@@ -1,48 +1,38 @@
 # OpenTelemetry .NET
 
 [![Gitter
-chat](https://img.shields.io/gitter/room/opentelemetry/opentelemetry-dotnet)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
-![Build
-Status](https://github.com/open-telemetry/opentelemetry-dotnet/workflows/.NET%20Linux/badge.svg?branch=master)
-![Build
-Status](https://github.com/open-telemetry/opentelemetry-dotnet/workflows/.NET%20Windows/badge.svg?branch=master)
+chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
+[![Build
+Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
+[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
-## Installation
+## Getting Started
 
-This repository includes multiple installable packages. The `OpenTelemetry.Api`
-package includes abstract classes and no-op implementations for the
-[OpenTelemetry API
-specification](https://github.com/open-telemetry/opentelemetry-specification).
+This repository includes multiple installable components, available on
+[NuGet](https://www.nuget.org/profiles/OpenTelemetry).
 
-The `OpenTelemetry` package is the reference implementation of the API.
+Each package has its individual `README.md` file, which covers the instruction
+on how to install and how to get started. To find all the available components,
+please take a look at the `src` folder.
 
-Libraries that produce telemetry data should only depend on
-`OpenTelemetry.Api`, and defer the choice of the SDK to the application
-developer. Applications may depend on `OpenTelemetry` or another package that
-implements the API.
+Here are the most commonly used components:
 
-**Please note** that this library is currently in _alpha_, and shouldn't
-generally be used in production environments.
+* [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
+* [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
+* [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
-The API and SDK packages are available on the following NuGet feeds:
+Here are the exporters:
 
-* [MyGet V2](https://www.myget.org/F/opentelemetry/api/v2)
-* [MyGet V3](https://www.myget.org/F/opentelemetry/api/v3/index.json)
-
-## Documentation
-
-[OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
-
-[OpenTelemetry .NET SDK](./docs/sdk-usage.md)
-
-[OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
-
-## Compatible Exporters
+* [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
+* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [OpenTelemetry Protocol Exporter](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+* [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
-a list of exporters available.
+more exporters.
 
 ## Contributing
 

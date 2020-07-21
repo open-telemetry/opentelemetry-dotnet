@@ -1,4 +1,15 @@
-# ASP.NET Instrumentation
+# ASP.NET Instrumentation for OpenTelemetry .NET
+
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
+
+## Installation
+
+```shell
+dotnet add package OpenTelemetry.Instrumentation.AspNet
+```
+
+## Configuration
 
 Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
 (if supported) to collect incoming request information.
@@ -45,3 +56,8 @@ Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
         }
     }
     ```
+
+## References
+
+* [ASP.NET](https://dotnet.microsoft.com/apps/aspnet)
+* [OpenTelemetry Project](https://opentelemetry.io/)

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard2.0;netstandard2.1</TargetFrameworks>
-    <Description>Jaeger exporter for Open Telemetry.</Description>
+    <Description>Jaeger exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Jaeger;distributed-tracing</PackageTags>
   </PropertyGroup>
 
