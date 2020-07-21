@@ -53,7 +53,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.activity = span.activity;
+            this.activity = span.Activity;
             this.spanContextShim = new SpanContextShim(this.Span.Context);
         }
 

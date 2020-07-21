@@ -30,15 +30,11 @@ namespace OpenTelemetry.Trace
     public class TelemetrySpanNew : IDisposable
     {
         internal static readonly TelemetrySpanNew NoopInstance = new TelemetrySpanNew(null);
-#pragma warning disable SA1304 // Other variable name won't fit here
-#pragma warning disable SA1307 // Other variable name won't fit here
-        internal readonly Activity activity;
-#pragma warning restore SA1307 // Other variable name won't fit here
-#pragma warning restore SA1304 // Other variable name won't fit here
+        internal readonly Activity Activity;
 
         internal TelemetrySpanNew(Activity activity)
         {
-            this.activity = activity;
+            this.Activity = activity;
         }
 
         /// <summary>
@@ -48,13 +44,13 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                if (this.activity == null)
+                if (this.Activity == null)
                 {
                     return default;
                 }
                 else
                 {
-                    return new SpanContextNew(this.activity.Context);
+                    return new SpanContextNew(this.Activity.Context);
                 }
             }
         }
@@ -66,7 +62,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return (this.activity == null) ? false : this.activity.IsAllDataRequested;
+                return (this.Activity == null) ? false : this.Activity.IsAllDataRequested;
             }
         }
 
@@ -77,7 +73,7 @@ namespace OpenTelemetry.Trace
         {
             set
             {
-                this.activity?.SetStatus(value);
+                this.Activity?.SetStatus(value);
             }
         }
 
@@ -93,9 +89,9 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew UpdateName(string name)
         {
-            if (this.activity != null)
+            if (this.Activity != null)
             {
-                this.activity.DisplayName = name;
+                this.Activity.DisplayName = name;
             }
 
             return this;
@@ -110,7 +106,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew SetAttribute(string key, string value)
         {
-            this.activity?.AddTag(key, value);
+            this.Activity?.AddTag(key, value);
             return this;
         }
 
@@ -122,7 +118,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew AddEvent(string name)
         {
-            this.activity?.AddEvent(new ActivityEvent(name));
+            this.Activity?.AddEvent(new ActivityEvent(name));
             return this;
         }
 
@@ -135,7 +131,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew AddEvent(string name, DateTimeOffset timestamp)
         {
-            this.activity?.AddEvent(new ActivityEvent(name, timestamp));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp));
             return this;
         }
 
@@ -148,7 +144,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew AddEvent(string name, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new ActivityEvent(name, attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, attributes));
             return this;
         }
 
@@ -162,7 +158,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpanNew AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
         {
-            this.activity?.AddEvent(new ActivityEvent(name, timestamp, attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes));
             return this;
         }
 
@@ -172,7 +168,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End()
         {
-            this.activity?.Stop();
+            this.Activity?.Stop();
         }
 
         /// <summary>
@@ -182,15 +178,15 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End(DateTimeOffset endTimestamp)
         {
-            this.activity?.SetEndTime(endTimestamp.UtcDateTime);
-            this.activity?.Stop();
+            this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
+            this.Activity?.Stop();
         }
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            this.activity?.Dispose();
+            this.Activity?.Dispose();
         }
 
         /// <summary>
@@ -199,7 +195,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Activate()
         {
-            Activity.Current = this.activity;
+            Activity.Current = this.Activity;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         public TracerShim(Trace.TracerNew tracer, ITextFormatActivity textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.activitySource = tracer.activitySource;
+            this.activitySource = tracer.ActivitySource;
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }

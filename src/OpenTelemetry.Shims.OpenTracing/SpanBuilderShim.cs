@@ -90,12 +90,12 @@ namespace OpenTelemetry.Shims.OpenTracing
             this.ScopeManager = new ScopeManagerShim(this.tracer);
             this.rootOperationNamesForActivityBasedAutoInstrumentations = rootOperationNamesForActivityBasedAutoInstrumentations ?? this.rootOperationNamesForActivityBasedAutoInstrumentations;
 
-            this.activitySource = tracer.activitySource;
+            this.activitySource = tracer.ActivitySource;
         }
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
 
-        private bool ParentSet => this.parentActivity != null || this.parentActivityContext.IsValid();
+        private bool ParentSet => this.parentActivity != null || this.parentActivityContext != default;
 
         /// <inheritdoc/>
         public ISpanBuilder AsChildOf(ISpanContext parent)
@@ -172,11 +172,11 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null, null, this.links, startTimestamp);
             }
-            else if (this.parentActivity != null || this.parentActivityContext.IsValid())
+            else if (this.parentActivity != null || this.parentActivityContext != default)
             {
                 activity = this.activitySource.StartActivity(this.activityName, this.activityKind, this.parentActivityContext, null, this.links, startTimestamp);
             }
-            else if (this.parentActivity == null && !this.parentActivityContext.IsValid())
+            else if (this.parentActivity == null && this.parentActivityContext == default)
             {
                 // We need to know if we should inherit an existing Activity-based context or start a new one.
                 if (Activity.Current != null && Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)

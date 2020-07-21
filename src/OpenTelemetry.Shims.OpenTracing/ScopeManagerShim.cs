@@ -37,7 +37,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         public ScopeManagerShim(Trace.TracerNew tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.activitySource = tracer.activitySource;
+            this.activitySource = tracer.ActivitySource;
         }
 
 #if DEBUG
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             get
             {
                 var currentActivity = Activity.Current;
-                if (currentActivity == null || !currentActivity.Context.IsValid())
+                if (currentActivity == null || currentActivity.Context == default)
                 {
                     return null;
                 }
