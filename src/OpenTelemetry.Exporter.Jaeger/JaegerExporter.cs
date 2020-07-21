@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            await this.exportLock.WaitAsync().ConfigureAwait(false);
+            await this.exportLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 if (!this.libraryResourceApplied && activityBatch.Count() > 0)
@@ -55,9 +55,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
                 foreach (var activity in activityBatch)
                 {
-                    // avoid cancelling here: this is no return point: if we reached this point
-                    // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-                    await this.JaegerAgentUdpBatcher.AppendAsync(activity.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
+                    await this.JaegerAgentUdpBatcher.AppendAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
                 }
 
                 // TODO jaeger status to ExportResult
