@@ -46,7 +46,9 @@ console application, and have the traces displayed in the console.
     ```xml
     <ItemGroup>
         <PackageReference
-        Include="OpenTelemetry.Exporter.Console" Version="0.3.0" />
+            Include="OpenTelemetry.Exporter.Console"
+            Version="0.3.0"
+        />
     </ItemGroup>
     ```
 
@@ -56,18 +58,19 @@ console application, and have the traces displayed in the console.
 
     ```csharp
     using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
-                    (builder) => builder.AddActivitySource("companyname.product.library")
-                        .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
+        (builder) => builder.AddActivitySource("companyname.product.library")
+            .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
     ```
 
 3. Generate some activities in the application as shown below.
 
     ```csharp
-        var source = new ActivitySource("companyname.product.library");
-        using (var parent = source.StartActivity("ActivityName", ActivityKind.Server))
-        {
-            parent?.AddTag("http.method", "GET");
-        }
+    var source = new ActivitySource("companyname.product.library");
+
+    using (var activity = source.StartActivity("ActivityName", ActivityKind.Server))
+    {
+        activity?.AddTag("http.method", "GET");
+    }
     ```
 
 Run the application. Traces will be displayed in the console.
