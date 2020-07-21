@@ -3,47 +3,46 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 
+* [Installation](#installation)
+* [Getting started](#getting-started)
+  * [Traceing API](#tracing-api)
+  * [Metrics API](#metrics-api)
+* [Introduction to OpenTelemetry .NET Traceing
+  API](#introduction-to-opentelemetry-net-tracing-api)
+* [Instrumenting a library/application with .NET Activity
+  API](#instrumenting-a-libraryapplication-with-net-activity-api)
+  * [Basic usage](#basic-usage)
+  * [Activity creation options](#activity-creation-options)
+  * [Adding Events](#adding-events)
+  * [Setting Status](#setting-status)
+* [Instrumenting a library/application with OpenTelemetry.API
+  Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
+* [References](#references)
+
 ## Installation
 
 ```shell
 dotnet add package OpenTelemetry.Api
 ```
 
-## Getting Started
-
-* [Getting Started](#getting-started)
-  * [OpenTelemetry API](#opentelemetry-api)
-    * [Tracer API](#tracer-api)
-    * [Metric API](#metric-api)
-  * [Introduction to OpenTelemetry .NET Tracer
-    API](#introduction-to-opentelemetry-net-tracer-api)
-  * [Instrumenting a library/application with .NET Activity
-    API](#instrumenting-a-libraryapplication-with-net-activity-api)
-    * [Basic usage](#basic-usage)
-    * [Activity creation options](#activity-creation-options)
-    * [Adding Events](#adding-events)
-    * [Setting Status](#setting-status)
-  * [Instrumenting a library/application with OpenTelemetry.API
-    Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
-
-## OpenTelemetry API
+## Getting started
 
 Application developers and library authors use OpenTelemetry API to instrument
 their application/library. The API only surfaces necessary abstractions to
 instrument an application/library. It does not address concerns like how
 telemetry is exported to a specific telemetry backend, how to sample the
-telemetry, etc. The API consists of [Tracer
+telemetry, etc. The API consists of [Tracing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md),
-[Metric
+[Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md),
 [Context and Propagation
 API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/context),
 and a set of [semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
 
-### Tracer API
+### Traceing API
 
-[Tracer
+[Traceing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md)
 allows users to generate
 [Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span),
@@ -51,15 +50,15 @@ which represent a single operation within a trace. Spans can be nested to form
 a trace tree. Each trace contains a root span, which typically describes the
 entire operation and, optionally one or more sub-spans for its sub-operations.
 
-### Metric API
+### Metrics API
 
-[Metric
+[Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md)
 allows users to capture measurements about the execution of a computer program
 at runtime. The Metric API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
 
-## Introduction to OpenTelemetry .NET Tracer API
+## Introduction to OpenTelemetry .NET Traceing API
 
 .NET runtime had `Activity` class for a long time, which was meant to be used
 for tracing purposes and represents the equivalent of the OpenTelemetry
