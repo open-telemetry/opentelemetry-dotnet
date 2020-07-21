@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.AspNet.Win\OpenTelemetry.Instrumentation.AspNet.Win.csproj" />
+    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
