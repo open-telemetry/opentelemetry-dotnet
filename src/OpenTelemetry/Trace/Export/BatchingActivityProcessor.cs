@@ -105,13 +105,30 @@ namespace OpenTelemetry.Trace.Export
             this.flushTimer = new System.Timers.Timer
             {
                 AutoReset = false,
-                Enabled = true,
+                Enabled = false,
                 Interval = this.scheduledDelay.TotalMilliseconds,
             };
 
             this.flushTimer.Elapsed += async (sender, args) =>
             {
-                await this.FlushAsyncInternal(drain: false, CancellationToken.None).ConfigureAwait(false);
+                bool lockTaken = this.flushLock.Wait(0);
+                try
+                {
+                    if (!lockTaken)
+                    {
+                        // If the lock was already held, it means a flush is already executing.
+                        return;
+                    }
+
+                    await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                }
+                finally
+                {
+                    if (lockTaken)
+                    {
+                        this.flushLock.Release();
+                    }
+                }
             };
         }
 
@@ -132,15 +149,37 @@ namespace OpenTelemetry.Trace.Export
                 return;
             }
 
-            Interlocked.Increment(ref this.currentQueueSize);
+            var size = Interlocked.Increment(ref this.currentQueueSize);
 
             this.exportQueue.Enqueue(activity);
+
+            if (size >= this.maxExportBatchSize)
+            {
+                bool lockTaken = this.flushLock.Wait(0);
+                if (lockTaken)
+                {
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            this.flushLock.Release();
+                        }
+                    });
+                    return;
+                }
+            }
+
+            this.flushTimer.Enabled = true;
         }
 
         /// <inheritdoc/>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            await this.FlushAsyncInternal(drain: true, cancellationToken).ConfigureAwait(false);
+            await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
 
             await this.exporter.ShutdownAsync(cancellationToken).ConfigureAwait(false);
 
@@ -150,7 +189,7 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override async Task ForceFlushAsync(CancellationToken cancellationToken)
         {
-            await this.FlushAsyncInternal(drain: true, cancellationToken).ConfigureAwait(false);
+            await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
 
             OpenTelemetrySdkEventSource.Log.ForceFlushCompleted(this.currentQueueSize);
         }
@@ -192,9 +231,12 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
-        private async Task FlushAsyncInternal(bool drain, CancellationToken cancellationToken)
+        private async Task FlushAsyncInternal(bool drain, bool lockAlreadyHeld, CancellationToken cancellationToken)
         {
-            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (!lockAlreadyHeld)
+            {
+                await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
 
             try
             {
@@ -240,9 +282,10 @@ namespace OpenTelemetry.Trace.Export
             }
             finally
             {
-                this.flushTimer.Enabled = true;
-
-                this.flushLock.Release();
+                if (!lockAlreadyHeld)
+                {
+                    this.flushLock.Release();
+                }
             }
         }
 

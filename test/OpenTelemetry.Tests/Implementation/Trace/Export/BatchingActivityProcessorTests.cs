@@ -338,7 +338,13 @@ namespace OpenTelemetry.Trace.Export.Test
                 // we won't be able to export all before cancellation will fire
                 using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200)))
                 {
-                    await activityProcessor.ShutdownAsync(cts.Token);
+                    try
+                    {
+                        await activityProcessor.ShutdownAsync(cts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
                 }
 
                 var exportedCount = activityExporter.ExportedActivities.Length;
