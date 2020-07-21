@@ -37,8 +37,7 @@ namespace OpenTelemetry.Samples.Console
             // The above line is required only in applications
             // which decide to use OpenTelemetry.
 
-            // Following shows how to use the OpenTracing shim, which is a thin layer on top
-            // of Activity and associated classes.
+            // Following shows how to use the OpenTracing shim
 
             var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
 
