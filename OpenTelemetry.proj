@@ -5,7 +5,8 @@
     <SolutionProjects Include="**\*.csproj" />
     <SolutionProjects Remove="samples\Exporters\AspNet\OpenTelemetry.Exporter.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
     <SolutionProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
-    
+    <SolutionProjects Remove="test\OpenTelemetry.Instrumentation.AspNet.Tests\OpenTelemetry.Instrumentation.AspNet.Tests.csproj" Condition="'$(OS)' != 'Windows_NT'" />
+
     <PackProjects Include="src\**\*.csproj" />
     <PackProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
