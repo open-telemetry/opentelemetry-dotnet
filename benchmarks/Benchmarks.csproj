@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/../build/debug.snk</AssemblyOriginatorKeyFile>

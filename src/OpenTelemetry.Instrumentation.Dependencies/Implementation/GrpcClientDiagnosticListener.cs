@@ -23,13 +23,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
-
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
-            : base("Grpc.Net.Client", null)
+            : base("Grpc.Net.Client")
         {
             if (activitySource == null)
             {
@@ -49,33 +47,32 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            ActivityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
+            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.RpcSystem, "grpc");
+                activity.AddTag(SemanticConventions.AttributeRPCSystem, "grpc");
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
                 {
-                    activity.AddTag(SpanAttributeConstants.RpcService, rpcService);
-                    activity.AddTag(SpanAttributeConstants.RpcMethod, rpcMethod);
+                    activity.AddTag(SemanticConventions.AttributeRPCService, rpcService);
+                    activity.AddTag(SemanticConventions.AttributeRPCMethod, rpcMethod);
                 }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
                 {
-                    activity.AddTag(SpanAttributeConstants.NetPeerIp, request.RequestUri.Host);
+                    activity.AddTag(SemanticConventions.AttributeNetPeerIP, request.RequestUri.Host);
                 }
                 else
                 {
-                    activity.AddTag(SpanAttributeConstants.NetPeerName, request.RequestUri.Host);
+                    activity.AddTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
                 }
 
-                activity.AddTag(SpanAttributeConstants.NetPeerPort, request.RequestUri.Port.ToString());
+                activity.AddTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString());
             }
         }
 
@@ -83,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+                activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
             }
 
             this.activitySource.Stop(activity);

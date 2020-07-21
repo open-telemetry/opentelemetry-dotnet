@@ -152,6 +152,7 @@ namespace OpenTelemetry.Trace.Export
             }
         }
 
+        /// <inheritdoc/>
         public override async Task ForceFlushAsync(CancellationToken cancellationToken)
         {
             var queueSize = this.currentQueueSize;
@@ -164,6 +165,7 @@ namespace OpenTelemetry.Trace.Export
             OpenTelemetrySdkEventSource.Log.ForceFlushCompleted(this.currentQueueSize);
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.Dispose(true);

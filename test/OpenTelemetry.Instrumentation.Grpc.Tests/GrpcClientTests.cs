@@ -74,23 +74,23 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
             Assert.Equal("Client", span.Kind.ToString());
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.RpcSystem).Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.RpcService).Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.RpcMethod).Value);
+            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCSystem).Value);
+            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCService).Value);
+            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCMethod).Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.NetPeerIp).Value);
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.NetPeerName).Value);
+                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
             else
             {
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.NetPeerIp).Value);
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.NetPeerName).Value);
+                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.NetPeerPort).Value);
-            Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(Status.Ok, span.GetStatus());
             Assert.Equal(expectedResource, span.GetResource());
         }
 

@@ -22,36 +22,13 @@ namespace OpenTelemetry.Trace
     public static class SpanAttributeConstants
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public const string ComponentKey = "component";
-        public const string PeerServiceKey = "peer.service";
-
         public const string StatusCodeKey = "ot.status_code";
         public const string StatusDescriptionKey = "ot.status_description";
 
-        public const string HttpMethodKey = "http.method";
-        public const string HttpSchemeKey = "http.scheme";
-        public const string HttpTargetKey = "http.target";
-        public const string HttpStatusCodeKey = "http.status_code";
-        public const string HttpStatusTextKey = "http.status_text";
-        public const string HttpUserAgentKey = "http.user_agent";
         public const string HttpPathKey = "http.path";
-        public const string HttpHostKey = "http.host";
-        public const string HttpUrlKey = "http.url";
-        public const string HttpRouteKey = "http.route";
-        public const string HttpFlavorKey = "http.flavor";
 
-        public const string DatabaseSystemKey = "db.system";
-        public const string DatabaseNameKey = "db.name";
-        public const string DatabaseStatementKey = "db.statement";
         public const string DatabaseStatementTypeKey = "db.statement_type";
 
-        public const string RpcSystem = "rpc.system";
-        public const string RpcService = "rpc.service";
-        public const string RpcMethod = "rpc.method";
-
-        public const string NetPeerIp = "net.peer.ip";
-        public const string NetPeerName = "net.peer.name";
-        public const string NetPeerPort = "net.peer.port";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

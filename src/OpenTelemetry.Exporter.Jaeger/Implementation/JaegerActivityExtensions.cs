@@ -23,11 +23,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal static class JaegerActivityExtensions
     {
+        private const int DaysPerYear = 365;
+
+        // Number of days in 4 years
+        private const int DaysPer4Years = (DaysPerYear * 4) + 1;       // 1461
+
+        // Number of days in 100 years
+        private const int DaysPer100Years = (DaysPer4Years * 25) - 1;  // 36524
+
+        // Number of days in 400 years
+        private const int DaysPer400Years = (DaysPer100Years * 4) + 1; // 146097
+
+        // Number of days from 1/1/0001 to 12/31/1969
+        private const int DaysTo1970 = (DaysPer400Years * 4) + (DaysPer100Years * 3) + (DaysPer4Years * 17) + DaysPerYear; // 719,162
+
+        private const long UnixEpochTicks = DaysTo1970 * TimeSpan.TicksPerDay;
+        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+        private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
+
         private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            [SpanAttributeConstants.PeerServiceKey] = 0, // priority 0 (highest).
-            [SpanAttributeConstants.NetPeerName] = 1,
-            [SpanAttributeConstants.NetPeerIp] = 2,
+            [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
+            [SemanticConventions.AttributeNetPeerName] = 1,
+            [SemanticConventions.AttributeNetPeerIP] = 2,
             ["peer.hostname"] = 2,
             ["peer.address"] = 2,
             ["http.host"] = 3, // peer.service for Http.
@@ -60,7 +78,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 // If priority = 0 that means peer.service was already included in tags.
                 if (jaegerTags.PeerServicePriority > 0)
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SpanAttributeConstants.PeerServiceKey, JaegerTagType.STRING, vStr: peerServiceName));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SemanticConventions.AttributePeerService, JaegerTagType.STRING, vStr: peerServiceName));
                 }
             }
 
@@ -194,6 +212,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerSpanRef(JaegerSpanRefType.CHILD_OF, traceId.Low, traceId.High, spanId.Low);
         }
 
+        public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
+        {
+            switch (attribute.Value)
+            {
+                case string s:
+                    return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s);
+                case int i:
+                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i));
+                case long l:
+                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l);
+                case float f:
+                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f));
+                case double d:
+                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d);
+                case bool b:
+                    return new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b);
+            }
+
+            return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString());
+        }
+
         public static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
             const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
@@ -203,6 +242,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
             long microseconds = utcDateTime.Ticks / TicksPerMicrosecond;
+            return microseconds - UnixEpochMicroseconds;
+        }
+
+        public static long ToEpochMicroseconds(this DateTimeOffset timestamp)
+        {
+            // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
+            // the last digit being off by one for dates that result in negative Unix times
+            long microseconds = timestamp.UtcDateTime.Ticks / TicksPerMicrosecond;
             return microseconds - UnixEpochMicroseconds;
         }
 

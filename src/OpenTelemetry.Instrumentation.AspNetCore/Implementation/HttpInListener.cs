@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly ActivitySourceAdapter activitySource;
 
         public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
-            : base(name, null)
+            : base(name)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
@@ -90,8 +90,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+            activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
@@ -101,21 +100,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host);
+                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpHostKey, request.Host.Host + ":" + request.Host.Port);
+                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SpanAttributeConstants.HttpMethodKey, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SpanAttributeConstants.HttpUrlKey, GetUri(request));
+                activity.AddTag(SemanticConventions.AttributeHTTPURL, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SpanAttributeConstants.HttpUserAgentKey, userAgent);
+                    activity.AddTag(SemanticConventions.AttributeHTTPUserAgent, userAgent);
                 }
             }
         }
@@ -137,16 +136,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 else
                 {
                     var response = context.Response;
-                    activity.AddTag(SpanAttributeConstants.HttpStatusCodeKey, response.StatusCode.ToString());
+                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-
-                    var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
-                    if (!string.IsNullOrEmpty(statusDescription))
-                    {
-                        activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
-                    }
+                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
                 }
             }
 
@@ -190,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SpanAttributeConstants.HttpRouteKey, template);
+                        activity.AddTag(SemanticConventions.AttributeHTTPRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?
@@ -247,17 +240,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
             // activity.DisplayName = grpcMethod?.Trim('/');
 
-            activity.AddTag(SpanAttributeConstants.RpcSystem, "grpc");
+            activity.AddTag(SemanticConventions.AttributeRPCSystem, "grpc");
 
             if (Dependencies.GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
-                activity.AddTag(SpanAttributeConstants.RpcService, rpcService);
-                activity.AddTag(SpanAttributeConstants.RpcMethod, rpcMethod);
+                activity.AddTag(SemanticConventions.AttributeRPCService, rpcService);
+                activity.AddTag(SemanticConventions.AttributeRPCMethod, rpcMethod);
             }
 
-            activity.AddTag(SpanAttributeConstants.NetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.AddTag(SpanAttributeConstants.NetPeerPort, context.Connection.RemotePort.ToString());
-            activity.AddTag(SpanAttributeConstants.StatusCodeKey, Dependencies.GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+            activity.AddTag(SemanticConventions.AttributeNetPeerIP, context.Connection.RemoteIpAddress.ToString());
+            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
+            activity.SetStatus(Dependencies.GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }
 }

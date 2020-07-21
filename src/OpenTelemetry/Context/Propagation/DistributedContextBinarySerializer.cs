@@ -18,17 +18,17 @@ namespace OpenTelemetry.Context.Propagation
 {
     internal sealed class DistributedContextBinarySerializer : DistributedContextBinarySerializerBase
     {
-        private static readonly byte[] EmptyByteArray = { };
-
         internal DistributedContextBinarySerializer()
         {
         }
 
+        /// <inheritdoc/>
         public override byte[] ToByteArray(DistributedContext context)
         {
             return SerializationUtils.SerializeBinary(context);
         }
 
+        /// <inheritdoc/>
         public override DistributedContext FromByteArray(byte[] bytes)
         {
             return SerializationUtils.DeserializeBinary(bytes);

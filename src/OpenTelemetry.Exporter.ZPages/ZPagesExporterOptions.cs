@@ -25,5 +25,10 @@ namespace OpenTelemetry.Exporter.ZPages
         /// Gets or sets the port to listen to. Typically it ends with /rpcz like http://localhost:7284/rpcz/.
         /// </summary>
         public string Url { get; set; }
+
+        /// <summary>
+        /// Gets or sets the retention time (in milliseconds) for the metrics. Default: 100000.
+        /// </summary>
+        public long RetentionTime { get; set; } = 100000;
     }
 }
