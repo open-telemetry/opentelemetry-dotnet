@@ -16,7 +16,7 @@ This repository includes multiple installable components, available on
 
 Each package has its individual `README.md` file, which covers the instruction
 on how to install and how to get started. To find all the available components,
-please take a look at the [`src`](./src/) folder.
+please take a look at the `src` folder.
 
 Here are the most commonly used components:
 
