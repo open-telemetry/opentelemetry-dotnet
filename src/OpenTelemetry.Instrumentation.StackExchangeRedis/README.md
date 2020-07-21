@@ -26,7 +26,7 @@ using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(b => b
 ```
 
 For a more detailed example see
-[TestRedis](../../samples/Exporters/Console/TestRedis.cs).
+[TestRedis](../../samples/Console/TestRedis.cs).
 
 ## References
 
