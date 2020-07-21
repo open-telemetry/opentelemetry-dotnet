@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityContextShim.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanContextShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,19 +22,19 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class ActivityContextShim : ISpanContext
+    public sealed class SpanContextShim : ISpanContext
     {
-        public ActivityContextShim(in ActivityContext activityContext)
+        public SpanContextShim(in SpanContextNew spanContext)
         {
-            if (!activityContext.IsValid())
+            if (!spanContext.IsValid)
             {
-                throw new ArgumentException(nameof(activityContext));
+                throw new ArgumentException(nameof(spanContext));
             }
 
-            this.Context = activityContext;
+            this.Context = spanContext;
         }
 
-        public ActivityContext Context { get; private set; }
+        public SpanContextNew Context { get; private set; }
 
         /// <inheritdoc/>
         public string TraceId => this.Context.TraceId.ToString();

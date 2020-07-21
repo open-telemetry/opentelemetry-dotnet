@@ -24,10 +24,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     public class ScopeManagerShimTests
     {
-        private const string ActivityName1 = "MyActivityName/1";
-        private const string ActivitySourceName = "defaultactivitysource";
-
-        private ActivitySource activitySource = default;
+        private const string SpanName = "MySpanName/1";
+        private const string TracerName = "defaultactivitysource";
 
         static ScopeManagerShimTests()
         {
@@ -53,8 +51,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            this.activitySource = new ActivitySource(ActivitySourceName);
-            var shim = new ScopeManagerShim(this.activitySource);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
 
             Assert.Null(Activity.Current);
             Assert.Null(shim.Active);
@@ -63,10 +61,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNotNull()
         {
-            // var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-            this.activitySource = new ActivitySource(ActivitySourceName);
-            var shim = new ScopeManagerShim(this.activitySource);
-            var openTracingSpan = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
+            var openTracingSpan = new SpanShim(tracer.StartSpan(SpanName));
 
             var scope = shim.Activate(openTracingSpan, true);
             Assert.NotNull(scope);
@@ -79,8 +76,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate_SpanMustBeShim()
         {
-            this.activitySource = new ActivitySource(ActivitySourceName);
-            var shim = new ScopeManagerShim(this.activitySource);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
 
             Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
         }
@@ -88,9 +85,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate()
         {
-            this.activitySource = new ActivitySource(ActivitySourceName);
-            var shim = new ScopeManagerShim(this.activitySource);
-            var spanShim = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
+            var spanShim = new SpanShim(tracer.StartSpan(SpanName));
 
             using (shim.Activate(spanShim, true))
             {

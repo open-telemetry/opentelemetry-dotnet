@@ -30,7 +30,11 @@ namespace OpenTelemetry.Trace
     public class TelemetrySpanNew : IDisposable
     {
         internal static readonly TelemetrySpanNew NoopInstance = new TelemetrySpanNew(null);
-        private readonly Activity activity;
+#pragma warning disable SA1304 // Other variable name won't fit here
+#pragma warning disable SA1307 // Other variable name won't fit here
+        internal readonly Activity activity;
+#pragma warning restore SA1307 // Other variable name won't fit here
+#pragma warning restore SA1304 // Other variable name won't fit here
 
         internal TelemetrySpanNew(Activity activity)
         {

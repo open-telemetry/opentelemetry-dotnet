@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityShim.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class ActivityShim : global::OpenTracing.ISpan
+    public sealed class SpanShim : global::OpenTracing.ISpan
     {
         /// <summary>
         /// The default event name if not specified.
@@ -42,21 +42,24 @@ namespace OpenTelemetry.Shims.OpenTracing
             typeof(double),
         };
 
-        private readonly ActivityContextShim activityContextShim;
+        private readonly SpanContextShim spanContextShim;
 
-        public ActivityShim(Activity activity)
+        public SpanShim(TelemetrySpanNew span)
         {
-            this.activity = activity ?? throw new ArgumentNullException(nameof(activity));
+            this.Span = span ?? throw new ArgumentNullException(nameof(span));
 
-            if (!this.activity.Context.IsValid())
+            if (!this.Span.Context.IsValid)
             {
-                throw new ArgumentException(nameof(this.activity.Context));
+                throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.activityContextShim = new ActivityContextShim(this.activity.Context);
+            this.activity = span.activity;
+            this.spanContextShim = new SpanContextShim(this.Span.Context);
         }
 
-        public ISpanContext Context => this.activityContextShim;
+        public ISpanContext Context => this.spanContextShim;
+
+        public TelemetrySpanNew Span { get; private set; }
 
 #pragma warning disable SA1300 // Other variable name will cause confusion, as it is referenced in other classes
         public Activity activity { get; private set; }

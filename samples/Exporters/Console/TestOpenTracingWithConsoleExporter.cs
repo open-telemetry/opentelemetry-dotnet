@@ -39,10 +39,10 @@ namespace Samples
             // The above line is required only in applications
             // which decide to use OpenTelemetry.
 
-            // Following shows how to use the OpenTracing, which is a thin layer on top
+            // Following shows how to use the OpenTracing shim, which is a thin layer on top
             // of Activity and associated classes.
 
-            var tracer = new ActivitySourceShim(new ActivitySource("MyCompany.MyProduct.MyWebServer"), new TraceContextFormatActivity());
+            var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormatActivity());
 
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {

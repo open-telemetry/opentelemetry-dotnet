@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityBuilderShim.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanBuilderShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using global::OpenTracing;
 using OpenTelemetry.Trace;
-using SpanCreationOptions = OpenTelemetry.Trace.SpanCreationOptions;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
@@ -28,8 +27,13 @@ namespace OpenTelemetry.Shims.OpenTracing
     /// </summary>
     /// <remarks>Instances of this class are not thread-safe.</remarks>
     /// <seealso cref="ISpanBuilder" />
-    public sealed class ActivityBuilderShim : ISpanBuilder
+    public sealed class SpanBuilderShim : ISpanBuilder
     {
+        /// <summary>
+        /// The tracer.
+        /// </summary>
+        private readonly Trace.TracerNew tracer;
+
         /// <summary>
         /// The tracer.
         /// </summary>
@@ -79,12 +83,14 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private bool error;
 
-        public ActivityBuilderShim(ActivitySource activitySource, string activityName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
+        public SpanBuilderShim(Trace.TracerNew tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
         {
-            this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
-            this.activityName = activityName ?? throw new ArgumentNullException(nameof(activityName));
-            this.ScopeManager = new ScopeManagerShim(this.activitySource);
+            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.activityName = spanName ?? throw new ArgumentNullException(nameof(spanName));
+            this.ScopeManager = new ScopeManagerShim(this.tracer);
             this.rootOperationNamesForActivityBasedAutoInstrumentations = rootOperationNamesForActivityBasedAutoInstrumentations ?? this.rootOperationNamesForActivityBasedAutoInstrumentations;
+
+            this.activitySource = tracer.activitySource;
         }
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
@@ -136,12 +142,12 @@ namespace OpenTelemetry.Shims.OpenTracing
             var actualContext = GetOpenTelemetrySpanContext(referencedContext);
             if (!this.ParentSet)
             {
-                this.parentActivityContext = actualContext;
+                this.parentActivityContext = actualContext.ActivityContext;
                 return this;
             }
             else
             {
-                this.links.Add(new ActivityLink(actualContext));
+                this.links.Add(new ActivityLink(actualContext.ActivityContext));
             }
 
             return this;
@@ -198,7 +204,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 activity.SetStatus(Status.Unknown);
             }
 
-            return new ActivityShim(activity);
+            return new SpanShim(new TelemetrySpanNew(activity));
         }
 
         /// <inheritdoc/>
@@ -326,7 +332,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <exception cref="ArgumentException">span is not a valid SpanShim object.</exception>
         private static Activity GetOpenTelemetrySpan(ISpan span)
         {
-            if (!(span is ActivityShim shim))
+            if (!(span is SpanShim shim))
             {
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
@@ -340,9 +346,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <param name="spanContext">The span context.</param>
         /// <returns>the OpenTelemetry SpanContext.</returns>
         /// <exception cref="ArgumentException">context is not a valid SpanContextShim object.</exception>
-        private static ActivityContext GetOpenTelemetrySpanContext(ISpanContext spanContext)
+        private static SpanContextNew GetOpenTelemetrySpanContext(ISpanContext spanContext)
         {
-            if (!(spanContext is ActivityContextShim shim))
+            if (!(spanContext is SpanContextShim shim))
             {
                 throw new ArgumentException("context is not a valid SpanContextShim object");
             }

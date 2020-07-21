@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivitySourceShim.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,20 +19,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public class ActivitySourceShim : global::OpenTracing.ITracer
+    public class TracerShim : global::OpenTracing.ITracer
     {
+        private readonly Trace.TracerNew tracer;
         private readonly ActivitySource activitySource;
         private readonly ITextFormatActivity textFormat;
 
-        public ActivitySourceShim(ActivitySource activitySource, ITextFormatActivity textFormat)
+        public TracerShim(Trace.TracerNew tracer, ITextFormatActivity textFormat)
         {
-            this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
+            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            this.activitySource = tracer.activitySource;
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
-
-            this.ScopeManager = new ScopeManagerShim(this.activitySource);
+            this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 
         /// <inheritdoc/>
@@ -44,7 +46,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
         {
-            return new ActivityBuilderShim(this.activitySource, operationName);
+            return new SpanBuilderShim(this.tracer, operationName);
         }
 
         /// <inheritdoc/>
@@ -60,7 +62,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            ActivityContext activityContext = default;
+            SpanContextNew spanContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -81,10 +83,10 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                activityContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
+                spanContext = new SpanContextNew(this.textFormat.Extract(carrierMap, GetCarrierKeyValue));
             }
 
-            return !activityContext.IsValid() ? null : new ActivityContextShim(activityContext);
+            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
 
         /// <inheritdoc/>
@@ -98,7 +100,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(activityContext));
             }
 
-            if (!(activityContext is ActivityContextShim shim))
+            if (!(activityContext is SpanContextShim shim))
             {
                 throw new ArgumentException("context is not a valid ActivityContextShim object");
             }
@@ -115,7 +117,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.Context, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                this.textFormat.Inject(shim.Context.ActivityContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

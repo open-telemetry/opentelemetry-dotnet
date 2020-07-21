@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityContextShimTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SpanContextShimTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,13 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    public class ActivityContextShimTests
+    public class SpanContextShimTests
     {
         [Fact]
         public void CtorArgumentValidation()
         {
-            Assert.Throws<ArgumentException>(() => new ActivityContextShim(default));
-            Assert.Throws<ArgumentException>(() => new ActivityContextShim(new ActivityContext(default, default, ActivityTraceFlags.None)));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContextNew(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]
@@ -52,9 +52,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // TODO
         }
 
-        internal static ActivityContextShim GetSpanContextShim()
+        internal static SpanContextShim GetSpanContextShim()
         {
-            return new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            return new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         }
     }
 }

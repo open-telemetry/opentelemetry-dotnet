@@ -27,7 +27,11 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerNew
     {
-        private readonly ActivitySource activitySource;
+#pragma warning disable SA1304 // Other variable name won't fit here
+#pragma warning disable SA1307 // Other variable name won't fit here
+        internal readonly ActivitySource activitySource;
+#pragma warning disable SA1304 // Other variable name won't fit here
+#pragma warning disable SA1307 // Other variable name won't fit here
 
         internal TracerNew(ActivitySource activitySource)
         {
