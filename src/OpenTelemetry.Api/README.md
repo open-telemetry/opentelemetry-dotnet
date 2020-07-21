@@ -100,10 +100,10 @@ here as well.
 
     ```xml
     <ItemGroup>
-        <PackageReference
-            Include="System.Diagnostics.DiagnosticSource"
-            Version="5.0.0-preview.7.20308.13"
-        />
+      <PackageReference
+        Include="System.Diagnostics.DiagnosticSource"
+        Version="5.0.0-preview.7.20308.13"
+      />
     </ItemGroup>
     ```
 

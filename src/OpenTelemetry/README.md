@@ -45,10 +45,10 @@ console application, and have the traces displayed in the console.
 
     ```xml
     <ItemGroup>
-        <PackageReference
-            Include="OpenTelemetry.Exporter.Console"
-            Version="0.3.0"
-        />
+      <PackageReference
+        Include="OpenTelemetry.Exporter.Console"
+        Version="0.3.0"
+      />
     </ItemGroup>
     ```
 
