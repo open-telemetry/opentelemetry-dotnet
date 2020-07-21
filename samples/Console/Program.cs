@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using CommandLine;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     /// <summary>
     /// Main samples entry point.
@@ -52,7 +52,7 @@ namespace Samples
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
-            Console.ReadLine();
+            System.Console.ReadLine();
         }
     }
 

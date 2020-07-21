@@ -17,14 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-
-using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
 using StackExchange.Redis;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestRedis
     {
@@ -67,7 +65,7 @@ namespace Samples
             // Create a scoped activity. It will end automatically when using statement ends
             using (activitySource.StartActivity("Main"))
             {
-                Console.WriteLine("About to do a busy work");
+                System.Console.WriteLine("About to do a busy work");
                 for (var i = 0; i < 10; i++)
                 {
                     DoWork(db, activitySource);
@@ -88,13 +86,13 @@ namespace Samples
                 {
                     db.StringSet("key", "value " + DateTime.Now.ToLongDateString());
 
-                    Console.WriteLine("Doing busy work");
+                    System.Console.WriteLine("Doing busy work");
                     Thread.Sleep(1000);
 
                     // run a command, in this case a GET
                     var myVal = db.StringGet("key");
 
-                    Console.WriteLine(myVal);
+                    System.Console.WriteLine(myVal);
                 }
                 catch (ArgumentOutOfRangeException e)
                 {

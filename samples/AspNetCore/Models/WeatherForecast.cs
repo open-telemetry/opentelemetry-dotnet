@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace API
+namespace OpenTelemetry.Samples.AspNetCore.Models
 {
     public class WeatherForecast
     {

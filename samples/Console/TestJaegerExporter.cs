@@ -17,7 +17,7 @@ using System;
 
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestJaegerExporter
     {
@@ -48,10 +48,10 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Traces are being created and exported" +
+                System.Console.WriteLine("Traces are being created and exported" +
                     "to Jaeger in the background. Use Jaeger to view them." +
                     "Press ENTER to stop.");
-                Console.ReadLine();
+                System.Console.ReadLine();
             }
 
             return null;

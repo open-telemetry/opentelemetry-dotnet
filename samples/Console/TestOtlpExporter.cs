@@ -14,12 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal static class TestOtlpExporter
     {
@@ -44,10 +41,10 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Traces are being created and exported" +
+                System.Console.WriteLine("Traces are being created and exported" +
                     "to OTLP in the background." +
                     "Press ENTER to stop.");
-                Console.ReadLine();
+                System.Console.ReadLine();
             }
 
             return null;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OpenTelemetry.Exporter.AspNet.Models
+namespace OpenTelemetry.Samples.AspNet.Models
 {
     public class WeatherForecast
     {

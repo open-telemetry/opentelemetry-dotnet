@@ -15,12 +15,9 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestZipkinExporter
     {
@@ -42,10 +39,10 @@ namespace Samples
             {
                 sample.Start();
 
-                Console.WriteLine("Traces are being created and exported" +
+                System.Console.WriteLine("Traces are being created and exported" +
                     "to Zipkin in the background. Use Zipkin to view them." +
                     "Press ENTER to stop.");
-                Console.ReadLine();
+                System.Console.ReadLine();
             }
 
             return null;

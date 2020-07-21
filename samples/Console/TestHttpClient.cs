@@ -13,24 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Diagnostics;
 using System.Net.Http;
-using OpenTelemetry.Exporter.Console;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestHttpClient
     {
         internal static object Run()
         {
-            Console.WriteLine("Hello World!");
+            System.Console.WriteLine("Hello World!");
 
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
-                .SetResource(Resources.CreateServiceResource("http-service-example"))
+                .SetResource(Resources.Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
                 .UseConsoleExporter(opt => opt.DisplayAsJson = false));
 
@@ -41,7 +38,7 @@ namespace Samples
                 client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
             }
 
-            Console.ReadLine();
+            System.Console.ReadLine();
 
             return null;
         }

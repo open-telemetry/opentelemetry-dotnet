@@ -7,9 +7,9 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Threading.Tasks;
 
-using OpenTelemetry.Exporter.AspNet.Models;
+using OpenTelemetry.Samples.AspNet.Models;
 
-namespace OpenTelemetry.Exporter.AspNet.Controllers
+namespace OpenTelemetry.Samples.AspNet.Controllers
 {
     public class WeatherForecastController : ApiController
     {

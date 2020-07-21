@@ -14,13 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Diagnostics;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestOTelShimWithConsoleExporter
     {
@@ -30,7 +27,7 @@ namespace Samples
             // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                    .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in applications
@@ -49,7 +46,7 @@ namespace Samples
 
             span.End();
 
-            Console.WriteLine("Press Enter key to exit.");
+            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }

@@ -1,1 +1,1 @@
-﻿<%@ Application Codebehind="Global.asax.cs" Inherits="OpenTelemetry.Exporter.AspNet.WebApiApplication" Language="C#" %>
+﻿<%@ Application Codebehind="Global.asax.cs" Inherits="OpenTelemetry.Samples.AspNet.WebApiApplication" Language="C#" %>

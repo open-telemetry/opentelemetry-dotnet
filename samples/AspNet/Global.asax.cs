@@ -7,7 +7,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Exporter.AspNet
+namespace OpenTelemetry.Samples.AspNet
 {
     public class WebApiApplication : HttpApplication
     {

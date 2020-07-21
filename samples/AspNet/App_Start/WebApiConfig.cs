@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Formatting;
 using System.Web.Http;
 
-namespace OpenTelemetry.Exporter.AspNet
+namespace OpenTelemetry.Samples.AspNet
 {
     public static class WebApiConfig
     {

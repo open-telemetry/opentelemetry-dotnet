@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Trace.Configuration;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestZPagesExporter
     {
@@ -48,7 +47,7 @@ namespace Samples
                 // Create a scoped activity. It will end automatically when using statement ends
                 using (activitySource.StartActivity("Main"))
                 {
-                    Console.WriteLine("About to do a busy work in Main");
+                    System.Console.WriteLine("About to do a busy work in Main");
                 }
 
                 Thread.Sleep(3000);
@@ -56,7 +55,7 @@ namespace Samples
                 // Create a scoped activity. It will end automatically when using statement ends
                 using (activitySource.StartActivity("Test"))
                 {
-                    Console.WriteLine("About to do a busy work in Test");
+                    System.Console.WriteLine("About to do a busy work in Test");
                 }
 
                 Thread.Sleep(5000);

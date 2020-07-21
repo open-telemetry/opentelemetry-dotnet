@@ -24,13 +24,13 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestPrometheusExporter
     {
         internal static async Task<object> RunAsync(int port, int pushIntervalInSecs, int totalDurationInMins)
         {
-            Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
+            System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
 
             /*
             Following is sample prometheus.yml config. Adjust port,interval as needed.
@@ -93,13 +93,13 @@ namespace Samples
 
                 await Task.Delay(1000);
                 var remaining = (totalDurationInMins * 60) - sw.Elapsed.TotalSeconds;
-                Console.WriteLine("Running and emitting metrics. Remaining time:" + (int)remaining + " seconds");
+                System.Console.WriteLine("Running and emitting metrics. Remaining time:" + (int)remaining + " seconds");
             }
 
             // Stopping 
             metricsHttpServer.Stop();
-            Console.WriteLine("Metrics server shutdown.");
-            Console.WriteLine("Press Enter key to exit.");
+            System.Console.WriteLine("Metrics server shutdown.");
+            System.Console.WriteLine("Press Enter key to exit.");
             return null;
         }
 

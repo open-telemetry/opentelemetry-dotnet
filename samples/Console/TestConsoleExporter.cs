@@ -18,11 +18,10 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestConsoleExporter
     {
@@ -32,7 +31,7 @@ namespace Samples
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                    .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
                                                 (p) => p.AddProcessor((next) => new MyProcessor(next))));
 
@@ -94,7 +93,7 @@ namespace Samples
                 }
             }
 
-            Console.WriteLine("Press Enter key to exit.");
+            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }
