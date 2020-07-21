@@ -20,7 +20,7 @@ You can configure the `PrometheusExporter` by following the directions below:
 * `Url`: The url to listen to. Typically it ends with `/metrics` like `http://localhost:9184/metrics/`.
 
 See
-[`TestPrometheusExporter.cs`](../../samples/Exporters/Console/TestPrometheusExporter.cs)
+[`TestPrometheusExporter.cs`](../../samples/Console/TestPrometheusExporter.cs)
 for example use.
 
 ## References
