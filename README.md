@@ -21,7 +21,7 @@ please take a look at the `src` folder.
 Here are the most commonly used components:
 
 * [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
-* [OpenTelemetry .NET SDK](./docs/sdk-usage.md)
+* [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
 * [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
 Here are the exporters:
