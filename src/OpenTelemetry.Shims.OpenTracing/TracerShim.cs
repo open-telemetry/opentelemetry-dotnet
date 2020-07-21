@@ -16,24 +16,21 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.TracerNew tracer;
-        private readonly ActivitySource activitySource;
-        private readonly ITextFormatActivity textFormat;
+        private readonly ITextFormat textFormat;
 
-        public TracerShim(Trace.TracerNew tracer, ITextFormatActivity textFormat)
+        public TracerShim(Trace.TracerNew tracer, ITextFormat textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.activitySource = tracer.ActivitySource;
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
+
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 
@@ -62,7 +59,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            SpanContextNew spanContext = default;
+            Trace.SpanContext spanContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -83,26 +80,28 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                spanContext = new SpanContextNew(this.textFormat.Extract(carrierMap, GetCarrierKeyValue));
+                spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            // TODO: remove comment after spanshim changes
+            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            return default;
         }
 
         /// <inheritdoc/>
         public void Inject<TCarrier>(
-            global::OpenTracing.ISpanContext activityContext,
+            global::OpenTracing.ISpanContext spanContext,
             global::OpenTracing.Propagation.IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            if (activityContext is null)
+            if (spanContext is null)
             {
-                throw new ArgumentNullException(nameof(activityContext));
+                throw new ArgumentNullException(nameof(spanContext));
             }
 
-            if (!(activityContext is SpanContextShim shim))
+            if (!(spanContext is SpanContextShim shim))
             {
-                throw new ArgumentException("context is not a valid ActivityContextShim object");
+                throw new ArgumentException("context is not a valid SpanContextShim object");
             }
 
             if (format is null)
@@ -117,7 +116,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.Context.ActivityContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                // Remove comment after spanshim changes
+                // this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

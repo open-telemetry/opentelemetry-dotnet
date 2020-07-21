@@ -35,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.Context.TraceId.ToString(), shim.TraceId);
+            Assert.Equal(shim.TraceId.ToString(), shim.TraceId);
         }
 
         [Fact]
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.Context.SpanId.ToString(), shim.SpanId);
+            Assert.Equal(shim.SpanId.ToString(), shim.SpanId);
         }
 
         [Fact]

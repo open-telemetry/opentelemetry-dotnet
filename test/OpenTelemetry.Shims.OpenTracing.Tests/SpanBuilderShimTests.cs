@@ -67,7 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal(startTimestamp, spanShim.activity.StartTimeUtc);
+            Assert.Equal(startTimestamp, spanShim.Span.Activity.StartTimeUtc);
         }
 
         [Fact]
@@ -97,8 +97,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.Null(spanShim.activity.Parent);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Null(spanShim.Span.Activity.Parent);
         }
 
         [Fact]
@@ -114,9 +114,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.NotNull(spanShim.activity.Parent);
-            Assert.Equal(SpanName1, spanShim.activity.Parent.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.NotNull(spanShim.Span.Activity.ParentId);
         }
 
         [Fact]
@@ -127,14 +126,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new SpanBuilderShim(tracer, "foo", new List<string> { "foo" });
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
 
             // mis-matched root operation name
             shim = new SpanBuilderShim(tracer, "foo", new List<string> { "bar" });
             spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.Equal("foo", spanShim.activity.Parent.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.Parent.OperationName);
         }
 
         [Fact]
@@ -152,11 +151,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.Equal(SpanName2, spanShim.activity.Parent.OperationName);
-            Assert.Equal(SpanName1, spanShim.activity.Parent.Parent.OperationName);
-            Assert.Equal(spanShim.Context.TraceId, spanShim.activity.Parent.TraceId.ToHexString());
-            Assert.Equal(spanShim.Context.TraceId, spanShim.activity.Parent.Parent.TraceId.ToHexString());
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Contains(spanShim.Context.TraceId, spanShim.Span.Activity.TraceId.ToHexString());
+
+            // TODO: Check for multi level parenting
         }
 
         [Fact]
@@ -172,7 +170,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // should be no parent.
-            Assert.Null(spanShim.activity.Parent);
+            Assert.Null(spanShim.Span.Activity.Parent);
         }
 
         [Fact]
@@ -188,7 +186,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var spanShim = (SpanShim)shim.Start();
 
-            Assert.NotNull(spanShim.activity.ParentId);
+            Assert.NotNull(spanShim.Span.Activity.ParentId);
         }
 
         [Fact]
@@ -209,11 +207,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // build
             var spanShim = (SpanShim)shim.Start();
-            var linkContext = spanShim.activity.Links.First().Context;
+            var linkContext = spanShim.Span.Activity.Links.First().Context;
 
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.Contains(spanContext1.TraceId, spanShim.activity.ParentId);
-            Assert.Equal(spanContext2.Context.SpanId, spanShim.activity.Links.First().Context.SpanId);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);
+            Assert.Equal(spanContext2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
         }
 
         [Fact]
@@ -228,9 +226,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Not an attribute
-            Assert.Empty(spanShim.activity.Tags);
-            Assert.Equal("foo", spanShim.activity.OperationName);
-            Assert.Equal(ActivityKind.Client, spanShim.activity.Kind);
+            Assert.Empty(spanShim.Span.Activity.Tags);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Equal(ActivityKind.Client, spanShim.Span.Activity.Kind);
         }
 
         [Fact]
@@ -245,7 +243,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanShim.activity.GetStatus());
+            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -260,7 +258,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Null key was ignored
-            Assert.Empty(spanShim.activity.Tags);
+            Assert.Empty(spanShim.Span.Activity.Tags);
         }
 
         [Fact]
@@ -275,8 +273,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Null value was turned into string.empty
-            Assert.Equal("foo", spanShim.activity.Tags.First().Key);
-            Assert.Equal(string.Empty, spanShim.activity.Tags.First().Value);
+            Assert.Equal("foo", spanShim.Span.Activity.Tags.First().Key);
+            Assert.Equal(string.Empty, spanShim.Span.Activity.Tags.First().Value);
         }
 
         [Fact]
@@ -291,7 +289,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanShim.activity.GetStatus());
+            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -312,7 +310,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Just verify the count
-            Assert.Equal(7, spanShim.activity.Tags.Count());
+            Assert.Equal(7, spanShim.Span.Activity.Tags.Count());
         }
 
         [Fact]
@@ -327,7 +325,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // Just check the return value is a SpanShim and that the underlying OpenTelemetry Span.
             // There is nothing left to verify because the rest of the tests were already calling .Start() prior to verification.
             Assert.NotNull(span);
-            Assert.Equal("foo", span.activity.OperationName);
+            Assert.Equal("foo", span.Span.Activity.OperationName);
         }
     }
 }

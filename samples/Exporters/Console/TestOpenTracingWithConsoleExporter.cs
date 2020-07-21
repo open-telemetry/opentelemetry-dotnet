@@ -42,7 +42,7 @@ namespace Samples
             // Following shows how to use the OpenTracing shim, which is a thin layer on top
             // of Activity and associated classes.
 
-            var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormatActivity());
+            var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
 
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {
@@ -52,12 +52,8 @@ namespace Samples
                 // The child scope will automatically use parentScope as its parent.
                 using (IScope childScope = tracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true))
                 {
-                    childScope.Span.SetTag("Child Tag", "Child Tag Value").SetBaggageItem("ch", "value").SetTag("more", "attributes");
-                    childScope.Span.Finish();
+                    childScope.Span.SetTag("Child Tag", "Child Tag Value").SetTag("ch", "value").SetTag("more", "attributes");
                 }
-
-                // TODO: Current implementation does not end the span on dispose.
-                parentScope.Span.Finish();
             }
 
             Console.WriteLine("Press Enter key to exit.");

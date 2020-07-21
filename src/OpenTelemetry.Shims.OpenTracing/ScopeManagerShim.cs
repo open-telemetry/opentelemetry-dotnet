@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using global::OpenTracing;
@@ -25,10 +24,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<Activity, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Activity, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<Trace.TelemetrySpanNew, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpanNew, global::OpenTracing.IScope>();
 
         private readonly Trace.TracerNew tracer;
-        private readonly ActivitySource activitySource;
 
 #if DEBUG
         private int spanScopeTableCount;
@@ -37,7 +35,6 @@ namespace OpenTelemetry.Shims.OpenTracing
         public ScopeManagerShim(Trace.TracerNew tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.activitySource = tracer.ActivitySource;
         }
 
 #if DEBUG
@@ -49,18 +46,18 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             get
             {
-                var currentActivity = Activity.Current;
-                if (currentActivity == null || currentActivity.Context == default)
+                var currentSpan = this.tracer.CurrentSpan;
+                if (currentSpan == null || !currentSpan.Context.IsValid)
                 {
                     return null;
                 }
 
-                if (SpanScopeTable.TryGetValue(currentActivity, out var openTracingScope))
+                if (SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope))
                 {
                     return openTracingScope;
                 }
 
-                return new ScopeInstrumentation(new TelemetrySpanNew(currentActivity));
+                return new ScopeInstrumentation(currentSpan);
             }
         }
 
@@ -78,7 +75,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 shim.Span,
                 () =>
                 {
-                    var removed = SpanScopeTable.Remove(shim.activity);
+                    var removed = SpanScopeTable.Remove(shim.Span);
 #if DEBUG
                     if (removed)
                     {
@@ -88,7 +85,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     scope.Dispose();
                 });
 
-            SpanScopeTable.Add(shim.activity, instrumentation);
+            SpanScopeTable.Add(shim.Span, instrumentation);
 #if DEBUG
             Interlocked.Increment(ref this.spanScopeTableCount);
 #endif

@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using global::OpenTracing;
 using OpenTelemetry.Trace;
@@ -53,7 +52,6 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.activity = span.Activity;
             this.spanContextShim = new SpanContextShim(this.Span.Context);
         }
 
@@ -61,21 +59,16 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TelemetrySpanNew Span { get; private set; }
 
-#pragma warning disable SA1300 // Other variable name will cause confusion, as it is referenced in other classes
-        public Activity activity { get; private set; }
-#pragma warning restore SA1300 // Other variable name will cause confusion, as it is referenced in other classes
-
         /// <inheritdoc/>
         public void Finish()
         {
-            this.activity.Stop();
+            this.Span.End();
         }
 
         /// <inheritdoc/>
         public void Finish(DateTimeOffset finishTimestamp)
         {
-            this.activity.SetEndTime(finishTimestamp.UtcDateTime);
-            this.activity.Stop();
+            this.Span.End(finishTimestamp);
         }
 
         /// <inheritdoc/>
@@ -101,9 +94,14 @@ namespace OpenTelemetry.Shims.OpenTracing
             var eventName = payload.Item1;
             var eventAttributes = payload.Item2;
 
-            this.activity.AddEvent(timestamp == DateTimeOffset.MinValue
-                ? new ActivityEvent(eventName, eventAttributes)
-                : new ActivityEvent(eventName, timestamp, eventAttributes));
+            if (timestamp == DateTimeOffset.MinValue)
+            {
+                this.Span.AddEvent(eventName, eventAttributes);
+            }
+            else
+            {
+                this.Span.AddEvent(eventName, timestamp, eventAttributes);
+            }
 
             return this;
         }
@@ -122,7 +120,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(@event));
             }
 
-            this.activity.AddEvent(new ActivityEvent(@event));
+            this.Span.AddEvent(@event);
             return this;
         }
 
@@ -134,7 +132,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(@event));
             }
 
-            this.activity.AddEvent(new ActivityEvent(@event, timestamp));
+            this.Span.AddEvent(@event, timestamp);
             return this;
         }
 
@@ -146,8 +144,8 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.activity.AddBaggage(key, value);
-            return this;
+            // TODO Revisit once CorrelationContext is finalized
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
@@ -158,7 +156,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(operationName));
             }
 
-            this.activity.DisplayName = operationName;
+            this.Span.UpdateName(operationName);
             return this;
         }
 
@@ -170,7 +168,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.activity.AddTag(key, value);
+            this.Span.SetAttribute(key, value);
             return this;
         }
 
@@ -186,12 +184,11 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
             {
-                this.activity.SetStatus(value ? Status.Unknown : Status.Ok);
+                this.Span.Status = value ? Trace.Status.Unknown : Trace.Status.Ok;
             }
             else
             {
-                // TODO: Remove ToString() from value, when Activity.Tags support bool value.
-                this.activity.AddTag(key, value.ToString());
+                this.Span.SetAttribute(key, value.ToString());
             }
 
             return this;
@@ -205,8 +202,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            // TODO: Remove ToString() from value, when Activity.Tags support int value.
-            this.activity.AddTag(key, value.ToString());
+            this.Span.SetAttribute(key, value.ToString());
             return this;
         }
 
@@ -218,8 +214,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            // TODO: Remove ToString() from value, when Activity.Tags support double value.
-            this.activity.AddTag(key, value.ToString());
+            this.Span.SetAttribute(key, value.ToString());
             return this;
         }
 

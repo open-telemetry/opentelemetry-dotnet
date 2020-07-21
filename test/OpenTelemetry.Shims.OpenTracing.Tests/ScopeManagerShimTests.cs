@@ -69,7 +69,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.NotNull(scope);
 
             var activeScope = shim.Active;
-            Assert.Equal(scope, activeScope);
+            Assert.Equal(scope.Span.Context.SpanId, activeScope.Span.Context.SpanId);
             openTracingSpan.Finish();
         }
 
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 #endif
 
             spanShim.Finish();
-            Assert.NotEqual(default, spanShim.activity.Duration);
+            Assert.NotEqual(default, spanShim.Span.Activity.Duration);
         }
     }
 }
