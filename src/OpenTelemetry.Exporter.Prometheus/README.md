@@ -15,31 +15,12 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
 
 ## Configuration
 
-Start `PrometheusExporter` as below.
+You can configure the `PrometheusExporter` by following the directions below:
 
-```csharp
-var exporter = new PrometheusExporter(
-    new PrometheusExporterOptions()
-    {
-        Url = "http://+:9184/metrics/"
-    },
-    Stats.ViewManager);
-
-exporter.Start();
-
-try
-{
-    // record metrics
-    statsRecorder.NewMeasureMap().Put(VideoSize, values[0] * MiB).Record();
-}
-finally
-{
-    exporter.Stop();
-}
-```
+* `Url`: The url to listen to. Typically it ends with `/metrics` like `http://localhost:9184/metrics/`.
 
 See
-[sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestPrometheus.cs)
+[`TestPrometheusExporter.cs`](../../samples/Exporters/Console/TestPrometheusExporter.cs)
 for example use.
 
 ## References

@@ -15,32 +15,15 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
-Configure `ZipkinTraceExporter` as below:
+You can configure the `ZipkinExporter` by following the directions below:
 
-```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .UseZipkin(o =>
-    {
-        o.ServiceName = "test-zipkin";
-        o.Endpoint = new Uri(zipkinUri);
-    })))
-{
-    var tracer = tracerFactory.GetTracer("zipkin-test");
-
-    // Create a scoped span. It will end automatically when using statement ends
-    using (tracer.WithSpan(tracer.StartSpan("Main")))
-    {
-        Console.WriteLine("About to do a busy work");
-        for (var i = 0; i < 10; i++)
-        {
-            DoWork(i, tracer);
-        }
-    }
-}
-```
+* `Endpoint`: Zipkin endpoint address.
+* `TimeoutSeconds`: Timeout in seconds.
+* `ServiceName`: Name of the service reporting telemetry.
+* `UseShortTraceIds`: Value indicating whether short trace id should be used.
 
 See
-[sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
+[`TestZipkinExporter.cs`](../../samples/Exporters/Console/TestZipkinExporter.cs)
 for example use.
 
 ## References
