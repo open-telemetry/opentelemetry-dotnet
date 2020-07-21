@@ -1,8 +1,6 @@
 name: .NET Linux
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -39,4 +37,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll
+      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --configuration Release --no-build 
