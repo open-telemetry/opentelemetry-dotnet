@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         [Event(2, Message = "Error: '{0}'", Level = EventLevel.Error)]
         public void UnexpectedError(string exception)
         {
-            this.WriteEvent(1, exception);
+            this.WriteEvent(2, exception);
         }
 
         /// <summary>
