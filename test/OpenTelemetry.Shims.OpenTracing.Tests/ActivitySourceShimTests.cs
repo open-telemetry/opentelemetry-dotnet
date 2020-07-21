@@ -48,7 +48,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void ScopeManager_NotNull()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             // Internals of the ScopeManagerShim tested elsewhere
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void BuildSpan_NotNull()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             // Internals of the SpanBuilderShim tested elsewhere
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Inject_ArgumentValidation()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Inject_UnknownFormatIgnored()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_ArgumentValidation()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_UnknownFormatIgnored()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             var spanContextShim = new ActivityContextShim(new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Extract_InvalidTraceParent()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, new TraceContextFormatActivity());
 
             var mockCarrier = new Mock<ITextMap>();
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             var format = new TraceContextFormatActivity();
 
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivitySourceShim(activitySource, format);
 
             // first inject

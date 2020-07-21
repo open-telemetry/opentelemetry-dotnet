@@ -179,8 +179,6 @@ namespace OpenTelemetry.Shims.OpenTracing
                     if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(currentActivity.OperationName))
                     {
                         activity = this.activitySource.StartActivity(this.activityName, this.activityKind, null, null, this.links, startTimestamp);
-
-                        // activity = Activity.Current;
                     }
                 }
             }
@@ -333,7 +331,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            return shim.ActivityObj;
+            return shim.activity;
         }
 
         /// <summary>

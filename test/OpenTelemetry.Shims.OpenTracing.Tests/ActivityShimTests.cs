@@ -54,7 +54,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SpanContextIsNotNull()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             // ISpanContext validation handled in a separate test class
@@ -64,43 +64,43 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void FinishSpan()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             shim.Finish();
 
-            Assert.NotEqual(default, shim.ActivityObj.Duration);
+            Assert.NotEqual(default, shim.activity.Duration);
         }
 
         [Fact]
         public void FinishSpanUsingSpecificTimestamp()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             var endTime = DateTimeOffset.UtcNow;
             shim.Finish(endTime);
 
-            Assert.Equal(endTime - shim.ActivityObj.StartTimeUtc, shim.ActivityObj.Duration);
+            Assert.Equal(endTime - shim.activity.StartTimeUtc, shim.activity.Duration);
         }
 
         [Fact]
         public void SetOperationName()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             // parameter validation
             Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null));
 
-            // We cannot set operation name on activity after creation.
-            // shim.SetOperationName("bar");
+            shim.SetOperationName("bar");
+            Assert.Equal("bar", shim.activity.DisplayName);
         }
 
         [Fact]
         public void GetBaggageItem()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             // parameter validation
@@ -113,13 +113,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Log()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             shim.Log("foo");
 
-            Assert.Single(shim.ActivityObj.Events);
-            var first = shim.ActivityObj.Events.First();
+            Assert.Single(shim.activity.Events);
+            var first = shim.activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.False(first.Attributes.Any());
         }
@@ -127,14 +127,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogWithExplicitTimestamp()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             var now = DateTimeOffset.UtcNow;
             shim.Log(now, "foo");
 
-            Assert.Single(shim.ActivityObj.Events);
-            var first = shim.ActivityObj.Events.First();
+            Assert.Single(shim.activity.Events);
+            var first = shim.activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.Equal(now, first.Timestamp);
             Assert.False(first.Attributes.Any());
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFields()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
@@ -159,10 +159,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 new KeyValuePair<string, object>("event", "foo"),
             });
 
-            var first = shim.ActivityObj.Events.FirstOrDefault();
-            var last = shim.ActivityObj.Events.LastOrDefault();
+            var first = shim.activity.Events.FirstOrDefault();
+            var last = shim.activity.Events.LastOrDefault();
 
-            Assert.Equal(2, shim.ActivityObj.Events.Count());
+            Assert.Equal(2, shim.activity.Events.Count());
 
             Assert.Equal(ActivityShim.DefaultEventName, first.Name);
             Assert.True(first.Attributes.Any());
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFieldsWithExplicitTimestamp()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
@@ -191,9 +191,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 new KeyValuePair<string, object>("event", "foo"),
             });
 
-            Assert.Equal(2, shim.ActivityObj.Events.Count());
-            var first = shim.ActivityObj.Events.First();
-            var last = shim.ActivityObj.Events.Last();
+            Assert.Equal(2, shim.activity.Events.Count());
+            var first = shim.activity.Events.First();
+            var last = shim.activity.Events.Last();
 
             Assert.Equal(ActivityShim.DefaultEventName, first.Name);
             Assert.True(first.Attributes.Any());
@@ -207,22 +207,22 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagStringValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, "foo"));
 
             shim.SetTag("foo", "bar");
 
-            Assert.Single(shim.ActivityObj.Tags);
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal("bar", shim.ActivityObj.Tags.First().Value);
+            Assert.Single(shim.activity.Tags);
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal("bar", shim.activity.Tags.First().Value);
         }
 
         [Fact]
         public void SetTagBoolValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
@@ -230,51 +230,51 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag("foo", true);
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, true);
 
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.True(bool.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.True(bool.Parse(shim.activity.Tags.First().Value));
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, shim.ActivityObj.GetStatus());
+            Assert.Equal(Status.Unknown, shim.activity.GetStatus());
 
-            // Activity object does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
+            // TODO: Activity object does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
             // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.ActivityObj.GetStatus());
+            // Assert.Equal(Status.Ok, shim.activity.GetStatus());
         }
 
         [Fact]
         public void SetTagIntValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, 1));
 
             shim.SetTag("foo", 1);
 
-            Assert.Single(shim.ActivityObj.Tags);
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Single(shim.activity.Tags);
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagDoubleValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
 
             shim.SetTag("foo", 1D);
 
-            Assert.Single(shim.ActivityObj.Tags);
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal(1, double.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Single(shim.activity.Tags);
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal(1, double.Parse(shim.activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagBooleanTagValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
@@ -282,51 +282,51 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag(new BooleanTag("foo"), true);
             shim.SetTag(new BooleanTag(global::OpenTracing.Tag.Tags.Error.Key), true);
 
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.True(bool.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.True(bool.Parse(shim.activity.Tags.First().Value));
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, shim.ActivityObj.GetStatus());
+            Assert.Equal(Status.Unknown, shim.activity.GetStatus());
 
-            // .NET does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
+            // TODO: .NET does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
             // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.ActivityObj.GetStatus());
+            // Assert.Equal(Status.Ok, shim.activity.GetStatus());
         }
 
         [Fact]
         public void SetTagStringTagValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null, "foo"));
 
             shim.SetTag(new StringTag("foo"), "bar");
 
-            Assert.Single(shim.ActivityObj.Tags);
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal("bar", shim.ActivityObj.Tags.First().Value);
+            Assert.Single(shim.activity.Tags);
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal("bar", shim.activity.Tags.First().Value);
         }
 
         [Fact]
         public void SetTagIntTagValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null, 1));
 
             shim.SetTag(new IntTag("foo"), 1);
 
-            Assert.Single(shim.ActivityObj.Tags);
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Single(shim.activity.Tags);
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagIntOrStringTagValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityShim(activitySource.StartActivity(ActivityName1));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null, "foo"));
@@ -334,13 +334,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag(new IntOrStringTag("foo"), 1);
             shim.SetTag(new IntOrStringTag("bar"), "baz");
 
-            Assert.Equal(2, shim.ActivityObj.Tags.Count());
+            Assert.Equal(2, shim.activity.Tags.Count());
 
-            Assert.Equal("foo", shim.ActivityObj.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.ActivityObj.Tags.First().Value));
+            Assert.Equal("foo", shim.activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.activity.Tags.First().Value));
 
-            Assert.Equal("bar", shim.ActivityObj.Tags.Last().Key);
-            Assert.Equal("baz", shim.ActivityObj.Tags.Last().Value);
+            Assert.Equal("bar", shim.activity.Tags.Last().Key);
+            Assert.Equal("baz", shim.activity.Tags.Last().Value);
         }
     }
 }

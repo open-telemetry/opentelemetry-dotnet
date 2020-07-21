@@ -71,10 +71,10 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             var instrumentation = new ScopeInstrumentation(
-                shim.ActivityObj,
+                shim.activity,
                 () =>
                 {
-                    var removed = SpanScopeTable.Remove(shim.ActivityObj);
+                    var removed = SpanScopeTable.Remove(shim.activity);
 #if DEBUG
                     if (removed)
                     {
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 #endif
                 });
 
-            SpanScopeTable.Add(shim.ActivityObj, instrumentation);
+            SpanScopeTable.Add(shim.activity, instrumentation);
 #if DEBUG
             Interlocked.Increment(ref this.spanScopeTableCount);
 #endif

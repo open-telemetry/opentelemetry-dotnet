@@ -48,7 +48,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void CtorArgumentValidation()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             Assert.Throws<ArgumentNullException>(() => new ActivityBuilderShim(null, "foo"));
             Assert.Throws<ArgumentNullException>(() => new ActivityBuilderShim(activitySource, null));
         }
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void IgnoreActiveSpan()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Add a parent. The shim requires that the ISpan implementation be a SpanShim
@@ -68,13 +68,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
+            Assert.Equal("foo", activityShim.activity.OperationName);
         }
 
         [Fact]
         public void StartWithExplicitTimestamp()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             var startTimestamp = DateTimeOffset.Now;
@@ -83,13 +83,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal(startTimestamp, activityShim.ActivityObj.StartTimeUtc);
+            Assert.Equal(startTimestamp, activityShim.activity.StartTimeUtc);
         }
 
         [Fact]
         public void AsChildOf_WithNullSpan()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Add a null parent
@@ -98,14 +98,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.Null(activityShim.ActivityObj.Parent);
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.Null(activityShim.activity.Parent);
         }
 
         [Fact]
         public void AsChildOf_WithSpan()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Add a parent.
@@ -115,33 +115,33 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.NotNull(activityShim.ActivityObj.Parent);
-            Assert.Equal(ActivityName1, activityShim.ActivityObj.Parent.OperationName);
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.NotNull(activityShim.activity.Parent);
+            Assert.Equal(ActivityName1, activityShim.activity.Parent.OperationName);
         }
 
         [Fact]
         public void Start_ActivityOperationRootSpanChecks()
         {
             // matching root operation name
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo", new List<string> { "foo" });
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
+            Assert.Equal("foo", activityShim.activity.OperationName);
 
             // mis-matched root operation name
             shim = new ActivityBuilderShim(activitySource, "foo", new List<string> { "bar" });
             activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.Equal("foo", activityShim.ActivityObj.Parent.OperationName);
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.Equal("foo", activityShim.activity.Parent.OperationName);
         }
 
         [Fact]
         public void AsChildOf_MultipleCallsWithSpan()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Multiple calls
@@ -153,17 +153,17 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.Equal(ActivityName2, activityShim.ActivityObj.Parent.OperationName);
-            Assert.Equal(ActivityName1, activityShim.ActivityObj.Parent.Parent.OperationName);
-            Assert.Equal(activityShim.Context.TraceId, activityShim.ActivityObj.Parent.TraceId.ToHexString());
-            Assert.Equal(activityShim.Context.TraceId, activityShim.ActivityObj.Parent.Parent.TraceId.ToHexString());
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.Equal(ActivityName2, activityShim.activity.Parent.OperationName);
+            Assert.Equal(ActivityName1, activityShim.activity.Parent.Parent.OperationName);
+            Assert.Equal(activityShim.Context.TraceId, activityShim.activity.Parent.TraceId.ToHexString());
+            Assert.Equal(activityShim.Context.TraceId, activityShim.activity.Parent.Parent.TraceId.ToHexString());
         }
 
         [Fact]
         public void AsChildOf_WithNullSpanContext()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Add a null parent
@@ -173,13 +173,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // should be no parent.
-            Assert.Null(activityShim.ActivityObj.Parent);
+            Assert.Null(activityShim.activity.Parent);
         }
 
         [Fact]
         public void AsChildOfWithSpanContext()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Add a parent
@@ -189,13 +189,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // build
             var activityShim = (ActivityShim)shim.Start();
 
-            Assert.NotNull(activityShim.ActivityObj.ParentId);
+            Assert.NotNull(activityShim.activity.ParentId);
         }
 
         [Fact]
         public void AsChildOf_MultipleCallsWithSpanContext()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // Multiple calls
@@ -210,17 +210,17 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // build
             var activityShim = (ActivityShim)shim.Start();
-            var linkContext = activityShim.ActivityObj.Links.First().Context;
+            var linkContext = activityShim.activity.Links.First().Context;
 
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.Contains(spanContext1.TraceId, activityShim.ActivityObj.ParentId);
-            Assert.Equal(spanContext2.Context, activityShim.ActivityObj.Links.First().Context);
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.Contains(spanContext1.TraceId, activityShim.activity.ParentId);
+            Assert.Equal(spanContext2.Context, activityShim.activity.Links.First().Context);
         }
 
         [Fact]
         public void WithTag_KeyIsSpanKindStringValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.SpanKind.Key, global::OpenTracing.Tag.Tags.SpanKindClient);
@@ -229,15 +229,15 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Not an attribute
-            Assert.Empty(activityShim.ActivityObj.Tags);
-            Assert.Equal("foo", activityShim.ActivityObj.OperationName);
-            Assert.Equal(ActivityKind.Client, activityShim.ActivityObj.Kind);
+            Assert.Empty(activityShim.activity.Tags);
+            Assert.Equal("foo", activityShim.activity.OperationName);
+            Assert.Equal(ActivityKind.Client, activityShim.activity.Kind);
         }
 
         [Fact]
         public void WithTag_KeyIsErrorStringValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, "true");
@@ -246,13 +246,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, activityShim.ActivityObj.GetStatus());
+            Assert.Equal(Status.Unknown, activityShim.activity.GetStatus());
         }
 
         [Fact]
         public void WithTag_KeyIsNullStringValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag((string)null, "unused");
@@ -261,13 +261,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Null key was ignored
-            Assert.Empty(activityShim.ActivityObj.Tags);
+            Assert.Empty(activityShim.activity.Tags);
         }
 
         [Fact]
         public void WithTag_ValueIsNullStringValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag("foo", null);
@@ -276,14 +276,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Null value was turned into string.empty
-            Assert.Equal("foo", activityShim.ActivityObj.Tags.First().Key);
-            Assert.Equal(string.Empty, activityShim.ActivityObj.Tags.First().Value);
+            Assert.Equal("foo", activityShim.activity.Tags.First().Key);
+            Assert.Equal(string.Empty, activityShim.activity.Tags.First().Value);
         }
 
         [Fact]
         public void WithTag_KeyIsErrorBoolValue()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, true);
@@ -292,13 +292,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, activityShim.ActivityObj.GetStatus());
+            Assert.Equal(Status.Unknown, activityShim.activity.GetStatus());
         }
 
         [Fact]
         public void WithTag_VariousValueTypes()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             shim.WithTag("foo", "unused");
@@ -313,13 +313,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var activityShim = (ActivityShim)shim.Start();
 
             // Just verify the count
-            Assert.Equal(7, activityShim.ActivityObj.Tags.Count());
+            Assert.Equal(7, activityShim.activity.Tags.Count());
         }
 
         [Fact]
         public void Start()
         {
-            var activitySource = new ActivitySource(ActivitySourceName);
+            using var activitySource = new ActivitySource(ActivitySourceName);
             var shim = new ActivityBuilderShim(activitySource, "foo");
 
             // build
@@ -328,7 +328,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // Just check the return value is a SpanShim and that the underlying OpenTelemetry Span.
             // There is nothing left to verify because the rest of the tests were already calling .Start() prior to verification.
             Assert.NotNull(span);
-            Assert.Equal("foo", span.ActivityObj.OperationName);
+            Assert.Equal("foo", span.activity.OperationName);
         }
     }
 }

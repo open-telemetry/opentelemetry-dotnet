@@ -25,7 +25,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
     public class ScopeManagerShimTests
     {
         private const string ActivityName1 = "MyActivityName/1";
-        private const string ActivityName2 = "MyActivityName/2";
         private const string ActivitySourceName = "defaultactivitysource";
 
         private ActivitySource activitySource = default;
@@ -69,11 +68,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new ScopeManagerShim(this.activitySource);
             var openTracingSpan = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
 
-            // var scopeMock = new Mock<IDisposable>();
-
-            // tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
-            // tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
-
             var scope = shim.Activate(openTracingSpan, true);
             Assert.NotNull(scope);
 
@@ -98,8 +92,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new ScopeManagerShim(this.activitySource);
             var spanShim = new ActivityShim(this.activitySource.StartActivity(ActivityName1));
 
-            // tracerMock.Setup(x => x.WithSpan(spanShim.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
-
             using (shim.Activate(spanShim, true))
             {
 #if DEBUG
@@ -112,18 +104,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 #endif
 
             spanShim.Finish();
-
-            // tracerMock.Verify(x => x.WithSpan(spanShim.Span, It.IsAny<bool>()), Times.Once);
-            // scopeMock.Verify(x => x.Dispose(), Times.Once);
-        }
-
-        private Activity CreateSampledEndedSpan(string spanName)
-        {
-            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
-
-            var activity = this.activitySource.StartActivity(spanName, ActivityKind.Internal, context);
-            activity?.Stop();
-            return activity;
+            Assert.NotEqual(default, spanShim.activity.Duration);
         }
     }
 }
