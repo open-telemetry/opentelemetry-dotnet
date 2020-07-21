@@ -1,4 +1,4 @@
-﻿// <copyright file="TestPrometheus.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestPrometheusExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ using OpenTelemetry.Trace;
 
 namespace Samples
 {
-    internal class TestPrometheus
+    internal class TestPrometheusExporter
     {
         internal static async Task<object> RunAsync(int port, int pushIntervalInSecs, int totalDurationInMins)
         {
@@ -67,7 +67,7 @@ namespace Samples
             // Obtain a Meter. Libraries would pass their name as argument.
             var meter = meterFactory.GetMeter("MyMeter");
 
-            // the rest is purely from Metric API.
+            // the rest is purely from Metrics API.
             var testCounter = meter.CreateInt64Counter("MyCounter");
             var testMeasure = meter.CreateInt64Measure("MyMeasure");
             var testObserver = meter.CreateInt64Observer("MyObservation", CallBackForMyObservation);

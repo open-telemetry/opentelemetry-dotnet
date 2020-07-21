@@ -1,31 +1,29 @@
 # Prometheus Exporter for OpenTelemetry .NET
 
-Configure Prometheus exporter to have stats collected by Prometheus.
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 
-1. Get Prometheus using [getting started
-   guide](https://prometheus.io/docs/introduction/first_steps/).
-2. Start `PrometheusExporter` as below.
-3. See
-   [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestPrometheus.cs)
-   for example use.
+## Prerequisite
 
-```csharp
-var exporter = new PrometheusExporter(
-    new PrometheusExporterOptions()
-    {
-        Url = "http://+:9184/metrics/"
-    },
-    Stats.ViewManager);
+* [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
 
-exporter.Start();
+## Installation
 
-try
-{
-    // record metrics
-    statsRecorder.NewMeasureMap().Put(VideoSize, values[0] * MiB).Record();
-}
-finally
-{
-    exporter.Stop();
-}
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus
 ```
+
+## Configuration
+
+You can configure the `PrometheusExporter` by following the directions below:
+
+* `Url`: The url to listen to. Typically it ends with `/metrics` like `http://localhost:9184/metrics/`.
+
+See
+[`TestPrometheusExporter.cs`](../../samples/Exporters/Console/TestPrometheusExporter.cs)
+for example use.
+
+## References
+
+* [OpenTelemetry Project](https://opentelemetry.io/)
+* [Prometheus](https://prometheus.io)

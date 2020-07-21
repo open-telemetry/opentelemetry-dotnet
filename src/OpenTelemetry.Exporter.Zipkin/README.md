@@ -1,32 +1,32 @@
 # Zipkin Exporter for OpenTelemetry .NET
 
-Configure Zipkin exporter to see traces in Zipkin UI.
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Zipkin.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Zipkin.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Zipkin)
 
-1. Get Zipkin using [getting started
-   guide](https://zipkin.io/pages/quickstart.html).
-2. Configure `ZipkinTraceExporter` as below:
-3. See
-   [sample](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/samples/Exporters/Console/TestZipkin.cs)
-   for example use.
+## Prerequisite
 
-```csharp
-using (var tracerFactory = TracerFactory.Create(builder => builder
-    .UseZipkin(o =>
-    {
-        o.ServiceName = "test-zipkin";
-        o.Endpoint = new Uri(zipkinUri);
-    })))
-{
-    var tracer = tracerFactory.GetTracer("zipkin-test");
+* [Get Zipkin](https://zipkin.io/pages/quickstart.html)
 
-    // Create a scoped span. It will end automatically when using statement ends
-    using (tracer.WithSpan(tracer.StartSpan("Main")))
-    {
-        Console.WriteLine("About to do a busy work");
-        for (var i = 0; i < 10; i++)
-        {
-            DoWork(i, tracer);
-        }
-    }
-}
+## Installation
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Zipkin
 ```
+
+## Configuration
+
+You can configure the `ZipkinExporter` by following the directions below:
+
+* `Endpoint`: Zipkin endpoint address.
+* `TimeoutSeconds`: Timeout in seconds.
+* `ServiceName`: Name of the service reporting telemetry.
+* `UseShortTraceIds`: Value indicating whether short trace id should be used.
+
+See
+[`TestZipkinExporter.cs`](../../samples/Exporters/Console/TestZipkinExporter.cs)
+for example use.
+
+## References
+
+* [OpenTelemetry Project](https://opentelemetry.io/)
+* [Zipkin](https://zipkin.io)
