@@ -28,7 +28,6 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporter : ActivityExporter, IDisposable
     {
-        private readonly SemaphoreSlim exportLock = new SemaphoreSlim(1);
         private bool libraryResourceApplied = false;
         private bool disposedValue = false; // To detect redundant dispose calls
 
@@ -37,34 +36,23 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
-        internal IJaegerUdpBatcher JaegerAgentUdpBatcher { get; }
+        internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            await this.exportLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
+            if (!this.libraryResourceApplied && activityBatch.Count() > 0)
             {
-                if (!this.libraryResourceApplied && activityBatch.Count() > 0)
-                {
-                    var libraryResource = activityBatch.First().GetResource();
+                var libraryResource = activityBatch.First().GetResource();
 
-                    this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
+                this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
 
-                    this.libraryResourceApplied = true;
-                }
-
-                foreach (var activity in activityBatch)
-                {
-                    await this.JaegerAgentUdpBatcher.AppendAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
-                }
-
-                // TODO jaeger status to ExportResult
-                return ExportResult.Success;
+                this.libraryResourceApplied = true;
             }
-            finally
-            {
-                this.exportLock.Release();
-            }
+
+            await this.JaegerAgentUdpBatcher.AppendBatchAsync(activityBatch, cancellationToken).ConfigureAwait(false);
+
+            // TODO jaeger status to ExportResult
+            return ExportResult.Success;
         }
 
         public override async Task ShutdownAsync(CancellationToken cancellationToken)

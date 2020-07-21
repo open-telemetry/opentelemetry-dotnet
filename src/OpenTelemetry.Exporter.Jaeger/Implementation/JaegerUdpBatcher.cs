@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class JaegerUdpBatcher : IJaegerUdpBatcher
+    internal class JaegerUdpBatcher : IDisposable
     {
         private readonly int maxPacketSize;
         private readonly TProtocolFactory protocolFactory;
@@ -94,7 +95,33 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
-        public async ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
+        public async Task AppendBatchAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
+        {
+            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                foreach (var activity in activityBatch)
+                {
+                    await this.AppendAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                this.flushLock.Release();
+            }
+        }
+
+        public ValueTask<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
+
+        public ValueTask<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing).
+            this.Dispose(true);
+        }
+
+        protected async ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
         {
             if (this.processCache == null)
             {
@@ -127,55 +154,37 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var flushedSpanCount = 0;
 
-            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
+            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
             {
-                if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
+                spanBatch = new Batch(spanProcess)
                 {
-                    spanBatch = new Batch(spanProcess)
-                    {
-                        SpanMessages = new List<BufferWriterMemory>(),
-                    };
-                    this.CurrentBatches.Add(spanServiceName, spanBatch);
+                    SpanMessages = new List<BufferWriterMemory>(),
+                };
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
 
-                    spanTotalBytesNeeded += spanProcess.Message.Length;
-                }
-
-                // flush if current batch size plus new span size equals or exceeds max batch size
-                if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
-                {
-                    flushedSpanCount = await this.FlushAsyncInternal(lockAlreadyHeld: true, cancellationToken).ConfigureAwait(false);
-
-                    // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                    spanBatch.SpanMessages.Clear();
-                    spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
-                    this.CurrentBatches.Add(spanServiceName, spanBatch);
-                }
-                else
-                {
-                    this.maxFlushIntervalTimer.Enabled = true;
-                }
-
-                // add span to batch and wait for more spans
-                spanBatch.SpanMessages.Add(spanMessage);
-                this.batchByteSize += spanTotalBytesNeeded;
+                spanTotalBytesNeeded += spanProcess.Message.Length;
             }
-            finally
+
+            // flush if current batch size plus new span size equals or exceeds max batch size
+            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
             {
-                this.flushLock.Release();
+                flushedSpanCount = await this.FlushAsyncInternal(lockAlreadyHeld: true, cancellationToken).ConfigureAwait(false);
+
+                // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
+                spanBatch.SpanMessages.Clear();
+                spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
             }
+            else
+            {
+                this.maxFlushIntervalTimer.Enabled = true;
+            }
+
+            // add span to batch and wait for more spans
+            spanBatch.SpanMessages.Add(spanMessage);
+            this.batchByteSize += spanTotalBytesNeeded;
 
             return flushedSpanCount;
-        }
-
-        public ValueTask<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
-
-        public ValueTask<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
         }
 
         protected async Task SendAsync(Dictionary<string, Batch> batches, CancellationToken cancellationToken)
