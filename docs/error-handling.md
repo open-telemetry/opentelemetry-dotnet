@@ -28,7 +28,7 @@ Open Census SDK must not throw or leak unhandled or user unhandled exceptions.
    state exceptions (CSEs).
     - We want this behavior—don’t catch CSEs
     - This allows exceptions like stack overflow, access violation to flow through
-    - More information: http://msdn.microsoft.com/en-us/magazine/dd419661.aspx
+    - More information, refer to [MSDN](http://msdn.microsoft.com/en-us/magazine/dd419661.aspx).
 2. Every background operation callback, Task or Thread method should have a
    global `try{}catch` statement to ensure reliability of an app.
 3. When catching all exceptions in other cases, reduce the scope of the `try` as

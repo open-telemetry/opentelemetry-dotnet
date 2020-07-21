@@ -68,15 +68,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            if (request.Headers.Contains("traceparent"))
+            if (this.options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h)))
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
                 return;
             }
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Client);
+            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
             this.activitySource.Start(activity);
@@ -111,14 +110,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     {
                         if (requestTaskStatus == TaskStatus.Canceled)
                         {
-                            Status status = Status.Cancelled;
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                            activity.SetStatus(Status.Cancelled);
                         }
                         else if (requestTaskStatus != TaskStatus.Faulted)
                         {
                             // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                            Status status = Status.Unknown;
-                            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+                            activity.SetStatus(Status.Unknown);
                         }
                     }
                 }
@@ -128,9 +125,10 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     // response could be null for DNS issues, timeouts, etc...
                     activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.ReasonPhrase);
+                    activity.SetStatus(
+                        SpanHelper
+                            .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                            .WithDescription(response.ReasonPhrase));
                 }
             }
 
@@ -154,18 +152,14 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         switch (exception.SocketErrorCode)
                         {
                             case SocketError.HostNotFound:
-                                Status status = Status.InvalidArgument;
-                                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
+                                activity.SetStatus(Status.InvalidArgument.WithDescription(exc.Message));
                                 return;
                         }
                     }
 
                     if (exc.InnerException != null)
                     {
-                        Status status = Status.Unknown;
-                        activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                        activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, exc.Message);
+                        activity.SetStatus(Status.Unknown.WithDescription(exc.Message));
                     }
                 }
             }

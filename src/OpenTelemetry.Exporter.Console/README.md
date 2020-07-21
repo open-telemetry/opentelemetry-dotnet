@@ -1,7 +1,30 @@
-# OpenTelemetry.Exporter.Console
+# Console Exporter for OpenTelemetry .NET
 
-This is a simple exporter that that JSON serializes collected activities and prints them to the Console and is intended to be used during learning how activities are created and exported.
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Console.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Console)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Console.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Console)
 
-**Note** This is not intended as a production tool
+The console exporter prints data to the Console in a JSON serialized format.
 
-TODO: Add example here?
+**Note:** this exporter is intended to be used during learning how telemetry
+data are created and exported. It is not recommended for any production
+environment.
+
+## Installation
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Console
+```
+
+## Configuration
+
+You can configure the `ConsoleExporter` by following the directions below:
+
+* `DisplayAsJson`: Boolean to show data as JSON.
+
+See the
+[`TestConsoleExporter.cs`](../../samples/Exporters/Console/TestConsoleExporter.cs)
+for an example of how to use the exporter.
+
+## References
+
+* [OpenTelemetry Project](https://opentelemetry.io/)

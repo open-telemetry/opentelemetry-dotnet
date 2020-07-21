@@ -23,8 +23,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        private static readonly PropertyInfo ActivityKindPropertyInfo = typeof(Activity).GetProperty("Kind");
-
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
@@ -49,8 +47,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            ActivityKindPropertyInfo.SetValue(activity, ActivityKind.Client);
+            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
 
             this.activitySource.Start(activity);
@@ -83,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+                activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
             }
 
             this.activitySource.Stop(activity);

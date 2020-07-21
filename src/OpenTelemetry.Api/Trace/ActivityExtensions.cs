@@ -17,6 +17,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace
 {
@@ -33,15 +35,16 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetStatus(this Activity activity, Status status)
         {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
+            Debug.Assert(activity != null, "Activity should not be null");
 
             activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-            activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            if (!string.IsNullOrEmpty(status.Description))
+            {
+                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+            }
         }
 
         /// <summary>
@@ -51,18 +54,46 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <returns>Activity execution status.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status GetStatus(this Activity activity)
         {
-            if (activity == null)
-            {
-                throw new ArgumentNullException(nameof(activity));
-            }
+            Debug.Assert(activity != null, "Activity should not be null");
 
             var statusCanonicalCode = activity.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
             var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
-            return status.IsValid ? status.WithDescription(statusDescription) : status;
+
+            if (status.IsValid && !string.IsNullOrEmpty(statusDescription))
+            {
+                return status.WithDescription(statusDescription);
+            }
+
+            return status;
+        }
+
+        /// <summary>
+        /// Sets the kind of activity execution.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="kind">Activity execution kind.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SetKind(this Activity activity, ActivityKind kind)
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+            SetKindProperty(activity, kind);
+        }
+
+#pragma warning disable SA1201 // Elements should appear in the correct order
+        private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
+#pragma warning restore SA1201 // Elements should appear in the correct order
+
+        private static Action<Activity, ActivityKind> CreateActivityKindSetter()
+        {
+            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
+            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
+            var body = Expression.Assign(Expression.Property(instance, "Kind"), propertyValue);
+            return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
         }
     }
 }

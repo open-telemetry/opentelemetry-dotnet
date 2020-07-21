@@ -40,7 +40,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
         static HttpWebRequestActivitySourceTests()
         {
-            GC.KeepAlive(HttpWebRequestActivitySource.Instance);
+            // Need to touch something in HttpWebRequestActivitySource to do the static injection.
+            GC.KeepAlive(HttpWebRequestActivitySource.Options);
         }
 
         public HttpWebRequestActivitySourceTests()
@@ -633,7 +634,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
 
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.DoesNotContain(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
         }
 
         /// <summary>
@@ -792,7 +793,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             // Examine the result. Make sure we got all successful requests.
 
             // Just make sure some events are written, to confirm we successfully subscribed to it. We should have
-            // exactly 1 Start event per request and exaclty 1 Stop event per response (if request succeeded)
+            // exactly 1 Start event per request and exactly 1 Stop event per response (if request succeeded)
             var successfulTasks = tasks.Where(t => t.Value.Status == TaskStatus.RanToCompletion);
 
             Assert.Equal(tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
@@ -893,7 +894,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             }
 
             Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value);
-            Assert.Equal("1.1", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPFlavor).Value);
         }
 
         private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)

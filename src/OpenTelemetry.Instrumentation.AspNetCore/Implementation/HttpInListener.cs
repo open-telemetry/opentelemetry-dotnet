@@ -90,8 +90,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
             activity.DisplayName = path;
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+            activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
@@ -133,14 +132,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var response = context.Response;
                 activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-
-                var statusDescription = response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase;
-                if (!string.IsNullOrEmpty(statusDescription))
-                {
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
-                }
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))

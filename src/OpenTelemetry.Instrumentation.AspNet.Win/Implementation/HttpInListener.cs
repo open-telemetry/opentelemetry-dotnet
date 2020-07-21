@@ -87,8 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            // TODO: Avoid the reflection hack once .NET ships new Activity with Kind settable.
-            activity.GetType().GetProperty("Kind").SetValue(activity, ActivityKind.Server);
+            activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
@@ -140,10 +139,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
 
                 var response = context.Response;
+
                 activityToEnrich.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
-                activityToEnrich.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
-                activityToEnrich.AddTag(SpanAttributeConstants.StatusDescriptionKey, response.StatusDescription);
+
+                activityToEnrich.SetStatus(
+                    SpanHelper
+                        .ResolveSpanStatusForHttpStatusCode(response.StatusCode)
+                        .WithDescription(response.StatusDescription));
 
                 var routeData = context.Request.RequestContext.RouteData;
 
