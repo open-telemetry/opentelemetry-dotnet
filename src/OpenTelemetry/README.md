@@ -41,7 +41,7 @@ The following examples show how to start collecting OpenTelemetry traces from a
 console application, and have the traces displayed in the console.
 
 1. Create a console application and install the `OpenTelemetry.Exporter.Console`
-   package to your it.
+   package to your project.
 
     ```xml
     <ItemGroup>
