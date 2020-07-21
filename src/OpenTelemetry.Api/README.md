@@ -5,9 +5,9 @@
 
 * [Installation](#installation)
 * [Getting started](#getting-started)
-  * [Traceing API](#tracing-api)
+  * [Tracing API](#tracing-api)
   * [Metrics API](#metrics-api)
-* [Introduction to OpenTelemetry .NET Traceing
+* [Introduction to OpenTelemetry .NET Tracing
   API](#introduction-to-opentelemetry-net-tracing-api)
 * [Instrumenting a library/application with .NET Activity
   API](#instrumenting-a-libraryapplication-with-net-activity-api)
@@ -40,9 +40,9 @@ API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/s
 and a set of [semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
 
-### Traceing API
+### Tracing API
 
-[Traceing
+[Tracing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md)
 allows users to generate
 [Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span),
@@ -58,7 +58,7 @@ allows users to capture measurements about the execution of a computer program
 at runtime. The Metric API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
 
-## Introduction to OpenTelemetry .NET Traceing API
+## Introduction to OpenTelemetry .NET Tracing API
 
 .NET runtime had `Activity` class for a long time, which was meant to be used
 for tracing purposes and represents the equivalent of the OpenTelemetry
