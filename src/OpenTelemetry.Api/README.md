@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 
 * [Installation](#installation)
-* [Getting started](#getting-started)
+* [Introduction](#introduction)
   * [Tracing API](#tracing-api)
   * [Metrics API](#metrics-api)
 * [Introduction to OpenTelemetry .NET Tracing
@@ -25,7 +25,7 @@
 dotnet add package OpenTelemetry.Api
 ```
 
-## Getting started
+## Introduction
 
 Application developers and library authors use OpenTelemetry API to instrument
 their application/library. The API only surfaces necessary abstractions to
@@ -124,7 +124,7 @@ here as well.
    the `DisplayName` of the activity.
 
     ```csharp
-    var activity = source.StartActivity("ActivityName");
+    var activity = activitySource.StartActivity("ActivityName");
     ```
 
     If there are no listeners interested in this activity, the activity above
@@ -137,10 +137,10 @@ here as well.
    populating any tags which are not readily available.
 
     ```csharp
-    parent?.AddTag("http.method", "GET");
-    if (parent?.IsAllDataRequested ?? false)
+    activity?.AddTag("http.method", "GET");
+    if (activity?.IsAllDataRequested ?? false)
     {
-        parent.AddTag("http.url", "http://www.mywebsite.com");
+        activity.AddTag("http.url", "http://www.mywebsite.com");
     }
     ```
 
@@ -157,9 +157,9 @@ here as well.
     shown below.
 
     ```csharp
-    using (var activity = source.StartActivity("ActivityName")
+    using (var activity = activitySource.StartActivity("ActivityName")
     {
-        parent?.AddTag("http.method", "GET");
+        activity?.AddTag("http.method", "GET");
     } // Activity gets stopped automatically at end of this block during dispose.
     ```
 
@@ -186,7 +186,7 @@ OpenTelemetry samplers chose not to sample this activity.
     `ActivityKind` while starting an `Activity`.
 
     ```csharp
-    var activity = source.StartActivity("ActivityName", ActivityKind.Server);
+    var activity = activitySource.StartActivity("ActivityName", ActivityKind.Server);
     ```
 
 2. Parent using `ActivityContext`
@@ -204,7 +204,7 @@ OpenTelemetry samplers chose not to sample this activity.
         ActivitySpanId.CreateFromString("b7ad6b7169203331"),
         ActivityTraceFlags.None);
 
-    var activity = source.StartActivity(
+    var activity = activitySource.StartActivity(
         "ActivityName",
         ActivityKind.Server,
         parentContext);
@@ -216,7 +216,7 @@ OpenTelemetry samplers chose not to sample this activity.
     header of the W3C Trace-Context. This is shown below.
 
     ```csharp
-    var activity = source.StartActivity(
+    var activity = activitySource.StartActivity(
         "ActivityName",
         ActivityKind.Server,
         "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
@@ -236,12 +236,14 @@ OpenTelemetry samplers chose not to sample this activity.
     initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
     initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
 
-    var activity = source.StartActivity(
+    var activity = activitySource.StartActivity(
         "ActivityName",
         ActivityKind.Server,
         "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
         initialTags);
     ```
+
+    The above requires import of the `System.Collections.Generic` namespace.
 
 4. Activity Links
 
@@ -267,7 +269,7 @@ OpenTelemetry samplers chose not to sample this activity.
     activityLinks.Add(new ActivityLink(linkedContext1));
     activityLinks.Add(new ActivityLink(linkedContext2));
 
-    var activity = source.StartActivity(
+    var activity = activitySource.StartActivity(
         "ActivityName",
         ActivityKind.Server,
         "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
