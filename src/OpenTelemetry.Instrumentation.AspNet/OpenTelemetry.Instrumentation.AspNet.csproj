@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net452;net46</TargetFrameworks>
     <Description>ASP.NET instrumentation for OpenTelemetry .NET</Description>
-    <AssemblyName>OpenTelemetry.Instrumentation.AspNet</AssemblyName>
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;MVC;WebAPI</PackageTags>
   </PropertyGroup>
 
