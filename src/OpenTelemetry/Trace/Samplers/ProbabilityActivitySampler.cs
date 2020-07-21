@@ -1,4 +1,4 @@
-// <copyright file="ProbabilityActivitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProbabilityActivitySampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,12 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Diagnostics;
 using System.Globalization;
 
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
-    /// Otherwise, samples traces according to the specified probability.
+    /// Samples traces according to the specified probability.
     /// </summary>
     public sealed class ProbabilityActivitySampler : ActivitySampler
     {
@@ -70,25 +68,6 @@ namespace OpenTelemetry.Trace.Samplers
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
         {
-            // If the parent is sampled keep the sampling decision.
-            var parentContext = samplingParameters.ParentContext;
-            if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
-            {
-                return new SamplingResult(true);
-            }
-
-            if (samplingParameters.Links != null)
-            {
-                // If any parent link is sampled keep the sampling decision.
-                foreach (var parentLink in samplingParameters.Links)
-                {
-                    if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
-                    {
-                        return new SamplingResult(true);
-                    }
-                }
-            }
-
             // Always sample if we are within probability range. This is true even for child activities (that
             // may have had a different sampling decision made) to allow for different sampling policies,
             // and dynamic increases to sampling probabilities for debugging purposes.
