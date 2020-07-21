@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry hosting integration adds startup extensions to register OpenTelemetry into .NET Core applications.</Description>
+    <Description>Startup extensions to register OpenTelemetry into the applications using Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
 
