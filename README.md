@@ -1,11 +1,10 @@
 # OpenTelemetry .NET
 
 [![Gitter
-chat](https://img.shields.io/gitter/room/opentelemetry/opentelemetry-dotnet)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
-![Build
-Status](https://github.com/open-telemetry/opentelemetry-dotnet/workflows/.NET%20Linux/badge.svg?branch=master)
-![Build
-Status](https://github.com/open-telemetry/opentelemetry-dotnet/workflows/.NET%20Windows/badge.svg?branch=master)
+chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
+[![Build
+Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
+[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
