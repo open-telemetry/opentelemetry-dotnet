@@ -120,7 +120,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             // TODO: Validate IsRemote when ActivityContext supports it.
             // Assert.True(ctx.IsRemote);
-            Assert.True(ctx.IsRemote);
+            Assert.False(ctx.IsValid);
         }
 
         [Fact]
