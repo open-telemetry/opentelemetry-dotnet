@@ -7,7 +7,7 @@
     <ProductVersion>
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{9A4E3A68-904B-4835-A3C8-F664B73098DB}</ProjectGuid>
+    <ProjectGuid>{3B0CBBF5-BC93-45EC-AFB7-28F36F73032D}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -87,7 +87,7 @@
       <Project>{99f8a331-05e9-45a5-89ba-4c54e825e5b2}</Project>
       <Name>OpenTelemetry.Api</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.AspNet.Win\OpenTelemetry.Instrumentation.AspNet.Win.csproj">
+    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj">
       <Project>{b9eeacdd-cafa-4b75-a18d-898e7de21b17}</Project>
       <Name>OpenTelemetry.Instrumentation.AspNet.Win</Name>
     </ProjectReference>
