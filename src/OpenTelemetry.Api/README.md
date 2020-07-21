@@ -3,47 +3,46 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Api.svg)](https://www.nuget.org/packages/OpenTelemetry.Api)
 
+* [Installation](#installation)
+* [Getting started](#getting-started)
+  * [Tracing API](#tracing-api)
+  * [Metrics API](#metrics-api)
+* [Introduction to OpenTelemetry .NET Tracing
+  API](#introduction-to-opentelemetry-net-tracing-api)
+* [Instrumenting a library/application with .NET Activity
+  API](#instrumenting-a-libraryapplication-with-net-activity-api)
+  * [Basic usage](#basic-usage)
+  * [Activity creation options](#activity-creation-options)
+  * [Adding Events](#adding-events)
+  * [Setting Status](#setting-status)
+* [Instrumenting a library/application with OpenTelemetry.API
+  Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
+* [References](#references)
+
 ## Installation
 
 ```shell
 dotnet add package OpenTelemetry.Api
 ```
 
-## Getting Started
-
-* [Getting Started](#getting-started)
-  * [OpenTelemetry API](#opentelemetry-api)
-    * [Tracer API](#tracer-api)
-    * [Metric API](#metric-api)
-  * [Introduction to OpenTelemetry .NET Tracer
-    API](#introduction-to-opentelemetry-net-tracer-api)
-  * [Instrumenting a library/application with .NET Activity
-    API](#instrumenting-a-libraryapplication-with-net-activity-api)
-    * [Basic usage](#basic-usage)
-    * [Activity creation options](#activity-creation-options)
-    * [Adding Events](#adding-events)
-    * [Setting Status](#setting-status)
-  * [Instrumenting a library/application with OpenTelemetry.API
-    Shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim)
-
-## OpenTelemetry API
+## Getting started
 
 Application developers and library authors use OpenTelemetry API to instrument
 their application/library. The API only surfaces necessary abstractions to
 instrument an application/library. It does not address concerns like how
 telemetry is exported to a specific telemetry backend, how to sample the
-telemetry, etc. The API consists of [Tracer
+telemetry, etc. The API consists of [Tracing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md),
-[Metric
+[Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md),
 [Context and Propagation
 API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/context),
 and a set of [semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
 
-### Tracer API
+### Tracing API
 
-[Tracer
+[Tracing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md)
 allows users to generate
 [Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span),
@@ -51,15 +50,15 @@ which represent a single operation within a trace. Spans can be nested to form
 a trace tree. Each trace contains a root span, which typically describes the
 entire operation and, optionally one or more sub-spans for its sub-operations.
 
-### Metric API
+### Metrics API
 
-[Metric
+[Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md)
 allows users to capture measurements about the execution of a computer program
-at runtime. The Metric API is designed to process raw measurements, generally
+at runtime. The Metrics API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
 
-## Introduction to OpenTelemetry .NET Tracer API
+## Introduction to OpenTelemetry .NET Tracing API
 
 .NET runtime had `Activity` class for a long time, which was meant to be used
 for tracing purposes and represents the equivalent of the OpenTelemetry
@@ -100,11 +99,12 @@ here as well.
    5.0.0-preview.7.20308.13 or above to your application or library.
 
     ```xml
-        <ItemGroup>
-            <PackageReference
-                Include="System.Diagnostics.DiagnosticSource"
-                Version="5.0.0-preview.7.20308.13" />
-        </ItemGroup>
+    <ItemGroup>
+      <PackageReference
+        Include="System.Diagnostics.DiagnosticSource"
+        Version="5.0.0-preview.7.20308.13"
+      />
+    </ItemGroup>
     ```
 
 2. Create an `ActivitySource`, providing the name and version of the
@@ -112,9 +112,9 @@ here as well.
    typically created once and is reused throughout the application/library.
 
     ```csharp
-        static ActivitySource activitySource = new ActivitySource(
-            "companyname.product.library",
-            "semver1.0.0");
+    static ActivitySource activitySource = new ActivitySource(
+        "companyname.product.library",
+        "semver1.0.0");
     ```
 
     The above requires import of the `System.Diagnostics` namespace.
@@ -124,7 +124,7 @@ here as well.
    the `DisplayName` of the activity.
 
     ```csharp
-        var activity = source.StartActivity("ActivityName");
+    var activity = source.StartActivity("ActivityName");
     ```
 
     If there are no listeners interested in this activity, the activity above
@@ -137,11 +137,11 @@ here as well.
    populating any tags which are not readily available.
 
     ```csharp
-        parent?.AddTag("http.method", "GET");
-        if (parent?.IsAllDataRequested ?? false)
-        {
-            parent.AddTag("http.url", "http://www.mywebsite.com");
-        }
+    parent?.AddTag("http.method", "GET");
+    if (parent?.IsAllDataRequested ?? false)
+    {
+        parent.AddTag("http.url", "http://www.mywebsite.com");
+    }
     ```
 
 5. Perform application/library logic.
@@ -149,7 +149,7 @@ here as well.
 6. Stop the activity when done.
 
     ```csharp
-        activity?.Stop();
+    activity?.Stop();
     ```
 
     Alternately, as `Activity` implements `IDisposable`, it can be used with a
@@ -157,10 +157,10 @@ here as well.
     shown below.
 
     ```csharp
-        using (var activity = source.StartActivity("ActivityName")
-        {
-            parent?.AddTag("http.method", "GET");
-        } // Activity gets stopped automatically at end of this block during dispose.
+    using (var activity = source.StartActivity("ActivityName")
+    {
+        parent?.AddTag("http.method", "GET");
+    } // Activity gets stopped automatically at end of this block during dispose.
     ```
 
 The above showed the basic usage of instrumenting using `Activity`. The
@@ -186,7 +186,7 @@ OpenTelemetry samplers chose not to sample this activity.
     `ActivityKind` while starting an `Activity`.
 
     ```csharp
-        var activity = source.StartActivity("ActivityName", ActivityKind.Server);
+    var activity = source.StartActivity("ActivityName", ActivityKind.Server);
     ```
 
 2. Parent using `ActivityContext`
@@ -199,14 +199,15 @@ OpenTelemetry samplers chose not to sample this activity.
     behavior.
 
     ```csharp
-        var parentContext = new ActivityContext(
-            ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
-            ActivitySpanId.CreateFromString("b7ad6b7169203331"),
-            ActivityTraceFlags.None);
-        var activity = source.StartActivity(
-            "ActivityName",
-            ActivityKind.Server,
-            parentContext);
+    var parentContext = new ActivityContext(
+        ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
+        ActivitySpanId.CreateFromString("b7ad6b7169203331"),
+        ActivityTraceFlags.None);
+
+    var activity = source.StartActivity(
+        "ActivityName",
+        ActivityKind.Server,
+        parentContext);
     ```
 
     As `ActivityContext` follows the [W3C
@@ -215,10 +216,10 @@ OpenTelemetry samplers chose not to sample this activity.
     header of the W3C Trace-Context. This is shown below.
 
     ```csharp
-        var activity = source.StartActivity(
-            "ActivityName",
-            ActivityKind.Server,
-            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
+    var activity = source.StartActivity(
+        "ActivityName",
+        ActivityKind.Server,
+        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
     ```
 
 3. Initial Tags
@@ -230,14 +231,16 @@ OpenTelemetry samplers chose not to sample this activity.
    creation, as shown below.
 
     ```csharp
-        var initialTags = new List<KeyValuePair<string, string>>();
-        initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
-        initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
-        var activity = source.StartActivity(
-            "ActivityName",
-            ActivityKind.Server,
-            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
-            initialTags);
+    var initialTags = new List<KeyValuePair<string, string>>();
+
+    initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
+    initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
+
+    var activity = source.StartActivity(
+        "ActivityName",
+        ActivityKind.Server,
+        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        initialTags);
     ```
 
 4. Activity Links
@@ -249,23 +252,27 @@ OpenTelemetry samplers chose not to sample this activity.
    below.
 
     ```csharp
-        var activityLinks = new List<ActivityLink>();
-        var linkedContext1 = new ActivityContext(
-            ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
-            ActivitySpanId.CreateFromString("b7ad6b7169203331"),
-            ActivityTraceFlags.None);
-        var linkedContext2 = new ActivityContext(
-            ActivityTraceId.CreateFromString("4bf92f3577b34da6a3ce929d0e0e4736"),
-            ActivitySpanId.CreateFromString("00f067aa0ba902b7"),
-            ActivityTraceFlags.Recorded);
-        activityLinks.Add(new ActivityLink(linkedContext1));
-        activityLinks.Add(new ActivityLink(linkedContext2));
-        var activity = source.StartActivity(
-            "ActivityName",
-            ActivityKind.Server,
-            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
-            initialTags,
-            activityLinks);
+    var activityLinks = new List<ActivityLink>();
+
+    var linkedContext1 = new ActivityContext(
+        ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
+        ActivitySpanId.CreateFromString("b7ad6b7169203331"),
+        ActivityTraceFlags.None);
+
+    var linkedContext2 = new ActivityContext(
+        ActivityTraceId.CreateFromString("4bf92f3577b34da6a3ce929d0e0e4736"),
+        ActivitySpanId.CreateFromString("00f067aa0ba902b7"),
+        ActivityTraceFlags.Recorded);
+
+    activityLinks.Add(new ActivityLink(linkedContext1));
+    activityLinks.Add(new ActivityLink(linkedContext2));
+
+    var activity = source.StartActivity(
+        "ActivityName",
+        ActivityKind.Server,
+        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        initialTags,
+        activityLinks);
     ```
 
 ### Adding Events
@@ -275,7 +282,7 @@ event](https://github.com/open-telemetry/opentelemetry-specification/blob/master
 with `Activity` using the `AddEvent` method as shown below.
 
 ```csharp
-    activity?.AddEvent(new ActivityEvent("sample activity event."));
+activity?.AddEvent(new ActivityEvent("sample activity event."));
 ```
 
 Apart from providing name, timestamp and attributes can be provided by using
@@ -296,8 +303,8 @@ Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/
 Example:
 
 ```csharp
-    activity?.AddTag("ot.status_code", "status canonical code");
-    activity?.AddTag("ot.status_description", "status description");
+activity?.AddTag("ot.status_code", "status canonical code");
+activity?.AddTag("ot.status_description", "status description");
 ```
 
 ## Instrumenting a library/application with OpenTelemetry.API Shim
