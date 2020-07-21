@@ -84,7 +84,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            return this.ActivityLink.Equals(obj);
+            return (obj is Link link) && this.ActivityLink.Equals(link.ActivityLink);
         }
 
         /// <inheritdoc />

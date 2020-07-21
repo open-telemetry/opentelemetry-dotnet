@@ -31,6 +31,11 @@ namespace OpenTelemetry.Trace
         /// <returns>Tracer instance.</returns>
         public static Tracer GetTracer(string name, string version = null)
         {
+            if (name == null)
+            {
+                name = string.Empty;
+            }
+
             return new Tracer(new ActivitySource(name, version));
         }
     }
