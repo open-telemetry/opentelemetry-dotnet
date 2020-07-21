@@ -23,7 +23,7 @@ You can configure the `ZipkinExporter` by following the directions below:
 * `UseShortTraceIds`: Value indicating whether short trace id should be used.
 
 See
-[`TestZipkinExporter.cs`](../../samples/Exporters/Console/TestZipkinExporter.cs)
+[`TestZipkinExporter.cs`](../../samples/Console/TestZipkinExporter.cs)
 for example use.
 
 ## References
