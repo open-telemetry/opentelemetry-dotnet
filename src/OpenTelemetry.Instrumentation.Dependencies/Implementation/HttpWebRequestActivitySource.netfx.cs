@@ -18,6 +18,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -38,6 +39,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
     {
         internal const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+
+        internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
+        internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
@@ -186,7 +190,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            Options.TextFormat.Inject(activity.Context, request, (r, k, v) => r.Headers.Add(k, v));
+            Options.TextFormat.Inject(activity.Context, request, HttpWebRequestHeaderValuesSetter);
 
             if (request.Headers.Get(CorrelationContextHeaderName) == null)
             {
@@ -210,7 +214,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h));
+            => Options.TextFormat.IsInjected(request, HttpWebRequestHeaderValuesGetter);
 
         private static void ProcessRequest(HttpWebRequest request)
         {
