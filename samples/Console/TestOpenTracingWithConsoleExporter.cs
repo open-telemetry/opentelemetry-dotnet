@@ -15,15 +15,13 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Shims.OpenTracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTracing;
 
-namespace Samples
+namespace OpenTelemetry.Samples.Console
 {
     internal class TestOpenTracingWithConsoleExporter
     {
@@ -33,7 +31,7 @@ namespace Samples
             // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                    .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in applications
@@ -56,7 +54,7 @@ namespace Samples
                 }
             }
 
-            Console.WriteLine("Press Enter key to exit.");
+            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }
