@@ -17,8 +17,8 @@
 
 ## Installation
 
-```shell	
-dotnet add package OpenTelemetry	
+```shell
+dotnet add package OpenTelemetry
 ```
 
 ## Introduction
