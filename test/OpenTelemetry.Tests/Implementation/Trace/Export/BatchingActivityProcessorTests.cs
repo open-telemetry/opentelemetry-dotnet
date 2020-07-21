@@ -147,7 +147,11 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddActivityAfterQueueIsExhausted()
         {
             int exportCalledCount = 0;
-            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var activityExporter = new TestActivityExporter(_ =>
+            {
+                Interlocked.Increment(ref exportCalledCount);
+                Thread.Sleep(50);
+            });
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 1, TimeSpan.FromMilliseconds(100), DefaultTimeout, 1);
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)

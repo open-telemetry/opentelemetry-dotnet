@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace.Export
             this.flushTimer = new System.Timers.Timer
             {
                 AutoReset = false,
-                Enabled = false,
+                Enabled = true,
                 Interval = this.scheduledDelay.TotalMilliseconds,
             };
 
@@ -172,8 +172,6 @@ namespace OpenTelemetry.Trace.Export
                     return;
                 }
             }
-
-            this.flushTimer.Enabled = true;
         }
 
         /// <inheritdoc/>
@@ -282,6 +280,8 @@ namespace OpenTelemetry.Trace.Export
             }
             finally
             {
+                this.flushTimer.Enabled = true;
+
                 if (!lockAlreadyHeld)
                 {
                     this.flushLock.Release();
