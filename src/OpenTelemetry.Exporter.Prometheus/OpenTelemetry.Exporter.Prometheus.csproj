@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;net46;netstandard2.0;</TargetFrameworks>
-    <Description>OpenTelemetry to Prometheus exporter.</Description>
+    <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
+    <Description>Prometheus exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Prometheus</PackageTags>
   </PropertyGroup>
 
