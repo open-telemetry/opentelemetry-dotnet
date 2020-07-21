@@ -27,9 +27,9 @@ Here are the exporters:
 
 * [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
 * [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [OpenTelemetry Protocol Exporter](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 * [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
 * [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
-* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
