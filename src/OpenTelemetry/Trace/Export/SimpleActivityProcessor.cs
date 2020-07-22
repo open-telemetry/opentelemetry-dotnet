@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Export
     public class SimpleActivityProcessor : ActivityProcessor, IDisposable
     {
         private readonly ActivityExporter exporter;
-        private bool disposed = false;
+        private bool stopped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleActivityProcessor"/> class.
@@ -55,16 +55,16 @@ namespace OpenTelemetry.Trace.Export
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
             }
         }
 
         /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            if (!this.disposed)
+            if (!this.stopped)
             {
-                this.disposed = true;
+                this.stopped = true;
                 return this.exporter.ShutdownAsync(cancellationToken);
             }
 
@@ -93,6 +93,15 @@ namespace OpenTelemetry.Trace.Export
 
         protected virtual void Dispose(bool isDisposing)
         {
+            try
+            {
+                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+            }
+
             if (isDisposing)
             {
                 if (this.exporter is IDisposable disposableExporter)
@@ -103,7 +112,7 @@ namespace OpenTelemetry.Trace.Export
                     }
                     catch (Exception e)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), e);
                     }
                 }
             }

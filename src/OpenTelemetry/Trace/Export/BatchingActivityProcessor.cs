@@ -33,6 +33,7 @@ namespace OpenTelemetry.Trace.Export
         private const int DefaultMaxExportBatchSize = 512;
         private static readonly TimeSpan DefaultScheduledDelay = TimeSpan.FromMilliseconds(5000);
         private static readonly TimeSpan DefaultExporterTimeout = TimeSpan.FromMilliseconds(30000);
+
         private readonly ConcurrentQueue<Activity> exportQueue;
         private readonly int maxQueueSize;
         private readonly int maxExportBatchSize;
@@ -40,9 +41,10 @@ namespace OpenTelemetry.Trace.Export
         private readonly TimeSpan exporterTimeout;
         private readonly ActivityExporter exporter;
         private readonly List<Activity> batch = new List<Activity>();
-        private CancellationTokenSource cts;
+        private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
+        private readonly System.Timers.Timer flushTimer;
         private volatile int currentQueueSize;
-        private bool stopping = false;
+        private bool isDisposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchingActivityProcessor"/> class with default parameters:
@@ -87,18 +89,51 @@ namespace OpenTelemetry.Trace.Export
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
+            if (scheduledDelay <= TimeSpan.FromMilliseconds(0))
+            {
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelay));
+            }
+
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.maxQueueSize = maxQueueSize;
             this.scheduledDelay = scheduledDelay;
             this.exporterTimeout = exporterTimeout;
             this.maxExportBatchSize = maxExportBatchSize;
 
-            this.cts = new CancellationTokenSource();
             this.exportQueue = new ConcurrentQueue<Activity>();
 
-            // worker task that will last for lifetime of processor.
-            // Threads are also useless as exporter tasks run in thread pool threads.
-            Task.Run(() => this.Worker(this.cts.Token), this.cts.Token);
+            this.flushTimer = new System.Timers.Timer
+            {
+                AutoReset = false,
+                Enabled = true,
+                Interval = this.scheduledDelay.TotalMilliseconds,
+            };
+
+            this.flushTimer.Elapsed += async (sender, args) =>
+            {
+                bool lockTaken = this.flushLock.Wait(0);
+                try
+                {
+                    if (!lockTaken)
+                    {
+                        // If the lock was already held, it means a flush is already executing.
+                        return;
+                    }
+
+                    await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(System.Timers.Timer.Elapsed), ex);
+                }
+                finally
+                {
+                    if (lockTaken)
+                    {
+                        this.flushLock.Release();
+                    }
+                }
+            };
         }
 
         /// <inheritdoc/>
@@ -109,11 +144,6 @@ namespace OpenTelemetry.Trace.Export
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            if (this.stopping)
-            {
-                return;
-            }
-
             // because of race-condition between checking the size and enqueueing,
             // we might end up with a bit more activities than maxQueueSize.
             // Let's just tolerate it to avoid extra synchronization.
@@ -123,44 +153,51 @@ namespace OpenTelemetry.Trace.Export
                 return;
             }
 
-            Interlocked.Increment(ref this.currentQueueSize);
+            var size = Interlocked.Increment(ref this.currentQueueSize);
 
             this.exportQueue.Enqueue(activity);
+
+            if (size >= this.maxExportBatchSize)
+            {
+                bool lockTaken = this.flushLock.Wait(0);
+                if (lockTaken)
+                {
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                        }
+                        finally
+                        {
+                            this.flushLock.Release();
+                        }
+                    });
+                    return;
+                }
+            }
         }
 
         /// <inheritdoc/>
+        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
-            if (!this.stopping)
-            {
-                this.stopping = true;
+            await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
 
-                // This will stop the loop after current batch finishes.
-                this.cts.Cancel(false);
-                this.cts.Dispose();
-                this.cts = null;
+            await this.exporter.ShutdownAsync(cancellationToken).ConfigureAwait(false);
 
-                await this.ForceFlushAsync(cancellationToken).ConfigureAwait(false);
-                await this.exporter.ShutdownAsync(cancellationToken);
-
-                // there is no point in waiting for a worker task if cancellation happens
-                // it's dead already or will die on the next iteration on its own
-
-                // ExportBatchAsync must never throw, we are here either because it was cancelled
-                // or because there are no items left
-                OpenTelemetrySdkEventSource.Log.ShutdownEvent(this.currentQueueSize);
-            }
+            OpenTelemetrySdkEventSource.Log.ShutdownEvent(this.currentQueueSize);
         }
 
         /// <inheritdoc/>
+        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override async Task ForceFlushAsync(CancellationToken cancellationToken)
         {
-            var queueSize = this.currentQueueSize;
-            while (queueSize > 0 && !cancellationToken.IsCancellationRequested)
-            {
-                await this.ExportBatchAsync(cancellationToken).ConfigureAwait(false);
-                queueSize = queueSize - this.maxExportBatchSize;
-            }
+            await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
 
             OpenTelemetrySdkEventSource.Log.ForceFlushCompleted(this.currentQueueSize);
         }
@@ -173,12 +210,16 @@ namespace OpenTelemetry.Trace.Export
 
         protected virtual void Dispose(bool isDisposing)
         {
-            if (!this.stopping)
+            try
             {
-                this.ShutdownAsync(CancellationToken.None).ContinueWith(_ => { }).GetAwaiter().GetResult();
+                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
             }
 
-            if (isDisposing)
+            if (isDisposing && !this.isDisposed)
             {
                 if (this.exporter is IDisposable disposableExporter)
                 {
@@ -188,21 +229,94 @@ namespace OpenTelemetry.Trace.Export
                     }
                     catch (Exception e)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), e);
                     }
+                }
+
+                this.flushTimer.Dispose();
+                this.flushLock.Dispose();
+                this.isDisposed = true;
+            }
+        }
+
+        private async Task FlushAsyncInternal(bool drain, bool lockAlreadyHeld, CancellationToken cancellationToken)
+        {
+            if (!lockAlreadyHeld)
+            {
+                await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            try
+            {
+                this.flushTimer.Enabled = false;
+
+                var queueSize = this.currentQueueSize;
+                do
+                {
+                    using var cts = new CancellationTokenSource(this.exporterTimeout);
+
+                    var linkedCTS = cancellationToken.CanBeCanceled
+                        ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token)
+                        : null;
+
+                    int exportedCount;
+                    using (linkedCTS)
+                    {
+                        try
+                        {
+                            exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException ocex)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                // User-supplied cancellation, bubble up the exception.
+                                throw ocex;
+                            }
+
+                            OpenTelemetrySdkEventSource.Log.SpanExporterTimeout(Math.Min(queueSize, this.maxExportBatchSize));
+                            break;
+                        }
+                    }
+
+                    if (exportedCount == 0)
+                    {
+                        // Break out of drain loop if nothing is being exported, likely means there is an issue
+                        // and we don't want to deadlock.
+                        break;
+                    }
+
+                    queueSize -= exportedCount;
+                }
+#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly -> Spacing is for readability
+                while (
+                    !cancellationToken.IsCancellationRequested &&
+                    (
+                        (drain && queueSize > 0) // If draining, keep looping until queue is empty.
+                      ||
+                        (!drain && queueSize >= this.maxExportBatchSize) // If not draining, keep looping while there are batches ready.
+                    ));
+#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.FlushAsyncInternal), ex);
+            }
+            finally
+            {
+                this.flushTimer.Enabled = true;
+
+                if (!lockAlreadyHeld)
+                {
+                    this.flushLock.Release();
                 }
             }
         }
 
-        private async Task ExportBatchAsync(CancellationToken cancellationToken)
+        private async Task<int> ExportBatchAsync(CancellationToken cancellationToken)
         {
             try
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
                 if (this.exportQueue.TryDequeue(out var nextActivity))
                 {
                     Interlocked.Decrement(ref this.currentQueueSize);
@@ -211,7 +325,7 @@ namespace OpenTelemetry.Trace.Export
                 else
                 {
                     // nothing in queue
-                    return;
+                    return 0;
                 }
 
                 while (this.batch.Count < this.maxExportBatchSize && this.exportQueue.TryDequeue(out nextActivity))
@@ -229,37 +343,12 @@ namespace OpenTelemetry.Trace.Export
                     // as only exporter implementation knows how to retry: which items failed
                     // and what is the reasonable policy for that exporter.
                 }
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ExportBatchAsync), ex);
+
+                return this.batch.Count;
             }
             finally
             {
                 this.batch.Clear();
-            }
-        }
-
-        private async Task Worker(CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                var sw = Stopwatch.StartNew();
-                using (var exportCancellationTokenSource = new CancellationTokenSource(this.exporterTimeout))
-                {
-                    await this.ExportBatchAsync(exportCancellationTokenSource.Token).ConfigureAwait(false);
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                var remainingWait = this.scheduledDelay - sw.Elapsed;
-                if (remainingWait > TimeSpan.Zero)
-                {
-                    await Task.Delay(remainingWait, cancellationToken).ConfigureAwait(false);
-                }
             }
         }
     }
