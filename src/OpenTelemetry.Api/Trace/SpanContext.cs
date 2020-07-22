@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         /// <param name="traceState">The traceState to associate with the <see cref="SpanContext"/>.</param>
         public SpanContext(in ActivityTraceId traceId, in ActivitySpanId spanId, ActivityTraceFlags traceFlags, bool isRemote = false, IEnumerable<KeyValuePair<string, string>> traceState = null)
         {
-            this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TraceStateUtils.GetString(traceState));
+            this.ActivityContext = new ActivityContext(traceId, spanId, traceFlags, TraceStateUtilsNew.GetString(traceState));
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 var traceStateResult = new List<KeyValuePair<string, string>>();
-                TraceStateUtils.AppendTraceState(this.ActivityContext.TraceState, traceStateResult);
+                TraceStateUtilsNew.AppendTraceState(this.ActivityContext.TraceState, traceStateResult);
                 return traceStateResult;
             }
         }

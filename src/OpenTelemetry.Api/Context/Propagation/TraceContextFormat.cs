@@ -108,7 +108,7 @@ namespace OpenTelemetry.Context.Propagation
 
             setter(carrier, TraceParent, traceparent);
 
-            string tracestateStr = TraceStateUtils.GetString(spanContext.TraceState);
+            string tracestateStr = TraceStateUtilsNew.GetString(spanContext.TraceState);
             if (tracestateStr.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);
@@ -249,7 +249,7 @@ namespace OpenTelemetry.Context.Propagation
                 // front of the list.
                 for (int i = tracestateCollection.Length - 1; i >= 0; i--)
                 {
-                    if (!TraceStateUtils.AppendTraceState(tracestateCollection[i], tracestateResult))
+                    if (!TraceStateUtilsNew.AppendTraceState(tracestateCollection[i], tracestateResult))
                     {
                         return false;
                     }

@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceStateUtils.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceStateUtilsNew.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// Extension methods to extract TraceState from string.
     /// </summary>
-    internal static class TraceStateUtils
+    internal static class TraceStateUtilsNew
     {
         private const int KeyMaxSize = 256;
         private const int ValueMaxSize = 256;
