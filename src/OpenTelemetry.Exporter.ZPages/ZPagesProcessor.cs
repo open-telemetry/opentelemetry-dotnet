@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
@@ -115,10 +116,10 @@ namespace OpenTelemetry.Exporter.ZPages
                 minuteSpanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
                 hourSpanInformation.LastUpdated = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                // Log.SpanProcessorException("OnEnd", ex);
-                Console.Write("OnEnd", exception);
+                ZPagesExporterEventSource.Log.FailedProcess(ex);
+                Console.Write("OnEnd", ex);
             }
         }
 

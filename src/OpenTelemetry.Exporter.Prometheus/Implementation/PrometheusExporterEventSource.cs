@@ -1,4 +1,4 @@
-﻿// <copyright file="InstrumentationEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="PrometheusExporterEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,35 +19,32 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>
-    [EventSource(Name = "OpenTelemetry-Instrumentation")]
-    internal class InstrumentationEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
+    internal class PrometheusExporterEventSource : EventSource
     {
-        public static InstrumentationEventSource Log = new InstrumentationEventSource();
-
-        [Event(1, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullActivity(string eventName)
-        {
-            this.WriteEvent(1, eventName);
-        }
+        public static PrometheusExporterEventSource Log = new PrometheusExporterEventSource();
 
         [NonEvent]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+        public void FailedExport(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
+                this.FailedExport(ToInvariantString(ex));
             }
         }
 
-        [Event(2, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+        [NonEvent]
+        public void CanceledExport(Exception ex)
         {
-            this.WriteEvent(2, handlerName, eventName, ex);
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.CanceledExport(ToInvariantString(ex));
+            }
         }
 
         /// <summary>
@@ -67,6 +64,18 @@ namespace OpenTelemetry.Instrumentation
             {
                 Thread.CurrentThread.CurrentUICulture = originalUICulture;
             }
+        }
+
+        [Event(1, Message = "Failed to export activities: '{0}'", Level = EventLevel.Error)]
+        private void FailedExport(string exception)
+        {
+            this.WriteEvent(1, exception);
+        }
+
+        [Event(2, Message = "Canceled to export activities: '{0}'", Level = EventLevel.Error)]
+        private void CanceledExport(string exception)
+        {
+            this.WriteEvent(2, exception);
         }
     }
 }
