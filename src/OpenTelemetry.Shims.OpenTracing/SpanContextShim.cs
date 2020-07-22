@@ -22,7 +22,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class SpanContextShim : ISpanContext
     {
-        public SpanContextShim(in Trace.SpanContextNew spanContext)
+        public SpanContextShim(in Trace.SpanContext spanContext)
         {
             if (!spanContext.IsValid)
             {
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             this.SpanContext = spanContext;
         }
 
-        public Trace.SpanContextNew SpanContext { get; private set; }
+        public Trace.SpanContext SpanContext { get; private set; }
 
         /// <inheritdoc/>
         public string TraceId => this.SpanContext.TraceId.ToString();
