@@ -15,9 +15,10 @@
 // </copyright>
 using System.Diagnostics;
 using System.Net.Http;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestHttpClient
     {
@@ -27,7 +28,7 @@ namespace OpenTelemetry.Examples.Console
 
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
-                .SetResource(Resources.Resources.CreateServiceResource("http-service-example"))
+                .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
                 .UseConsoleExporter(opt => opt.DisplayAsJson = false));
 

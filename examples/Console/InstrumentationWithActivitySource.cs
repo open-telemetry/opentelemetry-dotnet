@@ -25,7 +25,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class InstrumentationWithActivitySource : IDisposable
     {

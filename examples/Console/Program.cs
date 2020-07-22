@@ -16,7 +16,7 @@
 
 using CommandLine;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     /// <summary>
     /// Main samples entry point.

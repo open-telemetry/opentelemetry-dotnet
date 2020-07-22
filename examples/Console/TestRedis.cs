@@ -22,7 +22,7 @@ using OpenTelemetry.Trace.Configuration;
 
 using StackExchange.Redis;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestRedis
     {

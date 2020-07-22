@@ -1,7 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
 
-namespace OpenTelemetry.Examples.AspNet
+namespace Examples.AspNet
 {
     public class RouteConfig
     {

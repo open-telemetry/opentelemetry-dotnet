@@ -14,12 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestOTelShimWithConsoleExporter
     {
@@ -29,7 +28,7 @@ namespace OpenTelemetry.Examples.Console
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
+                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in applications

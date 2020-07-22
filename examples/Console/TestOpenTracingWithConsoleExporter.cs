@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Shims.OpenTracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTracing;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestOpenTracingWithConsoleExporter
     {
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Examples.Console
             // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
+                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in applications

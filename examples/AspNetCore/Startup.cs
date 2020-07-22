@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.AspNetCore
+namespace Examples.AspNetCore
 {
     public class Startup
     {

@@ -3,11 +3,9 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.AspNet
+namespace Examples.AspNet
 {
     public class WebApiApplication : HttpApplication
     {

@@ -1,6 +1,6 @@
 ﻿using System.Web.Mvc;
 
-namespace OpenTelemetry.Examples.AspNet.Controllers
+namespace Examples.AspNet.Controllers
 {
     public class HomeController : Controller
     {

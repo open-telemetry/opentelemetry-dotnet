@@ -17,7 +17,7 @@ using System;
 
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestJaegerExporter
     {

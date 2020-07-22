@@ -24,7 +24,7 @@ using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {

@@ -19,7 +19,7 @@ using System.Threading;
 using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Trace.Configuration;
 
-namespace OpenTelemetry.Examples.Console
+namespace Examples.Console
 {
     internal class TestZPagesExporter
     {
