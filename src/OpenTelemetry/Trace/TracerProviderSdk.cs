@@ -23,7 +23,7 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Samplers;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     public class TracerProviderSdk : TracerProvider, IDisposable
     {

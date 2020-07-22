@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
 

@@ -31,4 +31,8 @@
     <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Trace\Configuration\" />
+  </ItemGroup>
+
 </Project>

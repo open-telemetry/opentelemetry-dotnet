@@ -28,7 +28,7 @@ using Moq;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 

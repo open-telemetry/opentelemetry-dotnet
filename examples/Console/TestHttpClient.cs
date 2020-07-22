@@ -16,7 +16,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {

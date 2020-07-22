@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Trace.Configuration
 {

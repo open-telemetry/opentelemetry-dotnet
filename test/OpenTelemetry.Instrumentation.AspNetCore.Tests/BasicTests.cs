@@ -29,7 +29,7 @@ using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;

@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;

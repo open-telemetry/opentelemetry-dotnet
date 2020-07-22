@@ -27,7 +27,7 @@ using Moq;
 using Newtonsoft.Json;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 

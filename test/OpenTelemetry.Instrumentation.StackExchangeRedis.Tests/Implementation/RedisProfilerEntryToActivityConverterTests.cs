@@ -21,7 +21,7 @@ using System.Net;
 using System.Net.Sockets;
 using Moq;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 using Xunit;

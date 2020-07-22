@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests

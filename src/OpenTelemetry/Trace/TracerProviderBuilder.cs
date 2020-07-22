@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Build TracerProvider pipeline with Sampler, Processors and Exporters.

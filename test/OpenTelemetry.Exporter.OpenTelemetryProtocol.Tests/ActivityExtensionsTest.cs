@@ -25,7 +25,7 @@ using Opentelemetry.Proto.Common.V1;
 using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;

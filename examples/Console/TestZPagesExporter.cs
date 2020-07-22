@@ -17,7 +17,7 @@
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Exporter.ZPages;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {

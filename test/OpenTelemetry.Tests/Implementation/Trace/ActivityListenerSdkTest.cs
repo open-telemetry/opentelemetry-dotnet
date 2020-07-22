@@ -16,7 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Implementation.Trace

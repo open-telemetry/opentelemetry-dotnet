@@ -17,7 +17,7 @@
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Tracing;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Samplers;
 
 namespace Benchmarks

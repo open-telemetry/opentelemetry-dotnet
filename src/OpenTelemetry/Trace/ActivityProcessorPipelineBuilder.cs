@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Trace.Export;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Configures exporting pipeline with chains of processors and exporter.
