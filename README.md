@@ -10,6 +10,8 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Getting Started
 
+If you are new here, please [get started in 5 minutes](./docs/getting-started.md).
+
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry).
 
