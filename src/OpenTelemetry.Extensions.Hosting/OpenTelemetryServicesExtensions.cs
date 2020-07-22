@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Trace.Configuration;
+
 namespace Microsoft.Extensions.DependencyInjection
 {
-    using System;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-    using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Extensions.Hosting.Implementation;
-    using OpenTelemetry.Trace.Configuration;
-
     /// <summary>
     /// Extension methods for setting up OpenTelemetry services in an <see cref="IServiceCollection" />.
     /// </summary>
@@ -80,8 +80,15 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(createSdk));
             }
 
-            services.AddSingleton(s => createSdk());
-            AddOpenTelemetryInternal(services);
+            try
+            {
+                services.AddSingleton(s => createSdk());
+                AddOpenTelemetryInternal(services);
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
+            }
 
             return services;
         }
@@ -104,8 +111,15 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(createSdk));
             }
 
-            services.AddSingleton(s => createSdk(s));
-            AddOpenTelemetryInternal(services);
+            try
+            {
+                services.AddSingleton(s => createSdk(s));
+                AddOpenTelemetryInternal(services);
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
+            }
 
             return services;
         }

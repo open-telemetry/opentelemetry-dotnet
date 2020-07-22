@@ -1,4 +1,4 @@
-﻿// <copyright file="InstrumentationEventSource.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AspNetInstrumentationEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,35 +19,26 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>
-    [EventSource(Name = "OpenTelemetry-Instrumentation")]
-    internal class InstrumentationEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Instrumentation-AspNet")]
+    internal class AspNetInstrumentationEventSource : EventSource
     {
-        public static InstrumentationEventSource Log = new InstrumentationEventSource();
+        public static AspNetInstrumentationEventSource Log = new AspNetInstrumentationEventSource();
 
-        [Event(1, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullActivity(string eventName)
+        [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
+        public void NullPayload(string handlerName, string eventName)
         {
-            this.WriteEvent(1, eventName);
+            this.WriteEvent(1, handlerName, eventName);
         }
 
-        [NonEvent]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+        [Event(2, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
+        public void RequestIsFilteredOut(string eventName)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
-            {
-                this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
-            }
-        }
-
-        [Event(2, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
-        {
-            this.WriteEvent(2, handlerName, eventName, ex);
+            this.WriteEvent(2, eventName);
         }
 
         /// <summary>

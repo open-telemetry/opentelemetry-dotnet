@@ -45,13 +45,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var context = HttpContext.Current;
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
+                AspNetInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
                 return;
             }
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 var context = HttpContext.Current;
                 if (context == null)
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
+                    AspNetInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 

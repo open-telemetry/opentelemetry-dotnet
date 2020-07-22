@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Configuration
             configureOpenTelemetryBuilder?.Invoke(openTelemetryBuilder);
 
             var openTelemetrySDK = new OpenTelemetrySdk();
-            ActivitySampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnActivitySampler();
+            Sampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnSampler();
 
             ActivityProcessor activityProcessor;
             if (openTelemetryBuilder.ProcessingPipelines == null || !openTelemetryBuilder.ProcessingPipelines.Any())
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal static ActivityDataRequest ComputeActivityDataRequest(
             in ActivityCreationOptions<ActivityContext> options,
-            ActivitySampler sampler)
+            Sampler sampler)
         {
             var isRootSpan = options.Parent.TraceId == default;
 
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Trace.Configuration
                 ? options.Parent.TraceId
                 : ActivityTraceId.CreateRandom();
 
-            var samplingParameters = new ActivitySamplingParameters(
+            var samplingParameters = new SamplingParameters(
                 options.Parent,
                 traceId,
                 options.Name,

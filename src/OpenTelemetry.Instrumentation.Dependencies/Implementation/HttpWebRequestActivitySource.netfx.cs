@@ -18,7 +18,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -88,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             catch (Exception ex)
             {
                 // If anything went wrong, just no-op. Write an event so at least we can find out.
-                InstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
+                DependenciesInstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
             }
         }
 
@@ -328,8 +327,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                DependenciesInstrumentationEventSource.Log.FailedProcessResult(ex);
             }
 
             activity.Stop();

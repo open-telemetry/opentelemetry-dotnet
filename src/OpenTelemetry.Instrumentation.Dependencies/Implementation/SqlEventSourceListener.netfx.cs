@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             }
             catch (Exception exc)
             {
-                InstrumentationEventSource.Log.UnknownErrorProcessingEvent(nameof(SqlEventSourceListener), nameof(this.OnEventWritten), exc);
+                DependenciesInstrumentationEventSource.Log.UnknownErrorProcessingEvent(nameof(SqlEventSourceListener), nameof(this.OnEventWritten), exc);
             }
         }
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if ((eventData?.Payload?.Count ?? 0) < 4)
             {
-                InstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnBeginExecute));
+                DependenciesInstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnBeginExecute));
                 return;
             }
 
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if ((eventData?.Payload?.Count ?? 0) < 3)
             {
-                InstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnEndExecute));
+                DependenciesInstrumentationEventSource.Log.InvalidPayload(nameof(SqlEventSourceListener), nameof(this.OnEndExecute));
                 return;
             }
 

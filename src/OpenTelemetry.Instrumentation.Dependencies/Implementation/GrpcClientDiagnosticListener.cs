@@ -41,7 +41,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
+                DependenciesInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;
             }
 

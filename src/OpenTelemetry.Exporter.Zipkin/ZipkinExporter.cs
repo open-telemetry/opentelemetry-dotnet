@@ -65,8 +65,10 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 return ExportResult.Success;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                ZipkinExporterEventSource.Log.FailedExport(ex);
+
                 // TODO distinguish retryable exceptions
                 return ExportResult.FailedNotRetryable;
             }

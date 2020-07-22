@@ -117,13 +117,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     this.exporter.WriteMetricsCollection(writer);
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                // this will happen when cancellation will be requested
+                PrometheusExporterEventSource.Log.CanceledExport(ex);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: report error
+                PrometheusExporterEventSource.Log.FailedExport(ex);
             }
             finally
             {

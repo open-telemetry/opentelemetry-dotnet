@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         {
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
+                DependenciesInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
             }
 
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
+                    DependenciesInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
                 }
 

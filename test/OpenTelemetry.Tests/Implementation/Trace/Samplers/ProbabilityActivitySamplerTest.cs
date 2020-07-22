@@ -27,19 +27,19 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void ProbabilitySampler_OutOfRangeHighProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilityActivitySampler(1.01));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(1.01));
         }
 
         [Fact]
         public void ProbabilitySampler_OutOfRangeLowProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilityActivitySampler(-0.00001));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(-0.00001));
         }
 
         [Fact]
         public void ProbabilitySampler_SampleBasedOnTraceId()
         {
-            ActivitySampler defaultProbability = new ProbabilityActivitySampler(0.0001);
+            Sampler defaultProbability = new ProbabilitySampler(0.0001);
 
             // This traceId will not be sampled by the ProbabilityActivitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                     });
             Assert.False(
-                    defaultProbability.ShouldSample(new ActivitySamplingParameters(
+                    defaultProbability.ShouldSample(new SamplingParameters(
                         default,
                         notSampledtraceId,
                         ActivityDisplayName,
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                     });
             Assert.True(
-                    defaultProbability.ShouldSample(new ActivitySamplingParameters(
+                    defaultProbability.ShouldSample(new SamplingParameters(
                         default,
                         sampledtraceId,
                         ActivityDisplayName,
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         public void ProbabilitySampler_GetDescription()
         {
             var expectedDescription = "ProbabilityActivitySampler{0.500000}";
-            Assert.Equal(expectedDescription, new ProbabilityActivitySampler(0.5).Description);
+            Assert.Equal(expectedDescription, new ProbabilitySampler(0.5).Description);
         }
     }
 }

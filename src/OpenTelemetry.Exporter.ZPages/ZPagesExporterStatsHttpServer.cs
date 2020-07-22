@@ -20,6 +20,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
@@ -178,13 +179,13 @@ namespace OpenTelemetry.Exporter.ZPages
                     writer.WriteLine("</div></div></body></html>");
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                // this will happen when cancellation will be requested
+                ZPagesExporterEventSource.Log.CanceledExport(ex);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: report error
+                ZPagesExporterEventSource.Log.FailedExport(ex);
             }
             finally
             {

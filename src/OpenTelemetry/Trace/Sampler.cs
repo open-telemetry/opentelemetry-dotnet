@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Sampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Sampler to select data to be exported. This sampler executes before Activity object is created.
     /// </summary>
-    public abstract class ActivitySampler
+    public abstract class Sampler
     {
         /// <summary>
         /// Gets the sampler description.
@@ -31,10 +31,10 @@ namespace OpenTelemetry.Trace
         /// Checks whether activity needs to be created and tracked.
         /// </summary>
         /// <param name="samplingParameters">
-        /// The <see cref="ActivitySamplingParameters"/> used by the <see cref="ActivitySampler"/>
+        /// The <see cref="SamplingParameters"/> used by the <see cref="Sampler"/>
         /// to decide if the <see cref="Activity"/> to be created is going to be sampled or not.
         /// </param>
         /// <returns>Sampling decision on whether activity needs to be sampled or not.</returns>
-        public abstract SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters);
+        public abstract SamplingResult ShouldSample(in SamplingParameters samplingParameters);
     }
 }
