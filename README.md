@@ -35,7 +35,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
   * gRPC for .NET [:link:](https://github.com/grpc/grpc-dotnet)
   * Microsoft.Data.SqlClient [:link:](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
   * System.Data.SqlClient [:link:](https://www.nuget.org/packages/System.Data.SqlClient)
-  * System.Net.Http.HttpClient [:link](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
+  * System.Net.Http.HttpClient [:link:](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
   * System.Net.HttpWebRequest [:link:](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
 * [OpenTelemetry.Instrumentation.StackExchangeRedis](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
   * StackExchange.Redis [:link:](https://www.nuget.org/packages/StackExchange.Redis)
