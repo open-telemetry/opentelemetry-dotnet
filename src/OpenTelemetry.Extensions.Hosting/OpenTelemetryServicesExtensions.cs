@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Trace.Configuration;
+
 namespace Microsoft.Extensions.DependencyInjection
 {
-    using System;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-    using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Extensions.Hosting.Implementation;
-    using OpenTelemetry.Trace.Configuration;
-
     /// <summary>
     /// Extension methods for setting up OpenTelemetry services in an <see cref="IServiceCollection" />.
     /// </summary>

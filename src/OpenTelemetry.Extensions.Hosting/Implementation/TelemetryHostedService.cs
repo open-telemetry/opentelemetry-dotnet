@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace.Configuration;
+
 namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using OpenTelemetry.Trace.Configuration;
-
     internal class TelemetryHostedService : IHostedService
     {
         private readonly IServiceProvider serviceProvider;
