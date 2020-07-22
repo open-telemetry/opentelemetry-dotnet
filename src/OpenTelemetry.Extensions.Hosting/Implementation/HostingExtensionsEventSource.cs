@@ -66,13 +66,13 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             }
         }
 
-        [Event(1, Message = "Failed to initialize: '{0}'", Level = EventLevel.Error)]
+        [Event(1, Message = "Failed to initialize: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
         private void FailedInitialize(string exception)
         {
             this.WriteEvent(1, exception);
         }
 
-        [Event(2, Message = "Failed to get OpenTelemetrySDK: '{0}'", Level = EventLevel.Error)]
+        [Event(2, Message = "Failed to get OpenTelemetrySDK: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
         private void FailedOpenTelemetrySDK(string exception)
         {
             this.WriteEvent(2, exception);
