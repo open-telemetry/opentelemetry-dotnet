@@ -1,15 +1,16 @@
 # MassTransit Instrumentation for OpenTelemetry .NET
 
-Automatically instruments [DiagnosticSource](https://masstransit-project.com/advanced/monitoring/diagnostic-source.html) 
+Automatically instruments
+[DiagnosticSource](https://masstransit-project.com/advanced/monitoring/diagnostic-source.html)
 events emitted by [MassTransit](https://masstransit-project.com/) library.
 
-## Installation 
+## Installation
 
 ```shell
 dotnet add package OpenTelemetry.Instrumentation.MassTransit
 ```
 
-## Configuration 
+## Configuration
 
 ASP.NET Core instrumentation example:
 
@@ -36,7 +37,7 @@ services.AddMassTransitHostedService();
 
 // Add OpenTelemetry and MassTransit instrumentation
 services.AddOpenTelemetrySdk(x =>
-{ 
+{
     x.AddMassTransitInstrumentation();
     x.UseJaegerActivityExporter(config => // Configure Jaeger);
 });
@@ -52,9 +53,9 @@ using OpenTelemetry.Instrumentation.MassTransit.Implementation;
 // ...
 x.AddMassTransitInstrumentation(
     opts =>
-        opts.TracedOperations = new HashSet<string>(new[] { 
+        opts.TracedOperations = new HashSet<string>(new[] {
             OperationName.Consumer.Consume,
-            OperationName.Consumer.Handle 
+            OperationName.Consumer.Handle
 }));
 ```
 
