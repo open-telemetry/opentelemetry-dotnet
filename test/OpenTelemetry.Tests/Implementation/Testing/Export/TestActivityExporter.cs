@@ -40,7 +40,7 @@ namespace OpenTelemetry.Testing.Export
         public override Task<ExportResult> ExportAsync(IEnumerable<Activity> data, CancellationToken cancellationToken)
         {
             // Added a sleep for zero milliseconds to respect cancellation time set by export timeout.
-            Thread.Sleep(0);
+            Thread.Sleep(2);
 
             cancellationToken.ThrowIfCancellationRequested();
 

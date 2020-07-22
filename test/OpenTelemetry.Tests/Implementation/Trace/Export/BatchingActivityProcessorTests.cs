@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             using var inMemoryEventListener = new InMemoryEventListener();
             var activityExporter = new TestActivityExporter(null);
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(0), 1);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(0), 1);
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
                             .SetSampler(new AlwaysOnActivitySampler())
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Export.Test
 
             var activity1 = this.CreateActivity(ActivityName1);
 
-            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
+            Thread.Sleep(2000);
 
             Assert.Contains(inMemoryEventListener.Events, (e) => e.EventId == 23);
         }
@@ -473,11 +473,10 @@ namespace OpenTelemetry.Trace.Export.Test
         private Activity[] WaitForActivities(TestActivityExporter exporter, int activityCount, TimeSpan timeout)
         {
             var sw = Stopwatch.StartNew();
-            do
+            while (exporter.ExportedActivities.Length < activityCount && sw.Elapsed <= timeout)
             {
-                Thread.Sleep(100);
+                Thread.Sleep(10);
             }
-            while (exporter.ExportedActivities.Length < activityCount && sw.Elapsed <= timeout);
 
             Assert.True(
                 exporter.ExportedActivities.Length >= activityCount,

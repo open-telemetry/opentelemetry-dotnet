@@ -95,15 +95,32 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
-        public async Task AppendBatchAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
+        public async ValueTask<int> AppendBatchAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
             await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                int recordsFlushed = 0;
+
                 foreach (var activity in activityBatch)
                 {
-                    await this.AppendAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
+                    recordsFlushed += await this.AppendInternalAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
                 }
+
+                return recordsFlushed;
+            }
+            finally
+            {
+                this.flushLock.Release();
+            }
+        }
+
+        public async ValueTask<int> AppendAsync(Activity activity, CancellationToken cancellationToken)
+        {
+            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await this.AppendInternalAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -121,7 +138,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.Dispose(true);
         }
 
-        protected async ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
+        protected async ValueTask<int> AppendInternalAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
         {
             if (this.processCache == null)
             {
