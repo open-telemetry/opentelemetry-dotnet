@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void CancelWithExporterTimeoutMilliseconds()
         {
             using var inMemoryEventListener = new InMemoryEventListener();
-            var activityExporter = new TestActivityExporter(null);
+            var activityExporter = new TestActivityExporter(null, sleepMilliseconds: 5000);
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(0), 1);
             using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
