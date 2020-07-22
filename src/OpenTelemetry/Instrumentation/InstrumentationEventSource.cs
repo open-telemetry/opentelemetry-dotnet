@@ -29,15 +29,6 @@ namespace OpenTelemetry.Instrumentation
     {
         public static InstrumentationEventSource Log = new InstrumentationEventSource();
 
-        [NonEvent]
-        public void ExceptionInCustomSampler(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
-            {
-                this.ExceptionInCustomSampler(ToInvariantString(ex));
-            }
-        }
-
         [Event(1, Message = "Span is NULL or blank in the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
         public void NullOrBlankSpan(string eventName)
         {
