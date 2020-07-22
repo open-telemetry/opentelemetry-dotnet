@@ -36,7 +36,7 @@ class Program
     static readonly ActivitySource activitySource = new ActivitySource(
         "MyCompany.MyProduct.MyLibrary");
 
-    static void Main(string[] args)
+    static void Main()
     {
         using var otel = OpenTelemetrySdk.EnableOpenTelemetry(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
