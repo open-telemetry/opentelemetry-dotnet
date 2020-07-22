@@ -10,8 +10,11 @@
 
   <ItemGroup>
     <Compile Remove="Implementation\**" />
+    <Compile Remove="Trace\Internal\**" />
     <EmbeddedResource Remove="Implementation\**" />
+    <EmbeddedResource Remove="Trace\Internal\**" />
     <None Remove="Implementation\**" />
+    <None Remove="Trace\Internal\**" />
   </ItemGroup>
 
   <ItemGroup>

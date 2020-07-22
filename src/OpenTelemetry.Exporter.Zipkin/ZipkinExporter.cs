@@ -64,8 +64,10 @@ namespace OpenTelemetry.Exporter.Zipkin
                 await this.SendBatchActivityAsync(batchActivity).ConfigureAwait(false);
                 return ExportResult.Success;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                ZipkinExporterEventSource.Log.FailedExport(ex);
+
                 // TODO distinguish retryable exceptions
                 return ExportResult.FailedNotRetryable;
             }

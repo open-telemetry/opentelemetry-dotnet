@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
             catch (RpcException ex)
             {
-                ExporterEventSource.Log.FailedToReachCollector(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
                 return ExportResult.FailedRetryable;
             }
