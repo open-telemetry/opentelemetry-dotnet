@@ -89,15 +89,15 @@ Run the application. Traces will be displayed in the console.
 are used to control the noise and overhead introduced by OpenTelemetry by
 reducing the number of samples of traces collected and sent to the backend. If
 no sampler is explicitly specified, the default is to use
-[AlwaysOnActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
+[AlwaysOnSampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
 The following sample shows how to change it to
-[ProbabilityActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
+[ProbabilitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
 with sampling probability of 25%.
 
 ```csharp
 using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
                 .AddActivitySource("companyname.product.library")
-                .SetSampler(new ProbabilityActivitySampler(.25))
+                .SetSampler(new ProbabilitySampler(.25))
                 .UseConsoleExporter());
 ```
 
