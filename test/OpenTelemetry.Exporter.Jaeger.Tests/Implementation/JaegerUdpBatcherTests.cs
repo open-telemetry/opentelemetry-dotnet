@@ -156,7 +156,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal(Convert.ToBase64String(validJaegerThriftPayload), Convert.ToBase64String(memoryTransport.ToArray()));
         }
 
-        internal static JaegerSpan CreateTestPayloadJaegerSpan()
+        internal static Activity CreateTestPayloadJaegerSpan()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -225,10 +225,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             activity.SetStatus(Status.Ok);
 
-            return activity.ToJaegerSpan();
+            return activity;
         }
 
-        internal static JaegerSpan CreateTestJaegerSpan(
+        internal static Activity CreateTestJaegerSpan(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
             bool addEvents = true,
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             ActivityKind kind = ActivityKind.Client)
         {
             return JaegerActivityConversionTest.CreateTestActivity(
-                setAttributes, additionalAttributes, addEvents, addLinks, resource, kind).ToJaegerSpan();
+                setAttributes, additionalAttributes, addEvents, addLinks, resource, kind);
         }
     }
 }

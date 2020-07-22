@@ -58,6 +58,17 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
+        public void DisposeTwice()
+        {
+            using var activityProcessor = new BatchingActivityProcessor(new TestActivityExporter(null));
+
+            activityProcessor.Dispose();
+
+            // does not throw
+            activityProcessor.Dispose();
+        }
+
+        [Fact]
         public async Task ShutdownWithHugeScheduledDelay()
         {
             using var activityProcessor =
@@ -74,18 +85,20 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
-        public void CancelWithExporterTimeoutMilliSeconds()
+        public void CancelWithExporterTimeoutMilliseconds()
         {
-            var activityExporter = new TestActivityExporter(null);
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(0), 1);
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var inMemoryEventListener = new InMemoryEventListener();
+            var activityExporter = new TestActivityExporter(null, sleepMilliseconds: 5000);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(0), 1);
+            using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
-                            .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
+                            .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor))))
+            {
+                var activity1 = this.CreateActivity(ActivityName1);
+            } // Force everything to flush out of the processor.
 
-            var activity1 = this.CreateActivity(ActivityName1);
-
-            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
+            Assert.Contains(inMemoryEventListener.Events, (e) => e.EventId == 23);
         }
 
         [Fact]
@@ -147,7 +160,11 @@ namespace OpenTelemetry.Trace.Export.Test
         public void AddActivityAfterQueueIsExhausted()
         {
             int exportCalledCount = 0;
-            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var activityExporter = new TestActivityExporter(_ =>
+            {
+                Interlocked.Increment(ref exportCalledCount);
+                Thread.Sleep(50);
+            });
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 1, TimeSpan.FromMilliseconds(100), DefaultTimeout, 1);
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
@@ -207,14 +224,14 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(activity6, exported);
         }
 
-        [Fact(Skip = "Reenable once AlwaysParentActivitySampler is added")]
+        [Fact]
         public void ExportNotSampledActivities()
         {
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
             using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
-                                    .SetSampler(new AlwaysOffSampler())
+                                    .SetSampler(new ParentOrElseSampler(new AlwaysOffSampler()))
                                     .AddActivitySource(ActivitySourceName)
                                     .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
 
@@ -265,11 +282,11 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownOnNotEmptyQueueFullFlush()
         {
-            const int batchSize = 2;
+            const int batchSize = 75;
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var activityProcessor =
-                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
+                new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                          .AddActivitySource(ActivitySourceName)
                                          .SetSampler(new AlwaysOnSampler())
@@ -289,9 +306,9 @@ namespace OpenTelemetry.Trace.Export.Test
                 }
 
                 // Get the shutdown event.
-                // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
+                // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
                 // TODO: Expose event ids as internal, so tests can access them more reliably.
-                var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
+                var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
 
                 int droppedCount = 0;
                 if (shutdownEvent != null)
@@ -309,19 +326,13 @@ namespace OpenTelemetry.Trace.Export.Test
         [Fact]
         public async Task ShutdownOnNotEmptyQueueNotFullFlush()
         {
-            const int batchSize = 2;
+            const int batchSize = 25;
             int exportCalledCount = 0;
 
-            // we'll need about 1.5 sec to export all activities
-            // we export 100 activities in batches of 2, each export takes 30ms, in one thread
-            var activityExporter = new TestActivityExporter(_ =>
-            {
-                Interlocked.Increment(ref exportCalledCount);
-                Thread.Sleep(30);
-            });
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount), 30000);
 
             using var activityProcessor =
-                new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
+                new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                      .AddActivitySource(ActivitySourceName)
                                      .SetSampler(new AlwaysOnSampler())
@@ -338,7 +349,18 @@ namespace OpenTelemetry.Trace.Export.Test
                 // we won't be able to export all before cancellation will fire
                 using (var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200)))
                 {
-                    await activityProcessor.ShutdownAsync(cts.Token);
+                    bool canceled;
+                    try
+                    {
+                        await activityProcessor.ShutdownAsync(cts.Token);
+                        canceled = false;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        canceled = true;
+                    }
+
+                    Assert.True(canceled);
                 }
 
                 var exportedCount = activityExporter.ExportedActivities.Length;
@@ -347,12 +369,12 @@ namespace OpenTelemetry.Trace.Export.Test
         }
 
         [Fact]
-        public async Task ForceExport()
+        public async Task ForceFlushExportsAllData()
         {
-            const int batchSize = 2;
+            const int batchSize = 75;
             int exportCalledCount = 0;
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize);
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                 .AddActivitySource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
@@ -374,13 +396,13 @@ namespace OpenTelemetry.Trace.Export.Test
                 // Get the shutdown event.
                 // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
                 // TODO: Expose event ids as internal, so tests can access them more reliably.
-                var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
+                var flushEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
 
                 int droppedCount = 0;
-                if (shutdownEvent != null)
+                if (flushEvent != null)
                 {
                     // There is a single payload which is the number of items left in buffer at shutdown.
-                    droppedCount = (int)shutdownEvent.Payload[0];
+                    droppedCount = (int)flushEvent.Payload[0];
                 }
 
                 Assert.Equal(activities.Count, activityExporter.ExportedActivities.Length + droppedCount);
@@ -393,10 +415,10 @@ namespace OpenTelemetry.Trace.Export.Test
         {
             const int batchSize = 1;
             int exportCalledCount = 0;
-            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount), 100);
             var activities = new List<Activity>();
             using var inMemoryEventListener = new InMemoryEventListener();
-            using (var batchingActivityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(100), DefaultTimeout, batchSize))
+            using (var batchingActivityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize))
             {
                 using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                                             .AddActivitySource(ActivitySourceName)
@@ -411,9 +433,9 @@ namespace OpenTelemetry.Trace.Export.Test
             }
 
             // Get the shutdown event.
-            // 22 is the EventId for OpenTelemetrySdkEventSource.ForceFlushCompleted
+            // 2 is the EventId for OpenTelemetrySdkEventSource.ShutdownEvent
             // TODO: Expose event ids as internal, so tests can access them more reliably.
-            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 22).First();
+            var shutdownEvent = inMemoryEventListener.Events.Where((e) => e.EventId == 2).First();
 
             int droppedCount = 0;
             if (shutdownEvent != null)

@@ -61,7 +61,8 @@ namespace OpenTelemetry.Exporter.Zipkin
         {
             try
             {
-                await this.SendBatchActivityAsync(batchActivity).ConfigureAwait(false);
+                await this.SendBatchActivityAsync(batchActivity, cancellationToken).ConfigureAwait(false);
+
                 return ExportResult.Success;
             }
             catch (Exception ex)
@@ -83,7 +84,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 #endif
         }
 
-        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity)
+        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             var requestUri = this.options.Endpoint;
 
@@ -92,9 +93,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 Content = new JsonContent(this, batchActivity),
             };
 
-            // avoid cancelling here: this is no return point: if we reached this point
-            // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-            return this.httpClient.SendAsync(request);
+            return this.httpClient.SendAsync(request, cancellationToken);
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()

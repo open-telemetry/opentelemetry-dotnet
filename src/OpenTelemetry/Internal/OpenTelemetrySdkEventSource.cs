@@ -129,7 +129,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(6, spanName);
         }
 
-        [Event(7, Message = "Attempting to activate active span '{0}'", Level = EventLevel.Warning)]
+        [Event(7, Message = "Attempting to activate span: '{0}'", Level = EventLevel.Informational)]
         public void AttemptToActivateActiveSpan(string spanName)
         {
             this.WriteEvent(7, spanName);
@@ -223,6 +223,12 @@ namespace OpenTelemetry.Internal
         public void ForceFlushCompleted(int spansLeftUnprocessed)
         {
             this.WriteEvent(22, spansLeftUnprocessed);
+        }
+
+        [Event(23, Message = "Timeout reached waiting on SpanExporter. '{0}' spans attempted.", Level = EventLevel.Warning)]
+        public void SpanExporterTimeout(int spansAttempted)
+        {
+            this.WriteEvent(23, spansAttempted);
         }
 
         /// <summary>
