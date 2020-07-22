@@ -29,7 +29,7 @@ You can configure the `JaegerExporter` by following the directions below:
   agent. (default `65000`).
 
 See the
-[`TestJaegerExporter.cs`](../../samples/Console/TestJaegerExporter.cs)
+[`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.
 
 ## References
