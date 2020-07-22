@@ -27,8 +27,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void CtorArgumentValidation()
         {
             Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None, true)));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContextNew(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]
@@ -36,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.SpanContext.TraceId.ToString(), shim.TraceId);
+            Assert.Equal(shim.TraceId.ToString(), shim.TraceId);
         }
 
         [Fact]
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
 
-            Assert.Equal(shim.SpanContext.SpanId.ToString(), shim.SpanId);
+            Assert.Equal(shim.SpanId.ToString(), shim.SpanId);
         }
 
         [Fact]
@@ -55,7 +54,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         internal static SpanContextShim GetSpanContextShim()
         {
-            return new SpanContextShim(Defaults.GetOpenTelemetrySpanContext());
+            return new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         }
     }
 }
