@@ -1,4 +1,4 @@
-﻿// <copyright file="ParentOrElseActivitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ParentOrElseSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,15 +22,15 @@ namespace OpenTelemetry.Trace.Samplers
     /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
     /// Otherwise, samples root traces according to the specified delegate sampler.
     /// </summary>
-    public sealed class ParentOrElseActivitySampler : ActivitySampler
+    public sealed class ParentOrElseSampler : Sampler
     {
-        private readonly ActivitySampler delegateSampler;
+        private readonly Sampler delegateSampler;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParentOrElseActivitySampler"/> class.
+        /// Initializes a new instance of the <see cref="ParentOrElseSampler"/> class.
         /// </summary>
-        /// <param name="delegateSampler">The <see cref="ActivitySampler"/> to be called to decide whether or not to sample a root trace.</param>
-        public ParentOrElseActivitySampler(ActivitySampler delegateSampler)
+        /// <param name="delegateSampler">The <see cref="Sampler"/> to be called to decide whether or not to sample a root trace.</param>
+        public ParentOrElseSampler(Sampler delegateSampler)
         {
             this.delegateSampler = delegateSampler ?? throw new ArgumentNullException(nameof(delegateSampler));
 
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Samplers
         public override string Description { get; }
 
         /// <inheritdoc />
-        public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             var parentContext = samplingParameters.ParentContext;
             if (parentContext == default)

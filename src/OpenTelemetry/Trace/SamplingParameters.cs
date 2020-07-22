@@ -1,4 +1,4 @@
-// <copyright file="ActivitySamplingParameters.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SamplingParameters.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampling parameters passed to an <see cref="ActivitySampler"/> for it to make a sampling decision.
+    /// Sampling parameters passed to an <see cref="Sampler"/> for it to make a sampling decision.
     /// </summary>
-    public readonly struct ActivitySamplingParameters
+    public readonly struct SamplingParameters
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ActivitySamplingParameters"/> struct.
+        /// Initializes a new instance of the <see cref="SamplingParameters"/> struct.
         /// </summary>
         /// <param name="parentContext">Parent activity context. Typically taken from the wire.</param>
         /// <param name="traceId">Trace ID of a activity to be created.</param>
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">The kind of the Activity to be created.</param>
         /// <param name="tags">Initial set of Tags for the Activity being constructed.</param>
         /// <param name="links">Links associated with the activity.</param>
-        public ActivitySamplingParameters(
+        public SamplingParameters(
             ActivityContext parentContext,
             ActivityTraceId traceId,
             string name,
