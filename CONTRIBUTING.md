@@ -19,7 +19,7 @@ on how to become a
 and
 [**Maintainer**](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
 
-## Find a Buddy and get Started Quickly
+## Find a Buddy and Get Started Quickly
 
 If you are looking for someone to help you find a starting point and be a
 resource for your first contribution, join our Gitter and find a buddy!
@@ -27,9 +27,7 @@ resource for your first contribution, join our Gitter and find a buddy!
 1. Join [Gitter.im](https://gitter.im) and join our [chat
    room](https://gitter.im/open-telemetry/opentelemetry-dotnet).
 2. Post in the room with an introduction to yourself, what area you are
-   interested in (check issues marked with [good first
-   issue](https://github.com/open-telemetry/opentelemetry-dotnet/labels/good%20first%20issue)
-   or [help
+   interested in (check issues marked with [help
    wanted](https://github.com/open-telemetry/opentelemetry-dotnet/labels/help%20wanted)),
    and say you are looking for a buddy. We will match you with someone who has
    experience in that area.
@@ -39,70 +37,27 @@ contributing to OpenTelemetry: providing context, reviewing PRs, and helping
 those get merged. Buddies will not be available 24/7, but is committed to
 responding during their normal contribution hours.
 
-## Development
-
-### Prerequisites
+## Development Environment
 
 You can contribute to this project from a Windows, macOS or Linux machine.
-Requirements can very slightly:
 
-In all platforms, the requirements are:
+On all platforms, the minimum requirements are:
 
-* Git client and command line tools. You may use Visual Studio to clone the
-  repo, but we use [SourceLink](https://github.com/dotnet/sourcelink) to build
-  and it needs git.
+* Git client and command line tools.
 * .NET Core 3.1+
 
-#### Windows
+### Linux or MacOS
 
-* Visual Studio 2017+, VS Code or JetBrains Rider
-* .NET Framework 4.6+
-
-#### MacOS or Linux
-
-* Visual Studio for Mac, VS Code or JetBrains Rider
+* Visual Studio for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
 because unit tests targeting .NET Framework (i.e: `net46`) are disabled outside
 of Windows.
 
-### Build
+### Windows
 
-Open `OpenTelemetry.sln` in your IDE of choice and follow normal development
-process.
-
-To build from the command line you need `dotnet` version `3.1+`.
-
-```sh
-dotnet build OpenTelemetry.sln
-```
-
-### Test
-
-You can use any of the IDEs mentioned above to test your contribution. Open
-root folder or `OpenTelemetry.sln` in your editor and follow normal development
-process.
-
-To test from command line you need `dotnet` version `3.1+`.
-
-```sh
-dotnet test OpenTelemetry.sln
-```
-
-### Code Coverage
-
-On Linux and macOS run `dotnet test` from a terminal window and you will see
-the following output:
-
-![image](https://user-images.githubusercontent.com/20248180/59361025-1e1e7980-8d29-11e9-8449-548caf0d7823.png)
-
-Or, after running the tests, open the file `TestResults\Results\index.htm` in a
-browser.
-
-On Windows use the `Analyze Code Coverage for All Tests` on Visual Studio
-`Test` menu.
-
-![image](docs/vs-code-coverage.png)
+* Visual Studio 2017+ or Visual Studio Code
+* .NET Framework 4.6+
 
 ## Pull Requests
 
@@ -142,8 +97,8 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 
 ### How to Receive Comments
 
-* If the PR is not ready for review, please put `[WIP]` in the title, tag it as
-  `work-in-progress`, or mark it as
+* If the PR is not ready for review, please put `[WIP]` in the title or mark it
+  as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
 * Make sure CLA is signed and CI is clear.
 
