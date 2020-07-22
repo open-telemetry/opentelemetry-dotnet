@@ -70,6 +70,43 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
+        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
+            try
+            {
+                if (this.singleHeader)
+                {
+                    var header = getter(carrier, XB3Combined)?.FirstOrDefault();
+                    return !string.IsNullOrWhiteSpace(header);
+                }
+                else
+                {
+                    var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
+                    var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
+
+                    return traceIdStr != null && spanIdStr != null;
+                }
+            }
+            catch (Exception e)
+            {
+                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
+                return false;
+            }
+        }
+
+        /// <inheritdoc/>
         public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
@@ -95,9 +132,9 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(ActivityContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
         {
-            if (!spanContext.IsValid())
+            if (!activityContext.IsValid())
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
@@ -118,10 +155,10 @@ namespace OpenTelemetry.Context.Propagation
             if (this.singleHeader)
             {
                 var sb = new StringBuilder();
-                sb.Append(spanContext.TraceId.ToHexString());
+                sb.Append(activityContext.TraceId.ToHexString());
                 sb.Append(XB3CombinedDelimiter);
-                sb.Append(spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                sb.Append(activityContext.SpanId.ToHexString());
+                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
@@ -131,9 +168,9 @@ namespace OpenTelemetry.Context.Propagation
             }
             else
             {
-                setter(carrier, XB3TraceId, spanContext.TraceId.ToHexString());
-                setter(carrier, XB3SpanId, spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                setter(carrier, XB3TraceId, activityContext.TraceId.ToHexString());
+                setter(carrier, XB3SpanId, activityContext.SpanId.ToHexString());
+                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     setter(carrier, XB3Sampled, SampledValue);
                 }

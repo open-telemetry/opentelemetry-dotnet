@@ -122,7 +122,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Not_Equality1()
+        public void Not_Equality_DifferentTraceId()
         {
             var spanId = ActivitySpanId.CreateRandom();
             var context1 = new SpanContext(ActivityTraceId.CreateRandom(), spanId, ActivityTraceFlags.Recorded);
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Not_Equality2()
+        public void Not_Equality_DifferentSpanId()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var context1 = new SpanContext(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, true);
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Not_Equality3()
+        public void Not_Equality_DifferentTraceFlags()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
@@ -156,8 +156,8 @@ namespace OpenTelemetry.Trace.Test
             Assert.True(context1 != context2);
         }
 
-        [Fact]
-        public void Not_Equality4()
+        [Fact(Skip = "Skip until ActivityContext support IsRemote")]
+        public void Not_Equality_DifferentIsRemote()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
@@ -170,13 +170,14 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void Not_Equality5()
+        public void Not_Equality_DifferentTraceState()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
-            IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, null);
-            var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
+            IEnumerable<KeyValuePair<string, string>> tracestate1 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v1") };
+            IEnumerable<KeyValuePair<string, string>> tracestate2 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v2") };
+            var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate1);
+            var context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate2);
 
             Assert.NotEqual(context1, context2);
             Assert.True(context1 != context2);

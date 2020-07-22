@@ -31,11 +31,11 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class ActivitySourceAdapter
     {
-        private ActivitySampler activitySampler;
+        private Sampler activitySampler;
         private ActivityProcessor activityProcessor;
         private Resource resource;
 
-        internal ActivitySourceAdapter(ActivitySampler activitySampler, ActivityProcessor activityProcessor, Resource resource)
+        internal ActivitySourceAdapter(Sampler activitySampler, ActivityProcessor activityProcessor, Resource resource)
         {
             this.activitySampler = activitySampler;
             this.activityProcessor = activityProcessor;
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var samplingParameters = new ActivitySamplingParameters(
+            var samplingParameters = new SamplingParameters(
                 parentContext,
                 activity.TraceId,
                 activity.DisplayName,
