@@ -43,7 +43,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private readonly SpanContextShim spanContextShim;
 
-        public SpanShim(TelemetrySpan span)
+        public SpanShim(TelemetrySpanNew span)
         {
             this.Span = span ?? throw new ArgumentNullException(nameof(span));
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ISpanContext Context => this.spanContextShim;
 
-        public TelemetrySpan Span { get; private set; }
+        public TelemetrySpanNew Span { get; private set; }
 
         /// <inheritdoc/>
         public void Finish()
@@ -94,9 +94,14 @@ namespace OpenTelemetry.Shims.OpenTracing
             var eventName = payload.Item1;
             var eventAttributes = payload.Item2;
 
-            this.Span.AddEvent(timestamp == DateTimeOffset.MinValue
-                ? new Event(eventName, eventAttributes)
-                : new Event(eventName, timestamp, eventAttributes));
+            if (timestamp == DateTimeOffset.MinValue)
+            {
+                this.Span.AddEvent(eventName, eventAttributes);
+            }
+            else
+            {
+                this.Span.AddEvent(eventName, timestamp, eventAttributes);
+            }
 
             return this;
         }
@@ -127,7 +132,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(@event));
             }
 
-            this.Span.AddEvent(new Trace.Event(@event, timestamp));
+            this.Span.AddEvent(@event, timestamp);
             return this;
         }
 
@@ -183,7 +188,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
             else
             {
-                this.Span.SetAttribute(key, value);
+                this.Span.SetAttribute(key, value.ToString());
             }
 
             return this;
@@ -197,7 +202,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value);
+            this.Span.SetAttribute(key, value.ToString());
             return this;
         }
 
@@ -209,7 +214,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value);
+            this.Span.SetAttribute(key, value.ToString());
             return this;
         }
 

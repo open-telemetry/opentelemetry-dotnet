@@ -23,10 +23,10 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
-        private readonly Trace.Tracer tracer;
+        private readonly Trace.TracerNew tracer;
         private readonly ITextFormat textFormat;
 
-        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
+        public TracerShim(Trace.TracerNew tracer, ITextFormat textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
@@ -83,7 +83,9 @@ namespace OpenTelemetry.Shims.OpenTracing
                 spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            // TODO: remove comment after spanshim changes
+            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            return default;
         }
 
         /// <inheritdoc/>
@@ -114,7 +116,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                // Remove comment after spanshim changes
+                // this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

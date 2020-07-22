@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         private static readonly string UnknownHostName = "UNKNOWN-HOST";
         private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
@@ -70,9 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // using the context extracted from w3ctraceparent header or
                 // using the format TextFormat supports.
 
-                var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => r.Headers[name]);
+                var ctx = this.options.TextFormat.Extract(request, HttpRequestHeaderValuesGetter);
 
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by

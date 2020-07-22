@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using Moq;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -23,6 +24,24 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     public class ScopeManagerShimTests
     {
+        private const string SpanName = "MySpanName/1";
+        private const string TracerName = "defaultactivitysource";
+
+        static ScopeManagerShimTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Fact]
         public void CtorArgumentValidation()
         {
@@ -32,36 +51,33 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracer = TracerFactoryBase.Default.GetTracer(null);
+            var tracer = TracerProvider.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
 
-            Assert.False(tracer.CurrentSpan.Context.IsValid);
+            Assert.Null(Activity.Current);
             Assert.Null(shim.Active);
         }
 
         [Fact]
         public void Active_IsNotNull()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
-            var openTracingSpan = new SpanShim(Defaults.GetOpenTelemetrySpanMock());
-            var scopeMock = new Mock<IDisposable>();
-
-            tracerMock.Setup(x => x.WithSpan(openTracingSpan.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
-            tracerMock.Setup(x => x.CurrentSpan).Returns(openTracingSpan.Span);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
+            var openTracingSpan = new SpanShim(tracer.StartSpan(SpanName));
 
             var scope = shim.Activate(openTracingSpan, true);
             Assert.NotNull(scope);
 
             var activeScope = shim.Active;
-            Assert.Equal(scope, activeScope);
+            Assert.Equal(scope.Span.Context.SpanId, activeScope.Span.Context.SpanId);
+            openTracingSpan.Finish();
         }
 
         [Fact]
         public void Activate_SpanMustBeShim()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
 
             Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
         }
@@ -69,12 +85,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate()
         {
-            var tracerMock = new Mock<Tracer>();
-            var shim = new ScopeManagerShim(tracerMock.Object);
-            var scopeMock = new Mock<IDisposable>();
-            var spanShim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
-
-            tracerMock.Setup(x => x.WithSpan(spanShim.Span, It.IsAny<bool>())).Returns(scopeMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new ScopeManagerShim(tracer);
+            var spanShim = new SpanShim(tracer.StartSpan(SpanName));
 
             using (shim.Activate(spanShim, true))
             {
@@ -86,8 +99,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 #if DEBUG
             Assert.Equal(0, shim.SpanScopeTableCount);
 #endif
-            tracerMock.Verify(x => x.WithSpan(spanShim.Span, It.IsAny<bool>()), Times.Once);
-            scopeMock.Verify(x => x.Dispose(), Times.Once);
+
+            spanShim.Finish();
+            Assert.NotEqual(default, spanShim.Span.Activity.Duration);
         }
     }
 }

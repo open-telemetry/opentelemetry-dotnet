@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -28,6 +29,18 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
+        private static readonly Func<HttpRequestMessage, string, IEnumerable<string>> HttpRequestMessageHeaderValuesGetter = (request, name) =>
+        {
+            if (request.Headers.TryGetValues(name, out var values))
+            {
+                return values;
+            }
+
+            return null;
+        };
+
+        private static readonly Action<HttpRequestMessage, string, string> HttpRequestMessageHeaderValueSetter = (request, name, value) => request.Headers.Add(name, value);
+
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly ActivitySourceAdapter activitySource;
@@ -68,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                 return;
             }
 
-            if (this.options.TextFormat.IsInjected(request, (r, h) => r.Headers.GetValues(h)))
+            if (this.options.TextFormat.IsInjected(request, HttpRequestMessageHeaderValuesGetter))
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
@@ -94,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormatActivity))
             {
-                this.options.TextFormat.Inject(activity.Context, request, (r, k, v) => r.Headers.Add(k, v));
+                this.options.TextFormat.Inject(activity.Context, request, HttpRequestMessageHeaderValueSetter);
             }
         }
 
