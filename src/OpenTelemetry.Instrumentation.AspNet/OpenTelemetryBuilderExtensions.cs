@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Instrumentation.AspNet;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of Asp.Net request instrumentation.

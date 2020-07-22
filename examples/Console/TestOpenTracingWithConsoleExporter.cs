@@ -18,7 +18,6 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Shims.OpenTracing;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace;
 using OpenTracing;
 
 namespace Examples.Console

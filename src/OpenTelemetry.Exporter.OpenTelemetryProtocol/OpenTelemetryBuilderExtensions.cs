@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.

@@ -16,7 +16,6 @@
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {

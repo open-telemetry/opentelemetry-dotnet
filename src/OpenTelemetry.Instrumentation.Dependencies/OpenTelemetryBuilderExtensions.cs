@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Instrumentation.Dependencies;
 using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of dependency instrumentation.

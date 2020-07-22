@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using StackExchange.Redis;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of dependency instrumentation.

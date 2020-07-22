@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics.Configuration
+namespace OpenTelemetry.Metrics
 {
     public class MeterBuilder
     {

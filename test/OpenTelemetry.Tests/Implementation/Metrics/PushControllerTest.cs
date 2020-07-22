@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Metrics.Export;
 using Xunit;
-using static OpenTelemetry.Metrics.Configuration.MeterFactory;
+using static OpenTelemetry.Metrics.MeterFactory;
 
 namespace OpenTelemetry.Metrics.Test
 {

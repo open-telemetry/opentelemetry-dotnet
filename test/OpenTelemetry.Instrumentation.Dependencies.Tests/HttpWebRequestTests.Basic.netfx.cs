@@ -16,15 +16,12 @@
 #if NETFRAMEWORK
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Dependencies.Implementation;
 using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Xunit;

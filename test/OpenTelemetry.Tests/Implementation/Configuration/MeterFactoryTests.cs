@@ -17,7 +17,6 @@
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Metrics.Test;
 using OpenTelemetry.Trace;

@@ -18,8 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace;
-
 using StackExchange.Redis;
 
 namespace Examples.Console

@@ -27,8 +27,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 #if NETCOREAPP2_1
