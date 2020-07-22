@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
@@ -26,6 +27,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     internal class HttpInListener : ListenerHandler
     {
         private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
         private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
@@ -61,9 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted using the format TextFormat supports.
-                var ctx = this.options.TextFormat.Extract<HttpRequest>(
-                    request,
-                    (r, name) => requestValues.Headers.GetValues(name));
+                var ctx = this.options.TextFormat.Extract(request, HttpRequestHeaderValuesGetter);
 
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by

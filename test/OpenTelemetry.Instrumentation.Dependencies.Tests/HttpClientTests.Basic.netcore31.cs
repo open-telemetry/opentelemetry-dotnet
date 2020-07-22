@@ -15,6 +15,7 @@
 // </copyright>
 #if NETCOREAPP3_1
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -23,7 +24,6 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -72,8 +72,27 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
+            // Ensure that the header value func does not throw if the header key can't be found
+            var mockTextFormat = new Mock<ITextFormatActivity>();
+            var isInjectedHeaderValueGetterThrows = false;
+            mockTextFormat
+                .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
+                .Callback<HttpRequestMessage, Func<HttpRequestMessage, string, IEnumerable<string>>>(
+                    (carrier, getter) =>
+                    {
+                        try
+                        {
+                            // traceparent doesn't exist
+                            getter(carrier, "traceparent");
+                        }
+                        catch
+                        {
+                            isInjectedHeaderValueGetterThrows = true;
+                        }
+                    });
+
             using (OpenTelemetrySdk.EnableOpenTelemetry(
-                        (builder) => builder.AddHttpClientDependencyInstrumentation()
+                        (builder) => builder.AddHttpClientDependencyInstrumentation(o => o.TextFormat = mockTextFormat.Object)
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 using var c = new HttpClient();
@@ -95,6 +114,9 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+
+            mockTextFormat.Verify(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()), Times.Once);
+            Assert.False(isInjectedHeaderValueGetterThrows);
         }
 
         [Fact]
