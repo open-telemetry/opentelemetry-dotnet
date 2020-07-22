@@ -95,7 +95,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             }
         }
 
-        private class TestSampler : ActivitySampler
+        private class TestSampler : Sampler
         {
             public SamplingResult DesiredSamplingResult { get; set; }
 

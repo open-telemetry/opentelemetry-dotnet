@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Configuration
 
         internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
-        internal ActivitySampler Sampler { get; private set; }
+        internal Sampler Sampler { get; private set; }
 
         internal Resource Resource { get; private set; } = Resource.Empty;
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
         /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder SetSampler(ActivitySampler sampler)
+        public OpenTelemetryBuilder SetSampler(Sampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;

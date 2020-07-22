@@ -1,4 +1,4 @@
-﻿// <copyright file="ProbabilityActivitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProbabilitySampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,18 @@ namespace OpenTelemetry.Trace.Samplers
     /// <summary>
     /// Samples traces according to the specified probability.
     /// </summary>
-    public sealed class ProbabilityActivitySampler : ActivitySampler
+    public sealed class ProbabilitySampler : Sampler
     {
         private readonly long idUpperBound;
         private readonly double probability;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProbabilityActivitySampler"/> class.
+        /// Initializes a new instance of the <see cref="ProbabilitySampler"/> class.
         /// </summary>
         /// <param name="probability">The desired probability of sampling. This must be between 0.0 and 1.0.
         /// Higher the value, higher is the probability of a given Activity to be sampled in.
         /// </param>
-        public ProbabilityActivitySampler(double probability)
+        public ProbabilitySampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {

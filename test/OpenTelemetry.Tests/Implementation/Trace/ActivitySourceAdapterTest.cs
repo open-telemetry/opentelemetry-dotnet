@@ -181,7 +181,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             Activity.Current = null;
         }
 
-        private class TestSampler : ActivitySampler
+        private class TestSampler : Sampler
         {
             public Func<ActivitySamplingParameters, SamplingResult> SamplingAction { get; set; }
 

@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             var link = new ActivityLink(parentContext);
 
             Assert.True(
-                    new AlwaysOnActivitySampler()
+                    new AlwaysOnSampler()
                         .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
                             this.traceId,
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void AlwaysOnSampler_GetDescription()
         {
-            Assert.Equal("AlwaysOnSampler", new AlwaysOnActivitySampler().Description);
+            Assert.Equal("AlwaysOnSampler", new AlwaysOnSampler().Description);
         }
 
         [Theory]
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             var link = new ActivityLink(parentContext);
 
             Assert.False(
-                    new AlwaysOffActivitySampler()
+                    new AlwaysOffSampler()
                         .ShouldSample(new ActivitySamplingParameters(
                             parentContext,
                             this.traceId,
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void AlwaysOffSampler_GetDescription()
         {
-            Assert.Equal("AlwaysOffSampler", new AlwaysOffActivitySampler().Description);
+            Assert.Equal("AlwaysOffSampler", new AlwaysOffSampler().Description);
         }
     }
 }

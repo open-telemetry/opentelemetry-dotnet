@@ -22,8 +22,8 @@ namespace OpenTelemetry.Trace.Samplers.Test
 {
     public class ParentOrElseSamplerTests
     {
-        private readonly ParentOrElseActivitySampler parentOrElseAlwaysOnSampler = new ParentOrElseActivitySampler(new AlwaysOnActivitySampler());
-        private readonly ParentOrElseActivitySampler parentOrElseAlwaysOffSampler = new ParentOrElseActivitySampler(new AlwaysOffActivitySampler());
+        private readonly ParentOrElseSampler parentOrElseAlwaysOnSampler = new ParentOrElseSampler(new AlwaysOnSampler());
+        private readonly ParentOrElseSampler parentOrElseAlwaysOffSampler = new ParentOrElseSampler(new AlwaysOffSampler());
 
         [Fact]
         public void ParentOrElseSampler_SampledParent()

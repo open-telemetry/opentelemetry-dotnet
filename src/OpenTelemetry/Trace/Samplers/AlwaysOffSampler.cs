@@ -1,4 +1,4 @@
-﻿// <copyright file="AlwaysOffActivitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AlwaysOffSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace.Samplers
     /// <summary>
     /// Sampler implementation which never samples any activity.
     /// </summary>
-    public sealed class AlwaysOffActivitySampler : ActivitySampler
+    public sealed class AlwaysOffSampler : Sampler
     {
         /// <inheritdoc />
         public override string Description { get; } = "AlwaysOffSampler";
