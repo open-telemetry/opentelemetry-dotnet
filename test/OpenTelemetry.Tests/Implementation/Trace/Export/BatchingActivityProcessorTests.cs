@@ -79,14 +79,13 @@ namespace OpenTelemetry.Trace.Export.Test
             using var inMemoryEventListener = new InMemoryEventListener();
             var activityExporter = new TestActivityExporter(null);
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(0), 1);
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using (var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
                             .AddActivitySource(ActivitySourceName)
                             .SetSampler(new AlwaysOnActivitySampler())
-                            .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor)));
-
-            var activity1 = this.CreateActivity(ActivityName1);
-
-            Thread.Sleep(2000);
+                            .AddProcessorPipeline(pp => pp.AddProcessor(ap => activityProcessor))))
+            {
+                var activity1 = this.CreateActivity(ActivityName1);
+            } // Force everything to flush out of the processor.
 
             Assert.Contains(inMemoryEventListener.Events, (e) => e.EventId == 23);
         }
