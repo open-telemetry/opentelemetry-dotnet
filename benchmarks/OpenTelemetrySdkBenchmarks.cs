@@ -32,10 +32,10 @@ namespace Benchmarks
         public OpenTelemetrySdkBenchmarks()
         {
             using var openTelemetryAlwaysOnSample = OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddActivitySource("AlwaysOnSample"));
+                (builder) => builder.AddActivitySource("AlwaysOnSample").SetSampler(new AlwaysOnActivitySampler()));
 
             using var openTelemetryAlwaysOffSample = OpenTelemetrySdk.EnableOpenTelemetry(
-                (builder) => builder.AddActivitySource("AlwaysOffSample"));
+                (builder) => builder.AddActivitySource("AlwaysOffSample").SetSampler(new AlwaysOffActivitySampler()));
 
             using var openTelemetryNoOp = OpenTelemetrySdk.EnableOpenTelemetry(null);
 
