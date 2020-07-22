@@ -21,6 +21,27 @@ using System.Threading.Tasks;
 namespace OpenTelemetry.Trace.Export
 {
     /// <summary>
+    /// Enumeration used to define the result of an export operation.
+    /// </summary>
+    public enum ExportResult
+    {
+        /// <summary>
+        /// Batch is successfully exported.
+        /// </summary>
+        Success = 0,
+
+        /// <summary>
+        /// Batch export failed. Caller must not retry.
+        /// </summary>
+        FailedNotRetryable = 1,
+
+        /// <summary>
+        /// Batch export failed transiently. Caller should record error and may retry.
+        /// </summary>
+        FailedRetryable = 2,
+    }
+
+    /// <summary>
     /// ActivityExporter base class.
     /// </summary>
     public abstract class ActivityExporter

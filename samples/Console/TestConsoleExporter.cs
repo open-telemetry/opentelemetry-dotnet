@@ -35,8 +35,8 @@ namespace OpenTelemetry.Samples.Console
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
                                                 (p) => p.AddProcessor((next) => new MyProcessor(next))));
 
-            // The above line is required only in Applications
-            // which decide to use OT.
+            // The above line is required only in applications
+            // which decide to use Open Telemetry.
 
             // Libraries would simply write the following lines of code to
             // emit activities, which are the .NET representation of OT Spans.

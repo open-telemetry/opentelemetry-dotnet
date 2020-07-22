@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/packages/OpenTelemetry)
 
 * [Installation](#installation)
-* [Getting started](#getting-started)
+* [Introduction](#introduction)
 * [Basic usage](#basic-usage)
 * [Advanced usage scenarios](#advanced-usage-scenarios)
   * [Customize Exporter](#customize-exporter)
@@ -21,7 +21,7 @@
 dotnet add package OpenTelemetry
 ```
 
-## Getting Started
+## Introduction
 
 OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
 implements the Tracing API, the Metrics API, and the Context API. OpenTelemetry
@@ -29,8 +29,10 @@ SDK deals with concerns such as sampling, processing pipeline, exporting
 telemetry to a particular backend etc. The default implementation consists of
 the following.
 
-* Set of [Built-in samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-samplers)
-* Set of [Built-in processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors).
+* Set of [Built-in
+  samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-samplers)
+* Set of [Built-in
+  processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors).
   * SimpleProcessor which sends Activities to the exporter without any batching.
   * BatchingProcessor which batches and sends Activities to the exporter.
 * Extensibility options for users to customize SDK.
@@ -58,16 +60,18 @@ console application, and have the traces displayed in the console.
 
     ```csharp
     using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
-        .AddActivitySource("companyname.product.library")
-        .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
+                    .AddActivitySource("companyname.product.library")
+                    .UseConsoleExporter())
     ```
+
+    The above requires import of namespace `OpenTelemetry.Trace.Configuration`.
 
 3. Generate some activities in the application as shown below.
 
     ```csharp
-    var source = new ActivitySource("companyname.product.library");
+    var activitySource = new ActivitySource("companyname.product.library");
 
-    using (var activity = source.StartActivity("ActivityName", ActivityKind.Server))
+    using (var activity = activitySource.StartActivity("ActivityName", ActivityKind.Server))
     {
         activity?.AddTag("http.method", "GET");
     }
@@ -80,6 +84,24 @@ Run the application. Traces will be displayed in the console.
 ### Customize Exporter
 
 ### Customize Sampler
+
+[Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+are used to control the noise and overhead introduced by OpenTelemetry by
+reducing the number of samples of traces collected and sent to the backend. If
+no sampler is explicitly specified, the default is to use
+[AlwaysOnActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
+The following sample shows how to change it to
+[ProbabilityActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
+with sampling probability of 25%.
+
+```csharp
+using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
+                .AddActivitySource("companyname.product.library")
+                .SetSampler(new ProbabilityActivitySampler(.25))
+                .UseConsoleExporter());
+```
+
+  The above requires import of the namespace `OpenTelemetry.Trace.Samplers`.
 
 ### Customize Resource
 

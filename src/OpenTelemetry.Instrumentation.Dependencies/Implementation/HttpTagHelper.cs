@@ -35,7 +35,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         private static readonly Func<string, string> ConvertMethodToOperationNameRef = ConvertMethodToOperationName;
         private static readonly Func<HttpMethod, string> ConvertHttpMethodToOperationNameRef = ConvertHttpMethodToOperationName;
         private static readonly Func<HttpMethod, string> ConvertHttpMethodToNameRef = ConvertHttpMethodToName;
-        private static readonly Func<Version, string> ConvertConvertProtcolVersionToStringRef = ConvertProtcolVersionToString;
+        private static readonly Func<Version, string> ConvertProtocolVersionToStringRef = ConvertProtocolVersionToString;
         private static readonly Func<HttpStatusCode, string> ConvertHttpStatusCodeToStringRef = ConvertHttpStatusCodeToString;
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
         /// </summary>
         /// <param name="protocolVersion"><see cref="Version"/>.</param>
         /// <returns>Span flavor value.</returns>
-        public static string GetFlavorTagValueFromProtocolVersion(Version protocolVersion) => ProtocolVersionToStringCache.GetOrAdd(protocolVersion, ConvertConvertProtcolVersionToStringRef);
+        public static string GetFlavorTagValueFromProtocolVersion(Version protocolVersion) => ProtocolVersionToStringCache.GetOrAdd(protocolVersion, ConvertProtocolVersionToStringRef);
 
         /// <summary>
         /// Gets the OpenTelemetry standard status code tag value for a span based on its protocol <see cref="HttpStatusCode"/>.
@@ -112,6 +112,6 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
         private static string ConvertHttpStatusCodeToString(HttpStatusCode statusCode) => ((int)statusCode).ToString();
 
-        private static string ConvertProtcolVersionToString(Version protocolVersion) => protocolVersion.ToString();
+        private static string ConvertProtocolVersionToString(Version protocolVersion) => protocolVersion.ToString();
     }
 }
