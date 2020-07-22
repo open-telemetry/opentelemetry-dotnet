@@ -183,6 +183,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
+        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
@@ -193,6 +194,7 @@ namespace OpenTelemetry.Trace.Export
         }
 
         /// <inheritdoc/>
+        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override async Task ForceFlushAsync(CancellationToken cancellationToken)
         {
             await this.FlushAsyncInternal(drain: true, lockAlreadyHeld: false, cancellationToken).ConfigureAwait(false);
