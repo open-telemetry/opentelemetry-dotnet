@@ -124,16 +124,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Compare two <see cref="SpanContext"/> for equality.
         /// </summary>
-        /// <param name="spanContextNew1">First SpanContextNew to compare.</param>
-        /// <param name="spanContextNew2">Second SpanContextNew to compare.</param>
-        public static bool operator ==(SpanContext spanContextNew1, SpanContext spanContextNew2) => spanContextNew1.Equals(spanContextNew2);
+        /// <param name="spanContext1">First SpanContext to compare.</param>
+        /// <param name="spanContext2">Second SpanContext to compare.</param>
+        public static bool operator ==(SpanContext spanContext1, SpanContext spanContext2) => spanContext1.Equals(spanContext2);
 
         /// <summary>
         /// Compare two <see cref="SpanContext"/> for not equality.
         /// </summary>
-        /// <param name="spanContextNew1">First SpanContextNew to compare.</param>
-        /// <param name="spanContextNew2">Second SpanContextNew to compare.</param>
-        public static bool operator !=(SpanContext spanContextNew1, SpanContext spanContextNew2) => !spanContextNew1.Equals(spanContextNew2);
+        /// <param name="spanContext1">First SpanContext to compare.</param>
+        /// <param name="spanContext2">Second SpanContext to compare.</param>
+        public static bool operator !=(SpanContext spanContext1, SpanContext spanContext2) => !spanContext1.Equals(spanContext2);
 
         /// <inheritdoc/>
         public override int GetHashCode()
