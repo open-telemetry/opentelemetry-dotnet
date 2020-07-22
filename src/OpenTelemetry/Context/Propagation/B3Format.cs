@@ -132,9 +132,9 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(ActivityContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
         {
-            if (!spanContext.IsValid())
+            if (!activityContext.IsValid())
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
@@ -155,10 +155,10 @@ namespace OpenTelemetry.Context.Propagation
             if (this.singleHeader)
             {
                 var sb = new StringBuilder();
-                sb.Append(spanContext.TraceId.ToHexString());
+                sb.Append(activityContext.TraceId.ToHexString());
                 sb.Append(XB3CombinedDelimiter);
-                sb.Append(spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                sb.Append(activityContext.SpanId.ToHexString());
+                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
@@ -168,9 +168,9 @@ namespace OpenTelemetry.Context.Propagation
             }
             else
             {
-                setter(carrier, XB3TraceId, spanContext.TraceId.ToHexString());
-                setter(carrier, XB3SpanId, spanContext.SpanId.ToHexString());
-                if ((spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                setter(carrier, XB3TraceId, activityContext.TraceId.ToHexString());
+                setter(carrier, XB3SpanId, activityContext.SpanId.ToHexString());
+                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     setter(carrier, XB3Sampled, SampledValue);
                 }

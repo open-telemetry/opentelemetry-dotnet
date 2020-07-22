@@ -31,7 +31,7 @@ namespace Benchmarks.Tracing
         public static TelemetrySpan CreateSpan_ParentContext(Tracer tracer)
         {
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
-            var span = tracer.StartSpan("span", parentContext);
+            var span = tracer.StartSpan("span", SpanKind.Client, parentContext);
             span.End();
             return span;
         }
@@ -40,9 +40,9 @@ namespace Benchmarks.Tracing
         {
             var span = tracer.StartSpan("span");
             span.SetAttribute("attribute1", "1");
-            span.SetAttribute("attribute2", 2);
-            span.SetAttribute("attribute3", 3.0);
-            span.SetAttribute("attribute4", false);
+            span.SetAttribute("attribute2", "2");
+            span.SetAttribute("attribute3", "3.0");
+            span.SetAttribute("attribute4", "false");
             span.End();
             return span;
         }
@@ -60,7 +60,7 @@ namespace Benchmarks.Tracing
 
         public static TelemetrySpan CreateSpan_Active(Tracer tracer)
         {
-            using (tracer.StartActiveSpan("span", out var span))
+            using (var span = tracer.StartSpan("span"))
             {
                 return span;
             }
@@ -70,7 +70,7 @@ namespace Benchmarks.Tracing
         {
             TelemetrySpan span;
 
-            using (tracer.StartActiveSpan("span", out _))
+            using (tracer.StartSpan("span"))
             {
                 span = tracer.CurrentSpan;
             }

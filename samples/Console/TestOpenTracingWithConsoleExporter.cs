@@ -1,4 +1,4 @@
-﻿// <copyright file="TestOTelShimWithConsoleExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TestOpenTracingWithConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,36 +15,43 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Resources;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Shims.OpenTracing;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Configuration;
+using OpenTracing;
 
 namespace OpenTelemetry.Samples.Console
 {
-    internal class TestOTelShimWithConsoleExporter
+    internal class TestOpenTracingWithConsoleExporter
     {
-        internal static object Run(OpenTelemetryShimOptions options)
+        internal static object Run(OpenTracingShimOptions options)
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
-            // and use a single pipeline with a custom MyProcessor, and Console exporter.
+            // and use Console exporter.
             using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
 
             // The above line is required only in applications
-            // which decide to use Open Telemetry.
+            // which decide to use OpenTelemetry.
 
-            var tracer = TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer");
-            var span = tracer.StartSpan("parent span");
-            span.SetAttribute("my", "value");
-            span.UpdateName("parent span new name");
+            // Following shows how to use the OpenTracing shim
 
-            var spanChild = tracer.StartSpan("child span");
-            spanChild.AddEvent("sample event").SetAttribute("ch", "value").SetAttribute("more", "attributes");
-            spanChild.End();
+            var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
 
-            span.End();
+            using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
+            {
+                parentScope.Span.SetTag("my", "value");
+                parentScope.Span.SetOperationName("parent span new name");
+
+                // The child scope will automatically use parentScope as its parent.
+                using (IScope childScope = tracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true))
+                {
+                    childScope.Span.SetTag("Child Tag", "Child Tag Value").SetTag("ch", "value").SetTag("more", "attributes");
+                }
+            }
 
             System.Console.WriteLine("Press Enter key to exit.");
 

@@ -24,9 +24,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope>();
 
-        private readonly Trace.Tracer tracer;
+        private readonly Tracer tracer;
 
 #if DEBUG
         private int spanScopeTableCount;
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            var scope = this.tracer.WithSpan(shim.Span, false);
+            var scope = this.tracer.WithSpan(shim.Span);
 
             var instrumentation = new ScopeInstrumentation(
                 shim.Span,

@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Moq;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -26,306 +25,278 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     public class SpanBuilderShimTests
     {
+        private const string SpanName1 = "MySpanName/1";
+        private const string SpanName2 = "MySpanName/2";
+        private const string TracerName = "defaultactivitysource";
+
+        static SpanBuilderShimTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Fact]
         public void CtorArgumentValidation()
         {
+            var tracer = TracerProvider.GetTracer(TracerName);
             Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(null, "foo"));
-            Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(new Mock<Tracer>().Object, null));
+            Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(tracer, null));
         }
 
         [Fact]
         public void IgnoreActiveSpan()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent. The shim requires that the ISpan implementation be a SpanShim
-            shim.AsChildOf(new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object));
+            shim.AsChildOf(new SpanShim(tracer.StartSpan(SpanName1)));
 
             // Set to Ignore
             shim.IgnoreActiveSpan();
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
-            tracerMock.Verify(
-                o => o.StartRootSpan(
-                    "foo",
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
         }
 
         [Fact]
         public void StartWithExplicitTimestamp()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
-            var startTimestamp = DateTimeOffset.UtcNow;
+            var startTimestamp = DateTimeOffset.Now;
             shim.WithStartTimestamp(startTimestamp);
 
-            shim.Start();
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    It.IsAny<TelemetrySpan>(),
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == startTimestamp && !so.Links.Any())), Times.Once);
+            // build
+            var spanShim = (SpanShim)shim.Start();
+
+            Assert.Equal(startTimestamp, spanShim.Span.Activity.StartTimeUtc);
         }
 
         [Fact]
         public void AsChildOf_WithNullSpan()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a null parent
             shim.AsChildOf((global::OpenTracing.ISpan)null);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    It.IsAny<TelemetrySpan>(),
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Null(spanShim.Span.Activity.Parent);
         }
 
         [Fact]
         public void AsChildOf_WithSpan()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent.
-            var span = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
+            var span = new SpanShim(tracer.StartSpan(SpanName1));
             shim.AsChildOf(span);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    span.Span,
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.NotNull(spanShim.Span.Activity.ParentId);
         }
 
         [Fact]
         public void Start_ActivityOperationRootSpanChecks()
         {
-            // Create an activity
-            var activity = new System.Diagnostics.Activity("foo")
-                .SetIdFormat(System.Diagnostics.ActivityIdFormat.W3C)
-                .Start();
+            // matching root operation name
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo", new List<string> { "foo" });
+            var spanShim = (SpanShim)shim.Start();
 
-            try
-            {
-                // matching root operation name
-                var tracerMock = GetDefaultTracerMock();
-                var shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "foo" });
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
 
-                shim.Start();
-                tracerMock.Verify(o => o.StartSpanFromActivity("foo", activity, 0, It.Is<IEnumerable<Link>>(links => !links.Any())), Times.Once);
+            // mis-matched root operation name
+            shim = new SpanBuilderShim(tracer, "foo", new List<string> { "bar" });
+            spanShim = (SpanShim)shim.Start();
 
-                // mis-matched root operation name
-                tracerMock = GetDefaultTracerMock();
-                shim = new SpanBuilderShim(tracerMock.Object, "foo", new List<string> { "bar" });
-                shim.Start();
-                tracerMock.Verify(
-                    o => o.StartSpan(
-                        "foo",
-                        It.IsAny<TelemetrySpan>(),
-                        0,
-                        It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
-            }
-            finally
-            {
-                activity.Stop();
-            }
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Equal("foo", spanShim.Span.Activity.Parent.OperationName);
         }
 
         [Fact]
         public void AsChildOf_MultipleCallsWithSpan()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
-            var span1 = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
-            var span2 = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
+            var span1 = new SpanShim(tracer.StartSpan(SpanName1));
+            var span2 = new SpanShim(tracer.StartSpan(SpanName2));
             shim.AsChildOf(span1);
             shim.AsChildOf(span2);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    span1.Span,
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(span2.Span.Context))), Times.Once);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Contains(spanShim.Context.TraceId, spanShim.Span.Activity.TraceId.ToHexString());
+
+            // TODO: Check for multi level parenting
         }
 
         [Fact]
         public void AsChildOf_WithNullSpanContext()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a null parent
             shim.AsChildOf((global::OpenTracing.ISpanContext)null);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
             // should be no parent.
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    It.IsAny<TelemetrySpan>(),
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.Null(spanShim.Span.Activity.Parent);
         }
 
         [Fact]
         public void AsChildOfWithSpanContext()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent
             var spanContext = SpanContextShimTests.GetSpanContextShim();
-            shim.AsChildOf(spanContext);
+            var test = shim.AsChildOf(spanContext);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    spanContext.SpanContext,
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.NotNull(spanShim.Span.Activity.ParentId);
         }
 
         [Fact]
         public void AsChildOf_MultipleCallsWithSpanContext()
         {
-            var tracerMock = GetDefaultTracerMock();
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
             var spanContext1 = SpanContextShimTests.GetSpanContextShim();
             var spanContext2 = SpanContextShimTests.GetSpanContextShim();
+
+            // Add parent context
             shim.AsChildOf(spanContext1);
+
+            // Adds as link as parent context already exists
             shim.AsChildOf(spanContext2);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
+            var linkContext = spanShim.Span.Activity.Links.First().Context;
 
-            tracerMock.Verify(
-                o => o.StartSpan(
-                    "foo",
-                    spanContext1.SpanContext,
-                    0,
-                    It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && so.Links.Single().Context.Equals(spanContext2.SpanContext))), Times.Once);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);
+            Assert.Equal(spanContext2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
         }
 
         [Fact]
         public void WithTag_KeyIsSpanKindStringValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var tracerMock = GetDefaultTracerMock(spanMock);
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.SpanKind.Key, global::OpenTracing.Tag.Tags.SpanKindClient);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
             // Not an attribute
-            Assert.Empty(spanMock.Attributes);
-
-            tracerMock.Verify(o => o.StartSpan("foo", It.IsAny<TelemetrySpan>(), SpanKind.Client, It.Is<SpanCreationOptions>(so => so.StartTimestamp == default && !so.Links.Any())), Times.Once);
+            Assert.Empty(spanShim.Span.Activity.Tags);
+            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Equal(ActivityKind.Client, spanShim.Span.Activity.Kind);
         }
 
         [Fact]
         public void WithTag_KeyIsErrorStringValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanBuilderShim(GetDefaultTracerMock(spanMock).Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, "true");
 
             // build
-            shim.Start();
-
-            // Not an attribute
-            Assert.Empty(spanMock.Attributes);
+            var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
         public void WithTag_KeyIsNullStringValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanBuilderShim(GetDefaultTracerMock(spanMock).Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag((string)null, "unused");
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
             // Null key was ignored
-            Assert.Empty(spanMock.Attributes);
+            Assert.Empty(spanShim.Span.Activity.Tags);
         }
 
         [Fact]
         public void WithTag_ValueIsNullStringValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanBuilderShim(GetDefaultTracerMock(spanMock).Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag("foo", null);
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
             // Null value was turned into string.empty
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(string.Empty, spanMock.Attributes.First().Value);
+            Assert.Equal("foo", spanShim.Span.Activity.Tags.First().Key);
+            Assert.Equal(string.Empty, spanShim.Span.Activity.Tags.First().Value);
         }
 
         [Fact]
         public void WithTag_KeyIsErrorBoolValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanBuilderShim(GetDefaultTracerMock(spanMock).Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, true);
 
             // build
-            shim.Start();
-
-            // Not an attribute
-            Assert.Empty(spanMock.Attributes);
+            var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
         public void WithTag_VariousValueTypes()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanBuilderShim(GetDefaultTracerMock(spanMock).Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag("foo", "unused");
             shim.WithTag("bar", false);
@@ -336,18 +307,17 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.WithTag(new global::OpenTracing.Tag.StringTag("mobizzle"), "unused");
 
             // build
-            shim.Start();
+            var spanShim = (SpanShim)shim.Start();
 
             // Just verify the count
-            Assert.Equal(7, spanMock.Attributes.Count);
+            Assert.Equal(7, spanShim.Span.Activity.Tags.Count());
         }
 
         [Fact]
         public void Start()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var tracerMock = GetDefaultTracerMock(spanMock);
-            var shim = new SpanBuilderShim(tracerMock.Object, "foo");
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanBuilderShim(tracer, "foo");
 
             // build
             var span = shim.Start() as SpanShim;
@@ -355,19 +325,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // Just check the return value is a SpanShim and that the underlying OpenTelemetry Span.
             // There is nothing left to verify because the rest of the tests were already calling .Start() prior to verification.
             Assert.NotNull(span);
-            Assert.Equal(spanMock, span.Span);
-        }
-
-        private static Mock<Tracer> GetDefaultTracerMock(SpanMock spanMock = null)
-        {
-            var mock = new Mock<Tracer>();
-            spanMock = spanMock ?? Defaults.GetOpenTelemetrySpanMock();
-
-            mock.Setup(x => x.StartRootSpan(It.IsAny<string>(), It.IsAny<SpanKind>(), It.IsAny<SpanCreationOptions>())).Returns(spanMock);
-            mock.Setup(x => x.StartSpan(It.IsAny<string>(), It.IsAny<TelemetrySpan>(), It.IsAny<SpanKind>(), It.IsAny<SpanCreationOptions>())).Returns(spanMock);
-            mock.Setup(x => x.StartSpan(It.IsAny<string>(), It.IsAny<SpanContext>(), It.IsAny<SpanKind>(), It.IsAny<SpanCreationOptions>())).Returns(spanMock);
-            mock.Setup(x => x.StartSpanFromActivity(It.IsAny<string>(), It.IsAny<Activity>(), It.IsAny<SpanKind>(), It.IsAny<IEnumerable<Link>>())).Returns(spanMock);
-            return mock;
+            Assert.Equal("foo", span.Span.Activity.OperationName);
         }
     }
 }

@@ -83,7 +83,9 @@ namespace OpenTelemetry.Shims.OpenTracing
                 spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            // TODO: remove comment after spanshim changes
+            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
+            return default;
         }
 
         /// <inheritdoc/>
@@ -114,7 +116,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                // Remove comment after spanshim changes
+                // this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }

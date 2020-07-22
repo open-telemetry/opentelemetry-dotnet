@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace.Samplers
     public sealed class AlwaysOffActivitySampler : ActivitySampler
     {
         /// <inheritdoc />
-        public override string Description { get; } = nameof(AlwaysOffActivitySampler);
+        public override string Description { get; } = "AlwaysOffSampler";
 
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
