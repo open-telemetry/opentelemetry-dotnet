@@ -16,9 +16,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using global::OpenTracing.Tag;
-using Moq;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -26,6 +26,24 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
     public class SpanShimTests
     {
+        private const string SpanName = "MySpanName/1";
+        private const string TracerName = "defaultactivitysource";
+
+        static SpanShimTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Fact]
         public void CtorArgumentValidation()
         {
@@ -35,7 +53,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SpanContextIsNotNull()
         {
-            var shim = new SpanShim(Defaults.GetOpenTelemetryMockSpan().Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // ISpanContext validation handled in a separate test class
             Assert.NotNull(shim.Context);
@@ -44,62 +63,61 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void FinishSpan()
         {
-            var spanMock = Defaults.GetOpenTelemetryMockSpan();
-            var shim = new SpanShim(spanMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             shim.Finish();
 
-            spanMock.Verify(o => o.End(), Times.Once());
+            Assert.NotEqual(default, shim.Span.Activity.Duration);
         }
 
         [Fact]
         public void FinishSpanUsingSpecificTimestamp()
         {
-            var spanMock = Defaults.GetOpenTelemetryMockSpan();
-            var shim = new SpanShim(spanMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             var endTime = DateTimeOffset.UtcNow;
             shim.Finish(endTime);
 
-            spanMock.Verify(o => o.End(endTime), Times.Once());
+            Assert.Equal(endTime - shim.Span.Activity.StartTimeUtc, shim.Span.Activity.Duration);
         }
 
         [Fact]
         public void SetOperationName()
         {
-            var spanMock = Defaults.GetOpenTelemetryMockSpan();
-            var shim = new SpanShim(spanMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // parameter validation
             Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null));
 
             shim.SetOperationName("bar");
-
-            spanMock.Verify(o => o.UpdateName("bar"), Times.Once());
+            Assert.Equal("bar", shim.Span.Activity.DisplayName);
         }
 
         [Fact]
         public void GetBaggageItem()
         {
-            var spanMock = Defaults.GetOpenTelemetryMockSpan();
-            var shim = new SpanShim(spanMock.Object);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // parameter validation
             Assert.Throws<ArgumentNullException>(() => shim.GetBaggageItem(null));
 
-            // TODO
+           // TODO - Method not implemented
         }
 
         [Fact]
         public void Log()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             shim.Log("foo");
 
-            Assert.Single(spanMock.Events);
-            var first = spanMock.Events.First();
+            Assert.Single(shim.Span.Activity.Events);
+            var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.False(first.Attributes.Any());
         }
@@ -107,14 +125,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogWithExplicitTimestamp()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             var now = DateTimeOffset.UtcNow;
             shim.Log(now, "foo");
 
-            Assert.Single(spanMock.Events);
-            var first = spanMock.Events.First();
+            Assert.Single(shim.Span.Activity.Events);
+            var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.Equal(now, first.Timestamp);
             Assert.False(first.Attributes.Any());
@@ -123,8 +141,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFields()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
 
@@ -139,10 +157,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 new KeyValuePair<string, object>("event", "foo"),
             });
 
-            var first = spanMock.Events.FirstOrDefault();
-            var last = spanMock.Events.LastOrDefault();
+            var first = shim.Span.Activity.Events.FirstOrDefault();
+            var last = shim.Span.Activity.Events.LastOrDefault();
 
-            Assert.Equal(2, spanMock.Events.Count);
+            Assert.Equal(2, shim.Span.Activity.Events.Count());
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
             Assert.True(first.Attributes.Any());
@@ -154,8 +172,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFieldsWithExplicitTimestamp()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
             var now = DateTimeOffset.UtcNow;
@@ -171,9 +189,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 new KeyValuePair<string, object>("event", "foo"),
             });
 
-            Assert.Equal(2, spanMock.Events.Count);
-            var first = spanMock.Events.First();
-            var last = spanMock.Events.Last();
+            Assert.Equal(2, shim.Span.Activity.Events.Count());
+            var first = shim.Span.Activity.Events.First();
+            var last = shim.Span.Activity.Events.Last();
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
             Assert.True(first.Attributes.Any());
@@ -187,138 +205,140 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagStringValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, "foo"));
 
             shim.SetTag("foo", "bar");
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal("bar", spanMock.Attributes.First().Value);
+            Assert.Single(shim.Span.Activity.Tags);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
         }
 
         [Fact]
         public void SetTagBoolValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
 
             shim.SetTag("foo", true);
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, true);
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.True((bool)spanMock.Attributes.First().Value);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.True(bool.Parse(shim.Span.Activity.Tags.First().Value));
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
-            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
+
+            // TODO: Activity object does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
+            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]
         public void SetTagIntValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, 1));
 
             shim.SetTag("foo", 1);
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1L, spanMock.Attributes.First().Value);
+            Assert.Single(shim.Span.Activity.Tags);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagDoubleValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
 
             shim.SetTag("foo", 1D);
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1, (double)spanMock.Attributes.First().Value);
+            Assert.Single(shim.Span.Activity.Tags);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal(1, double.Parse(shim.Span.Activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagBooleanTagValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
 
             shim.SetTag(new BooleanTag("foo"), true);
             shim.SetTag(new BooleanTag(global::OpenTracing.Tag.Tags.Error.Key), true);
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.True((bool)spanMock.Attributes.First().Value);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.True(bool.Parse(shim.Span.Activity.Tags.First().Value));
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, spanMock.GetStatus());
-            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, spanMock.GetStatus());
+            Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
+
+            // TODO: .NET does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
+            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]
         public void SetTagStringTagValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null, "foo"));
 
             shim.SetTag(new StringTag("foo"), "bar");
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal("bar", (string)spanMock.Attributes.First().Value);
+            Assert.Single(shim.Span.Activity.Tags);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
         }
 
         [Fact]
         public void SetTagIntTagValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null, 1));
 
             shim.SetTag(new IntTag("foo"), 1);
 
-            Assert.Single(spanMock.Attributes);
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1L, spanMock.Attributes.First().Value);
+            Assert.Single(shim.Span.Activity.Tags);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
         }
 
         [Fact]
         public void SetTagIntOrStringTagValue()
         {
-            var spanMock = Defaults.GetOpenTelemetrySpanMock();
-            var shim = new SpanShim(spanMock);
+            var tracer = TracerProvider.GetTracer(TracerName);
+            var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null, "foo"));
 
             shim.SetTag(new IntOrStringTag("foo"), 1);
             shim.SetTag(new IntOrStringTag("bar"), "baz");
 
-            Assert.Equal(2, spanMock.Attributes.Count);
+            Assert.Equal(2, shim.Span.Activity.Tags.Count());
 
-            Assert.Equal("foo", spanMock.Attributes.First().Key);
-            Assert.Equal(1L, spanMock.Attributes.First().Value);
+            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
 
-            Assert.Equal("bar", spanMock.Attributes.Last().Key);
-            Assert.Equal("baz", (string)spanMock.Attributes.Last().Value);
+            Assert.Equal("bar", shim.Span.Activity.Tags.Last().Key);
+            Assert.Equal("baz", shim.Span.Activity.Tags.Last().Value);
         }
     }
 }
