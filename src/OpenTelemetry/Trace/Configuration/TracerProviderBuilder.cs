@@ -90,6 +90,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder AddActivitySource(string activitySourceName)
         {
+            // TODO: We need to fix the listening model.
+            // Today it ignores version.
             if (this.ActivitySourceNames == null)
             {
                 this.ActivitySourceNames = new HashSet<string>();
