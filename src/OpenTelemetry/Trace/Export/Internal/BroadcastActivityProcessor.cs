@@ -27,6 +27,7 @@ namespace OpenTelemetry.Trace.Export.Internal
     internal class BroadcastActivityProcessor : ActivityProcessor, IDisposable
     {
         private readonly IEnumerable<ActivityProcessor> processors;
+        private bool isDisposed;
 
         public BroadcastActivityProcessor(IEnumerable<ActivityProcessor> processors)
         {
@@ -97,19 +98,38 @@ namespace OpenTelemetry.Trace.Export.Internal
 
         public void Dispose()
         {
-            foreach (var processor in this.processors)
+            this.Dispose(true);
+        }
+
+        protected virtual void Dispose(bool isDisposing)
+        {
+            try
             {
-                try
+                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+            }
+
+            if (isDisposing && !this.isDisposed)
+            {
+                foreach (var processor in this.processors)
                 {
-                    if (processor is IDisposable disposable)
+                    try
                     {
-                        disposable.Dispose();
+                        if (processor is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
                     }
                 }
-                catch (Exception e)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
-                }
+
+                this.isDisposed = true;
             }
         }
     }

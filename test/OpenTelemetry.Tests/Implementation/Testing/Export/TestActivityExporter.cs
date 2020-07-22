@@ -27,24 +27,27 @@ namespace OpenTelemetry.Testing.Export
     {
         private readonly ConcurrentQueue<Activity> activities = new ConcurrentQueue<Activity>();
         private readonly Action<IEnumerable<Activity>> onExport;
+        private readonly int? sleepMilliseconds;
 
-        public TestActivityExporter(Action<IEnumerable<Activity>> onExport)
+        public TestActivityExporter(Action<IEnumerable<Activity>> onExport, int? sleepMilliseconds = null)
         {
             this.onExport = onExport;
+            this.sleepMilliseconds = sleepMilliseconds;
         }
 
         public Activity[] ExportedActivities => this.activities.ToArray();
 
         public bool WasShutDown { get; private set; } = false;
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> data, CancellationToken cancellationToken)
+        public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> data, CancellationToken cancellationToken)
         {
-            // Added a sleep for zero milliseconds to respect cancellation time set by export timeout.
-            Thread.Sleep(0);
-            if (cancellationToken.IsCancellationRequested)
+            // Added a sleep to respect cancellation time set by export timeout.
+            if (this.sleepMilliseconds.HasValue)
             {
-                return default;
+                await Task.Delay(this.sleepMilliseconds.Value, cancellationToken).ConfigureAwait(false);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             this.onExport?.Invoke(data);
 
@@ -53,7 +56,7 @@ namespace OpenTelemetry.Testing.Export
                 this.activities.Enqueue(s);
             }
 
-            return Task.FromResult(ExportResult.Success);
+            return ExportResult.Success;
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)

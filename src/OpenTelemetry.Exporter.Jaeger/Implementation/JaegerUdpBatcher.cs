@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class JaegerUdpBatcher : IJaegerUdpBatcher
+    internal class JaegerUdpBatcher : IDisposable
     {
         private readonly int maxPacketSize;
         private readonly TProtocolFactory protocolFactory;
@@ -31,15 +32,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly JaegerThriftClient thriftClient;
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
-
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly TimeSpan maxFlushInterval;
         private readonly System.Timers.Timer maxFlushIntervalTimer;
-
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
-
-        private bool disposedValue = false; // To detect redundant calls
+        private bool isDisposed;
 
         public JaegerUdpBatcher(JaegerExporterOptions options, TTransport clientTransport = null)
         {
@@ -72,13 +70,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.maxFlushIntervalTimer.Elapsed += async (sender, args) =>
             {
+                bool lockTaken = this.flushLock.Wait(0);
                 try
                 {
-                    await this.FlushAsyncInternal(false, CancellationToken.None).ConfigureAwait(false);
+                    if (!lockTaken)
+                    {
+                        // If the lock was already held, it means a flush is already executing.
+                        return;
+                    }
+
+                    await this.FlushAsyncInternal(lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    JaegerExporterEventSource.Log.UnexpectedError(ex);
+                    if (lockTaken)
+                    {
+                        this.flushLock.Release();
+                    }
                 }
             };
         }
@@ -87,7 +95,50 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
-        public async ValueTask<int> AppendAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
+        public async ValueTask<int> AppendBatchAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
+        {
+            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                int recordsFlushed = 0;
+
+                foreach (var activity in activityBatch)
+                {
+                    recordsFlushed += await this.AppendInternalAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
+                }
+
+                return recordsFlushed;
+            }
+            finally
+            {
+                this.flushLock.Release();
+            }
+        }
+
+        public async ValueTask<int> AppendAsync(Activity activity, CancellationToken cancellationToken)
+        {
+            await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await this.AppendInternalAsync(activity.ToJaegerSpan(), cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                this.flushLock.Release();
+            }
+        }
+
+        public ValueTask<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
+
+        public ValueTask<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(lockAlreadyHeld: false, cancellationToken);
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing).
+            this.Dispose(true);
+        }
+
+        protected async ValueTask<int> AppendInternalAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
         {
             if (this.processCache == null)
             {
@@ -120,55 +171,37 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             var flushedSpanCount = 0;
 
-            await this.flushLock.WaitAsync().ConfigureAwait(false);
-            try
+            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
             {
-                if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
+                spanBatch = new Batch(spanProcess)
                 {
-                    spanBatch = new Batch(spanProcess)
-                    {
-                        SpanMessages = new List<BufferWriterMemory>(),
-                    };
-                    this.CurrentBatches.Add(spanServiceName, spanBatch);
+                    SpanMessages = new List<BufferWriterMemory>(),
+                };
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
 
-                    spanTotalBytesNeeded += spanProcess.Message.Length;
-                }
-
-                // flush if current batch size plus new span size equals or exceeds max batch size
-                if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
-                {
-                    flushedSpanCount = await this.FlushAsyncInternal(true, cancellationToken).ConfigureAwait(false);
-
-                    // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                    spanBatch.SpanMessages.Clear();
-                    spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
-                    this.CurrentBatches.Add(spanServiceName, spanBatch);
-                }
-                else
-                {
-                    this.maxFlushIntervalTimer.Enabled = true;
-                }
-
-                // add span to batch and wait for more spans
-                spanBatch.SpanMessages.Add(spanMessage);
-                this.batchByteSize += spanTotalBytesNeeded;
+                spanTotalBytesNeeded += spanProcess.Message.Length;
             }
-            finally
+
+            // flush if current batch size plus new span size equals or exceeds max batch size
+            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
             {
-                this.flushLock.Release();
+                flushedSpanCount = await this.FlushAsyncInternal(lockAlreadyHeld: true, cancellationToken).ConfigureAwait(false);
+
+                // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
+                spanBatch.SpanMessages.Clear();
+                spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
             }
+            else
+            {
+                this.maxFlushIntervalTimer.Enabled = true;
+            }
+
+            // add span to batch and wait for more spans
+            spanBatch.SpanMessages.Add(spanMessage);
+            this.batchByteSize += spanTotalBytesNeeded;
 
             return flushedSpanCount;
-        }
-
-        public ValueTask<int> FlushAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
-
-        public ValueTask<int> CloseAsync(CancellationToken cancellationToken) => this.FlushAsyncInternal(false, cancellationToken);
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
         }
 
         protected async Task SendAsync(Dictionary<string, Batch> batches, CancellationToken cancellationToken)
@@ -189,7 +222,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool isDisposing)
         {
             try
             {
@@ -199,18 +232,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
             }
 
-            if (!this.disposedValue)
+            if (isDisposing && !this.isDisposed)
             {
-                if (disposing)
-                {
-                    this.maxFlushIntervalTimer.Dispose();
-                    this.thriftClient.Dispose();
-                    this.clientTransport.Dispose();
-                    this.memoryProtocol.Dispose();
-                    this.flushLock.Dispose();
-                }
+                this.maxFlushIntervalTimer.Dispose();
+                this.thriftClient.Dispose();
+                this.clientTransport.Dispose();
+                this.memoryProtocol.Dispose();
+                this.flushLock.Dispose();
 
-                this.disposedValue = true;
+                this.isDisposed = true;
             }
         }
 
@@ -218,7 +248,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             if (!lockAlreadyHeld)
             {
-                await this.flushLock.WaitAsync().ConfigureAwait(false);
+                await this.flushLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
 
             try
@@ -245,7 +275,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 return n;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 JaegerExporterEventSource.Log.FailedFlush(ex);
 
