@@ -129,7 +129,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(6, spanName);
         }
 
-        [Event(7, Message = "Attempting to activate active span '{0}'", Level = EventLevel.Warning)]
+        [Event(7, Message = "Attempting to activate span: '{0}'", Level = EventLevel.Informational)]
         public void AttemptToActivateActiveSpan(string spanName)
         {
             this.WriteEvent(7, spanName);
