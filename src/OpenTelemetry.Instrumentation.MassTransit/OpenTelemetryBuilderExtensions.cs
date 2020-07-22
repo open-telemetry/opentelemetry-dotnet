@@ -28,16 +28,21 @@ namespace OpenTelemetry.Trace.Configuration
         /// Enables the outgoing requests automatic data collection for MassTransit.
         /// </summary>
         /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="configureMassTransitInstrumentationOptions">MassTransit configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
         public static OpenTelemetryBuilder AddMassTransitInstrumentation(
-            this OpenTelemetryBuilder builder)
+            this OpenTelemetryBuilder builder,
+            Action<MassTransitInstrumentationOptions> configureMassTransitInstrumentationOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddInstrumentation(activitySource => new MassTransitInstrumentation(activitySource));
+            var options = new MassTransitInstrumentationOptions();
+            configureMassTransitInstrumentationOptions?.Invoke(options);
+
+            return builder.AddInstrumentation(activitySource => new MassTransitInstrumentation(activitySource, options));
         }
     }
 }

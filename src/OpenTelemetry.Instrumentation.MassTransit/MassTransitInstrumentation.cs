@@ -29,8 +29,18 @@ namespace OpenTelemetry.Instrumentation.MassTransit
         /// </summary>
         /// <param name="activitySource">ActivitySource adapter instance.</param>
         public MassTransitInstrumentation(ActivitySourceAdapter activitySource)
+            : this(activitySource, new MassTransitInstrumentationOptions())
         {
-            var diagnosticListener = new MassTransitDiagnosticListener("MassTransit", activitySource);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MassTransitInstrumentation"/> class.
+        /// </summary>
+        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        /// <param name="options">Instrumentation options.</param>
+        public MassTransitInstrumentation(ActivitySourceAdapter activitySource, MassTransitInstrumentationOptions options)
+        {
+            var diagnosticListener = new MassTransitDiagnosticListener(activitySource, options);
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(diagnosticListener, null);
             this.diagnosticSourceSubscriber.Subscribe();
         }

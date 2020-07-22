@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Trace;
@@ -23,41 +24,60 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Implementation
     internal class MassTransitDiagnosticListener : ListenerHandler
     {
         private readonly ActivitySourceAdapter activitySource;
+        private readonly MassTransitInstrumentationOptions options;
 
-        public MassTransitDiagnosticListener(string name, ActivitySourceAdapter activitySource)
-            : base(name)
+        public MassTransitDiagnosticListener(ActivitySourceAdapter activitySource, MassTransitInstrumentationOptions options)
+            : base("MassTransit")
         {
             this.activitySource = activitySource;
+            this.options = options;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
         {
+            if (!this.options.TracedOperations.Contains(activity.OperationName))
+            {
+                return;
+            }
+
             this.activitySource.Start(activity);
             if (activity.IsAllDataRequested)
             {
-                var tags = activity.Tags.ToDictionary(x => x.Key, x => x.Value);
-
-                switch (activity.OperationName)
-                {
-                    case "MassTransit.Transport.Send":
-                        activity.DisplayName = $"SEND {tags["peer.address"]}";
-                        break;
-                    case "MassTransit.Transport.Receive":
-                        activity.DisplayName = $"RECV {tags["peer.address"]}";
-                        break;
-                    case "MassTransit.Consumer.Consume":
-                        activity.DisplayName = $"CONSUME {tags["consumer-type"]}";
-                        break;
-                    case "MassTransit.Consumer.Handle":
-                        activity.DisplayName = $"HANDLE {tags["peer.address"]}";
-                        break;
-                }
+                activity.DisplayName = this.GetDisplayName(activity);
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            if (!this.options.TracedOperations.Contains(activity.OperationName))
+            {
+                return;
+            }
+
             this.activitySource.Stop(activity);
+        }
+
+        private string GetDisplayName(Activity activity)
+        {
+            switch (activity.OperationName)
+            {
+                case OperationName.Transport.Send:
+                    return DisplayNameHelper.GetSendOperationDisplayName(this.GetTag(activity.Tags, "peer.address"));
+                case OperationName.Transport.Receive:
+                    return DisplayNameHelper.GetReceiveOperationDisplayName(this.GetTag(activity.Tags, "peer.address"));
+                case OperationName.Consumer.Consume:
+                    return DisplayNameHelper.GetConsumeOperationDisplayName(this.GetTag(activity.Tags, "consumer-type"));
+                case OperationName.Consumer.Handle:
+                    return DisplayNameHelper.GetHandleOperationDisplayName(this.GetTag(activity.Tags, "peer.address"));
+                default:
+                    return activity.DisplayName;
+            }
+        }
+
+        private string GetTag(IEnumerable<KeyValuePair<string, string>> tags, string tagName)
+        {
+            var tag = tags.SingleOrDefault(kv => kv.Key == tagName);
+            return tag.Value;
         }
     }
 }

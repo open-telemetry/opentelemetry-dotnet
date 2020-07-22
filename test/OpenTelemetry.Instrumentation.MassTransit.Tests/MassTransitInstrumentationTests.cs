@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MassTransit.Testing;
 using Moq;
+using OpenTelemetry.Instrumentation.MassTransit.Implementation;
 using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
@@ -61,10 +62,10 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
 
             Assert.Equal(8, activityProcessor.Invocations.Count);
 
-            var sends = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Transport.Send");
-            var receives = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Transport.Receive");
-            var consumes = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Consumer.Consume");
-            var handles = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Consumer.Handle");
+            var sends = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, OperationName.Transport.Send);
+            var receives = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, OperationName.Transport.Receive);
+            var consumes = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, OperationName.Consumer.Consume);
+            var handles = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, OperationName.Consumer.Handle);
 
             foreach (var activity in sends)
             {
@@ -85,6 +86,45 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
             {
                 Assert.Equal("HANDLE TestMessage/OpenTelemetry.Instrumentation.MassTransit.Tests", activity.DisplayName);
             }
+        }
+
+        [Fact]
+        public async Task MassTransitInstrumentationTestOptions()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddMassTransitInstrumentation(
+                    opts =>
+                        opts.TracedOperations = new HashSet<string>(new[] { OperationName.Consumer.Consume }));
+            }))
+            {
+                var harness = new InMemoryTestHarness();
+                var consumerHarness = harness.Consumer<TestConsumer>();
+                var handlerHarness = harness.Handler<TestMessage>();
+                await harness.Start();
+                try
+                {
+                    await harness.InputQueueSendEndpoint.Send<TestMessage>(new
+                    {
+                        Text = "Hello, world!",
+                    });
+
+                    Assert.True(harness.Consumed.Select<TestMessage>().Any());
+                    Assert.True(consumerHarness.Consumed.Select<TestMessage>().Any());
+                    Assert.True(handlerHarness.Consumed.Select().Any());
+                }
+                finally
+                {
+                    await harness.Stop();
+                }
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count);
+
+            var consumes = this.GetActivitiesFromInvocationsByOperationName(activityProcessor.Invocations, "MassTransit.Consumer.Consume");
+            Assert.Equal(2, consumes.Count());
         }
 
         private IEnumerable<Activity> GetActivitiesFromInvocationsByOperationName(IEnumerable<IInvocation> invocations, string operationName)
