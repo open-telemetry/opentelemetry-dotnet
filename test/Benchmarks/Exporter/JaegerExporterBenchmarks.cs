@@ -35,17 +35,16 @@ namespace Benchmarks.Exporter
 #endif
     public class JaegerExporterBenchmarks
     {
-        private readonly byte[] Buffer = new byte[1024];
+        private readonly byte[] buffer = new byte[1024];
+        private UdpClient jaegerServer;
+        private JaegerUdpClient jaegerClient;
+        private Activity testActivity;
 
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
 
         [Params(10000)]
         public int NumberOfSpans { get; set; }
-
-        private UdpClient jaegerServer;
-        private JaegerUdpClient jaegerClient;
-        private Activity testActivity;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -64,17 +63,6 @@ namespace Benchmarks.Exporter
         {
             this.jaegerServer.Dispose();
             this.jaegerClient.Dispose();
-        }
-
-        private void ReceivedData(object state)
-        {
-            var buffer = new byte[1024];
-
-            while (true)
-            {
-                if (this.jaegerServer.Client.Receive(buffer) == 0)
-                    return;
-            }
         }
 
         [Benchmark]
@@ -101,8 +89,80 @@ namespace Benchmarks.Exporter
         {
             for (int i = 0; i < this.NumberOfSpans * this.NumberOfBatches; i++)
             {
-                await this.jaegerClient.SendAsync(this.Buffer).ConfigureAwait(false);
+                await this.jaegerClient.SendAsync(this.buffer).ConfigureAwait(false);
             }
+        }
+
+        private void ReceivedData(object state)
+        {
+            var buffer = new byte[1024];
+
+            while (true)
+            {
+                if (this.jaegerServer.Client.Receive(buffer) == 0)
+                {
+                    return;
+                }
+            }
+        }
+
+        private Activity CreateTestActivity()
+        {
+            var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            var endTimestamp = startTimestamp.AddSeconds(60);
+            var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+            var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
+            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
+            var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+            var attributes = new Dictionary<string, object>
+            {
+                { "stringKey", "value" },
+                { "longKey", 1L },
+                { "longKey2", 1 },
+                { "doubleKey", 1D },
+                { "doubleKey2", 1F },
+                { "boolKey", true },
+            };
+            var events = new List<ActivityEvent>
+            {
+                new ActivityEvent(
+                    "Event1",
+                    eventTimestamp,
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }),
+                new ActivityEvent(
+                    "Event2",
+                    eventTimestamp,
+                    new Dictionary<string, object>
+                    {
+                        { "key", "value" },
+                    }),
+            };
+
+            var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
+
+            var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
+
+            var tags = attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
+
+            var links = new[]
+            {
+                new ActivityLink(new ActivityContext(
+                    traceId,
+                    linkedSpanId,
+                    ActivityTraceFlags.Recorded)),
+            };
+
+            return activitySource.StartActivity(
+                "Name",
+                ActivityKind.Client,
+                parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
+                tags,
+                links,
+                startTime: startTimestamp);
         }
 
         private class BlackHoleTransport : TTransport
@@ -146,66 +206,6 @@ namespace Benchmarks.Exporter
             protected override void Dispose(bool disposing)
             {
             }
-        }
-
-        private Activity CreateTestActivity()
-        {
-            var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
-            var endTimestamp = startTimestamp.AddSeconds(60);
-            var eventTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
-
-            var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
-            var spanId = ActivitySpanId.CreateFromString("6a69db47429ea340".AsSpan());
-            var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
-            var attributes = new Dictionary<string, object>
-            {
-                { "stringKey", "value"},
-                { "longKey", 1L},
-                { "longKey2", 1 },
-                { "doubleKey", 1D},
-                { "doubleKey2", 1F},
-                { "boolKey", true},
-            };
-            var events = new List<ActivityEvent>
-            {
-                new ActivityEvent(
-                    "Event1",
-                    eventTimestamp,
-                    new Dictionary<string, object>
-                    {
-                        { "key", "value" },
-                    }
-                ),
-                new ActivityEvent(
-                    "Event2",
-                    eventTimestamp,
-                    new Dictionary<string, object>
-                    {
-                        { "key", "value" },
-                    }
-                ),
-            };
-
-            var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
-
-            var activitySource = new ActivitySource(nameof(CreateTestActivity));
-
-            var tags = attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
-
-            var links = new[] {
-                new ActivityLink(new ActivityContext(
-                    traceId,
-                    linkedSpanId,
-                    ActivityTraceFlags.Recorded)),
-            };
-
-            return activitySource.StartActivity(
-                "Name",
-                ActivityKind.Client,
-                parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
-                tags,
-                links,
-                startTime: startTimestamp);
         }
     }
 }
