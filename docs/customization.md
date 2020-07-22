@@ -43,13 +43,13 @@ class MySampler : ActivitySampler
 
 ### Tracing
 
-- Exporters should subclass `ActivityExporter` and implement `ExportAsync` and
+* Exporters should subclass `ActivityExporter` and implement `ExportAsync` and
   `ShutdownAsync` methods.
-- Depending on user's choice and load on the application `ExportAsync` may get
+* Depending on user's choice and load on the application `ExportAsync` may get
   called concurrently with zero or more activities.
-- Exporters should expect to receive only sampled-in ended activities.
-- Exporters must not throw.
-- Exporters should not modify activities they receive (the same activity may be
+* Exporters should expect to receive only sampled-in ended activities.
+* Exporters must not throw.
+* Exporters should not modify activities they receive (the same activity may be
   exported again by different exporter).
 
 It's a good practice to make exporter `IDisposable` and shut it down in
@@ -93,8 +93,8 @@ class MyExporter : ActivityExporter, IDisposable
 }
 ```
 
-- Users may configure the exporter similarly to other exporters.
-- You should also provide additional methods to simplify configuration
+* Users may configure the exporter similarly to other exporters.
+* You should also provide additional methods to simplify configuration
   similarly to `UseZipkinExporter` extension method.
 
 ```csharp
