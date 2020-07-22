@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcClientTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GrpcTests.client.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,18 +27,8 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    [Collection("GrpcInstrumentation")]
-    public class GrpcClientTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
     {
-        private GrpcFixture<GreeterService> fixture;
-
-        public GrpcClientTests(GrpcFixture<GreeterService> fixture)
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-
-            this.fixture = fixture;
-        }
-
         [Theory]
         [InlineData("http://localhost")]
         [InlineData("http://127.0.0.1")]

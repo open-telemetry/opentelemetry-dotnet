@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcAspNetCoreTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GrpcTests.server.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -29,12 +28,11 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    [Collection("GrpcInstrumentation")]
-    public class GrpcAspNetCoreTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
     {
         private GrpcFixture<GreeterService> fixture;
 
-        public GrpcAspNetCoreTests(GrpcFixture<GreeterService> fixture)
+        public GrpcTests(GrpcFixture<GreeterService> fixture)
         {
             this.fixture = fixture;
         }
