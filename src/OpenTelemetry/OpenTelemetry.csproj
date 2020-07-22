@@ -28,4 +28,8 @@
     <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Trace\Internal\" />
+  </ItemGroup>
+
 </Project>
