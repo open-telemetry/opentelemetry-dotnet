@@ -63,5 +63,6 @@ For full operation list please see: [OperationName](../OpenTelemetry.Instrumenta
 All operations are enabled by default.
 
 ## References
+
 * [OpenTelemetry Project](https://opentelemetry.io/)
 * [MassTransit Project](https://masstransit-project.com/)
