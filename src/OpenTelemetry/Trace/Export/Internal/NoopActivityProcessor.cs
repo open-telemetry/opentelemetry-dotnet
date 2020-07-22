@@ -18,7 +18,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace.Export.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
     {

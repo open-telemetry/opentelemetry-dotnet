@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 
 namespace Examples.Console
@@ -28,9 +28,9 @@ namespace Examples.Console
     {
         internal static object Run(ConsoleOptions options)
         {
-            // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
+            // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
-            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using var tracerProvider = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,

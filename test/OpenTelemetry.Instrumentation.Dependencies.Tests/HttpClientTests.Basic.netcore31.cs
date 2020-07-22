@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal.Test;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         [Fact]
         public void AddDependencyInstrumentation_BadArgs()
         {
-            OpenTelemetryBuilder builder = null;
+            TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddDependencyInstrumentation());
         }
 
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                         }
                     });
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                         (builder) => builder.AddHttpClientDependencyInstrumentation(o => o.TextFormat = mockTextFormat.Object)
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                    (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.TextFormat = textFormat.Object)
                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -234,7 +234,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                    (builder) =>
                    builder.AddHttpClientDependencyInstrumentation(
                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                         (builder) => builder.AddHttpClientDependencyInstrumentation()
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {

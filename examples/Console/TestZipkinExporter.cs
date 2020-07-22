@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {
@@ -25,7 +25,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Zipkin exporter.
-            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")

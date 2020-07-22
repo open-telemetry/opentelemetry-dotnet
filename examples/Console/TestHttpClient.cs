@@ -16,7 +16,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {
@@ -26,7 +26,7 @@ namespace Examples.Console
         {
             System.Console.WriteLine("Hello World!");
 
-            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddHttpClientDependencyInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")

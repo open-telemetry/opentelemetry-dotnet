@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetrySdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,89 +23,86 @@ using OpenTelemetry.Trace.Export;
 using OpenTelemetry.Trace.Export.Internal;
 using OpenTelemetry.Trace.Samplers;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
-    public class OpenTelemetrySdk : IDisposable
+    public class TracerProviderSdk : TracerProvider, IDisposable
     {
         private readonly List<object> instrumentations = new List<object>();
         private Resource resource;
         private ActivityProcessor activityProcessor;
         private ActivityListener listener;
 
-        static OpenTelemetrySdk()
+        static TracerProviderSdk()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
         }
 
-        private OpenTelemetrySdk()
+        private TracerProviderSdk()
         {
         }
 
         /// <summary>
         /// Enables OpenTelemetry.
         /// </summary>
-        /// <param name="configureOpenTelemetryBuilder">Function that configures OpenTelemetryBuilder.</param>
-        /// <returns><see cref="OpenTelemetrySdk"/> instance which can be disposed on application shutdown.</returns>
-        /// <remarks>
-        /// Basic implementation only. Most logic from TracerBuilder will be ported here.
-        /// </remarks>
-        public static OpenTelemetrySdk EnableOpenTelemetry(Action<OpenTelemetryBuilder> configureOpenTelemetryBuilder)
+        /// <param name="configureTracerProviderBuilder">Function that configures TracerProviderBuilder.</param>
+        /// <returns><see cref="TracerProviderSdk"/> instance which can be disposed on application shutdown.</returns>
+        public static TracerProviderSdk EnableTracerProvider(Action<TracerProviderBuilder> configureTracerProviderBuilder)
         {
-            var openTelemetryBuilder = new OpenTelemetryBuilder();
-            configureOpenTelemetryBuilder?.Invoke(openTelemetryBuilder);
+            var tracerProviderBuilder = new TracerProviderBuilder();
+            configureTracerProviderBuilder?.Invoke(tracerProviderBuilder);
 
-            var openTelemetrySDK = new OpenTelemetrySdk();
-            Sampler sampler = openTelemetryBuilder.Sampler ?? new AlwaysOnSampler();
+            var tracerProviderSdk = new TracerProviderSdk();
+            Sampler sampler = tracerProviderBuilder.Sampler ?? new AlwaysOnSampler();
 
             ActivityProcessor activityProcessor;
-            if (openTelemetryBuilder.ProcessingPipelines == null || !openTelemetryBuilder.ProcessingPipelines.Any())
+            if (tracerProviderBuilder.ProcessingPipelines == null || !tracerProviderBuilder.ProcessingPipelines.Any())
             {
                 // if there are no pipelines are configured, use noop processor
                 activityProcessor = new NoopActivityProcessor();
             }
-            else if (openTelemetryBuilder.ProcessingPipelines.Count == 1)
+            else if (tracerProviderBuilder.ProcessingPipelines.Count == 1)
             {
                 // if there is only one pipeline - use it's outer processor as a
                 // single processor on the tracerSdk.
-                var processorFactory = openTelemetryBuilder.ProcessingPipelines[0];
+                var processorFactory = tracerProviderBuilder.ProcessingPipelines[0];
                 activityProcessor = processorFactory.Build();
             }
             else
             {
                 // if there are more pipelines, use processor that will broadcast to all pipelines
-                var processors = new ActivityProcessor[openTelemetryBuilder.ProcessingPipelines.Count];
+                var processors = new ActivityProcessor[tracerProviderBuilder.ProcessingPipelines.Count];
 
-                for (int i = 0; i < openTelemetryBuilder.ProcessingPipelines.Count; i++)
+                for (int i = 0; i < tracerProviderBuilder.ProcessingPipelines.Count; i++)
                 {
-                    processors[i] = openTelemetryBuilder.ProcessingPipelines[i].Build();
+                    processors[i] = tracerProviderBuilder.ProcessingPipelines[i].Build();
                 }
 
                 activityProcessor = new BroadcastActivityProcessor(processors);
             }
 
-            openTelemetrySDK.resource = openTelemetryBuilder.Resource;
+            tracerProviderSdk.resource = tracerProviderBuilder.Resource;
 
-            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor, openTelemetrySDK.resource);
+            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor, tracerProviderSdk.resource);
 
-            if (openTelemetryBuilder.InstrumentationFactories != null)
+            if (tracerProviderBuilder.InstrumentationFactories != null)
             {
-                foreach (var instrumentation in openTelemetryBuilder.InstrumentationFactories)
+                foreach (var instrumentation in tracerProviderBuilder.InstrumentationFactories)
                 {
-                    openTelemetrySDK.instrumentations.Add(instrumentation.Factory(activitySource));
+                    tracerProviderSdk.instrumentations.Add(instrumentation.Factory(activitySource));
                 }
             }
 
             // This is what subscribes to Activities.
             // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
-            openTelemetrySDK.listener = new ActivityListener
+            tracerProviderSdk.listener = new ActivityListener
             {
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.SetResource(openTelemetrySDK.resource);
+                        activity.SetResource(tracerProviderSdk.resource);
                     }
 
                     activityProcessor.OnStart(activity);
@@ -116,7 +113,7 @@ namespace OpenTelemetry.Trace.Configuration
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not
-                ShouldListenTo = (activitySource) => openTelemetryBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
+                ShouldListenTo = (activitySource) => tracerProviderBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
                 // The following parameter is not used now.
                 GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
@@ -125,9 +122,9 @@ namespace OpenTelemetry.Trace.Configuration
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
 
-            ActivitySource.AddActivityListener(openTelemetrySDK.listener);
-            openTelemetrySDK.activityProcessor = activityProcessor;
-            return openTelemetrySDK;
+            ActivitySource.AddActivityListener(tracerProviderSdk.listener);
+            tracerProviderSdk.activityProcessor = activityProcessor;
+            return tracerProviderSdk;
         }
 
         public void Dispose()

@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of asp.net core request instrumentation.
@@ -27,11 +27,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// <summary>
         /// Enables the incoming requests automatic data collection for Asp.Net Core.
         /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddRequestInstrumentation(
-            this OpenTelemetryBuilder builder,
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddRequestInstrumentation(
+            this TracerProviderBuilder builder,
             Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
         {
             if (builder == null)

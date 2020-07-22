@@ -16,7 +16,7 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Test
@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetStatus()
         {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                                                    .AddActivitySource(ActivitySourceName));
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetStatusWithDescription()
         {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                                                    .AddActivitySource(ActivitySourceName));
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void SetCancelledStatus()
         {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                                                    .AddActivitySource(ActivitySourceName));
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void GetStatusWithNoStatusInActivity()
         {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                                                    .AddActivitySource(ActivitySourceName));
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "Activity does not support UpdateTag now. Enable once .NET Activity support SetTag method.")]
         public void LastSetStatusWins()
         {
-            using var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            using var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                                                    .AddActivitySource(ActivitySourceName));
 
             using var source = new ActivitySource(ActivitySourceName);

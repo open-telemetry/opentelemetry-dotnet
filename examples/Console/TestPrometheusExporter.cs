@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Metrics.Configuration;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 
@@ -96,7 +95,7 @@ namespace Examples.Console
                 System.Console.WriteLine("Running and emitting metrics. Remaining time:" + (int)remaining + " seconds");
             }
 
-            // Stopping 
+            // Stopping
             metricsHttpServer.Stop();
             System.Console.WriteLine("Metrics server shutdown.");
             System.Console.WriteLine("Press Enter key to exit.");

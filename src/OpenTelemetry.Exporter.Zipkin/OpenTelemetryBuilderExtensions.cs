@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Exporter.Zipkin;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of Zipkin exporter.
@@ -27,11 +27,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// <summary>
         /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> builder to use.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseZipkinExporter(this OpenTelemetryBuilder builder, Action<ZipkinExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder UseZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {

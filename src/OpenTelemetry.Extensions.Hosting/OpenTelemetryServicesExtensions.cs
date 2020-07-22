@@ -18,7 +18,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -42,11 +42,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">The <see cref="OpenTelemetryBuilder"/> configuration delegate.</param>
+        /// <param name="configure">The <see cref="TracerProviderBuilder"/> configuration delegate.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<OpenTelemetryBuilder> configure)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(() => OpenTelemetrySdk.EnableOpenTelemetry(configure));
+            services.AddOpenTelemetry(() => TracerProviderSdk.EnableTracerProvider(configure));
             return services;
         }
 
@@ -54,11 +54,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds OpenTelemetry services to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">The <see cref="OpenTelemetryBuilder"/> configuration delegate.</param>
+        /// <param name="configure">The <see cref="TracerProviderBuilder"/> configuration delegate.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, OpenTelemetryBuilder> configure)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(s => OpenTelemetrySdk.EnableOpenTelemetry(builder => configure(s, builder)));
+            services.AddOpenTelemetry(s => TracerProviderSdk.EnableTracerProvider(builder => configure(s, builder)));
             return services;
         }
 
@@ -68,7 +68,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="createSdk">A delegate that provides the factory to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<OpenTelemetrySdk> createSdk)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<TracerProviderSdk> createSdk)
         {
             if (services is null)
             {
@@ -99,7 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="createSdk">A delegate that provides the factory to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<IServiceProvider, OpenTelemetrySdk> createSdk)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<IServiceProvider, TracerProviderSdk> createSdk)
         {
             if (services is null)
             {

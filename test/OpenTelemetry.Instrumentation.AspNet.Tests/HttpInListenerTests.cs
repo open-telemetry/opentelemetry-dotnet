@@ -25,7 +25,6 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -139,7 +138,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using (openTelemetry = TracerProviderSdk.EnableTracerProvider(
             (builder) => builder.AddRequestInstrumentation(
                 (options) =>
                 {

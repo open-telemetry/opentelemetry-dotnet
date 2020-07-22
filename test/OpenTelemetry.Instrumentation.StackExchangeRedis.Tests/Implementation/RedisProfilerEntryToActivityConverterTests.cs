@@ -21,7 +21,6 @@ using System.Net;
 using System.Net.Sockets;
 using Moq;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 using Xunit;
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             this.connection = ConnectionMultiplexer.Connect(connectionOptions);
 
-            this.sdk = OpenTelemetrySdk.EnableOpenTelemetry(
+            this.sdk = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddRedisInstrumentation(this.connection));
         }
 

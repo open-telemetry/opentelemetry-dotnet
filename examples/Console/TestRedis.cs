@@ -18,8 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-
 using StackExchange.Redis;
 
 namespace Examples.Console
@@ -43,7 +41,7 @@ namespace Examples.Console
             var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
-            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 builder => builder
                     .UseZipkinExporter(o =>
                     {

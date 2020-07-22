@@ -19,7 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
                 // This method is invoked when host starts, and
                 // by requesting the OpenTelemetrySdk from DI
                 // it ensures all instrumentations gets started.
-                this.serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+                this.serviceProvider.GetRequiredService<TracerProviderSdk>();
             }
             catch (Exception ex)
             {

@@ -3,7 +3,7 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Examples.AspNet
 {
@@ -13,7 +13,7 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            this.openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddDependencyInstrumentation()
                 .AddRequestInstrumentation()
                 .UseJaegerExporter(c =>

@@ -16,9 +16,9 @@
 
 using System;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Trace.Configuration
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
@@ -31,8 +31,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder UseOtlpExporter(this OpenTelemetryBuilder builder, Action<OtlpExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder UseOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {

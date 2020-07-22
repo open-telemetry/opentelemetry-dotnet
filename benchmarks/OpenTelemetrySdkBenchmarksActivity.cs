@@ -17,7 +17,7 @@
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Tracing;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 namespace Benchmarks
 {
@@ -31,7 +31,7 @@ namespace Benchmarks
         public OpenTelemetrySdkBenchmarksActivity()
         {
             // Not configuring pipeline, which will result in default NoOpActivityProcessor.
-            var openTel = OpenTelemetrySdk.EnableOpenTelemetry(
+            var openTel = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddActivitySource("BenchMark")
                 );
         }

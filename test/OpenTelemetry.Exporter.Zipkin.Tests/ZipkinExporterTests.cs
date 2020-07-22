@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseZipkinExporter(
                                 o =>

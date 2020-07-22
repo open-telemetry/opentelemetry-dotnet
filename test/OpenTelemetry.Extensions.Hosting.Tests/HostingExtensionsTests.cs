@@ -18,7 +18,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting
@@ -74,8 +74,8 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var host = builder.Build();
 
-            var tracerFactoryBase1 = host.Services.GetRequiredService<OpenTelemetrySdk>();
-            var tracerFactoryBase2 = host.Services.GetRequiredService<OpenTelemetrySdk>();
+            var tracerFactoryBase1 = host.Services.GetRequiredService<TracerProviderSdk>();
+            var tracerFactoryBase2 = host.Services.GetRequiredService<TracerProviderSdk>();
 
             Assert.Same(tracerFactoryBase1, tracerFactoryBase2);
         }
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+            var tracerFactory = serviceProvider.GetRequiredService<TracerProviderSdk>();
             Assert.NotNull(tracerFactory);
 
             Assert.False(testInstrumentation.Disposed);

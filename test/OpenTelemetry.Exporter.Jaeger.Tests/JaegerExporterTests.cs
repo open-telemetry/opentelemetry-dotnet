@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseJaegerExporter(
                                 null, p => p.AddProcessor((next) => testActivityProcessor)));

@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Tests
@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void AddRequestInstrumentation_BadArgs()
         {
-            OpenTelemetryBuilder builder = null;
+            TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRequestInstrumentation());
         }
     }

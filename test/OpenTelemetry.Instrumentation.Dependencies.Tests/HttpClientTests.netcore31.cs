@@ -27,7 +27,6 @@ using Moq;
 using Newtonsoft.Json;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using Xunit;
 
@@ -56,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (serverLifeTime)
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                     (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))

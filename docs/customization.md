@@ -5,7 +5,7 @@
 You may configure sampler of your choice
 
 ```csharp
-OpenTelemetrySdk.EnableOpenTelemetry(b => b
+TracerProviderSdk.EnableTracerProvider(b => b
     .AddActivitySource(ActivitySourceName)
     .SetSampler(new ProbabilityActivitySampler(0.1))
     .SetResource(Resources.Resources.CreateServiceResource("my-service"))
@@ -98,7 +98,7 @@ class MyExporter : ActivityExporter, IDisposable
   similarly to `UseZipkinExporter` extension method.
 
 ```csharp
-OpenTelemetrySdk.EnableOpenTelemetry(b => b
+TracerProviderSdk.EnableTracerProvider(b => b
     .AddActivitySource(ActivitySourceName)
     .UseMyExporter();
 ```

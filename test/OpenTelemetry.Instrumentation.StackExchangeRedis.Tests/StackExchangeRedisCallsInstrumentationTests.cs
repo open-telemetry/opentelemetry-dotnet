@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using OpenTelemetry.Trace.Export;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using (TracerProviderSdk.EnableTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddRedisInstrumentation(connection);
