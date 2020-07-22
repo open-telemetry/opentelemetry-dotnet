@@ -27,6 +27,7 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
+    [Collection("GrpcInstrumentation")]
     public class GrpcClientTests : IClassFixture<GrpcFixture<GreeterService>>
     {
         private GrpcFixture<GreeterService> fixture;
