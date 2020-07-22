@@ -29,7 +29,7 @@ Update the `Program.cs` file with the following code:
 
 ```csharp
 using System.Diagnostics;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 
 class Program
 {
@@ -38,7 +38,7 @@ class Program
 
     static void Main()
     {
-        using var otel = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+        using var otel = TracerProviderSdk.EnableTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
             .UseConsoleExporter(options => options.DisplayAsJson = true));
 
