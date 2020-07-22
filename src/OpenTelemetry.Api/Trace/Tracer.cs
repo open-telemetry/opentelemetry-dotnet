@@ -25,11 +25,11 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Tracer to record distributed tracing information.
     /// </summary>
-    public class TracerNew
+    public class Tracer
     {
         internal readonly ActivitySource ActivitySource;
 
-        internal TracerNew(ActivitySource activitySource)
+        internal Tracer(ActivitySource activitySource)
         {
             this.ActivitySource = activitySource;
         }
@@ -37,11 +37,11 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the current span from the context.
         /// </summary>
-        public TelemetrySpanNew CurrentSpan
+        public TelemetrySpan CurrentSpan
         {
             get
             {
-                return new TelemetrySpanNew(Activity.Current);
+                return new TelemetrySpan(Activity.Current);
             }
         }
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">Kind.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpanNew StartSpan(string name, SpanKind kind = SpanKind.Internal)
+        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal)
         {
             // TODO: Open Question - should we have both StartSpan and StartActiveSpan?
             // Or should we call this method StartActiveSpan
@@ -62,17 +62,17 @@ namespace OpenTelemetry.Trace
             // Some discussions in Spec: https://github.com/open-telemetry/opentelemetry-specification/pull/485
             if (!this.ActivitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.ActivitySource.StartActivity(name, activityKind);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
-            return new TelemetrySpanNew(activity);
+            return new TelemetrySpan(activity);
         }
 
         /// <summary>
@@ -83,21 +83,21 @@ namespace OpenTelemetry.Trace
         /// <param name="parent">Parent for new span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpanNew StartSpan(string name, SpanKind kind, in SpanContextNew parent)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parent)
         {
             if (!this.ActivitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
             var activity = this.ActivitySource.StartActivity(name, activityKind, parent.ActivityContext);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
-            return new TelemetrySpanNew(activity);
+            return new TelemetrySpan(activity);
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpanNew StartSpan(string name, SpanKind kind, in TelemetrySpanNew parentSpan, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<LinkNew> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpan(name, kind, parentSpan.Context, attributes, links, startTime);
         }
@@ -127,11 +127,11 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpanNew StartSpan(string name, SpanKind kind, in SpanContextNew parentContext, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<LinkNew> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.ActivitySource.HasListeners())
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
             var activityKind = this.ConvertToActivityKind(kind);
@@ -149,10 +149,10 @@ namespace OpenTelemetry.Trace
             var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, attributes, activityLinks, startTime);
             if (activity == null)
             {
-                return TelemetrySpanNew.NoopInstance;
+                return TelemetrySpan.NoopInstance;
             }
 
-            return new TelemetrySpanNew(activity);
+            return new TelemetrySpan(activity);
         }
 
         /// <summary>
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Trace
         /// <param name="span">The span to be made current.</param>
         /// <returns>The current span.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpanNew WithSpan(TelemetrySpanNew span)
+        public TelemetrySpan WithSpan(TelemetrySpan span)
         {
             span.Activate();
             return span;

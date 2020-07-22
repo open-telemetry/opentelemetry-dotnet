@@ -72,7 +72,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TraceContextFormat());
 
-            var spanContextShim = new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
             var mockFormat = new Mock<IFormat<ITextMap>>();
             var mockCarrier = new Mock<ITextMap>();
 
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TraceContextFormat());
 
-            var spanContextShim = new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+            var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TraceContextFormat());
 
-            var spanContextShim = new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             var carrier = new TextMapCarrier();
 
-            var spanContextShim = new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             var format = new TraceContextFormat();
 

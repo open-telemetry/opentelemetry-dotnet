@@ -27,7 +27,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void CtorArgumentValidation()
         {
             Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContextNew(default, default, ActivityTraceFlags.None)));
+            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
         internal static SpanContextShim GetSpanContextShim()
         {
-            return new SpanContextShim(new SpanContextNew(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            return new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         }
     }
 }
