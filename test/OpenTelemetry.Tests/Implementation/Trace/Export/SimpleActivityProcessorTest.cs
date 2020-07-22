@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Export.Test
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
                         .SetExportingProcessor(e => new SimpleActivityProcessor(e)))
-                .SetSampler(new AlwaysOnActivitySampler()));
+                .SetSampler(new AlwaysOnSampler()));
             this.activitySource = new ActivitySource(ActivitySourceName);
         }
 
