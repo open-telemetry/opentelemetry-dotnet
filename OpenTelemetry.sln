@@ -59,7 +59,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests", "test\OpenTelemetry.Instrumentation.StackExchangeRedis.Tests\OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj", "{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Jaeger", "src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj", "{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}"
 EndProject
@@ -137,11 +137,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.1", "t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ZPages.Tests", "test\OpenTelemetry.Exporter.ZPages.Tests\OpenTelemetry.Exporter.ZPages.Tests.csproj", "{98F9556B-116F-49B5-9211-BB1D418446FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Samples.AspNet", "samples\AspNet\OpenTelemetry.Samples.AspNet.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.AspNet", "examples\AspNet\Examples.AspNet.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Samples.Console", "samples\Console\OpenTelemetry.Samples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Samples.AspNetCore", "samples\AspNetCore\OpenTelemetry.Samples.AspNetCore.csproj", "{0935622B-9377-4056-8343-AE6ECDC274CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "examples\AspNetCore\Examples.AspNetCore.csproj", "{0935622B-9377-4056-8343-AE6ECDC274CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

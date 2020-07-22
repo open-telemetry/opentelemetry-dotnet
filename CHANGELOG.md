@@ -12,7 +12,8 @@ the release.
        `string`.
     2. `HttpListener()` can support "+" as: hostname which listens on all
        ports.
-    3. Modified samples/TestPrometheus.cs to safely use the new implementation.
+    3. Modified `examples/Console/TestPrometheusExporter.cs` to safely use the
+       new implementation.
     4. Jaeger exporter implemented
 
 * Copy from
