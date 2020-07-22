@@ -24,15 +24,15 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<Trace.TelemetrySpanNew, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<Trace.TelemetrySpanNew, global::OpenTracing.IScope>();
 
-        private readonly Trace.Tracer tracer;
+        private readonly Trace.TracerNew tracer;
 
 #if DEBUG
         private int spanScopeTableCount;
 #endif
 
-        public ScopeManagerShim(Trace.Tracer tracer)
+        public ScopeManagerShim(Trace.TracerNew tracer)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
-            var scope = this.tracer.WithSpan(shim.Span, false);
+            var scope = this.tracer.WithSpan(shim.Span);
 
             var instrumentation = new ScopeInstrumentation(
                 shim.Span,
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             private readonly Action disposeAction;
 
-            public ScopeInstrumentation(TelemetrySpan span, Action disposeAction = null)
+            public ScopeInstrumentation(TelemetrySpanNew span, Action disposeAction = null)
             {
                 this.Span = new SpanShim(span);
                 this.disposeAction = disposeAction;
