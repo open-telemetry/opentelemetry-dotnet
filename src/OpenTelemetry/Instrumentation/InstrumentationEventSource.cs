@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation")]
-    public class InstrumentationEventSource : EventSource
+    internal class InstrumentationEventSource : EventSource
     {
         public static InstrumentationEventSource Log = new InstrumentationEventSource();
 

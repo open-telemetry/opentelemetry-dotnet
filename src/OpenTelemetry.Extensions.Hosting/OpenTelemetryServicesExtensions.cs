@@ -80,8 +80,15 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(createSdk));
             }
 
-            services.AddSingleton(s => createSdk());
-            AddOpenTelemetryInternal(services);
+            try
+            {
+                services.AddSingleton(s => createSdk());
+                AddOpenTelemetryInternal(services);
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
+            }
 
             return services;
         }
@@ -104,8 +111,15 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(createSdk));
             }
 
-            services.AddSingleton(s => createSdk(s));
-            AddOpenTelemetryInternal(services);
+            try
+            {
+                services.AddSingleton(s => createSdk(s));
+                AddOpenTelemetryInternal(services);
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
+            }
 
             return services;
         }

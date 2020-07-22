@@ -34,12 +34,19 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            // The sole purpose of this HostedService is to ensure
-            // all instrumentations are created and started.
-            // This method is invoked when host starts, and
-            // by requesting the OpenTelemetrySdk from DI
-            // it ensures all instrumentations gets started.
-            this.serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+            try
+            {
+                // The sole purpose of this HostedService is to ensure
+                // all instrumentations are created and started.
+                // This method is invoked when host starts, and
+                // by requesting the OpenTelemetrySdk from DI
+                // it ensures all instrumentations gets started.
+                this.serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedOpenTelemetrySDK(ex);
+            }
 
             return Task.CompletedTask;
         }
