@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var samplingParameters = new ActivitySamplingParameters(
+            var samplingParameters = new SamplingParameters(
                 parentContext,
                 activity.TraceId,
                 activity.DisplayName,

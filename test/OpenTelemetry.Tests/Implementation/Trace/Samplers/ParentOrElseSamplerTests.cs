@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             Assert.Equal(
                 new SamplingResult(false),
                 this.parentOrElseAlwaysOnSampler.ShouldSample(
-                    new ActivitySamplingParameters(
+                    new SamplingParameters(
                         parentContext: new ActivityContext(
                             ActivityTraceId.CreateRandom(),
                             ActivitySpanId.CreateRandom(),
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             Assert.Equal(
                 new SamplingResult(true),
                 this.parentOrElseAlwaysOffSampler.ShouldSample(
-                    new ActivitySamplingParameters(
+                    new SamplingParameters(
                         parentContext: new ActivityContext(
                             ActivityTraceId.CreateRandom(),
                             ActivitySpanId.CreateRandom(),
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             Assert.Equal(
                 new SamplingResult(false),
                 this.parentOrElseAlwaysOnSampler.ShouldSample(
-                    new ActivitySamplingParameters(
+                    new SamplingParameters(
                         parentContext: notSampledParent,
                         traceId: default,
                         name: "Span",
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
             Assert.Equal(
                 new SamplingResult(true),
                 this.parentOrElseAlwaysOffSampler.ShouldSample(
-                    new ActivitySamplingParameters(
+                    new SamplingParameters(
                         parentContext: notSampledParent,
                         traceId: default,
                         name: "Span",

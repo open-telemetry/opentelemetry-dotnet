@@ -166,7 +166,7 @@ namespace OpenTelemetry.Trace.Configuration
                 ? options.Parent.TraceId
                 : ActivityTraceId.CreateRandom();
 
-            var samplingParameters = new ActivitySamplingParameters(
+            var samplingParameters = new SamplingParameters(
                 options.Parent,
                 traceId,
                 options.Name,

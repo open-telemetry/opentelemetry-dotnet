@@ -99,11 +99,11 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             public SamplingResult DesiredSamplingResult { get; set; }
 
-            public ActivitySamplingParameters LatestSamplingParameters { get; private set; }
+            public SamplingParameters LatestSamplingParameters { get; private set; }
 
             public override string Description { get; } = nameof(TestSampler);
 
-            public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
                 this.LatestSamplingParameters = samplingParameters;
                 return this.DesiredSamplingResult;

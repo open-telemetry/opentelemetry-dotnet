@@ -31,10 +31,10 @@ namespace OpenTelemetry.Trace
         /// Checks whether activity needs to be created and tracked.
         /// </summary>
         /// <param name="samplingParameters">
-        /// The <see cref="ActivitySamplingParameters"/> used by the <see cref="Sampler"/>
+        /// The <see cref="SamplingParameters"/> used by the <see cref="Sampler"/>
         /// to decide if the <see cref="Activity"/> to be created is going to be sampled or not.
         /// </param>
         /// <returns>Sampling decision on whether activity needs to be sampled or not.</returns>
-        public abstract SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters);
+        public abstract SamplingResult ShouldSample(in SamplingParameters samplingParameters);
     }
 }

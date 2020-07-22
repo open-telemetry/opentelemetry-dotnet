@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                     });
             Assert.False(
-                    defaultProbability.ShouldSample(new ActivitySamplingParameters(
+                    defaultProbability.ShouldSample(new SamplingParameters(
                         default,
                         notSampledtraceId,
                         ActivityDisplayName,
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                     });
             Assert.True(
-                    defaultProbability.ShouldSample(new ActivitySamplingParameters(
+                    defaultProbability.ShouldSample(new SamplingParameters(
                         default,
                         sampledtraceId,
                         ActivityDisplayName,

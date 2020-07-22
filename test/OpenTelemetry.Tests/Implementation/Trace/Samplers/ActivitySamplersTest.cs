@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             Assert.True(
                     new AlwaysOnSampler()
-                        .ShouldSample(new ActivitySamplingParameters(
+                        .ShouldSample(new SamplingParameters(
                             parentContext,
                             this.traceId,
                             "Another name",
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
 
             Assert.False(
                     new AlwaysOffSampler()
-                        .ShouldSample(new ActivitySamplingParameters(
+                        .ShouldSample(new SamplingParameters(
                             parentContext,
                             this.traceId,
                             "Another name",
