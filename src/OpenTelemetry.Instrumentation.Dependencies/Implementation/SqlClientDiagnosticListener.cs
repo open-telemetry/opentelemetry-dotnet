@@ -76,7 +76,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                         var command = this.commandFetcher.Fetch(payload);
                         if (command == null)
                         {
-                            InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
+                            DependenciesInstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                             activity.Stop();
                             return;
                         }
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     {
                         if (activity == null)
                         {
-                            InstrumentationEventSource.Log.NullActivity(name);
+                            DependenciesInstrumentationEventSource.Log.NullActivity(name);
                             return;
                         }
 
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     {
                         if (activity == null)
                         {
-                            InstrumentationEventSource.Log.NullActivity(name);
+                            DependenciesInstrumentationEventSource.Log.NullActivity(name);
                             return;
                         }
 
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                 }
                                 else
                                 {
-                                    InstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
+                                    DependenciesInstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
                                 }
                             }
                         }

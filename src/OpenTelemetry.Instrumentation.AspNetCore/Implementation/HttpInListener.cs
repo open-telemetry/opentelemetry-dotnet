@@ -54,13 +54,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
+                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
                 return;
             }
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 
