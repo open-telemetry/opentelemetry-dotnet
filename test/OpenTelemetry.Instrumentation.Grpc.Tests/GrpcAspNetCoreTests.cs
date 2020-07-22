@@ -18,10 +18,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using Greet;
 using Grpc.Net.Client;
+using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
@@ -47,6 +50,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var client = new Greeter.GreeterClient(channel);
             var rs = client.SayHello(new HelloRequest());
 
+            WaitForProcessorInvocations(spanProcessor, 2);
+
             Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
@@ -57,6 +62,20 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Contains(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value, clientLoopbackAddresses);
             Assert.True(!string.IsNullOrEmpty(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
             Assert.Equal(Status.Ok, span.GetStatus());
+        }
+
+        private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
+        {
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            Assert.True(SpinWait.SpinUntil(
+                () =>
+                {
+                    Thread.Sleep(10);
+                    return spanProcessor.Invocations.Count >= invocationCount;
+                },
+                TimeSpan.FromSeconds(1)));
         }
     }
 }
