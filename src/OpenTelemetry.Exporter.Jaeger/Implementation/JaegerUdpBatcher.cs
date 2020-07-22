@@ -275,7 +275,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 return n;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 JaegerExporterEventSource.Log.FailedFlush(ex);
 
