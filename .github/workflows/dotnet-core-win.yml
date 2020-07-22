@@ -3,6 +3,7 @@ name: .NET Windows
 on:
   pull_request:
     branches: [ master ]
+    - '**.md'
 
 jobs:
   build-test:
