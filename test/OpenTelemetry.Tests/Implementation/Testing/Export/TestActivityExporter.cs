@@ -41,10 +41,8 @@ namespace OpenTelemetry.Testing.Export
         {
             // Added a sleep for zero milliseconds to respect cancellation time set by export timeout.
             Thread.Sleep(0);
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return default;
-            }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             this.onExport?.Invoke(data);
 

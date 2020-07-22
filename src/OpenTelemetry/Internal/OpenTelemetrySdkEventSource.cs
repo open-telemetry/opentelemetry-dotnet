@@ -225,6 +225,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(22, spansLeftUnprocessed);
         }
 
+        [Event(23, Message = "Timeout reached waiting on SpanExporter. '{0}' spans attempted.", Level = EventLevel.Warning)]
+        public void SpanExporterTimeout(int spansAttempted)
+        {
+            this.WriteEvent(23, spansAttempted);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.

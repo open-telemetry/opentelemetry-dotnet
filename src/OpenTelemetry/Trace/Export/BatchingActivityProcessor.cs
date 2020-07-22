@@ -122,6 +122,10 @@ namespace OpenTelemetry.Trace.Export
 
                     await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
                 }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(System.Timers.Timer.Elapsed), ex);
+                }
                 finally
                 {
                     if (lockTaken)
@@ -163,6 +167,10 @@ namespace OpenTelemetry.Trace.Export
                         try
                         {
                             await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
                         }
                         finally
                         {
@@ -252,7 +260,21 @@ namespace OpenTelemetry.Trace.Export
                     int exportedCount;
                     using (linkedCTS)
                     {
-                        exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
+                        try
+                        {
+                            exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException ocex)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                // User-supplied cancellation, bubble up the exception.
+                                throw ocex;
+                            }
+
+                            OpenTelemetrySdkEventSource.Log.SpanExporterTimeout(Math.Min(queueSize, this.maxExportBatchSize));
+                            break;
+                        }
                     }
 
                     if (exportedCount == 0)
@@ -274,7 +296,7 @@ namespace OpenTelemetry.Trace.Export
                     ));
 #pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.FlushAsyncInternal), ex);
             }
@@ -321,11 +343,6 @@ namespace OpenTelemetry.Trace.Export
                 }
 
                 return this.batch.Count;
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ExportBatchAsync), ex);
-                return 0;
             }
             finally
             {
