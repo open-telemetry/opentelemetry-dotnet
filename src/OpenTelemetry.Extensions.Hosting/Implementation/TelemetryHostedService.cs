@@ -41,7 +41,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
                 // This method is invoked when host starts, and
                 // by requesting the OpenTelemetrySdk from DI
                 // it ensures all instrumentations gets started.
-                this.serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+                this.serviceProvider.GetRequiredService<TracerProviderSdk>();
             }
             catch (Exception ex)
             {

@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilder.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,11 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Trace.Configuration
 {
     /// <summary>
-    /// Build OpenTelemetry pipeline.
-    /// Currently supports a single processing pipeline, and any number of activity source names
-    /// to subscribe to.
+    /// Build TracerProvider pipeline with Sampler, Processors and Exporters.
     /// </summary>
-    public class OpenTelemetryBuilder
+    public class TracerProviderBuilder
     {
-        internal OpenTelemetryBuilder()
+        internal TracerProviderBuilder()
         {
         }
 
@@ -44,8 +42,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// Sets processing and exporting pipeline.
         /// </summary>
         /// <param name="configure">Function that configures pipeline.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder AddProcessorPipeline(Action<ActivityProcessorPipelineBuilder> configure)
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder AddProcessorPipeline(Action<ActivityProcessorPipelineBuilder> configure)
         {
             if (configure == null)
             {
@@ -67,8 +65,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// Configures sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder SetSampler(Sampler sampler)
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder SetSampler(Sampler sampler)
         {
             this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
@@ -78,8 +76,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
         /// </summary>
         /// <param name="resource">Resource to be associate with all traces.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder SetResource(Resource resource)
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder SetResource(Resource resource)
         {
             this.Resource = resource ?? Resource.Empty;
             return this;
@@ -89,8 +87,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// Adds given activitysource name to the list of subscribed sources.
         /// </summary>
         /// <param name="activitySourceName">Activity source name.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder AddActivitySource(string activitySourceName)
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder AddActivitySource(string activitySourceName)
         {
             if (this.ActivitySourceNames == null)
             {
@@ -106,8 +104,8 @@ namespace OpenTelemetry.Trace.Configuration
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="OpenTelemetryBuilder"/> for chaining.</returns>
-        public OpenTelemetryBuilder AddInstrumentation<TInstrumentation>(
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder AddInstrumentation<TInstrumentation>(
             Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {

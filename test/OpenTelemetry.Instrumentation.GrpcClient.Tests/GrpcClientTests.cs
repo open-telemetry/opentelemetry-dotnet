@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder
                     .AddGrpcClientDependencyInstrumentation()
                     .SetResource(expectedResource)
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (TracerProviderSdk.EnableTracerProvider(
             (builder) => builder
                 .AddDependencyInstrumentation() // AddDependencyInstrumentation applies both gRPC client and HttpClient instrumentation
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))

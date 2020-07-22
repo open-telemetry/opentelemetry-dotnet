@@ -150,7 +150,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            var openTelemetrySdk = TracerProviderSdk.EnableTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseZipkinExporter(
                                 o =>

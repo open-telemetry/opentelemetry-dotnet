@@ -13,7 +13,7 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            this.openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 (builder) => builder.AddDependencyInstrumentation()
                 .AddRequestInstrumentation()
                 .UseJaegerExporter(c =>

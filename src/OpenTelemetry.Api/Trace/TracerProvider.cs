@@ -21,7 +21,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// TracerProvider is the entry point of the OTel API. It provides access to Tracers.
     /// </summary>
-    public class TracerProvider
+    public abstract class TracerProvider
     {
         /// <summary>
         /// Gets a tracer with given name and version.

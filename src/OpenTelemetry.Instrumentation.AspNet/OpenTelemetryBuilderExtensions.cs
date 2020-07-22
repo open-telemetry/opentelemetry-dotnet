@@ -27,11 +27,11 @@ namespace OpenTelemetry.Trace.Configuration
         /// <summary>
         /// Enables the incoming requests automatic data collection for Asp.Net.
         /// </summary>
-        /// <param name="builder"><see cref="OpenTelemetryBuilder"/> being configured.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="configureAspNetInstrumentationOptions">ASP.NET Request configuration options.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryBuilder"/> to chain the calls.</returns>
-        public static OpenTelemetryBuilder AddRequestInstrumentation(
-            this OpenTelemetryBuilder builder,
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddRequestInstrumentation(
+            this TracerProviderBuilder builder,
             Action<AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null)
         {
             if (builder == null)

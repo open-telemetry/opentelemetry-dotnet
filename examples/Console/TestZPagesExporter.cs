@@ -33,7 +33,7 @@ namespace Examples.Console
             // Start the server
             httpServer.Start();
 
-            using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
+            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
                 builder => builder
                     .AddActivitySource("zpages-test")
                     .UseZPagesExporter(
