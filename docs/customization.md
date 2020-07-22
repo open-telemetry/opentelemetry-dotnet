@@ -93,8 +93,8 @@ class MyExporter : ActivityExporter, IDisposable
 }
 ```
 
-- Users may configure the exporter similarly to other exporters.
-- You should also provide additional methods to simplify configuration
+* Users may configure the exporter similarly to other exporters.
+* You should also provide additional methods to simplify configuration
   similarly to `UseZipkinExporter` extension method.
 
 ```csharp
