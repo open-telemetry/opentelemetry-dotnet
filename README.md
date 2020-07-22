@@ -30,14 +30,15 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [OpenTelemetry.Instrumentation.AspNet](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
   * ASP.NET [:link:](https://docs.microsoft.com/aspnet/overview)
 * [OpenTelemetry.Instrumentation.AspNetCore](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-  * [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core)
+  * ASP.NET Core [:link:](https://docs.microsoft.com/en-us/aspnet/core)
 * [OpenTelemetry.Instrumentation.Dependencies](./src/OpenTelemetry.Instrumentation.Dependencies/README.md)
-  * [gRPC for .NET](https://github.com/grpc/grpc-dotnet)
-  * [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
-  * [System.Data.SqlClient](https://www.nuget.org/packages/System.Data.SqlClient)
-  * [System.Net.HttpWebRequest](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
+  * gRPC for .NET [:link:](https://github.com/grpc/grpc-dotnet)
+  * Microsoft.Data.SqlClient [:link:](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
+  * System.Data.SqlClient [:link:](https://www.nuget.org/packages/System.Data.SqlClient)
+  * System.Net.Http.HttpClient [:link](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
+  * System.Net.HttpWebRequest [:link:](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
 * [OpenTelemetry.Instrumentation.StackExchangeRedis](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
-  * [StackExchange.Redis](https://www.nuget.org/packages/StackExchange.Redis)
+  * StackExchange.Redis [:link:](https://www.nuget.org/packages/StackExchange.Redis)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
