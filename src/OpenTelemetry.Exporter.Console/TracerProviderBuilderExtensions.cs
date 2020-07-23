@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +15,20 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Exporter.Console;
 
 namespace OpenTelemetry.Trace
 {
-    /// <summary>
-    /// Extension methods to simplify registering a Jaeger exporter.
-    /// </summary>
-    public static class OpenTelemetryBuilderExtensions
+    public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Registers a ConsoleActivity exporter to a processing pipeline.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static TracerProviderBuilder UseConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,12 +37,12 @@ namespace OpenTelemetry.Trace
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var exporterOptions = new JaegerExporterOptions();
+                var exporterOptions = new ConsoleExporterOptions();
                 configure?.Invoke(exporterOptions);
 
-                var activityExporter = new JaegerExporter(exporterOptions);
+                var consoleExporter = new ConsoleExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(activityExporter);
+                pipeline.SetExporter(consoleExporter);
             });
         }
     }
