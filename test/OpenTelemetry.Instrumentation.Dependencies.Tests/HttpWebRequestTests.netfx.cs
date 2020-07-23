@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.SetResource(expectedResource);
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));

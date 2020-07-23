@@ -32,13 +32,13 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string ActivitySourceName = "defaultactivitysource";
 
         private TestActivityExporter activityExporter;
-        private TracerProviderSdk openTelemetry;
+        private TracerProvider openTelemetry;
         private ActivitySource activitySource;
 
         public SimpleActivityProcessorTest()
         {
             this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = TracerProviderSdk.EnableTracerProvider(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource(ActivitySourceName)
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsInExporter()
         {
             this.activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
-            this.openTelemetry = TracerProviderSdk.EnableTracerProvider(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource("cijo")
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             this.activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
-            this.openTelemetry = TracerProviderSdk.EnableTracerProvider(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource("cijo")
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)

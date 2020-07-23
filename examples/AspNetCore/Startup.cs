@@ -48,12 +48,17 @@ namespace Examples.AspNetCore
                 }));
             */
 
+            /*
             services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
                 .UseZipkinExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
                     o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                 }));
+            */
+
+            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+                .UseConsoleExporter());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

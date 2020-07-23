@@ -41,7 +41,7 @@ namespace Examples.Console
             var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
-            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
                 builder => builder
                     .UseZipkinExporter(o =>
                     {
