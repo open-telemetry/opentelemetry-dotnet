@@ -20,7 +20,7 @@ namespace OpenTelemetry.Trace
     /// Constants for semantic attribute names outlined by the OpenTelemetry specifications.
     /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/README.md"/>.
     /// </summary>
-    public static class SemanticConventions
+    internal static class SemanticConventions
     {
         // The set of constants matches the specification as of this commit.
         // https://github.com/open-telemetry/opentelemetry-specification/tree/709293fe132709705f0e0dd4252992e87a6ec899/specification/trace/semantic_conventions
