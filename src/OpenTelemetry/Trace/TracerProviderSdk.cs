@@ -17,20 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Export.Internal;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace
 {
-    public class TracerProviderSdk : TracerProvider, IDisposable
+    internal class TracerProviderSdk : TracerProvider, IDisposable
     {
-        private readonly List<object> instrumentations = new List<object>();
-        private Resource resource;
-        private ActivityProcessor activityProcessor;
-        private ActivityListener listener;
+        internal readonly List<object> Instrumentations = new List<object>();
+        internal Resource Resource;
+        internal ActivityProcessor ActivityProcessor;
+        internal ActivityListener ActivityListener;
 
         static TracerProviderSdk()
         {
@@ -38,98 +35,13 @@ namespace OpenTelemetry.Trace
             Activity.ForceDefaultIdFormat = true;
         }
 
-        private TracerProviderSdk()
+        internal TracerProviderSdk()
         {
         }
 
-        /// <summary>
-        /// Enables OpenTelemetry.
-        /// </summary>
-        /// <param name="configureTracerProviderBuilder">Function that configures TracerProviderBuilder.</param>
-        /// <returns><see cref="TracerProviderSdk"/> instance which can be disposed on application shutdown.</returns>
-        public static TracerProviderSdk EnableTracerProvider(Action<TracerProviderBuilder> configureTracerProviderBuilder)
+        public override void Dispose()
         {
-            var tracerProviderBuilder = new TracerProviderBuilder();
-            configureTracerProviderBuilder?.Invoke(tracerProviderBuilder);
-
-            var tracerProviderSdk = new TracerProviderSdk();
-            Sampler sampler = tracerProviderBuilder.Sampler ?? new AlwaysOnSampler();
-
-            ActivityProcessor activityProcessor;
-            if (tracerProviderBuilder.ProcessingPipelines == null || !tracerProviderBuilder.ProcessingPipelines.Any())
-            {
-                // if there are no pipelines are configured, use noop processor
-                activityProcessor = new NoopActivityProcessor();
-            }
-            else if (tracerProviderBuilder.ProcessingPipelines.Count == 1)
-            {
-                // if there is only one pipeline - use it's outer processor as a
-                // single processor on the tracerSdk.
-                var processorFactory = tracerProviderBuilder.ProcessingPipelines[0];
-                activityProcessor = processorFactory.Build();
-            }
-            else
-            {
-                // if there are more pipelines, use processor that will broadcast to all pipelines
-                var processors = new ActivityProcessor[tracerProviderBuilder.ProcessingPipelines.Count];
-
-                for (int i = 0; i < tracerProviderBuilder.ProcessingPipelines.Count; i++)
-                {
-                    processors[i] = tracerProviderBuilder.ProcessingPipelines[i].Build();
-                }
-
-                activityProcessor = new BroadcastActivityProcessor(processors);
-            }
-
-            tracerProviderSdk.resource = tracerProviderBuilder.Resource;
-
-            var activitySource = new ActivitySourceAdapter(sampler, activityProcessor, tracerProviderSdk.resource);
-
-            if (tracerProviderBuilder.InstrumentationFactories != null)
-            {
-                foreach (var instrumentation in tracerProviderBuilder.InstrumentationFactories)
-                {
-                    tracerProviderSdk.instrumentations.Add(instrumentation.Factory(activitySource));
-                }
-            }
-
-            // This is what subscribes to Activities.
-            // Think of this as the replacement for DiagnosticListener.AllListeners.Subscribe(onNext => diagnosticListener.Subscribe(..));
-            tracerProviderSdk.listener = new ActivityListener
-            {
-                // Callback when Activity is started.
-                ActivityStarted = (activity) =>
-                {
-                    if (activity.IsAllDataRequested)
-                    {
-                        activity.SetResource(tracerProviderSdk.resource);
-                    }
-
-                    activityProcessor.OnStart(activity);
-                },
-
-                // Callback when Activity is stopped.
-                ActivityStopped = activityProcessor.OnEnd,
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not
-                ShouldListenTo = (activitySource) => tracerProviderBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
-
-                // The following parameter is not used now.
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-
-                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
-            };
-
-            ActivitySource.AddActivityListener(tracerProviderSdk.listener);
-            tracerProviderSdk.activityProcessor = activityProcessor;
-            return tracerProviderSdk;
-        }
-
-        public void Dispose()
-        {
-            foreach (var item in this.instrumentations)
+            foreach (var item in this.Instrumentations)
             {
                 if (item is IDisposable disposable)
                 {
@@ -137,9 +49,9 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            this.instrumentations.Clear();
+            this.Instrumentations.Clear();
 
-            if (this.activityProcessor is IDisposable disposableProcessor)
+            if (this.ActivityProcessor is IDisposable disposableProcessor)
             {
                 disposableProcessor.Dispose();
             }
@@ -147,41 +59,7 @@ namespace OpenTelemetry.Trace
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
-            this.listener.Dispose();
-        }
-
-        internal static ActivityDataRequest ComputeActivityDataRequest(
-            in ActivityCreationOptions<ActivityContext> options,
-            Sampler sampler)
-        {
-            var isRootSpan = options.Parent.TraceId == default;
-
-            // This is not going to be the final traceId of the Activity (if one is created), however, it is
-            // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
-            // the Sampler always receives the actual traceId of a root span/activity.
-            ActivityTraceId traceId = !isRootSpan
-                ? options.Parent.TraceId
-                : ActivityTraceId.CreateRandom();
-
-            var samplingParameters = new SamplingParameters(
-                options.Parent,
-                traceId,
-                options.Name,
-                options.Kind,
-                options.Tags,
-                options.Links);
-
-            var shouldSample = sampler.ShouldSample(samplingParameters);
-            if (shouldSample.IsSampled)
-            {
-                return ActivityDataRequest.AllDataAndRecorded;
-            }
-
-            // If it is the root span select PropagationData so the trace ID is preserved
-            // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-            return isRootSpan
-                ? ActivityDataRequest.PropagationData
-                : ActivityDataRequest.None;
+            this.ActivityListener.Dispose();
         }
     }
 }

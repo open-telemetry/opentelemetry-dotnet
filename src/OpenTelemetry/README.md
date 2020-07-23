@@ -59,12 +59,12 @@ console application, and have the traces displayed in the console.
    the source named "companyname.product.library".
 
     ```csharp
-    using var openTelemetry = TracerProviderSdk.EnableTracerProvider(builder => builder
+    using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(builder => builder
                     .AddActivitySource("companyname.product.library")
                     .UseConsoleExporter())
     ```
 
-    The above requires import of namespace `OpenTelemetry.Trace.Configuration`.
+    The above requires import of namespace `OpenTelemetry.Trace`.
 
 3. Generate some activities in the application as shown below.
 
@@ -95,7 +95,7 @@ The following sample shows how to change it to
 with sampling probability of 25%.
 
 ```csharp
-using var openTelemetry = TracerProviderSdk.EnableTracerProvider(builder => builder
+using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(builder => builder
                 .AddActivitySource("companyname.product.library")
                 .SetSampler(new ProbabilitySampler(.25))
                 .UseConsoleExporter());

@@ -28,7 +28,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter.
-            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
@@ -38,7 +38,7 @@ namespace Examples.Console
 
             // Following shows how to use the OpenTracing shim
 
-            var tracer = new TracerShim(TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
+            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
 
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {

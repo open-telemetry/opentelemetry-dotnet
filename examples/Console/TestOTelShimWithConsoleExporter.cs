@@ -25,7 +25,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
-            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
@@ -33,7 +33,7 @@ namespace Examples.Console
             // The above line is required only in applications
             // which decide to use Open Telemetry.
 
-            var tracer = TracerProvider.GetTracer("MyCompany.MyProduct.MyWebServer");
+            var tracer = TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer");
             var span = tracer.StartSpan("parent span");
             span.SetAttribute("my", "value");
             span.UpdateName("parent span new name");

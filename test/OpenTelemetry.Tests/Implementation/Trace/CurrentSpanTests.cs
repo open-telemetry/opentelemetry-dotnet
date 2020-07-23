@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            this.tracer = TracerProvider.GetTracer(null);
+            this.tracer = TracerProvider.Default.GetTracer(null);
         }
 
         [Fact]
