@@ -102,6 +102,33 @@ using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(builder => build
 ```
 
   The above requires import of the namespace `OpenTelemetry.Trace.Samplers`.
+  
+  You can also implement a custom sampler by subclassing `Sampler`
+
+```csharp
+class MySampler : Sampler
+{
+    public override string Description { get; } = "mysampler";
+
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+    {
+        bool sampledIn;
+        var parentContext = samplingParameters.ParentContext;
+        if (parentContext != null && parentContext.IsValid())
+        {
+            sampledIn = (
+                parentContext.TraceFlags & ActivityTraceFlags.Recorded
+            ) != 0;
+        }
+        else
+        {
+            sampledIn = Stopwatch.GetTimestamp() % 2 == 0;
+        }
+
+        return new SamplingResult(sampledIn);
+    }
+}
+```
 
 ### Customize Resource
 
