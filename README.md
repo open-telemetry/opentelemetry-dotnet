@@ -76,9 +76,6 @@ Approvers
 * [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
-
-Triagers:
-
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community
