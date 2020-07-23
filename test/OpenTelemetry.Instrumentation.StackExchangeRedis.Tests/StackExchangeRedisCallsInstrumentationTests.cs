@@ -56,13 +56,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (TracerProviderSdk.EnableTracerProvider(b =>
+            using (OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddRedisInstrumentation(connection);
             }))
             {
-                IDatabase db = connection.GetDatabase();
+                var db = connection.GetDatabase();
 
                 bool set = db.StringSet("key1", value, TimeSpan.FromSeconds(60));
 

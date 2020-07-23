@@ -25,7 +25,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Zipkin exporter.
-            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
                 builder => builder
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")

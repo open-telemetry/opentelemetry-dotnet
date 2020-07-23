@@ -19,7 +19,7 @@ dotnet add package OpenTelemetry.Instrumentation.StackExchangeRedis
 using var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
 // Pass the connection to AddRedisInstrumentation.
-using var openTelemetry = TracerProviderSdk.EnableTracerProvider(b => b
+using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
     .AddRedisInstrumentation(connection)
     .UseZipkinExporter()
     .SetResource(Resources.CreateServiceResource("my-service"));

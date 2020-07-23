@@ -38,7 +38,7 @@ class Program
 
     static void Main()
     {
-        using var otel = TracerProviderSdk.EnableTracerProvider(b => b
+        using var otel = OpenTelemetrySdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
             .UseConsoleExporter(options => options.DisplayAsJson = true));
 
