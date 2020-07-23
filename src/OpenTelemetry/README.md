@@ -140,21 +140,9 @@ class MySampler : ActivitySampler
 {
     public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
     {
-        var shouldSample = false;
-        var parentContext = samplingParameters.ParentContext;
+        var shouldSample = true;
 
-        if (parentContext != null && parentContext.IsValid())
-        {
-            shouldSample = (
-                parentContext.TraceFlags & ActivityTraceFlags.Recorded
-            ) != 0;
-        }
-        else
-        {
-            shouldSample = Stopwatch.GetTimestamp() % 2 == 0;
-        }
-
-        return new Decision(shouldSample);
+        return new SamplingResult(shouldSample);
     }
 }
 ```
