@@ -138,7 +138,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = Trace.OpenTelemetrySdk.CreateTracerProvider(
+            using (openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
             (builder) => builder.AddRequestInstrumentation(
                 (options) =>
                 {
