@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
             using (OpenTelemetrySdk.CreateTracerProvider(
                 (builder) => builder
-                    .AddGrpcClientDependencyInstrumentation()
+                    .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -109,7 +109,8 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
             using (OpenTelemetrySdk.CreateTracerProvider(
             (builder) => builder
-                .AddDependencyInstrumentation() // AddDependencyInstrumentation applies both gRPC client and HttpClient instrumentation
+                .AddHttpClientInstrumentation()
+                .AddGrpcClientInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var channel = GrpcChannel.ForAddress(uri);

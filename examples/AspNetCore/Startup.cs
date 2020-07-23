@@ -39,7 +39,9 @@ namespace Examples.AspNetCore
             // Switch between Zipkin/Jaeger by commenting out one of the following.
 
             /*
-            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetry((builder) => builder
+                .AddAspNetCoreInstrumentation()
+                .AddHttpInstrumentation()
                 .UseJaegerActivityExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
@@ -49,7 +51,9 @@ namespace Examples.AspNetCore
             */
 
             /*
-            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetry((builder) => builder
+                .AddAspNetCoreInstrumentation()
+                .AddHttpInstrumentation()
                 .UseZipkinExporter(o =>
                 {
                     o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
@@ -57,7 +61,9 @@ namespace Examples.AspNetCore
                 }));
             */
 
-            services.AddOpenTelemetry((builder) => builder.AddRequestInstrumentation().AddDependencyInstrumentation()
+            services.AddOpenTelemetry((builder) => builder
+                .AddAspNetCoreInstrumentation()
+                .AddHttpInstrumentation()
                 .UseConsoleExporter());
         }
 
