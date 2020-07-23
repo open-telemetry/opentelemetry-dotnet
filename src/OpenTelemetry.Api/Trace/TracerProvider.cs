@@ -25,16 +25,16 @@ namespace OpenTelemetry.Trace
     public class TracerProvider : IDisposable
     {
         /// <summary>
-        /// Gets the default Tracer.
-        /// </summary>
-        public static TracerProvider Default = new TracerProvider();
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="TracerProvider"/> class.
         /// </summary>
         protected TracerProvider()
         {
         }
+
+        /// <summary>
+        /// Gets the default Tracer.
+        /// </summary>
+        public static TracerProvider Default { get; } = new TracerProvider();
 
         /// <inheritdoc/>
         public virtual void Dispose()
