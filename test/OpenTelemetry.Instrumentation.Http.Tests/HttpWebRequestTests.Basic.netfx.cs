@@ -23,7 +23,6 @@ using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests

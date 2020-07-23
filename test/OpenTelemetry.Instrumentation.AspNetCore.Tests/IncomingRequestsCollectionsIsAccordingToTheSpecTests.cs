@@ -18,17 +18,13 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-
 using Moq;
-
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
 #else

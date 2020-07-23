@@ -25,7 +25,6 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Tests

@@ -23,7 +23,6 @@ using System.Threading.Tasks;
 
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 using Xunit;
 

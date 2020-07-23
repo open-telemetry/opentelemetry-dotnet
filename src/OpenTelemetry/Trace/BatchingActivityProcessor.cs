@@ -22,7 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
