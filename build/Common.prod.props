@@ -27,7 +27,8 @@
     <PropertyGroup>
       <RevisionNumber>$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
       <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>
-      <FilveVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</FilveVersion>
+      <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</Version>
+      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</FileVersion>
     </PropertyGroup>
   </Target>
 
