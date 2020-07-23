@@ -130,7 +130,7 @@ OpenTelemetrySdk.CreateTracerProvider(b => b
 
 ### Building your own Sampler
 
-* Samplers should inherit from `ActivitySampler`, and implement `ShouldSample`
+* Samplers should inherit from `Sampler`, and implement `ShouldSample`
   method.
 * `ShouldSample` should not block or take long time, since it will be called on
   critical code path.
