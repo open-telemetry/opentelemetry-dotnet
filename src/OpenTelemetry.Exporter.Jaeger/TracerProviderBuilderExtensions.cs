@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +15,23 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Exporter.Jaeger;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of Zipkin exporter.
+    /// Extension methods to simplify registering a Jaeger exporter.
     /// </summary>
-    public static class OpenTelemetryBuilderExtensions
+    public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static TracerProviderBuilder UseJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
         {
             if (builder == null)
             {
@@ -40,12 +40,12 @@ namespace OpenTelemetry.Trace
 
             return builder.AddProcessorPipeline(pipeline =>
             {
-                var options = new ZipkinExporterOptions();
-                configure?.Invoke(options);
+                var exporterOptions = new JaegerExporterOptions();
+                configure?.Invoke(exporterOptions);
 
-                var exporter = new ZipkinExporter(options);
+                var activityExporter = new JaegerExporter(exporterOptions);
                 processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(exporter);
+                pipeline.SetExporter(activityExporter);
             });
         }
     }

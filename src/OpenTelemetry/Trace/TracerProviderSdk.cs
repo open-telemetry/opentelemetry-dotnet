@@ -24,10 +24,10 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderSdk : TracerProvider, IDisposable
     {
-        internal readonly List<object> Instrumentations = new List<object>();
-        internal Resource Resource;
-        internal ActivityProcessor ActivityProcessor;
-        internal ActivityListener ActivityListener;
+        public readonly List<object> Instrumentations = new List<object>();
+        public Resource Resource;
+        public ActivityProcessor ActivityProcessor;
+        public ActivityListener ActivityListener;
 
         static TracerProviderSdk()
         {
