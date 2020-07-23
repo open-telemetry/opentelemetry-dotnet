@@ -16,12 +16,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Exporter.Zipkin;
-using System.Linq;
+using OpenTelemetry.Internal.Test;
 
 namespace Benchmarks.Exporter
 {
@@ -31,14 +31,13 @@ namespace Benchmarks.Exporter
 #endif
     public class ZipkinExporterBenchmarks
     {
-        [Params(2000, 5000)]
-        public int NumberOfActivities { get; set; }
-
         private Activity testActivity;
-
         private IDisposable server;
         private string serverHost;
         private int serverPort;
+
+        [Params(2000, 5000)]
+        public int NumberOfActivities { get; set; }
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -117,7 +116,7 @@ namespace Benchmarks.Exporter
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var activitySource = new ActivitySource(nameof(CreateTestActivity));
+            var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
 
             var tags = attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()));
             var links = new[]
