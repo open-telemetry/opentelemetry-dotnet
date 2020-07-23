@@ -60,12 +60,6 @@ namespace OpenTelemetry.Exporter.Jaeger
             await this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
-        }
-
         internal void ApplyLibraryResource(Resource libraryResource)
         {
             if (libraryResource is null)
@@ -118,7 +112,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!this.disposedValue)
             {
