@@ -22,17 +22,18 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class Sampler
     {
+        protected string description;
+
         /// <summary>
         /// Gets the sampler description.
         /// </summary>
-        public abstract string Description
+        public virtual string Description
         {
             get
             {
                 this.description = this.description ?? this.GetType().Name;
                 return this.description;
             }
-            set { this.description = value; }
         }
 
         /// <summary>
@@ -44,7 +45,5 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <returns>Sampling decision on whether activity needs to be sampled or not.</returns>
         public abstract SamplingResult ShouldSample(in SamplingParameters samplingParameters);
-
-        private string description;
     }
 }
