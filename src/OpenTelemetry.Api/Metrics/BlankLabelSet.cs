@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Blank or no-op labelset.
+    /// Blank or No-op labelset.
     /// </summary>
     public sealed class BlankLabelSet : LabelSet
     {
