@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the sampler description.
+        /// Gets or sets the sampler description.
         /// </summary>
         public string Description { get; protected set; }
 
