@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivitySamplersTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SamplersTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,14 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Samplers.Test
 {
-    public class ActivitySamplersTest
+    public class SamplersTest
     {
         private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
         private readonly ActivityTraceId traceId;
         private readonly ActivitySpanId spanId;
         private readonly ActivitySpanId parentSpanId;
 
-        public ActivitySamplersTest()
+        public SamplersTest()
         {
             this.traceId = ActivityTraceId.CreateRandom();
             this.spanId = ActivitySpanId.CreateRandom();

@@ -1,4 +1,4 @@
-﻿// <copyright file="ProbabilityActivitySamplerTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ProbabilitySamplerTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Samplers.Test
 {
-    public class ProbabilityActivitySamplerTest
+    public class ProbabilitySamplerTest
     {
         private const string ActivityDisplayName = "MyActivityName";
         private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         {
             Sampler defaultProbability = new ProbabilitySampler(0.0001);
 
-            // This traceId will not be sampled by the ProbabilityActivitySampler because the first 8 bytes as long
+            // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
                 ActivityTraceId.CreateFromBytes(
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
                         null,
                         null)).IsSampled);
 
-            // This traceId will be sampled by the ProbabilityActivitySampler because the first 8 bytes as long
+            // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
                 ActivityTraceId.CreateFromBytes(
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Trace.Samplers.Test
         [Fact]
         public void ProbabilitySampler_GetDescription()
         {
-            var expectedDescription = "ProbabilityActivitySampler{0.500000}";
+            var expectedDescription = "ProbabilitySampler{0.500000}";
             Assert.Equal(expectedDescription, new ProbabilitySampler(0.5).Description);
         }
     }
