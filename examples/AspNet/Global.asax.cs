@@ -14,8 +14,9 @@ namespace Examples.AspNet
         protected void Application_Start()
         {
             this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
-                (builder) => builder.AddDependencyInstrumentation()
-                .AddRequestInstrumentation()
+                 (builder) => builder
+                 .AddHttpInstrumentation()
+                 .AddAspNetInstrumentation()
                 .UseJaegerExporter(c =>
                 {
                     c.AgentHost = "localhost";

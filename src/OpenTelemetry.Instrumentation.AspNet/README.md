@@ -46,8 +46,8 @@ Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
                         c.AgentHost = "localhost";
                         c.AgentPort = 6831;
                     })
-                    .AddRequestInstrumentation()
-                    .AddDependencyInstrumentation();
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpInstrumentation();
             });
         }
         protected void Application_End()

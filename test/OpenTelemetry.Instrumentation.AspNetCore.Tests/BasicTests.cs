@@ -51,10 +51,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public void AddRequestInstrumentation_BadArgs()
+        public void AddAspNetCoreInstrumentation_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddRequestInstrumentation());
+            Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider(
-                    (builder) => builder.AddRequestInstrumentation()
+                    (builder) => builder.AddAspNetCoreInstrumentation()
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider((builder) => builder.AddRequestInstrumentation()
+                        this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider((builder) => builder.AddAspNetCoreInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     })))
             {
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider(
-                            (builder) => builder.AddRequestInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                            (builder) => builder.AddAspNetCoreInstrumentation((opt) => opt.TextFormat = textFormat.Object)
                         .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
                     })))
             {
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider(
                     (builder) =>
-                    builder.AddRequestInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    builder.AddAspNetCoreInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object)));
             }
 

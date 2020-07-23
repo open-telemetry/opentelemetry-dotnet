@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net452;net461</TargetFrameworks>
+    <Description>SqlClient instrumentation for OpenTelemetry .NET</Description>
+    <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+</Project>

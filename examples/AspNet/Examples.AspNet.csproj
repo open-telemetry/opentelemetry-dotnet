@@ -91,13 +91,13 @@
       <Project>{b9eeacdd-cafa-4b75-a18d-898e7de21b17}</Project>
       <Name>OpenTelemetry.Instrumentation.AspNet</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Dependencies\OpenTelemetry.Instrumentation.Dependencies.csproj">
-      <Project>{d3ffbc59-2486-4f8f-bff1-fa95c84929e1}</Project>
-      <Name>OpenTelemetry.Instrumentation.Dependencies</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj">
       <Project>{8d47e3cf-9ae3-42fe-9084-feb72d9ad769}</Project>
       <Name>OpenTelemetry.Exporter.Jaeger</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj">
+      <Project>{412c64d1-43d6-4e4c-8ad8-e20e63b415bd}</Project>
+      <Name>OpenTelemetry.Instrumentation.Http</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj">
       <Project>{ae3e3df5-4083-4c6e-a840-8271b0acde7e}</Project>
