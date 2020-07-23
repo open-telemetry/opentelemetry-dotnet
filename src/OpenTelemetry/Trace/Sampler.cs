@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class Sampler
     {
-        protected string description;
+        private string description;
 
         /// <summary>
         /// Gets the sampler description.
@@ -33,6 +33,11 @@ namespace OpenTelemetry.Trace
             {
                 this.description = this.description ?? this.GetType().Name;
                 return this.description;
+            }
+
+            protected set
+            {
+                this.description = value;
             }
         }
 

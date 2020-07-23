@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Samplers
         {
             this.delegateSampler = delegateSampler ?? throw new ArgumentNullException(nameof(delegateSampler));
 
-            this.description = $"ParentOrElse{{{delegateSampler.Description}}}";
+            this.Description = $"ParentOrElse{{{delegateSampler.Description}}}";
         }
 
         /// <inheritdoc />
