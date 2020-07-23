@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
   </ItemGroup>
