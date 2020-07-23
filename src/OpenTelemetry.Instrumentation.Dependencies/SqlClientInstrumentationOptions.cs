@@ -39,12 +39,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDBStatement"/> tag. Default value: True.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
         /// </summary>
         public bool SetStoredProcedureCommandName { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDBStatement"/> tag. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
         public bool SetTextCommandContent { get; set; }
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
         /// </summary>
         /// <remarks>
-        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIP"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDBMSSQLInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
+        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; } = false;
 
@@ -127,12 +127,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies
                 }
                 else
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeNetPeerIP, connectionDetails.ServerIpAddress);
+                    sqlActivity.AddTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeDBMSSQLInstanceName, connectionDetails.InstanceName);
+                    sqlActivity.AddTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))

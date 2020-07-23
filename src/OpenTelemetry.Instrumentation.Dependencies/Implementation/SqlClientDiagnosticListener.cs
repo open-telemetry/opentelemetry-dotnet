@@ -91,8 +91,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
-                            activity.AddTag(SemanticConventions.AttributeDBSystem, MicrosoftSqlServerDatabaseSystemName);
-                            activity.AddTag(SemanticConventions.AttributeDBName, (string)database);
+                            activity.AddTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
+                            activity.AddTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                                         if (this.options.SetStoredProcedureCommandName)
                                         {
-                                            activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
+                                            activity.AddTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
 
                                         break;
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                                         activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                                         if (this.options.SetTextCommandContent)
                                         {
-                                            activity.AddTag(SemanticConventions.AttributeDBStatement, (string)commandText);
+                                            activity.AddTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
 
                                         break;

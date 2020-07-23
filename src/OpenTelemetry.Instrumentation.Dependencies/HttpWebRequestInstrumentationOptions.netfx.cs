@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies
     public class HttpWebRequestInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHTTPFlavor"/> tag. Default value: False.
+        /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHttpFlavor"/> tag. Default value: False.
         /// </summary>
         public bool SetHttpFlavor { get; set; } = false;
 
