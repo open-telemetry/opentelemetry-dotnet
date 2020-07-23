@@ -14,22 +14,40 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// TracerProvider is the entry point of the OTel API. It provides access to Tracers.
+    /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to Tracers.
     /// </summary>
-    public abstract class TracerProvider
+    public class TracerProvider : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TracerProvider"/> class.
+        /// </summary>
+        protected TracerProvider()
+        {
+        }
+
+        /// <summary>
+        /// Gets the default Tracer.
+        /// </summary>
+        public static TracerProvider Default { get; } = new TracerProvider();
+
+        /// <inheritdoc/>
+        public virtual void Dispose()
+        {
+        }
+
         /// <summary>
         /// Gets a tracer with given name and version.
         /// </summary>
         /// <param name="name">Name identifying the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library.</param>
         /// <returns>Tracer instance.</returns>
-        public static Tracer GetTracer(string name, string version = null)
+        public Tracer GetTracer(string name, string version = null)
         {
             if (name == null)
             {

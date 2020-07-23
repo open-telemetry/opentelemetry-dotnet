@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 });
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation(options => options.TextFormat = textFormat.Object);
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation();
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         public async Task HttpDependenciesInstrumentationFiltersOutRequests()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestDependencyInstrumentation(

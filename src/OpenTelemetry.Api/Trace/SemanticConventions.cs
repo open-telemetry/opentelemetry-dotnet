@@ -30,16 +30,16 @@ namespace OpenTelemetry.Trace
         public const string AttributeServiceInstance = "service.instance.id";
         public const string AttributeServiceVersion = "service.version";
 
-        public const string AttributeTelemetrySDKName = "telemetry.sdk.name";
-        public const string AttributeTelemetrySDKLanguage = "telemetry.sdk.language";
-        public const string AttributeTelemetrySDKVersion = "telemetry.sdk.version";
+        public const string AttributeTelemetrySdkName = "telemetry.sdk.name";
+        public const string AttributeTelemetrySdkLanguage = "telemetry.sdk.language";
+        public const string AttributeTelemetrySdkVersion = "telemetry.sdk.version";
 
         public const string AttributeContainerName = "container.name";
         public const string AttributeContainerImage = "container.image.name";
         public const string AttributeContainerTag = "container.image.tag";
 
         public const string AttributeFaasName = "faas.name";
-        public const string AttributeFaasID = "faas.id";
+        public const string AttributeFaasId = "faas.id";
         public const string AttributeFaasVersion = "faas.version";
         public const string AttributeFaasInstance = "faas.instance";
 
@@ -49,14 +49,14 @@ namespace OpenTelemetry.Trace
         public const string AttributeK8sDeployment = "k8s.deployment.name";
 
         public const string AttributeHostHostname = "host.hostname";
-        public const string AttributeHostID = "host.id";
+        public const string AttributeHostId = "host.id";
         public const string AttributeHostName = "host.name";
         public const string AttributeHostType = "host.type";
         public const string AttributeHostImageName = "host.image.name";
-        public const string AttributeHostImageID = "host.image.id";
+        public const string AttributeHostImageId = "host.image.id";
         public const string AttributeHostImageVersion = "host.image.version";
 
-        public const string AttributeProcessID = "process.id";
+        public const string AttributeProcessId = "process.id";
         public const string AttributeProcessExecutableName = "process.executable.name";
         public const string AttributeProcessExecutablePath = "process.executable.path";
         public const string AttributeProcessCommand = "process.command";
@@ -70,70 +70,70 @@ namespace OpenTelemetry.Trace
         public const string AttributeComponent = "component";
 
         public const string AttributeNetTransport = "net.transport";
-        public const string AttributeNetPeerIP = "net.peer.ip";
+        public const string AttributeNetPeerIp = "net.peer.ip";
         public const string AttributeNetPeerPort = "net.peer.port";
         public const string AttributeNetPeerName = "net.peer.name";
-        public const string AttributeNetHostIP = "net.host.ip";
+        public const string AttributeNetHostIp = "net.host.ip";
         public const string AttributeNetHostPort = "net.host.port";
         public const string AttributeNetHostName = "net.host.name";
 
-        public const string AttributeEnduserID = "enduser.id";
+        public const string AttributeEnduserId = "enduser.id";
         public const string AttributeEnduserRole = "enduser.role";
         public const string AttributeEnduserScope = "enduser.scope";
 
         public const string AttributePeerService = "peer.service";
 
-        public const string AttributeHTTPMethod = "http.method";
-        public const string AttributeHTTPURL = "http.url";
-        public const string AttributeHTTPTarget = "http.target";
-        public const string AttributeHTTPHost = "http.host";
-        public const string AttributeHTTPScheme = "http.scheme";
-        public const string AttributeHTTPStatusCode = "http.status_code";
-        public const string AttributeHTTPStatusText = "http.status_text";
-        public const string AttributeHTTPFlavor = "http.flavor";
-        public const string AttributeHTTPServerName = "http.server_name";
-        public const string AttributeHTTPHostName = "host.name";
-        public const string AttributeHTTPHostPort = "host.port";
-        public const string AttributeHTTPRoute = "http.route";
-        public const string AttributeHTTPClientIP = "http.client_ip";
-        public const string AttributeHTTPUserAgent = "http.user_agent";
-        public const string AttributeHTTPRequestContentLength = "http.request_content_length";
-        public const string AttributeHTTPRequestContentLengthUncompressed = "http.request_content_length_uncompressed";
-        public const string AttributeHTTPResponseContentLength = "http.response_content_length";
-        public const string AttributeHTTPResponseContentLengthUncompressed = "http.response_content_length_uncompressed";
+        public const string AttributeHttpMethod = "http.method";
+        public const string AttributeHttpUrl = "http.url";
+        public const string AttributeHttpTarget = "http.target";
+        public const string AttributeHttpHost = "http.host";
+        public const string AttributeHttpScheme = "http.scheme";
+        public const string AttributeHttpStatusCode = "http.status_code";
+        public const string AttributeHttpStatusText = "http.status_text";
+        public const string AttributeHttpFlavor = "http.flavor";
+        public const string AttributeHttpServerName = "http.server_name";
+        public const string AttributeHttpHostName = "host.name";
+        public const string AttributeHttpHostPort = "host.port";
+        public const string AttributeHttpRoute = "http.route";
+        public const string AttributeHttpClientIP = "http.client_ip";
+        public const string AttributeHttpUserAgent = "http.user_agent";
+        public const string AttributeHttpRequestContentLength = "http.request_content_length";
+        public const string AttributeHttpRequestContentLengthUncompressed = "http.request_content_length_uncompressed";
+        public const string AttributeHttpResponseContentLength = "http.response_content_length";
+        public const string AttributeHttpResponseContentLengthUncompressed = "http.response_content_length_uncompressed";
 
-        public const string AttributeDBSystem = "db.system";
-        public const string AttributeDBConnectionString = "db.connection_string";
-        public const string AttributeDBUser = "db.user";
-        public const string AttributeDBMSSQLInstanceName = "db.mssql.instance_name";
-        public const string AttributeDBJDBCDriverClassName = "db.jdbc.driver_classname";
-        public const string AttributeDBName = "db.name";
-        public const string AttributeDBStatement = "db.statement";
-        public const string AttributeDBOperation = "db.operation";
-        public const string AttributeDBInstance = "db.instance";
-        public const string AttributeDBURL = "db.url";
-        public const string AttributeDBCassandraKeyspace = "db.cassandra.keyspace";
-        public const string AttributeDBHBaseNamespace = "db.hbase.namespace";
-        public const string AttributeDBRedisDatabaseIndex = "db.redis.database_index";
-        public const string AttributeDBMongoDBCollection = "db.mongodb.collection";
+        public const string AttributeDbSystem = "db.system";
+        public const string AttributeDbConnectionString = "db.connection_string";
+        public const string AttributeDbUser = "db.user";
+        public const string AttributeDbMsSqlInstanceName = "db.mssql.instance_name";
+        public const string AttributeDbJdbcDriverClassName = "db.jdbc.driver_classname";
+        public const string AttributeDbName = "db.name";
+        public const string AttributeDbStatement = "db.statement";
+        public const string AttributeDbOperation = "db.operation";
+        public const string AttributeDbInstance = "db.instance";
+        public const string AttributeDbUrl = "db.url";
+        public const string AttributeDbCassandraKeyspace = "db.cassandra.keyspace";
+        public const string AttributeDbHBaseNamespace = "db.hbase.namespace";
+        public const string AttributeDbRedisDatabaseIndex = "db.redis.database_index";
+        public const string AttributeDbMongoDbCollection = "db.mongodb.collection";
 
-        public const string AttributeRPCSystem = "rpc.system";
-        public const string AttributeRPCService = "rpc.service";
-        public const string AttributeRPCMethod = "rpc.method";
+        public const string AttributeRpcSystem = "rpc.system";
+        public const string AttributeRpcService = "rpc.service";
+        public const string AttributeRpcMethod = "rpc.method";
 
         public const string AttributeMessageType = "message.type";
-        public const string AttributeMessageID = "message.id";
+        public const string AttributeMessageId = "message.id";
         public const string AttributeMessageCompressedSize = "message.compressed_size";
         public const string AttributeMessageUncompressedSize = "message.uncompressed_size";
 
-        public const string AttributeFaaSTrigger = "faas.trigger";
-        public const string AttributeFaaSExecution = "faas.execution";
-        public const string AttributeFaaSDocumentCollection = "faas.document.collection";
-        public const string AttributeFaaSDocumentOperation = "faas.document.operation";
-        public const string AttributeFaaSDocumentTime = "faas.document.time";
-        public const string AttributeFaaSDocumentName = "faas.document.name";
-        public const string AttributeFaaSTime = "faas.time";
-        public const string AttributeFaaSCron = "faas.cron";
+        public const string AttributeFaasTrigger = "faas.trigger";
+        public const string AttributeFaasExecution = "faas.execution";
+        public const string AttributeFaasDocumentCollection = "faas.document.collection";
+        public const string AttributeFaasDocumentOperation = "faas.document.operation";
+        public const string AttributeFaasDocumentTime = "faas.document.time";
+        public const string AttributeFaasDocumentName = "faas.document.name";
+        public const string AttributeFaasTime = "faas.time";
+        public const string AttributeFaasCron = "faas.cron";
 
         public const string AttributeMessagingSystem = "messaging.system";
         public const string AttributeMessagingDestination = "messaging.destination";
@@ -141,9 +141,9 @@ namespace OpenTelemetry.Trace
         public const string AttributeMessagingTempDestination = "messaging.temp_destination";
         public const string AttributeMessagingProtocol = "messaging.protocol";
         public const string AttributeMessagingProtocolVersion = "messaging.protocol_version";
-        public const string AttributeMessagingURL = "messaging.url";
-        public const string AttributeMessagingMessageID = "messaging.message_id";
-        public const string AttributeMessagingConversationID = "messaging.conversation_id";
+        public const string AttributeMessagingUrl = "messaging.url";
+        public const string AttributeMessagingMessageId = "messaging.message_id";
+        public const string AttributeMessagingConversationId = "messaging.conversation_id";
         public const string AttributeMessagingPayloadSize = "messaging.message_payload_size_bytes";
         public const string AttributeMessagingPayloadCompressedSize = "messaging.message_payload_compressed_size_bytes";
         public const string AttributeMessagingOperation = "messaging.operation";

@@ -54,18 +54,18 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeRPCSystem, "grpc");
+                activity.AddTag(SemanticConventions.AttributeRpcSystem, "grpc");
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
                 {
-                    activity.AddTag(SemanticConventions.AttributeRPCService, rpcService);
-                    activity.AddTag(SemanticConventions.AttributeRPCMethod, rpcMethod);
+                    activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
+                    activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
                 }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
                 {
-                    activity.AddTag(SemanticConventions.AttributeNetPeerIP, request.RequestUri.Host);
+                    activity.AddTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
                 }
                 else
                 {

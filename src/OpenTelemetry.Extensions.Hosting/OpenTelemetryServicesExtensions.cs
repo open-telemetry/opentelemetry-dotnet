@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(() => TracerProviderSdk.EnableTracerProvider(configure));
+            services.AddOpenTelemetry(() => OpenTelemetrySdk.CreateTracerProvider(configure));
             return services;
         }
 
@@ -58,7 +58,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(s => TracerProviderSdk.EnableTracerProvider(builder => configure(s, builder)));
+            services.AddOpenTelemetry(s => OpenTelemetrySdk.CreateTracerProvider(builder => configure(s, builder)));
             return services;
         }
 
@@ -68,7 +68,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="createSdk">A delegate that provides the factory to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<TracerProviderSdk> createSdk)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<TracerProvider> createSdk)
         {
             if (services is null)
             {
@@ -99,7 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="createSdk">A delegate that provides the factory to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<IServiceProvider, TracerProviderSdk> createSdk)
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createSdk)
         {
             if (services is null)
             {

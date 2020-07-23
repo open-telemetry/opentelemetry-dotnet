@@ -102,12 +102,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
-                activity.AddTag(SemanticConventions.AttributeHTTPHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.AddTag(SemanticConventions.AttributeHTTPURL, request.RequestUri.OriginalString);
+                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.AddTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
                 if (Options.SetHttpFlavor)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                    activity.AddTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 }
             }
         }
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                activity.AddTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
                 activity.SetStatus(
                     SpanHelper
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
             {
                 if (wexc.Response is HttpWebResponse response)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                    activity.AddTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
                     status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode).WithDescription(response.StatusDescription);
                 }

@@ -95,17 +95,17 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             {
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Url.Host);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Url.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Url.Host + ":" + request.Url.Port);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Url.Host + ":" + request.Url.Port);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.HttpMethod);
+                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.HttpMethod);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SemanticConventions.AttributeHTTPUserAgent, request.UserAgent);
-                activity.AddTag(SemanticConventions.AttributeHTTPURL, request.Url.ToString());
+                activity.AddTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
+                activity.AddTag(SemanticConventions.AttributeHttpUrl, request.Url.ToString());
             }
         }
 
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                activityToEnrich.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
+                activityToEnrich.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
 
                 activityToEnrich.SetStatus(
                     SpanHelper
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 {
                     // Override the name that was previously set to the path part of URL.
                     activityToEnrich.DisplayName = template;
-                    activityToEnrich.AddTag(SemanticConventions.AttributeHTTPRoute, template);
+                    activityToEnrich.AddTag(SemanticConventions.AttributeHttpRoute, template);
                 }
             }
 

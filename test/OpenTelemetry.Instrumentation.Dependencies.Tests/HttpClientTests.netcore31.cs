@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
 
             using (serverLifeTime)
 
-            using (TracerProviderSdk.EnableTracerProvider(
+            using (OpenTelemetrySdk.CreateTracerProvider(
                     (builder) => builder.AddHttpClientDependencyInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))

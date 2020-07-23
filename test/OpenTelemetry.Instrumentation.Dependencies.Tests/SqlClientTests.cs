@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             bool isFailure = false)
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = TracerProviderSdk.EnableTracerProvider(b =>
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddSqlClientDependencyInstrumentation(options =>
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (TracerProviderSdk.EnableTracerProvider(
+            using (OpenTelemetrySdk.CreateTracerProvider(
                     (builder) => builder.AddSqlClientDependencyInstrumentation(
                         (opt) =>
                         {
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (TracerProviderSdk.EnableTracerProvider(
+            using (OpenTelemetrySdk.CreateTracerProvider(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -242,19 +242,19 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
             }
 
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBSystem).Value);
-            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBName).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbSystem).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbName).Value);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
 
                     break;
@@ -262,11 +262,11 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDBStatement).Value);
+                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
 
                     break;

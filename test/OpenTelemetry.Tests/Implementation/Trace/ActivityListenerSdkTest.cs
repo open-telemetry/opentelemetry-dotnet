@@ -39,7 +39,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    TracerProviderSdk.ComputeActivityDataRequest(options, testSampler),
+                    OpenTelemetry.Trace.OpenTelemetrySdk.ComputeActivityDataRequest(options, testSampler),
             };
 
             ActivitySource.AddActivityListener(listener);
