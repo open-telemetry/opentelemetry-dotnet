@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
             using (openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
-            (builder) => builder.AddRequestInstrumentation(
+            (builder) => builder.AddAspNetInstrumentation(
                 (options) =>
                 {
                     options.RequestFilter = httpContext =>

@@ -43,10 +43,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api", "src\Op
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus", "src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj", "{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Dependencies", "src\OpenTelemetry.Instrumentation.Dependencies\OpenTelemetry.Instrumentation.Dependencies.csproj", "{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Dependencies.Tests", "test\OpenTelemetry.Instrumentation.Dependencies.Tests\OpenTelemetry.Instrumentation.Dependencies.Tests.csproj", "{56E2647A-B814-4BAC-B854-BEA0051B5F2E}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore", "src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj", "{752D2182-A351-41D8-99EE-DD363D7D5B43}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore.Tests", "test\OpenTelemetry.Instrumentation.AspNetCore.Tests\OpenTelemetry.Instrumentation.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
@@ -143,6 +139,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "exam
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient.Tests", "test\OpenTelemetry.Instrumentation.SqlClient.Tests\OpenTelemetry.Instrumentation.SqlClient.Tests.csproj", "{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient", "src\OpenTelemetry.Instrumentation.SqlClient\OpenTelemetry.Instrumentation.SqlClient.csproj", "{41C30DC1-8C57-4E14-A83A-7635A3C7960B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http.Tests", "test\OpenTelemetry.Instrumentation.Http.Tests\OpenTelemetry.Instrumentation.Http.Tests.csproj", "{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Http", "src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj", "{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc", "src\OpenTelemetry.Instrumentation.Grpc\OpenTelemetry.Instrumentation.Grpc.csproj", "{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,14 +175,6 @@ Global
 		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD9B2B54-EC9C-448E-BD3C-EDCC3F7AD022}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3FFBC59-2486-4F8F-BFF1-FA95C84929E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56E2647A-B814-4BAC-B854-BEA0051B5F2E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{752D2182-A351-41D8-99EE-DD363D7D5B43}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -281,6 +279,26 @@ Global
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41C30DC1-8C57-4E14-A83A-7635A3C7960B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9EB7D8-9CC5-4073-90B3-9FBF685B3305}.Release|Any CPU.Build.0 = Release|Any CPU
+		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{412C64D1-43D6-4E4C-8AD8-E20E63B415BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
