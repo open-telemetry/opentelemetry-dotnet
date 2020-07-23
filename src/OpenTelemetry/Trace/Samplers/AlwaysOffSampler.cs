@@ -22,9 +22,6 @@ namespace OpenTelemetry.Trace.Samplers
     public sealed class AlwaysOffSampler : Sampler
     {
         /// <inheritdoc />
-        public override string Description { get; } = "AlwaysOffSampler";
-
-        /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             return new SamplingResult(false);

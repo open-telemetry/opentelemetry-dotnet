@@ -25,7 +25,15 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the sampler description.
         /// </summary>
-        public abstract string Description { get; }
+        public abstract string Description
+        {
+            get
+            {
+                this.description = this.description ?? this.GetType().Name;
+                return this.description;
+            }
+            set { this.description = value; }
+        }
 
         /// <summary>
         /// Checks whether activity needs to be created and tracked.
@@ -36,5 +44,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <returns>Sampling decision on whether activity needs to be sampled or not.</returns>
         public abstract SamplingResult ShouldSample(in SamplingParameters samplingParameters);
+
+        private string description;
     }
 }
