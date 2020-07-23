@@ -136,9 +136,9 @@ OpenTelemetrySdk.CreateTracerProvider(b => b
   critical code path.
 
 ```csharp
-class MySampler : ActivitySampler
+class MySampler : Sampler
 {
-    public override SamplingResult ShouldSample(in ActivitySamplingParameters samplingParameters)
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
         var shouldSample = true;
 
