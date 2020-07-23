@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(span2, exported);
         }
 
-        [Fact(Skip = "Reenable once AlwaysParentActivitySampler is added")]
+        [Fact(Skip = "Reenable once AlwaysParentSampler is added")]
         public void ExportNotSampledSpans()
         {
             var span1 = this.CreateNotSampledEndedSpan(SpanName1);
