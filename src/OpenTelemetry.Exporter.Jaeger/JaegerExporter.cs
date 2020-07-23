@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {

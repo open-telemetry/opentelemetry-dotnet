@@ -30,7 +30,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {

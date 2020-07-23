@@ -16,8 +16,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Trace.Export;
-using OpenTelemetry.Trace.Export.Internal;
+using OpenTelemetry.Trace.Internal;
 using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace

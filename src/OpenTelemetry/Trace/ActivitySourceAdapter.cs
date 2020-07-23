@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Trace
 {

@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages

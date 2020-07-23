@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Testing.Export
 {

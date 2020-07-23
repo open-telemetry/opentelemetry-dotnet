@@ -23,7 +23,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Export.Test
+namespace OpenTelemetry.Trace.Test
 {
     public class SimpleActivityProcessorTest : IDisposable
     {

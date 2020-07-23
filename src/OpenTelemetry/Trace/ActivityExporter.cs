@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace OpenTelemetry.Trace.Export
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Enumeration used to define the result of an export operation.
