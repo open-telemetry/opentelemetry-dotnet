@@ -123,7 +123,7 @@ class MyExporter : ActivityExporter
   similarly to `UseZipkinExporter` extension method.
 
 ```csharp
-OpenTelemetrySdk.EnableOpenTelemetry(b => b
+OpenTelemetrySdk.CreateTracerProvider(b => b
     .AddActivitySource(ActivitySourceName)
     .UseMyExporter();
 ```
