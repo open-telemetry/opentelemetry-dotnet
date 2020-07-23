@@ -63,9 +63,6 @@ namespace OpenTelemetry.Trace.Samplers
         }
 
         /// <inheritdoc />
-        public override string Description { get; }
-
-        /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             // Always sample if we are within probability range. This is true even for child activities (that
