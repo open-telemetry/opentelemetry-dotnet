@@ -108,21 +108,21 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             if (isSet)
             {
                 Assert.Equal("SETEX", activity.DisplayName);
-                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
+                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
             }
             else
             {
                 Assert.Equal("GET", activity.DisplayName);
-                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
+                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
             }
 
             Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
             Assert.Equal("0", activity.Tags.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
 
             if (endPoint is IPEndPoint ipEndPoint)
             {
-                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 Assert.Equal(ipEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
             }
             else if (endPoint is DnsEndPoint dnsEndPoint)

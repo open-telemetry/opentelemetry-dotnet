@@ -887,18 +887,18 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
         {
             Assert.NotNull(activity.Tags);
-            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPMethod).Value);
+            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
             if (hostNameAndPort != null)
             {
-                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value);
+                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
             }
 
-            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value);
+            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
         }
 
         private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)
         {
-            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPStatusCode).Value);
+            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
             Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 

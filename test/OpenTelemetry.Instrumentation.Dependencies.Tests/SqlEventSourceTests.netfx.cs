@@ -186,7 +186,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
 
             if (!enableConnectionLevelAttributes)
             {
@@ -202,12 +202,12 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
                 else
                 {
-                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBMSSQLInstanceName).Value);
+                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
@@ -216,17 +216,17 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Tests
                 }
             }
 
-            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBName).Value);
+            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbName).Value);
             Assert.Equal(commandType.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
             if (commandType == CommandType.StoredProcedure)
             {
                 if (captureText)
                 {
-                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
+                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
                 }
                 else
                 {
-                    Assert.DoesNotContain(activity.Tags, t => t.Key == SemanticConventions.AttributeDBStatement);
+                    Assert.DoesNotContain(activity.Tags, t => t.Key == SemanticConventions.AttributeDbStatement);
                 }
             }
 

@@ -110,8 +110,8 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeDBSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
-                activity.AddTag(SemanticConventions.AttributeDBName, databaseName);
+                activity.AddTag(SemanticConventions.AttributeDbSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
+                activity.AddTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.Dependencies.Implementation
                     activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                     if (this.options.SetStoredProcedureCommandName)
                     {
-                        activity.AddTag(SemanticConventions.AttributeDBStatement, commandText);
+                        activity.AddTag(SemanticConventions.AttributeDbStatement, commandText);
                     }
                 }
             }
