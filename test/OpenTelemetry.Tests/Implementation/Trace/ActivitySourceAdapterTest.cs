@@ -185,8 +185,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
 
-            public override string Description { get; } = nameof(TestSampler);
-
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
                 return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(true);
