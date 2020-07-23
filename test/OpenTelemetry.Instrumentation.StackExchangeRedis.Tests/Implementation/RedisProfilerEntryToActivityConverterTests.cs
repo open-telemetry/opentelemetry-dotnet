@@ -88,8 +88,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDBSystem);
-            Assert.Equal("redis", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDbSystem);
+            Assert.Equal("redis", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDbSystem).Value);
         }
 
         [Fact]
@@ -102,8 +102,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDBStatement);
-            Assert.Equal("SET", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDBStatement).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeDbStatement);
+            Assert.Equal("SET", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDbStatement).Value);
         }
 
         [Fact]
@@ -135,8 +135,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerIP);
-            Assert.Equal($"{address}.0.0.0", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerIP).Value);
+            Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp);
+            Assert.Equal($"{address}.0.0.0", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp).Value);
             Assert.Contains(result.Tags, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
             Assert.Equal($"{port}", result.Tags.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }

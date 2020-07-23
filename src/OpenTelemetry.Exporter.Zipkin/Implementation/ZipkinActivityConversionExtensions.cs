@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
             [SemanticConventions.AttributeNetPeerName] = 1,
-            [SemanticConventions.AttributeNetPeerIP] = 2,
+            [SemanticConventions.AttributeNetPeerIp] = 2,
             ["peer.hostname"] = 2,
             ["peer.address"] = 2,
             ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
