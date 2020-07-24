@@ -94,6 +94,10 @@ Maintainers
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
+### Thanks to all the people who have contributed
+
+![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)
+
 ## Release Schedule
 
 OpenTelemetry .NET is under active development.
