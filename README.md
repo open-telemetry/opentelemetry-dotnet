@@ -94,11 +94,9 @@ Maintainers
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
 
-### Thanks to all the people who have contributed!
+### Thanks to all the people who have contributed
 
-<a href="https://github.com/open-telemetry/opentelemetry-dotnet/graphs/contributors">
-  <img src="https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet" />
-</a>
+![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)
 
 ## Release Schedule
 
