@@ -6,12 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Implementation\Trace\Internal\**" />
-    <EmbeddedResource Remove="Implementation\Trace\Internal\**" />
-    <None Remove="Implementation\Trace\Internal\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
