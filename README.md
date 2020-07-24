@@ -30,7 +30,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [gRPC](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
-* [HTTP client](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [HTTP](./src/OpenTelemetry.Instrumentation.Http/README.md)
 * [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
