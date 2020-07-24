@@ -54,7 +54,7 @@ class Program
 Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
 
-```
+```text
 Activity ID - 00-3ae67370100cdc44a8d461d1b2cf846f-d80f2b1ab6d3bc4b-01
 Activity DisplayName - SayHello
 Activity Kind - Internal
