@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="SpanContext"/> struct with the given identifiers and options.
         /// </summary>
         /// <param name="activityContext">The activity context.</param>
-        internal SpanContext(in ActivityContext activityContext)
+        public SpanContext(in ActivityContext activityContext)
         {
             this.ActivityContext = activityContext;
         }

@@ -66,7 +66,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted from w3ctraceparent header or

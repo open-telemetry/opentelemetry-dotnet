@@ -97,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormatActivity>();
+            var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Inject(It.IsAny<ActivityContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
                 .Callback<ActivityContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {

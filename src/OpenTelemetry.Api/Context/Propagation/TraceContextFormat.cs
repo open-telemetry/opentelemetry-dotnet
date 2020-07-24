@@ -17,9 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Api.Context.Propagation;
+using System.Text;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -44,8 +43,51 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
         /// <inheritdoc/>
-        public SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
+            try
+            {
+                var traceparentCollection = getter(carrier, TraceParent);
+
+                // There must be a single traceparent
+                return traceparentCollection != null && traceparentCollection.Count() == 1;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+            }
+
+            // in case of exception indicate to upstream that there is no parseable context from the top
+            return false;
+        }
+
+        /// <inheritdoc/>
+        public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return default;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return default;
+            }
+
             try
             {
                 var traceparentCollection = getter(carrier, TraceParent);
@@ -64,18 +106,18 @@ namespace OpenTelemetry.Context.Propagation
                     return default;
                 }
 
-                List<KeyValuePair<string, string>> tracestate = null;
+                string tracestate = null;
                 var tracestateCollection = getter(carrier, TraceState);
                 if (tracestateCollection != null)
                 {
                     this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return new SpanContext(traceId, spanId, traceoptions, true, tracestate);
+                return new ActivityContext(traceId, spanId, traceoptions, tracestate);
             }
             catch (Exception ex)
             {
-                OpenTelemetryApiEventSource.Log.SpanContextExtractException(ex);
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
@@ -83,33 +125,33 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
         {
-            if (!spanContext.IsValid)
+            if (activityContext == default)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("Invalid context");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectSpanContext("null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null setter");
                 return;
             }
 
-            var traceparent = string.Concat("00-", spanContext.TraceId.ToHexString(), "-", spanContext.SpanId.ToHexString());
-            traceparent = string.Concat(traceparent, (spanContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+            var traceparent = string.Concat("00-", activityContext.TraceId.ToHexString(), "-", activityContext.SpanId.ToHexString());
+            traceparent = string.Concat(traceparent, (activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
             setter(carrier, TraceParent, traceparent);
 
-            string tracestateStr = TraceStateUtilsNew.GetString(spanContext.TraceState);
-            if (tracestateStr.Length > 0)
+            string tracestateStr = activityContext.TraceState;
+            if (tracestateStr?.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);
             }
@@ -237,23 +279,27 @@ namespace OpenTelemetry.Context.Propagation
             throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
         }
 
-        private bool TryExtractTracestate(string[] tracestateCollection, out List<KeyValuePair<string, string>> tracestateResult)
+        private bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
         {
-            tracestateResult = null;
+            tracestateResult = string.Empty;
 
             if (tracestateCollection != null)
             {
-                tracestateResult = new List<KeyValuePair<string, string>>();
+                var result = new StringBuilder();
 
                 // Iterate in reverse order because when call builder set the elements is added in the
                 // front of the list.
                 for (int i = tracestateCollection.Length - 1; i >= 0; i--)
                 {
-                    if (!TraceStateUtilsNew.AppendTraceState(tracestateCollection[i], tracestateResult))
+                    if (string.IsNullOrEmpty(tracestateCollection[i]))
                     {
                         return false;
                     }
+
+                    result.Append(tracestateCollection[i]);
                 }
+
+                tracestateResult = result.ToString();
             }
 
             return true;
