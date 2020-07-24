@@ -37,11 +37,11 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
 
-* [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
-* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
-* [OpenTelemetry Protocol Exporter](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-* [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
-* [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+* [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [OTLP (OpenTelemetry Protocol)](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
