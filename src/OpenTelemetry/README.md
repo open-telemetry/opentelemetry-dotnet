@@ -59,7 +59,7 @@ are used to control the noise and overhead introduced by OpenTelemetry by
 reducing the number of samples of traces collected and sent to the backend. If
 no sampler is explicitly specified, the default is to use
 [AlwaysOnSampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
-The following sample shows how to change it to
+The following example shows how to change it to
 [ProbabilitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
 with sampling probability of 25%.
 
