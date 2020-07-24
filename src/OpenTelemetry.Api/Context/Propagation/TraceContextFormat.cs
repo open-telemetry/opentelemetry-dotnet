@@ -115,6 +115,37 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
+        /// <inheritdoc/>
+        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return false;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return false;
+            }
+
+            try
+            {
+                var traceparentCollection = getter(carrier, TraceParent);
+
+                // There must be a single traceparent
+                return traceparentCollection != null && traceparentCollection.Count() == 1;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+            }
+
+            // in case of exception indicate to upstream that there is no parseable context from the top
+            return false;
+        }
+
         private bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceOptions)
         {
             // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md

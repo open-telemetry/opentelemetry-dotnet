@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="SpanContext"/> struct with the given identifiers and options.
         /// </summary>
         /// <param name="activityContext">The activity context.</param>
-        internal SpanContext(in ActivityContext activityContext)
+        public SpanContext(in ActivityContext activityContext)
         {
             this.ActivityContext = activityContext;
         }
@@ -118,6 +118,17 @@ namespace OpenTelemetry.Trace
                 var traceStateResult = new List<KeyValuePair<string, string>>();
                 TraceStateUtilsNew.AppendTraceState(this.ActivityContext.TraceState, traceStateResult);
                 return traceStateResult;
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="TraceStateString"/> associated with this <see cref="SpanContext"/>.
+        /// </summary>
+        public string TraceStateString
+        {
+            get
+            {
+                return this.ActivityContext.TraceState;
             }
         }
 

@@ -189,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
         {
-            Options.TextFormat.Inject(activity.Context, request, HttpWebRequestHeaderValuesSetter);
+            Options.TextFormat.Inject(new SpanContext(activity.Context), request, HttpWebRequestHeaderValuesSetter);
 
             if (request.Headers.Get(CorrelationContextHeaderName) == null)
             {

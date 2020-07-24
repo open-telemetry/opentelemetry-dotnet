@@ -73,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             // Ensure that the header value func does not throw if the header key can't be found
-            var mockTextFormat = new Mock<ITextFormatActivity>();
+            var mockTextFormat = new Mock<ITextFormat>();
             var isInjectedHeaderValueGetterThrows = false;
             mockTextFormat
                 .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
@@ -122,9 +122,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormatActivity>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<ActivityContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            var textFormat = new Mock<ITextFormat>();
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<SpanContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<SpanContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
