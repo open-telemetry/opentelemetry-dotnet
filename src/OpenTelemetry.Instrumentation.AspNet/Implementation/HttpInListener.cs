@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
-            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            if (!(this.options.TextFormat is TraceContextFormat))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted using the format TextFormat supports.
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             Activity activityToEnrich = activity;
 
-            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            if (!(this.options.TextFormat is TraceContextFormat))
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.TextFormat is TraceContextFormatActivity))
+            if (!(this.options.TextFormat is TraceContextFormat))
             {
                 if (activity.OperationName.Equals(ActivityNameByHttpInListener))
                 {
