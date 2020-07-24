@@ -21,9 +21,9 @@ using System.Net.Http;
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     /// <summary>
-    /// A collection of helper methods to be used when building Http spans.
+    /// A collection of helper methods to be used when building Http activities.
     /// </summary>
-    public static class HttpTagHelper
+    internal static class HttpTagHelper
     {
         private static readonly ConcurrentDictionary<string, string> MethodOperationNameCache = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodOperationNameCache = new ConcurrentDictionary<HttpMethod, string>();
@@ -39,10 +39,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static readonly Func<HttpStatusCode, string> ConvertHttpStatusCodeToStringRef = ConvertHttpStatusCodeToString;
 
         /// <summary>
-        /// Gets the OpenTelemetry standard operation name for a span based on its Http method.
+        /// Gets the OpenTelemetry standard name for an activity based on its Http method.
         /// </summary>
         /// <param name="method">Http method.</param>
-        /// <returns>Span operation name.</returns>
+        /// <returns>Activity name.</returns>
         public static string GetOperationNameForHttpMethod(string method) => MethodOperationNameCache.GetOrAdd(method, ConvertMethodToOperationNameRef);
 
         /// <summary>
