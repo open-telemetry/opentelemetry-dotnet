@@ -54,7 +54,7 @@ namespace Examples.Console
             // Create Processor (called Batcher in Metric spec, this is still not decided)
             var processor = new UngroupedBatcher();
 
-            // Application which decide to enable OpenTelemetry metrics
+            // Application which decides to enable OpenTelemetry metrics
             // would setup a MeterProvider and make it default.
             // All meters from this factory will be configured with the common processing pipeline.
             MeterProvider.SetDefault(OpenTelemetryMetrics.CreateMeterProvider(mb =>
