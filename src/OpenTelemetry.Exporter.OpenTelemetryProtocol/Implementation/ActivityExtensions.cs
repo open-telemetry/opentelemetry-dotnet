@@ -159,8 +159,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 var protoSpan = activity.ToOtlpSpan();
                 if (protoSpan == null)
                 {
-                    // If it could not be translated ignore it.
-                    // TODO: report this issue.
+                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
+                        nameof(ActivityExtensions),
+                        nameof(GroupByResourceAndLibrary));
                     continue;
                 }
 

@@ -64,7 +64,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var processor = builder.Build();
 
             Assert.Single(builder.Processors);
-            Assert.IsType<SimpleActivityProcessor>(builder.Processors.Single());
+            Assert.IsType<BatchingActivityProcessor>(builder.Processors.Single());
             Assert.Same(processor, builder.Processors[0]);
         }
 
