@@ -86,16 +86,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity = newOne;
             }
 
-            // TODO: move setting displayname to inside IsAllDataRequested?
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
-
             activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
+                var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+                activity.DisplayName = path;
+
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
