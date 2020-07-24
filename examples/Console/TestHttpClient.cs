@@ -26,8 +26,8 @@ namespace Examples.Console
         {
             System.Console.WriteLine("Hello World!");
 
-            using var openTelemetry = TracerProviderSdk.EnableTracerProvider(
-                (builder) => builder.AddHttpClientDependencyInstrumentation()
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+                (builder) => builder.AddHttpClientInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
                 .UseConsoleExporter(opt => opt.DisplayAsJson = false));

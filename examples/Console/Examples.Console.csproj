@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Dependencies\OpenTelemetry.Instrumentation.Dependencies.csproj" />
+    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />

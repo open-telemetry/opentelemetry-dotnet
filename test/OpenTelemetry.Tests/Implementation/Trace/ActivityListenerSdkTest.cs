@@ -39,7 +39,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    TracerProviderSdk.ComputeActivityDataRequest(options, testSampler),
+                    OpenTelemetry.Trace.OpenTelemetrySdk.ComputeActivityDataRequest(options, testSampler),
             };
 
             ActivitySource.AddActivityListener(listener);
@@ -99,8 +99,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             public SamplingResult DesiredSamplingResult { get; set; }
 
             public SamplingParameters LatestSamplingParameters { get; private set; }
-
-            public override string Description { get; } = nameof(TestSampler);
 
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {

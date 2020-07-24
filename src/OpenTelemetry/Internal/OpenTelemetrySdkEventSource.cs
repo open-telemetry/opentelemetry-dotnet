@@ -18,7 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal
 {

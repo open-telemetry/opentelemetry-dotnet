@@ -31,7 +31,7 @@ namespace Benchmarks
         public OpenTelemetrySdkBenchmarksActivity()
         {
             // Not configuring pipeline, which will result in default NoOpActivityProcessor.
-            var openTel = TracerProviderSdk.EnableTracerProvider((builder) => builder.AddActivitySource("BenchMark"));
+            var openTel = OpenTelemetrySdk.CreateTracerProvider((builder) => builder.AddActivitySource("BenchMark"));
         }
 
         [Benchmark]

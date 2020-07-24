@@ -24,7 +24,6 @@ using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.ZPages
 {

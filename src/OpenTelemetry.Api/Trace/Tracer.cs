@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
         public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal)
         {
             // TODO: Open Question - should we have both StartSpan and StartActiveSpan?
-            // Or should we call this method StartActiveSpan
+            // Or should we call this method StartActiveSpan?
             // This method StartSpan is starting a Span and making it Active.
             // OTel spec calls for StartSpan, and StartActiveSpan being separate.
             // Need to see if it makes sense for .NET to strictly adhere to it.

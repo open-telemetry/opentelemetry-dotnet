@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
@@ -58,12 +57,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             await this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)
@@ -118,7 +111,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!this.disposedValue)
             {

@@ -41,8 +41,8 @@ namespace OpenTelemetry.Trace.Samplers
 
             this.probability = probability;
 
-            // The expected description is like ProbabilityActivitySampler{0.000100}
-            this.Description = "ProbabilityActivitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
+            // The expected description is like ProbabilitySampler{0.000100}
+            this.Description = "ProbabilitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
@@ -61,9 +61,6 @@ namespace OpenTelemetry.Trace.Samplers
                 this.idUpperBound = (long)(probability * long.MaxValue);
             }
         }
-
-        /// <inheritdoc />
-        public override string Description { get; }
 
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
