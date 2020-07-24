@@ -87,7 +87,7 @@ Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
+* [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
