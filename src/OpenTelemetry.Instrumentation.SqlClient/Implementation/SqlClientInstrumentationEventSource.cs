@@ -38,6 +38,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             }
         }
 
+        [Event(1, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+        {
+            this.WriteEvent(1, handlerName, eventName, ex);
+        }
+
         [Event(2, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
         public void NullActivity(string eventName)
         {
@@ -73,12 +79,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             {
                 Thread.CurrentThread.CurrentUICulture = originalUICulture;
             }
-        }
-
-        [Event(1, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
-        private void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
-        {
-            this.WriteEvent(1, handlerName, eventName, ex);
         }
     }
 }

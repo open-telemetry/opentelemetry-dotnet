@@ -83,9 +83,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            // TODO: remove comment after spanshim changes
-            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
-            return default;
+            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
 
         /// <inheritdoc/>

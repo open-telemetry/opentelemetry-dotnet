@@ -29,8 +29,6 @@ using Thrift.Transport;
 
 namespace Thrift.Protocol
 {
-    //TODO: implementation of TProtocol
-
     // ReSharper disable once InconsistentNaming
     internal class TCompactProtocol : TProtocol
     {

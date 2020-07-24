@@ -94,8 +94,7 @@ namespace OpenTelemetry.Trace
             }
             else if (this.Exporter != null)
             {
-                // TODO: Make this BatchingActivityProcessor once its available.
-                exportingProcessor = new SimpleActivityProcessor(this.Exporter);
+                exportingProcessor = new BatchingActivityProcessor(this.Exporter);
                 this.Processors.Add(exportingProcessor);
             }
 

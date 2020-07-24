@@ -56,6 +56,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(2, ex);
         }
 
+        [Event(3, Message = "Could not translate activity from class '{0}' and method '{1}', span will not be recorded.", Level = EventLevel.Informational)]
+        public void CouldNotTranslateActivity(string className, string methodName)
+        {
+            this.WriteEvent(3, className, methodName);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
