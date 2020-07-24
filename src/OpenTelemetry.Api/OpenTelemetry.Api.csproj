@@ -5,11 +5,6 @@
     <RootNamespace>OpenTelemetry</RootNamespace>
     <DefineConstants>$(DefineConstants);API</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Trace\Internal\**" />
-    <EmbeddedResource Remove="Trace\Internal\**" />
-    <None Remove="Trace\Internal\**" />
-  </ItemGroup>
 
   <!--
   Uncomment for development. This will disable the verification that every public method needs to be documented.

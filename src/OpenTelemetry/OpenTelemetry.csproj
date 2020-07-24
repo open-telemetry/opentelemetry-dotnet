@@ -4,15 +4,14 @@
     <Description>OpenTelemetry .NET SDK</Description>
   </PropertyGroup>
 
+   <!--
+  Uncomment for development. This will disable the verification that every public method needs to be documented.
+  //TODO: Disable this exception, and actually do document all public API. Quite a lot are missing now.
+  -->
+
   <PropertyGroup>
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Implementation\**" />
-    <EmbeddedResource Remove="Implementation\**" />
-    <None Remove="Implementation\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />

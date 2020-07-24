@@ -9,7 +9,7 @@
   <ItemGroup>
     <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
