@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.CreateTracerProvider(b =>
+            using (Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddRedisInstrumentation(connection);

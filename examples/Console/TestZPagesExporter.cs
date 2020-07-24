@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Trace;
 
@@ -33,7 +34,7 @@ namespace Examples.Console
             // Start the server
             httpServer.Start();
 
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+            using var openTelemetry = Sdk.CreateTracerProvider(
                 builder => builder
                     .AddActivitySource("zpages-test")
                     .UseZPagesExporter(

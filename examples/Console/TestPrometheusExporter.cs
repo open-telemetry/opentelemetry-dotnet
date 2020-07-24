@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
@@ -57,7 +58,7 @@ namespace Examples.Console
             // Application which decides to enable OpenTelemetry metrics
             // would setup a MeterProvider and make it default.
             // All meters from this factory will be configured with the common processing pipeline.
-            MeterProvider.SetDefault(OpenTelemetryMetrics.CreateMeterProvider(mb =>
+            MeterProvider.SetDefault(Sdk.CreateMeterProvider(mb =>
             {
                 mb.SetMetricProcessor(processor);
                 mb.SetMetricExporter(promExporter);

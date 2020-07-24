@@ -64,9 +64,11 @@ The following example shows how to change it to
 with sampling probability of 25%.
 
 ```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Samplers;
 
-using var otel = OpenTelemetrySdk.CreateTracerProvider(b => b
+using var otel = Sdk.CreateTracerProvider(b => b
     .AddActivitySource("MyCompany.MyProduct.MyLibrary")
     .SetSampler(new ProbabilitySampler(0.25))
     .UseConsoleExporter());
@@ -123,7 +125,7 @@ class MyExporter : ActivityExporter
   similarly to `UseZipkinExporter` extension method.
 
 ```csharp
-OpenTelemetrySdk.CreateTracerProvider(b => b
+Sdk.CreateTracerProvider(b => b
     .AddActivitySource(ActivitySourceName)
     .UseMyExporter();
 ```

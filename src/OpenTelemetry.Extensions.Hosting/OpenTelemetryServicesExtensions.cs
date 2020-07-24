@@ -17,6 +17,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Trace;
 
@@ -46,7 +47,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(() => OpenTelemetrySdk.CreateTracerProvider(configure));
+            services.AddOpenTelemetry(() => Sdk.CreateTracerProvider(configure));
             return services;
         }
 
@@ -58,7 +59,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(s => OpenTelemetrySdk.CreateTracerProvider(builder => configure(s, builder)));
+            services.AddOpenTelemetry(s => Sdk.CreateTracerProvider(builder => configure(s, builder)));
             return services;
         }
 

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics.Config.Test
         [Fact]
         public void MeterProvider_SetDefault()
         {
-            var meterProvider = OpenTelemetryMetrics.CreateMeterProvider(b => { });
+            var meterProvider = Sdk.CreateMeterProvider(b => { });
             MeterProvider.SetDefault(meterProvider);
 
             var defaultMeter = MeterProvider.Default.GetMeter(string.Empty);
@@ -65,8 +65,8 @@ namespace OpenTelemetry.Metrics.Config.Test
         [Fact]
         public void MeterProvider_SetDefaultTwice_Throws()
         {
-            MeterProvider.SetDefault(OpenTelemetryMetrics.CreateMeterProvider(b => { }));
-            Assert.Throws<InvalidOperationException>(() => MeterProvider.SetDefault(OpenTelemetryMetrics.CreateMeterProvider(b => { })));
+            MeterProvider.SetDefault(Sdk.CreateMeterProvider(b => { }));
+            Assert.Throws<InvalidOperationException>(() => MeterProvider.SetDefault(Sdk.CreateMeterProvider(b => { })));
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics.Config.Test
             var noOpCounter = defaultMeter.CreateDoubleCounter("ctr");
             Assert.IsType<NoOpCounterMetric<double>>(noOpCounter);
 
-            MeterProvider.SetDefault(OpenTelemetryMetrics.CreateMeterProvider(b => { }));
+            MeterProvider.SetDefault(Sdk.CreateMeterProvider(b => { }));
             var counter = defaultMeter.CreateDoubleCounter("ctr");
             Assert.IsType<DoubleCounterMetricSdk>(counter);
 
