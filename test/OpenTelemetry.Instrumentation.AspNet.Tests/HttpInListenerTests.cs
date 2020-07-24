@@ -128,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var textFormat = new Mock<ITextFormatActivity>();
+            var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+            using (openTelemetry = Sdk.CreateTracerProvider(
             (builder) => builder.AddAspNetInstrumentation(
                 (options) =>
                 {

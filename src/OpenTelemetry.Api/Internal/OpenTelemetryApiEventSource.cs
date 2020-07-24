@@ -30,15 +30,6 @@ namespace OpenTelemetry.Internal
         public static OpenTelemetryApiEventSource Log = new OpenTelemetryApiEventSource();
 
         [NonEvent]
-        public void SpanContextExtractException(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
-            {
-                this.FailedToExtractSpanContext(ToInvariantString(ex));
-            }
-        }
-
-        [NonEvent]
         public void ActivityContextExtractException(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
@@ -72,18 +63,6 @@ namespace OpenTelemetry.Internal
             {
                 this.TracestateValueIsInvalid(value.ToString());
             }
-        }
-
-        [Event(1, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractSpanContext(string exception)
-        {
-            this.WriteEvent(1, exception);
-        }
-
-        [Event(2, Message = "Failed to inject span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToInjectSpanContext(string error)
-        {
-            this.WriteEvent(2, error);
         }
 
         [Event(3, Message = "Failed to parse tracestate: too many items", Level = EventLevel.Warning)]

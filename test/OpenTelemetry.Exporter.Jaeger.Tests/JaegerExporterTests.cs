@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider(b => b
+            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseJaegerExporter(
                                 null, p => p.AddProcessor((next) => testActivityProcessor)));

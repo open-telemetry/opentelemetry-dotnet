@@ -57,20 +57,11 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             // TODO: Validate IsRemote when ActivityContext supports it.
             // Assert.True(ctx.IsRemote);
-            Assert.True(ctx.IsValid);
+            Assert.True(ctx.IsValid());
             Assert.True((ctx.TraceFlags & ActivityTraceFlags.Recorded) != 0);
 
-            Assert.Equal(2, ctx.TraceState.Count());
-
-            var first = ctx.TraceState.First();
-
-            Assert.Equal("congo", first.Key);
-            Assert.Equal("lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4", first.Value);
-
-            var last = ctx.TraceState.Last();
-
-            Assert.Equal("rojo", last.Key);
-            Assert.Equal($"00-{TraceId}-00f067aa0ba902b7-01", last.Value);
+            Assert.NotNull(ctx.TraceState);
+            Assert.Equal(headers[TraceState], ctx.TraceState);
         }
 
         [Fact]
@@ -90,7 +81,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             // TODO: Validate IsRemote when ActivityContext supports it.
             // Assert.True(ctx.IsRemote);
-            Assert.True(ctx.IsValid);
+            Assert.True(ctx.IsValid());
         }
 
         [Fact]
@@ -101,7 +92,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
-            Assert.False(ctx.IsValid);
+            Assert.False(ctx.IsValid());
 
             // TODO: Validate IsRemote when ActivityContext supports it.
             // Assert.True(ctx.IsRemote);
@@ -120,7 +111,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             // TODO: Validate IsRemote when ActivityContext supports it.
             // Assert.True(ctx.IsRemote);
-            Assert.False(ctx.IsValid);
+            Assert.False(ctx.IsValid());
         }
 
         [Fact]
@@ -134,8 +125,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
-            Assert.Empty(ctx.TraceState);
-            Assert.Equal(string.Empty, TraceStateUtilsNew.GetString(ctx.TraceState));
+            Assert.NotNull(ctx.TraceState);
         }
 
         [Fact]
@@ -150,16 +140,8 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
-            var entries = ctx.TraceState.ToArray();
-            Assert.Equal(3, entries.Length);
-            Assert.Equal("k1", entries[0].Key);
-            Assert.Equal("v1", entries[0].Value);
-            Assert.Equal("k2", entries[1].Key);
-            Assert.Equal("v2", entries[1].Value);
-            Assert.Equal("k3", entries[2].Key);
-            Assert.Equal("v3", entries[2].Value);
-
-            Assert.Equal("k1=v1,k2=v2,k3=v3", TraceStateUtilsNew.GetString(ctx.TraceState));
+            Assert.NotNull(ctx.TraceState);
+            Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.TraceState);
         }
     }
 }

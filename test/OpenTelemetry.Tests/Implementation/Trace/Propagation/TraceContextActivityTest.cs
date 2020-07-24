@@ -53,7 +53,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
                 { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01" },
             };
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.TraceId);
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
                 { TraceParent, $"00-{TraceId}-{SpanId}-00" },
             };
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.TraceId);
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
         {
             var headers = new Dictionary<string, string>();
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.False(ctx.IsValid());
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
                 { TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01" },
             };
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.False(ctx.IsValid());
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
                 { TraceParent, $"00-{TraceId}-{SpanId}-01" },
             };
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.Empty(ctx.TraceState);
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
                 { TraceState, "k1=v1,k2=v2,k3=v3" },
             };
 
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             var ctx = f.Extract(headers, Getter);
 
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.TraceState);
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
             var carrier = new Dictionary<string, string>();
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             f.Inject(activityContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
 
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
             var carrier = new Dictionary<string, string>();
-            var f = new TraceContextFormatActivity();
+            var f = new TraceContextFormat();
             f.Inject(activityContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);

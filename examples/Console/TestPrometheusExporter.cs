@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
@@ -54,17 +55,22 @@ namespace Examples.Console
             // Create Processor (called Batcher in Metric spec, this is still not decided)
             var processor = new UngroupedBatcher();
 
-            // MeterFactory is from where one can obtain Meters.
-            // All meters from this factory will be configured with the common processor.
-            var meterFactory = MeterFactory.Create(mb =>
-                {
-                    mb.SetMetricProcessor(processor);
-                    mb.SetMetricExporter(promExporter);
-                    mb.SetMetricPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs));
-                });
+            // Application which decides to enable OpenTelemetry metrics
+            // would setup a MeterProvider and make it default.
+            // All meters from this factory will be configured with the common processing pipeline.
+            MeterProvider.SetDefault(Sdk.CreateMeterProvider(mb =>
+            {
+                mb.SetMetricProcessor(processor);
+                mb.SetMetricExporter(promExporter);
+                mb.SetMetricPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs));
+            }));
 
-            // Obtain a Meter. Libraries would pass their name as argument.
-            var meter = meterFactory.GetMeter("MyMeter");
+            // The following shows how libraries would obtain a MeterProvider.
+            // MeterProvider is the entry point, which provides Meter.
+            // If user did not set the Default MeterProvider (shown in earlier lines),
+            // all metric operations become no-ops.
+            var meterProvider = MeterProvider.Default;
+            var meter = meterProvider.GetMeter("MyMeter");
 
             // the rest is purely from Metrics API.
             var testCounter = meter.CreateInt64Counter("MyCounter");

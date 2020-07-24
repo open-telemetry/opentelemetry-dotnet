@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Shims.OpenTracing;
@@ -28,7 +29,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter.
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+            using var openTelemetry = Sdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
                     .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
