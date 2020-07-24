@@ -5,6 +5,7 @@ chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https:/
 [![Build
 Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
+[![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
@@ -30,7 +31,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [gRPC](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
-* [HTTP client](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [HTTP](./src/OpenTelemetry.Instrumentation.Http/README.md)
 * [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
