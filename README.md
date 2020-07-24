@@ -80,12 +80,16 @@ Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
+* [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+
+### Thanks to all the people who have contributed
+
+![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)
 
 ## Release Schedule
 
