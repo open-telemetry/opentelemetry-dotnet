@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation();
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation(options => options.TextFormat = textFormat.Object);
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation();
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationFiltersOutRequests()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation(

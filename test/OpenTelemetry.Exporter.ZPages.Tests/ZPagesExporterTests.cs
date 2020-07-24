@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
+using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.CreateTracerProvider(b => b
+            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseZPagesExporter(
                                 processorConfigure: p => p.AddProcessor((next) => testActivityProcessor)));

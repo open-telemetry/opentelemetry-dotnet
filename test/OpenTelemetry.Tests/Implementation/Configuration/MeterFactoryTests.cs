@@ -30,9 +30,9 @@ namespace OpenTelemetry.Configuration.Tests
         public void DefaultMeterShouldBeCollectedAsWell()
         {
             var testProcessor = new TestMetricProcessor();
-            var factory = MeterFactory.Create(mb => mb.SetMetricProcessor(testProcessor));
-            var controller = factory.PushMetricController;
-            var defaultMeter = factory.GetMeter(string.Empty) as MeterSdk;
+            var meterProvider = (MeterProviderSdk)Sdk.CreateMeterProvider(mb => mb.SetMetricProcessor(testProcessor));
+            var controller = meterProvider.PushMetricController;
+            var defaultMeter = meterProvider.GetMeter(string.Empty) as MeterSdk;
 
             // Record some metrics using default meter
             var testCounter = defaultMeter.CreateInt64Counter("testCounter");
