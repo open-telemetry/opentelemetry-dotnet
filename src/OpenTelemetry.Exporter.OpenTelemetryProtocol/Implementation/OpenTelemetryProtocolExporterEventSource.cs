@@ -44,6 +44,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
+        [Event(1, Message = "Exporter failed to convert SpanData content into gRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        public void FailedToConvertToProtoDefinitionError(string ex)
+        {
+            this.WriteEvent(1, ex);
+        }
+
+        [Event(2, Message = "Exporter failed send spans to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        public void FailedToReachCollector(string ex)
+        {
+            this.WriteEvent(2, ex);
+        }
+
         [Event(3, Message = "Could not translate activity from class '{0}' and method '{1}', span will not be recorded.", Level = EventLevel.Informational)]
         public void CouldNotTranslateActivity(string className, string methodName)
         {
@@ -67,18 +79,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 Thread.CurrentThread.CurrentUICulture = originalUICulture;
             }
-        }
-
-        [Event(1, Message = "Exporter failed to convert SpanData content into gRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
-        private void FailedToConvertToProtoDefinitionError(string ex)
-        {
-            this.WriteEvent(1, ex);
-        }
-
-        [Event(2, Message = "Exporter failed send spans to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
-        private void FailedToReachCollector(string ex)
-        {
-            this.WriteEvent(2, ex);
         }
     }
 }
