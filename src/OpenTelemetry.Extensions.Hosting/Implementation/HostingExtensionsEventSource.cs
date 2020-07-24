@@ -47,6 +47,18 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             }
         }
 
+        [Event(1, Message = "Failed to initialize: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
+        public void FailedInitialize(string exception)
+        {
+            this.WriteEvent(1, exception);
+        }
+
+        [Event(2, Message = "Failed to get OpenTelemetrySDK: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
+        public void FailedOpenTelemetrySDK(string exception)
+        {
+            this.WriteEvent(2, exception);
+        }
+
         /// <summary>
         /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
         /// appropriate for diagnostics tracing.
@@ -64,18 +76,6 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             {
                 Thread.CurrentThread.CurrentUICulture = originalUICulture;
             }
-        }
-
-        [Event(1, Message = "Failed to initialize: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
-        private void FailedInitialize(string exception)
-        {
-            this.WriteEvent(1, exception);
-        }
-
-        [Event(2, Message = "Failed to get OpenTelemetrySDK: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
-        private void FailedOpenTelemetrySDK(string exception)
-        {
-            this.WriteEvent(2, exception);
         }
     }
 }
