@@ -30,7 +30,7 @@ namespace OpenTelemetry
     /// <summary>
     /// OpenTelemetry helper.
     /// </summary>
-    public class Sdk
+    public static class Sdk
     {
         private static TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
 
