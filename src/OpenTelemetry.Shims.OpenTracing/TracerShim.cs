@@ -23,10 +23,10 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public class TracerShim : global::OpenTracing.ITracer
     {
-        private readonly Trace.TracerNew tracer;
+        private readonly Trace.Tracer tracer;
         private readonly ITextFormat textFormat;
 
-        public TracerShim(Trace.TracerNew tracer, ITextFormat textFormat)
+        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
@@ -83,9 +83,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            // TODO: remove comment after spanshim changes
-            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
-            return default;
+            return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
         }
 
         /// <inheritdoc/>

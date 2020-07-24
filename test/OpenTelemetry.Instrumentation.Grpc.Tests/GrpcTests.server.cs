@@ -23,7 +23,6 @@ using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
@@ -54,10 +53,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCSystem).Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCService).Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCMethod).Value);
-            Assert.Contains(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value, clientLoopbackAddresses);
+            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Contains(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
             Assert.True(!string.IsNullOrEmpty(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
             Assert.Equal(Status.Ok, span.GetStatus());
         }

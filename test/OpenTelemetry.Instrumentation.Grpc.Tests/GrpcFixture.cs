@@ -20,8 +20,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
         private readonly IHost host;
 
-        private OpenTelemetrySdk openTelemetrySdk = null;
+        private TracerProvider openTelemetrySdk = null;
 
         public GrpcFixture()
         {
@@ -85,9 +84,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                         .ConfigureServices(serviceCollection =>
                         {
                             this.openTelemetrySdk = OpenTelemetrySdk
-                                .EnableOpenTelemetry(
+                                .CreateTracerProvider(
                                     (builder) => builder
-                                        .AddRequestInstrumentation()
+                                        .AddAspNetCoreInstrumentation()
                                         .AddProcessorPipeline(p => p.AddProcessor(n => this.GrpcServerSpanProcessor.Object)));
                         })
                         .UseStartup<Startup>();

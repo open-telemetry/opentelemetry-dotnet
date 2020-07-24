@@ -13,27 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
-    /// Sampler implementation which will sample out all the spans.
+    /// Sampler implementation which never samples any activity.
     /// </summary>
     public sealed class AlwaysOffSampler : Sampler
     {
         /// <inheritdoc />
-        public override string Description { get; } = nameof(AlwaysOffSampler);
-
-        /// <inheritdoc />
-        public override SamplingResult ShouldSample(
-            in SpanContext parentContext,
-            in ActivityTraceId traceId,
-            string name,
-            SpanKind spanKind,
-            IEnumerable<KeyValuePair<string, object>> attributes,
-            IEnumerable<Link> links)
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             return new SamplingResult(false);
         }

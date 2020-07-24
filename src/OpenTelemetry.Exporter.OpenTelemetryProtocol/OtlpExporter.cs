@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
             catch (RpcException ex)
             {
-                ExporterEventSource.Log.FailedToReachCollector(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
                 return ExportResult.FailedRetryable;
             }

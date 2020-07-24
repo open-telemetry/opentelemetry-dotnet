@@ -59,20 +59,20 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.SetStatus(Status.Ok);
 
-                activity.AddTag(SemanticConventions.AttributeDBSystem, "redis");
+                activity.AddTag(SemanticConventions.AttributeDbSystem, "redis");
                 activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
                 if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
-                    activity.AddTag(SemanticConventions.AttributeDBStatement, command.Command);
+                    activity.AddTag(SemanticConventions.AttributeDbStatement, command.Command);
                 }
 
                 if (command.EndPoint != null)
                 {
                     if (command.EndPoint is IPEndPoint ipEndPoint)
                     {
-                        activity.AddTag(SemanticConventions.AttributeNetPeerIP, ipEndPoint.Address.ToString());
+                        activity.AddTag(SemanticConventions.AttributeNetPeerIp, ipEndPoint.Address.ToString());
                         activity.AddTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port.ToString());
                     }
                     else if (command.EndPoint is DnsEndPoint dnsEndPoint)

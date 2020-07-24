@@ -21,8 +21,6 @@ using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
@@ -44,9 +42,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (OpenTelemetrySdk.CreateTracerProvider(
                 (builder) => builder
-                    .AddGrpcClientDependencyInstrumentation()
+                    .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
@@ -65,18 +63,18 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
             Assert.Equal("Client", span.Kind.ToString());
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCSystem).Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCService).Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRPCMethod).Value);
+            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
             else
             {
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
@@ -95,9 +93,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.EnableOpenTelemetry(
+            using (OpenTelemetrySdk.CreateTracerProvider(
             (builder) => builder
-                .AddDependencyInstrumentation() // AddDependencyInstrumentation applies both gRPC client and HttpClient instrumentation
+                .AddHttpClientInstrumentation()
+                .AddGrpcClientInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var channel = GrpcChannel.ForAddress(uri);

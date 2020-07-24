@@ -10,6 +10,8 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Getting Started
 
+If you are new here, please [get started in 5 minutes](./docs/getting-started.md).
+
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry).
 
@@ -21,9 +23,27 @@ Here are the most commonly used components:
 
 * [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
 * [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
-* [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
-Here are the exporters:
+Here are the [instrumentation
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library):
+
+* [OpenTelemetry.Instrumentation.AspNet](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
+  * ASP.NET [:link:](https://docs.microsoft.com/aspnet/overview)
+* [OpenTelemetry.Instrumentation.AspNetCore](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+  * ASP.NET Core [:link:](https://docs.microsoft.com/en-us/aspnet/core)
+* [OpenTelemetry.Instrumentation.Grpc](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
+  * gRPC for .NET [:link:](https://github.com/grpc/grpc-dotnet)
+* [OpenTelemetry.Instrumentation.Http](./src/OpenTelemetry.Instrumentation.Http/README.md)
+  * System.Net.Http.HttpClient [:link:](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
+  * System.Net.HttpWebRequest [:link:](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
+* [OpenTelemetry.Instrumentation.SqlClient](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
+  * Microsoft.Data.SqlClient [:link:](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
+  * System.Data.SqlClient [:link:](https://www.nuget.org/packages/System.Data.SqlClient)
+* [OpenTelemetry.Instrumentation.StackExchangeRedis](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+  * StackExchange.Redis [:link:](https://www.nuget.org/packages/StackExchange.Redis)
+
+Here are the [exporter
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
 
 * [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
 * [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
@@ -58,9 +78,6 @@ Approvers
 * [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
-
-Triagers:
-
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community

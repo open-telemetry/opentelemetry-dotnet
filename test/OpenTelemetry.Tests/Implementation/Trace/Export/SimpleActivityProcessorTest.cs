@@ -19,11 +19,11 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Export.Test
+namespace OpenTelemetry.Trace.Test
 {
     public class SimpleActivityProcessorTest : IDisposable
     {
@@ -32,18 +32,18 @@ namespace OpenTelemetry.Trace.Export.Test
         private const string ActivitySourceName = "defaultactivitysource";
 
         private TestActivityExporter activityExporter;
-        private OpenTelemetrySdk openTelemetry;
+        private TracerProvider openTelemetry;
         private ActivitySource activitySource;
 
         public SimpleActivityProcessorTest()
         {
             this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource(ActivitySourceName)
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
                         .SetExportingProcessor(e => new SimpleActivityProcessor(e)))
-                .SetSampler(new AlwaysOnActivitySampler()));
+                .SetSampler(new AlwaysOnSampler()));
             this.activitySource = new ActivitySource(ActivitySourceName);
         }
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ThrowsInExporter()
         {
             this.activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource("cijo")
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Export.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             this.activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
-            this.openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            this.openTelemetry = OpenTelemetrySdk.CreateTracerProvider(b => b
                         .AddActivitySource("cijo")
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace.Export.Test
             Assert.Contains(span2, exported);
         }
 
-        [Fact(Skip = "Reenable once AlwaysParentActivitySampler is added")]
+        [Fact(Skip = "Reenable once AlwaysParentSampler is added")]
         public void ExportNotSampledSpans()
         {
             var span1 = this.CreateNotSampledEndedSpan(SpanName1);

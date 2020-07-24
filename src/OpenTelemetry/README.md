@@ -5,14 +5,15 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Basic usage](#basic-usage)
-* [Advanced usage scenarios](#advanced-usage-scenarios)
-  * [Customize Exporter](#customize-exporter)
-  * [Customize Sampler](#customize-sampler)
-  * [Customize Resource](#customize-resource)
-  * [Filtering and enriching activities using
-    Processor](#filtering-and-enriching-activities-using-processor)
-  * [OpenTelemetry Instrumentation](#opentelemetry-instrumentation)
+* [Getting started](#getting-started)
+* [Configuration](#configuration)
+  * [Instrumentation](#instrumentation)
+  * [Processor](#processor)
+  * [Resource](#resource)
+  * [Sampler](#sampler)
+* [Advanced topics](#advanced-topics)
+  * [Building your own Exporter](#building-your-own-exporter)
+  * [Building your own Sampler](#building-your-own-sampler)
 * [References](#references)
 
 ## Installation
@@ -33,83 +34,118 @@ the following.
   samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-samplers)
 * Set of [Built-in
   processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors).
-  * SimpleProcessor which sends Activities to the exporter without any batching.
+  * SimpleProcessor which sends Activities to the exporter without any
+    batching.
   * BatchingProcessor which batches and sends Activities to the exporter.
 * Extensibility options for users to customize SDK.
 
-## Basic usage
+## Getting started
 
-The following examples show how to start collecting OpenTelemetry traces from a
-console application, and have the traces displayed in the console.
+Please follow the tutorial and [get started in 5
+minutes](../../docs/getting-started.md).
 
-1. Create a console application and install the `OpenTelemetry.Exporter.Console`
-   package to your project.
+## Configuration
 
-    ```xml
-    <ItemGroup>
-      <PackageReference
-        Include="OpenTelemetry.Exporter.Console"
-        Version="0.3.0"
-      />
-    </ItemGroup>
-    ```
+### Instrumentation
 
-2. At the beginning of the application, enable OpenTelemetry SDK with
-   ConsoleExporter as shown below. It also configures to collect activities from
-   the source named "companyname.product.library".
+### Processor
 
-    ```csharp
-    using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
-                    .AddActivitySource("companyname.product.library")
-                    .UseConsoleExporter())
-    ```
+### Resource
 
-    The above requires import of namespace `OpenTelemetry.Trace.Configuration`.
-
-3. Generate some activities in the application as shown below.
-
-    ```csharp
-    var activitySource = new ActivitySource("companyname.product.library");
-
-    using (var activity = activitySource.StartActivity("ActivityName", ActivityKind.Server))
-    {
-        activity?.AddTag("http.method", "GET");
-    }
-    ```
-
-Run the application. Traces will be displayed in the console.
-
-## Advanced usage scenarios
-
-### Customize Exporter
-
-### Customize Sampler
+### Sampler
 
 [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
 are used to control the noise and overhead introduced by OpenTelemetry by
 reducing the number of samples of traces collected and sent to the backend. If
 no sampler is explicitly specified, the default is to use
-[AlwaysOnActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
+[AlwaysOnSampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
 The following sample shows how to change it to
-[ProbabilityActivitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
+[ProbabilitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
 with sampling probability of 25%.
 
 ```csharp
-using var openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(builder => builder
-                .AddActivitySource("companyname.product.library")
-                .SetSampler(new ProbabilityActivitySampler(.25))
-                .UseConsoleExporter());
+using OpenTelemetry.Trace.Samplers;
+
+using var otel = OpenTelemetrySdk.CreateTracerProvider(b => b
+    .AddActivitySource("MyCompany.MyProduct.MyLibrary")
+    .SetSampler(new ProbabilitySampler(0.25))
+    .UseConsoleExporter());
 ```
 
-  The above requires import of the namespace `OpenTelemetry.Trace.Samplers`.
+## Advanced topics
 
-### Customize Resource
+### Building your own Exporter
 
-### Filtering and enriching activities using Processor
+#### Trace Exporter
 
-### OpenTelemetry Instrumentation
+* Exporters should inherit from `ActivityExporter` and implement `ExportAsync`
+  and `ShutdownAsync` methods.
+* Depending on user's choice and load on the application `ExportAsync` may get
+  called concurrently with zero or more activities.
+* Exporters should expect to receive only sampled-in ended activities.
+* Exporters must not throw.
+* Exporters should not modify activities they receive (the same activity may be
+  exported again by different exporter).
 
-This should link to the Instrumentation documentation.
+```csharp
+class MyExporter : ActivityExporter
+{
+    public override Task<ExportResult> ExportAsync(
+        IEnumerable<Activity> batch, CancellationToken cancellationToken)
+    {
+        foreach (var activity in batch)
+        {
+            Console.WriteLine(
+                $"[{activity.StartTimeUtc:o}] " +
+                $"{activity.DisplayName} " +
+                $"{activity.Context.TraceId.ToHexString()} " +
+                $"{activity.Context.SpanId.ToHexString()}"
+            );
+        }
+
+        return Task.FromResult(ExportResult.Success);
+    }
+
+    public override Task ShutdownAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        // flush the data and clean up the resource
+    }
+}
+```
+
+* Users may configure the exporter similarly to other exporters.
+* You should also provide additional methods to simplify configuration
+  similarly to `UseZipkinExporter` extension method.
+
+```csharp
+OpenTelemetrySdk.CreateTracerProvider(b => b
+    .AddActivitySource(ActivitySourceName)
+    .UseMyExporter();
+```
+
+### Building your own Sampler
+
+* Samplers should inherit from `Sampler`, and implement `ShouldSample`
+  method.
+* `ShouldSample` should not block or take long time, since it will be called on
+  critical code path.
+
+```csharp
+class MySampler : Sampler
+{
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+    {
+        var shouldSample = true;
+
+        return new SamplingResult(shouldSample);
+    }
+}
+```
 
 ## References
 

@@ -17,7 +17,7 @@ You can configure the `ZPagesExporter` by following the directions below:
 * `RetentionTime`: The retention time (in milliseconds) for the metrics.
 
 See the
-[`TestZPagesExporter.cs`](../../samples/Console/TestZPagesExporter.cs)
+[`TestZPagesExporter.cs`](../../examples/Console/TestZPagesExporter.cs)
 for an example of how to use the exporter.
 
 ## References

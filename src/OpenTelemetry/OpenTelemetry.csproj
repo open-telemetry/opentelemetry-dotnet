@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TracestateUtils.cs" Link="Utils\TracestateUtils.cs" />
+    <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
     <Compile Include="..\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
   </ItemGroup>
 

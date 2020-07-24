@@ -25,85 +25,29 @@ namespace OpenTelemetry.Instrumentation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation")]
-    public class InstrumentationEventSource : EventSource
+    internal class InstrumentationEventSource : EventSource
     {
         public static InstrumentationEventSource Log = new InstrumentationEventSource();
 
-        [NonEvent]
-        public void ExceptionInCustomSampler(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
-            {
-                this.ExceptionInCustomSampler(ToInvariantString(ex));
-            }
-        }
-
-        [Event(1, Message = "Span is NULL or blank in the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullOrBlankSpan(string eventName)
-        {
-            this.WriteEvent(1, eventName);
-        }
-
-        [Event(2, Message = "Error getting custom sampler, the default sampler will be used. Exception : {0}", Level = EventLevel.Warning)]
-        public void ExceptionInCustomSampler(string ex)
-        {
-            this.WriteEvent(2, ex);
-        }
-
-        [Event(3, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        [Event(1, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
         public void NullActivity(string eventName)
         {
-            this.WriteEvent(3, eventName);
+            this.WriteEvent(1, eventName);
         }
 
         [NonEvent]
         public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
         {
-            if (!this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
-            {
-                return;
-            }
-
-            this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
-        }
-
-        [Event(4, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
-        {
-            this.WriteEvent(4, handlerName, eventName, ex);
-        }
-
-        [Event(5, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullPayload(string handlerName, string eventName)
-        {
-            this.WriteEvent(5, handlerName, eventName);
-        }
-
-        [Event(6, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
-        public void RequestIsFilteredOut(string eventName)
-        {
-            this.WriteEvent(6, eventName);
-        }
-
-        [NonEvent]
-        public void ExceptionInitializingInstrumentation(string instrumentationType, Exception ex)
-        {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.ExceptionInitializingInstrumentation(instrumentationType, ToInvariantString(ex));
+                this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
             }
         }
 
-        [Event(7, Message = "Error initializing instrumentation type {0}. Exception : {1}", Level = EventLevel.Error)]
-        public void ExceptionInitializingInstrumentation(string instrumentationType, string ex)
+        [Event(2, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
         {
-            this.WriteEvent(7, instrumentationType, ex);
-        }
-
-        [Event(8, Message = "Payload is invalid in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
-        public void InvalidPayload(string handlerName, string eventName)
-        {
-            this.WriteEvent(8, handlerName, eventName);
+            this.WriteEvent(2, handlerName, eventName, ex);
         }
 
         /// <summary>

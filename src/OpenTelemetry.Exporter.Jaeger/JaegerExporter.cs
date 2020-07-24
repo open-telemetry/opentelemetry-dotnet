@@ -22,13 +22,11 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Export;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporter : ActivityExporter, IDisposable
     {
-        private readonly SemaphoreSlim exportLock = new SemaphoreSlim(1);
         private bool libraryResourceApplied = false;
         private bool disposedValue = false; // To detect redundant dispose calls
 
@@ -37,47 +35,28 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
         }
 
-        internal IJaegerUdpBatcher JaegerAgentUdpBatcher { get; }
+        internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            await this.exportLock.WaitAsync().ConfigureAwait(false);
-            try
+            if (!this.libraryResourceApplied && activityBatch.Count() > 0)
             {
-                if (!this.libraryResourceApplied && activityBatch.Count() > 0)
-                {
-                    var libraryResource = activityBatch.First().GetResource();
+                var libraryResource = activityBatch.First().GetResource();
 
-                    this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
+                this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
 
-                    this.libraryResourceApplied = true;
-                }
-
-                foreach (var activity in activityBatch)
-                {
-                    // avoid cancelling here: this is no return point: if we reached this point
-                    // and cancellation is requested, it's better if we try to finish sending spans rather than drop it
-                    await this.JaegerAgentUdpBatcher.AppendAsync(activity.ToJaegerSpan(), CancellationToken.None).ConfigureAwait(false);
-                }
-
-                // TODO jaeger status to ExportResult
-                return ExportResult.Success;
+                this.libraryResourceApplied = true;
             }
-            finally
-            {
-                this.exportLock.Release();
-            }
+
+            await this.JaegerAgentUdpBatcher.AppendBatchAsync(activityBatch, cancellationToken).ConfigureAwait(false);
+
+            // TODO jaeger status to ExportResult
+            return ExportResult.Success;
         }
 
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             await this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)
@@ -132,7 +111,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!this.disposedValue)
             {

@@ -51,7 +51,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNull()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
 
             Assert.Null(Activity.Current);
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Active_IsNotNull()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
             var openTracingSpan = new SpanShim(tracer.StartSpan(SpanName));
 
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate_SpanMustBeShim()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
 
             Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Activate()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
             var spanShim = new SpanShim(tracer.StartSpan(SpanName));
 

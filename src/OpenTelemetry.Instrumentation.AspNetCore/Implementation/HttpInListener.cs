@@ -22,6 +22,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Grpc;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -54,13 +55,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
+                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
                 return;
             }
@@ -86,35 +87,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity = newOne;
             }
 
-            // TODO: move setting displayname to inside IsAllDataRequested?
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
-
             activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
+                var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+                activity.DisplayName = path;
+
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host + ":" + request.Host.Port);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SemanticConventions.AttributeHTTPURL, GetUri(request));
+                activity.AddTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPUserAgent, userAgent);
+                    activity.AddTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
             }
         }
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 else
                 {
                     var response = context.Response;
-                    activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
+                    activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
 
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
                     activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SemanticConventions.AttributeHTTPRoute, template);
+                        activity.AddTag(SemanticConventions.AttributeHttpRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         private bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
-            grpcMethod = Dependencies.GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+            grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
             return !string.IsNullOrEmpty(grpcMethod);
         }
 
@@ -240,17 +240,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
             // activity.DisplayName = grpcMethod?.Trim('/');
 
-            activity.AddTag(SemanticConventions.AttributeRPCSystem, "grpc");
+            activity.AddTag(SemanticConventions.AttributeRpcSystem, "grpc");
 
-            if (Dependencies.GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
+            if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
-                activity.AddTag(SemanticConventions.AttributeRPCService, rpcService);
-                activity.AddTag(SemanticConventions.AttributeRPCMethod, rpcMethod);
+                activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
+                activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
             }
 
-            activity.AddTag(SemanticConventions.AttributeNetPeerIP, context.Connection.RemoteIpAddress.ToString());
+            activity.AddTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
-            activity.SetStatus(Dependencies.GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }
 }
