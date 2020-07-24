@@ -13,6 +13,7 @@
     <NoWarn>$(NoWarn),1573,1712</NoWarn>
     <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!--<MinVerVerbosity>detailed</MinVerVerbosity>-->
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,6 +27,8 @@
     <PropertyGroup>
       <RevisionNumber>$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
       <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>
+      <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</Version>
+      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</FileVersion>
     </PropertyGroup>
   </Target>
 
