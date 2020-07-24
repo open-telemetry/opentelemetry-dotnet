@@ -148,11 +148,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Null(spanContextShim);
         }
 
-        [Fact(Skip = "Enable after actual spanshim")]
+        [Fact]
         public void InjectExtract_TextMap_Ok()
         {
-            var tracerMock = new Mock<Trace.Tracer>();
-
             var carrier = new TextMapCarrier();
 
             var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
