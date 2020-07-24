@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetrySdk.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Sdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,60 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;
 using OpenTelemetry.Trace.Samplers;
+using static OpenTelemetry.Metrics.MeterProviderSdk;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
     /// OpenTelemetry helper.
     /// </summary>
-    public class OpenTelemetrySdk
+    public static class Sdk
     {
+        private static TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// Creates MeterProvider with the configuration provided.
+        /// Configuration involves MetricProcessor, Exporter and push internval.
+        /// </summary>
+        /// <param name="configure">Action to configure MeterBuilder.</param>
+        /// <returns>MeterProvider instance, which must be disposed upon shutdown.</returns>
+        public static MeterProvider CreateMeterProvider(Action<MeterBuilder> configure)
+        {
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var meterBuilder = new MeterBuilder();
+            configure(meterBuilder);
+
+            var metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
+            var metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+            var cancellationTokenSource = new CancellationTokenSource();
+            var meterRegistry = new Dictionary<MeterRegistryKey, MeterSdk>();
+
+            // We only have PushMetricController now with only configurable thing being the push interval
+            var controller = new PushMetricController(
+                meterRegistry,
+                metricProcessor,
+                metricExporter,
+                meterBuilder.MetricPushInterval == default(TimeSpan) ? defaultPushInterval : meterBuilder.MetricPushInterval,
+                cancellationTokenSource);
+
+            var meterProviderSdk = new MeterProviderSdk(metricProcessor, meterRegistry, controller, cancellationTokenSource);
+
+            return meterProviderSdk;
+        }
+
         /// <summary>
         /// Creates TracerProvider with the configuration provided.
         /// This sets up listeners for all configured ActivitySources and

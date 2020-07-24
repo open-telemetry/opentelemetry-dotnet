@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.CreateTracerProvider(
+            using (Sdk.CreateTracerProvider(
                 (builder) => builder
                     .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.CreateTracerProvider(
+            using (Sdk.CreateTracerProvider(
             (builder) => builder
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()

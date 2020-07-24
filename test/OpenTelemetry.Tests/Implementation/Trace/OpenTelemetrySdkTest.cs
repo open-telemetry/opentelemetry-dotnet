@@ -29,7 +29,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             using var activitySource = new ActivitySource(nameof(this.ResourceGetsAssociatedWithActivity));
             var expectedResource = Resources.Resources.CreateServiceResource("ServiceNameAbc");
 
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+            using var openTelemetry = Sdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource(nameof(this.ResourceGetsAssociatedWithActivity))
                 .SetResource(expectedResource));
 
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             using var activitySource = new ActivitySource(nameof(this.ResourceGetsAssociatedWithActivity));
             var expectedResource = Resource.Empty;
 
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProvider(
+            using var openTelemetry = Sdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource(nameof(this.ResourceGetsAssociatedWithActivity)));
 
             using (var root = activitySource.StartActivity("root"))
