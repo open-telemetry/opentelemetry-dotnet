@@ -27,29 +27,22 @@ Here are the most commonly used components:
 Here are the [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library):
 
-* [OpenTelemetry.Instrumentation.AspNet](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
-  * ASP.NET [:link:](https://docs.microsoft.com/aspnet/overview)
-* [OpenTelemetry.Instrumentation.AspNetCore](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-  * ASP.NET Core [:link:](https://docs.microsoft.com/en-us/aspnet/core)
-* [OpenTelemetry.Instrumentation.Grpc](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
-  * gRPC for .NET [:link:](https://github.com/grpc/grpc-dotnet)
-* [OpenTelemetry.Instrumentation.Http](./src/OpenTelemetry.Instrumentation.Http/README.md)
-  * System.Net.Http.HttpClient [:link:](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
-  * System.Net.HttpWebRequest [:link:](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
-* [OpenTelemetry.Instrumentation.SqlClient](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
-  * Microsoft.Data.SqlClient [:link:](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
-  * System.Data.SqlClient [:link:](https://www.nuget.org/packages/System.Data.SqlClient)
-* [OpenTelemetry.Instrumentation.StackExchangeRedis](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
-  * StackExchange.Redis [:link:](https://www.nuget.org/packages/StackExchange.Redis)
+* [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
+* [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+* [gRPC](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
+* [HTTP client](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+* [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
 
-* [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
-* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
-* [OpenTelemetry Protocol Exporter](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-* [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
-* [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+* [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+  (OpenTelemetry Protocol)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
