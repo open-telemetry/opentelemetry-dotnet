@@ -3,6 +3,9 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
 
+Automatically instruments the incoming requests to
+[ASP.NET](https://docs.microsoft.com/aspnet/overview).
+
 ## Installation
 
 ```shell

@@ -11,4 +11,5 @@ dotnet add package OpenTelemetry.Instrumentation.Grpc
 
 ## References
 
+* [gRPC for .NET](https://github.com/grpc/grpc-dotnet)
 * [OpenTelemetry Project](https://opentelemetry.io/)
