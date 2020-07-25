@@ -19,7 +19,7 @@ def sanity(pattern, allow_utf8 = False):
                     line = line[3:]
                 if any(b > 127 for b in line):
                     error.append('  Non-ASCII character found at Ln:{} {}'.format(lineno, line))
-                if line[-1:] == b' ':
+                if line[-1:] == b' ' or line[-1:] == b'\t':
                     error.append('  Trailing space found at Ln:{} {}'.format(lineno, line))
                 lineno += 1
             if error:
