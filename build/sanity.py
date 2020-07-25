@@ -34,9 +34,9 @@ def sanity(pattern, allow_utf8 = False):
     return error_count
 
 retval = 0
+retval += sanity('**/*.cmd')
 retval += sanity('**/*.cs', allow_utf8 = True)
 retval += sanity('**/*.csproj', allow_utf8 = True)
-retval += sanity('**/*.cmd')
 retval += sanity('**/*.md')
 retval += sanity('**/*.proj', allow_utf8 = True)
 retval += sanity('**/*.py')
