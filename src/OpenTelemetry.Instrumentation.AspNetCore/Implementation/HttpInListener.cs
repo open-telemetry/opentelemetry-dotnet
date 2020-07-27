@@ -129,15 +129,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+                var response = context.Response;
+                activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
+
                 if (this.TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     this.AddGrpcAttributes(activity, grpcMethod, context);
                 }
                 else
                 {
-                    var response = context.Response;
-                    activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
-
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
                     activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
                 }
