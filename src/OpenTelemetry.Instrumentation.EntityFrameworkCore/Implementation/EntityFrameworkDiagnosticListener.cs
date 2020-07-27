@@ -72,7 +72,6 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
                             return;
                         }
 
-
                         if (activity.IsAllDataRequested)
                         {
                             var connection = this.connectionFetcher.Fetch(command);
