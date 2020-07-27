@@ -240,7 +240,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
             // activity.DisplayName = grpcMethod?.Trim('/');
 
-            activity.AddTag(SemanticConventions.AttributeRpcSystem, "grpc");
+            activity.AddTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
