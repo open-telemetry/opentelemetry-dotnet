@@ -59,6 +59,17 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Contains(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
             Assert.True(!string.IsNullOrEmpty(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
             Assert.Equal(Status.Ok, span.GetStatus());
+
+            // The following are http.* attributes that are also included on the span for the gRPC invocation.
+            Assert.Equal($"localhost:{this.fixture.Port}", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
+            Assert.Equal("POST", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
+            Assert.Equal("/greet.Greeter/SayHello", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
+            Assert.StartsWith("grpc-dotnet", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value);
+
+            // This attribute is added by the gRPC for .NET library. There is a discussion of having the OTel instrumentation remove it.
+            // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/482#issuecomment-655753756
+            Assert.Equal($"0", span.Tags.FirstOrDefault(i => i.Key == "grpc.status_code").Value);
         }
 
         private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
