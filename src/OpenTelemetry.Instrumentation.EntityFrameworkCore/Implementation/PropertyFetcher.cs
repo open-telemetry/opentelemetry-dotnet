@@ -34,14 +34,21 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         {
             if (this.innerFetcher == null)
             {
-                var type = obj.GetType().GetTypeInfo();
-                var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, this.propertyName, StringComparison.InvariantCultureIgnoreCase));
-                if (property == null)
+                try
                 {
-                    property = type.GetProperty(this.propertyName);
-                }
+                    var type = obj.GetType().GetTypeInfo();
+                    var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, this.propertyName, StringComparison.InvariantCultureIgnoreCase));
+                    if (property == null)
+                    {
+                        property = type.GetProperty(this.propertyName);
+                    }
 
-                this.innerFetcher = PropertyFetch.FetcherForProperty(property);
+                    this.innerFetcher = PropertyFetch.FetcherForProperty(property);
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
             }
 
             return this.innerFetcher?.Fetch(obj);
