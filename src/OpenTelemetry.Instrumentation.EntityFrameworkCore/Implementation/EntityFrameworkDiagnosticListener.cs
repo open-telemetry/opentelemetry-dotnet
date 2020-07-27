@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
     {
         internal const string DiagnosticSourceName = "Microsoft.EntityFrameworkCore";
 
-        internal const string ActivitySourceName = "OpenTelemetry.PostgresClient";
+        internal const string ActivitySourceName = "OpenTelemetry.EntityFrameworkCore";
         internal const string ActivityName = ActivitySourceName + ".Execute";
 
         // TODO: get this value from payload
