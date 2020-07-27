@@ -21,7 +21,7 @@ using System.Threading;
 
 namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
 {
-    [EventSource(Name = "OpenTelemetry-Instrumentation-SqlClient")]
+    [EventSource(Name = "OpenTelemetry-Instrumentation-EntityFrameworkCore")]
     internal class EntityFrameworkInstrumentationEventSource : EventSource
     {
         public static EntityFrameworkInstrumentationEventSource Log = new EntityFrameworkInstrumentationEventSource();
