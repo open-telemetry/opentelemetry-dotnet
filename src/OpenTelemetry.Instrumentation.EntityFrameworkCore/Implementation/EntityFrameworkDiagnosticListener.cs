@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         public EntityFrameworkDiagnosticListener(string sourceName, EntityFrameworkInstrumentationOptions options)
             : base(sourceName)
         {
-            this.options = options;
+            this.options = options ?? new EntityFrameworkInstrumentationOptions();
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
