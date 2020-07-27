@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation();
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormatActivity>();
+            var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Inject(It.IsAny<ActivityContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
                 .Callback<ActivityContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation(options => options.TextFormat = textFormat.Object);
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation();
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpDependenciesInstrumentationFiltersOutRequests()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddHttpWebRequestInstrumentation(

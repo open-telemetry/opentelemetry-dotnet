@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,33 +15,34 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNet;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of asp.net core request instrumentation.
+    /// Extension methods to simplify registering of ASP.NET request instrumentation.
     /// </summary>
-    public static class OpenTelemetryBuilderExtensions
+    public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Enables the incoming requests automatic data collection for Asp.Net Core.
+        /// Enables the incoming requests automatic data collection for ASP.NET.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
+        /// <param name="configureAspNetInstrumentationOptions">ASP.NET Request configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddAspNetCoreInstrumentation(
+        public static TracerProviderBuilder AddAspNetInstrumentation(
             this TracerProviderBuilder builder,
-            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
+            Action<AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
-            configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddInstrumentation((activitySource) => new AspNetCoreInstrumentation(activitySource, aspnetCoreOptions));
+            var aspnetOptions = new AspNetInstrumentationOptions();
+            configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
+
+            builder.AddInstrumentation((activitySource) => new AspNetInstrumentation(activitySource, aspnetOptions));
 
             return builder;
         }

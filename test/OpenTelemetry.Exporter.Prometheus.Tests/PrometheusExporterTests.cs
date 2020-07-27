@@ -114,7 +114,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
         private static void CollectMetrics(UngroupedBatcher simpleProcessor, MetricExporter exporter)
         {
-            var meter = MeterFactory.Create(mb =>
+            var meter = Sdk.CreateMeterProvider(mb =>
             {
                 mb.SetMetricProcessor(simpleProcessor);
                 mb.SetMetricExporter(exporter);

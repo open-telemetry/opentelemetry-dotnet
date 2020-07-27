@@ -44,14 +44,14 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
 
         public bool DisposedCalled { get; private set; } = false;
 
-        public override void OnStart(Activity span)
+        public override void OnStart(Activity activity)
         {
-            this.StartAction?.Invoke(span);
+            this.StartAction?.Invoke(activity);
         }
 
-        public override void OnEnd(Activity span)
+        public override void OnEnd(Activity activity)
         {
-            this.EndAction?.Invoke(span);
+            this.EndAction?.Invoke(activity);
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)

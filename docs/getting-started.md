@@ -22,13 +22,14 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console
+dotnet add package OpenTelemetry.Exporter.Console -v 0.4.0-beta.2
 ```
 
 Update the `Program.cs` file with the following code:
 
 ```csharp
 using System.Diagnostics;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 class Program
@@ -38,7 +39,7 @@ class Program
 
     static void Main()
     {
-        using var otel = OpenTelemetrySdk.CreateTracerProvider(b => b
+        using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
             .UseConsoleExporter());
 
@@ -74,7 +75,7 @@ Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/maste
 The activitysource instance is used to start an `Activity` which represent
 [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span).
-`OpenTelemetrySdk.CreateTracerProvider` sets up the OpenTelemetry Sdk, and
+`Sdk.CreateTracerProvider` sets up the OpenTelemetry Sdk, and
 configures it to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`, which
 simply displays it on the console.

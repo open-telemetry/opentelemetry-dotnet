@@ -76,7 +76,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool isFailure = false)
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProvider(b =>
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddSqlClientDependencyInstrumentation(options =>
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.CreateTracerProvider(
+            using (Sdk.CreateTracerProvider(
                     (builder) => builder.AddSqlClientDependencyInstrumentation(
                         (opt) =>
                         {
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.CreateTracerProvider(
+            using (Sdk.CreateTracerProvider(
                 (builder) => builder.AddSqlClientDependencyInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {

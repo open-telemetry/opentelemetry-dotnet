@@ -8,6 +8,8 @@ trigger:
   branches:
     include:
     - master
+  tags:
+    '*'
 
 # no PR builds
 pr: none
