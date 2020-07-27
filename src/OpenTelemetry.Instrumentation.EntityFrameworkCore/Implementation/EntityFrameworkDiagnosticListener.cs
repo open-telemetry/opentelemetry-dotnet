@@ -72,16 +72,14 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
                             return;
                         }
 
-                        var connection = this.connectionFetcher.Fetch(command);
-                        var database = (string)this.databaseFetcher.Fetch(connection);
-
-                        activity.DisplayName = database;
 
                         if (activity.IsAllDataRequested)
                         {
+                            var connection = this.connectionFetcher.Fetch(command);
+                            var database = (string)this.databaseFetcher.Fetch(connection);
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
-                            var commandText = this.commandTextFetcher.Fetch(command);
 
+                            activity.DisplayName = database;
                             activity.AddTag(SemanticConventions.AttributeDbSystem, DatabaseSystemName);
                             activity.AddTag(SemanticConventions.AttributeDbName, database);
 
@@ -105,10 +103,10 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
                             return;
                         }
 
-                        var command = this.commandFetcher.Fetch(payload);
-
                         if (activity.IsAllDataRequested)
                         {
+                            var command = this.commandFetcher.Fetch(payload);
+
                             if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
                             {
                                 var commandText = this.commandTextFetcher.Fetch(command);
