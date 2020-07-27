@@ -40,10 +40,10 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var sqlOptions = new EntityFrameworkInstrumentationOptions();
-            configureOptions?.Invoke(sqlOptions);
+            var options = new EntityFrameworkInstrumentationOptions();
+            configureOptions?.Invoke(options);
 
-            builder.AddInstrumentation((activitySource) => new EntityFrameworkInstrumentation(sqlOptions));
+            builder.AddInstrumentation((activitySource) => new EntityFrameworkInstrumentation(options));
             builder.AddActivitySource(EntityFrameworkDiagnosticListener.ActivitySourceName);
 
             return builder;
