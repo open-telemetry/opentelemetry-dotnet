@@ -90,7 +90,7 @@ repository](https://github.com/open-telemetry/community/blob/master/community-me
 
 ### Thanks to all the people who have contributed
 
-![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)
+[![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/graphs/contributors)
 
 ## Release Schedule
 
