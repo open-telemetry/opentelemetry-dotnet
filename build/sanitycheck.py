@@ -4,7 +4,7 @@ import glob
 import os
 import sys
 
-def sanity(pattern, allow_utf8 = False):
+def sanitycheck(pattern, allow_utf8 = False):
     error_count = 0
 
     for filename in glob.glob(pattern, recursive=True):
@@ -34,12 +34,12 @@ def sanity(pattern, allow_utf8 = False):
     return error_count
 
 retval = 0
-retval += sanity('**/*.cmd')
-retval += sanity('**/*.cs', allow_utf8 = True)
-retval += sanity('**/*.csproj', allow_utf8 = True)
-retval += sanity('**/*.md')
-retval += sanity('**/*.proj', allow_utf8 = True)
-retval += sanity('**/*.py')
-retval += sanity('**/*.xml', allow_utf8 = True)
+retval += sanitycheck('**/*.cmd')
+retval += sanitycheck('**/*.cs', allow_utf8 = True)
+retval += sanitycheck('**/*.csproj', allow_utf8 = True)
+retval += sanitycheck('**/*.md')
+retval += sanitycheck('**/*.proj', allow_utf8 = True)
+retval += sanitycheck('**/*.py')
+retval += sanitycheck('**/*.xml', allow_utf8 = True)
 
 sys.exit(retval)

@@ -1,4 +1,4 @@
-name: sanity
+name: sanitycheck
 
 on:
   pull_request:
@@ -28,4 +28,4 @@ jobs:
       uses: actions/checkout@v2
 
     - name: detect non-ASCII encoding and trailing space
-      run: python3 ./build/sanity.py
+      run: python3 ./build/sanitycheck.py
