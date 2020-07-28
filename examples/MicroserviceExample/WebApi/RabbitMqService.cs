@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using OpenTelemetry.Context.Propagation;
-using RabbitMQ.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Context.Propagation;
+using RabbitMQ.Client;
 
 namespace WebApi
 {
