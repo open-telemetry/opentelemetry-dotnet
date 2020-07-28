@@ -23,6 +23,7 @@ docker-compose up --build
 ```
 
 Once the containers are up, you can:
+
 * [Invoke the Web API](http://localhost:5000/RabbitMq)
 * View your traces with Zipkin [here](http://localhost:9411/zipkin)
 * Manage RabbitMQ [here](http://localhost:15672/)
