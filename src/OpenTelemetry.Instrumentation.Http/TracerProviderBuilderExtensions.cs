@@ -16,7 +16,9 @@
 
 using System;
 using OpenTelemetry.Instrumentation.Http;
+#if NETFRAMEWORK
 using OpenTelemetry.Instrumentation.Http.Implementation;
+#endif
 
 namespace OpenTelemetry.Trace
 {
@@ -25,28 +27,19 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
+#if NETFRAMEWORK
         /// <summary>
         /// Enables HttpClient and HttpWebRequest instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <param name="configureHttpWebRequestInstrumentationOptions">HttpWebRequest configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddHttpInstrumentation(
+        public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            builder.AddHttpClientInstrumentation(configureHttpClientInstrumentationOptions);
-#if NETFRAMEWORK
-            builder.AddHttpWebRequestInstrumentation();
-#endif
-            return builder;
-        }
-
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null,
+            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null)
+#else
         /// <summary>
         /// Enables HttpClient instrumentation.
         /// </summary>
@@ -56,6 +49,7 @@ namespace OpenTelemetry.Trace
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
             Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
+#endif
         {
             if (builder == null)
             {
@@ -63,29 +57,24 @@ namespace OpenTelemetry.Trace
             }
 
             var httpClientOptions = new HttpClientInstrumentationOptions();
+
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
             builder.AddInstrumentation((activitySource) => new HttpClientInstrumentation(activitySource, httpClientOptions));
+
+#if NETFRAMEWORK
+            builder.AddHttpWebRequestInstrumentation(configureHttpWebRequestInstrumentationOptions);
+#endif
             return builder;
         }
 
 #if NETFRAMEWORK
-        /// <summary>
-        /// Enables HttpWebRequest instrumentation.
-        /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureOptions">HttpWebRequest configuration options.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddHttpWebRequestInstrumentation(
+        internal static TracerProviderBuilder AddHttpWebRequestInstrumentation(
             this TracerProviderBuilder builder,
             Action<HttpWebRequestInstrumentationOptions> configureOptions = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
             HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions();
+
             configureOptions?.Invoke(options);
 
             HttpWebRequestActivitySource.Options = options;
