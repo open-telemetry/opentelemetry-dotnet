@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - 9411:9411
+      
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  webapi:
+    build: ./WebApi
+    image: opentelemetry-example-webapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBIT_HOSTNAME=rabbitmq
+      - ZIPKIN_HOSTNAME=zipkin
+    ports:
+      - 5000:5000
+    depends_on:
+      - rabbitmq
+      - zipkin
+
+  workerservice:
+    build: ./WorkerService
+    image: opentelemetry-example-workerservice
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - RABBIT_HOSTNAME=rabbitmq
+      - ZIPKIN_HOSTNAME=zipkin
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - zipkin
