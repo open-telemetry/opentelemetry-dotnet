@@ -154,6 +154,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-7
 		docs\getting-started.md = docs\getting-started.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.EntityFrameworkCore", "src\OpenTelemetry.Instrumentation.EntityFrameworkCore\OpenTelemetry.Instrumentation.EntityFrameworkCore.csproj", "{3426C044-D4BF-4C99-9F77-835BA465189F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests", "test\OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests\OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests.csproj", "{399AA722-4E34-4AB7-BE23-5DEE1435485C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -304,6 +308,14 @@ Global
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3426C044-D4BF-4C99-9F77-835BA465189F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3426C044-D4BF-4C99-9F77-835BA465189F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3426C044-D4BF-4C99-9F77-835BA465189F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3426C044-D4BF-4C99-9F77-835BA465189F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{399AA722-4E34-4AB7-BE23-5DEE1435485C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{399AA722-4E34-4AB7-BE23-5DEE1435485C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{399AA722-4E34-4AB7-BE23-5DEE1435485C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{399AA722-4E34-4AB7-BE23-5DEE1435485C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

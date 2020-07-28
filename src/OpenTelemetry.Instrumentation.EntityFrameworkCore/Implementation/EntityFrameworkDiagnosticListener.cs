@@ -1,4 +1,4 @@
-// <copyright file="EntityFrameworkDiagnosticListener.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="EntityFrameworkDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,9 +31,10 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         // TODO: get this value from payload
         internal const string DatabaseSystemName = "mssql";
 
-        internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-
         private static readonly Version Version = typeof(EntityFrameworkDiagnosticListener).Assembly.GetName().Version;
+#pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before SqlClientActivitySource otherwise null ref exception is thrown.
+        internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+#pragma warning restore SA1202 // Elements should be ordered by access
 
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
@@ -50,6 +51,8 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         {
             this.options = options ?? new EntityFrameworkInstrumentationOptions();
         }
+
+        public override bool SupportsNullActivity => true;
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
