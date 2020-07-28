@@ -84,6 +84,13 @@ Run tests:
 dotnet test
 ```
 
+If you made changes to the Markdown documents (`*.md` files), install the latest
+[`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli) and run:
+
+```sh
+markdownlint .
+```
+
 Check out a new branch, make modifications and push the branch to your fork:
 
 ```sh
