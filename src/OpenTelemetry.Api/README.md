@@ -272,13 +272,14 @@ OpenTelemetry samplers chose not to sample this activity.
     var activity = activitySource.StartActivity(
         "ActivityWithLinks",
         ActivityKind.Server,
-        default(ActivityContext), // this will create Activity without parent, specify parent if you have one
+        default(ActivityContext), // this creates Activity without parent
         initialTags,
         activityLinks);
     ```
-    
-    In case you have a parent and it's remote specify `traceaparent` string instead of the context, 
-    or if you have parent Activity, use `Activity.Current.Context` (check for null!).
+
+    In case you have a parent and it's remote specify `traceaparent` string
+    instead of the default context, or if you have parent Activity,
+    use `Activity.Current.Context` (check for null!).
 
 ### Adding Events
 
