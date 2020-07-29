@@ -20,8 +20,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace.Config
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var processor = builder.Build();
 
             Assert.Single(builder.Processors);
-            Assert.IsType<SimpleActivityProcessor>(builder.Processors.Single());
+            Assert.IsType<BatchingActivityProcessor>(builder.Processors.Single());
             Assert.Same(processor, builder.Processors[0]);
         }
 

@@ -17,7 +17,7 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Test
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            this.tracer = TracerProvider.GetTracer(null);
+            this.tracer = TracerProvider.Default.GetTracer(null);
         }
 
         [Fact]

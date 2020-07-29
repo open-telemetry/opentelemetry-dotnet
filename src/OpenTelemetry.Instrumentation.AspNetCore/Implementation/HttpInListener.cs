@@ -54,19 +54,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (context == null)
             {
-                InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
+                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
             }
 
             if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
             {
-                InstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
                 return;
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormatActivity))
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted from w3ctraceparent header or
@@ -86,35 +86,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity = newOne;
             }
 
-            // TODO: move setting displayname to inside IsAllDataRequested?
-            var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
-
             activity.SetKind(ActivityKind.Server);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
+                var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
+                activity.DisplayName = path;
+
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPHost, request.Host.Host + ":" + request.Host.Port);
+                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeHTTPMethod, request.Method);
+                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SemanticConventions.AttributeHTTPURL, GetUri(request));
+                activity.AddTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SemanticConventions.AttributeHTTPUserAgent, userAgent);
+                    activity.AddTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
             }
         }
@@ -125,12 +124,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
                 {
-                    InstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
                 }
 
                 var response = context.Response;
-                activity.AddTag(SemanticConventions.AttributeHTTPStatusCode, response.StatusCode.ToString());
+                activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
                 activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
@@ -176,7 +175,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SemanticConventions.AttributeHTTPRoute, template);
+                        activity.AddTag(SemanticConventions.AttributeHttpRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?

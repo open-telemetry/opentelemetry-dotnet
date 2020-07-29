@@ -25,8 +25,6 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Tests
@@ -130,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var textFormat = new Mock<ITextFormatActivity>();
+            var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
@@ -139,8 +137,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = OpenTelemetrySdk.EnableOpenTelemetry(
-            (builder) => builder.AddRequestInstrumentation(
+            using (openTelemetry = Sdk.CreateTracerProvider(
+            (builder) => builder.AddAspNetInstrumentation(
                 (options) =>
                 {
                     options.RequestFilter = httpContext =>
@@ -205,7 +203,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             Assert.Equal(
                 "200",
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPStatusCode).Value);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
 
             Assert.Equal(
                 "Ok",
@@ -216,7 +214,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
 
             var expectedUri = new Uri(url);
-            var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPURL).Value;
+            var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value;
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
 
@@ -235,24 +233,24 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 Assert.Equal(
                     expectedUri.Host,
-                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value as string);
+                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
             }
             else
             {
                 Assert.Equal(
                     $"{expectedUri.Host}:{expectedUri.Port}",
-                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPHost).Value as string);
+                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
             }
 
             Assert.Equal(
                 HttpContext.Current.Request.HttpMethod,
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPMethod).Value as string);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value as string);
             Assert.Equal(
                 HttpContext.Current.Request.Path,
                 span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
             Assert.Equal(
                 HttpContext.Current.Request.UserAgent,
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHTTPUserAgent).Value as string);
+                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value as string);
 
             Assert.Equal(expectedResource, span.GetResource());
         }

@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Implementation.Trace
@@ -40,7 +39,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             {
                 ShouldListenTo = _ => true,
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    OpenTelemetrySdk.ComputeActivityDataRequest(options, testSampler),
+                    Sdk.ComputeActivityDataRequest(options, testSampler),
             };
 
             ActivitySource.AddActivityListener(listener);
@@ -100,8 +99,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             public SamplingResult DesiredSamplingResult { get; set; }
 
             public SamplingParameters LatestSamplingParameters { get; private set; }
-
-            public override string Description { get; } = nameof(TestSampler);
 
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {

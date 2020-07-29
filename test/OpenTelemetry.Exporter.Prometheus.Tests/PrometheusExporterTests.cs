@@ -24,7 +24,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 #endif
-using OpenTelemetry.Metrics.Configuration;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
         private static void CollectMetrics(UngroupedBatcher simpleProcessor, MetricExporter exporter)
         {
-            var meter = MeterFactory.Create(mb =>
+            var meter = Sdk.CreateMeterProvider(mb =>
             {
                 mb.SetMetricProcessor(simpleProcessor);
                 mb.SetMetricExporter(exporter);

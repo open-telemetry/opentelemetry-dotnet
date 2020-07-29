@@ -14,17 +14,25 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
+        [Fact]
+        public void JaegerExporter_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseJaegerExporter());
+        }
+
         [Fact]
         public void UseJaegerExporterWithCustomActivityProcessor()
         {
@@ -46,7 +54,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = OpenTelemetrySdk.EnableOpenTelemetry(b => b
+            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
                             .AddActivitySource(ActivitySourceName)
                             .UseJaegerExporter(
                                 null, p => p.AddProcessor((next) => testActivityProcessor)));

@@ -21,8 +21,6 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 using Xunit;
@@ -57,13 +55,13 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using (Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddRedisInstrumentation(connection);
             }))
             {
-                IDatabase db = connection.GetDatabase();
+                var db = connection.GetDatabase();
 
                 bool set = db.StringSet("key1", value, TimeSpan.FromSeconds(60));
 
@@ -104,26 +102,41 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             Assert.Equal(second, third);
         }
 
+        [Fact]
+        public void StackExchangeRedis_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddRedisInstrumentation(null));
+
+            var activityProcessor = new Mock<ActivityProcessor>();
+            Assert.Throws<ArgumentNullException>(() =>
+            Sdk.CreateTracerProvider(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddRedisInstrumentation(null);
+            }));
+        }
+
         private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)
         {
             if (isSet)
             {
                 Assert.Equal("SETEX", activity.DisplayName);
-                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
+                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
             }
             else
             {
                 Assert.Equal("GET", activity.DisplayName);
-                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBStatement).Value);
+                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
             }
 
             Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDBSystem).Value);
+            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
             Assert.Equal("0", activity.Tags.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
 
             if (endPoint is IPEndPoint ipEndPoint)
             {
-                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIP).Value);
+                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 Assert.Equal(ipEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
             }
             else if (endPoint is DnsEndPoint dnsEndPoint)

@@ -1,4 +1,21 @@
 {
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [
+            "src/**.csproj"
+          ],
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "_site/**"
+          ]
+        }
+      ],
+      "dest": "_api"
+    }
+  ],
   "build": {
     "content": [
       {
@@ -12,7 +29,7 @@
       {
         "files": [
           "docs/**.png",
-          "samples/**.cs",
+          "examples/**.cs",
           "src/**.cs"
         ]
       }

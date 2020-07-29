@@ -21,8 +21,7 @@ using System.Threading.Tasks;
 using MassTransit.Testing;
 using Moq;
 using OpenTelemetry.Instrumentation.MassTransit.Implementation;
-using OpenTelemetry.Trace.Configuration;
-using OpenTelemetry.Trace.Export;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.MassTransit.Tests
@@ -33,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
         public async Task MassTransitInstrumentationConsumerAndHandlerTest()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using (Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddMassTransitInstrumentation();
@@ -92,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.MassTransit.Tests
         public async Task MassTransitInstrumentationTestOptions()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (OpenTelemetrySdk.EnableOpenTelemetry(b =>
+            using (Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
                 b.AddMassTransitInstrumentation(

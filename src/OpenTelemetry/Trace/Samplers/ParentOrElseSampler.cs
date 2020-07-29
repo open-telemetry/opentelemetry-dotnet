@@ -38,9 +38,6 @@ namespace OpenTelemetry.Trace.Samplers
         }
 
         /// <inheritdoc />
-        public override string Description { get; }
-
-        /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             var parentContext = samplingParameters.ParentContext;

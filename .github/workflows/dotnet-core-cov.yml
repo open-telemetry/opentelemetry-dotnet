@@ -2,9 +2,13 @@ name: .NET Code Coverage
 
 on:
   push:
-    branches: [ master1 ]
+    branches: [ master ]
+    paths-ignore:
+    - '**.md'
   pull_request:
-    branches: [ master1 ]
+    branches: [ master ]
+    paths-ignore:
+    - '**.md'
 
 jobs:
   build-test-report:
@@ -23,7 +27,7 @@ jobs:
     - name: Setup .NET Core 3.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
+        dotnet-version: 3.1.x
 
     - name: Install dependencies
       run: dotnet restore
@@ -40,7 +44,7 @@ jobs:
     - name: Merging test results
       run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura
 
-    - uses: codecov/codecov-action@v1.0.10
+    - uses: codecov/codecov-action@v1.0.12
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS

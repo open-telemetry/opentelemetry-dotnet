@@ -5,6 +5,7 @@ chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https:/
 [![Build
 Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
+[![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
@@ -23,15 +24,26 @@ Here are the most commonly used components:
 
 * [OpenTelemetry .NET API](./src/OpenTelemetry.Api/README.md)
 * [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
-* [OpenTelemetry .NET Instrumentation](./docs/instrumentation.md)
 
-Here are the exporters:
+Here are the [instrumentation
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library):
 
-* [Console Exporter](./src/OpenTelemetry.Exporter.Console/README.md)
-* [Jaeger Exporter](./src/OpenTelemetry.Exporter.Jaeger/README.md)
-* [OpenTelemetry Protocol Exporter](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-* [Prometheus Exporter](./src/OpenTelemetry.Exporter.Prometheus/README.md)
-* [Zipkin Exporter](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
+* [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+* [gRPC](./src/OpenTelemetry.Instrumentation.Grpc/README.md)
+* [HTTP](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+* [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
+
+Here are the [exporter
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
+
+* [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+* [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
+* [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+  (OpenTelemetry Protocol)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
@@ -60,9 +72,6 @@ Approvers
 * [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
-
-Triagers:
-
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community
@@ -72,12 +81,16 @@ Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mike Goldsmith](https://github.com/MikeGoldsmith), LightStep
+* [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+
+### Thanks to all the people who have contributed
+
+[![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/graphs/contributors)
 
 ## Release Schedule
 

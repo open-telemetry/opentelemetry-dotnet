@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
 
@@ -59,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            Trace.SpanContext spanContext = default;
+            ActivityContext activityContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -80,12 +81,10 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                spanContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
+                activityContext = this.textFormat.Extract(carrierMap, GetCarrierKeyValue);
             }
 
-            // TODO: remove comment after spanshim changes
-            // return !spanContext.IsValid ? null : new SpanContextShim(spanContext);
-            return default;
+            return !activityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(activityContext));
         }
 
         /// <inheritdoc/>

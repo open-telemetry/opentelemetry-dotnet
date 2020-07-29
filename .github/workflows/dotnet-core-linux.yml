@@ -3,6 +3,8 @@ name: .NET Linux
 on:
   pull_request:
     branches: [ master ]
+    paths-ignore:
+    - '**.md'
 
 jobs:
   build-test:

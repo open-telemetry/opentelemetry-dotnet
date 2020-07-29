@@ -22,10 +22,15 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class Sampler
     {
+        protected Sampler()
+        {
+            this.Description = this.GetType().Name;
+        }
+
         /// <summary>
-        /// Gets the sampler description.
+        /// Gets or sets the sampler description.
         /// </summary>
-        public abstract string Description { get; }
+        public string Description { get; protected set; }
 
         /// <summary>
         /// Checks whether activity needs to be created and tracked.

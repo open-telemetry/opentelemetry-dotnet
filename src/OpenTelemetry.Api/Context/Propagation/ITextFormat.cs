@@ -15,7 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Trace;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -33,21 +33,30 @@ namespace OpenTelemetry.Context.Propagation
         ISet<string> Fields { get; }
 
         /// <summary>
-        /// Injects textual representation of span context to transmit over the wire.
+        /// Injects textual representation of activity context to transmit over the wire.
         /// </summary>
         /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
-        /// <param name="spanContext">Span context to transmit over the wire.</param>
+        /// <param name="activityContext">Activity context to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
-        void Inject<T>(SpanContext spanContext, T carrier, Action<T, string, string> setter);
+        void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter);
 
         /// <summary>
-        /// Extracts span context from textual representation.
+        /// Extracts activity context from textual representation.
         /// </summary>
         /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
         /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
-        /// <returns>Span context from it's text representation.</returns>
-        SpanContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+        /// <returns>Activity context from it's text representation.</returns>
+        ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+
+        /// <summary>
+        /// Tests if an activity context has been injected into a carrier.
+        /// </summary>
+        /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
+        /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
+        /// <param name="getter">Function that will return string value of a key with the specified name.</param>
+        /// <returns><see langword="true" /> if the carrier has been injected with an activity context.</returns>
+        bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

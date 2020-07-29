@@ -3,6 +3,8 @@ name: .NET Windows
 on:
   pull_request:
     branches: [ master ]
+    paths-ignore:
+    - '**.md'
 
 jobs:
   build-test:

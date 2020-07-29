@@ -3,8 +3,12 @@ name: Integration Tests
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+    - '**.md'
   pull_request:
     branches: [ master ]
+    paths-ignore:
+    - '**.md'
 
 jobs:
   redis-test:
@@ -19,4 +23,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run sql docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.Dependencies.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build

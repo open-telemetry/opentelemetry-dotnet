@@ -18,7 +18,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Trace.Configuration;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting
@@ -74,8 +74,8 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var host = builder.Build();
 
-            var tracerFactoryBase1 = host.Services.GetRequiredService<OpenTelemetrySdk>();
-            var tracerFactoryBase2 = host.Services.GetRequiredService<OpenTelemetrySdk>();
+            var tracerFactoryBase1 = host.Services.GetRequiredService<TracerProvider>();
+            var tracerFactoryBase2 = host.Services.GetRequiredService<TracerProvider>();
 
             Assert.Same(tracerFactoryBase1, tracerFactoryBase2);
         }
@@ -89,12 +89,12 @@ namespace OpenTelemetry.Extensions.Hosting
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetry((provider, builder) =>
             {
-                builder.AddInstrumentation<TestInstrumentation>((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             });
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<OpenTelemetrySdk>();
+            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
             Assert.NotNull(tracerFactory);
 
             Assert.False(testInstrumentation.Disposed);
@@ -102,6 +102,18 @@ namespace OpenTelemetry.Extensions.Hosting
             serviceProvider.Dispose();
 
             Assert.True(testInstrumentation.Disposed);
+        }
+
+        [Fact]
+        public void AddOpenTelemetry_BadArgs()
+        {
+            ServiceCollection services = null;
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetry());
+            Assert.Throws<ArgumentNullException>(() =>
+            services.AddOpenTelemetry((provider, builder) =>
+            {
+                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+            }));
         }
 
         internal class TestInstrumentation : IDisposable

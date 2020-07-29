@@ -53,7 +53,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SpanContextIsNotNull()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // ISpanContext validation handled in a separate test class
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void FinishSpan()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             shim.Finish();
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void FinishSpanUsingSpecificTimestamp()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             var endTime = DateTimeOffset.UtcNow;
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetOperationName()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // parameter validation
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void GetBaggageItem()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // parameter validation
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Log()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             shim.Log("foo");
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogWithExplicitTimestamp()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             var now = DateTimeOffset.UtcNow;
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFields()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void LogUsingFieldsWithExplicitTimestamp()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagStringValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, "foo"));
@@ -220,7 +220,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagBoolValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
@@ -242,7 +242,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagIntValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, 1));
@@ -257,7 +257,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagDoubleValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagBooleanTagValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
@@ -294,7 +294,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagStringTagValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null, "foo"));
@@ -309,7 +309,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagIntTagValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null, 1));
@@ -324,7 +324,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void SetTagIntOrStringTagValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null, "foo"));

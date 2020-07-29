@@ -3,6 +3,9 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNetCore)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNetCore)
 
+Automatically instruments the incoming requests to [ASP.NET
+Core](https://docs.microsoft.com/en-us/aspnet/core).
+
 ## Installation
 
 ```shell

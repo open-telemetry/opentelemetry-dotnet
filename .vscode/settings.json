@@ -1,9 +1,0 @@
-{
-    "rewrap.wrappingColumn": 79,
-    "files.associations": {
-        ".vsts/*.yml": "azure-pipelines"
-    },
-    "files.exclude": {
-        "**/obj": true
-    },
-}
