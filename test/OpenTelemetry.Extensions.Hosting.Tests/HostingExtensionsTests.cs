@@ -89,7 +89,7 @@ namespace OpenTelemetry.Extensions.Hosting
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetry((provider, builder) =>
             {
-                builder.AddInstrumentation<TestInstrumentation>((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             });
 
             var serviceProvider = services.BuildServiceProvider();
@@ -102,6 +102,18 @@ namespace OpenTelemetry.Extensions.Hosting
             serviceProvider.Dispose();
 
             Assert.True(testInstrumentation.Disposed);
+        }
+
+        [Fact]
+        public void AddOpenTelemetry_BadArgs()
+        {
+            ServiceCollection services = null;
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetry());
+            Assert.Throws<ArgumentNullException>(() =>
+            services.AddOpenTelemetry((provider, builder) =>
+            {
+                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+            }));
         }
 
         internal class TestInstrumentation : IDisposable
