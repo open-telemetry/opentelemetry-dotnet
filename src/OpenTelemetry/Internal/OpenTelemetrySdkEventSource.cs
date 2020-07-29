@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal
@@ -35,7 +33,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.SpanProcessorException(evnt, ToInvariantString(ex));
+                this.SpanProcessorException(evnt, ex.ToInvariantString());
             }
         }
 
@@ -44,7 +42,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.FailedToExtractContext(ToInvariantString(ex));
+                this.FailedToExtractContext(ex.ToInvariantString());
             }
         }
 
@@ -53,7 +51,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.TracestateExtractError(ToInvariantString(ex));
+                this.TracestateExtractError(ex.ToInvariantString());
             }
         }
 
@@ -62,7 +60,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.MetricObserverCallbackError(metricName, ToInvariantString(ex));
+                this.MetricObserverCallbackError(metricName, ex.ToInvariantString());
             }
         }
 
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.MetricControllerException(ToInvariantString(ex));
+                this.MetricControllerException(ex.ToInvariantString());
             }
         }
 
@@ -229,25 +227,6 @@ namespace OpenTelemetry.Internal
         public void SpanExporterTimeout(int spansAttempted)
         {
             this.WriteEvent(23, spansAttempted);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }

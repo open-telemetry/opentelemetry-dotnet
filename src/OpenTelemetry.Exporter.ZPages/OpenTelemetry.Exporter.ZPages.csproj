@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+
+    <Compile Include="..\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
     <Compile Include="..\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
   </ItemGroup>
 

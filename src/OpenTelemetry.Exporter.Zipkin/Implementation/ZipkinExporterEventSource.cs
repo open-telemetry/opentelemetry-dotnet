@@ -16,8 +16,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
@@ -34,7 +33,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.FailedExport(ToInvariantString(ex));
+                this.FailedExport(ex.ToInvariantString());
             }
         }
 
@@ -42,25 +41,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public void FailedExport(string exception)
         {
             this.WriteEvent(1, exception);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }
