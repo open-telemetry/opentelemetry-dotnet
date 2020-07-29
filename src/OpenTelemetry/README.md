@@ -12,8 +12,6 @@
   * [Resource](#resource)
   * [Sampler](#sampler)
 * [Advanced topics](#advanced-topics)
-  * [Building your own Exporter](#building-your-own-exporter)
-  * [Building your own Sampler](#building-your-own-sampler)
 * [References](#references)
 
 ## Installation
@@ -42,7 +40,7 @@ the following.
 ## Getting started
 
 Please follow the tutorial and [get started in 5
-minutes](../../docs/getting-started.md).
+minutes](../../docs/trace/getting-started.md).
 
 ## Configuration
 
@@ -76,78 +74,16 @@ using var otel = Sdk.CreateTracerProvider(b => b
 
 ## Advanced topics
 
-### Building your own Exporter
-
-#### Trace Exporter
-
-* Exporters should inherit from `ActivityExporter` and implement `ExportAsync`
-  and `ShutdownAsync` methods.
-* Depending on user's choice and load on the application `ExportAsync` may get
-  called concurrently with zero or more activities.
-* Exporters should expect to receive only sampled-in ended activities.
-* Exporters must not throw.
-* Exporters should not modify activities they receive (the same activity may be
-  exported again by different exporter).
-
-```csharp
-class MyExporter : ActivityExporter
-{
-    public override Task<ExportResult> ExportAsync(
-        IEnumerable<Activity> batch, CancellationToken cancellationToken)
-    {
-        foreach (var activity in batch)
-        {
-            Console.WriteLine(
-                $"[{activity.StartTimeUtc:o}] " +
-                $"{activity.DisplayName} " +
-                $"{activity.Context.TraceId.ToHexString()} " +
-                $"{activity.Context.SpanId.ToHexString()}"
-            );
-        }
-
-        return Task.FromResult(ExportResult.Success);
-    }
-
-    public override Task ShutdownAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        // flush the data and clean up the resource
-    }
-}
-```
-
-* Users may configure the exporter similarly to other exporters.
-* You should also provide additional methods to simplify configuration
-  similarly to `UseZipkinExporter` extension method.
-
-```csharp
-Sdk.CreateTracerProvider(b => b
-    .AddActivitySource(ActivitySourceName)
-    .UseMyExporter();
-```
-
-### Building your own Sampler
-
-* Samplers should inherit from `Sampler`, and implement `ShouldSample`
-  method.
-* `ShouldSample` should not block or take long time, since it will be called on
-  critical code path.
-
-```csharp
-class MySampler : Sampler
-{
-    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-    {
-        var shouldSample = true;
-
-        return new SamplingResult(shouldSample);
-    }
-}
-```
+* Logs
+  * [Building your own Exporter](../../docs/logs/building-your-own-exporter.md)
+  * [Logging correlation](../../docs/logs/logging-correlation.md)
+* Metrics
+  * [Building your own Exporter](../../docs/metrics/building-your-own-exporter.md)
+* Trace
+  * [Building your own Exporter](../../docs/trace/building-your-own-exporter.md)
+  * [Building your own Instrumentation
+    Library](../../docs/trace/building-your-own-instrumentation-library.md)
+  * [Building your own Sampler](../../docs/trace/building-your-own-sampler.md)
 
 ## References
 
