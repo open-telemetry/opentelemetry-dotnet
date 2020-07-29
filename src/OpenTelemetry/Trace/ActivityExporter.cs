@@ -62,12 +62,23 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ShutdownAsync(CancellationToken cancellationToken);
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Overloaded Implementation of Dispose.
+        /// </summary>
+        /// <param name="disposing">Boolean that indicates whether the method call comes from a Dispose method or from a finalizer.</param>
+        /// <remarks>The disposing parameter should be false when called from a finalizer,
+        /// and true when called from the IDisposable.Dispose method. In other words, it is
+        /// true when deterministically called and false when non-deterministically called.
+        /// </remarks>
         protected virtual void Dispose(bool disposing)
         {
         }

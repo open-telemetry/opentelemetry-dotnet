@@ -208,6 +208,14 @@ namespace OpenTelemetry.Trace
             this.Dispose(true);
         }
 
+        /// <summary>
+        /// Overloaded Implementation of Dispose.
+        /// </summary>
+        /// <param name="isDisposing">Boolean that indicates whether the method call comes from a Dispose method or from a finalizer.</param>
+        /// <remarks>The disposing parameter should be false when called from a finalizer,
+        /// and true when called from the IDisposable.Dispose method. In other words, it is
+        /// true when deterministically called and false when non-deterministically called.
+        /// </remarks>
         protected virtual void Dispose(bool isDisposing)
         {
             try
