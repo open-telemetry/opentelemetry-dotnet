@@ -277,9 +277,18 @@ OpenTelemetry samplers chose not to sample this activity.
         activityLinks);
     ```
 
-    In case you have a parent and it's remote specify `traceaparent` string
-    instead of the default context, or if you have parent Activity,
-    use `Activity.Current.Context` (check for null!).
+    In case activity has parent, pass parent's context:
+
+    ```csharp
+    var parentContext = Activity.Current != null ? Activity.Current.Context : default(ActivityContext);
+
+    var activity = activitySource.StartActivity(
+        "ActivityWithLinks",
+        ActivityKind.Server,
+        parentContext,
+        initialTags,
+        activityLinks);    
+    ```
 
 ### Adding Events
 
