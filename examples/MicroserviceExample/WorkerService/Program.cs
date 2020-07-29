@@ -16,7 +16,9 @@ namespace WorkerService
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<RabbitMqConsumer>();
+                    services.AddHostedService<RabbitMqService>();
+
+                    services.AddSingleton<MessageProcessor>();
 
                     // TODO: Determine if this can be done here in a WorkerService. It does not seem to work... doing this in the RabbitMqConsumer for now.
                     // services.AddOpenTelemetry((builder) =>
