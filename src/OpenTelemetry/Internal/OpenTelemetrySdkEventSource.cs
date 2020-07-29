@@ -35,7 +35,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.SpanProcessorException(evnt, ToInvariantString(ex));
+                this.SpanProcessorException(evnt, ex.ToInvariantString());
             }
         }
 
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.FailedToExtractContext(ToInvariantString(ex));
+                this.FailedToExtractContext(ex.ToInvariantString());
             }
         }
 
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.TracestateExtractError(ToInvariantString(ex));
+                this.TracestateExtractError(ex.ToInvariantString());
             }
         }
 
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.MetricObserverCallbackError(metricName, ToInvariantString(ex));
+                this.MetricObserverCallbackError(metricName, ex.ToInvariantString());
             }
         }
 
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.MetricControllerException(ToInvariantString(ex));
+                this.MetricControllerException(ex.ToInvariantString());
             }
         }
 
