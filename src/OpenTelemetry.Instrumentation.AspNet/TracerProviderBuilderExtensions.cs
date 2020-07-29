@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,30 +15,35 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Instrumentation.Grpc;
-using OpenTelemetry.Instrumentation.Grpc.Implementation;
+using OpenTelemetry.Instrumentation.AspNet;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of dependency instrumentation.
+    /// Extension methods to simplify registering of ASP.NET request instrumentation.
     /// </summary>
-    public static class OpenTelemetryBuilderExtensions
+    public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Enables gRPClient Instrumentation.
+        /// Enables the incoming requests automatic data collection for ASP.NET.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configureAspNetInstrumentationOptions">ASP.NET Request configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddGrpcClientInstrumentation(
-            this TracerProviderBuilder builder)
+        public static TracerProviderBuilder AddAspNetInstrumentation(
+            this TracerProviderBuilder builder,
+            Action<AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource));
+            var aspnetOptions = new AspNetInstrumentationOptions();
+            configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
+
+            builder.AddInstrumentation((activitySource) => new AspNetInstrumentation(activitySource, aspnetOptions));
+
             return builder;
         }
     }

@@ -1,11 +1,11 @@
-name: spellcheck
+name: sanitycheck
 
 on:
   pull_request:
     branches: [ master ]
 
 jobs:
-  build:
+  misspell:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,3 +19,13 @@ jobs:
 
     - name: run misspell
       run: ./bin/misspell -error .
+
+  encoding:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v2
+
+    - name: detect non-ASCII encoding and trailing space
+      run: python3 ./build/sanitycheck.py

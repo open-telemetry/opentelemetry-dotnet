@@ -35,4 +35,3 @@ for an example of how to use the exporter.
 * [OpenTelemetry Project](https://opentelemetry.io/)
 * [OpenTelemetry
   Protocol](https://github.com/open-telemetry/opentelemetry-proto)
-  

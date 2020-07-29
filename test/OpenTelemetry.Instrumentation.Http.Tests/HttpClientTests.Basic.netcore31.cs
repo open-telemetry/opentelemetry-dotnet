@@ -53,7 +53,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddHttpClientInstrumentation());
-            Assert.Throws<ArgumentNullException>(() => builder.AddHttpInstrumentation());
         }
 
         [Fact]

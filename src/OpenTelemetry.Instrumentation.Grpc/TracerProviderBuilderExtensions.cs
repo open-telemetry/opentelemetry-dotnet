@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,37 +15,29 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Instrumentation.SqlClient;
-using OpenTelemetry.Instrumentation.SqlClient.Implementation;
+using OpenTelemetry.Instrumentation.Grpc;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Extension methods to simplify registering of dependency instrumentation.
     /// </summary>
-    public static class OpenTelemetryBuilderExtensions
+    public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Enables SqlClient instrumentation.
+        /// Enables gRPClient Instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddSqlClientDependencyInstrumentation(
-            this TracerProviderBuilder builder,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
+        public static TracerProviderBuilder AddGrpcClientInstrumentation(
+            this TracerProviderBuilder builder)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var sqlOptions = new SqlClientInstrumentationOptions();
-            configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
-
-            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(sqlOptions));
-            builder.AddActivitySource(SqlClientDiagnosticListener.ActivitySourceName);
-
+            builder.AddInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource));
             return builder;
         }
     }
