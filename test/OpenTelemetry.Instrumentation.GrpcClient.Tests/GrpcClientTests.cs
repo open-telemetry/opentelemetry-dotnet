@@ -125,5 +125,12 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
         }
+
+        [Fact]
+        public void Grpc_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddGrpcClientInstrumentation());
+        }
     }
 }

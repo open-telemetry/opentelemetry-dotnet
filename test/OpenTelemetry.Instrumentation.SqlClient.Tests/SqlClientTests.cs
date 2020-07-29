@@ -59,6 +59,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             this.fakeSqlClientDiagnosticSource.Dispose();
         }
 
+        [Fact]
+        public void SqlClient_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddSqlClientInstrumentation());
+        }
+
         [Trait("CategoryName", "SqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
         [InlineData(CommandType.Text, "select 1/1", false)]
@@ -79,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientDependencyInstrumentation(options =>
+                b.AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
@@ -132,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var spanProcessor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProvider(
-                    (builder) => builder.AddSqlClientDependencyInstrumentation(
+                    (builder) => builder.AddSqlClientInstrumentation(
                         (opt) =>
                         {
                             opt.SetTextCommandContent = captureTextCommandContent;
@@ -182,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var spanProcessor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProvider(
-                (builder) => builder.AddSqlClientDependencyInstrumentation()
+                (builder) => builder.AddSqlClientInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
             {
                 var operationId = Guid.NewGuid();

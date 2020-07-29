@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientDependencyInstrumentation(options =>
+                b.AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureText;
                 });
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientDependencyInstrumentation(options =>
+                b.AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientDependencyInstrumentation();
+                b.AddSqlClientInstrumentation();
             });
 
             fakeSqlEventSource.WriteUnknownEventWithNullPayload();
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
             {
                 b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientDependencyInstrumentation();
+                b.AddSqlClientInstrumentation();
             });
 
             fakeSqlEventSource.WriteBeginExecuteEvent("arg1");

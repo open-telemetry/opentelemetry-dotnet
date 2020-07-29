@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddSqlClientDependencyInstrumentation(
+        public static TracerProviderBuilder AddSqlClientInstrumentation(
             this TracerProviderBuilder builder,
             Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
         {
