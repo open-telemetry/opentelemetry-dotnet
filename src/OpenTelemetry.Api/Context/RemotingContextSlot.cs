@@ -32,12 +32,12 @@ namespace OpenTelemetry.Context
         // By default the value added to System.Runtime.Remoting.Messaging.CallContext
         // will be marshalled/unmarshalled across AppDomain boundary. This will cause
         // serious issue if the destination AppDomain doesn't have the corresponding type
-        // to unmarshal data (which is DistributedContext in this case).
+        // to unmarshal data.
         // The worst case is AppDomain crash with ReflectionLoadTypeException.
         //
         // The workaround is to use a well known type that exists in all AppDomains, and
-        // put the actual payload (DistributedContext instance) as a non-public field so
-        // the field is ignored during marshalling.
+        // put the actual payload as a non-public field so the field is ignored during
+        // marshalling.
         private static readonly FieldInfo WrapperField = typeof(BitArray).GetField("_syncRoot", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
