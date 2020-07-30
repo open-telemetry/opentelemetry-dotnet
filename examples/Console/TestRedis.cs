@@ -105,7 +105,8 @@ namespace Examples.Console
                 {
                     { "use", "demo" },
                 };
-                activity.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
+                ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
+                activity.AddEvent(new ActivityEvent("Invoking DoWork", default, eventTags));
             }
         }
     }

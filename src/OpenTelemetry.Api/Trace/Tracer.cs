@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpan(name, kind, parentSpan.Context, attributes, links, startTime);
         }
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.ActivitySource.HasListeners())
             {

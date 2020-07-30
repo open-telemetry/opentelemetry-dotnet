@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.Console
                         foreach (var activityEvent in activity.Events)
                         {
                             System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
-                            foreach (var attribute in activityEvent.Attributes)
+                            foreach (var attribute in activityEvent.Tags)
                             {
                                 System.Console.WriteLine($"\t {attribute.Key} : {attribute.Value}");
                             }

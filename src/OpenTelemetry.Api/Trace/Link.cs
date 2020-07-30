@@ -42,7 +42,8 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Link attributes.</param>
         public Link(in SpanContext spanContext, IDictionary<string, object> attributes)
         {
-            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes);
+            ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
+            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, eventTags);
         }
 
         /// <summary>
@@ -63,7 +64,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return this.ActivityLink.Attributes;
+                return this.ActivityLink.Tags;
             }
         }
 
