@@ -1,4 +1,4 @@
-﻿# OpenTelemetry Benchmarks
+# OpenTelemetry Benchmarks
 
 Use the following example to run Benchmarks from command line:
 (change parameters as necessary)

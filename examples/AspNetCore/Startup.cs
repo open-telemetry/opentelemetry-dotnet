@@ -63,7 +63,7 @@ namespace Examples.AspNetCore
 
             services.AddOpenTelemetry((builder) => builder
                 .AddAspNetCoreInstrumentation()
-                .AddHttpInstrumentation()
+                .AddHttpClientInstrumentation()
                 .UseConsoleExporter());
         }
 
