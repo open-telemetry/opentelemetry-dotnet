@@ -66,8 +66,10 @@ namespace OpenTelemetry.Tests
 
                     throw new Exception("Method '" + name + "' is implemented incorrectly.", e);
                 }
-
-                listener.ClearMessages();
+                finally
+                {
+                    listener.ClearMessages();
+                }
             }
         }
 
