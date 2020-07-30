@@ -72,6 +72,34 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests
             VerifyActivityData(activity);
         }
 
+        [Fact]
+        public void EntityFrameworkContextExceptionEventsInstrumentedTest()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddEntityFrameworkInstrumentation();
+            });
+
+            using (var context = new ItemsContext(this.contextOptions))
+            {
+                try
+                {
+                    context.Database.ExecuteSqlRaw("select * from no_table");
+                }
+                catch
+                {
+                }
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count);
+
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            VerifyActivityData(activity, isError: true);
+        }
+
         public void Dispose() => this.connection.Dispose();
 
         private static DbConnection CreateInMemoryDatabase()
@@ -83,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests
             return connection;
         }
 
-        private static void VerifyActivityData(Activity activity)
+        private static void VerifyActivityData(Activity activity, bool isError = false)
         {
             Assert.Equal("main", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
@@ -95,7 +123,15 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests
             Assert.Equal("main", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbName).Value);
             Assert.Equal(CommandType.Text.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
 
-            Assert.Equal("Ok", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            if (!isError)
+            {
+                Assert.Equal("Ok", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+            else
+            {
+                Assert.Equal("Unknown", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Contains(activity.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey);
+            }
         }
 
         private void Seed()
