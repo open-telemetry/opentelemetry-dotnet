@@ -16,8 +16,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
@@ -34,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.UnknownErrorProcessingEvent(handlerName, eventName, ToInvariantString(ex));
+                this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
             }
         }
 
@@ -60,25 +59,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public void InvalidPayload(string handlerName, string eventName)
         {
             this.WriteEvent(4, handlerName, eventName);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }
