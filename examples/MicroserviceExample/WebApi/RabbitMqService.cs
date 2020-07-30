@@ -22,9 +22,9 @@ namespace WebApi
 
             this.connectionFactory = new ConnectionFactory()
             {
-                HostName = Environment.GetEnvironmentVariable("RABBIT_HOSTNAME") ?? "localhost",
-                UserName = "guest",
-                Password = "guest",
+                HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME") ?? "localhost",
+                UserName = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_USER") ?? "localhost",
+                Password = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_PASS") ?? "localhost",
                 Port = 5672,
                 RequestedConnectionTimeout = TimeSpan.FromMilliseconds(3000),
             };
