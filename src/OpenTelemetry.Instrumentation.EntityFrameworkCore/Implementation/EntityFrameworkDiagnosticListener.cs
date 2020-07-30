@@ -28,6 +28,11 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         internal const string ActivitySourceName = "OpenTelemetry.EntityFrameworkCore";
         internal const string ActivityName = ActivitySourceName + ".Execute";
 
+        internal const string EntityFrameworkCoreCommandCreated = "Microsoft.EntityFrameworkCore.Database.Command.CommandCreated";
+        internal const string EntityFrameworkCoreCommandExecuting = "Microsoft.EntityFrameworkCore.Database.Command.CommandExecuting";
+        internal const string EntityFrameworkCoreCommandExecuted = "Microsoft.EntityFrameworkCore.Database.Command.CommandExecuted";
+        internal const string EntityFrameworkCoreCommandError = "Microsoft.EntityFrameworkCore.Database.Command.CommandError";
+
         // TODO: get this value from payload
         internal const string DatabaseSystemName = "mssql";
 
@@ -58,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         {
             switch (name)
             {
-                case "Microsoft.EntityFrameworkCore.Database.Command.CommandCreated":
+                case EntityFrameworkCoreCommandCreated:
                     {
                         activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
                         if (activity == null)
@@ -92,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
 
                     break;
 
-                case "Microsoft.EntityFrameworkCore.Database.Command.CommandExecuting":
+                case EntityFrameworkCoreCommandExecuting:
                     {
                         if (activity == null)
                         {
@@ -142,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
 
                     break;
 
-                case "Microsoft.EntityFrameworkCore.Database.Command.CommandExecuted":
+                case EntityFrameworkCoreCommandExecuted:
                     {
                         if (activity == null)
                         {
@@ -170,7 +175,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
 
                     break;
 
-                case "Microsoft.EntityFrameworkCore.Database.Command.CommandError":
+                case EntityFrameworkCoreCommandError:
                     {
                         if (activity == null)
                         {
