@@ -9,7 +9,8 @@ trigger:
     include:
     - master
   tags:
-    '*'
+    include:
+    - '*'
 
 # no PR builds
 pr: none

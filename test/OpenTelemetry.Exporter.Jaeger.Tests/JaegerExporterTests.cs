@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
@@ -25,6 +26,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
+        [Fact]
+        public void JaegerExporter_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseJaegerExporter());
+        }
+
         [Fact]
         public void UseJaegerExporterWithCustomActivityProcessor()
         {

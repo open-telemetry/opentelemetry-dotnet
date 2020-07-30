@@ -50,7 +50,7 @@ Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
                         c.AgentPort = 6831;
                     })
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpInstrumentation();
+                    .AddHttpClientInstrumentation();
             });
         }
         protected void Application_End()
