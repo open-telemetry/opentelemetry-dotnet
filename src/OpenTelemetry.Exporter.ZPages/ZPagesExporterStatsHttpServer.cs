@@ -20,7 +20,6 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
