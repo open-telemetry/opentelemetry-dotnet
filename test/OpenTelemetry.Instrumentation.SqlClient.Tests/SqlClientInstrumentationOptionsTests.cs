@@ -14,12 +14,31 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using System.Linq;
+using Moq;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 {
     public class SqlClientInstrumentationOptionsTests
     {
+        static SqlClientInstrumentationOptionsTests()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Theory]
         [InlineData("localhost", "localhost", null, null, null)]
         [InlineData("127.0.0.1", null, "127.0.0.1", null, null)]
@@ -41,6 +60,42 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedServerIpAddress, sqlConnectionDetails.ServerIpAddress);
             Assert.Equal(expectedInstanceName, sqlConnectionDetails.InstanceName);
             Assert.Equal(expectedPort, sqlConnectionDetails.Port);
+        }
+
+        [Theory]
+        [InlineData(true, "localhost", "localhost", null, null, null)]
+        [InlineData(true, "127.0.0.1,1433", null, "127.0.0.1", null, null)]
+        [InlineData(true, "127.0.0.1,1434", null, "127.0.0.1", null, "1434")]
+        [InlineData(true, "127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
+        [InlineData(false, "localhost", "localhost", null, null, null)]
+        public void SqlClientInstrumentationOptions_EnableConnectionLevelAttributes(
+            bool enableConnectionLevelAttributes,
+            string dataSource,
+            string expectedServerHostName,
+            string expectedServerIpAddress,
+            string expectedInstanceName,
+            string expectedPort)
+        {
+            var source = new ActivitySource("sql-client-instrumentation");
+            var activity = source.StartActivity("Test Sql Activity");
+            var options = new SqlClientInstrumentationOptions
+            {
+                EnableConnectionLevelAttributes = enableConnectionLevelAttributes,
+            };
+            options.AddConnectionLevelDetailsToActivity(dataSource, activity);
+
+            if (!enableConnectionLevelAttributes)
+            {
+                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+            }
+            else
+            {
+                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
+            }
+
+            Assert.Equal(expectedServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
+            Assert.Equal(expectedInstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
+            Assert.Equal(expectedPort, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
     }
 }

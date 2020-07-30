@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading;
 
 namespace OpenTelemetry.Internal
 {
@@ -34,7 +32,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.FailedToExtractActivityContext(ToInvariantString(ex));
+                this.FailedToExtractActivityContext(ex.ToInvariantString());
             }
         }
 
@@ -43,7 +41,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.TracestateExtractError(ToInvariantString(ex));
+                this.TracestateExtractError(ex.ToInvariantString());
             }
         }
 
@@ -111,25 +109,6 @@ namespace OpenTelemetry.Internal
         public void FailedToExtractContext(string error)
         {
             this.WriteEvent(10, error);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Examples.AspNet
         {
             this.openTelemetry = Sdk.CreateTracerProvider(
                  (builder) => builder
-                 .AddHttpInstrumentation()
+                 .AddHttpClientInstrumentation()
                  .AddAspNetInstrumentation()
                 .UseJaegerExporter(c =>
                 {
