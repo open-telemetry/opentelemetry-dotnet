@@ -44,7 +44,14 @@ namespace OpenTelemetry.Tests
                     object[] eventArguments = GenerateEventArguments(eventMethod);
                     eventMethod.Invoke(eventSource, eventArguments);
 
-                    EventWrittenEventArgs actualEvent = listener.Messages.First();
+                    EventWrittenEventArgs actualEvent = null;
+
+#if !NET452
+                    actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
+#else
+                    actualEvent = listener.Messages.First();
+#endif
+
                     VerifyEventId(eventMethod, actualEvent);
                     VerifyEventLevel(eventMethod, actualEvent);
 
@@ -59,6 +66,8 @@ namespace OpenTelemetry.Tests
 
                     throw new Exception("Method '" + name + "' is implemented incorrectly.", e);
                 }
+
+                listener.ClearMessages();
             }
         }
 
