@@ -270,9 +270,22 @@ OpenTelemetry samplers chose not to sample this activity.
     activityLinks.Add(new ActivityLink(linkedContext2));
 
     var activity = activitySource.StartActivity(
-        "ActivityName",
+        "ActivityWithLinks",
         ActivityKind.Server,
-        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        default(ActivityContext), // this creates Activity without parent
+        initialTags,
+        activityLinks);
+    ```
+
+    In case activity has parent, pass parent's context:
+
+    ```csharp
+    var parentContext = Activity.Current != null ? Activity.Current.Context : default(ActivityContext);
+
+    var activity = activitySource.StartActivity(
+        "ActivityWithLinks",
+        ActivityKind.Server,
+        parentContext,
         initialTags,
         activityLinks);
     ```
