@@ -30,15 +30,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
         /// </summary>
         /// <param name="activitySource">ActivitySource adapter instance.</param>
-        public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource)
-            : this(activitySource, new AspNetCoreInstrumentationOptions())
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
-        /// </summary>
-        /// <param name="activitySource">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for ASP.NET Core instrumentation.</param>
         public AspNetCoreInstrumentation(ActivitySourceAdapter activitySource, AspNetCoreInstrumentationOptions options)
         {

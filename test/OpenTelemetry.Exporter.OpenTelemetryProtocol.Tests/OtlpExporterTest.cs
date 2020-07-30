@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityExtensionsTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OtlpExporterTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,9 +31,9 @@ using OtlpTrace = Opentelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class ActivityExtensionsTest
+    public class OtlpExporterTest
     {
-        static ActivityExtensionsTest()
+        static OtlpExporterTest()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
@@ -46,6 +46,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
 
             ActivitySource.AddActivityListener(listener);
+        }
+
+        [Fact]
+        public void OtlpExporter_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseOtlpExporter());
         }
 
         [Fact]

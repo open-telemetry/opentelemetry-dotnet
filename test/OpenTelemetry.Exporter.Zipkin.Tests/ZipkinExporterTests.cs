@@ -84,6 +84,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             this.testServer.Dispose();
         }
 
+        [Fact]
+        public void ZipkinExporter_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseZipkinExporter());
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

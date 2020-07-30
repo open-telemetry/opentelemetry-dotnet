@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -43,6 +44,13 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             };
 
             ActivitySource.AddActivityListener(listener);
+        }
+
+        [Fact]
+        public void ZPagesExporter_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.UseZPagesExporter());
         }
 
         [Fact]
@@ -91,6 +99,77 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
 
             Assert.True(startCalled);
             Assert.True(endCalled);
+        }
+
+        [Fact]
+        public void ZPagesExporter_CheckingCustomOptions()
+        {
+            ZPagesExporterOptions options = new ZPagesExporterOptions
+            {
+                RetentionTime = 100_000,
+                Url = "http://localhost:7284/rpcz/",
+            };
+
+            ZPagesExporter exporter = new ZPagesExporter(options);
+
+            Assert.Equal(options.Url, exporter.Options.Url);
+            Assert.Equal(options.RetentionTime, exporter.Options.RetentionTime);
+        }
+
+        [Fact]
+        public void ZPagesExporter_ZPagesProcessor()
+        {
+            const string ActivitySourceName = "zpages.test";
+            Guid requestId = Guid.NewGuid();
+            ZPagesExporterOptions options = new ZPagesExporterOptions
+            {
+                RetentionTime = 100_000,
+                Url = "http://localhost:7284/rpcz/",
+            };
+            ZPagesExporter exporter = new ZPagesExporter(options);
+            var zpagesProcessor = new ZPagesProcessor(exporter);
+
+            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
+                            .AddActivitySource(ActivitySourceName)
+                            .UseZPagesExporter(
+                                processorConfigure: p => p.AddProcessor((next) => zpagesProcessor)));
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity0 = source.StartActivity("Test Zipkin Activity");
+
+            // checking size of dictionaries from ZPagesActivityTracker
+            Assert.Equal(1, ZPagesActivityTracker.ProcessingList.First().Value);
+            Assert.Equal(1, ZPagesActivityTracker.TotalCount.First().Value);
+            Assert.Single(ZPagesActivityTracker.TotalEndedCount);
+            Assert.Single(ZPagesActivityTracker.TotalErrorCount);
+            Assert.Single(ZPagesActivityTracker.TotalLatency);
+
+            var activity1 = source.StartActivity("Test Zipkin Activity");
+
+            // checking size of dictionaries from ZPagesActivityTracker
+            Assert.Equal(2, ZPagesActivityTracker.ProcessingList.First().Value);
+            Assert.Equal(2, ZPagesActivityTracker.TotalCount.First().Value);
+            Assert.Single(ZPagesActivityTracker.TotalEndedCount);
+            Assert.Single(ZPagesActivityTracker.TotalErrorCount);
+            Assert.Single(ZPagesActivityTracker.TotalLatency);
+
+            var activity2 = source.StartActivity("Test Zipkin Activity 2");
+
+            // checking size of dictionaries from ZPagesActivityTracker
+            Assert.Equal(2, ZPagesActivityTracker.ProcessingList.Count);
+            Assert.Equal(2, ZPagesActivityTracker.TotalCount.Count);
+            Assert.Equal(2, ZPagesActivityTracker.TotalEndedCount.Count);
+            Assert.Equal(2, ZPagesActivityTracker.TotalErrorCount.Count);
+            Assert.Equal(2, ZPagesActivityTracker.TotalLatency.Count);
+
+            activity0?.Stop();
+            activity1?.Stop();
+            activity2?.Stop();
+
+            // checking if activities were processed
+            Assert.Equal(0, ZPagesActivityTracker.ProcessingList.First().Value);
+            Assert.Equal(0, ZPagesActivityTracker.ProcessingList.Last().Value);
+            Assert.Empty(ZPagesActivityTracker.ZQueue);
         }
 
         internal static Activity CreateTestActivity(

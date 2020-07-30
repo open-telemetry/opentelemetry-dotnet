@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
-    using System;
-    using System.Diagnostics.Tracing;
-    using System.Globalization;
-    using System.Threading;
-
     [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
     internal class OpenTelemetryProtocolExporterEventSource : EventSource
     {
@@ -31,7 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.FailedToConvertToProtoDefinitionError(ToInvariantString(ex));
+                this.FailedToConvertToProtoDefinitionError(ex.ToInvariantString());
             }
         }
 
@@ -40,7 +39,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.FailedToReachCollector(ToInvariantString(ex));
+                this.FailedToReachCollector(ex.ToInvariantString());
             }
         }
 
@@ -60,25 +59,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void CouldNotTranslateActivity(string className, string methodName)
         {
             this.WriteEvent(3, className, methodName);
-        }
-
-        /// <summary>
-        /// Returns a culture-independent string representation of the given <paramref name="exception"/> object,
-        /// appropriate for diagnostics tracing.
-        /// </summary>
-        private static string ToInvariantString(Exception exception)
-        {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                return exception.ToString();
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
-            }
         }
     }
 }

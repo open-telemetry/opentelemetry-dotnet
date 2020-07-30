@@ -102,6 +102,21 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             Assert.Equal(second, third);
         }
 
+        [Fact]
+        public void StackExchangeRedis_BadArgs()
+        {
+            TracerProviderBuilder builder = null;
+            Assert.Throws<ArgumentNullException>(() => builder.AddRedisInstrumentation(null));
+
+            var activityProcessor = new Mock<ActivityProcessor>();
+            Assert.Throws<ArgumentNullException>(() =>
+            Sdk.CreateTracerProvider(b =>
+            {
+                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
+                b.AddRedisInstrumentation(null);
+            }));
+        }
+
         private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)
         {
             if (isSet)
