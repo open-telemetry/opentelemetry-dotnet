@@ -1,4 +1,4 @@
-﻿// <copyright file="ThreadLocalContextSlot.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AsyncLocalRuntimeContextSlot.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,27 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET452
 using System.Threading;
 
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// The thread local (TLS) implementation of context slot.
+    /// The async local implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class ThreadLocalContextSlot<T> : AbstractContextSlot<T>
+    public class AsyncLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>
     {
-        private readonly ThreadLocal<T> slot;
+        private readonly AsyncLocal<T> slot;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ThreadLocalContextSlot{T}"/> class.
+        /// Initializes a new instance of the <see cref="AsyncLocalRuntimeContextSlot{T}"/> class.
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
-        public ThreadLocalContextSlot(string name)
+        public AsyncLocalRuntimeContextSlot(string name)
             : base(name)
         {
-            this.slot = new ThreadLocal<T>();
+            this.slot = new AsyncLocal<T>();
         }
 
         /// <inheritdoc/>
@@ -49,3 +50,4 @@ namespace OpenTelemetry.Context
         }
     }
 }
+#endif

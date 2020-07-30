@@ -1,4 +1,4 @@
-﻿// <copyright file="RemotingContextSlot.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="RemotingRuntimeContextSlot.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ namespace OpenTelemetry.Context
     /// The .NET Remoting implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class RemotingContextSlot<T> : AbstractContextSlot<T>
+    public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>
     {
         // A special workaround to suppress context propagation cross AppDomains.
         //
@@ -41,10 +41,10 @@ namespace OpenTelemetry.Context
         private static readonly FieldInfo WrapperField = typeof(BitArray).GetField("_syncRoot", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RemotingContextSlot{T}"/> class.
+        /// Initializes a new instance of the <see cref="RemotingRuntimeContextSlot{T}"/> class.
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
-        public RemotingContextSlot(string name)
+        public RemotingRuntimeContextSlot(string name)
             : base(name)
         {
         }

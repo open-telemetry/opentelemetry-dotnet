@@ -1,4 +1,4 @@
-﻿// <copyright file="AsyncLocalContextSlot.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="RuntimeContextSlot.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,40 +14,38 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET452
-using System.Threading;
-
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// The async local implementation of context slot.
+    /// The abstract context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class AsyncLocalContextSlot<T> : AbstractContextSlot<T>
+    public abstract class RuntimeContextSlot<T>
     {
-        private readonly AsyncLocal<T> slot;
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="AsyncLocalContextSlot{T}"/> class.
+        /// Initializes a new instance of the <see cref="RuntimeContextSlot{T}"/> class.
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
-        public AsyncLocalContextSlot(string name)
-            : base(name)
+        public RuntimeContextSlot(string name)
         {
-            this.slot = new AsyncLocal<T>();
+            this.Name = name;
         }
 
-        /// <inheritdoc/>
-        public override T Get()
-        {
-            return this.slot.Value;
-        }
+        /// <summary>
+        /// Gets the name of the context slot.
+        /// </summary>
+        public string Name { get; private set; }
 
-        /// <inheritdoc/>
-        public override void Set(T value)
-        {
-            this.slot.Value = value;
-        }
+        /// <summary>
+        /// Get the value from the context slot.
+        /// </summary>
+        /// <returns>The value retrieved from the context slot.</returns>
+        public abstract T Get();
+
+        /// <summary>
+        /// Set the value to the context slot.
+        /// </summary>
+        /// <param name="value">The value to be set.</param>
+        public abstract void Set(T value);
     }
 }
-#endif

@@ -1,4 +1,4 @@
-﻿// <copyright file="AbstractContextSlot.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ThreadLocalRuntimeContextSlot.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,38 +14,38 @@
 // limitations under the License.
 // </copyright>
 
+using System.Threading;
+
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// The abstract context slot.
+    /// The thread local (TLS) implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public abstract class AbstractContextSlot<T>
+    public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>
     {
+        private readonly ThreadLocal<T> slot;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="AbstractContextSlot{T}"/> class.
+        /// Initializes a new instance of the <see cref="ThreadLocalRuntimeContextSlot{T}"/> class.
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
-        public AbstractContextSlot(string name)
+        public ThreadLocalRuntimeContextSlot(string name)
+            : base(name)
         {
-            this.Name = name;
+            this.slot = new ThreadLocal<T>();
         }
 
-        /// <summary>
-        /// Gets the name of the context slot.
-        /// </summary>
-        public string Name { get; private set; }
+        /// <inheritdoc/>
+        public override T Get()
+        {
+            return this.slot.Value;
+        }
 
-        /// <summary>
-        /// Get the value from the context slot.
-        /// </summary>
-        /// <returns>The value retrieved from the context slot.</returns>
-        public abstract T Get();
-
-        /// <summary>
-        /// Set the value to the context slot.
-        /// </summary>
-        /// <param name="value">The value to be set.</param>
-        public abstract void Set(T value);
+        /// <inheritdoc/>
+        public override void Set(T value)
+        {
+            this.slot.Value = value;
+        }
     }
 }

@@ -31,9 +31,9 @@ namespace OpenTelemetry.Context
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
 #if !NET452
-        public static Type ContextSlotType { get; set; } = typeof(AsyncLocalContextSlot<>);
+        public static Type ContextSlotType { get; set; } = typeof(AsyncLocalRuntimeContextSlot<>);
 #else
-        public static Type ContextSlotType { get; set; } = typeof(RemotingContextSlot<>);
+        public static Type ContextSlotType { get; set; } = typeof(RemotingRuntimeContextSlot<>);
 #endif
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Context
         /// <typeparam name="T">The type of the value.</typeparam>
         public static void SetValue<T>(string name, T value)
         {
-            var slot = (AbstractContextSlot<T>)Slots[name];
+            var slot = (RuntimeContextSlot<T>)Slots[name];
             slot.Set(value);
         }
 
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Context
         /// <returns>The value retrieved from the context slot.</returns>
         public static T GetValue<T>(string name)
         {
-            var slot = (AbstractContextSlot<T>)Slots[name];
+            var slot = (RuntimeContextSlot<T>)Slots[name];
             return slot.Get();
         }
 
