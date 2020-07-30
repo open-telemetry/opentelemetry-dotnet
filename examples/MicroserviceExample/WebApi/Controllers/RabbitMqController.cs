@@ -7,19 +7,19 @@ namespace WebApi.Controllers
     [Route("[controller]")]
     public class RabbitMqController : ControllerBase
     {
-        private readonly ILogger<RabbitMqController> _logger;
-        private readonly IRabbitMqService _rabbitMqService;
+        private readonly ILogger<RabbitMqController> logger;
+        private readonly RabbitMqService rabbitMqService;
 
-        public RabbitMqController(ILogger<RabbitMqController> logger, IRabbitMqService rabbitMqService)
+        public RabbitMqController(ILogger<RabbitMqController> logger, RabbitMqService rabbitMqService)
         {
-            _logger = logger;
-            _rabbitMqService = rabbitMqService;
+            this.logger = logger;
+            this.rabbitMqService = rabbitMqService;
         }
 
         [HttpGet]
         public string Get()
         {
-            return _rabbitMqService.PublishMessage();
+            return this.rabbitMqService.PublishMessage();
         }
     }
 }

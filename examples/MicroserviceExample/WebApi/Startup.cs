@@ -21,15 +21,17 @@ namespace WebApi
         {
             services.AddControllers();
 
-            services.AddSingleton<IRabbitMqService, RabbitMqService>();
+            services.AddSingleton<RabbitMqService>();
+
+            services.AddSingleton<MessageSender>();
 
             services.AddOpenTelemetry((builder) => builder
                 .AddAspNetCoreInstrumentation()
-                .AddActivitySource(nameof(RabbitMqService))
+                .AddActivitySource(nameof(MessageSender))
                 .UseZipkinExporter(b =>
                 {
                     var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                    b.ServiceName = "WebApi";
+                    b.ServiceName = nameof(WebApi);
                     b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
                 }));
         }
