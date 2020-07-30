@@ -23,11 +23,14 @@ namespace WebApi
 
         internal string PublishMessage(IModel channel, string queueName)
         {
+            // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
             string activityName = $"{queueName} send";
             using (var activity = activitySource.StartActivity(activityName))
             {
                 var props = channel.CreateBasicProperties();
 
+                // Inject the ActivityContext into the message headers.
                 TextFormat.Inject(activity.Context, props, InjectTraceContextIntoBasicProperties);
 
                 var body = $"Published message: DateTime.Now = {DateTime.Now}.";

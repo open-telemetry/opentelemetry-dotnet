@@ -41,10 +41,12 @@ namespace WorkerService
 
         public async Task ProcessMessage(BasicDeliverEventArgs ea)
         {
-            var activityName = $"{ea.RoutingKey} receive";
-
+            // Extract the ActivityContext of the upstream parent from the message headers.
             var parentContext = TextFormat.Extract(ea.BasicProperties, ExtractTraceContextFromBasicProperties);
 
+            // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
+            var activityName = $"{ea.RoutingKey} receive";
             using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Server, parentContext))
             {
                 try
