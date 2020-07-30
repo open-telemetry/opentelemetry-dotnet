@@ -287,7 +287,7 @@ OpenTelemetry samplers chose not to sample this activity.
         ActivityKind.Server,
         parentContext,
         initialTags,
-        activityLinks);    
+        activityLinks);
     ```
 
 ### Adding Events
