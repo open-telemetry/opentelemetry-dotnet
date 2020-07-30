@@ -33,9 +33,6 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
         internal const string EntityFrameworkCoreCommandExecuted = "Microsoft.EntityFrameworkCore.Database.Command.CommandExecuted";
         internal const string EntityFrameworkCoreCommandError = "Microsoft.EntityFrameworkCore.Database.Command.CommandError";
 
-        // TODO: get this value from payload
-        internal const string DatabaseSystemName = "mssql";
-
         private static readonly Version Version = typeof(EntityFrameworkDiagnosticListener).Assembly.GetName().Version;
 #pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before SqlClientActivitySource otherwise null ref exception is thrown.
         internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -43,6 +40,9 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
 
         private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
         private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
+        private readonly PropertyFetcher dbContextFetcher = new PropertyFetcher("Context");
+        private readonly PropertyFetcher dbContextDatabaseFetcher = new PropertyFetcher("Database");
+        private readonly PropertyFetcher providerNameFetcher = new PropertyFetcher("ProviderName");
         private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
         private readonly PropertyFetcher databaseFetcher = new PropertyFetcher("Database");
         private readonly PropertyFetcher commandTypeFetcher = new PropertyFetcher("CommandType");
@@ -80,18 +80,50 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Implementation
                             return;
                         }
 
+                        var connection = this.connectionFetcher.Fetch(command);
+                        var database = (string)this.databaseFetcher.Fetch(connection);
+
+                        activity.DisplayName = (string)database;
+
                         if (activity.IsAllDataRequested)
                         {
-                            var connection = this.connectionFetcher.Fetch(command);
-                            var database = (string)this.databaseFetcher.Fetch(connection);
-                            var dataSource = this.dataSourceFetcher.Fetch(connection);
+                            var dbContext = this.dbContextFetcher.Fetch(payload);
+                            var dbContextDatabase = this.dbContextDatabaseFetcher.Fetch(dbContext);
+                            var providerName = (string)this.providerNameFetcher.Fetch(dbContextDatabase);
 
-                            activity.DisplayName = database;
-                            activity.AddTag(SemanticConventions.AttributeDbSystem, DatabaseSystemName);
+                            switch (providerName)
+                            {
+                                case "Microsoft.EntityFrameworkCore.SqlServer":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "mssql");
+                                    break;
+                                case "Microsoft.EntityFrameworkCore.Cosmos":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "cosmosdb");
+                                    break;
+                                case "Microsoft.EntityFrameworkCore.Sqlite":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "sqlite");
+                                    break;
+                                case "MySql.Data.EntityFrameworkCore":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "mysql");
+                                    break;
+                                case "Npgsql.EntityFrameworkCore.PostgreSQL":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "postgresql");
+                                    break;
+                                case "Oracle.EntityFrameworkCore":
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "oracle");
+                                    break;
+                                default:
+                                    activity.AddTag(SemanticConventions.AttributeDbSystem, "other_sql");
+                                    activity.AddTag("ef.provider", providerName);
+                                    break;
+                            }
+
+                            var dataSource = (string)this.dataSourceFetcher.Fetch(connection);
+
                             activity.AddTag(SemanticConventions.AttributeDbName, database);
-
-                            // TODO:
-                            // this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
+                            if (!string.IsNullOrEmpty(dataSource))
+                            {
+                                activity.AddTag(SemanticConventions.AttributePeerService, dataSource);
+                            }
                         }
                     }
 

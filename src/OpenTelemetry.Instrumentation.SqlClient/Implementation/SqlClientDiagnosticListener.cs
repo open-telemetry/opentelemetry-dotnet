@@ -82,9 +82,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         }
 
                         var connection = this.connectionFetcher.Fetch(command);
-                        var database = this.databaseFetcher.Fetch(connection);
+                        var database = (string)this.databaseFetcher.Fetch(connection);
 
-                        activity.DisplayName = (string)database;
+                        activity.DisplayName = database;
 
                         if (activity.IsAllDataRequested)
                         {
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             var commandText = this.commandTextFetcher.Fetch(command);
 
                             activity.AddTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
-                            activity.AddTag(SemanticConventions.AttributeDbName, (string)database);
+                            activity.AddTag(SemanticConventions.AttributeDbName, database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 

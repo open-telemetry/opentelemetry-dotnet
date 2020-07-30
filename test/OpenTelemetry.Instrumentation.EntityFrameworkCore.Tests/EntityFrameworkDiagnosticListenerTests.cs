@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.EntityFrameworkCore.Tests
         {
             Assert.Equal("main", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(EntityFrameworkDiagnosticListener.DatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
+            Assert.Equal("sqlite", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
 
             // TBD: SqlLite not setting the DataSource so it doesn't get set.
             Assert.DoesNotContain(activity.Tags, t => t.Key == SemanticConventions.AttributePeerService);
