@@ -28,5 +28,7 @@
     <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Grpc\OpenTelemetry.Instrumentation.Grpc.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 </Project>
