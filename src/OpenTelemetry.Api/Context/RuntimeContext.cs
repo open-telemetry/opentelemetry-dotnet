@@ -68,9 +68,7 @@ namespace OpenTelemetry.Context
         /// <returns>The slot previously registered, or null if not found.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string name)
         {
-            object slot;
-            Slots.TryGetValue(name, out slot);
-            return (RuntimeContextSlot<T>)slot;
+            return (RuntimeContextSlot<T>)Slots[name];
         }
 
         /*
