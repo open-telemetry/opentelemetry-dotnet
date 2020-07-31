@@ -44,7 +44,7 @@ jobs:
       run: dotnet restore OpenTelemetry.proj
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore -p:Deterministic=true
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true
 
     - name: dotnet test
       run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"
