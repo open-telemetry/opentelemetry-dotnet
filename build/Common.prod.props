@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project=".\Common.props" />
 
   <ItemGroup>
     <PackageReference Include="MinVer" Version="2.3.0" Condition="'$(IntegrationBuild)' != 'true'">
