@@ -11,6 +11,10 @@
     <PackProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
+  </Target>
+
   <Target Name="Build">
     <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" />
   </Target>

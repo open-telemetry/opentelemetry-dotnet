@@ -41,7 +41,7 @@ jobs:
         rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore OpenTelemetry.proj
 
     - name: dotnet build
       run: dotnet build --configuration Release --no-restore -p:Deterministic=true

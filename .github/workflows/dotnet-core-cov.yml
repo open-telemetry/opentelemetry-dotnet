@@ -30,7 +30,7 @@ jobs:
         dotnet-version: 3.1.x
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore OpenTelemetry.proj
 
     - name: dotnet build
       run: dotnet build --configuration Release --no-restore
