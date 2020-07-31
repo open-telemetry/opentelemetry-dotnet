@@ -65,7 +65,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
         /// <typeparam name="T">The type of the underlying value.</typeparam>
-        /// <returns>The slot previously registered, or null if not found.</returns>
+        /// <returns>The slot previously registered.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string name)
         {
             return (RuntimeContextSlot<T>)Slots[name];
