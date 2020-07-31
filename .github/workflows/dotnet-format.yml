@@ -5,6 +5,7 @@ on:
     branches: [ master ]
     paths:
     - '**.cs'
+    - '.editorconfig'
 
 jobs:
   check-format:
