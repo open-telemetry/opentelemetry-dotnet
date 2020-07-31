@@ -94,12 +94,12 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Overloaded Implementation of Dispose.
         /// </summary>
-        /// <param name="isDisposing">Boolean that indicates whether the method call comes from a Dispose method or from a finalizer.</param>
+        /// <param name="disposing">Boolean that indicates whether the method call comes from a Dispose method or from a finalizer.</param>
         /// <remarks>The disposing parameter should be false when called from a finalizer,
         /// and true when called from the IDisposable.Dispose method. In other words, it is
         /// true when deterministically called and false when non-deterministically called.
         /// </remarks>
-        protected virtual void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool disposing)
         {
             try
             {
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Trace
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
             }
 
-            if (isDisposing)
+            if (disposing)
             {
                 if (this.exporter is IDisposable disposableExporter)
                 {
