@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.Http
 {
     /// <summary>
-    /// Dependencies instrumentation.
+    /// HttpClient instrumentation.
     /// </summary>
     internal class HttpClientInstrumentation : IDisposable
     {
@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
         /// <param name="activitySource">ActivitySource adapter instance.</param>
-        /// <param name="options">Configuration options for dependencies instrumentation.</param>
+        /// <param name="options">Configuration options for HTTP client instrumentation.</param>
         public HttpClientInstrumentation(ActivitySourceAdapter activitySource, HttpClientInstrumentationOptions options)
         {
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySource), (activitySource, arg1, arg2) => options?.EventFilter(activitySource, arg1) ?? true);
