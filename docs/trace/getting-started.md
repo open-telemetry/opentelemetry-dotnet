@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output Hello
-cd Hello
+dotnet new console --output getting-started
+cd getting-started
 dotnet run
 ```
 
@@ -18,7 +18,7 @@ Hello World!
 ```
 
 Install the
-[OpenTelemetry.Exporter.Console](../src/OpenTelemetry.Exporter.Console/README.md)
+[OpenTelemetry.Exporter.Console](../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
