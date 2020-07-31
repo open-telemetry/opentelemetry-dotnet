@@ -279,7 +279,7 @@ OpenTelemetry samplers chose not to sample this activity.
 
     Note that `Activity` is created with default `ActivityContext`
     which makes it child of implicit `Activity.Current` or orphan if
-	   there is no `Current`.
+    there is no `Current`.
 
 ### Adding Events
 
