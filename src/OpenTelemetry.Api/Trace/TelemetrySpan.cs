@@ -101,15 +101,55 @@ namespace OpenTelemetry.Trace
         /// Sets a new attribute on the span.
         /// </summary>
         /// <param name="key">Attribute key.</param>
-        /// <param name="value">Attribute value. The value may be an <see cref="IEnumerable"/> of primitive types. An enumeration may be iterated multiple times.</param>
+        /// <param name="value">Attribute value.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
-        /// <remarks>More types for value will be supported in the next release. (bool, int etc.)</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan SetAttribute(string key, string value)
         {
             this.Activity?.AddTag(key, value);
             return this;
         }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, int value)
+        {
+            this.Activity?.AddTag(key, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, bool value)
+        {
+            this.Activity?.AddTag(key, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, double value)
+        {
+            this.Activity?.AddTag(key, value);
+            return this;
+        }
+
+        // TODO: SetAttribute(string key, array of primitives)
 
         /// <summary>
         /// Adds a single Event to the <see cref="TelemetrySpan"/>.

@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Console
                     if (activity.Tags.Count() > 0)
                     {
                         System.Console.WriteLine("Activity Tags");
-                        foreach (var tag in activity.Tags)
+                        foreach (var tag in activity.TagObjects)
                         {
                             System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
                         }

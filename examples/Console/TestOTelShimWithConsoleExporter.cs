@@ -36,7 +36,10 @@ namespace Examples.Console
 
             var tracer = TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer");
             var span = tracer.StartSpan("parent span");
-            span.SetAttribute("my", "value");
+            span.SetAttribute("mystring", "value");
+            span.SetAttribute("myint", 100);
+            span.SetAttribute("mydouble", 101.089);
+            span.SetAttribute("mybool", true);
             span.UpdateName("parent span new name");
 
             var spanChild = tracer.StartSpan("child span");
