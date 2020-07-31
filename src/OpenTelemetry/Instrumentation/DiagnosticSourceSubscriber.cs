@@ -81,9 +81,7 @@ namespace OpenTelemetry.Instrumentation
         {
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)

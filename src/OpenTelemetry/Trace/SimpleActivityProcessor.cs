@@ -92,13 +92,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Overloaded Implementation of Dispose.
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
         /// </summary>
-        /// <param name="disposing">Boolean that indicates whether the method call comes from a Dispose method or from a finalizer.</param>
-        /// <remarks>The disposing parameter should be false when called from a finalizer,
-        /// and true when called from the IDisposable.Dispose method. In other words, it is
-        /// true when deterministically called and false when non-deterministically called.
-        /// </remarks>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             try
