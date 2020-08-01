@@ -19,7 +19,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 {
     /// <summary>
-    /// Options for dependencies instrumentation.
+    /// Options for StackExchange.Redis instrumentation.
     /// </summary>
     public class StackExchangeRedisCallsInstrumentationOptions
     {

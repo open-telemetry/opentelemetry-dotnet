@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.Http
 {
     /// <summary>
-    /// Options for dependencies instrumentation.
+    /// Options for HttpClient instrumentation.
     /// </summary>
     public class HttpClientInstrumentationOptions
     {

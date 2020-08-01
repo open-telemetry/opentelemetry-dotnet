@@ -49,14 +49,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public void AddDependencyInstrumentation_BadArgs()
+        public void AddHttpClientInstrumentation_BadArgs()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddHttpClientInstrumentation());
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
+        public async Task HttpClientInstrumentationInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
             var request = new HttpRequestMessage
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
+        public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
+        public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
+        public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
+        public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpDependenciesInstrumentationFiltersOutRequests()
+        public async void HttpClientInstrumentationFiltersOutRequests()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationFiltersOutRequestsToExporterEndpoints()
+        public async Task HttpClientInstrumentationFiltersOutRequestsToExporterEndpoints()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 

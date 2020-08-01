@@ -1,4 +1,4 @@
-﻿# Create a container for running the OpenTelemetry dependency unit tests.
+﻿# Create a container for running the OpenTelemetry instrumentation unit tests.
 # This should be run from the root of the repo:
 #  opentelemetry>docker build -f test\OpenTelemetry.Instrumentation.SqlClient.Tests\dockerfile .
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
