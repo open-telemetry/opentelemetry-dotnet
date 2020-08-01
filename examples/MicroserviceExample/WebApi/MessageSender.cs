@@ -26,7 +26,7 @@ namespace WebApi
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
             string activityName = $"{queueName} send";
-            using (var activity = activitySource.StartActivity(activityName))
+            using (var activity = activitySource.StartActivity(activityName, ActivityKind.Producer))
             {
                 var props = channel.CreateBasicProperties();
 
