@@ -44,12 +44,6 @@ namespace OpenTelemetry.Instrumentation.Http
         {
             var originalString = requestUri.OriginalString;
 
-            // zipkin
-            if (originalString.Contains(":9411/api/v2/spans"))
-            {
-                return true;
-            }
-
             // applicationinsights
             if (originalString.StartsWith("https://dc.services.visualstudio") ||
                 originalString.StartsWith("https://rt.services.visualstudio") ||

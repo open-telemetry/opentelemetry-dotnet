@@ -44,16 +44,6 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
 
         public bool DisposedCalled { get; private set; } = false;
 
-        public override void OnStart(Activity activity)
-        {
-            this.StartAction?.Invoke(activity);
-        }
-
-        public override void OnEnd(Activity activity)
-        {
-            this.EndAction?.Invoke(activity);
-        }
-
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             this.ShutdownCalled = true;
@@ -77,6 +67,16 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         public void Dispose()
         {
             this.DisposedCalled = true;
+        }
+
+        protected override void OnStartInternal(Activity activity)
+        {
+            this.StartAction?.Invoke(activity);
+        }
+
+        protected override void OnEndInternal(Activity activity)
+        {
+            this.EndAction?.Invoke(activity);
         }
     }
 }

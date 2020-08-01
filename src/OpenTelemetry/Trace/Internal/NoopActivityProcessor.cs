@@ -22,14 +22,6 @@ namespace OpenTelemetry.Trace.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
     {
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        public override void OnEnd(Activity activity)
-        {
-        }
-
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
 #if NET452
@@ -46,6 +38,14 @@ namespace OpenTelemetry.Trace.Internal
 #else
             return Task.CompletedTask;
 #endif
+        }
+
+        protected override void OnStartInternal(Activity activity)
+        {
+        }
+
+        protected override void OnEndInternal(Activity activity)
+        {
         }
     }
 }
