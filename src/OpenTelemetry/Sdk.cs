@@ -17,7 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using OpenTelemetry.Context;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
@@ -32,7 +34,53 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
-        private static TimeSpan defaultPushInterval = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
+
+        private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
+
+        /// <summary>
+        /// Gets or sets a value indicating whether automatic telemetry
+        /// collection in the current context should be suppressed (disabled).
+        /// Default value: False.
+        /// </summary>
+        /// <remarks>
+        /// Set <see cref="SuppressInstrumentation"/> to <see langword="true"/>
+        /// when you want to turn off automatic telemetry collection.
+        /// This is typically used to prevent infinite loops created by
+        /// collection of internal operations, such as exporting traces over HTTP.
+        /// <code>
+        ///    public override async Task&lt;ExportResult&gt; ExportAsync(
+        ///        IEnumerable&lt;Activity&gt; batch,
+        ///        CancellationToken cancellationToken)
+        ///    {
+        ///       var currentSuppressionPolicy = Sdk.SuppressInstrumentation;
+        ///       Sdk.SuppressInstrumentation = true;
+        ///       try
+        ///       {
+        ///          await this.SendBatchActivityAsync(batch, cancellationToken).ConfigureAwait(false);
+        ///          return ExportResult.Success;
+        ///       }
+        ///       finally
+        ///       {
+        ///          Sdk.SuppressInstrumentation = currentSuppressionPolicy;
+        ///       }
+        ///    }
+        /// </code>
+        /// </remarks>
+        public static bool SuppressInstrumentation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return SuppressInstrumentationRuntimeContextSlot.Get();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set
+            {
+                SuppressInstrumentationRuntimeContextSlot.Set(value);
+            }
+        }
 
         /// <summary>
         /// Creates MeterProvider with the configuration provided.
@@ -60,7 +108,7 @@ namespace OpenTelemetry
                 meterRegistry,
                 metricProcessor,
                 metricExporter,
-                meterBuilder.MetricPushInterval == default(TimeSpan) ? defaultPushInterval : meterBuilder.MetricPushInterval,
+                meterBuilder.MetricPushInterval == default(TimeSpan) ? DefaultPushInterval : meterBuilder.MetricPushInterval,
                 cancellationTokenSource);
 
             var meterProviderSdk = new MeterProviderSdk(metricProcessor, meterRegistry, controller, cancellationTokenSource);
