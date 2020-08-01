@@ -55,6 +55,16 @@ namespace WorkerService
 
                     activity.AddTag("message", message);
 
+                    // These tags are added demonstrating the semantic conventions of the messaging specification
+                    // See:
+                    //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes
+                    //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#rabbitmq
+                    string DefaultExchange = string.Empty;
+                    activity.AddTag("messaging.system", "rabbitmq");
+                    activity.AddTag("messaging.destination_kind", "queue");
+                    activity.AddTag("messaging.destination", DefaultExchange);
+                    activity.AddTag("messaging.rabbitmq.routing_key", ea.RoutingKey);
+
                     // Simulate some work
                     await Task.Delay(1000);
                 }

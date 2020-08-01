@@ -33,6 +33,16 @@ namespace WebApi
                 // Inject the ActivityContext into the message headers.
                 TextFormat.Inject(activity.Context, props, InjectTraceContextIntoBasicProperties);
 
+                // These tags are added demonstrating the semantic conventions of the messaging specification
+                // See:
+                //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes
+                //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#rabbitmq
+                string DefaultExchange = string.Empty;
+                activity.AddTag("messaging.system", "rabbitmq");
+                activity.AddTag("messaging.destination_kind", "queue");
+                activity.AddTag("messaging.destination", DefaultExchange);
+                activity.AddTag("messaging.rabbitmq.routing_key", queueName);
+
                 var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 
                 channel.BasicPublish(
