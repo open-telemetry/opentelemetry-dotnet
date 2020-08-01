@@ -26,8 +26,8 @@ namespace WorkerService
             var connectionFactory = new ConnectionFactory()
             {
                 HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME") ?? "localhost",
-                UserName = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_USER") ?? "localhost",
-                Password = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_PASS") ?? "localhost",
+                UserName = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_USER") ?? "guest",
+                Password = Environment.GetEnvironmentVariable("RABBITMQ_DEFAULT_PASS") ?? "guest",
                 Port = 5672,
                 DispatchConsumersAsync = true,
                 RequestedConnectionTimeout = TimeSpan.FromMilliseconds(3000),
