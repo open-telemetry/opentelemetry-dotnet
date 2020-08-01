@@ -28,11 +28,11 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <summary>
         /// Adds value to the running total in a thread safe manner.
         /// </summary>
-        /// <param name="value">Value to be added to running total.</param>
+        /// <param name="value">Value to be aggregated.</param>
         public abstract void Update(T value);
 
         /// <summary>
-        /// Checkpoints the current running sum into checkpoint, and starts counting again.
+        /// Checkpoints the current aggregate data, and resets the state.
         /// </summary>
         public abstract void Checkpoint();
 

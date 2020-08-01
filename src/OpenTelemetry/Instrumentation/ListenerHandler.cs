@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation
         public virtual bool SupportsNullActivity { get; } = false;
 
         /// <summary>
-        /// Method called when an <see cref="Activity"/> from this source is started.
+        /// Method called when this responds to an event with the suffix 'Start'.
         /// </summary>
         /// <param name="activity">The <see cref="Activity"/> to be started.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation
         }
 
         /// <summary>
-        /// Method called when an <see cref="Activity"/> from this source is stopped.
+        /// Method called when this responds to an event with the suffix 'Stop'.
         /// </summary>
         /// <param name="activity">The <see cref="Activity"/> to be stopped.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
