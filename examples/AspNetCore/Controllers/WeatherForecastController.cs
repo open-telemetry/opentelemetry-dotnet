@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using Microsoft.AspNetCore.Mvc;
 using Examples.AspNetCore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Examples.AspNetCore.Controllers
 {
