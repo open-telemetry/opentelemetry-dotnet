@@ -44,36 +44,6 @@ namespace OpenTelemetry.Trace.Internal
             this.processors = processors;
         }
 
-        public override void OnEnd(Activity activity)
-        {
-            foreach (var processor in this.processors)
-            {
-                try
-                {
-                    processor.OnEnd(activity);
-                }
-                catch (Exception e)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", e);
-                }
-            }
-        }
-
-        public override void OnStart(Activity activity)
-        {
-            foreach (var processor in this.processors)
-            {
-                try
-                {
-                    processor.OnStart(activity);
-                }
-                catch (Exception e)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", e);
-                }
-            }
-        }
-
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             var tasks = new List<Task>();
@@ -130,6 +100,41 @@ namespace OpenTelemetry.Trace.Internal
                 }
 
                 this.isDisposed = true;
+            }
+        }
+
+        protected override void OnEndInternal(Activity activity)
+        {
+            foreach (var processor in this.processors)
+            {
+                try
+                {
+                    processor.OnEnd(activity);
+                }
+                catch (Exception e)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnEnd", e);
+                }
+            }
+        }
+
+        protected override void OnStartInternal(Activity activity)
+        {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            foreach (var processor in this.processors)
+            {
+                try
+                {
+                    processor.OnStart(activity);
+                }
+                catch (Exception e)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException("OnStart", e);
+                }
             }
         }
     }

@@ -39,27 +39,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        /// <inheritdoc />
-        public override void OnEnd(Activity activity)
-        {
-            try
-            {
-                // do not await, just start export
-                // it can still throw in synchronous part
-
-                _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-            }
-        }
-
-        /// <inheritdoc />
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             if (!this.stopped)
@@ -119,6 +98,30 @@ namespace OpenTelemetry.Trace
                         OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), e);
                     }
                 }
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnStartInternal(Activity activity)
+        {
+        }
+
+        /// <inheritdoc />
+        protected override void OnEndInternal(Activity activity)
+        {
+            try
+            {
+                // do not await, just start export
+                // it can still throw in synchronous part
+
+                var previous = Sdk.SuppressInstrumentation;
+                Sdk.SuppressInstrumentation = true;
+                _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
+                Sdk.SuppressInstrumentation = previous;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
             }
         }
     }

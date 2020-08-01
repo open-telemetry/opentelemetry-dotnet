@@ -137,52 +137,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        /// <inheritdoc/>
-        public override void OnEnd(Activity activity)
-        {
-            // because of race-condition between checking the size and enqueueing,
-            // we might end up with a bit more activities than maxQueueSize.
-            // Let's just tolerate it to avoid extra synchronization.
-            if (this.currentQueueSize >= this.maxQueueSize)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
-                return;
-            }
-
-            var size = Interlocked.Increment(ref this.currentQueueSize);
-
-            this.exportQueue.Enqueue(activity);
-
-            if (size >= this.maxExportBatchSize)
-            {
-                bool lockTaken = this.flushLock.Wait(0);
-                if (lockTaken)
-                {
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-                        }
-                        finally
-                        {
-                            this.flushLock.Release();
-                        }
-                    });
-                    return;
-                }
-            }
-        }
-
-        /// <inheritdoc/>
         /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override async Task ShutdownAsync(CancellationToken cancellationToken)
         {
@@ -240,6 +194,52 @@ namespace OpenTelemetry.Trace
                 this.flushTimer.Dispose();
                 this.flushLock.Dispose();
                 this.isDisposed = true;
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnStartInternal(Activity activity)
+        {
+        }
+
+        /// <inheritdoc/>
+        protected override void OnEndInternal(Activity activity)
+        {
+            // because of race-condition between checking the size and enqueueing,
+            // we might end up with a bit more activities than maxQueueSize.
+            // Let's just tolerate it to avoid extra synchronization.
+            if (this.currentQueueSize >= this.maxQueueSize)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
+                return;
+            }
+
+            var size = Interlocked.Increment(ref this.currentQueueSize);
+
+            this.exportQueue.Enqueue(activity);
+
+            if (size >= this.maxExportBatchSize)
+            {
+                bool lockTaken = this.flushLock.Wait(0);
+                if (lockTaken)
+                {
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                        }
+                        finally
+                        {
+                            this.flushLock.Release();
+                        }
+                    });
+                    return;
+                }
             }
         }
 
@@ -338,7 +338,11 @@ namespace OpenTelemetry.Trace
                     this.batch.Add(nextActivity);
                 }
 
+                var previous = Sdk.SuppressInstrumentation;
+                Sdk.SuppressInstrumentation = true;
                 var result = await this.exporter.ExportAsync(this.batch, cancellationToken).ConfigureAwait(false);
+                Sdk.SuppressInstrumentation = previous;
+
                 if (result != ExportResult.Success)
                 {
                     OpenTelemetrySdkEventSource.Log.ExporterErrorResult(result);

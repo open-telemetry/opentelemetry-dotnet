@@ -109,12 +109,22 @@ namespace Examples.Console
                 this.next = next;
             }
 
-            public override void OnEnd(Activity activity)
+            public override Task ShutdownAsync(CancellationToken cancellationToken)
+            {
+                return this.next.ShutdownAsync(cancellationToken);
+            }
+
+            public override Task ForceFlushAsync(CancellationToken cancellationToken)
+            {
+                return this.next.ForceFlushAsync(cancellationToken);
+            }
+
+            protected override void OnEndInternal(Activity activity)
             {
                 this.next.OnEnd(activity);
             }
 
-            public override void OnStart(Activity activity)
+            protected override void OnStartInternal(Activity activity)
             {
                 if (activity.IsAllDataRequested)
                 {
@@ -129,16 +139,6 @@ namespace Examples.Console
                 }
 
                 this.next.OnStart(activity);
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ShutdownAsync(cancellationToken);
-            }
-
-            public override Task ForceFlushAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ForceFlushAsync(cancellationToken);
             }
         }
     }

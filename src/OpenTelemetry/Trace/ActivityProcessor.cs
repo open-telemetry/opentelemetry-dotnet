@@ -28,13 +28,29 @@ namespace OpenTelemetry.Trace
         /// Activity start hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnStart(Activity activity);
+        public void OnStart(Activity activity)
+        {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            this.OnStartInternal(activity);
+        }
 
         /// <summary>
         /// Activity end hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnEnd(Activity activity);
+        public void OnEnd(Activity activity)
+        {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            this.OnEndInternal(activity);
+        }
 
         /// <summary>
         /// Shuts down Activity processor asynchronously.
@@ -49,5 +65,9 @@ namespace OpenTelemetry.Trace
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ForceFlushAsync(CancellationToken cancellationToken);
+
+        protected abstract void OnStartInternal(Activity activity);
+
+        protected abstract void OnEndInternal(Activity activity);
     }
 }

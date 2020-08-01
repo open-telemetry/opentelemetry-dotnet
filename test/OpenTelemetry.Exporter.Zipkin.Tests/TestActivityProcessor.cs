@@ -43,16 +43,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
         public bool DisposedCalled { get; private set; } = false;
 
-        public override void OnStart(Activity span)
-        {
-            this.StartAction?.Invoke(span);
-        }
-
-        public override void OnEnd(Activity span)
-        {
-            this.EndAction?.Invoke(span);
-        }
-
         public override Task ShutdownAsync(CancellationToken cancellationToken)
         {
             this.ShutdownCalled = true;
@@ -76,6 +66,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         public void Dispose()
         {
             this.DisposedCalled = true;
+        }
+
+        protected override void OnStartInternal(Activity span)
+        {
+            this.StartAction?.Invoke(span);
+        }
+
+        protected override void OnEndInternal(Activity span)
+        {
+            this.EndAction?.Invoke(span);
         }
     }
 }

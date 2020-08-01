@@ -43,7 +43,25 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        public override void OnStart(Activity activity)
+        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        protected override void OnStartInternal(Activity activity)
         {
             if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity.DisplayName))
             {
@@ -65,7 +83,7 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        public override void OnEnd(Activity activity)
+        protected override void OnEndInternal(Activity activity)
         {
             try
             {
@@ -119,24 +137,6 @@ namespace OpenTelemetry.Exporter.ZPages
                 ZPagesExporterEventSource.Log.FailedProcess(ex);
                 Console.Write("OnEnd", ex);
             }
-        }
-
-        /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            throw new NotImplementedException();
         }
     }
 }
