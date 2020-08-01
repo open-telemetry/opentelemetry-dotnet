@@ -7,7 +7,6 @@ ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
 WORKDIR /repo
 COPY . ./
-RUN ls -la /repo
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests"
 RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
 
