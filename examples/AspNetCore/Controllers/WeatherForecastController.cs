@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using Examples.AspNetCore.Models;
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Trace;
 
 namespace Examples.AspNetCore.Controllers
 {
@@ -19,8 +20,14 @@ namespace Examples.AspNetCore.Controllers
         private static HttpClient httpClient = new HttpClient();
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public IEnumerable<WeatherForecast> Get(int? zipPostalCode = null)
         {
+            using var scope = EnrichmentScope.Begin(a =>
+            {
+                if (zipPostalCode.HasValue)
+                    a.AddTag("user.zip_postal", zipPostalCode.Value.ToString());
+            });
+
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated
             // automatically as child of incoming request.

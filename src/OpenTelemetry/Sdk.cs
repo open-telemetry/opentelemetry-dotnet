@@ -185,7 +185,28 @@ namespace OpenTelemetry
                 },
 
                 // Callback when Activity is stopped.
-                ActivityStopped = activityProcessor.OnEnd,
+                ActivityStopped = (activity) =>
+                {
+                    if (activity.IsAllDataRequested)
+                    {
+                        EnrichmentScope scope = EnrichmentScope.Current;
+                        while (scope != null)
+                        {
+                            try
+                            {
+                                scope.EnrichmentAction?.Invoke(activity);
+                            }
+                            catch
+                            {
+                                // todo: Log
+                            }
+
+                            scope.Dispose();
+                        }
+                    }
+
+                    activityProcessor.OnEnd(activity);
+                },
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                 // or not
