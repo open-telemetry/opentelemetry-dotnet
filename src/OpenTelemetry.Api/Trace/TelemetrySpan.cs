@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan SetAttribute(string key, string value)
         {
-            this.Activity?.AddTag(key, value);
+            this.Activity?.SetTag(key, value);
             return this;
         }
 
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan SetAttribute(string key, int value)
         {
-            this.Activity?.AddTag(key, value);
+            this.Activity?.SetTag(key, value);
             return this;
         }
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan SetAttribute(string key, bool value)
         {
-            this.Activity?.AddTag(key, value);
+            this.Activity?.SetTag(key, value);
             return this;
         }
 
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan SetAttribute(string key, double value)
         {
-            this.Activity?.AddTag(key, value);
+            this.Activity?.SetTag(key, value);
             return this;
         }
 

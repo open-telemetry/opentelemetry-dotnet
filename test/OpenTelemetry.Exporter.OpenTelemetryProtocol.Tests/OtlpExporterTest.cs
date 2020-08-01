@@ -152,7 +152,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             foreach (var kvp in attributes)
             {
-                rootActivity.AddTag(kvp.Key, kvp.Value.ToString());
+                rootActivity.SetTag(kvp.Key, kvp.Value.ToString());
             }
 
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
