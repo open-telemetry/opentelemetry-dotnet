@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Context
@@ -37,12 +38,14 @@ namespace OpenTelemetry.Context
         }
 
         /// <inheritdoc/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override T Get()
         {
             return this.slot.Value;
         }
 
         /// <inheritdoc/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Set(T value)
         {
             this.slot.Value = value;
