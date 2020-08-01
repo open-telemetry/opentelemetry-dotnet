@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Instrumentation.Http
 {
     /// <summary>
-    /// Options for dependencies instrumentation.
+    /// Options for HttpWebRequest instrumentation.
     /// </summary>
     public class HttpWebRequestInstrumentationOptions
     {

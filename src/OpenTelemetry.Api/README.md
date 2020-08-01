@@ -272,23 +272,14 @@ OpenTelemetry samplers chose not to sample this activity.
     var activity = activitySource.StartActivity(
         "ActivityWithLinks",
         ActivityKind.Server,
-        default(ActivityContext), // this creates Activity without parent
+        default(ActivityContext),
         initialTags,
         activityLinks);
     ```
 
-    In case activity has parent, pass parent's context:
-
-    ```csharp
-    var parentContext = Activity.Current != null ? Activity.Current.Context : default(ActivityContext);
-
-    var activity = activitySource.StartActivity(
-        "ActivityWithLinks",
-        ActivityKind.Server,
-        parentContext,
-        initialTags,
-        activityLinks);
-    ```
+    Note that `Activity` above is created with `default(ActivityContext)`
+    parent, which makes it child of implicit `Activity.Current` or orphan if
+    there is no `Current`.
 
 ### Adding Events
 

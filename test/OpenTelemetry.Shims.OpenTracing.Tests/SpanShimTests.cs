@@ -105,7 +105,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // parameter validation
             Assert.Throws<ArgumentNullException>(() => shim.GetBaggageItem(null));
 
-           // TODO - Method not implemented
+            // TODO - Method not implemented
         }
 
         [Fact]
