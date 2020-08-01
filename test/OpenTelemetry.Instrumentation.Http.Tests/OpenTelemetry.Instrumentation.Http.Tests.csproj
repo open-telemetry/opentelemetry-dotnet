@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Unit test project for OpenTelemetry dependency instrumentations</Description>
+    <Description>Unit test project for OpenTelemetry HTTP instrumentations</Description>
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net452;net461</TargetFrameworks>
   </PropertyGroup>

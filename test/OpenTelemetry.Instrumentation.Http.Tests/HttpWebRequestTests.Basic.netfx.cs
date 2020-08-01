@@ -56,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationInjectsHeadersAsync()
+        public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationInjectsHeadersAsync_CustomFormat()
+        public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
             textFormat.Setup(m => m.Inject(It.IsAny<ActivityContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationBacksOffIfAlreadyInstrumented()
+        public async Task HttpWebRequestInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpDependenciesInstrumentationFiltersOutRequests()
+        public async Task HttpWebRequestInstrumentationFiltersOutRequests()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProvider(b =>

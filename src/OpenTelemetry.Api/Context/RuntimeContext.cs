@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Context
 {
@@ -41,7 +42,8 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="name">The name of the context slot.</param>
         /// <typeparam name="T">The type of the underlying value.</typeparam>
-        public static void RegisterSlot<T>(string name)
+        /// <returns>The slot registered.</returns>
+        public static RuntimeContextSlot<T> RegisterSlot<T>(string name)
         {
             lock (Slots)
             {
@@ -52,8 +54,21 @@ namespace OpenTelemetry.Context
 
                 var type = ContextSlotType.MakeGenericType(typeof(T));
                 var ctor = type.GetConstructor(new Type[] { typeof(string) });
-                Slots[name] = ctor.Invoke(new object[] { name });
+                var slot = (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name });
+                Slots[name] = slot;
+                return slot;
             }
+        }
+
+        /// <summary>
+        /// Get a registered slot from a given name.
+        /// </summary>
+        /// <param name="name">The name of the context slot.</param>
+        /// <typeparam name="T">The type of the underlying value.</typeparam>
+        /// <returns>The slot previously registered.</returns>
+        public static RuntimeContextSlot<T> GetSlot<T>(string name)
+        {
+            return (RuntimeContextSlot<T>)Slots[name];
         }
 
         /*
@@ -86,6 +101,7 @@ namespace OpenTelemetry.Context
         /// <param name="name">The name of the context slot.</param>
         /// <param name="value">The value to be set.</param>
         /// <typeparam name="T">The type of the value.</typeparam>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetValue<T>(string name, T value)
         {
             var slot = (RuntimeContextSlot<T>)Slots[name];
@@ -98,6 +114,7 @@ namespace OpenTelemetry.Context
         /// <param name="name">The name of the context slot.</param>
         /// <typeparam name="T">The type of the value.</typeparam>
         /// <returns>The value retrieved from the context slot.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T GetValue<T>(string name)
         {
             var slot = (RuntimeContextSlot<T>)Slots[name];
