@@ -126,7 +126,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Single(batches.First().SpanMessages);
         }
 
-        [Fact]
+        [Fact(Skip = "Temporarily disabling. Need to know how to capture the actual payload.")]
         public async Task JaegerUdpBatcher_IntegrationTest()
         {
             var validJaegerThriftPayload = Convert.FromBase64String(TestPayloadBase64);
