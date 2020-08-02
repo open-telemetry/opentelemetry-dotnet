@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Utils.Messaging;
 
 namespace WebApi.Controllers
 {
@@ -8,18 +9,18 @@ namespace WebApi.Controllers
     public class RabbitMqController : ControllerBase
     {
         private readonly ILogger<RabbitMqController> logger;
-        private readonly RabbitMqService rabbitMqService;
+        private readonly MessageSender messageSender;
 
-        public RabbitMqController(ILogger<RabbitMqController> logger, RabbitMqService rabbitMqService)
+        public RabbitMqController(ILogger<RabbitMqController> logger, MessageSender messageSender)
         {
             this.logger = logger;
-            this.rabbitMqService = rabbitMqService;
+            this.messageSender = messageSender;
         }
 
         [HttpGet]
         public string Get()
         {
-            return this.rabbitMqService.PublishMessage();
+            return this.messageSender.SendMessage();
         }
     }
 }

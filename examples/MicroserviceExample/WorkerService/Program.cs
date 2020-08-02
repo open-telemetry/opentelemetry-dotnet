@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
+using Utils.Messaging;
 
 namespace WorkerService
 {
@@ -16,9 +17,9 @@ namespace WorkerService
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<RabbitMqService>();
+                    services.AddHostedService<Worker>();
 
-                    services.AddSingleton<MessageProcessor>();
+                    services.AddSingleton<MessageReceiver>();
 
                     // TODO: Determine if this can be done here in a WorkerService. It does not seem to work... doing this in the RabbitMqConsumer for now.
                     // services.AddOpenTelemetry((builder) =>

@@ -16,7 +16,9 @@ services:
       - 15672:15672
 
   webapi:
-    build: ./WebApi
+    build:
+      context: .
+      dockerfile: ./WebApi/Dockerfile
     image: opentelemetry-example-webapi
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -31,7 +33,9 @@ services:
       - zipkin
 
   workerservice:
-    build: ./WorkerService
+    build:
+      context: .
+      dockerfile: ./WorkerService/Dockerfile
     image: opentelemetry-example-workerservice
     environment:
       - DOTNET_ENVIRONMENT=Development

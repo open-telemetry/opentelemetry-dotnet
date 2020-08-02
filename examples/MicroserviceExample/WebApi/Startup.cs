@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
+using Utils.Messaging;
 
 namespace WebApi
 {
@@ -20,8 +21,6 @@ namespace WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-
-            services.AddSingleton<RabbitMqService>();
 
             services.AddSingleton<MessageSender>();
 
