@@ -1,13 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="16.4" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+<Project>
   <ItemGroup>
     <SolutionProjects Include="**\*.csproj" />
+
+    <!-- Windows specific projects -->
     <SolutionProjects Remove="examples\AspNet\OpenTelemetry.Exporter.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
     <SolutionProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
     <SolutionProjects Remove="test\OpenTelemetry.Instrumentation.AspNet.Tests\OpenTelemetry.Instrumentation.AspNet.Tests.csproj" Condition="'$(OS)' != 'Windows_NT'" />
 
     <PackProjects Include="src\**\*.csproj" />
+
+    <!-- Windows specific projects -->
     <PackProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 
@@ -18,5 +20,4 @@
   <Target Name="Pack">
     <MSBuild Projects="@(PackProjects)" Targets="Pack" ContinueOnError="ErrorAndStop" />
   </Target>
-
 </Project>
