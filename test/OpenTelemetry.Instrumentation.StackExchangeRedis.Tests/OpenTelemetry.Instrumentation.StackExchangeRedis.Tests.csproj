@@ -25,3 +25,4 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
   </ItemGroup>
  </Project>
+ 
