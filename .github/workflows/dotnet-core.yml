@@ -5,10 +5,6 @@ on:
     branches: [ master ]
     paths-ignore:
     - '**.md'
-  pull_request:
-    branches: [ master ]
-    paths-ignore:
-    - '**.md'
 
 jobs:
   build-test-pack:
@@ -50,9 +46,11 @@ jobs:
       run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"
 
     - name: dotnet pack
+      if: ${{ matrix.os == 'windows-latest' }}
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
 
     - name: Publish Artifacts
+      if: ${{ matrix.os == 'windows-latest' }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.os }}-packages
