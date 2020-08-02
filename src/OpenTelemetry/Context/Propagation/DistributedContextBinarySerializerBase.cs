@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Context.Propagation
 {
+    /// <summary>
+    /// DistributedContextBinarySerializerBase base class.
+    /// </summary>
     public abstract class DistributedContextBinarySerializerBase
     {
         /// <summary>

@@ -34,6 +34,7 @@ namespace OpenTelemetry.Metrics.Export
             this.metrics = new List<Metric>();
         }
 
+        /// <inheritdoc/>
         public override void FinishCollectionCycle(out IEnumerable<Metric> metrics)
         {
             // The batcher is currently stateless. i.e it forgets state after collection is done.
@@ -44,6 +45,7 @@ namespace OpenTelemetry.Metrics.Export
             OpenTelemetrySdkEventSource.Log.BatcherCollectionCompleted(this.metrics.Count);
         }
 
+        /// <inheritdoc/>
         public override void Process(Metric metric)
         {
             this.metrics.Add(metric);

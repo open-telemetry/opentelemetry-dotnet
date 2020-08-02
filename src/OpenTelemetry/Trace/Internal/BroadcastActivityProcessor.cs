@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Internal
             this.Dispose(true);
         }
 
-        protected virtual void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool disposing)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Internal
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
             }
 
-            if (isDisposing && !this.isDisposed)
+            if (disposing && !this.isDisposed)
             {
                 foreach (var processor in this.processors)
                 {
