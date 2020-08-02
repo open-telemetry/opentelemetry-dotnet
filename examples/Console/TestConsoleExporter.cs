@@ -33,8 +33,9 @@ namespace Examples.Console
             using var tracerProvider = Sdk.CreateTracerProvider(
                 (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
-                                                (p) => p.AddProcessor((next) => new MyProcessor(next))));
+                    .UseConsoleExporter(
+                        opt => opt.DisplayAsJson = options.DisplayAsJson,
+                        (p) => p.AddProcessor((next) => new MyProcessor(next))));
 
             // The above line is required only in applications
             // which decide to use Open Telemetry.
