@@ -20,8 +20,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
 	ProjectSection(SolutionItems) = preProject
-		build\Common.props = build\Common.props
 		build\Common.prod.props = build\Common.prod.props
+		build\Common.props = build\Common.props
 		build\Common.test.props = build\Common.test.props
 		build\debug.snk = build\debug.snk
 		build\docfx.cmd = build\docfx.cmd
@@ -164,6 +164,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-7
 		docs\metrics\getting-started.md = docs\metrics\getting-started.md
 		docs\trace\getting-started.md = docs\trace\getting-started.md
 		docs\logs\logging-correlation.md = docs\logs\logging-correlation.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
+	ProjectSection(SolutionItems) = preProject
+		examples\Directory.Build.props = examples\Directory.Build.props
 	EndProjectSection
 EndProject
 Global
@@ -331,6 +336,7 @@ Global
 		{FF3E6E08-E8E4-4523-B526-847CD989279F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{0935622B-9377-4056-8343-AE6ECDC274CF} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{DE9130A4-F30A-49D7-8834-41DE3021218B} = {0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}
+		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
