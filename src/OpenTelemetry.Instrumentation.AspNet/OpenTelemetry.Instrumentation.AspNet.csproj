@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.TelemetryCorrelation" Version="1.0.7" />
+    <PackageReference Include="Microsoft.AspNet.TelemetryCorrelation" Version="$(MicrosoftAspNetTelemetryCorrelationPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>

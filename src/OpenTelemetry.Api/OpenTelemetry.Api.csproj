@@ -14,7 +14,7 @@
   </PropertyGroup>
   -->
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0-preview.8.20365.13" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
   </ItemGroup>
 
 </Project>

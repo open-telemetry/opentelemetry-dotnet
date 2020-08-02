@@ -24,7 +24,6 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Trace;
 using Thrift.Transport;
 
 namespace Benchmarks.Exporter
