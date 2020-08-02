@@ -270,12 +270,16 @@ OpenTelemetry samplers chose not to sample this activity.
     activityLinks.Add(new ActivityLink(linkedContext2));
 
     var activity = activitySource.StartActivity(
-        "ActivityName",
+        "ActivityWithLinks",
         ActivityKind.Server,
-        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        default(ActivityContext),
         initialTags,
         activityLinks);
     ```
+
+    Note that `Activity` above is created with `default(ActivityContext)`
+    parent, which makes it child of implicit `Activity.Current` or orphan if
+    there is no `Current`.
 
 ### Adding Events
 

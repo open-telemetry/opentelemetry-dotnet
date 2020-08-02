@@ -28,6 +28,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
@@ -40,9 +42,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
     <ProjectReference Include="..\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj" />
-  </ItemGroup>
 
-  <ItemGroup>
     <Reference Include="System.Net.Http" />
   </ItemGroup>
+
 </Project>

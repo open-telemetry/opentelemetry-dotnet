@@ -72,7 +72,7 @@ namespace OpenTelemetry.Trace
         {
             var newStatus = Status.Unknown;
 
-            if (httpStatusCode >= 200 && httpStatusCode <= 399)
+            if (httpStatusCode >= 100 && httpStatusCode <= 399)
             {
                 newStatus = Status.Ok;
             }
