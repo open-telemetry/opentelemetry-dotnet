@@ -3,7 +3,7 @@
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="2.3.0" Condition="'$(IntegrationBuild)' != 'true'">
+    <PackageReference Include="MinVer" Version="$(MinVerPkgVer)" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -33,10 +33,6 @@
       <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</FileVersion>
     </PropertyGroup>
   </Target>
-
-  <ItemGroup>
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
-  </ItemGroup>
 
   <PropertyGroup>
     <RepositoryType>git</RepositoryType>
@@ -72,10 +68,4 @@
   <PropertyGroup Condition="'$(Deterministic)'=='true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" Condition="'$(SkipAnalysis)'!='true'">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
 </Project>

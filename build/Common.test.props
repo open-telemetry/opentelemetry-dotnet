@@ -21,20 +21,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.Tests'))">
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" Condition="'$(SkipAnalysis)'!='true'">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
 </Project>
