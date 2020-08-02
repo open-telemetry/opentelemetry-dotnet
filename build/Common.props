@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package versions used in this repository">
+    <!--
+      Please sort alphabetically.
+      Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
+    -->
+    <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
+    <SystemCollectionsImmutablePkgVer>[1.4.0,2.0)</SystemCollectionsImmutablePkgVer>
+    <SystemDiagnosticSourcePkgVer>[5.0.0-preview.7.20364.11]</SystemDiagnosticSourcePkgVer>
+    <SystemReflectionEmitLightweightPkgVer>[4.7.0,5.0)</SystemReflectionEmitLightweightPkgVer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesPkgVer)" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

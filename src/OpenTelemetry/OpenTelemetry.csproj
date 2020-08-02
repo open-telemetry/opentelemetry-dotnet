@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePkgVer)" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
