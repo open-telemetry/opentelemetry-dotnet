@@ -16,7 +16,6 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Reflection;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Implementation
