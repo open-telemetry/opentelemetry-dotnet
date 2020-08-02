@@ -30,9 +30,9 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class ActivitySourceAdapter
     {
-        private Sampler sampler;
-        private ActivityProcessor activityProcessor;
-        private Resource resource;
+        private readonly Sampler sampler;
+        private readonly ActivityProcessor activityProcessor;
+        private readonly Resource resource;
 
         internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
         {
@@ -45,6 +45,10 @@ namespace OpenTelemetry.Trace
         {
         }
 
+        /// <summary>
+        /// Method that starts an <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> to be started.</param>
         public void Start(Activity activity)
         {
             this.RunGetRequestedData(activity);
@@ -55,6 +59,10 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Method that stops an <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
             if (activity.IsAllDataRequested)
