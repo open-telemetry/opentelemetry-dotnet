@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 #endif
         }
 
-        public void Dispose()
+        protected override void Dispose(bool isDisposing)
         {
             this.DisposedCalled = true;
         }

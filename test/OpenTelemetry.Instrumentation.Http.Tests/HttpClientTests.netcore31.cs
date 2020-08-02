@@ -85,7 +85,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(tc.SpanName, span.DisplayName);

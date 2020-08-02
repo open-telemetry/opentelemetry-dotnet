@@ -96,21 +96,9 @@ namespace OpenTelemetry.Trace.Internal
             return Task.WhenAll(tasks);
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            try
-            {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-            }
+            base.Dispose(disposing);
 
             if (disposing && !this.isDisposed)
             {

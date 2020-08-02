@@ -133,8 +133,8 @@ namespace OpenTelemetry.Exporter.ZPages
             throw new NotImplementedException();
         }
 
-        /// <inheritdoc />
-        public void Dispose()
+        /// <inheritdoc/>
+        protected override void Dispose(bool isDisposing)
         {
             throw new NotImplementedException();
         }
