@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project=".\Common.props" />
+
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/debug.snk</AssemblyOriginatorKeyFile>
@@ -13,11 +15,11 @@
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
- 
+
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
   </ItemGroup>
