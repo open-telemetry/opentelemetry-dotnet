@@ -209,7 +209,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var traceId = new Int128(link.Context.TraceId);
             var spanId = new Int128(link.Context.SpanId);
 
-            return new JaegerSpanRef(JaegerSpanRefType.CHILD_OF, traceId.Low, traceId.High, spanId.Low);
+            // Assume FOLLOWS_FROM for links, mirrored from Java: https://github.com/open-telemetry/opentelemetry-java/pull/481#discussion_r312577862
+            var refType = JaegerSpanRefType.FOLLOWS_FROM;
+
+            return new JaegerSpanRef(refType, traceId.Low, traceId.High, spanId.Low);
         }
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
