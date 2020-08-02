@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project>
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="2.3.0" Condition="'$(IntegrationBuild)' != 'true'">
+    <PackageReference Include="MinVer" Version="$(MinVerPkgVer)" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -17,13 +16,6 @@
     <!--<MinVerVerbosity>detailed</MinVerVerbosity>-->
   </PropertyGroup>
 
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
-    <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-
   <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!=''">
     <PropertyGroup>
       <RevisionNumber>0</RevisionNumber>
@@ -34,23 +26,19 @@
     </PropertyGroup>
   </Target>
 
-  <ItemGroup>
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
-  </ItemGroup>
-
   <PropertyGroup>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/open-telemetry/opentelemetry-dotnet</RepositoryUrl>
-    <PackageTags>Tracing;OpenTelemetry;Management;Monitoring</PackageTags>
+    <PackageTags>Observability;OpenTelemetry;Monitoring;Telemetry;Tracing</PackageTags>
     <PackageIcon>opentelemetry-icon-color.png</PackageIcon>
-    <PackageProjectUrl>https://OpenTelemetry.io</PackageProjectUrl>
+    <PackageProjectUrl>https://opentelemetry.io</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Authors>OpenTelemetry authors</Authors>
+    <Authors>OpenTelemetry Authors</Authors>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\"/>
+    <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <PropertyGroup Label="SourceLink">
@@ -60,22 +48,11 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
   <ItemGroup Condition="'$(Deterministic)'=='true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Deterministic)'=='true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" Condition="'$(SkipAnalysis)'!='true'">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
 </Project>

@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
-    <PackageTags>$(PackageTags);distributed-tracing</PackageTags>
+    <PackageTags>$(PackageTags);OTLP</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="Google.Protobuf" Version="3.6.1" />
-    <PackageReference Include="Grpc" Version="2.23.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.25.0" PrivateAssets="all" />
+    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
+    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
+    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
 
     <Compile Include="..\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
   </ItemGroup>

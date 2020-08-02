@@ -1,6 +1,15 @@
 <Project>
   <PropertyGroup>
     <LangVersion>8.0</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
+    <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <PropertyGroup Label="Package versions used in this repository">
@@ -8,13 +17,35 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
+    <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
+    <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
+    <GrpcPkgVer>[2.23.0,3.0)</GrpcPkgVer>
+    <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
+    <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
+    <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
+    <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
+    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,5.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
+    <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
+    <NewtonsoftJsonPkgVer>[12.0.2,13.0)</NewtonsoftJsonPkgVer>
+    <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
+    <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
+    <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>[1.4.0,2.0)</SystemCollectionsImmutablePkgVer>
     <SystemDiagnosticSourcePkgVer>[5.0.0-preview.7.20364.11]</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>[4.7.0,5.0)</SystemReflectionEmitLightweightPkgVer>
+    <SystemTextJsonPkgVer>[4.7.0,5.0)</SystemTextJsonPkgVer>
+    <SystemThreadingTasksExtensionsPkgVer>[4.5.3,5.0)</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesPkgVer)" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

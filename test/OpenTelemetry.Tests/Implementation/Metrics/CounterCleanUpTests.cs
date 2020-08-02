@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
