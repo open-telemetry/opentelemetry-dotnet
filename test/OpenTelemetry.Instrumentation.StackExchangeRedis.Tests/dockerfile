@@ -1,23 +1,16 @@
-﻿# Create a container for running the OpenTelemetry redis unit tests.
+﻿# Create a container for running the OpenTelemetry Redis integration tests.
 # This should be run from the root of the repo:
-#  opentelemetry>docker build -f test\OpenTelemetry.Instrumentation.StackExchangeRedis.Tests\dockerfile .
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS base
+# docker build --file test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/dockerfile .
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
-WORKDIR /src
-COPY ["NuGet.config", ""] # Needed for the .NET 5 preview packages. Won't be needed in the future.
-COPY ["test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj", "test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/"]
-COPY ["src/OpenTelemetry.Instrumentation.StackExchangeRedis/OpenTelemetry.Instrumentation.StackExchangeRedis.csproj", "src/OpenTelemetry.Instrumentation.StackExchangeRedis/"]
-COPY ["src/OpenTelemetry/OpenTelemetry.csproj", "src/OpenTelemetry/"]
-COPY ["src/OpenTelemetry.Api/OpenTelemetry.Api.csproj", "src/OpenTelemetry.Api/"]
-RUN dotnet restore "test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" --configfile "NuGet.config"
-COPY . .
-WORKDIR "/src/test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests"
-RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /build -p:IntegrationBuild=true --no-restore
+WORKDIR /repo
+COPY . ./
+WORKDIR "/repo/test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests"
+RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
 
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS final
 WORKDIR /test
-COPY --from=build /build .
+COPY --from=build /drop .
 ENTRYPOINT ["dotnet", "test", "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.dll"]
