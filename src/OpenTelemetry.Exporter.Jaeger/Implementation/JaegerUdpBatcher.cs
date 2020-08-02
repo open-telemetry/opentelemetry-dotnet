@@ -222,7 +222,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        protected virtual void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool disposing)
         {
             try
             {
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
             }
 
-            if (isDisposing && !this.isDisposed)
+            if (disposing && !this.isDisposed)
             {
                 this.maxFlushIntervalTimer.Dispose();
                 this.thriftClient.Dispose();
