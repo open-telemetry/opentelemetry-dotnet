@@ -117,7 +117,8 @@ namespace Examples.Console
                 this.cts = new CancellationTokenSource();
                 var cancellationToken = this.cts.Token;
 
-                this.requestTask = Task.Run(async () =>
+                this.requestTask = Task.Run(
+                    async () =>
                     {
                         using var source = new ActivitySource("Samples.SampleClient");
                         using var client = new HttpClient();

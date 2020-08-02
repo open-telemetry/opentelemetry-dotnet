@@ -29,16 +29,19 @@ namespace OpenTelemetry.Metrics.Aggregators
         private DoubleSummary checkPoint = new DoubleSummary();
         private object updateLock = new object();
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             this.checkPoint = Interlocked.Exchange(ref this.summary, new DoubleSummary());
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.DoubleSummary;
         }
 
+        /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
             return new DoubleSummaryData
@@ -51,6 +54,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             };
         }
 
+        /// <inheritdoc/>
         public override void Update(double value)
         {
             lock (this.updateLock)

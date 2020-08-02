@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;

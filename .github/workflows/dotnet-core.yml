@@ -5,49 +5,30 @@ on:
     branches: [ master ]
     paths-ignore:
     - '**.md'
-  pull_request:
-    branches: [ master ]
-    paths-ignore:
-    - '**.md'
 
 jobs:
-  build-test-pack:
+  build-pack:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Setup .NET Core 2.1
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.1.807
-
     - name: Setup .NET Core 3.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
-    
-    # For linux, we have to apply a workaround to enable both dotnet versions at same time
-    - name: .net SxS
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
+        dotnet-version: 3.1.x
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: dotnet build
       run: dotnet build --configuration Release --no-restore -p:Deterministic=true
-
-    - name: dotnet test
-      run: dotnet test -p:CollectCoverage=false --configuration Release --no-build --logger:"console;verbosity=detailed"
 
     - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build

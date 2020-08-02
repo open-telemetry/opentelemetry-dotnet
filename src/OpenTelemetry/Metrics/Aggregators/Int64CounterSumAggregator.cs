@@ -28,12 +28,14 @@ namespace OpenTelemetry.Metrics.Aggregators
         private long sum;
         private long checkPoint;
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             // checkpoints the current running sum into checkpoint, and starts counting again.
             this.checkPoint = Interlocked.Exchange(ref this.sum, 0);
         }
 
+        /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
             return new Int64SumData
@@ -43,11 +45,13 @@ namespace OpenTelemetry.Metrics.Aggregators
             };
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.LongSum;
         }
 
+        /// <inheritdoc/>
         public override void Update(long value)
         {
             // Adds value to the running total in a thread safe manner.

@@ -20,8 +20,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
 	ProjectSection(SolutionItems) = preProject
-		build\Common.props = build\Common.props
 		build\Common.prod.props = build\Common.prod.props
+		build\Common.props = build\Common.props
 		build\Common.test.props = build\Common.test.props
 		build\debug.snk = build\debug.snk
 		build\docfx.cmd = build\docfx.cmd
@@ -178,6 +178,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "examples\MicroserviceExample\WorkerService\WorkerService.csproj", "{FA7A6F67-1F2F-4855-890D-51B5829578A9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "examples\MicroserviceExample\Utils\Utils.csproj", "{5435517C-AEC5-4182-87AE-14E13D31525F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
+	ProjectSection(SolutionItems) = preProject
+		examples\Directory.Build.props = examples\Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -360,6 +365,7 @@ Global
 		{07336602-860B-4975-95DD-405D19C00901} = {4D492D62-5150-45F9-817F-C99562E364E2}
 		{FA7A6F67-1F2F-4855-890D-51B5829578A9} = {4D492D62-5150-45F9-817F-C99562E364E2}
 		{5435517C-AEC5-4182-87AE-14E13D31525F} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

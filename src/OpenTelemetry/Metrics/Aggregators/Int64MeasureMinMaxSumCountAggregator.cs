@@ -29,16 +29,19 @@ namespace OpenTelemetry.Metrics.Aggregators
         private LongSummary checkPoint = new LongSummary();
         private object updateLock = new object();
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             this.checkPoint = Interlocked.Exchange(ref this.summary, new LongSummary());
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.Int64Summary;
         }
 
+        /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
             return new Int64SummaryData
@@ -51,6 +54,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             };
         }
 
+        /// <inheritdoc/>
         public override void Update(long value)
         {
             lock (this.updateLock)
