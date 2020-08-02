@@ -146,7 +146,11 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, attributes, activityLinks, startTime);
+            // TODO:
+            // Instead of converting to ActivityTagsCollection here,
+            // change the method signature to accept ActivityTagsCollection.
+            var tags = (attributes == null) ? null : new ActivityTagsCollection(attributes);
+            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, tags, activityLinks, startTime);
             if (activity == null)
             {
                 return TelemetrySpan.NoopInstance;
