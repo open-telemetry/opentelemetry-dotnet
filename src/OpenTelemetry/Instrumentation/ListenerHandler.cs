@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation
         public virtual bool SupportsNullActivity { get; } = false;
 
         /// <summary>
-        /// Method called when this responds to an event with the suffix 'Start'.
+        /// Method called for an event with the suffix 'Start'.
         /// </summary>
         /// <param name="activity">The <see cref="Activity"/> to be started.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation
         }
 
         /// <summary>
-        /// Method called when this responds to an event with the suffix 'Stop'.
+        /// Method called for an event with the suffix 'Stop'.
         /// </summary>
         /// <param name="activity">The <see cref="Activity"/> to be stopped.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation
         }
 
         /// <summary>
-        /// Method called when an exception occurred.
+        /// Method called for an event with the suffix 'Exception'.
         /// </summary>
         /// <param name="activity">The <see cref="Activity"/>.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Instrumentation
         }
 
         /// <summary>
-        /// Method called when an <see cref="Activity"/> from this source is custom.
+        /// Method called for an event which does not have 'Start', 'Stop' or 'Exception' as suffix.
         /// </summary>
         /// <param name="name">Custom name.</param>
         /// <param name="activity">The <see cref="Activity"/> to be processed.</param>
