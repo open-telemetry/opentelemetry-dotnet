@@ -31,13 +31,7 @@ namespace Examples.AspNetCore
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    var config = new ConfigurationBuilder()
-                        .AddCommandLine(args)
-                        .Build();
-
-                    webBuilder
-                        .UseConfiguration(config)
-                        .UseStartup<Startup>();
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }

@@ -52,8 +52,7 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // To choose which exporter to use, run this example with the UseExporter option (defaults to the ConsoleExporter):
-            //     example: dotnet run --UseExporter=zipkin
+            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
             var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
             switch (exporter)
             {
