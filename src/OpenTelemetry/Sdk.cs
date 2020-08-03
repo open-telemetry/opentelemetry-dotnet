@@ -36,52 +36,6 @@ namespace OpenTelemetry
     {
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
 
-        private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
-
-        /// <summary>
-        /// Gets or sets a value indicating whether automatic telemetry
-        /// collection in the current context should be suppressed (disabled).
-        /// Default value: False.
-        /// </summary>
-        /// <remarks>
-        /// Set <see cref="SuppressInstrumentation"/> to <see langword="true"/>
-        /// when you want to turn off automatic telemetry collection.
-        /// This is typically used to prevent infinite loops created by
-        /// collection of internal operations, such as exporting traces over HTTP.
-        /// <code>
-        ///    public override async Task&lt;ExportResult&gt; ExportAsync(
-        ///        IEnumerable&lt;Activity&gt; batch,
-        ///        CancellationToken cancellationToken)
-        ///    {
-        ///       var currentSuppressionPolicy = Sdk.SuppressInstrumentation;
-        ///       Sdk.SuppressInstrumentation = true;
-        ///       try
-        ///       {
-        ///          await this.SendBatchActivityAsync(batch, cancellationToken).ConfigureAwait(false);
-        ///          return ExportResult.Success;
-        ///       }
-        ///       finally
-        ///       {
-        ///          Sdk.SuppressInstrumentation = currentSuppressionPolicy;
-        ///       }
-        ///    }
-        /// </code>
-        /// </remarks>
-        public static bool SuppressInstrumentation
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return SuppressInstrumentationRuntimeContextSlot.Get();
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                SuppressInstrumentationRuntimeContextSlot.Set(value);
-            }
-        }
-
         /// <summary>
         /// Creates MeterProvider with the configuration provided.
         /// Configuration involves MetricProcessor, Exporter and push internval.
