@@ -73,7 +73,7 @@ namespace Examples.Console
                             foreach (var headerKey in headerKeys)
                             {
                                 string headerValue = context.Request.Headers[headerKey];
-                                activity?.AddTag($"http.header.{headerKey}", headerValue);
+                                activity?.SetTag($"http.header.{headerKey}", headerValue);
                             }
 
                             string requestContent;
@@ -84,8 +84,8 @@ namespace Examples.Console
                                 childSpan.AddEvent(new ActivityEvent("StreamReader.ReadToEnd"));
                             }
 
-                            activity?.AddTag("request.content", requestContent);
-                            activity?.AddTag("request.length", requestContent.Length.ToString());
+                            activity?.SetTag("request.content", requestContent);
+                            activity?.SetTag("request.length", requestContent.Length.ToString());
 
                             var echo = Encoding.UTF8.GetBytes("echo: " + requestContent);
                             context.Response.ContentEncoding = Encoding.UTF8;
@@ -136,21 +136,21 @@ namespace Examples.Console
                                 using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
                                 activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
-                                activity?.AddTag("http.status_code", $"{response.StatusCode:D}");
+                                activity?.SetTag("http.status_code", $"{response.StatusCode:D}");
 
                                 var responseContent = await response.Content.ReadAsStringAsync();
-                                activity?.AddTag("response.content", responseContent);
-                                activity?.AddTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
+                                activity?.SetTag("response.content", responseContent);
+                                activity?.SetTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
 
                                 foreach (var header in response.Headers)
                                 {
                                     if (header.Value is IEnumerable<object> enumerable)
                                     {
-                                        activity?.AddTag($"http.header.{header.Key}", string.Join(",", enumerable));
+                                        activity?.SetTag($"http.header.{header.Key}", string.Join(",", enumerable));
                                     }
                                     else
                                     {
-                                        activity?.AddTag($"http.header.{header.Key}", header.Value.ToString());
+                                        activity?.SetTag($"http.header.{header.Key}", header.Value.ToString());
                                     }
                                 }
                             }
