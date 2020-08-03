@@ -95,13 +95,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.AddTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.AddTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
+                activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
 
                 if (this.options.SetHttpFlavor)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
             }
 
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
                     // response could be null for DNS issues, timeouts, etc...
-                    activity.AddTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
 
                     activity.SetStatus(
                         SpanHelper

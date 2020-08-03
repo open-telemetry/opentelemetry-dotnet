@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             };
 
             DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.AllocationFreeForEach(
-                timedEvent.Attributes,
+                timedEvent.Tags,
                 ref tags,
                 ProcessTagRef);
 
