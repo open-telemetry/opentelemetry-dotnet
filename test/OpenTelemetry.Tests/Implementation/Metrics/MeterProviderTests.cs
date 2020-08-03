@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Config.Test

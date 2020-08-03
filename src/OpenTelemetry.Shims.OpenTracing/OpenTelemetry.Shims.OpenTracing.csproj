@@ -10,17 +10,14 @@
     //TODO: Disable this exception, and actually do document all public API.
     -->
 
+    <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
-    <PropertyGroup>
-      <NoWarn>$(NoWarn),1591</NoWarn>
-    </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTracing" Version="0.12.1" />
+    <PackageReference Include="OpenTracing" Version="$(OpenTracingPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
-
 </Project>

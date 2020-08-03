@@ -18,15 +18,34 @@ using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
 {
+    /// <summary>
+    /// Aggregator base class.
+    /// </summary>
+    /// <typeparam name="T">The type.</typeparam>
     public abstract class Aggregator<T>
         where T : struct
     {
+        /// <summary>
+        /// Adds value to the running total in a thread safe manner.
+        /// </summary>
+        /// <param name="value">Value to be aggregated.</param>
         public abstract void Update(T value);
 
+        /// <summary>
+        /// Checkpoints the current aggregate data, and resets the state.
+        /// </summary>
         public abstract void Checkpoint();
 
+        /// <summary>
+        /// Convert Aggregator data to MetricData.
+        /// </summary>
+        /// <returns>An instance of <see cref="MetricData"/> representing the currently aggregated value.</returns>
         public abstract MetricData ToMetricData();
 
+        /// <summary>
+        /// Get Aggregation Type.
+        /// </summary>
+        /// <returns><see cref="AggregationType"/>.</returns>
         public abstract AggregationType GetAggregationType();
     }
 }
