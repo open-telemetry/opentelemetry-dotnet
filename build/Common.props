@@ -2,6 +2,7 @@
   <PropertyGroup>
     <LangVersion>8.0</LangVersion>
     <SignAssembly>true</SignAssembly>
+    <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
