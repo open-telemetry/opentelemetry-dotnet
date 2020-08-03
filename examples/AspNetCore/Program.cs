@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Examples.AspNetCore
@@ -30,7 +31,13 @@ namespace Examples.AspNetCore
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    var config = new ConfigurationBuilder()
+                        .AddCommandLine(args)
+                        .Build();
+
+                    webBuilder
+                        .UseConfiguration(config)
+                        .UseStartup<Startup>();
                 });
     }
 }
