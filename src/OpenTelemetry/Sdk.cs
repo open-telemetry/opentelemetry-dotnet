@@ -187,22 +187,22 @@ namespace OpenTelemetry
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    if (activity.IsAllDataRequested)
+                    EnrichmentScope scope = EnrichmentScope.Current;
+                    while (scope != null)
                     {
-                        EnrichmentScope scope = EnrichmentScope.Current;
-                        while (scope != null)
+                        try
                         {
-                            try
+                            if (activity.IsAllDataRequested)
                             {
                                 scope.EnrichmentAction?.Invoke(activity);
                             }
-                            catch
-                            {
-                                // todo: Log
-                            }
-
-                            scope.Dispose();
                         }
+                        catch
+                        {
+                            // todo: Log
+                        }
+
+                        scope.Dispose();
                     }
 
                     activityProcessor.OnEnd(activity);
