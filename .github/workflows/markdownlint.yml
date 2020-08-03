@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
 
     - name: install markdownlint-cli
       run: sudo npm install -g markdownlint-cli

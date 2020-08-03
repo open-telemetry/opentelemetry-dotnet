@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Protobuf Include="**/*.proto">
-      <ProtoRoot>Implementation</ProtoRoot>
+      <ProtoRoot>Implementation/opentelemetry-proto/</ProtoRoot>
     </Protobuf>
   </ItemGroup>
 

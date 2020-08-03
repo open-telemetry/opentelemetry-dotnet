@@ -67,9 +67,10 @@ Everyone is welcome to contribute code to `opentelemetry-dotnet` via GitHub
 pull requests (PRs).
 
 To create a new PR, fork the project in GitHub and clone the upstream repo:
+Note: The --recursive flag will also pull any configured git submodules.
 
 ```sh
-git clone https://github.com/open-telemetry/opentelemetry-dotnet.git
+git clone --recursive https://github.com/open-telemetry/opentelemetry-dotnet.git
 ```
 
 Add your fork as an origin:
