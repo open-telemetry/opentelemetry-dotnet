@@ -96,8 +96,8 @@ namespace Examples.Console
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
+                    activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
                 }
 
                 // Annotate our activity to capture metadata about our operation
@@ -105,7 +105,8 @@ namespace Examples.Console
                 {
                     { "use", "demo" },
                 };
-                activity.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
+                ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
+                activity.AddEvent(new ActivityEvent("Invoking DoWork", default, eventTags));
             }
         }
     }

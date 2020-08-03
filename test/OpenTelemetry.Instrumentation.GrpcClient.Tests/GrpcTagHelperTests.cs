@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
         {
             var grpcMethod = "/some.service/somemethod";
             var activity = new Activity("operationName");
-            activity.AddTag(GrpcTagHelper.GrpcMethodTagName, grpcMethod);
+            activity.SetTag(GrpcTagHelper.GrpcMethodTagName, grpcMethod);
 
             var result = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
         public void GrpcTagHelper_GetGrpcStatusCodeFromActivity()
         {
             var activity = new Activity("operationName");
-            activity.AddTag(GrpcTagHelper.GrpcStatusCodeTagName, "0");
+            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, "0");
 
             var statusCode = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
 

@@ -201,7 +201,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
-            otlpLink.Attributes.AddRange(activityLink.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
+            otlpLink.Attributes.AddRange(activityLink.Tags.Select(ToOtlpAttribute).Where(a => a != null));
 
             return otlpLink;
         }
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            otlpEvent.Attributes.AddRange(activityEvent.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
+            otlpEvent.Attributes.AddRange(activityEvent.Tags.Select(ToOtlpAttribute).Where(a => a != null));
 
             return otlpEvent;
         }

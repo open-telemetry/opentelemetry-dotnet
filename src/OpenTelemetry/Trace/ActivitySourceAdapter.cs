@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace
                 activity.TraceId,
                 activity.DisplayName,
                 activity.Kind,
-                activity.Tags,
+                activity.TagObjects,
                 activity.Links);
 
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
