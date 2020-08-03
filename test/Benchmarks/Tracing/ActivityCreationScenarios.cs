@@ -50,9 +50,9 @@ namespace Benchmarks.Tracing
         public static Activity CreateActivityWithAttributes(ActivitySource source)
         {
             var activity = source.StartActivity("name");
-            activity?.AddTag("tag1", "value1");
-            activity?.AddTag("tag2", "value2");
-            activity?.AddTag("customPropTag1", "somecustomValue");
+            activity?.SetTag("tag1", "value1");
+            activity?.SetTag("tag2", "value2");
+            activity?.SetTag("customPropTag1", "somecustomValue");
             activity?.Stop();
             return activity;
         }
@@ -60,11 +60,11 @@ namespace Benchmarks.Tracing
         public static Activity CreateActivityWithAttributesAndCustomProperty(ActivitySource source)
         {
             var activity = source.StartActivity("name");
-            activity?.AddTag("tag1", "value1");
-            activity?.AddTag("tag2", "value2");
+            activity?.SetTag("tag1", "value1");
+            activity?.SetTag("tag2", "value2");
 
             // use custom property instead of tags
-            // activity?.AddTag("customPropTag1", "somecustomValue");
+            // activity?.SetTag("customPropTag1", "somecustomValue");
             activity?.SetCustomProperty("customPropTag1", "somecustomValue");
             activity?.Stop();
             return activity;

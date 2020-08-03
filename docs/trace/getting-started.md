@@ -45,8 +45,8 @@ class Program
 
         using (var activity = activitySource.StartActivity("SayHello"))
         {
-            activity?.AddTag("foo", "1");
-            activity?.AddTag("bar", "Hello, World!");
+            activity?.SetTag("foo", "1");
+            activity?.SetTag("bar", "Hello, World!");
         }
     }
 }

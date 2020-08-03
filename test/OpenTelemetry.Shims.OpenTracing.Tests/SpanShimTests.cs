@@ -119,7 +119,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Single(shim.Span.Activity.Events);
             var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
-            Assert.False(first.Attributes.Any());
+            Assert.False(first.Tags.Any());
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.Equal(now, first.Timestamp);
-            Assert.False(first.Attributes.Any());
+            Assert.False(first.Tags.Any());
         }
 
         [Fact]
@@ -163,10 +163,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Equal(2, shim.Span.Activity.Events.Count());
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Attributes.Any());
+            Assert.True(first.Tags.Any());
 
             Assert.Equal("foo", last.Name);
-            Assert.False(last.Attributes.Any());
+            Assert.False(last.Tags.Any());
         }
 
         [Fact]
@@ -194,11 +194,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var last = shim.Span.Activity.Events.Last();
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Attributes.Any());
+            Assert.True(first.Tags.Any());
             Assert.Equal(now, first.Timestamp);
 
             Assert.Equal("foo", last.Name);
-            Assert.False(last.Attributes.Any());
+            Assert.False(last.Tags.Any());
             Assert.Equal(now, last.Timestamp);
         }
 

@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         {
             if (!this.EnableConnectionLevelAttributes)
             {
-                sqlActivity.AddTag(SemanticConventions.AttributePeerService, dataSource);
+                sqlActivity.SetTag(SemanticConventions.AttributePeerService, dataSource);
             }
             else
             {
@@ -123,21 +123,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
+                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
                 }
                 else
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
+                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
+                    sqlActivity.SetTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
                 {
-                    sqlActivity.AddTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
                 }
             }
         }
