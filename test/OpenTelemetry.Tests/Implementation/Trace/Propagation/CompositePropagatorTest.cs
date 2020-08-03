@@ -110,6 +110,38 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
         }
 
         [Fact]
+        public void CompositePropagator_WithB3FormatAndTraceContext()
+        {
+            var expectedHeaders = new Dictionary<string, string>
+            {
+                { TraceParent, $"00-{this.traceId}-{this.spanId}-01" },
+                { B3Format.XB3TraceId, this.traceId.ToString() },
+                { B3Format.XB3SpanId, this.spanId.ToString() },
+                { B3Format.XB3Sampled, "1" },
+            };
+
+            var compositePropagator = new CompositePropagator(new List<ITextFormat>
+            {
+                new B3Format(),
+                new TraceContextFormat(),
+            });
+
+            var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
+            var carrier = new Dictionary<string, string>();
+            compositePropagator.Inject(activityContext, carrier, Setter);
+
+            Assert.Equal(expectedHeaders, carrier);
+
+            var ctx = compositePropagator.Extract(activityContext, expectedHeaders, Getter);
+            Assert.Equal(activityContext.TraceId, ctx.TraceId);
+            Assert.Equal(activityContext.SpanId, ctx.SpanId);
+            Assert.True(ctx.IsValid());
+
+            bool isInjected = compositePropagator.IsInjected(carrier, Getter);
+            Assert.True(isInjected);
+        }
+
+        [Fact]
         public void CompositePropagator_B3FormatNotInjected()
         {
             var carrier = new Dictionary<string, string>
