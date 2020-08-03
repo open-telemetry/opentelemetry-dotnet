@@ -38,9 +38,6 @@ jobs:
     - name: dotnet test
       run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
 
-    - name: dotnet test aspnet
-      run: dotnet test test\OpenTelemetry.Instrumentation.AspNet.Tests\OpenTelemetry.Instrumentation.AspNet.Tests.csproj  --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
-
     - name: Install report tool
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
 
