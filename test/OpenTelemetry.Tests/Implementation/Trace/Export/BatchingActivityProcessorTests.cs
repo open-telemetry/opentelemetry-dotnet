@@ -179,7 +179,7 @@ namespace OpenTelemetry.Trace.Test
             var exported = this.WaitForActivities(activityExporter, 1, DefaultTimeout);
 
             Assert.Equal(1, exportCalledCount);
-            Assert.Equal(1, exported.Length);
+            Assert.Single(exported);
             Assert.Contains(activities.First(), exported);
         }
 
