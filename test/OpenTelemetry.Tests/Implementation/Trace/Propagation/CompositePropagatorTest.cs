@@ -161,6 +161,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
 
             compositePropagator.Inject(activityContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent");
+            Assert.Equal($"00-{this.traceId}-{this.spanId}-01", carrier["custom-traceparent"]);
 
             bool isInjected = compositePropagator.IsInjected(carrier, Getter);
             Assert.True(isInjected);
