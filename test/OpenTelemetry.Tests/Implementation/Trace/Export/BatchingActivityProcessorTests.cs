@@ -176,10 +176,12 @@ namespace OpenTelemetry.Trace.Test
                 activities.Add(this.CreateActivity(i.ToString()));
             }
 
-            var exported = this.WaitForActivities(activityExporter, 1, DefaultTimeout);
+            // forcing dispose
+            openTelemetrySdk.Dispose();
+            var exported = this.WaitForActivities(activityExporter, 2, DefaultTimeout);
 
             Assert.Equal(1, exportCalledCount);
-            Assert.InRange(exported.Length, 1, 2);
+            Assert.Equal(2, exported.Length);
             Assert.Contains(activities.First(), exported);
         }
 
