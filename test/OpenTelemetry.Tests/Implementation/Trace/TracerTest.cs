@@ -22,6 +22,7 @@ namespace OpenTelemetry.Trace.Test
 {
     public class TracerTest : IDisposable
     {
+        // TODO: This is only a basic test. This must cover the entire shim API scenarios.
         private readonly Tracer tracer;
 
         public TracerTest()
@@ -34,6 +35,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var current = this.tracer.CurrentSpan;
             Assert.True(IsNoOpSpan(current));
+            Assert.False(current.Context.IsValid);
         }
 
         [Fact]
@@ -49,6 +51,7 @@ namespace OpenTelemetry.Trace.Test
         {
             var span = this.tracer.StartSpan("name");
             Assert.True(IsNoOpSpan(span));
+            Assert.False(span.Context.IsValid);
             Assert.False(span.IsRecording);
         }
 
