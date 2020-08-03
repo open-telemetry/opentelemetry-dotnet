@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal class MyActivityProcessor : ActivityProcessor
