@@ -20,8 +20,14 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Export
 {
+    /// <summary>
+    /// MetricExporter base class.
+    /// </summary>
     public abstract class MetricExporter
     {
+        /// <summary>
+        /// Enumeration used to define the result of an export operation.
+        /// </summary>
         public enum ExportResult
         {
             /// <summary>
@@ -40,6 +46,12 @@ namespace OpenTelemetry.Metrics.Export
             FailedRetryable = 2,
         }
 
+        /// <summary>
+        /// Exports batch of metrics asynchronously.
+        /// </summary>
+        /// <param name="metrics">Batch of metrics to export.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Result of export.</returns>
         public abstract Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken);
     }
 }

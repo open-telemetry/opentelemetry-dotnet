@@ -81,6 +81,7 @@ namespace OpenTelemetry.Instrumentation
         {
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)

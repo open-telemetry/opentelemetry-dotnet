@@ -17,6 +17,7 @@
 #if NET452
 using System.Collections;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Messaging;
 
 namespace OpenTelemetry.Context
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Context
         }
 
         /// <inheritdoc/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override T Get()
         {
             var wrapper = CallContext.LogicalGetData(this.Name) as BitArray;
@@ -63,6 +65,7 @@ namespace OpenTelemetry.Context
         }
 
         /// <inheritdoc/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Set(T value)
         {
             var wrapper = new BitArray(0);

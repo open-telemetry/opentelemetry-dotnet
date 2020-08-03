@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
+    <PackageReference Include="StackExchange.Redis" Version="$(StackExchangeRedisPkgVer)" />
   </ItemGroup>
 
 </Project>
