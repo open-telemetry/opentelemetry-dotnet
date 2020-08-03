@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Internal
     internal class BroadcastActivityProcessor : ActivityProcessor
     {
         private readonly IEnumerable<ActivityProcessor> processors;
-        private bool isDisposed;
+        private bool disposed;
 
         public BroadcastActivityProcessor(IEnumerable<ActivityProcessor> processors)
         {
@@ -98,9 +98,7 @@ namespace OpenTelemetry.Trace.Internal
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            if (disposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 foreach (var processor in this.processors)
                 {
@@ -117,8 +115,10 @@ namespace OpenTelemetry.Trace.Internal
                     }
                 }
 
-                this.isDisposed = true;
+                this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }

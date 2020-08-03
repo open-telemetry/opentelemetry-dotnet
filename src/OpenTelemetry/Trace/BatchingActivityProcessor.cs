@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly System.Timers.Timer flushTimer;
         private volatile int currentQueueSize;
-        private bool isDisposed;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchingActivityProcessor"/> class with default parameters:
@@ -208,9 +208,7 @@ namespace OpenTelemetry.Trace
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            if (disposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 if (this.exporter is IDisposable disposableExporter)
                 {
@@ -226,8 +224,10 @@ namespace OpenTelemetry.Trace
 
                 this.flushTimer.Dispose();
                 this.flushLock.Dispose();
-                this.isDisposed = true;
+                this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
 
         private async Task FlushAsyncInternal(bool drain, bool lockAlreadyHeld, CancellationToken cancellationToken)

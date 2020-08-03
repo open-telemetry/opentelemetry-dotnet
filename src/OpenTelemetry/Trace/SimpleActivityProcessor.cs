@@ -91,8 +91,6 @@ namespace OpenTelemetry.Trace
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (disposing)
             {
                 if (this.exporter is IDisposable disposableExporter)
@@ -107,6 +105,8 @@ namespace OpenTelemetry.Trace
                     }
                 }
             }
+
+            base.Dispose(disposing);
         }
     }
 }
