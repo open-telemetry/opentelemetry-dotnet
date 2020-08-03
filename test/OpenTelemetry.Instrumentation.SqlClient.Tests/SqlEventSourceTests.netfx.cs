@@ -131,8 +131,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
             fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
-
-            Assert.InRange(activityProcessor.Invocations.Count, 2, 3);
+            shutdownSignal.Dispose();
+            Assert.Equal(3, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
@@ -153,7 +153,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             fakeSqlEventSource.WriteUnknownEventWithNullPayload();
 
-            Assert.InRange(activityProcessor.Invocations.Count, 0, 1);
+            shutdownSignal.Dispose();
+
+            Assert.Single(activityProcessor.Invocations);
         }
 
         [Fact]
