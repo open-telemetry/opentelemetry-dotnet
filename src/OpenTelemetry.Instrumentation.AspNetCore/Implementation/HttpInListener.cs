@@ -99,21 +99,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
+                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
+                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
             }
         }
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
                 activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SemanticConventions.AttributeHttpRoute, template);
+                        activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?

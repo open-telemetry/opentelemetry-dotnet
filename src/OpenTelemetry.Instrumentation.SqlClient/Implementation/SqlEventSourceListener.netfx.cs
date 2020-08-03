@@ -110,22 +110,22 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeDbSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
-                activity.AddTag(SemanticConventions.AttributeDbName, databaseName);
+                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
+                activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
                 string commandText = (string)eventData.Payload[3];
                 if (string.IsNullOrEmpty(commandText))
                 {
-                    activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
+                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                 }
                 else
                 {
-                    activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
+                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                     if (this.options.SetStoredProcedureCommandName)
                     {
-                        activity.AddTag(SemanticConventions.AttributeDbStatement, commandText);
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                     }
                 }
             }

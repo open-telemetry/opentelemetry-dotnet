@@ -41,7 +41,15 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return new TelemetrySpan(Activity.Current);
+                var currentActivity = Activity.Current;
+                if (currentActivity == null)
+                {
+                    return TelemetrySpan.NoopInstance;
+                }
+                else
+                {
+                    return new TelemetrySpan(currentActivity);
+                }
             }
         }
 
@@ -111,7 +119,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpan(name, kind, parentSpan.Context, attributes, links, startTime);
         }
@@ -127,7 +135,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, string>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind, in SpanContext parentContext, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.ActivitySource.HasListeners())
             {
@@ -146,7 +154,11 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, attributes, activityLinks, startTime);
+            // TODO:
+            // Instead of converting to ActivityTagsCollection here,
+            // change the method signature to accept ActivityTagsCollection.
+            var tags = (attributes == null) ? null : new ActivityTagsCollection(attributes);
+            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, tags, activityLinks, startTime);
             if (activity == null)
             {
                 return TelemetrySpan.NoopInstance;

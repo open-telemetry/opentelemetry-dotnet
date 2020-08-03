@@ -53,25 +53,25 @@ namespace OpenTelemetry.Instrumentation.Grpc.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag(SemanticConventions.AttributeRpcSystem, "grpc");
+                activity.SetTag(SemanticConventions.AttributeRpcSystem, "grpc");
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
                 {
-                    activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
-                    activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+                    activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
+                    activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
                 }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
                 if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
                 {
-                    activity.AddTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
+                    activity.SetTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                    activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString());
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString());
             }
         }
 
