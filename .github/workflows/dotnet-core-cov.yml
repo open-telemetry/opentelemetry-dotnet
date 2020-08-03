@@ -49,3 +49,9 @@ jobs:
         file: TestResults/Cobertura.xml
         env_vars: OS
         name: Code Coverage for ${{ matrix.os }}
+
+    - name: Publish TestResults
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: 'TestResults/*'
