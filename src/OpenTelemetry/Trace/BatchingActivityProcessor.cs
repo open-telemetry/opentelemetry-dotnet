@@ -208,6 +208,8 @@ namespace OpenTelemetry.Trace
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
+            base.Dispose(disposing);
+
             if (disposing && !this.disposed)
             {
                 if (this.exporter is IDisposable disposableExporter)
@@ -226,8 +228,6 @@ namespace OpenTelemetry.Trace
                 this.flushLock.Dispose();
                 this.disposed = true;
             }
-
-            base.Dispose(disposing);
         }
 
         private async Task FlushAsyncInternal(bool drain, bool lockAlreadyHeld, CancellationToken cancellationToken)

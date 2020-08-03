@@ -98,6 +98,8 @@ namespace OpenTelemetry.Trace.Internal
 
         protected override void Dispose(bool disposing)
         {
+            base.Dispose(disposing);
+
             if (disposing && !this.disposed)
             {
                 foreach (var processor in this.processors)
@@ -117,8 +119,6 @@ namespace OpenTelemetry.Trace.Internal
 
                 this.disposed = true;
             }
-
-            base.Dispose(disposing);
         }
     }
 }
