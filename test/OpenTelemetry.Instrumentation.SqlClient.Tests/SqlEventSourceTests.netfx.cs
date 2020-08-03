@@ -173,8 +173,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
 
             fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
+            shutdownSignal.Dispose();
 
-            Assert.InRange(activityProcessor.Invocations.Count, 0, 1);
+            Assert.Single(activityProcessor.Invocations);
         }
 
         private static void VerifyActivityData(

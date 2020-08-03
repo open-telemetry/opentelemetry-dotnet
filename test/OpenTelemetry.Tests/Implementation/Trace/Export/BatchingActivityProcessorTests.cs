@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Test
         private const string ActivitySourceName = "my.source";
 
         private static readonly TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(30);
-        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
         private static readonly ActivitySource Source = new ActivitySource(ActivitySourceName);
 
         [Fact]
@@ -176,12 +176,10 @@ namespace OpenTelemetry.Trace.Test
                 activities.Add(this.CreateActivity(i.ToString()));
             }
 
-            // forcing dispose
-            openTelemetrySdk.Dispose();
-            var exported = this.WaitForActivities(activityExporter, 2, DefaultTimeout);
+            var exported = this.WaitForActivities(activityExporter, 1, DefaultTimeout);
 
             Assert.Equal(1, exportCalledCount);
-            Assert.Equal(2, exported.Length);
+            Assert.Equal(1, exported.Length);
             Assert.Contains(activities.First(), exported);
         }
 
