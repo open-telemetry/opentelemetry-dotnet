@@ -137,10 +137,10 @@ here as well.
    populating any tags which are not readily available.
 
     ```csharp
-    activity?.AddTag("http.method", "GET");
+    activity?.SetTag("http.method", "GET");
     if (activity?.IsAllDataRequested ?? false)
     {
-        activity.AddTag("http.url", "http://www.mywebsite.com");
+        activity.SetTag("http.url", "http://www.mywebsite.com");
     }
     ```
 
@@ -159,7 +159,7 @@ here as well.
     ```csharp
     using (var activity = activitySource.StartActivity("ActivityName")
     {
-        activity?.AddTag("http.method", "GET");
+        activity?.SetTag("http.method", "GET");
     } // Activity gets stopped automatically at end of this block during dispose.
     ```
 
@@ -226,7 +226,7 @@ OpenTelemetry samplers chose not to sample this activity.
 
    `Tags` in `Activity` represents the OpenTelemetry [Span
    Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes).
-   Earlier sample showed the usage of `AddTag` method of `Activity` to add
+   Earlier sample showed the usage of `SetTag` method of `Activity` to add
    tags. It is also possible to provide an initial set of tags during activity
    creation, as shown below.
 
@@ -309,8 +309,8 @@ Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/
 Example:
 
 ```csharp
-activity?.AddTag("ot.status_code", "status canonical code");
-activity?.AddTag("ot.status_description", "status description");
+activity?.SetTag("ot.status_code", "status canonical code");
+activity?.SetTag("ot.status_description", "status description");
 ```
 
 ## Instrumenting a library/application with OpenTelemetry.API Shim

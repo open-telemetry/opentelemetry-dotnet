@@ -50,8 +50,8 @@ namespace Examples.Console
             {
                 // TagNames can follow the OT guidelines
                 // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
-                parent?.AddTag("http.method", "GET");
-                parent?.AddTag("http.host", "MyHostName");
+                parent?.SetTag("http.method", "GET");
+                parent?.SetTag("http.host", "MyHostName");
                 if (parent != null)
                 {
                     parent.DisplayName = "HttpIn DisplayName";
@@ -59,7 +59,7 @@ namespace Examples.Console
                     // IsAllDataRequested is the equivalent of Span.IsRecording
                     if (parent.IsAllDataRequested)
                     {
-                        parent.AddTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
+                        parent.SetTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
                     }
                 }
 
@@ -73,25 +73,25 @@ namespace Examples.Console
                     // In this example HttpOut is a child of HttpIn.
                     using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
                     {
-                        child?.AddTag("http.url", "www.mydependencyapi.com");
+                        child?.SetTag("http.url", "www.mydependencyapi.com");
                         try
                         {
                             // do actual work.
 
                             child?.AddEvent(new ActivityEvent("sample activity event."));
-                            child?.AddTag("http.status_code", "200");
+                            child?.SetTag("http.status_code", "200");
                         }
                         catch (Exception)
                         {
-                            child?.AddTag("http.status_code", "500");
+                            child?.SetTag("http.status_code", "500");
                         }
                     }
 
-                    parent?.AddTag("http.status_code", "200");
+                    parent?.SetTag("http.status_code", "200");
                 }
                 catch (Exception)
                 {
-                    parent?.AddTag("http.status_code", "500");
+                    parent?.SetTag("http.status_code", "500");
                 }
             }
 
@@ -120,11 +120,11 @@ namespace Examples.Console
                 {
                     if (activity.Kind == ActivityKind.Server)
                     {
-                        activity.AddTag("customServerTag", "Custom Tag Value for server");
+                        activity.SetTag("customServerTag", "Custom Tag Value for server");
                     }
                     else if (activity.Kind == ActivityKind.Client)
                     {
-                        activity.AddTag("customClientTag", "Custom Tag Value for Client");
+                        activity.SetTag("customClientTag", "Custom Tag Value for Client");
                     }
                 }
 

@@ -40,10 +40,10 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
             if (!string.IsNullOrEmpty(status.Description))
             {
-                activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+                activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
             }
         }
 

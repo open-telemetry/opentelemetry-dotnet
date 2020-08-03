@@ -65,10 +65,10 @@ namespace OpenTelemetry.Exporter.Console
                     System.Console.WriteLine("Activity Kind - " + activity.Kind);
                     System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
                     System.Console.WriteLine("Activity Duration - " + activity.Duration);
-                    if (activity.Tags.Count() > 0)
+                    if (activity.TagObjects.Count() > 0)
                     {
                         System.Console.WriteLine("Activity Tags");
-                        foreach (var tag in activity.Tags)
+                        foreach (var tag in activity.TagObjects)
                         {
                             System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
                         }
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.Console
                         foreach (var activityEvent in activity.Events)
                         {
                             System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
-                            foreach (var attribute in activityEvent.Attributes)
+                            foreach (var attribute in activityEvent.Tags)
                             {
                                 System.Console.WriteLine($"\t {attribute.Key} : {attribute.Value}");
                             }
