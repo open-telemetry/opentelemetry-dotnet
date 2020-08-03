@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements the zpages span processor that exports spans in OnEnd call without batching.
     /// </summary>
-    public class ZPagesProcessor : ActivityProcessor, IDisposable
+    public class ZPagesProcessor : ActivityProcessor
     {
         private readonly ZPagesExporter exporter;
 

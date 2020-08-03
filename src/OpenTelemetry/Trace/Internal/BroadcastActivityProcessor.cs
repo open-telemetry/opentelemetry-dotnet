@@ -24,7 +24,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace.Internal
 {
-    internal class BroadcastActivityProcessor : ActivityProcessor, IDisposable
+    internal class BroadcastActivityProcessor : ActivityProcessor
     {
         private readonly IEnumerable<ActivityProcessor> processors;
         private bool isDisposed;

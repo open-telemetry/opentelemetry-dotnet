@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
     /// </summary>
-    public class BatchingActivityProcessor : ActivityProcessor, IDisposable
+    public class BatchingActivityProcessor : ActivityProcessor
     {
         private const int DefaultMaxQueueSize = 2048;
         private const int DefaultMaxExportBatchSize = 512;

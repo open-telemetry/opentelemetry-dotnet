@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements simple activity processor that exports activities in OnEnd call without batching.
     /// </summary>
-    public class SimpleActivityProcessor : ActivityProcessor, IDisposable
+    public class SimpleActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporter exporter;
         private bool stopped;

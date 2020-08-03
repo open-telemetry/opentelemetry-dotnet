@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Implementation.Testing.Export
 {
-    public class TestActivityProcessor : ActivityProcessor, IDisposable
+    public class TestActivityProcessor : ActivityProcessor
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;
