@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics.Tracing;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;

@@ -14,13 +14,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="System.Text.Json" Version="4.7.0" Condition="'$(TargetFramework)' != 'net452'" />
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" Condition="'$(TargetFramework)' != 'net452'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <Compile Include="..\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
     <Reference Include="System.Net.Http" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPkgVer)" />
   </ItemGroup>
 
 </Project>

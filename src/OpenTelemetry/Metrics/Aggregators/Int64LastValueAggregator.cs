@@ -28,11 +28,13 @@ namespace OpenTelemetry.Metrics.Aggregators
         private long value;
         private long checkpoint;
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
+        /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
             return new Int64SumData
@@ -42,11 +44,13 @@ namespace OpenTelemetry.Metrics.Aggregators
             };
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.LongSum;
         }
 
+        /// <inheritdoc/>
         public override void Update(long newValue)
         {
             Interlocked.Exchange(ref this.value, newValue);

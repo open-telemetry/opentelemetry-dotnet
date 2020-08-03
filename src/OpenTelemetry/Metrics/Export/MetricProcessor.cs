@@ -18,6 +18,9 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics.Export
 {
+    /// <summary>
+    /// MetricProcessor base class.
+    /// </summary>
     public abstract class MetricProcessor
     {
         /// <summary>

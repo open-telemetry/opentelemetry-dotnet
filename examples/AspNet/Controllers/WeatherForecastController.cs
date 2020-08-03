@@ -1,4 +1,20 @@
-﻿using System;
+﻿// <copyright file="WeatherForecastController.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,7 +30,7 @@ namespace Examples.AspNet.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
         };
 
         [HttpGet] // For testing traditional routing. Ex: https://localhost:XXXX/api/weatherforecast
@@ -62,7 +78,7 @@ namespace Examples.AspNet.Controllers
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
+                Summary = Summaries[rng.Next(Summaries.Length)],
             })
             .ToArray();
         }
@@ -75,6 +91,32 @@ namespace Examples.AspNet.Controllers
             using var response = await request.GetAsync("http://www.google.com").ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
+        }
+
+        // Test dependency collection via legacy HttpWebRequest sync.
+        private static void RequestGoogleHomPageViaHttpWebRequestLegacySync()
+        {
+            var request = WebRequest.Create("http://www.google.com/?sync");
+
+            using var response = request.GetResponse();
+        }
+
+        // Test dependency collection via legacy HttpWebRequest async.
+        private static async Task RequestGoogleHomPageViaHttpWebRequestLegacyAsync()
+        {
+            var request = (HttpWebRequest)WebRequest.Create($"http://www.google.com/?async");
+
+            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        }
+
+        // Test dependency collection via legacy HttpWebRequest IAsyncResult.
+        private static void RequestGoogleHomPageViaHttpWebRequestLegacyAsyncResult()
+        {
+            var request = (HttpWebRequest)WebRequest.Create($"http://www.google.com/?async");
+
+            var asyncResult = request.BeginGetResponse(null, null);
+
+            using var response = request.EndGetResponse(asyncResult);
         }
 
         // Test exception dependency collection via HttpClient.
@@ -104,7 +146,7 @@ namespace Examples.AspNet.Controllers
 
             using var response = await request.GetAsync(this.Url.Content("~/subroute/-1")).ConfigureAwait(false);
 
-            Debug.Assert(response.StatusCode == HttpStatusCode.InternalServerError);
+            Debug.Assert(response.StatusCode == HttpStatusCode.InternalServerError, "response.StatusCode is InternalServerError");
         }
 
         // Test successful dependency collection via HttpClient.
@@ -117,32 +159,6 @@ namespace Examples.AspNet.Controllers
             using var response = await request.GetAsync(this.Url.Content("~/subroute/10")).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
-        }
-
-        // Test dependency collection via legacy HttpWebRequest sync.
-        private static void RequestGoogleHomPageViaHttpWebRequestLegacySync()
-        {
-            var request = WebRequest.Create("http://www.google.com/?sync");
-
-            using var response = request.GetResponse();
-        }
-
-        // Test dependency collection via legacy HttpWebRequest async.
-        private static async Task RequestGoogleHomPageViaHttpWebRequestLegacyAsync()
-        {
-            var request = (HttpWebRequest)WebRequest.Create($"http://www.google.com/?async");
-
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
-        }
-
-        // Test dependency collection via legacy HttpWebRequest IAsyncResult.
-        private static void RequestGoogleHomPageViaHttpWebRequestLegacyAsyncResult()
-        {
-            var request = (HttpWebRequest)WebRequest.Create($"http://www.google.com/?async");
-
-            var asyncResult = request.BeginGetResponse(null, null);
-
-            using var response = request.EndGetResponse(asyncResult);
         }
     }
 }
