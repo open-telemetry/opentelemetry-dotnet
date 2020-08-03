@@ -1,7 +1,5 @@
 # OpenTelemetry Protocol Implementation
 
-`.proto` files under `Implementation\` are copied from the
-[`opentelemetry-proto`](https://github.com/open-telemetry/opentelemetry-proto/commit/1a931b4b57c34e7fd8f7dddcaa9b7587840e9c08)
-repo.
+`.proto` files under `opentelemetry-proto\` via git submodule to [`opentelemetry-proto`](https://github.com/open-telemetry/opentelemetry-proto)
 
-Trace proto files marked as stable.
+If the submodule commit is changed you must do a `git submodule update` to pull in the updated files.

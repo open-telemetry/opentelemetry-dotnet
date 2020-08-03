@@ -1,0 +1,3 @@
+[submodule "src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry-proto"]
+	path = src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry-proto
+	url = https://github.com/open-telemetry/opentelemetry-proto

@@ -11,6 +11,8 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
 
     - name: install misspell
       run: |
@@ -26,6 +28,8 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
 
     - name: detect non-ASCII encoding and trailing space
       run: python3 ./build/sanitycheck.py

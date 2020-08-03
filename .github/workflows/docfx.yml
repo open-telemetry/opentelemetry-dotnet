@@ -11,6 +11,8 @@ jobs:
     steps:
     - name: check out code
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
 
     - name: install docfx
       run: choco install docfx -y
