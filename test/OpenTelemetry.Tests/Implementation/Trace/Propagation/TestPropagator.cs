@@ -26,17 +26,24 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
     {
         private readonly string idHeaderName;
         private readonly string stateHeaderName;
+        private readonly bool defaultContext;
 
-        public TestPropagator(string idHeaderName, string stateHeaderName)
+        public TestPropagator(string idHeaderName, string stateHeaderName, bool defaultContext = false)
         {
             this.idHeaderName = idHeaderName;
             this.stateHeaderName = stateHeaderName;
+            this.defaultContext = defaultContext;
         }
 
         public ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
         public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (this.defaultContext)
+            {
+                return activityContext;
+            }
+
             IEnumerable<string> id = getter(carrier, this.idHeaderName);
             if (id.Count() <= 0)
             {
@@ -61,8 +68,10 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
 
         public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
         {
+            string headerNumber = this.stateHeaderName.Split('-').Last();
+
             var traceparent = string.Concat("00-", activityContext.TraceId.ToHexString(), "-", activityContext.SpanId.ToHexString());
-            traceparent = string.Concat(traceparent, (activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+            traceparent = string.Concat(traceparent, "-", headerNumber);
 
             setter(carrier, this.idHeaderName, traceparent);
 
