@@ -27,7 +27,10 @@ public class Program
     {
         using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-            .UseConsoleExporter());
+            .AddProcessorPipeline(pipeline =>
+            {
+                pipeline.AddProcessor(current => new MyActivityProcessor());
+            }));
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
