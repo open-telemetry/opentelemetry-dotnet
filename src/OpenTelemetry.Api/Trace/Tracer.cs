@@ -41,7 +41,15 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return new TelemetrySpan(Activity.Current);
+                var currentActivity = Activity.Current;
+                if (currentActivity == null)
+                {
+                    return TelemetrySpan.NoopInstance;
+                }
+                else
+                {
+                    return new TelemetrySpan(currentActivity);
+                }
             }
         }
 
