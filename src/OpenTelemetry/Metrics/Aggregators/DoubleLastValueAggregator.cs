@@ -28,11 +28,13 @@ namespace OpenTelemetry.Metrics.Aggregators
         private double value;
         private double checkpoint;
 
+        /// <inheritdoc/>
         public override void Checkpoint()
         {
             Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
+        /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
             return new DoubleSumData
@@ -42,11 +44,13 @@ namespace OpenTelemetry.Metrics.Aggregators
             };
         }
 
+        /// <inheritdoc/>
         public override AggregationType GetAggregationType()
         {
             return AggregationType.DoubleSum;
         }
 
+        /// <inheritdoc/>
         public override void Update(double newValue)
         {
             Interlocked.Exchange(ref this.value, newValue);

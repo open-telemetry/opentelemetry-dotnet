@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using System.Linq;
-using Moq;
 using OpenTelemetry.Trace;
 using Xunit;
 

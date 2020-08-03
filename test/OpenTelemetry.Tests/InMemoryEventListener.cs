@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics.Tracing;
-using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests
