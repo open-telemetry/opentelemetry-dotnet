@@ -273,6 +273,8 @@ namespace OpenTelemetry.Trace.Test
 
             resetEvent.Set();
 
+            openTelemetrySdk.Dispose();
+
             var exported = this.WaitForActivities(activityExporter, 1, DefaultTimeout);
 
             Assert.Single(exported);
