@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements simple activity processor that exports activities in OnEnd call without batching.
     /// </summary>
-    public class SimpleActivityProcessor : ActivityProcessor, IDisposable
+    public class SimpleActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporter exporter;
         private bool stopped;
@@ -85,26 +85,13 @@ namespace OpenTelemetry.Trace
 #endif
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-        }
-
         /// <summary>
         /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
         /// </summary>
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            try
-            {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-            }
+            base.Dispose(disposing);
 
             if (disposing)
             {
