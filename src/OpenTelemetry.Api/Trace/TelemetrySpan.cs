@@ -66,12 +66,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets a collection of key/value pairs that represents information that is passed
-        /// to children of this <see cref="TelemetrySpan"/>.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Baggage => this.Activity?.Baggage;
-
-        /// <summary>
         /// Sets the status of the span execution.
         /// </summary>
         public Status Status
@@ -285,30 +279,6 @@ namespace OpenTelemetry.Trace
         public void Dispose()
         {
             this.Activity?.Dispose();
-        }
-
-        /// <summary>
-        /// Updates the <see cref="TelemetrySpan"/> to have a new baggage item with the specified key and value.
-        /// </summary>
-        /// <param name="key">The baggage key.</param>
-        /// <param name="value">The baggage value.</param>
-        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddBaggage(string key, string value)
-        {
-            this.Activity?.AddBaggage(key, value);
-            return this;
-        }
-
-        /// <summary>
-        /// Returns the value of a key-value pair added to the <see cref="TelemetrySpan"/>.
-        /// </summary>
-        /// <param name="key">The baggage key.</param>
-        /// <returns>The baggage value if it exists, or null if it does not exist.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string GetBaggageItem(string key)
-        {
-            return this.Activity?.GetBaggageItem(key);
         }
 
         /// <summary>
