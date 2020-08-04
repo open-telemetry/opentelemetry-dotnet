@@ -216,7 +216,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
             }
             catch (Exception e)
             {
@@ -274,7 +274,7 @@ namespace OpenTelemetry.Context.Propagation
                     }
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
             }
             catch (Exception e)
             {
