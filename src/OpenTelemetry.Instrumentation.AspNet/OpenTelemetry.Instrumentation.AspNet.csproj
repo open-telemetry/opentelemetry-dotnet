@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
 </Project>

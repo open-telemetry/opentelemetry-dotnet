@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>
