@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -149,7 +148,57 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        // TODO: SetAttribute(string key, array of primitives)
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, string[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, int[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, bool[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, double[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
 
         /// <summary>
         /// Adds a single Event to the <see cref="TelemetrySpan"/>.
