@@ -21,23 +21,23 @@ namespace OpenTelemetry
 {
     public sealed class SuppressInstrumentationScope : IDisposable
     {
-        private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
+        private static readonly RuntimeContextSlot<bool> Slot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
 
         private readonly bool previousValue;
         private bool disposed;
 
         internal SuppressInstrumentationScope(bool value = true)
         {
-            this.previousValue = SuppressInstrumentationRuntimeContextSlot.Get();
-            SuppressInstrumentationRuntimeContextSlot.Set(value);
+            this.previousValue = Slot.Get();
+            Slot.Set(value);
         }
 
-        public static implicit operator bool(SuppressInstrumentationScope x) => SuppressInstrumentationRuntimeContextSlot.Get();
+        public static implicit operator bool(SuppressInstrumentationScope unused) => Slot.Get();
 
         /// <summary>
-        /// Begins a new scope in which automatic telemetry is suppressed (disabled).
+        /// Begins a new scope in which instrumentation is suppressed (disabled).
         /// </summary>
-        /// <param name="value">Value indicating whether to suppress automatic telemetry.</param>
+        /// <param name="value">Value indicating whether to suppress instrumentation.</param>
         /// <returns>Object to dispose to end the scope.</returns>
         /// <remarks>
         /// This is typically used to prevent infinite loops created by
@@ -66,7 +66,7 @@ namespace OpenTelemetry
         {
             if (!this.disposed)
             {
-                SuppressInstrumentationRuntimeContextSlot.Set(this.previousValue);
+                Slot.Set(this.previousValue);
                 this.disposed = true;
             }
         }
