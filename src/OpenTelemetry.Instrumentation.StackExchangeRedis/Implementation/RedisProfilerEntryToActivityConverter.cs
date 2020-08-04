@@ -59,34 +59,34 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.SetStatus(Status.Ok);
 
-                activity.AddTag(SemanticConventions.AttributeDbSystem, "redis");
-                activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
+                activity.SetTag(SemanticConventions.AttributeDbSystem, "redis");
+                activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
                 if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
-                    activity.AddTag(SemanticConventions.AttributeDbStatement, command.Command);
+                    activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
                 }
 
                 if (command.EndPoint != null)
                 {
                     if (command.EndPoint is IPEndPoint ipEndPoint)
                     {
-                        activity.AddTag(SemanticConventions.AttributeNetPeerIp, ipEndPoint.Address.ToString());
-                        activity.AddTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port.ToString());
+                        activity.SetTag(SemanticConventions.AttributeNetPeerIp, ipEndPoint.Address.ToString());
+                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port.ToString());
                     }
                     else if (command.EndPoint is DnsEndPoint dnsEndPoint)
                     {
-                        activity.AddTag(SemanticConventions.AttributeNetPeerName, dnsEndPoint.Host);
-                        activity.AddTag(SemanticConventions.AttributeNetPeerPort, dnsEndPoint.Port.ToString());
+                        activity.SetTag(SemanticConventions.AttributeNetPeerName, dnsEndPoint.Host);
+                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, dnsEndPoint.Port.ToString());
                     }
                     else
                     {
-                        activity.AddTag(SemanticConventions.AttributePeerService, command.EndPoint.ToString());
+                        activity.SetTag(SemanticConventions.AttributePeerService, command.EndPoint.ToString());
                     }
                 }
 
-                activity.AddTag(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName, command.Db.ToString());
+                activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName, command.Db.ToString());
 
                 // TODO: deal with the re-transmission
                 // command.RetransmissionOf;

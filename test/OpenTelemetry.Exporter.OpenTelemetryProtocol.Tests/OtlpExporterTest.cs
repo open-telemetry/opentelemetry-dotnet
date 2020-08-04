@@ -58,8 +58,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void ToOtlpResourceSpansTest()
         {
-            var evenTags = new[] { new KeyValuePair<string, string>("k0", "v0") };
-            var oddTags = new[] { new KeyValuePair<string, string>("k1", "v1") };
+            var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
+            var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
             var sources = new[]
             {
                 new ActivitySource("even", "2.4.6"),
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             foreach (var kvp in attributes)
             {
-                rootActivity.AddTag(kvp.Key, kvp.Value.ToString());
+                rootActivity.SetTag(kvp.Key, kvp.Value.ToString());
             }
 
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
             Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-            var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, attributes) };
+            var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, new ActivityTagsCollection(attributes)) };
             var childActivity = activitySource.StartActivity(
                 "child",
                 ActivityKind.Client,
@@ -200,7 +200,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             childActivity.SetStatus(Status.NotFound);
 
-            var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", attributes) };
+            var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", default, new ActivityTagsCollection(attributes)) };
             childActivity.AddEvent(childEvents[0]);
             childActivity.AddEvent(childEvents[1]);
 
@@ -223,14 +223,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             for (var i = 0; i < childEvents.Count; i++)
             {
                 Assert.Equal(childEvents[i].Name, otlpSpan.Events[i].Name);
-                AssertOtlpAttributes(childEvents[i].Attributes.ToList(), otlpSpan.Events[i].Attributes);
+                AssertOtlpAttributes(childEvents[i].Tags.ToList(), otlpSpan.Events[i].Attributes);
             }
 
             childLinks.Reverse();
             Assert.Equal(childLinks.Count, otlpSpan.Links.Count);
             for (var i = 0; i < childLinks.Count; i++)
             {
-                AssertOtlpAttributes(childLinks[i].Attributes.ToList(), otlpSpan.Links[i].Attributes);
+                AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
             }
         }
 
