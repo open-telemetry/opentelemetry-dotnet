@@ -1,4 +1,4 @@
-﻿// <copyright file="SuppressInstrumentation.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SuppressInstrumentationScope.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,14 @@ using OpenTelemetry.Context;
 
 namespace OpenTelemetry
 {
-    public class SuppressInstrumentation : IDisposable
+    public class SuppressInstrumentationScope : IDisposable
     {
         private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
 
         private readonly bool previousValue;
         private bool disposed;
 
-        private SuppressInstrumentation()
+        private SuppressInstrumentationScope()
         {
             this.previousValue = SuppressInstrumentationRuntimeContextSlot.Get();
             SuppressInstrumentationRuntimeContextSlot.Set(true);
@@ -61,7 +61,7 @@ namespace OpenTelemetry
         /// </remarks>
         public static IDisposable Begin()
         {
-            return new SuppressInstrumentation();
+            return new SuppressInstrumentationScope();
         }
 
         /// <inheritdoc/>
