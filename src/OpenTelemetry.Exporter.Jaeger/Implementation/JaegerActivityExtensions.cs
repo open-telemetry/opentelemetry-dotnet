@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Xml.Schema;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             ["db.instance"] = 3, // peer.service for Redis.
         };
 
-        private static readonly DictionaryEnumerator<string, string, TagState>.ForEachDelegate ProcessActivityTagRef = ProcessActivityTag;
+        private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessActivityTagRef = ProcessActivityTag;
         private static readonly ListEnumerator<ActivityLink, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessActivityLinkRef = ProcessActivityLink;
         private static readonly ListEnumerator<ActivityEvent, PooledListState<JaegerLog>>.ForEachDelegate ProcessActivityEventRef = ProcessActivityEvent;
         private static readonly DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
@@ -64,8 +65,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 Tags = PooledList<JaegerTag>.Create(),
             };
 
-            DictionaryEnumerator<string, string, TagState>.AllocationFreeForEach(
-                activity.Tags,
+            DictionaryEnumerator<string, object, TagState>.AllocationFreeForEach(
+                activity.TagObjects,
                 ref jaegerTags,
                 ProcessActivityTagRef);
 
@@ -256,9 +257,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return microseconds - UnixEpochMicroseconds;
         }
 
-        private static bool ProcessActivityTag(ref TagState state, KeyValuePair<string, string> activityTag)
+        private static bool ProcessActivityTag(ref TagState state, KeyValuePair<string, object> activityTag)
         {
-            var jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, activityTag.Value);
+            JaegerTag jaegerTag = default;
+
+            if (activityTag.Value is int intValue)
+            {
+                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: intValue);
+            }
+            else if (activityTag.Value is bool boolVal)
+            {
+                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: boolVal);
+            }
+            else if (activityTag.Value is double doubleVal)
+            {
+                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: doubleVal);
+            }
+            else if (activityTag.Value is string stringVal)
+            {
+                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, stringVal);
+            }
 
             if (jaegerTag.VStr != null
                 && PeerServiceKeyResolutionDictionary.TryGetValue(activityTag.Key, out int priority)
