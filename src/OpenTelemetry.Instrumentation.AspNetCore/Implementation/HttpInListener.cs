@@ -28,15 +28,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        private static readonly string UnknownHostName = "UNKNOWN-HOST";
-        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private const string UnknownHostName = "UNKNOWN-HOST";
+        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
-        private readonly bool hostingSupportsW3C = false;
+        private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 

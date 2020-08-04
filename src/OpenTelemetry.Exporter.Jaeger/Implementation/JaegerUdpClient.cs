@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)
         {
-            return this.SendAsync(buffer, 0, buffer?.Length ?? 0);
+            return this.SendAsync(buffer, 0, buffer?.Length ?? 0, cancellationToken);
         }
 
         public ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)

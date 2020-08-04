@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             try
             {
-                await this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count).ConfigureAwait(false);
+                await this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken).ConfigureAwait(false);
             }
             catch (SocketException se)
             {
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 #if NETSTANDARD2_1
             await this.byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            await this.byteStream.WriteAsync(buffer, offset, length).ConfigureAwait(false);
+            await this.byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
         }
 

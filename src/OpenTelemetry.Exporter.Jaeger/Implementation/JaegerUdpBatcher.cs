@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
             catch (Exception ex)
             {
-                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Value.SpanMessages.Count()).Sum()} spans", ex);
+                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Value.SpanMessages.Count).Sum()} spans", ex);
             }
         }
 
