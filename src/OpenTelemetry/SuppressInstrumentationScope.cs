@@ -19,28 +19,25 @@ using OpenTelemetry.Context;
 
 namespace OpenTelemetry
 {
-    public class SuppressInstrumentationScope : IDisposable
+    public sealed class SuppressInstrumentationScope : IDisposable
     {
         private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
 
         private readonly bool previousValue;
         private bool disposed;
 
-        private SuppressInstrumentationScope()
+        public SuppressInstrumentationScope(bool value = true)
         {
             this.previousValue = SuppressInstrumentationRuntimeContextSlot.Get();
-            SuppressInstrumentationRuntimeContextSlot.Set(true);
+            SuppressInstrumentationRuntimeContextSlot.Set(value);
         }
 
-        /// <summary>
-        /// Gets a value indicating whether automatic telemetry
-        /// collection in the current context should be suppressed (disabled).
-        /// </summary>
-        public static bool IsSuppressed => SuppressInstrumentationRuntimeContextSlot.Get();
+        public static implicit operator bool(SuppressInstrumentationScope x) => SuppressInstrumentationRuntimeContextSlot.Get();
 
         /// <summary>
         /// Begins a new scope in which automatic telemetry is suppressed (disabled).
         /// </summary>
+        /// <param name="value">Value indicating whether to suppress automatic telemetry.</param>
         /// <returns>Object to dispose to end the scope.</returns>
         /// <remarks>
         /// This is typically used to prevent infinite loops created by
@@ -50,18 +47,18 @@ namespace OpenTelemetry
         ///        IEnumerable&lt;Activity&gt; batch,
         ///        CancellationToken cancellationToken)
         ///    {
-        ///       using (SuppressInstrumentation.Begin())
+        ///       using (Sdk.SuppressInstrumentation.Begin())
         ///       {
-        ///           // Instrumentation is suppressed (i.e., SuppressInstrumentation.IsSuppressed == true)
+        ///           // Instrumentation is suppressed (i.e., Sdk.SuppressInstrumentation == true)
         ///       }
         ///
-        ///       // Instrumentation is not suppressed (i.e., SuppressInstrumentation.IsSuppressed == false)
+        ///       // Instrumentation is not suppressed (i.e., Sdk.SuppressInstrumentation == false)
         ///    }
         /// </code>
         /// </remarks>
-        public static IDisposable Begin()
+        public IDisposable Begin(bool value = true)
         {
-            return new SuppressInstrumentationScope();
+            return new SuppressInstrumentationScope(value);
         }
 
         /// <inheritdoc/>

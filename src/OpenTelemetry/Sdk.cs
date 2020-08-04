@@ -34,6 +34,8 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
+        public static readonly SuppressInstrumentationScope SuppressInstrumentation = new SuppressInstrumentationScope(false);
+
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
 
         /// <summary>
