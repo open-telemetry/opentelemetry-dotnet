@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,10 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="SkipUnlessEnvVarFoundTheoryAttribute.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\Implementation\Internal\TestHttpServer.cs" Link="TestHttpServer.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="SkipUnlessEnvVarFoundTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Implementation\Internal\TestHttpServer.cs" Link="TestHttpServer.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,8 +48,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
 </Project>
