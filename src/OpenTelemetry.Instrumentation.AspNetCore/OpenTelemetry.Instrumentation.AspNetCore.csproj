@@ -6,12 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
-    <Compile Include="..\OpenTelemetry.Instrumentation.Grpc\GrpcTagHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Grpc\GrpcTagHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="$(MicrosoftAspNetCoreHttpAbstractionsPkgVer)" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="$(MicrosoftAspNetCoreHttpFeaturesPkgVer)" />
   </ItemGroup>

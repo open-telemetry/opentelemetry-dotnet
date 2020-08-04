@@ -52,35 +52,38 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger by commenting out one of the following.
-
-            /*
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpInstrumentation()
-                .UseJaegerActivityExporter(o =>
-                {
-                    o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
-                    o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                    o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                }));
-            */
-
-            /*
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpInstrumentation()
-                .UseZipkinExporter(o =>
-                {
-                    o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
-                    o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                }));
-            */
-
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .UseConsoleExporter());
+            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
+            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+            switch (exporter)
+            {
+                case "jaeger":
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .UseJaegerExporter(o =>
+                        {
+                            o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                            o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                            o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                        }));
+                    break;
+                case "zipkin":
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .UseZipkinExporter(o =>
+                        {
+                            o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
+                            o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                        }));
+                    break;
+                default:
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .UseConsoleExporter());
+                    break;
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
