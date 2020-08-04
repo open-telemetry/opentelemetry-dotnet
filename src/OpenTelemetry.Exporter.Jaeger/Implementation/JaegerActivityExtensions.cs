@@ -48,8 +48,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             [SemanticConventions.AttributeNetPeerIp] = 2,
             ["peer.hostname"] = 2,
             ["peer.address"] = 2,
-            ["http.host"] = 3, // peer.service for Http.
-            ["db.instance"] = 3, // peer.service for Redis.
+            [SemanticConventions.AttributeHttpHost] = 3, // peer.service for Http.
+            [SemanticConventions.AttributeDbInstance] = 3, // peer.service for Redis.
         };
 
         private static readonly DictionaryEnumerator<string, object, TagState>.ForEachDelegate ProcessActivityTagRef = ProcessActivityTag;
@@ -217,23 +217,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
-            switch (attribute.Value)
+            return attribute.Value switch
             {
-                case string s:
-                    return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s);
-                case int i:
-                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i));
-                case long l:
-                    return new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l);
-                case float f:
-                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f));
-                case double d:
-                    return new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d);
-                case bool b:
-                    return new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b);
-            }
-
-            return new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString());
+                string s => new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s),
+                int i => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i)),
+                long l => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l),
+                float f => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f)),
+                double d => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d),
+                bool b => new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b),
+                _ => new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString()),
+            };
         }
 
         public static long ToEpochMicroseconds(this DateTime utcDateTime)
@@ -258,24 +251,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private static bool ProcessActivityTag(ref TagState state, KeyValuePair<string, object> activityTag)
         {
-            JaegerTag jaegerTag = default;
-
-            if (activityTag.Value is int intValue)
-            {
-                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: intValue);
-            }
-            else if (activityTag.Value is bool boolVal)
-            {
-                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: boolVal);
-            }
-            else if (activityTag.Value is double doubleVal)
-            {
-                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: doubleVal);
-            }
-            else if (activityTag.Value is string stringVal)
-            {
-                jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, stringVal);
-            }
+            JaegerTag jaegerTag = activityTag.ToJaegerTag();
 
             if (jaegerTag.VStr != null
                 && PeerServiceKeyResolutionDictionary.TryGetValue(activityTag.Key, out int priority)
