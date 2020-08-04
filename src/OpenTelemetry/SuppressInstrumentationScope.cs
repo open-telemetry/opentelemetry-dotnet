@@ -26,7 +26,7 @@ namespace OpenTelemetry
         private readonly bool previousValue;
         private bool disposed;
 
-        public SuppressInstrumentationScope(bool value = true)
+        internal SuppressInstrumentationScope(bool value = true)
         {
             this.previousValue = SuppressInstrumentationRuntimeContextSlot.Get();
             SuppressInstrumentationRuntimeContextSlot.Set(value);
