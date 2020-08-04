@@ -173,7 +173,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
 
             VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
         }
@@ -219,7 +219,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // begin and end was called
 
             VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
         }
