@@ -17,11 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <Compile Include="..\..\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
 </Project>

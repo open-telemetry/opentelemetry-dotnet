@@ -20,9 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.ZPages\OpenTelemetry.Exporter.ZPages.csproj" />
-    <Compile Include="..\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
-    <Compile Include="..\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.ZPages\OpenTelemetry.Exporter.ZPages.csproj" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
 </Project>
