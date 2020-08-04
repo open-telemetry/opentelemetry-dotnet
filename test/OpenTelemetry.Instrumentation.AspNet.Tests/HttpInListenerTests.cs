@@ -202,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(
-                "200",
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+                200,
+                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
 
             Assert.Equal(
                 "Ok",
