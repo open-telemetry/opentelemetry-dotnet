@@ -86,9 +86,12 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    parentContext = new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString);
-
-                    // TODO: once IsRemote is exposed on ActivityContext set parentContext's IsRemote=true
+                    parentContext = new ActivityContext(
+                        activity.TraceId,
+                        activity.ParentSpanId,
+                        activity.ActivityTraceFlags,
+                        activity.TraceStateString,
+                        isRemote: true);
                 }
             }
 
