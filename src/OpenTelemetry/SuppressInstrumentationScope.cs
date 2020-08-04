@@ -50,7 +50,7 @@ namespace OpenTelemetry
         ///        IEnumerable&lt;Activity&gt; batch,
         ///        CancellationToken cancellationToken)
         ///    {
-        ///       using (var scope = SuppressInstrumentation.Begin())
+        ///       using (SuppressInstrumentation.Begin())
         ///       {
         ///           // Instrumentation is suppressed (i.e., SuppressInstrumentation.IsSuppressed == true)
         ///       }
