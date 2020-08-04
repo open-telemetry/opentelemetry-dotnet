@@ -112,7 +112,7 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return new ActivityContext(traceId, spanId, traceoptions, tracestate);
+                return new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true);
             }
             catch (Exception ex)
             {

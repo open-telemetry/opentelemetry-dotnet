@@ -140,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
+                activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 activityToEnrich.SetStatus(
                     SpanHelper
