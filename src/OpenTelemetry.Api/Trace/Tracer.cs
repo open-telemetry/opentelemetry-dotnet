@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts span.
+        /// Starts a span and does not make it as current span.
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
@@ -81,11 +81,11 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartSpan(name, kind, parentSpan.Context, attributes, links, startTime);
+            return this.StartSpan(name, kind, parentSpan?.Context ?? default, attributes, links, startTime);
         }
 
         /// <summary>
-        /// Starts span.
+        /// Starts a span and does not make it as current span.
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Starts an active span.
+        /// Starts a span and make it the current active span.
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
@@ -113,11 +113,11 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartActiveSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, IEnumerable<KeyValuePair<string, object>> attributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartActiveSpan(name, kind, parentSpan.Context, attributes, links, startTime);
+            return this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, attributes, links, startTime);
         }
 
         /// <summary>
-        /// Starts an active span.
+        /// Starts a span and make it the current active span.
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
