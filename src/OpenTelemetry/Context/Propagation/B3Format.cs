@@ -172,7 +172,7 @@ namespace OpenTelemetry.Context.Propagation
                 setter(carrier, XB3SpanId, activityContext.SpanId.ToHexString());
                 if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
-                    setter(carrier, XB3Sampled, SampledValue.ToString());
+                    setter(carrier, XB3Sampled, SampledValue);
                 }
             }
         }
