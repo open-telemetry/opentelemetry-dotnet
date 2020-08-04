@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count);
+            Assert.Equal(3, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
@@ -131,8 +131,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
             fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
-
-            Assert.Equal(2, activityProcessor.Invocations.Count);
+            shutdownSignal.Dispose();
+            Assert.Equal(3, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
@@ -153,7 +153,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             fakeSqlEventSource.WriteUnknownEventWithNullPayload();
 
-            Assert.Equal(0, activityProcessor.Invocations.Count);
+            shutdownSignal.Dispose();
+
+            Assert.Single(activityProcessor.Invocations);
         }
 
         [Fact]
@@ -171,8 +173,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
 
             fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
+            shutdownSignal.Dispose();
 
-            Assert.Equal(0, activityProcessor.Invocations.Count);
+            Assert.Single(activityProcessor.Invocations);
         }
 
         private static void VerifyActivityData(
