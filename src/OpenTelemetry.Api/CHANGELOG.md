@@ -12,6 +12,11 @@
     Setting an attribute with an existing key now results in overwriting it.
     Setting null value has no impact except if null is set to an existing key,
     it gets removed.
+* Added `StartRootSpan` and modified `StartSpan` API.	
+  ([#989](https://github.com/open-telemetry/opentelemetry-dotnet/issues/989)).
+  Modified span creation not return active span by default to match the 
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span-creation).
+  Additionally, introduced `StartActiveSpan` to create an active span.   
 
 ## 0.4.0-beta.2
 
