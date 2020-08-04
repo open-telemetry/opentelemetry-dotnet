@@ -22,29 +22,32 @@ using OpenTelemetry.Trace;
 
 internal class MyActivityProcessor : ActivityProcessor
 {
-    public MyActivityProcessor()
+    public MyActivityProcessor(string name)
     {
+        this.Name = name;
     }
+
+    public string Name { get; private set; }
 
     public override void OnStart(Activity activity)
     {
-        Console.WriteLine($"{this.GetType()} OnStart");
+        Console.WriteLine($"{this.GetType()}({this.Name}).OnStart");
     }
 
     public override void OnEnd(Activity activity)
     {
-        Console.WriteLine($"{this.GetType()} OnEnd");
+        Console.WriteLine($"{this.GetType()}({this.Name}).OnEnd");
     }
 
     public override Task ForceFlushAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"{this.GetType()} ForceFlushAsync");
+        Console.WriteLine($"{this.GetType()}({this.Name}).ForceFlushAsync");
         return Task.CompletedTask;
     }
 
     public override Task ShutdownAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"{this.GetType()} ShutdownAsync");
+        Console.WriteLine($"{this.GetType()}({this.Name}).ShutdownAsync");
         return Task.CompletedTask;
     }
 }

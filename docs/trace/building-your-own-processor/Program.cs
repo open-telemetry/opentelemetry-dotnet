@@ -27,10 +27,12 @@ public class Program
     {
         using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-            .AddProcessorPipeline(pipeline =>
-            {
-                pipeline.AddProcessor(current => new MyActivityProcessor());
-            }));
+
+            // TODO: seems buggy if you remove A and B here, MyActivityProcessor(C).OnEnd is not called.
+            // TODO: should the dispose order be C, B, A or A, B C?
+            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("A")))
+            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("B")))
+            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("C"))));
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
