@@ -14,9 +14,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
-    <Compile Include="..\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
-    <Compile Include="..\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
 </Project>

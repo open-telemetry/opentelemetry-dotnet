@@ -6,12 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>
