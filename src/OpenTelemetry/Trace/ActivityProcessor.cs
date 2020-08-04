@@ -13,16 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Activity processor base class.
     /// </summary>
-    public abstract class ActivityProcessor
+    public abstract class ActivityProcessor : IDisposable
     {
         /// <summary>
         /// Activity start hook.
@@ -49,5 +52,24 @@ namespace OpenTelemetry.Trace
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
         public abstract Task ForceFlushAsync(CancellationToken cancellationToken);
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            try
+            {
+                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+            }
+        }
     }
 }

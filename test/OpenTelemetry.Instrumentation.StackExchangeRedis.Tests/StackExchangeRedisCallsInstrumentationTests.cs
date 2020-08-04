@@ -75,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             // Disposing SDK should flush the Redis profiling session immediately.
 
-            Assert.Equal(4, activityProcessor.Invocations.Count);
+            Assert.Equal(5, activityProcessor.Invocations.Count);
 
             VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0]);
             VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0]);
