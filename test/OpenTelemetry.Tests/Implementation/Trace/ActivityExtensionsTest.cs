@@ -81,7 +81,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.False(activity.GetStatus().IsValid);
         }
 
-        [Fact(Skip = "Activity does not support UpdateTag now. Enable once .NET Activity support SetTag method.")]
+        [Fact]
         public void LastSetStatusWins()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
