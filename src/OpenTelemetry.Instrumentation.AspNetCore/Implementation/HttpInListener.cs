@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
                 activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));

@@ -103,7 +103,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal("GET", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
             Assert.Equal(urlPath, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
             Assert.Equal($"http://localhost{urlPath}", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
-            Assert.Equal(statusCode.ToString(), span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+            Assert.Equal(statusCode, span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
 
             Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
             Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);

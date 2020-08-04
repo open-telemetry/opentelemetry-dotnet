@@ -136,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
                     // response could be null for DNS issues, timeouts, etc...
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                     activity.SetStatus(
                         SpanHelper
