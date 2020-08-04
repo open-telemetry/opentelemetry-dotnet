@@ -1,0 +1,17 @@
+<Project>
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\Common.nonprod.props" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package versions used in this folder">
+    <!--
+      Please sort alphabetically.
+      Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
+    -->
+    <OpenTelemetryPkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryPkgVer>
+    <OpenTelemetryExporterConsolePkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryExporterConsolePkgVer>
+  </PropertyGroup>
+</Project>
