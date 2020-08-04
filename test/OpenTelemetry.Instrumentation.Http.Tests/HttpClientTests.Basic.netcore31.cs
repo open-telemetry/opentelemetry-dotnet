@@ -98,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
@@ -225,7 +225,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(0, spanProcessor.Invocations.Count);
+            Assert.Equal(1, spanProcessor.Invocations.Count); // dispose
         }
 
         [Fact]
@@ -243,7 +243,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(0, spanProcessor.Invocations.Count);
+            Assert.Equal(1, spanProcessor.Invocations.Count);  // dispose
         }
 
         [Fact]
@@ -268,7 +268,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(0, spanProcessor.Invocations.Count);
+            Assert.Equal(1, spanProcessor.Invocations.Count);  // dispose
         }
 
         public void Dispose()

@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly System.Timers.Timer maxFlushIntervalTimer;
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
-        private bool isDisposed;
+        private bool disposed;
 
         public JaegerUdpBatcher(JaegerExporterOptions options, TTransport clientTransport = null)
         {
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        protected virtual void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool disposing)
         {
             try
             {
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
             }
 
-            if (isDisposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 this.maxFlushIntervalTimer.Dispose();
                 this.thriftClient.Dispose();
@@ -240,7 +240,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 this.memoryProtocol.Dispose();
                 this.flushLock.Dispose();
 
-                this.isDisposed = true;
+                this.disposed = true;
             }
         }
 
