@@ -26,6 +26,17 @@ namespace OpenTelemetry.Tests
             using (var scope = SuppressInstrumentation.Begin())
             {
                 Assert.True(SuppressInstrumentation.IsSuppressed);
+
+                using (var innerScope = SuppressInstrumentation.Begin())
+                {
+                    innerScope.Dispose();
+
+                    Assert.True(SuppressInstrumentation.IsSuppressed);
+
+                    scope.Dispose();
+                }
+
+                Assert.False(SuppressInstrumentation.IsSuppressed);
             }
 
             Assert.False(SuppressInstrumentation.IsSuppressed);

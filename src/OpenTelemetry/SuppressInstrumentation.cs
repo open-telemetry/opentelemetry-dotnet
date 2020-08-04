@@ -21,22 +21,22 @@ namespace OpenTelemetry
 {
     public class SuppressInstrumentation : IDisposable
     {
-        private static readonly RuntimeContextSlot<SuppressInstrumentation> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<SuppressInstrumentation>("otel.suppress_instrumentation");
+        private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
 
-        private readonly SuppressInstrumentation parent;
+        private readonly bool previousValue;
         private bool disposed;
 
         private SuppressInstrumentation()
         {
-            this.parent = SuppressInstrumentationRuntimeContextSlot.Get();
-            SuppressInstrumentationRuntimeContextSlot.Set(this);
+            this.previousValue = SuppressInstrumentationRuntimeContextSlot.Get();
+            SuppressInstrumentationRuntimeContextSlot.Set(true);
         }
 
         /// <summary>
         /// Gets a value indicating whether automatic telemetry
         /// collection in the current context should be suppressed (disabled).
         /// </summary>
-        public static bool IsSuppressed => SuppressInstrumentationRuntimeContextSlot.Get() != default;
+        public static bool IsSuppressed => SuppressInstrumentationRuntimeContextSlot.Get();
 
         /// <summary>
         /// Begins a new scope in which automatic telemetry is suppressed (disabled).
@@ -69,7 +69,7 @@ namespace OpenTelemetry
         {
             if (!this.disposed)
             {
-                SuppressInstrumentationRuntimeContextSlot.Set(this.parent);
+                SuppressInstrumentationRuntimeContextSlot.Set(this.previousValue);
                 this.disposed = true;
             }
         }
