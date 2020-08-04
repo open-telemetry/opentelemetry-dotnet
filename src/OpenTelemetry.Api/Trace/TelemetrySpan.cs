@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -65,6 +64,12 @@ namespace OpenTelemetry.Trace
                 return (this.Activity == null) ? false : this.Activity.IsAllDataRequested;
             }
         }
+
+        /// <summary>
+        /// Gets a collection of key/value pairs that represents information that is passed
+        /// to children of this <see cref="TelemetrySpan"/>.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> Baggage => this.Activity?.Baggage;
 
         /// <summary>
         /// Sets the status of the span execution.
@@ -149,7 +154,57 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        // TODO: SetAttribute(string key, array of primitives)
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, string[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, int[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, bool[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, double[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
 
         /// <summary>
         /// Adds a single Event to the <see cref="TelemetrySpan"/>.
@@ -230,6 +285,30 @@ namespace OpenTelemetry.Trace
         public void Dispose()
         {
             this.Activity?.Dispose();
+        }
+
+        /// <summary>
+        /// Updates the <see cref="TelemetrySpan"/> to have a new baggage item with the specified key and value.
+        /// </summary>
+        /// <param name="key">The baggage key.</param>
+        /// <param name="value">The baggage value.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddBaggage(string key, string value)
+        {
+            this.Activity?.AddBaggage(key, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Returns the value of a key-value pair added to the <see cref="TelemetrySpan"/>.
+        /// </summary>
+        /// <param name="key">The baggage key.</param>
+        /// <returns>The baggage value if it exists, or null if it does not exist.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string GetBaggageItem(string key)
+        {
+            return this.Activity?.GetBaggageItem(key);
         }
 
         /// <summary>
