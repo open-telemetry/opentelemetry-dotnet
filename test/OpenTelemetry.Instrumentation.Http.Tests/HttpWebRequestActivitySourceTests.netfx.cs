@@ -188,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(response);
 
-            VerifyActivityStopTags("200", "OK", activity);
+            VerifyActivityStopTags(200, "OK", activity);
         }
 
         [Theory]
@@ -404,7 +404,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(response);
 
-            VerifyActivityStopTags("200", "OK", activity);
+            VerifyActivityStopTags(200, "OK", activity);
         }
 
         [Fact]
@@ -523,7 +523,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
             Assert.NotNull(stopResponse);
 
-            VerifyActivityStopTags("204", "No Content", activity);
+            VerifyActivityStopTags(204, "No Content", activity);
         }
 
         /// <summary>
@@ -896,9 +896,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
         }
 
-        private static void VerifyActivityStopTags(string statusCode, string statusText, Activity activity)
+        private static void VerifyActivityStopTags(int statusCode, string statusText, Activity activity)
         {
-            Assert.Equal(statusCode, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+            Assert.Equal(statusCode, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
             Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
         }
 
