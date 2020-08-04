@@ -15,7 +15,7 @@ changed to match the
   * Setting null value has no impact except if null is set to an existing key, it
   gets removed.
     ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954)).
-* HttpStatusCode in all spans attribute (http.status_code) to use int value. 
+* HttpStatusCode in all spans attribute (http.status_code) to use int value.
 
 ## 0.4.0-beta.2
 
