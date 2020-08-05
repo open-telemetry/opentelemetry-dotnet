@@ -107,27 +107,27 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return default;
+                return activityContext;
             }
 
             if (getter == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return default;
+                return activityContext;
             }
 
             if (this.singleHeader)
             {
-                return ExtractFromSingleHeader(carrier, getter);
+                return ExtractFromSingleHeader(activityContext, carrier, getter);
             }
             else
             {
-                return ExtractFromMultipleHeaders(carrier, getter);
+                return ExtractFromMultipleHeaders(activityContext, carrier, getter);
             }
         }
 
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static ActivityContext ExtractFromMultipleHeaders<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromMultipleHeaders<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 ActivitySpanId spanId;
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -221,30 +221,30 @@ namespace OpenTelemetry.Context.Propagation
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return default;
+                return activityContext;
             }
         }
 
-        private static ActivityContext ExtractFromSingleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromSingleHeader<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
                 var header = getter(carrier, XB3Combined)?.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(header))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var parts = header.Split(XB3CombinedDelimiter);
                 if (parts.Length < 2 || parts.Length > 4)
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var traceIdStr = parts[0];
                 if (string.IsNullOrWhiteSpace(traceIdStr))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 if (traceIdStr.Length == 16)
@@ -258,7 +258,7 @@ namespace OpenTelemetry.Context.Propagation
                 var spanIdStr = parts[1];
                 if (string.IsNullOrWhiteSpace(spanIdStr))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
@@ -279,7 +279,7 @@ namespace OpenTelemetry.Context.Propagation
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return default;
+                return activityContext;
             }
         }
     }

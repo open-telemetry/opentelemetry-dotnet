@@ -63,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             {
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted using the format TextFormat supports.
-                var ctx = this.options.TextFormat.Extract(request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by

@@ -16,6 +16,10 @@ changed to match the
   gets removed.
     ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954)).
 * HttpStatusCode in all spans attribute (http.status_code) to use int value.
+* `ITextFormatActivity` got replaced by `ITextFormat` with an additional method
+  to be implemented (`IsInjected`)
+* Added `CompositePropagator` that accepts a list of `ITextFormat` following
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md#create-a-composite-propagator)
 
 ## 0.4.0-beta.2
 
