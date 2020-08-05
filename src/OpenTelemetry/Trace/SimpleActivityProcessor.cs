@@ -39,11 +39,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        /// <inheritdoc />
         public override void OnEnd(Activity activity)
         {
             try
@@ -68,16 +63,6 @@ namespace OpenTelemetry.Trace
                 return this.exporter.ShutdownAsync(cancellationToken);
             }
 
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        /// <inheritdoc />
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
 #if NET452
             return Task.FromResult(0);
 #else

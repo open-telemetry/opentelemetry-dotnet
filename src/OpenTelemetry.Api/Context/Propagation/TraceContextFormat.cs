@@ -30,7 +30,6 @@ namespace OpenTelemetry.Context.Propagation
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
 
-        private static readonly int VersionLength = "00".Length;
         private static readonly int VersionPrefixIdLength = "00-".Length;
         private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
         private static readonly int VersionAndTraceIdLength = "00-0af7651916cd43dd8448eb211c80319c-".Length;
@@ -74,18 +73,18 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
-                return default;
+                return activityContext;
             }
 
             if (getter == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
-                return default;
+                return activityContext;
             }
 
             try
@@ -95,22 +94,22 @@ namespace OpenTelemetry.Context.Propagation
                 // There must be a single traceparent
                 if (traceparentCollection == null || traceparentCollection.Count() != 1)
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var traceparent = traceparentCollection.First();
-                var traceparentParsed = this.TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
+                var traceparentParsed = TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
                 if (!traceparentParsed)
                 {
-                    return default;
+                    return activityContext;
                 }
 
-                string tracestate = null;
+                string tracestate = string.Empty;
                 var tracestateCollection = getter(carrier, TraceState);
-                if (tracestateCollection != null)
+                if (tracestateCollection?.Any() ?? false)
                 {
-                    this.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                    TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
                 return new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true);
@@ -121,7 +120,7 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
-            return default;
+            return activityContext;
         }
 
         /// <inheritdoc/>
@@ -157,7 +156,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceOptions)
+        internal static bool TryExtractTraceparent(string traceparent, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceOptions)
         {
             // from https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
             // traceparent: 00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01
@@ -179,8 +178,8 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             // or version is not a hex (will throw)
-            var version0 = this.HexCharToByte(traceparent[0]);
-            var version1 = this.HexCharToByte(traceparent[1]);
+            var version0 = HexCharToByte(traceparent[0]);
+            var version1 = HexCharToByte(traceparent[1]);
 
             if (version0 == 0xf && version1 == 0xf)
             {
@@ -229,8 +228,8 @@ namespace OpenTelemetry.Context.Propagation
 
             try
             {
-                options0 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
-                options1 = this.HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
+                options0 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
+                options1 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -259,27 +258,7 @@ namespace OpenTelemetry.Context.Propagation
             return true;
         }
 
-        private byte HexCharToByte(char c)
-        {
-            if ((c >= '0') && (c <= '9'))
-            {
-                return (byte)(c - '0');
-            }
-
-            if ((c >= 'a') && (c <= 'f'))
-            {
-                return (byte)(c - 'a' + 10);
-            }
-
-            if ((c >= 'A') && (c <= 'F'))
-            {
-                return (byte)(c - 'A' + 10);
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
-        }
-
-        private bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
+        internal static bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
         {
             tracestateResult = string.Empty;
 
@@ -303,6 +282,18 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             return true;
+        }
+
+        private static byte HexCharToByte(char c)
+        {
+            if (((c >= '0') && (c <= '9'))
+                || ((c >= 'a') && (c <= 'f'))
+                || ((c >= 'A') && (c <= 'F')))
+            {
+                return Convert.ToByte(c);
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
         }
     }
 }

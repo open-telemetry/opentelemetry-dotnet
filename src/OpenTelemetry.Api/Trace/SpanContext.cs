@@ -121,6 +121,12 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Converts a <see cref="SpanContext"/> into an <see cref="ActivityContext"/>.
+        /// </summary>
+        /// <param name="spanContext"><see cref="SpanContext"/> source.</param>
+        public static implicit operator ActivityContext(SpanContext spanContext) => spanContext.ActivityContext;
+
+        /// <summary>
         /// Compare two <see cref="SpanContext"/> for equality.
         /// </summary>
         /// <param name="spanContext1">First SpanContext to compare.</param>

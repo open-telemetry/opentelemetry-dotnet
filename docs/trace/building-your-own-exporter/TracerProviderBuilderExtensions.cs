@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopActivityProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using System;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Trace.Internal
+internal static class TracerProviderBuilderExtensions
 {
-    internal sealed class NoopActivityProcessor : ActivityProcessor
+    public static TracerProviderBuilder UseMyExporter(this TracerProviderBuilder builder)
     {
+        if (builder == null)
+        {
+            throw new ArgumentNullException(nameof(builder));
+        }
+
+        return builder.AddProcessorPipeline(p => p.SetExporter(new MyExporter()));
     }
 }

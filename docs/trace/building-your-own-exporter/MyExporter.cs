@@ -1,4 +1,4 @@
-﻿// <copyright file="MyActivityProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MyExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,39 +15,33 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
-internal class MyActivityProcessor : ActivityProcessor
+internal class MyExporter : ActivityExporter
 {
-    private readonly string name;
-
-    public MyActivityProcessor(string name)
+    public override Task<ExportResult> ExportAsync(
+        IEnumerable<Activity> batch, CancellationToken cancellationToken)
     {
-        this.name = name;
-    }
+        foreach (var activity in batch)
+        {
+            Console.WriteLine($"{activity.DisplayName}");
+        }
 
-    public override string ToString()
-    {
-        return $"{this.GetType()}({this.name})";
-    }
-
-    public override void OnEnd(Activity activity)
-    {
-        Console.WriteLine($"{this}.OnEnd");
-    }
-
-    public override Task ForceFlushAsync(CancellationToken cancellationToken)
-    {
-        Console.WriteLine($"{this}.ForceFlushAsync");
-        return Task.CompletedTask;
+        return Task.FromResult(ExportResult.Success);
     }
 
     public override Task ShutdownAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"{this}.ShutdownAsync");
+        Console.WriteLine($"MyExporter.ShutdownAsync");
         return Task.CompletedTask;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Console.WriteLine($"MyExporter.Dispose");
     }
 }
