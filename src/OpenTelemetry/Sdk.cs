@@ -64,7 +64,7 @@ namespace OpenTelemetry
                 meterRegistry,
                 metricProcessor,
                 metricExporter,
-                meterBuilder.MetricPushInterval == default(TimeSpan) ? DefaultPushInterval : meterBuilder.MetricPushInterval,
+                meterBuilder.MetricPushInterval == default ? DefaultPushInterval : meterBuilder.MetricPushInterval,
                 cancellationTokenSource);
 
             var meterProviderSdk = new MeterProviderSdk(metricProcessor, meterRegistry, controller, cancellationTokenSource);
@@ -85,7 +85,7 @@ namespace OpenTelemetry
             configureTracerProviderBuilder?.Invoke(tracerProviderBuilder);
 
             var tracerProviderSdk = new TracerProviderSdk();
-            Sampler sampler = tracerProviderBuilder.Sampler ?? new AlwaysOnSampler();
+            Sampler sampler = tracerProviderBuilder.Sampler ?? new ParentOrElseSampler(new AlwaysOnSampler());
 
             ActivityProcessor activityProcessor;
             if (tracerProviderBuilder.ProcessingPipelines == null || !tracerProviderBuilder.ProcessingPipelines.Any())
@@ -165,7 +165,8 @@ namespace OpenTelemetry
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            var isRootSpan = options.Parent.SpanId == default;
+            var isRootSpan = /*TODO: Put back once AutoGenerateRootContextTraceId is removed.
+                              options.Parent.TraceId == default ||*/ options.Parent.SpanId == default;
 
             // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
             // Parent.TraceId will always be the TraceId of the to-be-created Activity,
