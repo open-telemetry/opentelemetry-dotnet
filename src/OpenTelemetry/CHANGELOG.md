@@ -11,7 +11,7 @@
   disposes the containing exporter.
 * `BroadcastActivityProcessor`is disposable and it disposes the processors.
 * Samplers now get the actual TraceId of the Activity to be created.
-  
+
 ## 0.3.0-beta
 
 Released 2020-07-23
