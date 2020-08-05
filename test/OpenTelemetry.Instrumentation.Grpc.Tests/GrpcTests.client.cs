@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(parent.TraceId, span.Context.TraceId);
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(4, spanProcessor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call
+            Assert.Equal(5, spanProcessor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call + dispose
             var httpSpan = (Activity)spanProcessor.Invocations[2].Arguments[0];
             var grpcSpan = (Activity)spanProcessor.Invocations[3].Arguments[0];
 
