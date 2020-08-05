@@ -48,6 +48,20 @@ namespace OpenTelemetry.Context
         public IEnumerable<CorrelationContextEntry> Entries => this.entries;
 
         /// <summary>
+        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator ==(CorrelationContext left, CorrelationContext right) => left.Equals(right);
+
+        /// <summary>
+        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator !=(CorrelationContext left, CorrelationContext right) => !(left == right);
+
+        /// <summary>
         /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.
         /// </summary>
         /// <param name="key">Name of the <see cref="CorrelationContextEntry"/> to get.</param>
@@ -71,6 +85,18 @@ namespace OpenTelemetry.Context
             }
 
             return true;
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            return obj is CorrelationContext context && this.Equals(context);
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return this.entries.GetHashCode();
         }
     }
 }

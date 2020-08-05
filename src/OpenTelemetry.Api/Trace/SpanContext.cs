@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace
     /// child <see cref="TelemetrySpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>
     /// and <see cref="ActivitySpanId"/> associated with the <see cref="TelemetrySpan"/> and a set of <see cref="TraceFlags"/>.
     /// </summary>
-    public readonly struct SpanContext
+    public readonly struct SpanContext : System.IEquatable<SpanContext>
     {
         internal readonly ActivityContext ActivityContext;
 
@@ -150,6 +150,12 @@ namespace OpenTelemetry.Trace
         public override bool Equals(object obj)
         {
             return (obj is SpanContext ctx) && this.ActivityContext.Equals(ctx.ActivityContext);
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(SpanContext ctx)
+        {
+            return this.ActivityContext.Equals(ctx.ActivityContext);
         }
 
         private bool IsTraceIdValid(ActivityTraceId traceId)

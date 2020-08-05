@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityContextExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ThreadLocalRuntimeContextSlotTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using OpenTelemetry.Context;
+using Xunit;
 
-namespace OpenTelemetry.Context.Propagation
+namespace OpenTelemetry.Tests.Implementation.Context
 {
-    /// <summary>
-    /// Extension methods on ActivityContext.
-    /// </summary>
-    public static class ActivityContextExtensions
+    public class ThreadLocalRuntimeContextSlotTests
     {
-        /// <summary>
-        /// Returns a bool indicating if a ActivityContext is valid or not.
-        /// </summary>
-        /// <param name="ctx">ActivityContext.</param>
-        /// <returns>whether the context is a valid one or not.</returns>
-        public static bool IsValid(this ActivityContext ctx)
+        [Fact]
+        public void TestDispose()
         {
-            return ctx != default;
+            using (var threadLocal = new ThreadLocalRuntimeContextSlot<int>("test"))
+            {
+                threadLocal.Set(1);
+                Assert.Equal(1, threadLocal.Get());
+
+                threadLocal.Set(2);
+                Assert.Equal(2, threadLocal.Get());
+            }
         }
     }
 }

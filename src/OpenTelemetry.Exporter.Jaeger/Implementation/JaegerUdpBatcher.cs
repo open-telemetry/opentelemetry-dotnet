@@ -134,8 +134,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
             this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected async ValueTask<int> AppendInternalAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
@@ -237,6 +237,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 this.maxFlushIntervalTimer.Dispose();
                 this.thriftClient.Dispose();
                 this.clientTransport.Dispose();
+                this.memoryTransport.Dispose();
                 this.memoryProtocol.Dispose();
                 this.flushLock.Dispose();
 

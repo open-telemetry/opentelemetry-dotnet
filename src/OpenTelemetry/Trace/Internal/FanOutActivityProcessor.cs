@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Internal
 
         public override Task ForceFlushAsync(CancellationToken cancellationToken)
         {
-            var tasks = new List<Task>(this.processors.Count());
+            var tasks = new List<Task>(this.processors.Count);
             foreach (var processor in this.processors)
             {
                 tasks.Add(processor.ForceFlushAsync(cancellationToken));
