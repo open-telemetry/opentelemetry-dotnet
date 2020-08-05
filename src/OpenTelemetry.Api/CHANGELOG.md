@@ -16,11 +16,10 @@ changed to match the
   gets removed.
     ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954)).
 * HttpStatusCode in all spans attribute (http.status_code) to use int value.
-* Added `StartRootSpan` and modified `StartSpan` API.
+* Added `StartRootSpan`, `StartActiveSpan` and modified `StartSpan` API.
   ([#989](https://github.com/open-telemetry/opentelemetry-dotnet/issues/989)).
-  Modified span creation not return active span by default to match the
+   Modified StartSpan not to set the created span as Active to match 
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span-creation).
-  Additionally, introduced `StartActiveSpan` to create an active span.
 
 ## 0.4.0-beta.2
 
