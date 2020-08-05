@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal class MyExporter : ActivityExporter
@@ -26,6 +27,8 @@ internal class MyExporter : ActivityExporter
     public override Task<ExportResult> ExportAsync(
         IEnumerable<Activity> batch, CancellationToken cancellationToken)
     {
+        using var scope = Sdk.SuppressInstrumentation.Begin();
+
         foreach (var activity in batch)
         {
             Console.WriteLine($"{activity.DisplayName}");
