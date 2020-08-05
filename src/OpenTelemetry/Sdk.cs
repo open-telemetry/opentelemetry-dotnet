@@ -147,7 +147,9 @@ namespace OpenTelemetry
                 // or not.
                 ShouldListenTo = (activitySource) => tracerProviderBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
-                // Setting this to true means TraceId will be generated for RootActivities.
+                // Setting this to true means TraceId will be always
+                // available in sampling callbacks and will be the actual
+                // traceid used, if activity ends up getting created.
                 AutoGenerateRootContextTraceId = true,
 
                 // The following parameter is not used now.
