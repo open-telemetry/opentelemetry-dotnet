@@ -28,7 +28,8 @@ public class Program
         using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
 
-            // TODO: seems buggy if you remove A and B here, MyActivityProcessor(C).OnEnd is not called.
+            // TODO: seems buggy as ShutdownAsync is called 6 times
+            // TODO: need to discuss the expectation, currently FlushAsync is not called by default
             // TODO: should the dispose order be C, B, A or A, B C?
             .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("A")))
             .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("B")))

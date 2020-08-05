@@ -120,23 +120,5 @@ namespace OpenTelemetry.Exporter.ZPages
                 Console.Write("OnEnd", ex);
             }
         }
-
-        /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
