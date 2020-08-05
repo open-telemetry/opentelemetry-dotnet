@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Introduce `SuppressInstrumentationScope` API (#988).
 * `ActivityProcessor` implements `IDisposable`.
   * When `Dispose` occurs, it calls `ShutdownAsync`.
   * If you want a custom behavior for dispose, you will have to override the
