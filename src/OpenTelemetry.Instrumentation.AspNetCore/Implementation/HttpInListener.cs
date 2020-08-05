@@ -72,17 +72,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // using the format TextFormat supports.
 
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                if (ctx != default)
+                {
+                    // Create a new activity with its parent set from the extracted context.
+                    // This makes the new activity as a "sibling" of the activity created by
+                    // Asp.Net Core.
+                    Activity newOne = new Activity(ActivityNameByHttpInListener);
+                    newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                    newOne.TraceStateString = ctx.TraceState;
 
-                // Create a new activity with its parent set from the extracted context.
-                // This makes the new activity as a "sibling" of the activity created by
-                // Asp.Net Core.
-                Activity newOne = new Activity(ActivityNameByHttpInListener);
-                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
-                newOne.TraceStateString = ctx.TraceState;
-
-                // Starting the new activity make it the Activity.Current one.
-                newOne.Start();
-                activity = newOne;
+                    // Starting the new activity make it the Activity.Current one.
+                    newOne.Start();
+                    activity = newOne;
+                }
             }
 
             activity.SetKind(ActivityKind.Server);

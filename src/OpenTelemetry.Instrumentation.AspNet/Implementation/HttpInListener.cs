@@ -64,23 +64,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 // This requires to ignore the current activity and create a new one
                 // using the context extracted using the format TextFormat supports.
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                if (ctx != default)
+                {
+                    // Create a new activity with its parent set from the extracted context.
+                    // This makes the new activity as a "sibling" of the activity created by
+                    // Asp.Net.
+                    Activity newOne = new Activity(ActivityNameByHttpInListener);
+                    newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                    newOne.TraceStateString = ctx.TraceState;
 
-                // Create a new activity with its parent set from the extracted context.
-                // This makes the new activity as a "sibling" of the activity created by
-                // Asp.Net.
-                Activity newOne = new Activity(ActivityNameByHttpInListener);
-                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
-                newOne.TraceStateString = ctx.TraceState;
+                    // Starting the new activity make it the Activity.Current one.
+                    newOne.Start();
 
-                // Starting the new activity make it the Activity.Current one.
-                newOne.Start();
-
-                // Both new activity and old one store the other activity
-                // inside them. This is required in the Stop step to
-                // correctly stop and restore Activity.Current.
-                newOne.SetCustomProperty("ActivityByAspNet", activity);
-                activity.SetCustomProperty("ActivityByHttpInListener", newOne);
-                activity = newOne;
+                    // Both new activity and old one store the other activity
+                    // inside them. This is required in the Stop step to
+                    // correctly stop and restore Activity.Current.
+                    newOne.SetCustomProperty("ActivityByAspNet", activity);
+                    activity.SetCustomProperty("ActivityByHttpInListener", newOne);
+                    activity = newOne;
+                }
             }
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md

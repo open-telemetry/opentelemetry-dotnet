@@ -76,23 +76,20 @@ namespace OpenTelemetry.Trace
             ActivityContext parentContext;
             if (string.IsNullOrEmpty(activity.ParentId))
             {
-                parentContext = default(ActivityContext);
+                parentContext = default;
+            }
+            else if (activity.Parent != null)
+            {
+                parentContext = activity.Parent.Context;
             }
             else
             {
-                if (activity.Parent != null)
-                {
-                    parentContext = activity.Parent.Context;
-                }
-                else
-                {
-                    parentContext = new ActivityContext(
-                        activity.TraceId,
-                        activity.ParentSpanId,
-                        activity.ActivityTraceFlags,
-                        activity.TraceStateString,
-                        isRemote: true);
-                }
+                parentContext = new ActivityContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
             }
 
             var samplingParameters = new SamplingParameters(
