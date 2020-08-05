@@ -27,7 +27,7 @@ public class Program
     {
         using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-            .SetSampler(new MySampler())
+            .SetSampler(new MySampler()) // TODO: it is NOT working at this moment
             .UseConsoleExporter());
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
