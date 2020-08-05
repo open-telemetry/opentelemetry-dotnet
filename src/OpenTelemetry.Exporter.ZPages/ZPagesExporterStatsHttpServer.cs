@@ -94,6 +94,16 @@ namespace OpenTelemetry.Exporter.ZPages
         /// </summary>
         public void Dispose()
         {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
             if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();

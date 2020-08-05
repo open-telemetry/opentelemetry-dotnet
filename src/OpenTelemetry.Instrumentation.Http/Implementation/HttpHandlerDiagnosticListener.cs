@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
-        private readonly bool httpClientSupportsW3C = false;
+        private readonly bool httpClientSupportsW3C;
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)

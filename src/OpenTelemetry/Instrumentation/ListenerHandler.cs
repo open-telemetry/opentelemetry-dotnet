@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation
         /// <summary>
         /// Gets a value indicating whether the <see cref="ListenerHandler"/> supports NULL <see cref="Activity"/>.
         /// </summary>
-        public virtual bool SupportsNullActivity { get; } = false;
+        public virtual bool SupportsNullActivity { get; }
 
         /// <summary>
         /// Method called for an event with the suffix 'Start'.
