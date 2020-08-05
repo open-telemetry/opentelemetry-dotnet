@@ -71,16 +71,16 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            if (tag.Value.GetType().IsArray)
+                            if (!(tag.Value is IEnumerable array))
                             {
-                                foreach (var item in ((IEnumerable)tag.Value).Cast<object>())
-                                {
-                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
-                                }
+                                System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
                             }
                             else
                             {
-                                System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                                foreach (var item in array)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
                             }
                         }
                     }
