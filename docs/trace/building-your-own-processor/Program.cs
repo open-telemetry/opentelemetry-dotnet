@@ -26,6 +26,20 @@ public class Program
 
     public static void Main()
     {
+        /* a simple case, where default ALWAYS_ON sampler is used:
+        using var tracerProvider = Sdk.CreateTracerProvider()
+            .AddProcessor(new BatchingActivityProcessor(new ZipkinExporter()));
+        */
+
+        /* making it easier for the user:
+        using var tracerProvider = Sdk.CreateTracerProvider()
+            .AddZipkinExporter(options);
+
+        1) AddExporter should be an extension function provided by individual exporter
+        2) individual exporter should pick the right (batching vs. simple) processor by default
+        3) individual exporter can expose an option letting people to use a non-default processor
+        */
+
         using var tracerProvider = Sdk.CreateTracerProvider(new ProbabilitySampler(0.5))
             .AddListener("MyCompany.MyProduct.MyLibrary")
             .AddListener("MyCompany.AnotherProduct.*")
@@ -42,11 +56,13 @@ public class Program
         {
         }
 
-        /*
+        /* according to the spec, processors can be added at runtime
         tracerProvider.AddProcessor(new MultiActivityProcessor(
             [processor1, processor2, processor3]
         ));
+        */
 
+        /* existing samplers can be reused as a tail sampling filter
         tracerProvider.AddProcessor(new MultiActivityProcessor(
             [new TailSamplingProcessor(new Sampler()), new SimpleExportProcessor(new ConsoleExporter())]
         ));
