@@ -21,6 +21,7 @@ using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
@@ -44,6 +45,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProvider(
                 (builder) => builder
+                    .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
                     .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
@@ -95,6 +97,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProvider(
             (builder) => builder
+                .SetSampler(new AlwaysOnSampler())
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
                 .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
