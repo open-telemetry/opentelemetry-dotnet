@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 sb.Append(this.Tags);
             }
 
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
 
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
                     await oprot.WriteFieldBeginAsync(field, cancellationToken);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count()), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken);
 
                         foreach (var jt in this.Tags)
                         {

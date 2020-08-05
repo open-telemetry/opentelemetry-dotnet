@@ -145,7 +145,7 @@ namespace OpenTelemetry.Trace
             var activityKind = this.ConvertToActivityKind(kind);
 
             IList<ActivityLink> activityLinks = null;
-            if (links != null && links.Count() > 0)
+            if (links != null && links.Any())
             {
                 activityLinks = new List<ActivityLink>();
                 foreach (var link in links)

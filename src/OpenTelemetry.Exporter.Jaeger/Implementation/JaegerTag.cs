@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 sb.Append(this.VBinary);
             }
 
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
     }

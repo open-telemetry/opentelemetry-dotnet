@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcClientTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GrpcTests.client.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,27 +19,14 @@ using System.Linq;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
-using OpenTelemetry.Instrumentation.GrpcClient.Tests.Services;
+using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    public class GrpcClientTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
     {
-        private GrpcFixture<GreeterService> fixture;
-
-        public GrpcClientTests(GrpcFixture<GreeterService> fixture)
-        {
-            // Allows gRPC client to call insecure gRPC services
-            // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-
-            this.fixture = fixture;
-        }
-
         [Theory]
         [InlineData("http://localhost")]
         [InlineData("http://127.0.0.1")]
@@ -76,23 +63,23 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
             Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
             Assert.Equal("Client", span.Kind.ToString());
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == "rpc.system").Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == "rpc.service").Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == "rpc.method").Value);
+            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == "net.peer.ip").Value);
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == "net.peer.name").Value);
+                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
             else
             {
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == "net.peer.ip").Value);
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == "net.peer.name").Value);
+                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == "net.peer.port").Value);
-            Assert.Equal("Ok", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(Status.Ok, span.GetStatus());
             Assert.Equal(expectedResource, span.GetResource());
         }
 

@@ -21,7 +21,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
-    internal class TracerProviderSdk : TracerProvider, IDisposable
+    internal class TracerProviderSdk : TracerProvider
     {
         public readonly List<object> Instrumentations = new List<object>();
         public Resource Resource;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             foreach (var item in this.Instrumentations)
             {
@@ -59,6 +59,8 @@ namespace OpenTelemetry.Trace
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
             this.ActivityListener.Dispose();
+
+            base.Dispose(disposing);
         }
     }
 }

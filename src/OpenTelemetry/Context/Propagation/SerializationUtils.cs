@@ -28,8 +28,11 @@ namespace OpenTelemetry.Context.Propagation
 
         // This size limit only applies to the bytes representing tag keys and values.
         internal const int TagContextSerializedSizeLimit = 8192;
-
+#if NET452
         private static readonly byte[] InvalidContext = new byte[0];
+#else
+        private static readonly byte[] InvalidContext = Array.Empty<byte>();
+#endif
 
         // Serializes a DistributedContext to the on-the-wire format.
         // Encoded tags are of the form: <version_id><encoded_tags>

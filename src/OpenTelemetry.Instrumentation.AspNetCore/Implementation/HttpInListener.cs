@@ -22,21 +22,22 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Grpc;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        private static readonly string UnknownHostName = "UNKNOWN-HOST";
-        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private const string UnknownHostName = "UNKNOWN-HOST";
+        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
-        private readonly bool hostingSupportsW3C = false;
+        private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -129,8 +130,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var response = context.Response;
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                if (this.TryGetGrpcMethod(activity, out var grpcMethod))
+                {
+                    this.AddGrpcAttributes(activity, grpcMethod, context);
+                }
+                else
+                {
+                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))
@@ -216,6 +224,31 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             return builder.ToString();
+        }
+
+        private bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
+        {
+            grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+            return !string.IsNullOrEmpty(grpcMethod);
+        }
+
+        private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        {
+            // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
+            // activity.DisplayName = grpcMethod?.Trim('/');
+
+            activity.AddTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+
+            if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
+            {
+                activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
+                activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+            }
+
+            activity.AddTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
+            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }
 }

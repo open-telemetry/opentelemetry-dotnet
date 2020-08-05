@@ -98,7 +98,7 @@ namespace OpenTelemetry.Context.Propagation
 
                     traceStateSpan = traceStateSpan.Slice(pairEnd + 1);
                 }
-                while (traceStateSpan.Length > 0);
+                while (!traceStateSpan.IsEmpty);
 
                 if (!isValid)
                 {
@@ -144,9 +144,9 @@ namespace OpenTelemetry.Context.Propagation
                 {
                     // take last MaxKeyValuePairsCount pairs, ignore last (oldest) pairs
                     sb.Append(entry.Key)
-                        .Append("=")
+                        .Append('=')
                         .Append(entry.Value)
-                        .Append(",");
+                        .Append(',');
                 }
             }
 
