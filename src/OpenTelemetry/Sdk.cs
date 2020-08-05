@@ -144,11 +144,13 @@ namespace OpenTelemetry
                 ActivityStopped = activityProcessor.OnEnd,
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not
+                // or not.
                 ShouldListenTo = (activitySource) => tracerProviderBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
-                // The following parameter is not used now.
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                // Setting this to true means TraceId will be always
+                // available in sampling callbacks and will be the actual
+                // traceid used, if activity ends up getting created.
+                AutoGenerateRootContextTraceId = true,
 
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
@@ -163,14 +165,12 @@ namespace OpenTelemetry
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            var isRootSpan = options.Parent.TraceId == default;
+            var isRootSpan = options.Parent.SpanId == default;
 
-            // This is not going to be the final traceId of the Activity (if one is created), however, it is
-            // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
-            // the Sampler always receives the actual traceId of a root span/activity.
-            ActivityTraceId traceId = !isRootSpan
-                ? options.Parent.TraceId
-                : ActivityTraceId.CreateRandom();
+            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
+            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
+            // if it get created.
+            ActivityTraceId traceId = options.Parent.TraceId;
 
             var samplingParameters = new SamplingParameters(
                 options.Parent,
