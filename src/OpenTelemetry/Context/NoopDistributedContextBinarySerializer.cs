@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET452
+using System;
+#endif
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 
@@ -22,7 +25,11 @@ namespace OpenTelemetry.Context
     public class NoopDistributedContextBinarySerializer : DistributedContextBinarySerializerBase
     {
         internal static readonly DistributedContextBinarySerializerBase Instance = new NoopDistributedContextBinarySerializer();
+#if NET452
         private static readonly byte[] EmptyByteArray = { };
+#else
+        private static readonly byte[] EmptyByteArray = Array.Empty<byte>();
+#endif
 
         /// <inheritdoc/>
         public override byte[] ToByteArray(DistributedContext context)

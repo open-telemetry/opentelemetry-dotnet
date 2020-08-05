@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Grpc\GrpcTagHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>

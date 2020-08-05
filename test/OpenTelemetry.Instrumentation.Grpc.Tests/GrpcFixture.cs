@@ -19,8 +19,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Moq;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public class GrpcFixture<TService> : IDisposable
         where TService : class
@@ -29,8 +31,14 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
         private readonly IHost host;
 
+        private TracerProvider openTelemetrySdk = null;
+
         public GrpcFixture()
         {
+            // Allows gRPC client to call insecure gRPC services
+            // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             this.Port = 0;
 
             var retryCount = 5;
@@ -53,10 +61,13 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
 
         public int Port { get; }
 
+        public Mock<ActivityProcessor> GrpcServerSpanProcessor { get; } = new Mock<ActivityProcessor>();
+
         public void Dispose()
         {
             this.host.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             this.host.Dispose();
+            this.openTelemetrySdk.Dispose();
         }
 
         private IHost CreateServer()
@@ -69,6 +80,14 @@ namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
                         {
                             // Setup a HTTP/2 endpoint without TLS.
                             options.ListenLocalhost(this.Port, o => o.Protocols = HttpProtocols.Http2);
+                        })
+                        .ConfigureServices(serviceCollection =>
+                        {
+                            this.openTelemetrySdk = Sdk
+                                .CreateTracerProvider(
+                                    (builder) => builder
+                                        .AddAspNetCoreInstrumentation()
+                                        .AddProcessorPipeline(p => p.AddProcessor(n => this.GrpcServerSpanProcessor.Object)));
                         })
                         .UseStartup<Startup>();
                 });

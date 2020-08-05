@@ -105,7 +105,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             sb.Append(this.TraceIdHigh);
             sb.Append(", SpanId: ");
             sb.Append(this.SpanId);
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
     }
