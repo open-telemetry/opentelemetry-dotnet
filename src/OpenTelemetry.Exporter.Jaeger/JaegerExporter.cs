@@ -25,10 +25,10 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporter, IDisposable
+    public class JaegerExporter : ActivityExporter
     {
-        private bool libraryResourceApplied = false;
-        private bool disposedValue = false; // To detect redundant dispose calls
+        private bool libraryResourceApplied;
+        private bool disposedValue; // To detect redundant dispose calls
 
         public JaegerExporter(JaegerExporterOptions options)
         {
@@ -122,6 +122,8 @@ namespace OpenTelemetry.Exporter.Jaeger
 
                 this.disposedValue = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }

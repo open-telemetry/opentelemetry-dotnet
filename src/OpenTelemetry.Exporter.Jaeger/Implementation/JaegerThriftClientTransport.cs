@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
-        private bool isDisposed = false;
+        private bool isDisposed;
 
         public JaegerThriftClientTransport(string host, int port)
             : this(host, port, new MemoryStream(), new JaegerUdpClient())

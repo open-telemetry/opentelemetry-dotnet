@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Console
                 WriteIndented = true,
             };
 
-            this.displayAsJson = options.DisplayAsJson;
+            this.displayAsJson = options?.DisplayAsJson ?? false;
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
             this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
