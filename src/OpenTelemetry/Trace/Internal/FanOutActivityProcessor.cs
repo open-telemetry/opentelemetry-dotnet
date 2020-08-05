@@ -1,4 +1,4 @@
-﻿// <copyright file="BroadcastActivityProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="FanOutActivityProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +24,12 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace.Internal
 {
-    internal class BroadcastActivityProcessor : ActivityProcessor
+    internal class FanOutActivityProcessor : ActivityProcessor
     {
-        private readonly IEnumerable<ActivityProcessor> processors;
+        private readonly List<ActivityProcessor> processors;
         private bool disposed;
 
-        public BroadcastActivityProcessor(IEnumerable<ActivityProcessor> processors)
+        public FanOutActivityProcessor(IEnumerable<ActivityProcessor> processors)
         {
             if (processors == null)
             {
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace.Internal
                 throw new ArgumentException($"{nameof(processors)} collection is empty");
             }
 
-            this.processors = processors;
+            this.processors = new List<ActivityProcessor>(processors);
         }
 
         public override void OnEnd(Activity activity)
