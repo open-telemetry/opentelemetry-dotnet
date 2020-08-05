@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             ZipkinEndpoint localEndpoint,
             ZipkinEndpoint remoteEndpoint,
             in PooledList<ZipkinAnnotation>? annotations,
-            in PooledList<KeyValuePair<string, string>>? tags,
+            in PooledList<KeyValuePair<string, object>>? tags,
             bool? debug,
             bool? shared)
         {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         public PooledList<ZipkinAnnotation>? Annotations { get; }
 
-        public PooledList<KeyValuePair<string, string>>? Tags { get; }
+        public PooledList<KeyValuePair<string, object>>? Tags { get; }
 
         public bool? Debug { get; }
 
@@ -282,7 +282,28 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 foreach (var tag in this.Tags.Value)
                 {
-                    writer.WriteString(tag.Key, tag.Value);
+                    if (tag.Value is int intValue)
+                    {
+                        writer.WriteNumber(tag.Key, intValue);
+                    }
+                    else if (tag.Value is bool boolVal)
+                    {
+                        writer.WriteBoolean(tag.Key, boolVal);
+                    }
+                    else if (tag.Value is double doubleVal)
+                    {
+                        writer.WriteNumber(tag.Key, doubleVal);
+                    }
+                    else if (tag.Value is string stringVal)
+                    {
+                        writer.WriteString(tag.Key, stringVal);
+                    }
+                    else
+                    {
+                        // Should we try to convert to string? Or
+                        // just drop it?
+                        writer.WriteString(tag.Key, tag.Value.ToString());
+                    }
                 }
 
                 writer.WriteEndObject();
