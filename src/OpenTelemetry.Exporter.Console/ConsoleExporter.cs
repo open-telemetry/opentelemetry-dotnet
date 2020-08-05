@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -71,17 +72,23 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            if (!(tag.Value is IEnumerable array))
+                            var array = tag.Value as Array;
+
+                            if (array == null)
                             {
                                 System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                                continue;
                             }
-                            else
+
+                            System.Console.Write($"\t {tag.Key} : [");
+
+                            for (int i = 0; i < array.Length; i++)
                             {
-                                foreach (var item in array)
-                                {
-                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
-                                }
+                                System.Console.Write(i != 0 ? ", " : string.Empty);
+                                System.Console.Write($"{array.GetValue(i)}");
                             }
+
+                            System.Console.WriteLine($"]");
                         }
                     }
 
