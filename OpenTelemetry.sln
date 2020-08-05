@@ -129,7 +129,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 		test\Directory.Build.targets = test\Directory.Build.targets
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcClient.Tests", "test\OpenTelemetry.Instrumentation.GrpcClient.Tests\OpenTelemetry.Instrumentation.GrpcClient.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.1", "test\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj", "{7CDA3F85-EA6F-45C4-B432-2559303355D4}"
 EndProject
