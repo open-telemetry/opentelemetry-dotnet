@@ -70,7 +70,38 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            if (tag.Value is int[] intArray)
+                            {
+                                foreach (var item in intArray)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
+                            }
+                            else if (tag.Value is string[] stringArray)
+                            {
+                                foreach (var item in stringArray)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
+                            }
+                            else if (tag.Value is bool[] boolArray)
+                            {
+                                foreach (var item in boolArray)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
+                            }
+                            else if (tag.Value is double[] doubleArray)
+                            {
+                                foreach (var item in doubleArray)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
+                            }
+                            else
+                            {
+                                System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            }
                         }
                     }
 

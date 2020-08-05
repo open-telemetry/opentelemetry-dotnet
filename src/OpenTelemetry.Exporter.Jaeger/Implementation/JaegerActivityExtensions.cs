@@ -251,10 +251,52 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private static bool ProcessActivityTag(ref TagState state, KeyValuePair<string, object> activityTag)
         {
-            JaegerTag jaegerTag = activityTag.ToJaegerTag();
+            JaegerTag jaegerTag;
+            if (activityTag.Value is int[] intArray)
+            {
+                foreach (var item in intArray)
+                {
+                    jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(item));
+                    ProcessJaegerTag(ref state, activityTag.Key, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is string[] stringArray)
+            {
+                foreach (var item in stringArray)
+                {
+                    jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, vStr: item);
+                    ProcessJaegerTag(ref state, activityTag.Key, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is bool[] boolArray)
+            {
+                foreach (var item in boolArray)
+                {
+                    jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: item);
+                    ProcessJaegerTag(ref state, activityTag.Key, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is double[] doubleArray)
+            {
+                foreach (var item in doubleArray)
+                {
+                    jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: item);
+                    ProcessJaegerTag(ref state, activityTag.Key, jaegerTag);
+                }
+            }
+            else
+            {
+                jaegerTag = activityTag.ToJaegerTag();
+                ProcessJaegerTag(ref state, activityTag.Key, jaegerTag);
+            }
 
+            return true;
+        }
+
+        private static void ProcessJaegerTag(ref TagState state, string key, JaegerTag jaegerTag)
+        {
             if (jaegerTag.VStr != null
-                && PeerServiceKeyResolutionDictionary.TryGetValue(activityTag.Key, out int priority)
+                && PeerServiceKeyResolutionDictionary.TryGetValue(key, out int priority)
                 && (state.PeerService == null || priority < state.PeerServicePriority))
             {
                 state.PeerService = jaegerTag.VStr;
@@ -262,8 +304,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
 
             PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
-
-            return true;
         }
 
         private static bool ProcessActivityLink(ref PooledListState<JaegerSpanRef> state, ActivityLink link)
