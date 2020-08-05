@@ -193,6 +193,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-F
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-exporter", "docs\trace\building-your-own-exporter\building-your-own-exporter.csproj", "{9574368D-1230-4334-AA5D-EC2C2F47AA43}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-sampler", "docs\trace\building-your-own-sampler\building-your-own-sampler.csproj", "{D6318071-BE9F-43AF-9F28-A38894238627}"
 EndProject
 Global
