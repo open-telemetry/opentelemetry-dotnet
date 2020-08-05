@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             sb.Append(this.Process?.ToString() ?? "<null>");
             sb.Append(", Spans: ");
             sb.Append(this.Spans);
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
 

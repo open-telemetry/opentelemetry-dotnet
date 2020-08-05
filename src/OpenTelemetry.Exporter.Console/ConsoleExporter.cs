@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.Console
                     System.Console.WriteLine("Activity Kind - " + activity.Kind);
                     System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
                     System.Console.WriteLine("Activity Duration - " + activity.Duration);
-                    if (activity.TagObjects.Count() > 0)
+                    if (activity.TagObjects.Any())
                     {
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
