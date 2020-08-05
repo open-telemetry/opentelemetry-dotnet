@@ -152,9 +152,6 @@ namespace OpenTelemetry
                 // traceid used, if activity ends up getting created.
                 AutoGenerateRootContextTraceId = true,
 
-                // The following parameter is not used now.
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
