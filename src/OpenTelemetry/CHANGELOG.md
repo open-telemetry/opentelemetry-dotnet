@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor` (#1014)
+* Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor` (#1015)
 * Introduce `SuppressInstrumentationScope` API (#988).
 * `ActivityProcessor` implements `IDisposable`.
   * When `Dispose` occurs, it calls `ShutdownAsync`.
