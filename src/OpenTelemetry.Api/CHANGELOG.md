@@ -20,6 +20,10 @@ changed to match the
   to be implemented (`IsInjected`)
 * Added `CompositePropagator` that accepts a list of `ITextFormat` following
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md#create-a-composite-propagator)
+* Added `StartRootSpan`, `StartActiveSpan` and modified `StartSpan` API.
+  ([#989](https://github.com/open-telemetry/opentelemetry-dotnet/issues/989)).
+   Modified StartSpan not to set the created span as Active to match
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span-creation).
 
 ## 0.4.0-beta.2
 
