@@ -31,27 +31,45 @@ namespace OpenTelemetry.Trace
         /// Activity start hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnStart(Activity activity);
+        public virtual void OnStart(Activity activity)
+        {
+        }
 
         /// <summary>
         /// Activity end hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnEnd(Activity activity);
+        public virtual void OnEnd(Activity activity)
+        {
+        }
 
         /// <summary>
         /// Shuts down Activity processor asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
-        public abstract Task ShutdownAsync(CancellationToken cancellationToken);
+        public virtual Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
 
         /// <summary>
         /// Flushes all activities that have not yet been processed.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
-        public abstract Task ForceFlushAsync(CancellationToken cancellationToken);
+        public virtual Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
 
         /// <inheritdoc/>
         public void Dispose()

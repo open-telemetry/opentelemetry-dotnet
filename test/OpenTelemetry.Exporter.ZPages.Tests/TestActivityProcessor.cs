@@ -23,7 +23,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
-    public class TestActivityProcessor : ActivityProcessor, IDisposable
+    public class TestActivityProcessor : ActivityProcessor
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;

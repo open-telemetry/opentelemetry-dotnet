@@ -34,11 +34,6 @@ internal class MyActivityProcessor : ActivityProcessor
         return $"{this.GetType()}({this.name})";
     }
 
-    public override void OnStart(Activity activity)
-    {
-        Console.WriteLine($"{this}.OnStart");
-    }
-
     public override void OnEnd(Activity activity)
     {
         Console.WriteLine($"{this}.OnEnd");
