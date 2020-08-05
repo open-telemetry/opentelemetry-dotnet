@@ -20,5 +20,7 @@ comment:
   require_changes: no
 
 ignore:
-  - "test/**/*"     # ignore test folder
-  - "**.md"          # ignore md files
+  - "docs/**/*"
+  - "examples/**/*"
+  - "test/**/*"
+  - "**.md"
