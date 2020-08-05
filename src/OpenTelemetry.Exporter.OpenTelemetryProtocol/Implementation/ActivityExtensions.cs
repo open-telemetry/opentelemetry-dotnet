@@ -335,6 +335,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     break;
                 default:
                     attrib.Value.StringValue = kvp.Value.ToString();
+                    attributes.Add(attrib);
                     break;
             }
 

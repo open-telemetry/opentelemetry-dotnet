@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -70,30 +71,9 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            if (tag.Value is int[] intArray)
+                            if (tag.Value.GetType().IsArray)
                             {
-                                foreach (var item in intArray)
-                                {
-                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
-                                }
-                            }
-                            else if (tag.Value is string[] stringArray)
-                            {
-                                foreach (var item in stringArray)
-                                {
-                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
-                                }
-                            }
-                            else if (tag.Value is bool[] boolArray)
-                            {
-                                foreach (var item in boolArray)
-                                {
-                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
-                                }
-                            }
-                            else if (tag.Value is double[] doubleArray)
-                            {
-                                foreach (var item in doubleArray)
+                                foreach (var item in ((IEnumerable)tag.Value).Cast<object>())
                                 {
                                     System.Console.WriteLine($"\t {tag.Key} : {item}");
                                 }

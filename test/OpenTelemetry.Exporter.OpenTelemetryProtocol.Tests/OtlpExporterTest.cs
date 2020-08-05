@@ -145,7 +145,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("long", 1L),
                 new KeyValuePair<string, object>("string", "text"),
                 new KeyValuePair<string, object>("double", 3.14),
-
+                new KeyValuePair<string, object>("int", 1),
+                new KeyValuePair<string, object>("datetime", DateTime.UtcNow),
                 new KeyValuePair<string, object>("bool_array", new bool[] { true, false }),
                 new KeyValuePair<string, object>("int_array", new int[] { 1, 2 }),
                 new KeyValuePair<string, object>("double_array", new double[] { 1.0, 2.09 }),
