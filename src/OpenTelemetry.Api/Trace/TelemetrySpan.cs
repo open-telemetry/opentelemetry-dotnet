@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -149,7 +148,57 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        // TODO: SetAttribute(string key, array of primitives)
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, string[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, int[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, bool[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a new attribute on the span.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="values">Attribute values.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan SetAttribute(string key, double[] values)
+        {
+            this.Activity?.SetTag(key, values);
+            return this;
+        }
 
         /// <summary>
         /// Adds a single Event to the <see cref="TelemetrySpan"/>.
@@ -229,7 +278,8 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            this.Activity?.Dispose();
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -239,6 +289,15 @@ namespace OpenTelemetry.Trace
         internal void Activate()
         {
             Activity.Current = this.Activity;
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            this.Activity?.Dispose();
         }
     }
 }

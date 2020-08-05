@@ -37,8 +37,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             [SemanticConventions.AttributeNetPeerIp] = 2,
             ["peer.hostname"] = 2,
             ["peer.address"] = 2,
-            ["http.host"] = 3, // RemoteEndpoint.ServiceName for Http.
-            ["db.instance"] = 3, // RemoteEndpoint.ServiceName for Redis.
+            [SemanticConventions.AttributeHttpHost] = 3, // RemoteEndpoint.ServiceName for Http.
+            [SemanticConventions.AttributeDbInstance] = 3, // RemoteEndpoint.ServiceName for Redis.
         };
 
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
 
-        private static readonly DictionaryEnumerator<string, string, AttributeEnumerationState>.ForEachDelegate ProcessTagsRef = ProcessTags;
+        private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessTagsRef = ProcessTags;
         private static readonly ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessActivityEventsRef = ProcessActivityEvents;
 
         internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
@@ -62,18 +62,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             var attributeEnumerationState = new AttributeEnumerationState
             {
-                Tags = PooledList<KeyValuePair<string, string>>.Create(),
+                Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            DictionaryEnumerator<string, string, AttributeEnumerationState>.AllocationFreeForEach(activity.Tags, ref attributeEnumerationState, ProcessTagsRef);
+            DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(activity.TagObjects, ref attributeEnumerationState, ProcessTagsRef);
 
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))
             {
-                PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>("library.name", activitySource.Name));
+                PooledList<KeyValuePair<string, object>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, object>("library.name", activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<KeyValuePair<string, string>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, string>("library.version", activitySource.Version));
+                    PooledList<KeyValuePair<string, object>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, object>("library.version", activitySource.Version));
                 }
             }
 
@@ -161,19 +161,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static string ToActivityKind(Activity activity)
         {
-            switch (activity.Kind)
+            return activity.Kind switch
             {
-                case ActivityKind.Server:
-                    return "SERVER";
-                case ActivityKind.Producer:
-                    return "PRODUCER";
-                case ActivityKind.Consumer:
-                    return "CONSUMER";
-                case ActivityKind.Client:
-                    return "CLIENT";
-            }
-
-            return null;
+                ActivityKind.Server => "SERVER",
+                ActivityKind.Producer => "PRODUCER",
+                ActivityKind.Consumer => "CONSUMER",
+                ActivityKind.Client => "CLIENT",
+                _ => null,
+            };
         }
 
         private static bool ProcessActivityEvents(ref PooledList<ZipkinAnnotation> annotations, ActivityEvent @event)
@@ -182,10 +177,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return true;
         }
 
-        private static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, string> attribute)
+        private static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
         {
             string key = attribute.Key;
-            string strVal = attribute.Value;
+            string strVal = attribute.Value as string;
 
             if (strVal != null)
             {
@@ -205,12 +200,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
                 else
                 {
-                    PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+                    PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
                 }
             }
             else
             {
-                PooledList<KeyValuePair<string, string>>.Add(ref state.Tags, new KeyValuePair<string, string>(key, strVal));
+                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
             }
 
             return true;
@@ -218,7 +213,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private struct AttributeEnumerationState
         {
-            public PooledList<KeyValuePair<string, string>> Tags;
+            public PooledList<KeyValuePair<string, object>> Tags;
 
             public string RemoteEndpointServiceName;
 

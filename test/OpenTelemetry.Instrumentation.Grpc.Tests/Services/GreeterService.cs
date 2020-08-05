@@ -18,7 +18,7 @@ using Greet;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests.Services
+namespace OpenTelemetry.Instrumentation.Grpc.Tests.Services
 {
     public class GreeterService : Greeter.GreeterBase
     {

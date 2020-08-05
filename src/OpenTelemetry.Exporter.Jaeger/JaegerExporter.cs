@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
         {
-            if (!this.libraryResourceApplied && activityBatch.Count() > 0)
+            if (!this.libraryResourceApplied && activityBatch.Any())
             {
                 var libraryResource = activityBatch.First().GetResource();
 
