@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
+            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
                 ActivityTraceFlags.Recorded));
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin/end/dispose was called
             span = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);

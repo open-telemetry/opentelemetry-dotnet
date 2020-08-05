@@ -50,9 +50,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            var context = this.startContextFetcher.Fetch(payload) as HttpContext;
-
-            if (context == null)
+            if (!(this.startContextFetcher.Fetch(payload) is HttpContext context))
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
@@ -72,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // using the context extracted from w3ctraceparent header or
                 // using the format TextFormat supports.
 
-                var ctx = this.options.TextFormat.Extract(request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 // Create a new activity with its parent set from the extracted context.
                 // This makes the new activity as a "sibling" of the activity created by

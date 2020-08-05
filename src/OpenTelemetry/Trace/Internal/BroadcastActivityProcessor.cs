@@ -24,10 +24,10 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace.Internal
 {
-    internal class BroadcastActivityProcessor : ActivityProcessor, IDisposable
+    internal class BroadcastActivityProcessor : ActivityProcessor
     {
         private readonly IEnumerable<ActivityProcessor> processors;
-        private bool isDisposed;
+        private bool disposed;
 
         public BroadcastActivityProcessor(IEnumerable<ActivityProcessor> processors)
         {
@@ -96,23 +96,11 @@ namespace OpenTelemetry.Trace.Internal
             return Task.WhenAll(tasks);
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.Dispose(true);
-        }
+            base.Dispose(disposing);
 
-        protected virtual void Dispose(bool disposing)
-        {
-            try
-            {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-            }
-
-            if (disposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 foreach (var processor in this.processors)
                 {
@@ -129,7 +117,7 @@ namespace OpenTelemetry.Trace.Internal
                     }
                 }
 
-                this.isDisposed = true;
+                this.disposed = true;
             }
         }
     }
