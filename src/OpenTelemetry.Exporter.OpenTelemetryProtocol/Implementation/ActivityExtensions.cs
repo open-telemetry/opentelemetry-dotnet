@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
             };
 
-            foreach (var kvp in activity.Tags)
+            foreach (var kvp in activity.TagObjects)
             {
                 var attribute = ToOtlpAttribute(kvp);
                 if (attribute != null && attribute.Key != SpanAttributeConstants.StatusCodeKey && attribute.Key != SpanAttributeConstants.StatusDescriptionKey)
@@ -217,39 +217,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             otlpEvent.Attributes.AddRange(activityEvent.Tags.Select(ToOtlpAttribute).Where(a => a != null));
 
             return otlpEvent;
-        }
-
-        private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, string> kvp)
-        {
-            // TODO: enforce no duplicate keys?
-            // TODO: reverse?
-            // To maintain full fidelity to downstream receivers convert to the proper attribute types
-
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-
-            if (long.TryParse(kvp.Value, out var longValue))
-            {
-                attrib.Value.IntValue = longValue;
-            }
-            else if (double.TryParse(kvp.Value, out var doubleValue))
-            {
-                attrib.Value.DoubleValue = doubleValue;
-            }
-            else if (bool.TryParse(kvp.Value, out var boolValue))
-            {
-                attrib.Value.BoolValue = boolValue;
-            }
-            else
-            {
-                attrib.Value.StringValue = kvp.Value;
-            }
-
-            return attrib;
         }
 
         private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
