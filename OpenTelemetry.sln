@@ -192,6 +192,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-F
 		docs\toc.yml = docs\toc.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-sampler", "docs\trace\building-your-own-sampler\building-your-own-sampler.csproj", "{D6318071-BE9F-43AF-9F28-A38894238627}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -350,6 +352,10 @@ Global
 		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -372,6 +378,7 @@ Global
 		{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{3862190B-E2C5-418E-AFDC-DB281FB5C705} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{CB401DF1-FF5C-4055-886E-1183E832B2D6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{D6318071-BE9F-43AF-9F28-A38894238627} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

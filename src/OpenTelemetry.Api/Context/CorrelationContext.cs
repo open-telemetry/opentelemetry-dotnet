@@ -57,7 +57,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public bool Equals(CorrelationContext other)
         {
-            if (this.entries.Count() != other.entries.Count())
+            if (this.entries.Count != other.entries.Count)
             {
                 return false;
             }

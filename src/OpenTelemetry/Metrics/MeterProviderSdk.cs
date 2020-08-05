@@ -21,7 +21,7 @@ using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderSdk : MeterProvider, IDisposable
+    internal class MeterProviderSdk : MeterProvider
     {
         public MetricProcessor MetricProcessor;
         public PushMetricController PushMetricController;
@@ -62,11 +62,13 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             this.CancellationTokenSource.Dispose();
 
             // TODO: Actually flush the metric processor/exporer/controllers.
+
+            base.Dispose(disposing);
         }
 
         private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
