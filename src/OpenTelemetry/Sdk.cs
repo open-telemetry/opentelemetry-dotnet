@@ -110,7 +110,7 @@ namespace OpenTelemetry
                     processors[i] = tracerProviderBuilder.ProcessingPipelines[i].Build();
                 }
 
-                activityProcessor = new BroadcastActivityProcessor(processors);
+                activityProcessor = new FanOutActivityProcessor(processors);
             }
 
             tracerProviderSdk.Resource = tracerProviderBuilder.Resource;
