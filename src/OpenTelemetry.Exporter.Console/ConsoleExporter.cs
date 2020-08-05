@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -70,7 +71,17 @@ namespace OpenTelemetry.Exporter.Console
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            if (!(tag.Value is IEnumerable array))
+                            {
+                                System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            }
+                            else
+                            {
+                                foreach (var item in array)
+                                {
+                                    System.Console.WriteLine($"\t {tag.Key} : {item}");
+                                }
+                            }
                         }
                     }
 

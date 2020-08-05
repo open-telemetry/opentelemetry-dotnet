@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using Google.Protobuf;
-
+using Opentelemetry.Proto.Common.V1;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -114,10 +114,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var kvp in activity.TagObjects)
             {
-                var attribute = ToOtlpAttribute(kvp);
-                if (attribute != null && attribute.Key != SpanAttributeConstants.StatusCodeKey && attribute.Key != SpanAttributeConstants.StatusDescriptionKey)
+                var attributes = ToOtlpAttributes(kvp);
+                if (attributes != null
+                    && attributes.All(a => a.Key != SpanAttributeConstants.StatusCodeKey && a.Key != SpanAttributeConstants.StatusDescriptionKey))
                 {
-                    otlpSpan.Attributes.Add(attribute);
+                    otlpSpan.Attributes.AddRange(attributes);
                 }
             }
 
@@ -201,7 +202,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
-            otlpLink.Attributes.AddRange(activityLink.Tags.Select(ToOtlpAttribute).Where(a => a != null));
+            foreach (var attribute in from tag in activityLink.Tags
+                                      let attribute = ToOtlpAttributes(tag)
+                                      where attribute != null && attribute.Any()
+                                      select attribute)
+            {
+                otlpLink.Attributes.AddRange(attribute);
+            }
 
             return otlpLink;
         }
@@ -214,7 +221,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            otlpEvent.Attributes.AddRange(activityEvent.Tags.Select(ToOtlpAttribute).Where(a => a != null));
+            foreach (var attribute in from tag in activityEvent.Tags
+                                      let attribute = ToOtlpAttributes(tag)
+                                      where attribute != null && attribute.Any()
+                                      select attribute)
+            {
+                otlpEvent.Attributes.AddRange(attribute);
+            }
 
             return otlpEvent;
         }
@@ -251,6 +264,82 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             return attrib;
+        }
+
+        private static List<OtlpCommon.KeyValue> ToOtlpAttributes(KeyValuePair<string, object> kvp)
+        {
+            if (kvp.Value == null)
+            {
+                return null;
+            }
+
+            var attributes = new List<OtlpCommon.KeyValue>();
+            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+            switch (kvp.Value)
+            {
+                case string s:
+                    attrib.Value.StringValue = s;
+                    attributes.Add(attrib);
+                    break;
+                case bool b:
+                    attrib.Value.BoolValue = b;
+                    attributes.Add(attrib);
+                    break;
+                case int i:
+                    attrib.Value.IntValue = i;
+                    attributes.Add(attrib);
+                    break;
+                case long l:
+                    attrib.Value.IntValue = l;
+                    attributes.Add(attrib);
+                    break;
+                case double d:
+                    attrib.Value.DoubleValue = d;
+                    attributes.Add(attrib);
+                    break;
+                case int[] intArray:
+                    foreach (var item in intArray)
+                    {
+                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+                        attrib.Value.IntValue = item;
+                        attributes.Add(attrib);
+                    }
+
+                    break;
+                case double[] doubleArray:
+                    foreach (var item in doubleArray)
+                    {
+                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+                        attrib.Value.DoubleValue = item;
+                        attributes.Add(attrib);
+                    }
+
+                    break;
+                case bool[] boolArray:
+                    foreach (var item in boolArray)
+                    {
+                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+                        attrib.Value.BoolValue = item;
+                        attributes.Add(attrib);
+                    }
+
+                    break;
+                case string[] stringArray:
+                    foreach (var item in stringArray)
+                    {
+                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+                        attrib.Value.StringValue = item;
+                        attributes.Add(attrib);
+                    }
+
+                    break;
+                default:
+                    attrib.Value.StringValue = kvp.Value.ToString();
+                    attributes.Add(attrib);
+                    break;
+            }
+
+            return attributes;
         }
     }
 }

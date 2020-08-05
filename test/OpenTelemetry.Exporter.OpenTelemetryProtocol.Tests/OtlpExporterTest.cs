@@ -145,9 +145,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("long", 1L),
                 new KeyValuePair<string, object>("string", "text"),
                 new KeyValuePair<string, object>("double", 3.14),
-
-                // TODO: update if arrays of standard attribute types are supported
-                new KeyValuePair<string, object>("unknown_attrib_type", new byte[] { 1 }),
+                new KeyValuePair<string, object>("int", 1),
+                new KeyValuePair<string, object>("datetime", DateTime.UtcNow),
+                new KeyValuePair<string, object>("bool_array", new bool[] { true, false }),
+                new KeyValuePair<string, object>("int_array", new int[] { 1, 2 }),
+                new KeyValuePair<string, object>("double_array", new double[] { 1.0, 2.09 }),
+                new KeyValuePair<string, object>("string_array", new string[] { "a", "b" }),
             };
 
             foreach (var kvp in attributes)
@@ -184,7 +187,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(otlpSpan.Status);
             Assert.Empty(otlpSpan.Events);
             Assert.Empty(otlpSpan.Links);
-            AssertActivityTagsIntoOtlpAttributes(attributes, otlpSpan.Attributes);
+            AssertOtlpAttributes(attributes, otlpSpan.Attributes);
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
@@ -268,28 +271,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.True(endCalled);
         }
 
-        private static void AssertActivityTagsIntoOtlpAttributes(
-            List<KeyValuePair<string, object>> expectedTags,
-            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
-        {
-            Assert.Equal(expectedTags.Count, otlpAttributes.Count);
-            for (var i = 0; i < expectedTags.Count; i++)
-            {
-                Assert.Equal(expectedTags[i].Key, otlpAttributes[i].Key);
-                AssertOtlpAttributeValue(expectedTags[i].Value, otlpAttributes[i]);
-            }
-        }
-
         private static void AssertOtlpAttributes(
             List<KeyValuePair<string, object>> expectedAttributes,
             RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
         {
-            Assert.Equal(expectedAttributes.Count(), otlpAttributes.Count);
-            for (int i = 0; i < otlpAttributes.Count; i++)
+            int expectedSize = 0;
+            for (int i = 0; i < expectedAttributes.Count; i++)
             {
-                Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i].Key);
-                AssertOtlpAttributeValue(expectedAttributes[i].Value, otlpAttributes[i]);
+                var current = expectedAttributes[i].Value;
+
+                if (current.GetType().IsArray)
+                {
+                    if (current is bool[] boolArray)
+                    {
+                        int index = 0;
+                        foreach (var item in boolArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is int[] intArray)
+                    {
+                        int index = 1;
+                        foreach (var item in intArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is double[] doubleArray)
+                    {
+                        int index = 2;
+                        foreach (var item in doubleArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is string[] stringArray)
+                    {
+                        int index = 3;
+                        foreach (var item in stringArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                }
+                else
+                {
+                    Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i].Key);
+                    AssertOtlpAttributeValue(current, otlpAttributes[i]);
+                    expectedSize++;
+                }
             }
+
+            Assert.Equal(expectedSize, otlpAttributes.Count);
         }
 
         private static void AssertOtlpAttributeValue(object originalValue, OtlpCommon.KeyValue akv)
@@ -307,6 +353,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     break;
                 case double d:
                     Assert.Equal(d, akv.Value.DoubleValue);
+                    break;
+                case int i:
+                    Assert.Equal(i, akv.Value.IntValue);
                     break;
                 default:
                     Assert.Equal(originalValue.ToString(), akv.Value.StringValue);
