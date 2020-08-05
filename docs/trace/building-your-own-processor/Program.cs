@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 public class Program
 {
@@ -25,20 +26,30 @@ public class Program
 
     public static void Main()
     {
-        using var otel = Sdk.CreateTracerProvider(b => b
-            .AddActivitySource("MyCompany.MyProduct.MyLibrary")
+        using var tracerProvider = Sdk.CreateTracerProvider(new ProbabilitySampler(0.5))
+            .AddListener("MyCompany.MyProduct.MyLibrary")
+            .AddListener("MyCompany.AnotherProduct.*")
+            .AddProcessor(new MyActivityProcessor("A"))
+            .AddProcessor(new MyActivityProcessor("B"));
 
-            // TODO: seems buggy as ShutdownAsync is called 6 times
-            // TODO: need to discuss the expectation, currently FlushAsync is not called by default
-            // TODO: should the dispose order be C, B, A or A, B C?
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("A")))
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("B")))
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("C"))));
-
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        using (var activity = MyActivitySource.StartActivity("Foo"))
         {
-            activity?.SetTag("foo", 1);
-            activity?.SetTag("bar", "Hello, World!");
         }
+
+        tracerProvider.AddProcessor(new MyActivityProcessor("C"));
+
+        using (var activity = MyActivitySource.StartActivity("Bar"))
+        {
+        }
+
+        /*
+        tracerProvider.AddProcessor(new MultiActivityProcessor(
+            [processor1, processor2, processor3]
+        ));
+
+        tracerProvider.AddProcessor(new MultiActivityProcessor(
+            [new TailSamplingProcessor(new Sampler()), new SimpleExportProcessor(new ConsoleExporter())]
+        ));
+        */
     }
 }

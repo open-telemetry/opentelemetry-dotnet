@@ -22,6 +22,7 @@ using System.Threading;
 using OpenTelemetry.Context;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;
 using OpenTelemetry.Trace.Samplers;
@@ -159,6 +160,15 @@ namespace OpenTelemetry
             ActivitySource.AddActivityListener(tracerProviderSdk.ActivityListener);
             tracerProviderSdk.ActivityProcessor = activityProcessor;
             return tracerProviderSdk;
+        }
+
+        public static TracerProvider CreateTracerProvider(Sampler sampler = null, Resource resource = null)
+        {
+            return new TracerProviderSdk
+            {
+                Resource = resource,
+                Sampler = sampler,
+            };
         }
 
         internal static ActivityDataRequest ComputeActivityDataRequest(

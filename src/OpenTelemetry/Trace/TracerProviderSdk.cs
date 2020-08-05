@@ -21,12 +21,35 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
+    // TODO: this probably deserves a separate file
+    public static class TracerProviderExtensions
+    {
+        public static TracerProvider AddListener(this TracerProvider provider, string pattern)
+        {
+            var trait = provider as TracerProviderSdk;
+            // TODO: validate input
+            // TODO: implement listener
+            // TODO: handle multiple listeners, in a thread safe (CoW) way
+            return trait;
+        }
+
+        public static TracerProvider AddProcessor(this TracerProvider provider, ActivityProcessor processor)
+        {
+            var trait = provider as TracerProviderSdk;
+            // TODO: validate input
+            // TODO: leverage CompositeActivityProcessor to handle multiple processors, in a thread safe (CoW) way
+            trait.ActivityProcessor = processor;
+            return trait;
+        }
+    }
+
     internal class TracerProviderSdk : TracerProvider
     {
         public readonly List<object> Instrumentations = new List<object>();
         public Resource Resource;
         public ActivityProcessor ActivityProcessor;
         public ActivityListener ActivityListener;
+        public Sampler Sampler;
 
         static TracerProviderSdk()
         {
@@ -58,7 +81,7 @@ namespace OpenTelemetry.Trace
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
-            this.ActivityListener.Dispose();
+            this.ActivityListener?.Dispose();
 
             base.Dispose(disposing);
         }
