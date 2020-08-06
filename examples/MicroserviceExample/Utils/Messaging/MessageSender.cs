@@ -26,12 +26,12 @@ namespace Utils.Messaging
 {
     public class MessageSender : IDisposable
     {
+        private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageSender));
+        private static readonly ITextFormat TextFormat = new TraceContextFormat();
+
         private readonly ILogger<MessageSender> logger;
         private readonly IConnection connection;
         private readonly IModel channel;
-
-        private static readonly ActivitySource activitySource = new ActivitySource(nameof(MessageSender));
-        private static readonly ITextFormat TextFormat = new TraceContextFormat();
 
         public MessageSender(ILogger<MessageSender> logger)
         {
@@ -54,19 +54,19 @@ namespace Utils.Messaging
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
                 var activityName = $"{RabbitMqHelper.TestQueueName} send";
 
-                using (var activity = activitySource.StartActivity(activityName, ActivityKind.Producer))
+                using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Producer))
                 {
-                    var props = channel.CreateBasicProperties();
+                    var props = this.channel.CreateBasicProperties();
 
                     // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                    TextFormat.Inject(activity.Context, props, InjectTraceContextIntoBasicProperties);
+                    TextFormat.Inject(activity.Context, props, this.InjectTraceContextIntoBasicProperties);
 
                     // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                     RabbitMqHelper.AddMessagingTags(activity);
 
                     var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 
-                    channel.BasicPublish(
+                    this.channel.BasicPublish(
                         exchange: RabbitMqHelper.DefaultExchangeName,
                         routingKey: RabbitMqHelper.TestQueueName,
                         basicProperties: props,
