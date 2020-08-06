@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
                 });
             }
 
-            return trait;
+            return provider;
         }
     }
 }
