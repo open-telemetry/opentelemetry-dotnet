@@ -30,6 +30,11 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(provider));
             }
 
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
             var trait = provider as TracerProviderSdk;
 
             if (trait == null)
