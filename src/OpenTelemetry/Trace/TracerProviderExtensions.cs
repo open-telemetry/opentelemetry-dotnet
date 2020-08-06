@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -34,14 +33,13 @@ namespace OpenTelemetry.Trace
             {
                 trait.ActivityProcessor = processor;
             }
-            else if (trait.ActivityProcessor is FanOutActivityProcessor fanOutProcessor)
+            else if (trait.ActivityProcessor is CompositeActivityProcessor compositeProcessor)
             {
-                // TODO: add the processor to existing fan out processor
-                // TODO: FanOutActivityProcessor shouldn't be under internal namespace
+                compositeProcessor.AddProcessor(processor);
             }
             else
             {
-                trait.ActivityProcessor = new FanOutActivityProcessor(new[]
+                trait.ActivityProcessor = new CompositeActivityProcessor(new[]
                 {
                     trait.ActivityProcessor,
                     processor,
