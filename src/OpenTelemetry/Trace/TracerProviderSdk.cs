@@ -21,28 +21,6 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
-    // TODO: this probably deserves a separate file
-    public static class TracerProviderExtensions
-    {
-        public static TracerProvider AddListener(this TracerProvider provider, string pattern)
-        {
-            var trait = provider as TracerProviderSdk;
-            // TODO: validate input
-            // TODO: implement listener
-            // TODO: handle multiple listeners, in a thread safe (CoW) way
-            return trait;
-        }
-
-        public static TracerProvider AddProcessor(this TracerProvider provider, ActivityProcessor processor)
-        {
-            var trait = provider as TracerProviderSdk;
-            // TODO: validate input
-            // TODO: leverage CompositeActivityProcessor to handle multiple processors, in a thread safe (CoW) way
-            trait.ActivityProcessor = processor;
-            return trait;
-        }
-    }
-
     internal class TracerProviderSdk : TracerProvider
     {
         public readonly List<object> Instrumentations = new List<object>();

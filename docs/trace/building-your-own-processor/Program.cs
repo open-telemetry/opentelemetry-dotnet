@@ -40,9 +40,12 @@ public class Program
         3) individual exporter can expose an option letting people to use a non-default processor
         */
 
-        using var tracerProvider = Sdk.CreateTracerProvider(new ProbabilitySampler(0.5))
-            .AddListener("MyCompany.MyProduct.MyLibrary")
-            .AddListener("MyCompany.AnotherProduct.*")
+        using var tracerProvider = Sdk.CreateTracerProvider(
+            new string[]
+            {
+                "MyCompany.MyProduct.MyLibrary",
+            },
+            new ProbabilitySampler(0.5))
             .AddProcessor(new MyActivityProcessor("A"))
             .AddProcessor(new MyActivityProcessor("B"));
 

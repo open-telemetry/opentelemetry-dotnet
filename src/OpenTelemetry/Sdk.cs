@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -162,13 +163,56 @@ namespace OpenTelemetry
             return tracerProviderSdk;
         }
 
-        public static TracerProvider CreateTracerProvider(Sampler sampler = null, Resource resource = null)
+        public static TracerProvider CreateTracerProvider(IEnumerable<string> sources, Sampler sampler = null, Resource resource = null)
         {
-            return new TracerProviderSdk
+            var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var name in sources)
+            {
+                activitySources[name] = true;
+            }
+
+            var provider = new TracerProviderSdk
             {
                 Resource = resource,
                 Sampler = sampler,
             };
+
+            provider.ActivityListener = new ActivityListener
+            {
+                // Callback when Activity is started.
+                ActivityStarted = (activity) =>
+                {
+                    if (activity.IsAllDataRequested)
+                    {
+                        activity.SetResource(resource);
+                    }
+
+                    provider.ActivityProcessor?.OnStart(activity);
+                },
+
+                // Callback when Activity is stopped.
+                ActivityStopped = (activity) =>
+                {
+                    provider.ActivityProcessor?.OnEnd(activity);
+                },
+
+                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                // or not.
+                ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name),
+
+                // Setting this to true means TraceId will be always
+                // available in sampling callbacks and will be the actual
+                // traceid used, if activity ends up getting created.
+                AutoGenerateRootContextTraceId = true,
+
+                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
+            };
+
+            ActivitySource.AddActivityListener(provider.ActivityListener);
+
+            return provider;
         }
 
         internal static ActivityDataRequest ComputeActivityDataRequest(
