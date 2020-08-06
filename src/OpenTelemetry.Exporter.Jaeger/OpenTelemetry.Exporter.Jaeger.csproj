@@ -11,10 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
-    <Compile Include="..\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
-    <Compile Include="..\OpenTelemetry\Internal\EnumerationHelper.cs" Link="Implementation\EnumerationHelper.cs" />
-    <Compile Include="..\OpenTelemetry\Internal\PooledList.cs" Link="Implementation\PooledList.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnumerationHelper.cs" Link="Implementation\EnumerationHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PooledList.cs" Link="Implementation\PooledList.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
 </Project>

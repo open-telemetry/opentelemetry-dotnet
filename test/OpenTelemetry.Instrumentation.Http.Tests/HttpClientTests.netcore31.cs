@@ -85,7 +85,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(tc.SpanName, span.DisplayName);
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 
-            var normalizedAttributes = span.Tags.Where(kv => !kv.Key.StartsWith("ot")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
+            var normalizedAttributes = span.TagObjects.Where(kv => !kv.Key.StartsWith("ot")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
             var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
             Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);

@@ -22,30 +22,5 @@ namespace OpenTelemetry.Trace.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
     {
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        public override void OnEnd(Activity activity)
-        {
-        }
-
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
     }
 }

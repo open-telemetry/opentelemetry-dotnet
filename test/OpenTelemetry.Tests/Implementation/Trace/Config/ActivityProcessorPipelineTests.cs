@@ -237,32 +237,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 this.Next = next;
                 this.Name = name;
             }
-
-            public override void OnStart(Activity span)
-            {
-            }
-
-            public override void OnEnd(Activity span)
-            {
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-#if NET452
-                return Task.FromResult(0);
-#else
-                return Task.CompletedTask;
-#endif
-            }
-
-            public override Task ForceFlushAsync(CancellationToken cancellationToken)
-            {
-#if NET452
-                return Task.FromResult(0);
-#else
-                return Task.CompletedTask;
-#endif
-            }
         }
     }
 }

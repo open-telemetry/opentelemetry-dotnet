@@ -1,4 +1,4 @@
-﻿// <copyright file="BroadcastActivityProcessorTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="FanOutActivityProcessorTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,13 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Impl.Trace.Config
 {
-    public class BroadcastActivityProcessorTests
+    public class FanOutActivityProcessorTests
     {
         [Fact]
         public void BroadcastProcessor_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => new BroadcastActivityProcessor(null));
-            Assert.Throws<ArgumentException>(() => new BroadcastActivityProcessor(new SimpleActivityProcessor[0]));
+            Assert.Throws<ArgumentNullException>(() => new FanOutActivityProcessor(null));
+            Assert.Throws<ArgumentException>(() => new FanOutActivityProcessor(new SimpleActivityProcessor[0]));
         }
 
         [Fact]
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(end1Called);
             });
 
-            var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
+            var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             var activity = new Activity("somename");
             broadcastProcessor.OnStart(activity);
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
                 Assert.True(end1Called);
             });
 
-            var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
+            var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             var activity = new Activity("somename");
             broadcastProcessor.OnStart(activity);
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var processor1 = new TestActivityProcessor(null, null);
             var processor2 = new TestActivityProcessor(null, null);
 
-            var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
+            var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             broadcastProcessor.ShutdownAsync(default);
             Assert.True(processor1.ShutdownCalled);
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var processor1 = new TestActivityProcessor(null, null);
             var processor2 = new TestActivityProcessor(null, null);
 
-            var broadcastProcessor = new BroadcastActivityProcessor(new[] { processor1, processor2 });
+            var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             broadcastProcessor.ForceFlushAsync(default);
             Assert.True(processor1.ForceFlushCalled);

@@ -13,41 +13,81 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Activity processor base class.
     /// </summary>
-    public abstract class ActivityProcessor
+    public abstract class ActivityProcessor : IDisposable
     {
         /// <summary>
         /// Activity start hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnStart(Activity activity);
+        public virtual void OnStart(Activity activity)
+        {
+        }
 
         /// <summary>
         /// Activity end hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public abstract void OnEnd(Activity activity);
+        public virtual void OnEnd(Activity activity)
+        {
+        }
 
         /// <summary>
         /// Shuts down Activity processor asynchronously.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
-        public abstract Task ShutdownAsync(CancellationToken cancellationToken);
+        public virtual Task ShutdownAsync(CancellationToken cancellationToken)
+        {
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
 
         /// <summary>
         /// Flushes all activities that have not yet been processed.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Returns <see cref="Task"/>.</returns>
-        public abstract Task ForceFlushAsync(CancellationToken cancellationToken);
+        public virtual Task ForceFlushAsync(CancellationToken cancellationToken)
+        {
+#if NET452
+            return Task.FromResult(0);
+#else
+            return Task.CompletedTask;
+#endif
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            try
+            {
+                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+            }
+        }
     }
 }

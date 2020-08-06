@@ -32,20 +32,20 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-class Program
+public class Program
 {
-    static readonly ActivitySource activitySource = new ActivitySource(
+    private static readonly ActivitySource MyActivitySource = new ActivitySource(
         "MyCompany.MyProduct.MyLibrary");
 
-    static void Main()
+    public static void Main()
     {
         using var otel = Sdk.CreateTracerProvider(b => b
             .AddActivitySource("MyCompany.MyProduct.MyLibrary")
             .UseConsoleExporter());
 
-        using (var activity = activitySource.StartActivity("SayHello"))
+        using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
-            activity?.SetTag("foo", "1");
+            activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
         }
     }

@@ -273,7 +273,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 sb.Append(this.Logs);
             }
 
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
     }

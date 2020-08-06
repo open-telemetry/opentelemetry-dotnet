@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             sb.Append(this.Timestamp);
             sb.Append(", Fields: ");
             sb.Append(this.Fields);
-            sb.Append(")");
+            sb.Append(')');
             return sb.ToString();
         }
     }

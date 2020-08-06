@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
         private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
         private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
-        private readonly bool httpClientSupportsW3C = false;
+        private readonly bool httpClientSupportsW3C;
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
                     // response could be null for DNS issues, timeouts, etc...
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeTagValueFromHttpStatusCode(response.StatusCode));
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                     activity.SetStatus(
                         SpanHelper

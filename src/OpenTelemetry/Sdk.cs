@@ -34,53 +34,9 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
+        public static readonly SuppressInstrumentationScope SuppressInstrumentation = new SuppressInstrumentationScope(false);
+
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
-
-        private static readonly RuntimeContextSlot<bool> SuppressInstrumentationRuntimeContextSlot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
-
-        /// <summary>
-        /// Gets or sets a value indicating whether automatic telemetry
-        /// collection in the current context should be suppressed (disabled).
-        /// Default value: False.
-        /// </summary>
-        /// <remarks>
-        /// Set <see cref="SuppressInstrumentation"/> to <see langword="true"/>
-        /// when you want to turn off automatic telemetry collection.
-        /// This is typically used to prevent infinite loops created by
-        /// collection of internal operations, such as exporting traces over HTTP.
-        /// <code>
-        ///    public override async Task&lt;ExportResult&gt; ExportAsync(
-        ///        IEnumerable&lt;Activity&gt; batch,
-        ///        CancellationToken cancellationToken)
-        ///    {
-        ///       var currentSuppressionPolicy = Sdk.SuppressInstrumentation;
-        ///       Sdk.SuppressInstrumentation = true;
-        ///       try
-        ///       {
-        ///          await this.SendBatchActivityAsync(batch, cancellationToken).ConfigureAwait(false);
-        ///          return ExportResult.Success;
-        ///       }
-        ///       finally
-        ///       {
-        ///          Sdk.SuppressInstrumentation = currentSuppressionPolicy;
-        ///       }
-        ///    }
-        /// </code>
-        /// </remarks>
-        public static bool SuppressInstrumentation
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return SuppressInstrumentationRuntimeContextSlot.Get();
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                SuppressInstrumentationRuntimeContextSlot.Set(value);
-            }
-        }
 
         /// <summary>
         /// Creates MeterProvider with the configuration provided.
@@ -108,7 +64,7 @@ namespace OpenTelemetry
                 meterRegistry,
                 metricProcessor,
                 metricExporter,
-                meterBuilder.MetricPushInterval == default(TimeSpan) ? DefaultPushInterval : meterBuilder.MetricPushInterval,
+                meterBuilder.MetricPushInterval == default ? DefaultPushInterval : meterBuilder.MetricPushInterval,
                 cancellationTokenSource);
 
             var meterProviderSdk = new MeterProviderSdk(metricProcessor, meterRegistry, controller, cancellationTokenSource);
@@ -129,7 +85,7 @@ namespace OpenTelemetry
             configureTracerProviderBuilder?.Invoke(tracerProviderBuilder);
 
             var tracerProviderSdk = new TracerProviderSdk();
-            Sampler sampler = tracerProviderBuilder.Sampler ?? new AlwaysOnSampler();
+            Sampler sampler = tracerProviderBuilder.Sampler ?? new ParentOrElseSampler(new AlwaysOnSampler());
 
             ActivityProcessor activityProcessor;
             if (tracerProviderBuilder.ProcessingPipelines == null || !tracerProviderBuilder.ProcessingPipelines.Any())
@@ -154,7 +110,7 @@ namespace OpenTelemetry
                     processors[i] = tracerProviderBuilder.ProcessingPipelines[i].Build();
                 }
 
-                activityProcessor = new BroadcastActivityProcessor(processors);
+                activityProcessor = new FanOutActivityProcessor(processors);
             }
 
             tracerProviderSdk.Resource = tracerProviderBuilder.Resource;
@@ -188,11 +144,13 @@ namespace OpenTelemetry
                 ActivityStopped = activityProcessor.OnEnd,
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not
+                // or not.
                 ShouldListenTo = (activitySource) => tracerProviderBuilder.ActivitySourceNames?.Contains(activitySource.Name.ToUpperInvariant()) ?? false,
 
-                // The following parameter is not used now.
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                // Setting this to true means TraceId will be always
+                // available in sampling callbacks and will be the actual
+                // traceid used, if activity ends up getting created.
+                AutoGenerateRootContextTraceId = true,
 
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
@@ -207,14 +165,13 @@ namespace OpenTelemetry
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            var isRootSpan = options.Parent.TraceId == default;
+            var isRootSpan = /*TODO: Put back once AutoGenerateRootContextTraceId is removed.
+                              options.Parent.TraceId == default ||*/ options.Parent.SpanId == default;
 
-            // This is not going to be the final traceId of the Activity (if one is created), however, it is
-            // needed in order for the sampling to work. This differs from other OTel SDKs in which it is
-            // the Sampler always receives the actual traceId of a root span/activity.
-            ActivityTraceId traceId = !isRootSpan
-                ? options.Parent.TraceId
-                : ActivityTraceId.CreateRandom();
+            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
+            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
+            // if it get created.
+            ActivityTraceId traceId = options.Parent.TraceId;
 
             var samplingParameters = new SamplingParameters(
                 options.Parent,

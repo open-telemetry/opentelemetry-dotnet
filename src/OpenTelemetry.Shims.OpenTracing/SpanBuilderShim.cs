@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using global::OpenTracing;
 using OpenTelemetry.Trace;
 
@@ -160,7 +161,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             // If specified, this takes precedence.
             if (this.ignoreActiveSpan)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, null, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpan != null)
             {
@@ -170,19 +171,12 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, null, this.links, this.explicitStartTime ?? default);
             }
-            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && (this.tracer.CurrentSpan == null || !this.tracer.CurrentSpan.Context.IsValid))
+            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
             {
-                // TODO: We need to know if we should inherit an existing Activity-based context or start a new one.
-                /*
-                if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
+                if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(Activity.Current.OperationName))
                 {
-                    var currentActivity = System.Diagnostics.Activity.Current;
-                    if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(currentActivity.OperationName))
-                    {
-                        this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
-                        span = this.tracer.CurrentSpan;
-                    }
-                }*/
+                    span = this.tracer.CurrentSpan;
+                }
             }
 
             if (span == null)

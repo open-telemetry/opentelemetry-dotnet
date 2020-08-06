@@ -45,10 +45,11 @@ namespace OpenTelemetry.Context.Propagation
         /// Extracts activity context from textual representation.
         /// </summary>
         /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
+        /// <param name="activityContext">The default activity context to be used if Extract fails.</param>
         /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Activity context from it's text representation.</returns>
-        ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+        ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter);
 
         /// <summary>
         /// Tests if an activity context has been injected into a carrier.

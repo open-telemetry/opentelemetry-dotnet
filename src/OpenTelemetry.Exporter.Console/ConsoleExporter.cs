@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -38,7 +40,7 @@ namespace OpenTelemetry.Exporter.Console
                 WriteIndented = true,
             };
 
-            this.displayAsJson = options.DisplayAsJson;
+            this.displayAsJson = options?.DisplayAsJson ?? false;
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
             this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
@@ -65,12 +67,28 @@ namespace OpenTelemetry.Exporter.Console
                     System.Console.WriteLine("Activity Kind - " + activity.Kind);
                     System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
                     System.Console.WriteLine("Activity Duration - " + activity.Duration);
-                    if (activity.TagObjects.Count() > 0)
+                    if (activity.TagObjects.Any())
                     {
                         System.Console.WriteLine("Activity Tags");
                         foreach (var tag in activity.TagObjects)
                         {
-                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            var array = tag.Value as Array;
+
+                            if (array == null)
+                            {
+                                System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                                continue;
+                            }
+
+                            System.Console.Write($"\t {tag.Key} : [");
+
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                System.Console.Write(i != 0 ? ", " : string.Empty);
+                                System.Console.Write($"{array.GetValue(i)}");
+                            }
+
+                            System.Console.WriteLine($"]");
                         }
                     }
 
