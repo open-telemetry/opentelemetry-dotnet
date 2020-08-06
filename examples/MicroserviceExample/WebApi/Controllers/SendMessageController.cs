@@ -1,4 +1,4 @@
-﻿// <copyright file="RabbitMqController.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="SendMessageController.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,12 @@ namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class RabbitMqController : ControllerBase
+    public class SendMessageController : ControllerBase
     {
-        private readonly ILogger<RabbitMqController> logger;
+        private readonly ILogger<SendMessageController> logger;
         private readonly MessageSender messageSender;
 
-        public RabbitMqController(ILogger<RabbitMqController> logger, MessageSender messageSender)
+        public SendMessageController(ILogger<SendMessageController> logger, MessageSender messageSender)
         {
             this.logger = logger;
             this.messageSender = messageSender;
