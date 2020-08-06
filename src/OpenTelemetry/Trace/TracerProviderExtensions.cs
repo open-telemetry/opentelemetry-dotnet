@@ -25,10 +25,18 @@ namespace OpenTelemetry.Trace
     {
         public static TracerProvider AddProcessor(this TracerProvider provider, ActivityProcessor processor)
         {
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
             var trait = provider as TracerProviderSdk;
 
-            // TODO: validate input
-            // TODO: leverage CompositeActivityProcessor to handle multiple processors, in a thread safe (CoW) way
+            if (trait == null)
+            {
+                throw new ArgumentException($"{nameof(provider)} is not an instance of TracerProviderSdk");
+            }
+
             if (trait.ActivityProcessor == null)
             {
                 trait.ActivityProcessor = processor;

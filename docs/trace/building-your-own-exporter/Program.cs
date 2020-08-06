@@ -25,14 +25,18 @@ public class Program
 
     public static void Main()
     {
-        using var otel = Sdk.CreateTracerProvider(b => b
-            .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-            .UseMyExporter());
+        using var tracerProvider = Sdk.CreateTracerProvider(
+            new string[]
+            {
+                "MyCompany.MyProduct.MyLibrary",
+            })
+            .AddMyExporter();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
     }
 }

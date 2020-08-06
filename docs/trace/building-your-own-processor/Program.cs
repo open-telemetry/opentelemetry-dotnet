@@ -17,7 +17,6 @@
 using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 public class Program
 {
@@ -30,31 +29,15 @@ public class Program
             new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
-            },
-            new ProbabilitySampler(0.5))
+            })
             .AddProcessor(new MyActivityProcessor("A"))
             .AddProcessor(new MyActivityProcessor("B"));
 
         using (var activity = MyActivitySource.StartActivity("Foo"))
         {
+            activity?.SetTag("foo", 1);
+            activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
-
-        tracerProvider.AddProcessor(new MyActivityProcessor("C"));
-
-        using (var activity = MyActivitySource.StartActivity("Bar"))
-        {
-        }
-
-        /* according to the spec, processors can be added at runtime
-        tracerProvider.AddProcessor(new MultiActivityProcessor(
-            [processor1, processor2, processor3]
-        ));
-        */
-
-        /* existing samplers can be reused as a tail sampling filter
-        tracerProvider.AddProcessor(new MultiActivityProcessor(
-            [new TailSamplingProcessor(new Sampler()), new SimpleExportProcessor(new ConsoleExporter())]
-        ));
-        */
     }
 }
