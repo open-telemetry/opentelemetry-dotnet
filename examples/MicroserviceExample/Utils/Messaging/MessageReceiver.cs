@@ -40,7 +40,7 @@ namespace Utils.Messaging
         {
             this.logger = logger;
             this.connection = RabbitMqHelper.CreateConnection();
-            this.channel = RabbitMqHelper.CreateModelAndDeclareTestQueue(this.connection, declarePassive: true);
+            this.channel = RabbitMqHelper.CreateModelAndDeclareTestQueue(this.connection);
         }
 
         public void Dispose()

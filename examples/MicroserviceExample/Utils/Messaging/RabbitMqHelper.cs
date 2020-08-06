@@ -45,23 +45,16 @@ namespace Utils.Messaging
             return ConnectionFactory.CreateConnection();
         }
 
-        public static IModel CreateModelAndDeclareTestQueue(IConnection connection, bool declarePassive = false)
+        public static IModel CreateModelAndDeclareTestQueue(IConnection connection)
         {
             var channel = connection.CreateModel();
 
-            if (declarePassive)
-            {
-                channel.QueueDeclarePassive(TestQueueName);
-            }
-            else
-            {
-                channel.QueueDeclare(
-                    queue: TestQueueName,
-                    durable: false,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null);
-            }
+            channel.QueueDeclare(
+                queue: TestQueueName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
 
             return channel;
         }
