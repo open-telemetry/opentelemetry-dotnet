@@ -72,6 +72,8 @@ namespace Utils.Messaging
                         basicProperties: props,
                         body: Encoding.UTF8.GetBytes(body));
 
+                    this.logger.LogInformation($"Message sent: [{body}]");
+
                     return body;
                 }
             }

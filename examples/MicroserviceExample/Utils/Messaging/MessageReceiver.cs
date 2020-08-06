@@ -69,6 +69,8 @@ namespace Utils.Messaging
                 {
                     var message = Encoding.UTF8.GetString(ea.Body.Span.ToArray());
 
+                    this.logger.LogInformation($"Message received: [{message}]");
+
                     activity.AddTag("message", message);
 
                     // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
