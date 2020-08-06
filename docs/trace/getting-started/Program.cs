@@ -26,12 +26,30 @@ public class Program
 
     public static void Main()
     {
+        /* making it easier for the user:
+
+        using var tracerProvider = Sdk.CreateTracerProvider()
+            .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter()));
+
+        using var tracerProvider = Sdk.CreateTracerProvider()
+            .AddConsoleExporter();
+
+        1) AddConsoleExporter is an extension function provided by ConsoleExporter
+        2) individual exporter should pick the right (batching vs. simple) processor by default
+        3) individual exporter can expose an option letting people to use a non-default processor
+        4) AddConsoleExporter(options = null) should use the default option
+        */
         using var tracerProvider = Sdk.CreateTracerProvider(
             new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
+                "MyCompany.AnotherProduct.*", // I think it'll be nice to support wildcard
             })
             .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
+
+        // processor can be added on-the-fly according to the spec (MAY instead of MUST)
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#tracer-creation
+        tracerProvider.AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
