@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace;
 
 public class Program
@@ -25,10 +26,13 @@ public class Program
 
     public static void Main()
     {
-        using var otel = Sdk.CreateTracerProvider(b => b
-            .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-            .SetSampler(new MySampler()) // TODO: it is NOT working at this moment
-            .UseConsoleExporter());
+        using var tracerProvider = Sdk.CreateTracerProvider(
+            new string[]
+            {
+                "MyCompany.MyProduct.MyLibrary",
+            },
+            new MySampler())
+            .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
