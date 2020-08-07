@@ -30,9 +30,8 @@ public class Program
             new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
-            });
-
-        tracerProvider.AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
+            })
+            .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
