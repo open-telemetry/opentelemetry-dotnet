@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics.Config.Test
             Assert.Same(defaultMeter, MeterProvider.Default.GetMeter("named meter"));
 
             var counter = defaultMeter.CreateDoubleCounter("ctr");
-            Assert.IsType<NoOpCounterMetric<double>>(counter);
+            Assert.IsType<NoopCounterMetric<double>>(counter);
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics.Config.Test
         {
             var defaultMeter = MeterProvider.Default.GetMeter(string.Empty);
             var noOpCounter = defaultMeter.CreateDoubleCounter("ctr");
-            Assert.IsType<NoOpCounterMetric<double>>(noOpCounter);
+            Assert.IsType<NoopCounterMetric<double>>(noOpCounter);
 
             MeterProvider.SetDefault(Sdk.CreateMeterProvider(b => { }));
             var counter = defaultMeter.CreateDoubleCounter("ctr");

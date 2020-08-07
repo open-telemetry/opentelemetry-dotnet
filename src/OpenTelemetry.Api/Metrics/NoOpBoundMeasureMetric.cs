@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpBoundMeasureMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopBoundMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,13 @@ namespace OpenTelemetry.Metrics
     /// No op measure handle.
     /// </summary>
     /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
-    public sealed class NoOpBoundMeasureMetric<T> : BoundMeasureMetric<T>
+    public sealed class NoopBoundMeasureMetric<T> : BoundMeasureMetric<T>
         where T : struct
     {
         /// <summary>
         /// No op measure bound instrument instance.
         /// </summary>
-        public static readonly NoOpBoundMeasureMetric<T> Instance = new NoOpBoundMeasureMetric<T>();
+        public static readonly NoopBoundMeasureMetric<T> Instance = new NoopBoundMeasureMetric<T>();
 
         /// <inheritdoc/>
         public override void Record(in SpanContext context, T value)

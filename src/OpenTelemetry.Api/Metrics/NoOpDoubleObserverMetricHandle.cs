@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpDoubleObserverMetricHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDoubleObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// No-Op observer handle.
     /// </summary>
-    public sealed class NoOpDoubleObserverMetricHandle : DoubleObserverMetricHandle
+    public sealed class NoopDoubleObserverMetricHandle : DoubleObserverMetricHandle
     {
         /// <summary>
         /// No op observer handle instance.
         /// </summary>
-        public static readonly NoOpDoubleObserverMetricHandle Instance = new NoOpDoubleObserverMetricHandle();
+        public static readonly NoopDoubleObserverMetricHandle Instance = new NoopDoubleObserverMetricHandle();
 
         /// <inheritdoc/>
         public override void Observe(double value)

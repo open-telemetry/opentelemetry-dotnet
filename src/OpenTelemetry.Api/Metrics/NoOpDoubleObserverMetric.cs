@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpDoubleObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDoubleObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// A no-op observer instrument.
     /// </summary>
-    public sealed class NoOpDoubleObserverMetric : DoubleObserverMetric
+    public sealed class NoopDoubleObserverMetric : DoubleObserverMetric
     {
         /// <summary>
         /// No op observer instance.
         /// </summary>
-        public static readonly NoOpDoubleObserverMetric Instance = new NoOpDoubleObserverMetric();
+        public static readonly NoopDoubleObserverMetric Instance = new NoopDoubleObserverMetric();
 
         /// <inheritdoc/>
         public override void Observe(double value, LabelSet labelset)

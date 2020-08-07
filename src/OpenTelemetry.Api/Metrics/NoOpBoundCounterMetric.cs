@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpBoundCounterMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopBoundCounterMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,13 @@ namespace OpenTelemetry.Metrics
     /// No-Op bound counter metric.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
-    public sealed class NoOpBoundCounterMetric<T> : BoundCounterMetric<T>
+    public sealed class NoopBoundCounterMetric<T> : BoundCounterMetric<T>
         where T : struct
     {
         /// <summary>
         /// No op counter bound instrument instance.
         /// </summary>
-        public static readonly NoOpBoundCounterMetric<T> Instance = new NoOpBoundCounterMetric<T>();
+        public static readonly NoopBoundCounterMetric<T> Instance = new NoopBoundCounterMetric<T>();
 
         /// <inheritdoc/>
         public override void Add(in SpanContext context, T value)

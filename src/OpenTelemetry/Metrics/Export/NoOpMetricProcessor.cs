@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopMetricProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using System.Linq;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    internal class NoopMetricProcessor : MetricProcessor
     {
         public override void FinishCollectionCycle(out IEnumerable<Metric> metric)
         {

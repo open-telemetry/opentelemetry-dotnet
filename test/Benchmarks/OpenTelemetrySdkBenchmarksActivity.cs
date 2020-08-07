@@ -30,26 +30,26 @@ namespace Benchmarks
 
         public OpenTelemetrySdkBenchmarksActivity()
         {
-            // Not configuring pipeline, which will result in default NoOpActivityProcessor.
+            // Not configuring pipeline, which will result in default NoopActivityProcessor.
             var openTel = Sdk.CreateTracerProvider((builder) => builder.AddActivitySource("BenchMark"));
         }
 
         [Benchmark]
-        public Activity CreateActivity_NoOpProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
+        public Activity CreateActivity_NoopProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
 
         [Benchmark]
-        public Activity CreateActivity_WithParentContext_NoOpProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
+        public Activity CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
 
         [Benchmark]
-        public Activity CreateActivity_WithParentId_NoOpProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
+        public Activity CreateActivity_WithParentId_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributes_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
+        public Activity CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributesAndCustomProp_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.benchmarkSource);
+        public Activity CreateActivity_WithAttributesAndCustomProp_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.benchmarkSource);
 
         [Benchmark]
-        public Activity CreateActiviti_WithKind_NoOpProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
+        public Activity CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
     }
 }

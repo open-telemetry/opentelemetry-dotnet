@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpInt64ObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopInt64ObserverMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// A no-op observer instrument.
     /// </summary>
-    public sealed class NoOpInt64ObserverMetric : Int64ObserverMetric
+    public sealed class NoopInt64ObserverMetric : Int64ObserverMetric
     {
         /// <summary>
         /// No op observer instance.
         /// </summary>
-        public static readonly Int64ObserverMetric Instance = new NoOpInt64ObserverMetric();
+        public static readonly Int64ObserverMetric Instance = new NoopInt64ObserverMetric();
 
         /// <inheritdoc/>
         public override void Observe(long value, LabelSet labelset)
