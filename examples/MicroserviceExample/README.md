@@ -1,7 +1,7 @@
 # OpenTelemetry Example Application
 
 This set of projects is an example distributed application comprised of two
-components: 
+components:
 
 1. An ASP.NET Core Web API
 2. A background Worker Service
