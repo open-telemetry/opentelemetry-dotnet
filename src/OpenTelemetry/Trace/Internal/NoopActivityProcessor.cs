@@ -14,10 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace OpenTelemetry.Trace.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
