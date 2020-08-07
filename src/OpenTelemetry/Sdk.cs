@@ -18,6 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
@@ -163,11 +165,29 @@ namespace OpenTelemetry
 
         public static TracerProvider CreateTracerProvider(IEnumerable<string> sources, Sampler sampler = null, Resource resource = null)
         {
-            var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            if (sources == null)
+            {
+                throw new ArgumentNullException(nameof(sources));
+            }
+
+            if (!sources.Any())
+            {
+                throw new ArgumentException($"{nameof(sources)} collection is empty.");
+            }
+
+            var wildcardMode = false;
 
             foreach (var name in sources)
             {
-                activitySources[name] = true;
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ArgumentException($"{nameof(sources)} collection contains null or whitespace strings.");
+                }
+
+                if (name.Contains('*'))
+                {
+                    wildcardMode = true;
+                }
             }
 
             var provider = new TracerProviderSdk
@@ -176,7 +196,7 @@ namespace OpenTelemetry
                 Sampler = sampler,
             };
 
-            provider.ActivityListener = new ActivityListener
+            var listener = new ActivityListener
             {
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
@@ -195,10 +215,6 @@ namespace OpenTelemetry
                     provider.ActivityProcessor?.OnEnd(activity);
                 },
 
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name),
-
                 // Setting this to true means TraceId will be always
                 // available in sampling callbacks and will be the actual
                 // traceid used, if activity ends up getting created.
@@ -208,7 +224,29 @@ namespace OpenTelemetry
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
 
-            ActivitySource.AddActivityListener(provider.ActivityListener);
+            if (wildcardMode)
+            {
+                var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
+                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
+            }
+            else
+            {
+                var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var name in sources)
+                {
+                    activitySources[name] = true;
+                }
+
+                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                // or not.
+                listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+            }
+
+            ActivitySource.AddActivityListener(listener);
+
+            provider.ActivityListener = listener;
 
             return provider;
         }
