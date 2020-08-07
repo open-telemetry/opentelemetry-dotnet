@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricExporter.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopDoubleObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics
 {
-    internal class NoOpMetricExporter : MetricExporter
+    /// <summary>
+    /// No-Op observer handle.
+    /// </summary>
+    public sealed class NoopDoubleObserverMetricHandle : DoubleObserverMetricHandle
     {
-        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
+        /// <summary>
+        /// No op observer handle instance.
+        /// </summary>
+        public static readonly NoopDoubleObserverMetricHandle Instance = new NoopDoubleObserverMetricHandle();
+
+        /// <inheritdoc/>
+        public override void Observe(double value)
         {
-            return Task.FromResult(ExportResult.Success);
         }
     }
 }

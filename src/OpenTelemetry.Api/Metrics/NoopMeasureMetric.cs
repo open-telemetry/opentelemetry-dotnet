@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpDoubleObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,23 +19,27 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A no-op observer instrument.
+    /// No op measure instrument.
     /// </summary>
-    public sealed class NoOpDoubleObserverMetric : DoubleObserverMetric
+    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
+    public sealed class NoopMeasureMetric<T> : MeasureMetric<T>
+        where T : struct
     {
         /// <summary>
-        /// No op observer instance.
+        /// No op measure instance.
         /// </summary>
-        public static readonly NoOpDoubleObserverMetric Instance = new NoOpDoubleObserverMetric();
+        public static readonly NoopMeasureMetric<T> Instance = new NoopMeasureMetric<T>();
 
         /// <inheritdoc/>
-        public override void Observe(double value, LabelSet labelset)
+        public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {
+            return NoopBoundMeasureMetric<T>.Instance;
         }
 
         /// <inheritdoc/>
-        public override void Observe(double value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override BoundMeasureMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
         {
+            return NoopBoundMeasureMetric<T>.Instance;
         }
     }
 }
