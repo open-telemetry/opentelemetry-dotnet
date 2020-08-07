@@ -2,8 +2,12 @@
 
 ## Unreleased
 
-* Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor` (#1015)
-* Introduce `SuppressInstrumentationScope` API (#988).
+* Support wildcard pattern matching for ActivitySource
+  ([#1023](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1023)).
+* Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor`
+  ([#1015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1015)).
+* Introduce `SuppressInstrumentationScope` API
+  ([#988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/988)).
 * `ActivityProcessor` implements `IDisposable`.
   * When `Dispose` occurs, it calls `ShutdownAsync`.
   * If you want a custom behavior for dispose, you will have to override the
