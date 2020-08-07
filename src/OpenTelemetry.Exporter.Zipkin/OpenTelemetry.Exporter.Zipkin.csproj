@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net452;net461;netstandard2.0</TargetFrameworks>
+    <Description>Zipkin exporter for OpenTelemetry .NET</Description>
+    <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnumerationHelper.cs" Link="Implementation\EnumerationHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PooledList.cs" Link="Implementation\PooledList.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" Condition="'$(TargetFramework)' != 'net452'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPkgVer)" />
+  </ItemGroup>
+
+</Project>
