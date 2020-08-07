@@ -228,6 +228,9 @@ namespace OpenTelemetry
             {
                 var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
                 var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                // or not.
                 listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
             }
             else
