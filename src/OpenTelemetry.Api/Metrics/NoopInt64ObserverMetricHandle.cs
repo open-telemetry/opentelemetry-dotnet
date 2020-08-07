@@ -1,4 +1,4 @@
-﻿// <copyright file="NoopDisposable.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopInt64ObserverMetricHandle.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 
-namespace OpenTelemetry.Internal
+namespace OpenTelemetry.Metrics
 {
-    internal class NoopDisposable : IDisposable
+    /// <summary>
+    /// No-Op observer handle.
+    /// </summary>
+    public sealed class NoopInt64ObserverMetricHandle : Int64ObserverMetricHandle
     {
-        internal static readonly IDisposable Instance = new NoopDisposable();
+        /// <summary>
+        /// No op observer handle instance.
+        /// </summary>
+        public static readonly NoopInt64ObserverMetricHandle Instance = new NoopInt64ObserverMetricHandle();
 
-        public void Dispose()
+        /// <inheritdoc/>
+        public override void Observe(long value)
         {
         }
     }

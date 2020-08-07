@@ -54,8 +54,8 @@ namespace OpenTelemetry
             var meterBuilder = new MeterBuilder();
             configure(meterBuilder);
 
-            var metricProcessor = meterBuilder.MetricProcessor ?? new NoOpMetricProcessor();
-            var metricExporter = meterBuilder.MetricExporter ?? new NoOpMetricExporter();
+            var metricProcessor = meterBuilder.MetricProcessor ?? new NoopMetricProcessor();
+            var metricExporter = meterBuilder.MetricExporter ?? new NoopMetricExporter();
             var cancellationTokenSource = new CancellationTokenSource();
             var meterRegistry = new Dictionary<MeterRegistryKey, MeterSdk>();
 

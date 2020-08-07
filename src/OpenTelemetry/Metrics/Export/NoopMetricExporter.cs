@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpMetricProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,16 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics.Export
 {
-    internal class NoOpMetricProcessor : MetricProcessor
+    internal class NoopMetricExporter : MetricExporter
     {
-        public override void FinishCollectionCycle(out IEnumerable<Metric> metric)
+        public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
         {
-            metric = Enumerable.Empty<Metric>();
-        }
-
-        public override void Process(Metric metric)
-        {
+            return Task.FromResult(ExportResult.Success);
         }
     }
 }

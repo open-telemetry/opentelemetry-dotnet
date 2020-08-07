@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Test
         public void CurrentSpanNullByDefault()
         {
             var current = this.tracer.CurrentSpan;
-            Assert.True(IsNoOpSpan(current));
+            Assert.True(IsNoopSpan(current));
             Assert.False(current.Context.IsValid);
         }
 
@@ -48,10 +48,10 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void TracerStartReturnsNoOpSpanWhenNoSdk()
+        public void TracerStartReturnsNoopSpanWhenNoSdk()
         {
             var span = this.tracer.StartSpan("name");
-            Assert.True(IsNoOpSpan(span));
+            Assert.True(IsNoopSpan(span));
             Assert.False(span.Context.IsValid);
             Assert.False(span.IsRecording);
         }
@@ -238,7 +238,7 @@ namespace OpenTelemetry.Trace.Test
             Activity.Current = null;
         }
 
-        private static bool IsNoOpSpan(TelemetrySpan span)
+        private static bool IsNoopSpan(TelemetrySpan span)
         {
             return span.Activity == null;
         }

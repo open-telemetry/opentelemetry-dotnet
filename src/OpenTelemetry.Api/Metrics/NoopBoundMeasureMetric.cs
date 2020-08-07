@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpDoubleObserverMetricHandle.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopBoundMeasureMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,30 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// No-Op observer handle.
+    /// No op measure handle.
     /// </summary>
-    public sealed class NoOpDoubleObserverMetricHandle : DoubleObserverMetricHandle
+    /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
+    public sealed class NoopBoundMeasureMetric<T> : BoundMeasureMetric<T>
+        where T : struct
     {
         /// <summary>
-        /// No op observer handle instance.
+        /// No op measure bound instrument instance.
         /// </summary>
-        public static readonly NoOpDoubleObserverMetricHandle Instance = new NoOpDoubleObserverMetricHandle();
+        public static readonly NoopBoundMeasureMetric<T> Instance = new NoopBoundMeasureMetric<T>();
 
         /// <inheritdoc/>
-        public override void Observe(double value)
+        public override void Record(in SpanContext context, T value)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void Record(in DistributedContext context, T value)
         {
         }
     }

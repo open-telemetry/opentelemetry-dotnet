@@ -1,4 +1,4 @@
-﻿// <copyright file="NoOpInt64ObserverMetric.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NoopBoundCounterMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,27 +14,30 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using OpenTelemetry.Context;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A no-op observer instrument.
+    /// No-Op bound counter metric.
     /// </summary>
-    public sealed class NoOpInt64ObserverMetric : Int64ObserverMetric
+    /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
+    public sealed class NoopBoundCounterMetric<T> : BoundCounterMetric<T>
+        where T : struct
     {
         /// <summary>
-        /// No op observer instance.
+        /// No op counter bound instrument instance.
         /// </summary>
-        public static readonly Int64ObserverMetric Instance = new NoOpInt64ObserverMetric();
+        public static readonly NoopBoundCounterMetric<T> Instance = new NoopBoundCounterMetric<T>();
 
         /// <inheritdoc/>
-        public override void Observe(long value, LabelSet labelset)
+        public override void Add(in SpanContext context, T value)
         {
         }
 
         /// <inheritdoc/>
-        public override void Observe(long value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Add(in DistributedContext context, T value)
         {
         }
     }
