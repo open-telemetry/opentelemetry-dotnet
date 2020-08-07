@@ -110,7 +110,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 parentId,
                 EncodeSpanId(context.SpanId),
                 ToActivityKind(activity),
-                activity.OperationName,
+                activity.DisplayName,
                 activity.StartTimeUtc.ToEpochMicroseconds(),
                 duration: (long)activity.Duration.ToEpochMicroseconds(),
                 localEndpoint,

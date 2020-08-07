@@ -27,6 +27,7 @@ namespace OpenTelemetry.Trace
         public Resource Resource;
         public ActivityProcessor ActivityProcessor;
         public ActivityListener ActivityListener;
+        public Sampler Sampler;
 
         static TracerProviderSdk()
         {
@@ -58,7 +59,7 @@ namespace OpenTelemetry.Trace
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
-            this.ActivityListener.Dispose();
+            this.ActivityListener?.Dispose();
 
             base.Dispose(disposing);
         }
