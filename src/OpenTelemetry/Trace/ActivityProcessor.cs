@@ -27,6 +27,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class ActivityProcessor : IDisposable
     {
+        private bool disposed;
+
         /// <summary>
         /// Activity start hook.
         /// </summary>
@@ -80,14 +82,24 @@ namespace OpenTelemetry.Trace
 
         protected virtual void Dispose(bool disposing)
         {
-            try
+            if (this.disposed)
             {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+                return;
             }
-            catch (Exception ex)
+
+            if (disposing)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                try
+                {
+                    this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                }
             }
+
+            this.disposed = true;
         }
     }
 }
