@@ -236,7 +236,7 @@ namespace OpenTelemetry.Trace.Test
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                                         .AddActivitySource(ActivitySourceName)
-                                        .SetSampler(new AlwaysOnSampler())
+                                        .SetSampler(new ParentOrElseSampler(new AlwaysOffSampler()))
                                         .AddProcessor(activityProcessor)
                                         .Build();
 
