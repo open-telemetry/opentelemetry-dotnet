@@ -64,9 +64,9 @@ namespace Microsoft.Extensions.DependencyInjection
             var builder = Sdk.CreateTracerProviderBuilder();
             services.AddOpenTelemetry((sp) =>
             {
-                    configure(sp, builder);
-                    return builder.Build();
-                });
+                configure(sp, builder);
+                return builder.Build();
+            });
             return services;
         }
 
