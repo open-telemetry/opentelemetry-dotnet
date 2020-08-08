@@ -30,7 +30,8 @@ public class Program
             {
                 "MyCompany.MyProduct.MyLibrary",
             })
-            .Build().AddMyExporter();
+            .AddMyExporter()
+            .Build();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
