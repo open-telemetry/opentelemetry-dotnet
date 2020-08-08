@@ -11,7 +11,7 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
-    <OpenTelemetryPkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryPkgVer>
     <OpenTelemetryExporterConsolePkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryExporterConsolePkgVer>
+    <OpenTelemetryPkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryPkgVer>
   </PropertyGroup>
 </Project>

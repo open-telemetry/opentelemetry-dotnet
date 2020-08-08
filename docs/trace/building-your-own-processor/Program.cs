@@ -25,20 +25,19 @@ public class Program
 
     public static void Main()
     {
-        using var otel = Sdk.CreateTracerProvider(b => b
-            .AddActivitySource("MyCompany.MyProduct.MyLibrary")
+        using var tracerProvider = Sdk.CreateTracerProvider(
+            new string[]
+            {
+                "MyCompany.MyProduct.MyLibrary",
+            })
+            .AddProcessor(new MyActivityProcessor("A"))
+            .AddProcessor(new MyActivityProcessor("B"));
 
-            // TODO: seems buggy as ShutdownAsync is called 6 times
-            // TODO: need to discuss the expectation, currently FlushAsync is not called by default
-            // TODO: should the dispose order be C, B, A or A, B C?
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("A")))
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("B")))
-            .AddProcessorPipeline(p => p.AddProcessor(current => new MyActivityProcessor("C"))));
-
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        using (var activity = MyActivitySource.StartActivity("Foo"))
         {
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
     }
 }
