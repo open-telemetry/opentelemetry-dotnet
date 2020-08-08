@@ -186,7 +186,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E
 		docs\logs\logging-correlation.md = docs\logs\logging-correlation.md
 	EndProjectSection
 EndProject
-<<<<<<< HEAD
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
 	ProjectSection(SolutionItems) = preProject
 		examples\MicroserviceExample\.dockerignore = examples\MicroserviceExample\.dockerignore
