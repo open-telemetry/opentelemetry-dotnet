@@ -62,7 +62,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
             var builder = Sdk.CreateTracerProviderBuilder();
-            services.AddOpenTelemetry((sp) => {
+            services.AddOpenTelemetry((sp) =>
+            {
                     configure(sp, builder);
                     return builder.Build();
                 });

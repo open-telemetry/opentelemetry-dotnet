@@ -29,6 +29,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder UseConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
         {
+            // TODO: Rename to AddConsoleExporter?
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
