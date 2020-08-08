@@ -55,11 +55,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddRedisInstrumentation(connection);
-            }))
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddRedisInstrumentation(connection)
+                .Build())
             {
                 var db = connection.GetDatabase();
 
@@ -110,11 +109,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             var activityProcessor = new Mock<ActivityProcessor>();
             Assert.Throws<ArgumentNullException>(() =>
-            Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddRedisInstrumentation(null);
-            }));
+            Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddRedisInstrumentation(null)
+                .Build());
         }
 
         private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)

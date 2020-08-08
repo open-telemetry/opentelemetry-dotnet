@@ -24,12 +24,13 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProvider(
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddActivitySources(
             new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
             })
-            .AddMyExporter();
+            .Build().AddMyExporter();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {

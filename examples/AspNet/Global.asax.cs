@@ -32,15 +32,15 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            this.openTelemetry = Sdk.CreateTracerProvider(
-                 (builder) => builder
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
                  .AddHttpClientInstrumentation()
                  .AddAspNetInstrumentation()
-                .UseJaegerExporter(c =>
+                 .UseJaegerExporter(c =>
                 {
                     c.AgentHost = "localhost";
                     c.AgentPort = 6831;
-                }));
+                })
+                 .Build();
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
 

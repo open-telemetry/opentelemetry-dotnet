@@ -54,10 +54,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (serverLifeTime)
 
-            using (Sdk.CreateTracerProvider(
-                    (builder) => builder.AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
-                    .SetResource(expectedResource)
-                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                               .AddProcessor(spanProcessor.Object)
+                               .SetResource(expectedResource)
+                               .Build())
             {
                 try
                 {

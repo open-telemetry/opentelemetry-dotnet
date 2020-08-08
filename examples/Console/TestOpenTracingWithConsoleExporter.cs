@@ -29,10 +29,11 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use Console exporter.
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .AddActivitySource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson));
+                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                    .Build();
 
             // The above line is required only in applications
             // which decide to use OpenTelemetry.
