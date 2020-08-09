@@ -74,10 +74,10 @@ namespace Utils.Messaging
             // See:
             //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes
             //   * https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#rabbitmq
-            activity.AddTag("messaging.system", "rabbitmq");
-            activity.AddTag("messaging.destination_kind", "queue");
-            activity.AddTag("messaging.destination", DefaultExchangeName);
-            activity.AddTag("messaging.rabbitmq.routing_key", TestQueueName);
+            activity?.AddTag("messaging.system", "rabbitmq");
+            activity?.AddTag("messaging.destination_kind", "queue");
+            activity?.AddTag("messaging.destination", DefaultExchangeName);
+            activity?.AddTag("messaging.rabbitmq.routing_key", TestQueueName);
         }
     }
 }

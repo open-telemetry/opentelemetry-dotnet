@@ -62,7 +62,10 @@ namespace Utils.Messaging
                     TextFormat.Inject(activity.Context, props, this.InjectTraceContextIntoBasicProperties);
 
                     // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                    RabbitMqHelper.AddMessagingTags(activity);
+                    if (activity != null)
+                    {
+                        RabbitMqHelper.AddMessagingTags(activity);
+                    }
 
                     var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 

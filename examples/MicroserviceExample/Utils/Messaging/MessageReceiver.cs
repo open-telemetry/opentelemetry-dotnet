@@ -71,10 +71,13 @@ namespace Utils.Messaging
 
                     this.logger.LogInformation($"Message received: [{message}]");
 
-                    activity.AddTag("message", message);
+                    activity?.AddTag("message", message);
 
                     // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                    RabbitMqHelper.AddMessagingTags(activity);
+                    if (activity != null)
+                    {
+                        RabbitMqHelper.AddMessagingTags(activity);
+                    }
 
                     // Simulate some work
                     Thread.Sleep(1000);
