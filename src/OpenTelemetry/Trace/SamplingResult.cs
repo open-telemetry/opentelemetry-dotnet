@@ -26,22 +26,22 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
-        /// <param name="isSampled">True if sampled, false otherwise.</param>
-        public SamplingResult(bool isSampled)
+        /// <param name="decision">True if sampled, false otherwise.</param>
+        public SamplingResult(Decision decision)
         {
-            this.IsSampled = isSampled;
+            this.Decision = decision;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
-        /// <param name="isSampled">True if sampled, false otherwise.</param>
+        /// <param name="decision">True if sampled, false otherwise.</param>
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
-        public SamplingResult(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes)
+        public SamplingResult(Decision decision, IEnumerable<KeyValuePair<string, object>> attributes)
         {
-            this.IsSampled = isSampled;
+            this.Decision = decision;
 
             // Note: Decision object takes ownership of the collection.
             // Current implementation has no means to ensure the collection will not be modified by the caller.
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace
         /// Gets a value indicating whether Span was sampled or not.
         /// The value is not suppose to change over time and can be cached.
         /// </summary>
-        public bool IsSampled { get; }
+        public Decision Decision { get; }
 
         /// <summary>
         /// Gets a map of attributes associated with the sampling decision.
@@ -83,14 +83,14 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (SamplingResult)obj;
-            return this.IsSampled == that.IsSampled && this.Attributes == that.Attributes;
+            return this.Decision == that.Decision && this.Attributes == that.Attributes;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
             var result = 1;
-            result = (31 * result) + this.IsSampled.GetHashCode();
+            result = (31 * result) + this.Decision.GetHashCode();
             result = (31 * result) + this.Attributes.GetHashCode();
             return result;
         }

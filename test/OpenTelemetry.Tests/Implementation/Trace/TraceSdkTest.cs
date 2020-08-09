@@ -115,7 +115,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                     tpbuilder.SetSampler(testSampler);
                 });
 
-            testSampler.DesiredSamplingResult = new SamplingResult(true);
+            testSampler.DesiredSamplingResult = new SamplingResult(Decision.RecordAndSampled);
             using (var activity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(activity);
@@ -123,7 +123,17 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.True(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(false);
+            testSampler.DesiredSamplingResult = new SamplingResult(Decision.Record);
+            using (var activity = activitySource.StartActivity("root"))
+            {
+                // Even if sampling returns false, for root activities,
+                // activity is still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.True(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+            }
+
+            testSampler.DesiredSamplingResult = new SamplingResult(Decision.NotRecord);
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -143,7 +153,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
         private class TestSampler : Sampler
         {
-            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(true);
+            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(Decision.RecordAndSampled);
 
             public SamplingParameters LatestSamplingParameters { get; private set; }
 

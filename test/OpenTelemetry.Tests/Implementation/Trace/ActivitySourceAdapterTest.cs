@@ -56,13 +56,14 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void ActivitySourceAdapterCallsStartStopActivityProcessor(bool isSampled)
+        [InlineData(Decision.NotRecord)]
+        [InlineData(Decision.Record)]
+        [InlineData(Decision.RecordAndSampled)]
+        public void ActivitySourceAdapterCallsStartStopActivityProcessor(Decision decision)
         {
             this.testSampler.SamplingAction = (samplingParameters) =>
             {
-                return new SamplingResult(isSampled);
+                return new SamplingResult(decision);
             };
 
             bool startCalled = false;
@@ -74,7 +75,9 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
                     // If start is called, that means activity is sampled,
                     // and TraceFlag is set to Recorded.
-                    Assert.Equal(ActivityTraceFlags.Recorded, a.ActivityTraceFlags);
+                    Assert.Equal(decision == Decision.Record || decision == Decision.RecordAndSampled, a.IsAllDataRequested);
+                    Assert.Equal(decision == Decision.RecordAndSampled ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None, a.ActivityTraceFlags);
+                    Assert.Equal(decision == Decision.RecordAndSampled, a.Recorded);
                 };
 
             this.testProcessor.EndAction =
@@ -89,8 +92,8 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
-            Assert.Equal(isSampled, startCalled);
-            Assert.Equal(isSampled, endCalled);
+            Assert.Equal(activity.IsAllDataRequested, startCalled);
+            Assert.Equal(activity.IsAllDataRequested, endCalled);
         }
 
         [Fact]
@@ -99,7 +102,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             this.testSampler.SamplingAction = (samplingParameters) =>
             {
                 Assert.Equal(default, samplingParameters.ParentContext);
-                return new SamplingResult(true);
+                return new SamplingResult(Decision.RecordAndSampled);
             };
 
             // Start activity without setting parent. i.e it'll have null parent
@@ -128,7 +131,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
                 Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
-                return new SamplingResult(true);
+                return new SamplingResult(Decision.RecordAndSampled);
             };
 
             // Create an activity with remote parent id.
@@ -160,7 +163,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
                 Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
-                return new SamplingResult(true);
+                return new SamplingResult(Decision.RecordAndSampled);
             };
 
             // This activity will have a inproc parent.
@@ -187,7 +190,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
-                return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(true);
+                return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(Decision.RecordAndSampled);
             }
         }
     }

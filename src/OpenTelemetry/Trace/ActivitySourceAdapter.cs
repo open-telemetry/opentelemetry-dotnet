@@ -101,8 +101,9 @@ namespace OpenTelemetry.Trace
                 activity.Links);
 
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
+            var isSampled = samplingDecision.Decision == Decision.Record || samplingDecision.Decision == Decision.RecordAndSampled;
+            activity.IsAllDataRequested = isSampled;
+            if (samplingDecision.Decision == Decision.RecordAndSampled)
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }

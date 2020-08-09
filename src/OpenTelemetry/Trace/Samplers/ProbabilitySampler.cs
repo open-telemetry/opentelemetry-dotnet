@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Samplers
             // code is executed in-line for every Activity creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             samplingParameters.TraceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(true) : new SamplingResult(false);
+            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(Decision.RecordAndSampled) : new SamplingResult(Decision.NotRecord);
         }
 
         private long GetLowerLong(ReadOnlySpan<byte> bytes)

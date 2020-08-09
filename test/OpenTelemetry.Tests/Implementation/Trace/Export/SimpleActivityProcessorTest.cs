@@ -60,7 +60,8 @@ namespace OpenTelemetry.Trace.Test
                         .AddActivitySource("cijo")
                         .AddProcessorPipeline(p => p
                         .SetExporter(this.activityExporter)
-                        .SetExportingProcessor(e => new SimpleActivityProcessor(e))));
+                        .SetExportingProcessor(e => new SimpleActivityProcessor(e)))
+                        .SetSampler(new AlwaysOnSampler()));
 
             ActivitySource source = new ActivitySource("cijo");
             var activity = source.StartActivity("somename");
