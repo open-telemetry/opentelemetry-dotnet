@@ -33,12 +33,12 @@ namespace OpenTelemetry.Context.Propagation
 
         public string Name
         {
-            get { return name; }
+            get { return this.name; }
         }
 
         public string Value
         {
-            get { return value; }
+            get { return this.value; }
         }
 
         public static bool TryParse(string input, out NameValueHeaderValue parsedValue)

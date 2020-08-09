@@ -71,7 +71,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object? obj) => (obj is TextFormatContext context) ? Equals(context) : false;
+        public override bool Equals(object? obj) => (obj is TextFormatContext context) ? this.Equals(context) : false;
     }
 
     /// <summary>

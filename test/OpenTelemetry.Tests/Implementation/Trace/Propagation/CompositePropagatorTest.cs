@@ -79,10 +79,11 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
+            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
             var carrier = new Dictionary<string, string>();
             var activity = new Activity("test");
 
-            compositePropagator.Inject(activity, carrier, Setter);
+            compositePropagator.Inject(textFormatContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-1");
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-2");
         }
@@ -102,10 +103,9 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
             TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
 
-            var activity = new Activity("test");
             var carrier = new Dictionary<string, string>();
 
-            compositePropagator.Inject(activity, carrier, Setter);
+            compositePropagator.Inject(textFormatContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent");
 
             // checking if the latest propagator is the one with the data. So, it will replace the previous one.

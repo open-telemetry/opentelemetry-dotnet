@@ -37,7 +37,7 @@ namespace OpenTelemetry.Context.Propagation
 
         protected override int GetParsedValueLength(string value, int startIndex, out T parsedValue)
         {
-            return getParsedValueLength(value, startIndex, out parsedValue);
+            return this.getParsedValueLength(value, startIndex, out parsedValue);
         }
     }
 }

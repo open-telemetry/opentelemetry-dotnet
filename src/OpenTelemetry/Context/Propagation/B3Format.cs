@@ -95,9 +95,9 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
         {
-            if (activity == null || activity.TraceId == default || activity.SpanId == default)
+            if (context == null || context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
@@ -118,10 +118,10 @@ namespace OpenTelemetry.Context.Propagation
             if (this.singleHeader)
             {
                 var sb = new StringBuilder();
-                sb.Append(activity.TraceId.ToHexString());
+                sb.Append(context.ActivityContext.TraceId.ToHexString());
                 sb.Append(XB3CombinedDelimiter);
-                sb.Append(activity.SpanId.ToHexString());
-                if ((activity.ActivityTraceFlags & ActivityTraceFlags.Recorded) != 0)
+                sb.Append(context.ActivityContext.SpanId.ToHexString());
+                if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
@@ -131,9 +131,9 @@ namespace OpenTelemetry.Context.Propagation
             }
             else
             {
-                setter(carrier, XB3TraceId, activity.TraceId.ToHexString());
-                setter(carrier, XB3SpanId, activity.SpanId.ToHexString());
-                if ((activity.ActivityTraceFlags & ActivityTraceFlags.Recorded) != 0)
+                setter(carrier, XB3TraceId, context.ActivityContext.TraceId.ToHexString());
+                setter(carrier, XB3SpanId, context.ActivityContext.SpanId.ToHexString());
+                if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     setter(carrier, XB3Sampled, SampledValue);
                 }

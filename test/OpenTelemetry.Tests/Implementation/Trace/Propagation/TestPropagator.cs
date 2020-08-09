@@ -68,16 +68,16 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
                 context.ActivityBaggage);
         }
 
-        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 
-            var traceparent = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
+            var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
             traceparent = string.Concat(traceparent, "-", headerNumber);
 
             setter(carrier, this.idHeaderName, traceparent);
 
-            string tracestateStr = activity.TraceStateString;
+            string tracestateStr = context.ActivityContext.TraceState;
             if (tracestateStr?.Length > 0)
             {
                 setter(carrier, this.stateHeaderName, tracestateStr);
