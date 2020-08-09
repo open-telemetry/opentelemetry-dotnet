@@ -52,14 +52,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientInstrumentation(options =>
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureText;
-                });
-            });
+                })
+                .Build();
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
@@ -105,15 +104,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using FakeBehavingSqlEventSource fakeSqlEventSource = new FakeBehavingSqlEventSource();
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientInstrumentation(options =>
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
-                });
-            });
+                })
+                .Build();
 
             int objectId = Guid.NewGuid().GetHashCode();
 
@@ -145,11 +143,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientInstrumentation();
-            });
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation()
+                .Build();
 
             fakeSqlEventSource.WriteUnknownEventWithNullPayload();
 
@@ -164,11 +161,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientInstrumentation();
-            });
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation()
+                .Build();
 
             fakeSqlEventSource.WriteBeginExecuteEvent("arg1");
 

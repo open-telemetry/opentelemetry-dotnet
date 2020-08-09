@@ -90,9 +90,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         }
                     });
 
-            using (Sdk.CreateTracerProvider(
-                        (builder) => builder.AddHttpClientInstrumentation(o => o.TextFormat = mockTextFormat.Object)
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                        .AddHttpClientInstrumentation(o => o.TextFormat = mockTextFormat.Object)
+                        .AddProcessor(spanProcessor.Object)
+                        .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -143,9 +144,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using (Sdk.CreateTracerProvider(
-                   (builder) => builder.AddHttpClientInstrumentation((opt) => opt.TextFormat = textFormat.Object)
-                   .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                   .AddProcessor(spanProcessor.Object)
+                   .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -173,9 +175,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (Sdk.CreateTracerProvider(
-                        (builder) => builder.AddHttpClientInstrumentation()
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation()
+                   .AddProcessor(spanProcessor.Object)
+                   .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -191,9 +194,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (Sdk.CreateTracerProvider(
-                        (builder) => builder.AddHttpClientInstrumentation()
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation()
+                   .AddProcessor(spanProcessor.Object)
+                   .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -217,9 +221,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (Sdk.CreateTracerProvider(
-                        (builder) => builder.AddHttpClientInstrumentation()
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation()
+                   .AddProcessor(spanProcessor.Object)
+                   .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -232,12 +237,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async void HttpClientInstrumentationFiltersOutRequests()
         {
             var spanProcessor = new Mock<ActivityProcessor>();
-
-            using (Sdk.CreateTracerProvider(
-                   (builder) =>
-                   builder.AddHttpClientInstrumentation(
-                       (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
-                   .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation(
+                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                               .AddProcessor(spanProcessor.Object)
+                               .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -251,9 +255,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var spanProcessor = new Mock<ActivityProcessor>();
 
-            using (Sdk.CreateTracerProvider(
-                        (builder) => builder.AddHttpClientInstrumentation()
-                        .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation()
+                               .AddProcessor(spanProcessor.Object)
+                               .Build())
             {
                 using var c = new HttpClient();
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));

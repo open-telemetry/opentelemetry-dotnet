@@ -47,12 +47,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.SetResource(expectedResource);
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddHttpWebRequestInstrumentation(options => options.SetHttpFlavor = tc.SetHttpFlavor);
-            });
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .SetResource(expectedResource)
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation(options => options.SetHttpFlavor = tc.SetHttpFlavor)
+                .Build();
 
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 

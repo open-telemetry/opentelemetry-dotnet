@@ -54,10 +54,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseJaegerExporter(
-                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddActivitySource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .UseJaegerExporter()
+                .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Jaeger Activity");

@@ -37,12 +37,12 @@ namespace OpenTelemetry.Trace.Test
         public SimpleActivityProcessorTest()
         {
             this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = Sdk.CreateTracerProvider(b => b
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource(ActivitySourceName)
-                        .AddProcessorPipeline(p => p
-                        .SetExporter(this.activityExporter)
-                        .SetExportingProcessor(e => new SimpleActivityProcessor(e)))
-                .SetSampler(new AlwaysOnSampler()));
+                        .SetSampler(new AlwaysOnSampler())
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .Build();
+
             this.activitySource = new ActivitySource(ActivitySourceName);
         }
 
@@ -56,13 +56,13 @@ namespace OpenTelemetry.Trace.Test
         public void ThrowsInExporter()
         {
             this.activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
-            this.openTelemetry = Sdk.CreateTracerProvider(b => b
-                        .AddActivitySource("cijo")
-                        .AddProcessorPipeline(p => p
-                        .SetExporter(this.activityExporter)
-                        .SetExportingProcessor(e => new SimpleActivityProcessor(e))));
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource("random")
+                        .SetSampler(new AlwaysOnSampler())
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .Build();
 
-            ActivitySource source = new ActivitySource("cijo");
+            ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
 
             // does not throw
@@ -73,13 +73,12 @@ namespace OpenTelemetry.Trace.Test
         public void ProcessorDoesNotBlockOnExporter()
         {
             this.activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
-            this.openTelemetry = Sdk.CreateTracerProvider(b => b
-                        .AddActivitySource("cijo")
-                        .AddProcessorPipeline(p => p
-                        .SetExporter(this.activityExporter)
-                        .SetExportingProcessor(e => new SimpleActivityProcessor(e))));
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource("random")
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .Build();
 
-            ActivitySource source = new ActivitySource("cijo");
+            ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
 
             // does not block

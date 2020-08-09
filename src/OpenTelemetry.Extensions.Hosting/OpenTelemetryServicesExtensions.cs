@@ -47,7 +47,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(() => Sdk.CreateTracerProvider(configure));
+            var builder = Sdk.CreateTracerProviderBuilder();
+            configure(builder);
+            services.AddOpenTelemetry(() => builder.Build());
             return services;
         }
 
@@ -59,7 +61,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            services.AddOpenTelemetry(s => Sdk.CreateTracerProvider(builder => configure(s, builder)));
+            var builder = Sdk.CreateTracerProviderBuilder();
+            services.AddOpenTelemetry((sp) =>
+            {
+                configure(sp, builder);
+                return builder.Build();
+            });
             return services;
         }
 

@@ -43,8 +43,9 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             this.connection = ConnectionMultiplexer.Connect(connectionOptions);
 
-            this.sdk = Sdk.CreateTracerProvider(
-                (builder) => builder.AddRedisInstrumentation(this.connection));
+            this.sdk = Sdk.CreateTracerProviderBuilder()
+                .AddRedisInstrumentation(this.connection)
+                .Build();
         }
 
         public void Dispose()

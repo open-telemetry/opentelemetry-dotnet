@@ -43,12 +43,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (Sdk.CreateTracerProvider(
-                (builder) => builder
+            using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
-                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+                    .AddProcessor(spanProcessor.Object)
+                    .Build())
             {
                 var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
@@ -95,12 +95,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (Sdk.CreateTracerProvider(
-            (builder) => builder
-                .SetSampler(new AlwaysOnSampler())
-                .AddHttpClientInstrumentation()
-                .AddGrpcClientInstrumentation()
-                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new AlwaysOnSampler())
+                    .AddGrpcClientInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(spanProcessor.Object)
+                    .Build())
             {
                 var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);

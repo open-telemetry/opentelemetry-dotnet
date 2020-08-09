@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace
             }
 
             this.Instrumentations.Clear();
-
+            (this.Sampler as IDisposable)?.Dispose();
             this.ActivityProcessor?.Dispose();
 
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
