@@ -24,6 +24,126 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation
 {
+    // W3C baggage: https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md
+    public class BaggageFormat : ITextFormat
+    {
+        private const string Baggage = "baggage";
+        private const int MaxBaggageLength = 1024;
+
+        /// <inheritdoc/>
+        public ISet<string> Fields => new HashSet<string> { Baggage };
+
+        /// <inheritdoc/>
+        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return context;
+            }
+
+            if (getter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                return context;
+            }
+
+            try
+            {
+                IEnumerable<KeyValuePair<string, string>> baggage = null;
+                var baggageCollection = getter(carrier, Baggage);
+                if (baggageCollection?.Any() ?? false)
+                {
+                    TryExtractTracestateBaggage(baggageCollection.ToArray(), out baggage);
+                }
+
+                return new TextFormatContext(
+                    context.ActivityContext,
+                    baggage ?? context.ActivityBaggage);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+            }
+
+            return context;
+        }
+
+        /// <inheritdoc/>
+        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
+        {
+            if (activity == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
+                return;
+            }
+
+            if (carrier == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                return;
+            }
+
+            if (setter == null)
+            {
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null setter");
+                return;
+            }
+
+            using IEnumerator<KeyValuePair<string, string>> e = activity.Baggage.GetEnumerator();
+
+            if (e.MoveNext())
+            {
+                StringBuilder baggage = new StringBuilder();
+                do
+                {
+                    KeyValuePair<string, string> item = e.Current;
+                    baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
+                }
+                while (e.MoveNext());
+                baggage.Remove(baggage.Length - 1, 1);
+                setter(carrier, Baggage, baggage.ToString());
+            }
+        }
+
+        internal static bool TryExtractTracestateBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
+        {
+            int baggageLength = -1;
+            Dictionary<string, string> baggageDictionary = null;
+
+            foreach (var item in baggageCollection)
+            {
+                if (baggageLength >= MaxBaggageLength)
+                {
+                    break;
+                }
+
+                foreach (var pair in item.Split(','))
+                {
+                    baggageLength += pair.Length + 1; // pair and comma
+
+                    if (baggageLength >= MaxBaggageLength)
+                    {
+                        break;
+                    }
+
+                    if (NameValueHeaderValue.TryParse(pair, out NameValueHeaderValue baggageItem))
+                    {
+                        if (baggageDictionary == null)
+                        {
+                            baggageDictionary = new Dictionary<string, string>();
+                        }
+
+                        baggageDictionary[baggageItem.Name] = baggageItem.Value;
+                    }
+                }
+            }
+
+            baggage = baggageDictionary;
+            return baggageDictionary != null;
+        }
+    }
+
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>
@@ -31,8 +151,6 @@ namespace OpenTelemetry.Context.Propagation
     {
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
-        private const string Baggage = "baggage";
-        private const int MaxBaggageLength = 1024;
 
         private static readonly int VersionPrefixIdLength = "00-".Length;
         private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
@@ -44,37 +162,6 @@ namespace OpenTelemetry.Context.Propagation
 
         /// <inheritdoc/>
         public ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
-
-        /// <inheritdoc/>
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            if (carrier == null)
-            {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
-                return false;
-            }
-
-            if (getter == null)
-            {
-                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
-                return false;
-            }
-
-            try
-            {
-                var traceparentCollection = getter(carrier, TraceParent);
-
-                // There must be a single traceparent
-                return traceparentCollection != null && traceparentCollection.Count() == 1;
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
-            }
-
-            // in case of exception indicate to upstream that there is no parseable context from the top
-            return false;
-        }
 
         /// <inheritdoc/>
         public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
@@ -116,16 +203,9 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                IEnumerable<KeyValuePair<string, string>> baggage = null;
-                var baggageCollection = getter(carrier, Baggage);
-                if (baggageCollection?.Any() ?? false)
-                {
-                    TryExtractTracestateBaggage(baggageCollection.ToArray(), out baggage);
-                }
-
                 return new TextFormatContext(
                     new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true),
-                    baggage);
+                    context.ActivityBaggage);
             }
             catch (Exception ex)
             {
@@ -139,7 +219,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
         {
-            if (activity.TraceId == default || activity.SpanId == default)
+            if (activity == null || activity.TraceId == default || activity.SpanId == default)
             {
                 OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
                 return;
@@ -166,21 +246,6 @@ namespace OpenTelemetry.Context.Propagation
             if (tracestateStr?.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);
-            }
-
-            using IEnumerator<KeyValuePair<string, string>> e = activity.Baggage.GetEnumerator();
-
-            if (e.MoveNext())
-            {
-                StringBuilder baggage = new StringBuilder();
-                do
-                {
-                    KeyValuePair<string, string> item = e.Current;
-                    baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
-                }
-                while (e.MoveNext());
-                baggage.Remove(baggage.Length - 1, 1);
-                setter(carrier, Baggage, baggage.ToString());
             }
         }
 
@@ -310,43 +375,6 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             return true;
-        }
-
-        internal static bool TryExtractTracestateBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
-        {
-            int baggageLength = -1;
-            Dictionary<string, string> baggageDictionary = null;
-
-            foreach (var item in baggageCollection)
-            {
-                if (baggageLength >= MaxBaggageLength)
-                {
-                    break;
-                }
-
-                foreach (var pair in item.Split(','))
-                {
-                    baggageLength += pair.Length + 1; // pair and comma
-
-                    if (baggageLength >= MaxBaggageLength)
-                    {
-                        break;
-                    }
-
-                    if (NameValueHeaderValue.TryParse(pair, out NameValueHeaderValue baggageItem))
-                    {
-                        if (baggageDictionary == null)
-                        {
-                            baggageDictionary = new Dictionary<string, string>();
-                        }
-
-                        baggageDictionary[baggageItem.Name] = baggageItem.Value;
-                    }
-                }
-            }
-
-            baggage = baggageDictionary;
-            return baggageDictionary != null;
         }
 
         private static byte HexCharToByte(char c)

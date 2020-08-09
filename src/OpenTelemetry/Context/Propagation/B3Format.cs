@@ -70,43 +70,6 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            if (carrier == null)
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return false;
-            }
-
-            if (getter == null)
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return false;
-            }
-
-            try
-            {
-                if (this.singleHeader)
-                {
-                    var header = getter(carrier, XB3Combined)?.FirstOrDefault();
-                    return !string.IsNullOrWhiteSpace(header);
-                }
-                else
-                {
-                    var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
-                    var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
-
-                    return traceIdStr != null && spanIdStr != null;
-                }
-            }
-            catch (Exception e)
-            {
-                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return false;
-            }
-        }
-
-        /// <inheritdoc/>
         public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
@@ -134,7 +97,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
         {
-            if (activity.TraceId == default || activity.SpanId == default)
+            if (activity == null || activity.TraceId == default || activity.SpanId == default)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
                 return;
@@ -218,7 +181,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new TextFormatContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    null);
+                    context.ActivityBaggage);
             }
             catch (Exception e)
             {
@@ -278,7 +241,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new TextFormatContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    null);
+                    context.ActivityBaggage);
             }
             catch (Exception e)
             {

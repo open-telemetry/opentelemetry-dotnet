@@ -186,13 +186,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-        {
-            Options.TextFormat.Inject(activity, request, HttpWebRequestHeaderValuesSetter);
-        }
+            => Options.TextFormat.Inject(activity, request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.TextFormat.IsInjected(request, HttpWebRequestHeaderValuesGetter);
+            => Options.TextFormat.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {

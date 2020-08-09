@@ -65,7 +65,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
 
             return new TextFormatContext(
                 new ActivityContext(traceId, spanId, traceoptions, tracestate),
-                null);
+                context.ActivityBaggage);
         }
 
         public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
@@ -82,14 +82,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
             {
                 setter(carrier, this.stateHeaderName, tracestateStr);
             }
-        }
-
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            var traceparentCollection = getter(carrier, this.idHeaderName);
-
-            // There must be a single traceparent
-            return traceparentCollection != null && traceparentCollection.Count() == 1;
         }
     }
 }

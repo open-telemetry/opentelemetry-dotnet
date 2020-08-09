@@ -16,10 +16,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    public readonly struct TextFormatContext
+    public readonly struct TextFormatContext : IEquatable<TextFormatContext>
     {
         public ActivityContext ActivityContext { get; }
 
@@ -30,6 +31,45 @@ namespace OpenTelemetry.Context.Propagation
             this.ActivityContext = activityContext;
             this.ActivityBaggage = activityBaggage;
         }
+
+        public static bool operator ==(TextFormatContext left, TextFormatContext right) => left.Equals(right);
+
+        public static bool operator !=(TextFormatContext left, TextFormatContext right) => !(left == right);
+
+        public bool Equals(TextFormatContext value)
+        {
+            if (this.ActivityContext != value.ActivityContext
+                || this.ActivityBaggage is null != value.ActivityBaggage is null)
+            {
+                return false;
+            }
+
+            if (this.ActivityBaggage is null)
+            {
+                return true;
+            }
+
+            if (this.ActivityBaggage.Count() != value.ActivityBaggage.Count())
+            {
+                return false;
+            }
+
+            var thisEnumerator = this.ActivityBaggage.GetEnumerator();
+            var valueEnumerator = value.ActivityBaggage.GetEnumerator();
+
+            while (thisEnumerator.MoveNext() && valueEnumerator.MoveNext())
+            {
+                if (thisEnumerator.Current.Key != valueEnumerator.Current.Key
+                    || thisEnumerator.Current.Value != valueEnumerator.Current.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override bool Equals(object? obj) => (obj is TextFormatContext context) ? Equals(context) : false;
     }
 
     /// <summary>
@@ -63,14 +103,5 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Context from it's text representation.</returns>
         TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
-
-        /// <summary>
-        /// Tests if an activity context has been injected into a carrier.
-        /// </summary>
-        /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
-        /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
-        /// <param name="getter">Function that will return string value of a key with the specified name.</param>
-        /// <returns><see langword="true" /> if the carrier has been injected with an activity context.</returns>
-        bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

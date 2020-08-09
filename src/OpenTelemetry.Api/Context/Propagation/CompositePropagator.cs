@@ -47,10 +47,6 @@ namespace OpenTelemetry.Context.Propagation
             foreach (var textFormat in this.textFormats)
             {
                 context = textFormat.Extract(context, carrier, getter);
-                if (context.ActivityContext.IsValid())
-                {
-                    return context;
-                }
             }
 
             return context;
@@ -63,12 +59,6 @@ namespace OpenTelemetry.Context.Propagation
             {
                 textFormat.Inject(activity, carrier, setter);
             }
-        }
-
-        /// <inheritdoc/>
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            return this.textFormats.All(textFormat => textFormat.IsInjected(carrier, getter));
         }
     }
 }
