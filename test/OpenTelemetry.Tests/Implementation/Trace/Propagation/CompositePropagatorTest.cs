@@ -48,6 +48,21 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
         private readonly ActivityTraceId traceId = ActivityTraceId.CreateRandom();
         private readonly ActivitySpanId spanId = ActivitySpanId.CreateRandom();
 
+        static CompositePropagatorTest()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+
+            var listener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+        }
+
         [Fact]
         public void CompositePropagator_NullTextFormatList()
         {
@@ -65,13 +80,11 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
             var carrier = new Dictionary<string, string>();
+            var activity = new Activity("test");
 
-            compositePropagator.Inject(activityContext, carrier, Setter);
+            compositePropagator.Inject(activity, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-1");
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-2");
-
-            bool isInjected = compositePropagator.IsInjected(carrier, Getter);
-            Assert.True(isInjected);
         }
 
         [Fact]
@@ -87,20 +100,20 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
+            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
+
+            var activity = new Activity("test");
             var carrier = new Dictionary<string, string>();
 
-            compositePropagator.Inject(activityContext, carrier, Setter);
+            compositePropagator.Inject(activity, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent");
 
             // checking if the latest propagator is the one with the data. So, it will replace the previous one.
             Assert.Equal($"00-{this.traceId}-{this.spanId}-{header02.Split('-').Last()}", carrier["custom-traceparent"]);
 
-            bool isInjected = compositePropagator.IsInjected(carrier, Getter);
-            Assert.True(isInjected);
-
             // resetting counter
             count = 0;
-            ActivityContext newContext = compositePropagator.Extract(default, carrier, Getter);
+            TextFormatContext newTextFormatContext = compositePropagator.Extract(default, carrier, Getter);
 
             // checking if we accessed only two times: header/headerstate options
             // if that's true, we skipped the first one since we have a logic to for the default result

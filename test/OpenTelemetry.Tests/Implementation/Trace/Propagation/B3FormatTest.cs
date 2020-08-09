@@ -234,7 +234,10 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 { B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1" },
             };
-            Assert.Equal(new ActivityContext(TraceId, SpanId, TraceOptions), this.b3FormatSingleHeader.Extract(default, headersSampled, Getter));
+
+            Assert.Equal(
+                new TextFormatContext(new ActivityContext(TraceId, SpanId, TraceOptions), null),
+                this.b3FormatSingleHeader.Extract(default, headersSampled, Getter));
         }
 
         [Fact]
@@ -244,7 +247,10 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 { B3Format.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-0" },
             };
-            Assert.Equal(new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None), this.b3FormatSingleHeader.Extract(default, headersNotSampled, Getter));
+
+            Assert.Equal(
+                new TextFormatContext(new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None), null),
+                this.b3FormatSingleHeader.Extract(default, headersNotSampled, Getter));
         }
 
         [Fact]
