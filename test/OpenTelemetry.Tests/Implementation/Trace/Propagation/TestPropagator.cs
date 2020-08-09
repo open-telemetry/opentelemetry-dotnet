@@ -37,23 +37,23 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
 
         public ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
-        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (this.defaultContext)
             {
-                return activityContext;
+                return context;
             }
 
             IEnumerable<string> id = getter(carrier, this.idHeaderName);
             if (id.Count() <= 0)
             {
-                return activityContext;
+                return context;
             }
 
             var traceparentParsed = TraceContextFormat.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
             if (!traceparentParsed)
             {
-                return activityContext;
+                return context;
             }
 
             string tracestate = string.Empty;
@@ -63,19 +63,21 @@ namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
                 TraceContextFormat.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
-            return new ActivityContext(traceId, spanId, traceoptions, tracestate);
+            return new TextFormatContext(
+                new ActivityContext(traceId, spanId, traceoptions, tracestate),
+                null);
         }
 
-        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 
-            var traceparent = string.Concat("00-", activityContext.TraceId.ToHexString(), "-", activityContext.SpanId.ToHexString());
+            var traceparent = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
             traceparent = string.Concat(traceparent, "-", headerNumber);
 
             setter(carrier, this.idHeaderName, traceparent);
 
-            string tracestateStr = activityContext.TraceState;
+            string tracestateStr = activity.TraceStateString;
             if (tracestateStr?.Length > 0)
             {
                 setter(carrier, this.stateHeaderName, tracestateStr);

@@ -42,26 +42,26 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => EmptyFields;
 
         /// <inheritdoc/>
-        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             foreach (var textFormat in this.textFormats)
             {
-                activityContext = textFormat.Extract(activityContext, carrier, getter);
-                if (activityContext.IsValid())
+                context = textFormat.Extract(context, carrier, getter);
+                if (context.ActivityContext.IsValid())
                 {
-                    return activityContext;
+                    return context;
                 }
             }
 
-            return activityContext;
+            return context;
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
         {
             foreach (var textFormat in this.textFormats)
             {
-                textFormat.Inject(activityContext, carrier, setter);
+                textFormat.Inject(activity, carrier, setter);
             }
         }
 
