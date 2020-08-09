@@ -58,12 +58,12 @@ namespace Utils.Messaging
                 {
                     var props = this.channel.CreateBasicProperties();
 
-                    // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                    TextFormat.Inject(activity.Context, props, this.InjectTraceContextIntoBasicProperties);
-
-                    // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                     if (activity != null)
                     {
+                        // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
+                        TextFormat.Inject(activity.Context, props, this.InjectTraceContextIntoBasicProperties);
+
+                        // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                         RabbitMqHelper.AddMessagingTags(activity);
                     }
 
