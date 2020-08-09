@@ -15,65 +15,9 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    public readonly struct TextFormatContext : IEquatable<TextFormatContext>
-    {
-        public ActivityContext ActivityContext { get; }
-
-        public IEnumerable<KeyValuePair<string, string>> ActivityBaggage { get; }
-
-        public TextFormatContext(ActivityContext activityContext, IEnumerable<KeyValuePair<string, string>> activityBaggage)
-        {
-            this.ActivityContext = activityContext;
-            this.ActivityBaggage = activityBaggage;
-        }
-
-        public static bool operator ==(TextFormatContext left, TextFormatContext right) => left.Equals(right);
-
-        public static bool operator !=(TextFormatContext left, TextFormatContext right) => !(left == right);
-
-        /// <inheritdoc/>
-        public bool Equals(TextFormatContext value)
-        {
-            if (this.ActivityContext != value.ActivityContext
-                || this.ActivityBaggage is null != value.ActivityBaggage is null)
-            {
-                return false;
-            }
-
-            if (this.ActivityBaggage is null)
-            {
-                return true;
-            }
-
-            if (this.ActivityBaggage.Count() != value.ActivityBaggage.Count())
-            {
-                return false;
-            }
-
-            var thisEnumerator = this.ActivityBaggage.GetEnumerator();
-            var valueEnumerator = value.ActivityBaggage.GetEnumerator();
-
-            while (thisEnumerator.MoveNext() && valueEnumerator.MoveNext())
-            {
-                if (thisEnumerator.Current.Key != valueEnumerator.Current.Key
-                    || thisEnumerator.Current.Value != valueEnumerator.Current.Value)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public override bool Equals(object? obj) => (obj is TextFormatContext context) ? this.Equals(context) : false;
-    }
-
     /// <summary>
     /// Text format wire context propagator. Helps to extract and inject context from textual
     /// representation (typically http headers or metadata collection).
@@ -91,7 +35,7 @@ namespace OpenTelemetry.Context.Propagation
         /// Injects textual representation of activity context to transmit over the wire.
         /// </summary>
         /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
-        /// <param name="activity">Activity to transmit over the wire.</param>
+        /// <param name="context">The default context to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
         void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter);

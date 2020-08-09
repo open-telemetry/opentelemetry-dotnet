@@ -22,7 +22,6 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation
 {
-
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>
