@@ -42,8 +42,7 @@ namespace Examples.Console
             var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                builder => builder
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .UseZipkinExporter(o =>
                     {
                         o.ServiceName = "redis-test";
@@ -54,7 +53,8 @@ namespace Examples.Console
                         // changing flushinterval from 10s to 5s
                         options.FlushInterval = TimeSpan.FromSeconds(5);
                     })
-                    .AddActivitySource("redis-test"));
+                    .AddActivitySource("redis-test")
+                    .Build();
 
             ActivitySource activitySource = new ActivitySource("redis-test");
 

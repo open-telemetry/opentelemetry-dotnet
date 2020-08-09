@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -30,12 +29,10 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProvider(
-                (tpbuilder) =>
-                    {
-                        tpbuilder.AddActivitySource(ActivitySourceName);
-                        tpbuilder.SetSampler(testSampler);
-                    });
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource(ActivitySourceName)
+                        .SetSampler(testSampler)
+                        .Build();
 
             // OpenTelemetry Sdk is expected to set default to W3C.
             Assert.True(Activity.DefaultIdFormat == ActivityIdFormat.W3C);
@@ -108,12 +105,10 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProvider(
-                (tpbuilder) =>
-                {
-                    tpbuilder.AddActivitySource(ActivitySourceName);
-                    tpbuilder.SetSampler(testSampler);
-                });
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                    .AddActivitySource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
 
             testSampler.DesiredSamplingResult = new SamplingResult(Decision.RecordAndSampled);
             using (var activity = activitySource.StartActivity("root"))

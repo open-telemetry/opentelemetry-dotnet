@@ -26,18 +26,21 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProvider(
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddActivitySources(
             new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
-            },
-            new MySampler())
-            .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())));
+            })
+            .SetSampler(new MySampler())
+            .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())))
+            .Build();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
         {
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
     }
 }

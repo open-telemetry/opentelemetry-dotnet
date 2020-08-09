@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
@@ -55,6 +54,11 @@ namespace OpenTelemetry.Trace
 
         public CompositeActivityProcessor AddProcessor(ActivityProcessor processor)
         {
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
             var node = new DoublyLinkedListNode<ActivityProcessor>(processor)
             {
                 Previous = this.tail,
@@ -132,22 +136,22 @@ namespace OpenTelemetry.Trace
                     {
                         cur.Value?.Dispose();
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException("Dispose", e);
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
                     }
 
                     cur = cur.Next;
                 }
             }
 
-            base.Dispose(disposing);
-
             this.disposed = true;
         }
 
         private class DoublyLinkedListNode<T>
         {
+            public readonly T Value;
+
             public DoublyLinkedListNode(T value)
             {
                 this.Value = value;
@@ -156,8 +160,6 @@ namespace OpenTelemetry.Trace
             public DoublyLinkedListNode<T> Previous { get; set; }
 
             public DoublyLinkedListNode<T> Next { get; set; }
-
-            public T Value { get; set; }
         }
     }
 }

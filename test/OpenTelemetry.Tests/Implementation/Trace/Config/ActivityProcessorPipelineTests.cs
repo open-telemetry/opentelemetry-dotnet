@@ -15,10 +15,7 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;

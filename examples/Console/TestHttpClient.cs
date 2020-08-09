@@ -27,11 +27,12 @@ namespace Examples.Console
         {
             System.Console.WriteLine("Hello World!");
 
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                (builder) => builder.AddHttpClientInstrumentation()
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddActivitySource("http-client-test")
-                .UseConsoleExporter(opt => opt.DisplayAsJson = false));
+                .UseConsoleExporter(opt => opt.DisplayAsJson = false)
+                .Build();
 
             var source = new ActivitySource("http-client-test");
             using (var parent = source.StartActivity("incoming request", ActivityKind.Server))

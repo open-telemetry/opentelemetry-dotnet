@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Linq;
 
 using Google.Protobuf;
-using Opentelemetry.Proto.Common.V1;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
