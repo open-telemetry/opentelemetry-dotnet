@@ -36,6 +36,7 @@ namespace OpenTelemetry.Context.Propagation
 
         public static bool operator !=(TextFormatContext left, TextFormatContext right) => !(left == right);
 
+        /// <inheritdoc/>
         public bool Equals(TextFormatContext value)
         {
             if (this.ActivityContext != value.ActivityContext
@@ -69,6 +70,7 @@ namespace OpenTelemetry.Context.Propagation
             return true;
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj) => (obj is TextFormatContext context) ? Equals(context) : false;
     }
 
@@ -92,7 +94,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="activity">Activity to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
-        void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter);
+        void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter);
 
         /// <summary>
         /// Extracts activity context from textual representation.

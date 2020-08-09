@@ -16,8 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -53,11 +51,11 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(Activity activity, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
         {
             foreach (var textFormat in this.textFormats)
             {
-                textFormat.Inject(activity, carrier, setter);
+                textFormat.Inject(context, carrier, setter);
             }
         }
     }
