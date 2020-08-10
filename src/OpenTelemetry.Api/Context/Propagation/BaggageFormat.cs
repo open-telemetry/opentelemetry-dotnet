@@ -90,9 +90,9 @@ namespace OpenTelemetry.Context.Propagation
                 return;
             }
 
-            using IEnumerator<KeyValuePair<string, string>> e = context.ActivityBaggage.GetEnumerator();
+            using IEnumerator<KeyValuePair<string, string>> e = context.ActivityBaggage?.GetEnumerator();
 
-            if (e.MoveNext())
+            if (e != null && e.MoveNext())
             {
                 StringBuilder baggage = new StringBuilder();
                 do
@@ -116,6 +116,11 @@ namespace OpenTelemetry.Context.Propagation
                 if (baggageLength >= MaxBaggageLength)
                 {
                     break;
+                }
+
+                if (string.IsNullOrEmpty(item))
+                {
+                    continue;
                 }
 
                 foreach (var pair in item.Split(','))
