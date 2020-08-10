@@ -30,27 +30,22 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder UseZPagesExporter(
             this TracerProviderBuilder builder,
-            Action<ZPagesExporterOptions> configure = null,
-            Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+            Action<ZPagesExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddProcessorPipeline(pipeline =>
-            {
-                var options = new ZPagesExporterOptions();
-                configure?.Invoke(options);
+            var exporterOptions = new ZPagesExporterOptions();
+            configure?.Invoke(exporterOptions);
+            var zpagesExporter = new ZPagesExporter(exporterOptions);
 
-                var exporter = new ZPagesExporter(options);
-                processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(exporter);
-            });
+            // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(zpagesExporter));
         }
     }
 }

@@ -84,10 +84,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                         .ConfigureServices(serviceCollection =>
                         {
                             this.openTelemetrySdk = Sdk
-                                .CreateTracerProvider(
-                                    (builder) => builder
+                                .CreateTracerProviderBuilder()
                                         .AddAspNetCoreInstrumentation()
-                                        .AddProcessorPipeline(p => p.AddProcessor(n => this.GrpcServerSpanProcessor.Object)));
+                                        .AddProcessor(this.GrpcServerSpanProcessor.Object)
+                                        .Build();
                         })
                         .UseStartup<Startup>();
                 });

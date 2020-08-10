@@ -29,13 +29,12 @@ namespace Examples.Console
         internal static object Run(ConsoleOptions options)
         {
             // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"
-            // and use a single pipeline with a custom MyProcessor, and Console exporter.
-            using var tracerProvider = Sdk.CreateTracerProvider(
-                (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleExporter(
-                        opt => opt.DisplayAsJson = options.DisplayAsJson,
-                        (p) => p.AddProcessor((next) => new MyProcessor(next))));
+            // and use a custom MyProcessor, along with Console exporter.
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder().AddActivitySource("MyCompany.MyProduct.MyWebServer")
+                .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
+                .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                .Build();
 
             // The above line is required only in applications
             // which decide to use Open Telemetry.
@@ -102,18 +101,6 @@ namespace Examples.Console
 
         internal class MyProcessor : ActivityProcessor
         {
-            private ActivityProcessor next;
-
-            public MyProcessor(ActivityProcessor next)
-            {
-                this.next = next;
-            }
-
-            public override void OnEnd(Activity activity)
-            {
-                this.next.OnEnd(activity);
-            }
-
             public override void OnStart(Activity activity)
             {
                 if (activity.IsAllDataRequested)
@@ -127,18 +114,6 @@ namespace Examples.Console
                         activity.SetTag("customClientTag", "Custom Tag Value for Client");
                     }
                 }
-
-                this.next.OnStart(activity);
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ShutdownAsync(cancellationToken);
-            }
-
-            public override Task ForceFlushAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ForceFlushAsync(cancellationToken);
             }
         }
     }

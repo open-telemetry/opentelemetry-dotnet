@@ -25,13 +25,14 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProvider(
-            new string[]
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddActivitySources(new string[]
             {
                 "MyCompany.MyProduct.MyLibrary",
             })
             .AddProcessor(new MyActivityProcessor("A"))
-            .AddProcessor(new MyActivityProcessor("B"));
+            .AddProcessor(new MyActivityProcessor("B"))
+            .Build();
 
         using (var activity = MyActivitySource.StartActivity("Foo"))
         {

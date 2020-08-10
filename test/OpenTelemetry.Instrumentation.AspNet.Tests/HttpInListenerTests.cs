@@ -137,8 +137,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = Sdk.CreateTracerProvider(
-            (builder) => builder.AddAspNetInstrumentation(
+            using (openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetInstrumentation(
                 (options) =>
                 {
                     options.RequestFilter = httpContext =>
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     }
                 })
             .SetResource(expectedResource)
-            .AddProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object))))
+            .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
                 this.fakeAspNetDiagnosticSource.Write(

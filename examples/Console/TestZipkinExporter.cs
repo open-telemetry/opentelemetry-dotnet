@@ -33,15 +33,15 @@ namespace Examples.Console
 
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Zipkin exporter.
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                builder => builder
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddActivitySource("Samples.SampleServer")
                     .AddActivitySource("Samples.SampleClient")
                     .UseZipkinExporter(o =>
                     {
                         o.ServiceName = "test-zipkin";
                         o.Endpoint = new Uri(zipkinUri);
-                    }));
+                    })
+                    .Build();
 
             using (var sample = new InstrumentationWithActivitySource())
             {

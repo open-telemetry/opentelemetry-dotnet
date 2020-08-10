@@ -29,24 +29,20 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static TracerProviderBuilder UseOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddProcessorPipeline(pipeline =>
-            {
-                var exporterOptions = new OtlpExporterOptions();
-                configure?.Invoke(exporterOptions);
+            var exporterOptions = new OtlpExporterOptions();
+            configure?.Invoke(exporterOptions);
+            var otlpExporter = new OtlpExporter(exporterOptions);
 
-                var activityExporter = new OtlpExporter(exporterOptions);
-                processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(activityExporter);
-            });
+            // TODO: Pick Simple vs Batching based on OtlpExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(otlpExporter));
         }
     }
 }
