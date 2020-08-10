@@ -183,15 +183,5 @@ namespace OpenTelemetry.Tests.Implementation.Trace
         {
             Activity.Current = null;
         }
-
-        private class TestSampler : Sampler
-        {
-            public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
-
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(Decision.RecordAndSampled);
-            }
-        }
     }
 }

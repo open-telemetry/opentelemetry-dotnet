@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
+using OpenTelemetry.Tests.Implementation.Trace;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
@@ -33,9 +34,11 @@ namespace OpenTelemetry.Trace.Test
         private TestActivityExporter activityExporter;
         private TracerProvider openTelemetry;
         private ActivitySource activitySource;
+        private TestSampler testSampler;
 
         public SimpleActivityProcessorTest()
         {
+            this.testSampler = new TestSampler();
             this.activityExporter = new TestActivityExporter(null);
             this.openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource(ActivitySourceName)
@@ -91,6 +94,87 @@ namespace OpenTelemetry.Trace.Test
             var exported = this.WaitForSpans(this.activityExporter, 1, TimeSpan.FromMilliseconds(600));
 
             Assert.Single(exported);
+        }
+
+        [Fact]
+        public void ProcessorDoesNotSendRecordDecisionSpanToExporter()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.Record);
+            };
+
+            this.activityExporter = new TestActivityExporter(null);
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource("random")
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .SetSampler(this.testSampler)
+                        .Build();
+
+            ActivitySource source = new ActivitySource("random");
+            var activity = source.StartActivity("somename");
+            activity.Stop();
+
+            Assert.True(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+            Assert.False(activity.Recorded);
+
+            var exported = this.WaitForSpans(this.activityExporter, 0, TimeSpan.FromMilliseconds(100));
+            Assert.Empty(exported);
+        }
+
+        [Fact]
+        public void ProcessorSendsRecordAndSampledDecisionSpanToExporter()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.RecordAndSampled);
+            };
+
+            this.activityExporter = new TestActivityExporter(null);
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource("random")
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .SetSampler(this.testSampler)
+                        .Build();
+
+            ActivitySource source = new ActivitySource("random");
+            var activity = source.StartActivity("somename");
+            activity.Stop();
+
+            Assert.True(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.Recorded, activity.ActivityTraceFlags);
+            Assert.True(activity.Recorded);
+
+            var exported = this.WaitForSpans(this.activityExporter, 1, TimeSpan.FromMilliseconds(100));
+            Assert.Single(exported);
+        }
+
+        [Fact]
+        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.NotRecord);
+            };
+
+            this.activityExporter = new TestActivityExporter(null);
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddActivitySource("random")
+                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .SetSampler(this.testSampler)
+                        .Build();
+
+            ActivitySource source = new ActivitySource("random");
+            var activity = source.StartActivity("somename");
+            activity.Stop();
+
+            Assert.False(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+            Assert.False(activity.Recorded);
+
+            var exported = this.WaitForSpans(this.activityExporter, 0, TimeSpan.FromMilliseconds(100));
+            Assert.Empty(exported);
         }
 
         [Fact]

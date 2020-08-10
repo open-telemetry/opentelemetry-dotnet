@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
-        /// <param name="decision">True if sampled, false otherwise.</param>
+        /// <param name="decision"> indicates whether an activity object is recorded and sampled.</param>
         public SamplingResult(Decision decision)
         {
             this.Decision = decision;
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
-        /// <param name="decision">True if sampled, false otherwise.</param>
+        /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         public SamplingResult(Decision decision, IEnumerable<KeyValuePair<string, object>> attributes)
@@ -50,8 +50,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets a value indicating whether Span was sampled or not.
-        /// The value is not suppose to change over time and can be cached.
+        /// Gets a value indicating indicates whether an activity object is recorded and sampled.
         /// </summary>
         public Decision Decision { get; }
 

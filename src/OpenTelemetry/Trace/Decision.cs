@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     public enum Decision
     {
         /// <summary>
-        /// The Activity object needs to be created. It will have Name, Source, Id and Baggage.
+        /// The activity object needs to be created. It will have Name, Source, Id and Baggage.
         /// Other properties will be ignored.
         /// </summary>
         NotRecord,

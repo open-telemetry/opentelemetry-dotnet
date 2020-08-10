@@ -148,31 +148,34 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            var size = Interlocked.Increment(ref this.currentQueueSize);
-
-            this.exportQueue.Enqueue(activity);
-
-            if (size >= this.maxExportBatchSize)
+            if (activity.IsAllDataRequested && activity.Recorded)
             {
-                bool lockTaken = this.flushLock.Wait(0);
-                if (lockTaken)
+                var size = Interlocked.Increment(ref this.currentQueueSize);
+
+                this.exportQueue.Enqueue(activity);
+
+                if (size >= this.maxExportBatchSize)
                 {
-                    Task.Run(async () =>
+                    bool lockTaken = this.flushLock.Wait(0);
+                    if (lockTaken)
                     {
-                        try
+                        Task.Run(async () =>
                         {
-                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-                        }
-                        finally
-                        {
-                            this.flushLock.Release();
-                        }
-                    });
-                    return;
+                            try
+                            {
+                                await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                            }
+                            finally
+                            {
+                                this.flushLock.Release();
+                            }
+                        });
+                        return;
+                    }
                 }
             }
         }

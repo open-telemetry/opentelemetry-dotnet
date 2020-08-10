@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Tests.Implementation.Trace;
 using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
@@ -36,6 +37,13 @@ namespace OpenTelemetry.Trace.Test
         private static readonly TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(30);
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
         private static readonly ActivitySource Source = new ActivitySource(ActivitySourceName);
+
+        private TestSampler testSampler;
+
+        public BatchingActivityProcessorTests()
+        {
+            this.testSampler = new TestSampler();
+        }
 
         [Fact]
         public void ThrowsOnInvalidArguments()
@@ -99,6 +107,107 @@ namespace OpenTelemetry.Trace.Test
             } // Force everything to flush out of the processor.
 
             Assert.Contains(inMemoryEventListener.Events, (e) => e.EventId == 23);
+        }
+
+        [Fact]
+        public void ProcessorDoesNotSendRecordDecisionSpanToExporter()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.Record);
+            };
+
+            int exportCalledCount = 0;
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                        .AddActivitySource(ActivitySourceName)
+                                        .AddProcessor(activityProcessor)
+                                        .SetSampler(this.testSampler)
+                                        .Build();
+
+            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
+            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
+
+            Assert.False(activity1.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity1.ActivityTraceFlags);
+            Assert.False(activity1.Recorded);
+
+            Assert.False(activity2.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity2.ActivityTraceFlags);
+            Assert.False(activity2.Recorded);
+
+            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
+            Assert.Equal(0, exportCalledCount);
+
+            Assert.Empty(exported);
+        }
+
+        [Fact]
+        public void ProcessorSendsRecordAndSampledDecisionSpanToExporter()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.RecordAndSampled);
+            };
+
+            int exportCalledCount = 0;
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                        .AddActivitySource(ActivitySourceName)
+                                        .AddProcessor(activityProcessor)
+                                        .SetSampler(this.testSampler)
+                                        .Build();
+
+            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
+            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
+
+            Assert.True(activity1.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.Recorded, activity1.ActivityTraceFlags);
+            Assert.True(activity1.Recorded);
+
+            Assert.True(activity2.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.Recorded, activity2.ActivityTraceFlags);
+            Assert.True(activity2.Recorded);
+
+            var exported = this.WaitForActivities(activityExporter, 2, DefaultTimeout);
+            Assert.Equal(2, exportCalledCount);
+            Assert.Equal(2, exported.Length);
+        }
+
+        [Fact]
+        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
+        {
+            this.testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(Decision.NotRecord);
+            };
+
+            int exportCalledCount = 0;
+            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
+            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                        .AddActivitySource(ActivitySourceName)
+                                        .AddProcessor(activityProcessor)
+                                        .SetSampler(this.testSampler)
+                                        .Build();
+
+            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
+            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
+
+            Assert.True(activity1.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity1.ActivityTraceFlags);
+            Assert.False(activity1.Recorded);
+
+            Assert.True(activity2.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity2.ActivityTraceFlags);
+            Assert.False(activity2.Recorded);
+
+            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
+            Assert.Equal(0, exportCalledCount);
+
+            Assert.Empty(exported);
         }
 
         [Fact]

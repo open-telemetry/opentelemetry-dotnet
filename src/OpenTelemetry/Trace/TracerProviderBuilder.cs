@@ -187,15 +187,17 @@ namespace OpenTelemetry.Trace
                     if (activity.IsAllDataRequested)
                     {
                         activity.SetResource(this.Resource);
+                        provider.ActivityProcessor?.OnStart(activity);
                     }
-
-                    provider.ActivityProcessor?.OnStart(activity);
                 },
 
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    provider.ActivityProcessor?.OnEnd(activity);
+                    if (activity.IsAllDataRequested)
+                    {
+                        provider.ActivityProcessor?.OnEnd(activity);
+                    }
                 },
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -253,10 +255,11 @@ namespace OpenTelemetry.Trace
                 _ => ActivityDataRequest.PropagationData
             };
 
+            /* TODO: Validate once AutoGenerateRootContextTraceId is removed. If this part is required.
             if (activityDataRequest == ActivityDataRequest.PropagationData && !isRootSpan)
             {
                 return ActivityDataRequest.None;
-            }
+            }*/
 
             return activityDataRequest;
         }
