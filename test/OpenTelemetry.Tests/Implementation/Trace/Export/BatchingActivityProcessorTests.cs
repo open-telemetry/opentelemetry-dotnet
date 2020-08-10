@@ -38,13 +38,6 @@ namespace OpenTelemetry.Trace.Test
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
         private static readonly ActivitySource Source = new ActivitySource(ActivitySourceName);
 
-        private TestSampler testSampler;
-
-        public BatchingActivityProcessorTests()
-        {
-            this.testSampler = new TestSampler();
-        }
-
         [Fact]
         public void ThrowsOnInvalidArguments()
         {
@@ -112,7 +105,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ProcessorDoesNotSendRecordDecisionSpanToExporter()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.Record);
             };
@@ -123,19 +117,14 @@ namespace OpenTelemetry.Trace.Test
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                                         .AddActivitySource(ActivitySourceName)
                                         .AddProcessor(activityProcessor)
-                                        .SetSampler(this.testSampler)
+                                        .SetSampler(testSampler)
                                         .Build();
 
-            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
-            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
+            var activity1 = this.CreateNotSampledEndedActivity(ActivityName2);
 
-            Assert.False(activity1.IsAllDataRequested);
+            Assert.True(activity1.IsAllDataRequested);
             Assert.Equal(ActivityTraceFlags.None, activity1.ActivityTraceFlags);
             Assert.False(activity1.Recorded);
-
-            Assert.False(activity2.IsAllDataRequested);
-            Assert.Equal(ActivityTraceFlags.None, activity2.ActivityTraceFlags);
-            Assert.False(activity2.Recorded);
 
             var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
             Assert.Equal(0, exportCalledCount);
@@ -146,7 +135,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ProcessorSendsRecordAndSampledDecisionSpanToExporter()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.RecordAndSampled);
             };
@@ -157,7 +147,7 @@ namespace OpenTelemetry.Trace.Test
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                                         .AddActivitySource(ActivitySourceName)
                                         .AddProcessor(activityProcessor)
-                                        .SetSampler(this.testSampler)
+                                        .SetSampler(testSampler)
                                         .Build();
 
             var activity1 = this.CreateSampledEndedActivity(ActivityName1);
@@ -179,7 +169,8 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.NotRecord);
             };
@@ -190,19 +181,14 @@ namespace OpenTelemetry.Trace.Test
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                                         .AddActivitySource(ActivitySourceName)
                                         .AddProcessor(activityProcessor)
-                                        .SetSampler(this.testSampler)
+                                        .SetSampler(testSampler)
                                         .Build();
 
-            var activity1 = this.CreateSampledEndedActivity(ActivityName1);
-            var activity2 = this.CreateNotSampledEndedActivity(ActivityName2);
+            var activity1 = this.CreateNotSampledEndedActivity(ActivityName2);
 
-            Assert.True(activity1.IsAllDataRequested);
+            Assert.False(activity1.IsAllDataRequested);
             Assert.Equal(ActivityTraceFlags.None, activity1.ActivityTraceFlags);
             Assert.False(activity1.Recorded);
-
-            Assert.True(activity2.IsAllDataRequested);
-            Assert.Equal(ActivityTraceFlags.None, activity2.ActivityTraceFlags);
-            Assert.False(activity2.Recorded);
 
             var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
             Assert.Equal(0, exportCalledCount);

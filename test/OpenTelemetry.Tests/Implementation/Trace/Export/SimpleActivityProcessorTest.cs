@@ -31,24 +31,6 @@ namespace OpenTelemetry.Trace.Test
         private const string SpanName2 = "MySpanName/2";
         private const string ActivitySourceName = "defaultactivitysource";
 
-        private TestActivityExporter activityExporter;
-        private TracerProvider openTelemetry;
-        private ActivitySource activitySource;
-        private TestSampler testSampler;
-
-        public SimpleActivityProcessorTest()
-        {
-            this.testSampler = new TestSampler();
-            this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddActivitySource(ActivitySourceName)
-                        .SetSampler(new AlwaysOnSampler())
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
-                        .Build();
-
-            this.activitySource = new ActivitySource(ActivitySourceName);
-        }
-
         [Fact]
         public void ThrowsOnNullExporter()
         {
@@ -58,11 +40,11 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ThrowsInExporter()
         {
-            this.activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource("random")
                         .SetSampler(new AlwaysOnSampler())
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .AddProcessor(new SimpleActivityProcessor(activityExporter))
                         .Build();
 
             ActivitySource source = new ActivitySource("random");
@@ -75,10 +57,10 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ProcessorDoesNotBlockOnExporter()
         {
-            this.activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource("random")
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                        .AddProcessor(new SimpleActivityProcessor(activityExporter))
                         .Build();
 
             ActivitySource source = new ActivitySource("random");
@@ -91,7 +73,7 @@ namespace OpenTelemetry.Trace.Test
 
             Assert.InRange(sw.Elapsed, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
 
-            var exported = this.WaitForSpans(this.activityExporter, 1, TimeSpan.FromMilliseconds(600));
+            var exported = this.WaitForSpans(activityExporter, 1, TimeSpan.FromMilliseconds(600));
 
             Assert.Single(exported);
         }
@@ -99,19 +81,20 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ProcessorDoesNotSendRecordDecisionSpanToExporter()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.Record);
             };
 
-            this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var exporter = new TestActivityExporter(null);
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource("random")
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
-                        .SetSampler(this.testSampler)
+                        .AddProcessor(new SimpleActivityProcessor(exporter))
+                        .SetSampler(testSampler)
                         .Build();
 
-            ActivitySource source = new ActivitySource("random");
+            using ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
             activity.Stop();
 
@@ -119,26 +102,27 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
             Assert.False(activity.Recorded);
 
-            var exported = this.WaitForSpans(this.activityExporter, 0, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(exporter, 0, TimeSpan.FromMilliseconds(100));
             Assert.Empty(exported);
         }
 
         [Fact]
         public void ProcessorSendsRecordAndSampledDecisionSpanToExporter()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.RecordAndSampled);
             };
 
-            this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var exporter = new TestActivityExporter(null);
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource("random")
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
-                        .SetSampler(this.testSampler)
+                        .AddProcessor(new SimpleActivityProcessor(exporter))
+                        .SetSampler(testSampler)
                         .Build();
 
-            ActivitySource source = new ActivitySource("random");
+            using ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
             activity.Stop();
 
@@ -146,26 +130,27 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(ActivityTraceFlags.Recorded, activity.ActivityTraceFlags);
             Assert.True(activity.Recorded);
 
-            var exported = this.WaitForSpans(this.activityExporter, 1, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(exporter, 1, TimeSpan.FromMilliseconds(100));
             Assert.Single(exported);
         }
 
         [Fact]
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
-            this.testSampler.SamplingAction = (samplingParameters) =>
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParameters) =>
             {
                 return new SamplingResult(Decision.NotRecord);
             };
 
-            this.activityExporter = new TestActivityExporter(null);
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var exporter = new TestActivityExporter(null);
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddActivitySource("random")
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
-                        .SetSampler(this.testSampler)
+                        .AddProcessor(new SimpleActivityProcessor(exporter))
+                        .SetSampler(testSampler)
                         .Build();
 
-            ActivitySource source = new ActivitySource("random");
+            using ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
             activity.Stop();
 
@@ -173,7 +158,7 @@ namespace OpenTelemetry.Trace.Test
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
             Assert.False(activity.Recorded);
 
-            var exported = this.WaitForSpans(this.activityExporter, 0, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(exporter, 0, TimeSpan.FromMilliseconds(100));
             Assert.Empty(exported);
         }
 
@@ -202,10 +187,16 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ExportDifferentSampledSpans()
         {
+            using var exporter = new TestActivityExporter(null);
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                            .AddActivitySource(ActivitySourceName)
+                                            .AddProcessor(new SimpleActivityProcessor(exporter))
+                                            .Build();
+
             var span1 = this.CreateSampledEndedSpan(SpanName1);
             var span2 = this.CreateSampledEndedSpan(SpanName2);
 
-            var exported = this.WaitForSpans(this.activityExporter, 2, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(exporter, 2, TimeSpan.FromMilliseconds(100));
             Assert.Equal(2, exported.Length);
             Assert.Contains(span1, exported);
             Assert.Contains(span2, exported);
@@ -214,6 +205,12 @@ namespace OpenTelemetry.Trace.Test
         [Fact(Skip = "Reenable once AlwaysParentSampler is added")]
         public void ExportNotSampledSpans()
         {
+            using var exporter = new TestActivityExporter(null);
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                            .AddActivitySource(ActivitySourceName)
+                                            .AddProcessor(new SimpleActivityProcessor(exporter))
+                                            .Build();
+
             var span1 = this.CreateNotSampledEndedSpan(SpanName1);
             var span2 = this.CreateSampledEndedSpan(SpanName2);
 
@@ -222,7 +219,7 @@ namespace OpenTelemetry.Trace.Test
             // and checking that the first exported span is the sampled span (the non sampled did not get
             // exported).
 
-            var exported = this.WaitForSpans(this.activityExporter, 1, TimeSpan.FromMilliseconds(100));
+            var exported = this.WaitForSpans(exporter, 1, TimeSpan.FromMilliseconds(100));
 
             // Need to check this because otherwise the variable span1 is unused, other option is to not
             // have a span1 variable.
@@ -232,7 +229,6 @@ namespace OpenTelemetry.Trace.Test
 
         public void Dispose()
         {
-            this.activityExporter.ShutdownAsync(CancellationToken.None);
             Activity.Current = null;
         }
 
@@ -240,7 +236,8 @@ namespace OpenTelemetry.Trace.Test
         {
             var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
-            var activity = this.activitySource.StartActivity(spanName, ActivityKind.Internal, context);
+            using ActivitySource activitySource = new ActivitySource(ActivitySourceName);
+            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, context);
             activity.Stop();
             return activity;
         }
@@ -248,7 +245,9 @@ namespace OpenTelemetry.Trace.Test
         private Activity CreateNotSampledEndedSpan(string spanName)
         {
             var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-            var activity = this.activitySource.StartActivity(spanName, ActivityKind.Internal, context);
+
+            using ActivitySource activitySource = new ActivitySource(ActivitySourceName);
+            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, context);
             activity.Stop();
             return activity;
         }

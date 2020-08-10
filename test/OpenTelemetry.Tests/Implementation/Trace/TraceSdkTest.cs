@@ -127,23 +127,6 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.True(activity.IsAllDataRequested);
                 Assert.False(activity.Recorded);
             }
-
-            testSampler.DesiredSamplingResult = new SamplingResult(Decision.NotRecord);
-            using (var activity = activitySource.StartActivity("root"))
-            {
-                // Even if sampling returns false, for root activities,
-                // activity is still created with PropagationOnly.
-                Assert.NotNull(activity);
-                Assert.False(activity.IsAllDataRequested);
-                Assert.False(activity.Recorded);
-
-                using (var innerActivity = activitySource.StartActivity("inner"))
-                {
-                    // This is not a root activity.
-                    // If sampling returns false, no activity is created at all.
-                    Assert.Null(innerActivity);
-                }
-            }
         }
 
         private class TestSampler : Sampler
