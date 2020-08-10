@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk(
             IEnumerable<string> sources,
-            IEnumerable<object> instrumentations = null,
+            IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories = null,
             Sampler sampler = null,
             Resource resource = null)
         {
@@ -68,19 +68,20 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            if (instrumentations == null)
-            {
-                this.Instrumentations = new List<object>();
-            }
-            else
-            {
-                // TODO: check if individual element is null
-                this.Instrumentations = new List<object>(instrumentations);
-            }
-
             this.Sampler = sampler;
 
             this.Resource = resource;
+
+            if (instrumentationFactories != null)
+            {
+                // TODO: check if individual element is null
+                this.Instrumentations = new List<object>();
+                var adapter = new ActivitySourceAdapter(this.Sampler, this.ActivityProcessor, this.Resource);
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.Instrumentations.Add(instrumentationFactory.Factory(adapter));
+                }
+            }
 
             var listener = new ActivityListener
             {
@@ -139,12 +140,16 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            foreach (var item in this.Instrumentations)
+            if (this.Instrumentations != null)
             {
-                (item as IDisposable)?.Dispose();
+                foreach (var item in this.Instrumentations)
+                {
+                    (item as IDisposable)?.Dispose();
+                }
+
+                this.Instrumentations.Clear();
             }
 
-            this.Instrumentations.Clear();
             (this.Sampler as IDisposable)?.Dispose();
             this.ActivityProcessor?.Dispose();
 

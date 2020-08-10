@@ -150,21 +150,11 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build()
         {
-            var provider = new TracerProviderSdk(this.sources, null, this.sampler, this.resource);
+            var provider = new TracerProviderSdk(this.sources, this.InstrumentationFactories, this.sampler, this.resource);
 
             foreach (var processor in this.processors)
             {
                 provider.AddProcessor(processor);
-            }
-
-            var adapter = new ActivitySourceAdapter(this.sampler, provider.ActivityProcessor, this.resource);
-
-            if (this.InstrumentationFactories != null)
-            {
-                foreach (var instrumentation in this.InstrumentationFactories)
-                {
-                    this.instrumentations.Add(instrumentation.Factory(adapter));
-                }
             }
 
             return provider;
