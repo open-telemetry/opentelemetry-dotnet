@@ -74,8 +74,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             // This following is done just to set Resource to Activity.
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(sources[0].Name)
-                .AddActivitySource(sources[1].Name)
+                .AddSource(sources[0].Name)
+                .AddSource(sources[1].Name)
                 .SetResource(resource)
                 .Build();
 
@@ -260,7 +260,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 };
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .AddProcessor(testActivityProcessor)
                             .UseOtlpExporter()
                             .Build();

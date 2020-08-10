@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Test
         public void SetStatus()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(ActivitySourceName)
+                .AddSource(ActivitySourceName)
                 .Build();
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Test
         public void SetStatusWithDescription()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(ActivitySourceName)
+                .AddSource(ActivitySourceName)
                 .Build();
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Test
         public void SetCancelledStatus()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(ActivitySourceName)
+                .AddSource(ActivitySourceName)
                 .Build();
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace.Test
         public void GetStatusWithNoStatusInActivity()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(ActivitySourceName)
+                .AddSource(ActivitySourceName)
                 .Build();
 
             using var source = new ActivitySource(ActivitySourceName);
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace.Test
         public void LastSetStatusWins()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddActivitySource(ActivitySourceName)
+                .AddSource(ActivitySourceName)
                 .Build();
 
             using var source = new ActivitySource(ActivitySourceName);
