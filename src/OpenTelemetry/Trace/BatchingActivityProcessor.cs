@@ -148,7 +148,7 @@ namespace OpenTelemetry.Trace
                 return;
             }
 
-            if (activity.IsAllDataRequested && activity.Recorded)
+            if (activity.Recorded)
             {
                 var size = Interlocked.Increment(ref this.currentQueueSize);
 

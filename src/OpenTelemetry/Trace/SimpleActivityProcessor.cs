@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         {
             try
             {
-                if (activity.IsAllDataRequested && activity.Recorded)
+                if (activity.Recorded)
                 {
                     // do not await, just start export
                     // it can still throw in synchronous part
