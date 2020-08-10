@@ -186,6 +186,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E
 		docs\logs\logging-correlation.md = docs\logs\logging-correlation.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
+	ProjectSection(SolutionItems) = preProject
+		examples\MicroserviceExample\.dockerignore = examples\MicroserviceExample\.dockerignore
+		examples\MicroserviceExample\docker-compose.yml = examples\MicroserviceExample\docker-compose.yml
+		examples\MicroserviceExample\README.md = examples\MicroserviceExample\README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "examples\MicroserviceExample\WebApi\WebApi.csproj", "{07336602-860B-4975-95DD-405D19C00901}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "examples\MicroserviceExample\WorkerService\WorkerService.csproj", "{FA7A6F67-1F2F-4855-890D-51B5829578A9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "examples\MicroserviceExample\Utils\Utils.csproj", "{5435517C-AEC5-4182-87AE-14E13D31525F}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-FF5C-4055-886E-1183E832B2D6}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Directory.Build.props = docs\Directory.Build.props
@@ -347,6 +360,18 @@ Global
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B1891B31-B021-4074-8E42-B4AC170CD208}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B1891B31-B021-4074-8E42-B4AC170CD208}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1891B31-B021-4074-8E42-B4AC170CD208}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -378,6 +403,10 @@ Global
 		{FF3E6E08-E8E4-4523-B526-847CD989279F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{0935622B-9377-4056-8343-AE6ECDC274CF} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{DE9130A4-F30A-49D7-8834-41DE3021218B} = {0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}
+		{4D492D62-5150-45F9-817F-C99562E364E2} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{07336602-860B-4975-95DD-405D19C00901} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{5435517C-AEC5-4182-87AE-14E13D31525F} = {4D492D62-5150-45F9-817F-C99562E364E2}
 		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{B1891B31-B021-4074-8E42-B4AC170CD208} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
