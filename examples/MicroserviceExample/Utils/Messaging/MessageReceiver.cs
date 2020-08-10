@@ -57,7 +57,7 @@ namespace Utils.Messaging
         public void ReceiveMessage(BasicDeliverEventArgs ea)
         {
             // Extract the ActivityContext of the upstream parent from the message headers.
-            var parentContext = TextFormat.Extract(ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
+            var parentContext = TextFormat.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
 
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
