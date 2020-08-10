@@ -4,10 +4,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Exporter.Zipkin" Version="0.4.0-beta.2" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="0.4.0-beta.2" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="0.4.0-beta.2" />
     <PackageReference Include="RabbitMQ.Client" Version="6.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ services:
     image: openzipkin/zipkin
     ports:
       - 9411:9411
-      
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
@@ -17,8 +17,8 @@ services:
 
   webapi:
     build:
-      context: .
-      dockerfile: ./WebApi/Dockerfile
+      context: ../..
+      dockerfile: ./examples/MicroserviceExample/WebApi/Dockerfile
     image: opentelemetry-example-webapi
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -34,8 +34,8 @@ services:
 
   workerservice:
     build:
-      context: .
-      dockerfile: ./WorkerService/Dockerfile
+      context: ../..
+      dockerfile: ./examples/MicroserviceExample/WorkerService/Dockerfile
     image: opentelemetry-example-workerservice
     environment:
       - DOTNET_ENVIRONMENT=Development
