@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="TraceContextFormat"/>.
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/>.
         /// </summary>
         public ITextFormat TextFormat { get; set; } = new CompositePropagator(new System.Collections.Generic.List<ITextFormat>
         {
