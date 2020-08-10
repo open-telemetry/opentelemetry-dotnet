@@ -21,12 +21,13 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
-    internal class TracerProviderSdk : TracerProvider, IDisposable
+    internal class TracerProviderSdk : TracerProvider
     {
         public readonly List<object> Instrumentations = new List<object>();
         public Resource Resource;
         public ActivityProcessor ActivityProcessor;
         public ActivityListener ActivityListener;
+        public Sampler Sampler;
 
         static TracerProviderSdk()
         {
@@ -38,27 +39,23 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             foreach (var item in this.Instrumentations)
             {
-                if (item is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
+                (item as IDisposable)?.Dispose();
             }
 
             this.Instrumentations.Clear();
-
-            if (this.ActivityProcessor is IDisposable disposableProcessor)
-            {
-                disposableProcessor.Dispose();
-            }
+            (this.Sampler as IDisposable)?.Dispose();
+            this.ActivityProcessor?.Dispose();
 
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
-            this.ActivityListener.Dispose();
+            this.ActivityListener?.Dispose();
+
+            base.Dispose(disposing);
         }
     }
 }

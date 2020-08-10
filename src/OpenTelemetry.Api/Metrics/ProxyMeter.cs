@@ -32,32 +32,32 @@ namespace OpenTelemetry.Metrics
 
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateDoubleCounter(name, monotonic) : NoOpCounterMetric<double>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleCounter(name, monotonic) : NoopCounterMetric<double>.Instance;
         }
 
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateDoubleMeasure(name, absolute) : NoOpMeasureMetric<double>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleMeasure(name, absolute) : NoopMeasureMetric<double>.Instance;
         }
 
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateDoubleObserver(name, callback, absolute) : NoOpDoubleObserverMetric.Instance;
+            return this.realMeter != null ? this.realMeter.CreateDoubleObserver(name, callback, absolute) : NoopDoubleObserverMetric.Instance;
         }
 
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateInt64Counter(name, monotonic) : NoOpCounterMetric<long>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Counter(name, monotonic) : NoopCounterMetric<long>.Instance;
         }
 
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateInt64Measure(name, absolute) : NoOpMeasureMetric<long>.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Measure(name, absolute) : NoopMeasureMetric<long>.Instance;
         }
 
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
-            return this.realMeter != null ? this.realMeter.CreateInt64Observer(name, callback, absolute) : NoOpInt64ObserverMetric.Instance;
+            return this.realMeter != null ? this.realMeter.CreateInt64Observer(name, callback, absolute) : NoopInt64ObserverMetric.Instance;
         }
 
         public override LabelSet GetLabelSet(IEnumerable<KeyValuePair<string, string>> labels)

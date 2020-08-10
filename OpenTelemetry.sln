@@ -20,9 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
 	ProjectSection(SolutionItems) = preProject
+		build\Common.nonprod.props = build\Common.nonprod.props
 		build\Common.prod.props = build\Common.prod.props
 		build\Common.props = build\Common.props
-		build\Common.test.props = build\Common.test.props
 		build\debug.snk = build\debug.snk
 		build\docfx.cmd = build\docfx.cmd
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
@@ -129,7 +129,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 		test\Directory.Build.targets = test\Directory.Build.targets
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.GrpcClient.Tests", "test\OpenTelemetry.Instrumentation.GrpcClient.Tests\OpenTelemetry.Instrumentation.GrpcClient.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.2.1", "test\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj", "{7CDA3F85-EA6F-45C4-B432-2559303355D4}"
 EndProject
@@ -154,22 +154,61 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc", "src\OpenTelemetry.Instrumentation.Grpc\OpenTelemetry.Instrumentation.Grpc.csproj", "{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}"
-	ProjectSection(SolutionItems) = preProject
-		docs\logs\building-your-own-exporter.md = docs\logs\building-your-own-exporter.md
-		docs\trace\building-your-own-exporter.md = docs\trace\building-your-own-exporter.md
-		docs\metrics\building-your-own-exporter.md = docs\metrics\building-your-own-exporter.md
-		docs\trace\building-your-own-instrumentation-library.md = docs\trace\building-your-own-instrumentation-library.md
-		docs\trace\building-your-own-sampler.md = docs\trace\building-your-own-sampler.md
-		docs\logs\getting-started.md = docs\logs\getting-started.md
-		docs\metrics\getting-started.md = docs\metrics\getting-started.md
-		docs\trace\getting-started.md = docs\trace\getting-started.md
-		docs\logs\logging-correlation.md = docs\logs\logging-correlation.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
 	ProjectSection(SolutionItems) = preProject
 		examples\Directory.Build.props = examples\Directory.Build.props
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
+	ProjectSection(SolutionItems) = preProject
+		docs\trace\building-your-own-exporter.md = docs\trace\building-your-own-exporter.md
+		docs\trace\building-your-own-instrumentation-library.md = docs\trace\building-your-own-instrumentation-library.md
+		docs\trace\building-your-own-processor.md = docs\trace\building-your-own-processor.md
+		docs\trace\building-your-own-sampler.md = docs\trace\building-your-own-sampler.md
+		docs\trace\getting-started.md = docs\trace\getting-started.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-processor", "docs\trace\building-your-own-processor\building-your-own-processor.csproj", "{B1891B31-B021-4074-8E42-B4AC170CD208}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\trace\getting-started\getting-started.csproj", "{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
+	ProjectSection(SolutionItems) = preProject
+		docs\metrics\building-your-own-exporter.md = docs\metrics\building-your-own-exporter.md
+		docs\metrics\getting-started.md = docs\metrics\getting-started.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
+	ProjectSection(SolutionItems) = preProject
+		docs\logs\building-your-own-exporter.md = docs\logs\building-your-own-exporter.md
+		docs\logs\getting-started.md = docs\logs\getting-started.md
+		docs\logs\logging-correlation.md = docs\logs\logging-correlation.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
+	ProjectSection(SolutionItems) = preProject
+		examples\MicroserviceExample\.dockerignore = examples\MicroserviceExample\.dockerignore
+		examples\MicroserviceExample\docker-compose.yml = examples\MicroserviceExample\docker-compose.yml
+		examples\MicroserviceExample\README.md = examples\MicroserviceExample\README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "examples\MicroserviceExample\WebApi\WebApi.csproj", "{07336602-860B-4975-95DD-405D19C00901}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "examples\MicroserviceExample\WorkerService\WorkerService.csproj", "{FA7A6F67-1F2F-4855-890D-51B5829578A9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "examples\MicroserviceExample\Utils\Utils.csproj", "{5435517C-AEC5-4182-87AE-14E13D31525F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-FF5C-4055-886E-1183E832B2D6}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Directory.Build.props = docs\Directory.Build.props
+		docs\docfx.json = docs\docfx.json
+		docs\toc.yml = docs\toc.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-exporter", "docs\trace\building-your-own-exporter\building-your-own-exporter.csproj", "{9574368D-1230-4334-AA5D-EC2C2F47AA43}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "building-your-own-sampler", "docs\trace\building-your-own-sampler\building-your-own-sampler.csproj", "{D6318071-BE9F-43AF-9F28-A38894238627}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -321,6 +360,34 @@ Global
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1891B31-B021-4074-8E42-B4AC170CD208}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1891B31-B021-4074-8E42-B4AC170CD208}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1891B31-B021-4074-8E42-B4AC170CD208}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1891B31-B021-4074-8E42-B4AC170CD208}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9574368D-1230-4334-AA5D-EC2C2F47AA43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9574368D-1230-4334-AA5D-EC2C2F47AA43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9574368D-1230-4334-AA5D-EC2C2F47AA43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9574368D-1230-4334-AA5D-EC2C2F47AA43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6318071-BE9F-43AF-9F28-A38894238627}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -336,7 +403,19 @@ Global
 		{FF3E6E08-E8E4-4523-B526-847CD989279F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{0935622B-9377-4056-8343-AE6ECDC274CF} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{DE9130A4-F30A-49D7-8834-41DE3021218B} = {0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}
+		{4D492D62-5150-45F9-817F-C99562E364E2} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{07336602-860B-4975-95DD-405D19C00901} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{5435517C-AEC5-4182-87AE-14E13D31525F} = {4D492D62-5150-45F9-817F-C99562E364E2}
 		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
+		{B1891B31-B021-4074-8E42-B4AC170CD208} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
+		{3862190B-E2C5-418E-AFDC-DB281FB5C705} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
+		{CB401DF1-FF5C-4055-886E-1183E832B2D6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{9574368D-1230-4334-AA5D-EC2C2F47AA43} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{D6318071-BE9F-43AF-9F28-A38894238627} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

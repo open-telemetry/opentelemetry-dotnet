@@ -29,24 +29,20 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <param name="processorConfigure">Activity processor configuration.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null, Action<ActivityProcessorPipelineBuilder> processorConfigure = null)
+        public static TracerProviderBuilder UseJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddProcessorPipeline(pipeline =>
-            {
-                var exporterOptions = new JaegerExporterOptions();
-                configure?.Invoke(exporterOptions);
+            var exporterOptions = new JaegerExporterOptions();
+            configure?.Invoke(exporterOptions);
+            var jaegerExporter = new JaegerExporter(exporterOptions);
 
-                var activityExporter = new JaegerExporter(exporterOptions);
-                processorConfigure?.Invoke(pipeline);
-                pipeline.SetExporter(activityExporter);
-            });
+            // TODO: Pick Simple vs Batching based on JaegerExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(jaegerExporter));
         }
     }
 }

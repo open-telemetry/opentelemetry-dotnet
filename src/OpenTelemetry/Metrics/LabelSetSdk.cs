@@ -98,11 +98,11 @@ namespace OpenTelemetry.Metrics
             {
                 if (!isFirstLabel)
                 {
-                    encoder.Append(",");
+                    encoder.Append(',');
                 }
 
                 encoder.Append(label.Key);
-                encoder.Append("=");
+                encoder.Append('=');
                 encoder.Append(label.Value);
                 isFirstLabel = false;
             }

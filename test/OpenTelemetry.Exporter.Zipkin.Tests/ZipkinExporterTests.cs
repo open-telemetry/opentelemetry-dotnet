@@ -157,14 +157,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                             .AddActivitySource(ActivitySourceName)
+                            .AddProcessor(testActivityProcessor)
                             .UseZipkinExporter(
                                 o =>
                             {
                                 o.ServiceName = "test-zipkin";
                                 o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
-                            }, p => p.AddProcessor((next) => testActivityProcessor)));
+                            })
+                            .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Zipkin Activity");

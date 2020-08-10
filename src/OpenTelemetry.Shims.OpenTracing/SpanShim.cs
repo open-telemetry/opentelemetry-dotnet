@@ -188,7 +188,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
             else
             {
-                this.Span.SetAttribute(key, value.ToString());
+                this.Span.SetAttribute(key, value);
             }
 
             return this;
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value.ToString());
+            this.Span.SetAttribute(key, value);
             return this;
         }
 
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value.ToString());
+            this.Span.SetAttribute(key, value);
             return this;
         }
 

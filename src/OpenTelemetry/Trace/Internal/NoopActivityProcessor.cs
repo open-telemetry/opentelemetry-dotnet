@@ -15,31 +15,11 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Trace.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
     {
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
         protected override void OnStartInternal(Activity activity)
         {
         }

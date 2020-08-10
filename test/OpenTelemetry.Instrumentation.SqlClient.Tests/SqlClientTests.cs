@@ -82,15 +82,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool isFailure = false)
         {
             var activityProcessor = new Mock<ActivityProcessor>();
-            using var shutdownSignal = Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddSqlClientInstrumentation(options =>
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
-                });
-            });
+                })
+                .Build();
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
@@ -137,14 +136,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (Sdk.CreateTracerProvider(
-                    (builder) => builder.AddSqlClientInstrumentation(
+            using (Sdk.CreateTracerProviderBuilder()
+                    .AddSqlClientInstrumentation(
                         (opt) =>
                         {
                             opt.SetTextCommandContent = captureTextCommandContent;
                             opt.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                         })
-                    .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+                    .AddProcessor(spanProcessor.Object)
+                    .Build())
             {
                 var operationId = Guid.NewGuid();
                 sqlCommand.CommandType = commandType;
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
 
             VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
         }
@@ -187,9 +187,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var spanProcessor = new Mock<ActivityProcessor>();
-            using (Sdk.CreateTracerProvider(
-                (builder) => builder.AddSqlClientInstrumentation()
-                .AddProcessorPipeline(p => p.AddProcessor(n => spanProcessor.Object))))
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSqlClientInstrumentation()
+                .AddProcessor(spanProcessor.Object)
+                .Build())
             {
                 var operationId = Guid.NewGuid();
                 sqlCommand.CommandText = "SP_GetOrders";
@@ -219,7 +220,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, spanProcessor.Invocations.Count); // begin and end was called
 
             VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
         }

@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Collections.Concurrent;
-using System.Net;
 using System.Net.Http;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
@@ -30,13 +29,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodNameCache = new ConcurrentDictionary<HttpMethod, string>();
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new ConcurrentDictionary<string, ConcurrentDictionary<int, string>>();
         private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new ConcurrentDictionary<Version, string>();
-        private static readonly ConcurrentDictionary<HttpStatusCode, string> StatusCodeToStringCache = new ConcurrentDictionary<HttpStatusCode, string>();
 
         private static readonly Func<string, string> ConvertMethodToOperationNameRef = ConvertMethodToOperationName;
         private static readonly Func<HttpMethod, string> ConvertHttpMethodToOperationNameRef = ConvertHttpMethodToOperationName;
         private static readonly Func<HttpMethod, string> ConvertHttpMethodToNameRef = ConvertHttpMethodToName;
         private static readonly Func<Version, string> ConvertProtocolVersionToStringRef = ConvertProtocolVersionToString;
-        private static readonly Func<HttpStatusCode, string> ConvertHttpStatusCodeToStringRef = ConvertHttpStatusCodeToString;
 
         /// <summary>
         /// Gets the OpenTelemetry standard name for an activity based on its Http method.
@@ -65,13 +62,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// <param name="protocolVersion"><see cref="Version"/>.</param>
         /// <returns>Span flavor value.</returns>
         public static string GetFlavorTagValueFromProtocolVersion(Version protocolVersion) => ProtocolVersionToStringCache.GetOrAdd(protocolVersion, ConvertProtocolVersionToStringRef);
-
-        /// <summary>
-        /// Gets the OpenTelemetry standard status code tag value for a span based on its protocol <see cref="HttpStatusCode"/>.
-        /// </summary>
-        /// <param name="statusCode"><see cref="HttpStatusCode"/>.</param>
-        /// <returns>Span status code value.</returns>
-        public static string GetStatusCodeTagValueFromHttpStatusCode(HttpStatusCode statusCode) => StatusCodeToStringCache.GetOrAdd(statusCode, ConvertHttpStatusCodeToStringRef);
 
         /// <summary>
         /// Gets the OpenTelemetry standard host tag value for a span based on its request <see cref="Uri"/>.
@@ -109,8 +99,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static string ConvertHttpMethodToOperationName(HttpMethod method) => $"HTTP {method}";
 
         private static string ConvertHttpMethodToName(HttpMethod method) => method.ToString();
-
-        private static string ConvertHttpStatusCodeToString(HttpStatusCode statusCode) => ((int)statusCode).ToString();
 
         private static string ConvertProtocolVersionToString(Version protocolVersion) => protocolVersion.ToString();
     }

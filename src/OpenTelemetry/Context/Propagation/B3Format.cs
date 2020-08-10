@@ -27,23 +27,23 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public sealed class B3Format : ITextFormat
     {
-        internal static readonly string XB3TraceId = "X-B3-TraceId";
-        internal static readonly string XB3SpanId = "X-B3-SpanId";
-        internal static readonly string XB3ParentSpanId = "X-B3-ParentSpanId";
-        internal static readonly string XB3Sampled = "X-B3-Sampled";
-        internal static readonly string XB3Flags = "X-B3-Flags";
-        internal static readonly string XB3Combined = "b3";
-        internal static readonly char XB3CombinedDelimiter = '-';
+        internal const string XB3TraceId = "X-B3-TraceId";
+        internal const string XB3SpanId = "X-B3-SpanId";
+        internal const string XB3ParentSpanId = "X-B3-ParentSpanId";
+        internal const string XB3Sampled = "X-B3-Sampled";
+        internal const string XB3Flags = "X-B3-Flags";
+        internal const string XB3Combined = "b3";
+        internal const char XB3CombinedDelimiter = '-';
 
         // Used as the upper ActivityTraceId.SIZE hex characters of the traceID. B3-propagation used to send
         // ActivityTraceId.SIZE hex characters (8-bytes traceId) in the past.
-        internal static readonly string UpperTraceId = "0000000000000000";
+        internal const string UpperTraceId = "0000000000000000";
 
         // Sampled value via the X_B3_SAMPLED header.
-        internal static readonly string SampledValue = "1";
+        internal const string SampledValue = "1";
 
         // "Debug" sampled value.
-        internal static readonly string FlagsValue = "1";
+        internal const string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
@@ -107,27 +107,27 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public ActivityContext Extract<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return default;
+                return activityContext;
             }
 
             if (getter == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return default;
+                return activityContext;
             }
 
             if (this.singleHeader)
             {
-                return ExtractFromSingleHeader(carrier, getter);
+                return ExtractFromSingleHeader(activityContext, carrier, getter);
             }
             else
             {
-                return ExtractFromMultipleHeaders(carrier, getter);
+                return ExtractFromMultipleHeaders(activityContext, carrier, getter);
             }
         }
 
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static ActivityContext ExtractFromMultipleHeaders<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromMultipleHeaders<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 ActivitySpanId spanId;
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -216,35 +216,35 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
             }
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return default;
+                return activityContext;
             }
         }
 
-        private static ActivityContext ExtractFromSingleHeader<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static ActivityContext ExtractFromSingleHeader<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
                 var header = getter(carrier, XB3Combined)?.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(header))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var parts = header.Split(XB3CombinedDelimiter);
                 if (parts.Length < 2 || parts.Length > 4)
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var traceIdStr = parts[0];
                 if (string.IsNullOrWhiteSpace(traceIdStr))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 if (traceIdStr.Length == 16)
@@ -258,7 +258,7 @@ namespace OpenTelemetry.Context.Propagation
                 var spanIdStr = parts[1];
                 if (string.IsNullOrWhiteSpace(spanIdStr))
                 {
-                    return default;
+                    return activityContext;
                 }
 
                 var spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
@@ -274,12 +274,12 @@ namespace OpenTelemetry.Context.Propagation
                     }
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions);
+                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
             }
             catch (Exception e)
             {
                 OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return default;
+                return activityContext;
             }
         }
     }

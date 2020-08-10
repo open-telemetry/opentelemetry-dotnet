@@ -17,8 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;
@@ -236,24 +234,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             {
                 this.Next = next;
                 this.Name = name;
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-#if NET452
-                return Task.FromResult(0);
-#else
-                return Task.CompletedTask;
-#endif
-            }
-
-            public override Task ForceFlushAsync(CancellationToken cancellationToken)
-            {
-#if NET452
-                return Task.FromResult(0);
-#else
-                return Task.CompletedTask;
-#endif
             }
 
             protected override void OnStartInternal(Activity span)

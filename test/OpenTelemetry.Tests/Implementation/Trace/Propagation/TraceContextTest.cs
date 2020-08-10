@@ -39,6 +39,11 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             return Empty;
         };
 
+        private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
+        {
+            carrier[name] = value;
+        };
+
         [Fact]
         public void TraceContextFormatCanParseExampleFromSpec()
         {
@@ -49,18 +54,16 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.TraceId);
             Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.SpanId);
 
-            // TODO: Validate IsRemote when ActivityContext supports it.
-            // Assert.True(ctx.IsRemote);
+            Assert.True(ctx.IsRemote);
             Assert.True(ctx.IsValid());
             Assert.True((ctx.TraceFlags & ActivityTraceFlags.Recorded) != 0);
 
-            Assert.NotNull(ctx.TraceState);
-            Assert.Equal(headers[TraceState], ctx.TraceState);
+            Assert.Equal($"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01", ctx.TraceState);
         }
 
         [Fact]
@@ -72,14 +75,13 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.TraceId);
             Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.SpanId);
             Assert.True((ctx.TraceFlags & ActivityTraceFlags.Recorded) == 0);
 
-            // TODO: Validate IsRemote when ActivityContext supports it.
-            // Assert.True(ctx.IsRemote);
+            Assert.True(ctx.IsRemote);
             Assert.True(ctx.IsValid());
         }
 
@@ -89,12 +91,9 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var headers = new Dictionary<string, string>();
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
             Assert.False(ctx.IsValid());
-
-            // TODO: Validate IsRemote when ActivityContext supports it.
-            // Assert.True(ctx.IsRemote);
         }
 
         [Fact]
@@ -106,11 +105,12 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
-            // TODO: Validate IsRemote when ActivityContext supports it.
-            // Assert.True(ctx.IsRemote);
             Assert.False(ctx.IsValid());
+
+            // TODO: when ActivityContext supports IsRemote
+            // Assert.True(ctx.IsRemote);
         }
 
         [Fact]
@@ -122,9 +122,9 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
-            Assert.NotNull(ctx.TraceState);
+            Assert.Empty(ctx.TraceState);
         }
 
         [Fact]
@@ -137,10 +137,46 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             };
 
             var f = new TraceContextFormat();
-            var ctx = f.Extract(headers, Getter);
+            var ctx = f.Extract(default, headers, Getter);
 
-            Assert.NotNull(ctx.TraceState);
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.TraceState);
+        }
+
+        [Fact]
+        public void TraceContextFormat_Inject_NoTracestate()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var expectedHeaders = new Dictionary<string, string>
+            {
+                { TraceParent, $"00-{traceId}-{spanId}-01" },
+            };
+
+            var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
+            var carrier = new Dictionary<string, string>();
+            var f = new TraceContextFormat();
+            f.Inject(activityContext, carrier, Setter);
+
+            Assert.Equal(expectedHeaders, carrier);
+        }
+
+        [Fact]
+        public void TraceContextFormat_Inject_WithTracestate()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            var expectedHeaders = new Dictionary<string, string>
+            {
+                { TraceParent, $"00-{traceId}-{spanId}-01" },
+                { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{traceId}-00f067aa0ba902b7-01" },
+            };
+
+            var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
+            var carrier = new Dictionary<string, string>();
+            var f = new TraceContextFormat();
+            f.Inject(activityContext, carrier, Setter);
+
+            Assert.Equal(expectedHeaders, carrier);
         }
     }
 }

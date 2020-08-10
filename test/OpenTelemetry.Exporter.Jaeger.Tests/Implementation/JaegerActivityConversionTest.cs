@@ -79,25 +79,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("stringKey", tag.Key);
             Assert.Equal("value", tag.VStr);
             tag = tags[1];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[2];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[3];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[4];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[5];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
-            Assert.Equal("True", tag.VStr);
+            Assert.Equal(true, tag.VBool);
 
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
@@ -220,25 +220,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("stringKey", tag.Key);
             Assert.Equal("value", tag.VStr);
             tag = tags[1];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[2];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[3];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[4];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[5];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
-            Assert.Equal("True", tag.VStr);
+            Assert.Equal(true, tag.VBool);
         }
 
         [Fact]
@@ -271,25 +271,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("stringKey", tag.Key);
             Assert.Equal("value", tag.VStr);
             tag = tags[1];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[2];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
             Assert.Equal("longKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VLong);
             tag = tags[3];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[4];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
             Assert.Equal("doubleKey2", tag.Key);
-            Assert.Equal("1", tag.VStr);
+            Assert.Equal(1, tag.VDouble);
             tag = tags[5];
-            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal(JaegerTagType.BOOL, tag.VType);
             Assert.Equal("boolKey", tag.Key);
-            Assert.Equal("True", tag.VStr);
+            Assert.Equal(true, tag.VBool);
+
+            tag = tags[6];
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal("int_array", tag.Key);
+            Assert.Equal(1, tag.VLong);
+
+            tag = tags[8];
+            Assert.Equal(JaegerTagType.BOOL, tag.VType);
+            Assert.Equal("bool_array", tag.Key);
+            Assert.Equal(true, tag.VBool);
+
+            tag = tags[10];
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
+            Assert.Equal("double_array", tag.Key);
+            Assert.Equal(1, tag.VDouble);
+
+            tag = tags[12];
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("string_array", tag.Key);
+            Assert.Equal("a", tag.VStr);
 
             // The second to last tag should be span.kind in this case
             tag = tags[tags.Length - 2];
@@ -422,6 +442,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "doubleKey", 1D },
                 { "doubleKey2", 1F },
                 { "boolKey", true },
+                { "int_array", new int[] { 1, 2 } },
+                { "bool_array", new bool[] { true, false } },
+                { "double_array", new double[] { 1.0, 1.1 } },
+                { "string_array", new string[] { "a", "b" } },
             };
             if (additionalAttributes != null)
             {
@@ -454,7 +478,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
+                    attributes
                     : null;
             var links = addLinks ?
                     new[]

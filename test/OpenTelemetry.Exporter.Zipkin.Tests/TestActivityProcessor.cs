@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests
 {
-    public class TestActivityProcessor : ActivityProcessor, IDisposable
+    public class TestActivityProcessor : ActivityProcessor
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 #endif
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
             this.DisposedCalled = true;
         }

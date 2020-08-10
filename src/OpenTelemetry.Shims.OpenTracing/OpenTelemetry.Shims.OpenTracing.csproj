@@ -4,12 +4,9 @@
     <Description>OpenTracing shim for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;OpenTracing</PackageTags>
     <IsPackable>true</IsPackable>
-
     <!--
-    Uncomment for development. This will disable the verification that every public method needs to be documented.
-    //TODO: Disable this exception, and actually do document all public API.
+    TODO: Disable this exception, and actually do document all public API.
     -->
-
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
@@ -18,6 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 </Project>
