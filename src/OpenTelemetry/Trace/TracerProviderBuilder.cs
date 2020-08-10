@@ -148,8 +148,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build()
         {
-            var provider = new TracerProviderSdk(this.sources, this.processors, this.InstrumentationFactories, this.sampler, this.resource);
-            return provider;
+            return new TracerProviderSdk(this.sources, this.processors, this.InstrumentationFactories, this.sampler, this.resource);
         }
 
         internal readonly struct InstrumentationFactory

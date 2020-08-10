@@ -44,36 +44,9 @@ namespace OpenTelemetry.Trace
             Sampler sampler = null,
             Resource resource = null)
         {
-            /*
-            if (sources == null)
-            {
-                throw new ArgumentNullException(nameof(sources));
-            }
-
-            if (!sources.Any())
-            {
-                throw new ArgumentException($"{nameof(sources)} collection is empty.");
-            }
-            */
-
             foreach (var processor in processors)
             {
                 this.AddProcessor(processor);
-            }
-
-            var wildcardMode = false;
-
-            foreach (var name in sources)
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(sources)} collection contains null or whitespace strings.");
-                }
-
-                if (name.Contains('*'))
-                {
-                    wildcardMode = true;
-                }
             }
 
             this.Sampler = sampler;
@@ -119,27 +92,45 @@ namespace OpenTelemetry.Trace
                 GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, this.Sampler),
             };
 
-            if (wildcardMode)
+            if (sources != null & sources.Any())
             {
-                var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
-                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                // Sources can be null. This happens when user
+                // is only interested in InstrumentationLibraries
+                // which do not depend on ActivitySources.
 
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
-            }
-            else
-            {
-                var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+                var wildcardMode = false;
 
+                // Validation of source name is already done in builder.
                 foreach (var name in sources)
                 {
-                    activitySources[name] = true;
+                    if (name.Contains('*'))
+                    {
+                        wildcardMode = true;
+                    }
                 }
 
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                if (wildcardMode)
+                {
+                    var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
+                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                    // or not.
+                    listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
+                }
+                else
+                {
+                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var name in sources)
+                    {
+                        activitySources[name] = true;
+                    }
+
+                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                    // or not.
+                    listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                }
             }
 
             ActivitySource.AddActivityListener(listener);
