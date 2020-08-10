@@ -184,15 +184,25 @@ namespace OpenTelemetry.Trace.Test
                                         .SetSampler(testSampler)
                                         .Build();
 
-            var activity1 = this.CreateNotSampledEndedActivity(ActivityName2);
+            using (var activity = Source.StartActivity("root"))
+            {
+                // Even if sampling returns false, for root activities,
+                // activity is still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.False(activity.IsAllDataRequested);
+                Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+                Assert.False(activity.Recorded);
 
-            Assert.False(activity1.IsAllDataRequested);
-            Assert.Equal(ActivityTraceFlags.None, activity1.ActivityTraceFlags);
-            Assert.False(activity1.Recorded);
+                using (var innerActivity = Source.StartActivity("inner"))
+                {
+                    // This is not a root activity.
+                    // If sampling returns false, no activity is created at all.
+                    Assert.Null(innerActivity);
+                }
+            }
 
             var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
             Assert.Equal(0, exportCalledCount);
-
             Assert.Empty(exported);
         }
 

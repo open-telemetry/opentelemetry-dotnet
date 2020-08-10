@@ -233,35 +233,39 @@ namespace OpenTelemetry.Trace
             var isRootSpan = /*TODO: Put back once AutoGenerateRootContextTraceId is removed.
                               options.Parent.TraceId == default ||*/ options.Parent.SpanId == default;
 
-            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
-            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
-            // if it get created.
-            ActivityTraceId traceId = options.Parent.TraceId;
-
-            var samplingParameters = new SamplingParameters(
-                options.Parent,
-                traceId,
-                options.Name,
-                options.Kind,
-                options.Tags,
-                options.Links);
-
-            var shouldSample = sampler.ShouldSample(samplingParameters);
-
-            var activityDataRequest = shouldSample.Decision switch
+            if (sampler != null)
             {
-                Decision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
-                Decision.Record => ActivityDataRequest.AllData,
-                _ => ActivityDataRequest.PropagationData
-            };
+                // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
+                // Parent.TraceId will always be the TraceId of the to-be-created Activity,
+                // if it get created.
+                ActivityTraceId traceId = options.Parent.TraceId;
 
-            /* TODO: Validate once AutoGenerateRootContextTraceId is removed. If this part is required.
-            if (activityDataRequest == ActivityDataRequest.PropagationData && !isRootSpan)
-            {
-                return ActivityDataRequest.None;
-            }*/
+                var samplingParameters = new SamplingParameters(
+                    options.Parent,
+                    traceId,
+                    options.Name,
+                    options.Kind,
+                    options.Tags,
+                    options.Links);
 
-            return activityDataRequest;
+                var shouldSample = sampler.ShouldSample(samplingParameters);
+
+                var activityDataRequest = shouldSample.Decision switch
+                {
+                    Decision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
+                    Decision.Record => ActivityDataRequest.AllData,
+                    _ => ActivityDataRequest.PropagationData
+                };
+
+                if (activityDataRequest != ActivityDataRequest.PropagationData)
+                {
+                    return activityDataRequest;
+                }
+            }
+
+            return isRootSpan
+                ? ActivityDataRequest.PropagationData
+                : ActivityDataRequest.None;
         }
 
         internal readonly struct InstrumentationFactory
