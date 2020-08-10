@@ -39,10 +39,12 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk(
             IEnumerable<string> sources,
+            List<ActivityProcessor> processors,
             IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories = null,
             Sampler sampler = null,
             Resource resource = null)
         {
+            /*
             if (sources == null)
             {
                 throw new ArgumentNullException(nameof(sources));
@@ -51,6 +53,12 @@ namespace OpenTelemetry.Trace
             if (!sources.Any())
             {
                 throw new ArgumentException($"{nameof(sources)} collection is empty.");
+            }
+            */
+
+            foreach (var processor in processors)
+            {
+                this.AddProcessor(processor);
             }
 
             var wildcardMode = false;

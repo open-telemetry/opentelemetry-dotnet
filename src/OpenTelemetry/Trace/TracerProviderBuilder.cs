@@ -25,8 +25,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerProviderBuilder
     {
-        private readonly List<object> instrumentations = new List<object>();
-
         private readonly List<ActivityProcessor> processors = new List<ActivityProcessor>();
 
         private readonly List<string> sources = new List<string>();
@@ -150,13 +148,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build()
         {
-            var provider = new TracerProviderSdk(this.sources, this.InstrumentationFactories, this.sampler, this.resource);
-
-            foreach (var processor in this.processors)
-            {
-                provider.AddProcessor(processor);
-            }
-
+            var provider = new TracerProviderSdk(this.sources, this.processors, this.InstrumentationFactories, this.sampler, this.resource);
             return provider;
         }
 
