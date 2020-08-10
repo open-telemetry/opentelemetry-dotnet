@@ -72,15 +72,17 @@ namespace OpenTelemetry.Trace
                     if (activity.IsAllDataRequested)
                     {
                         activity.SetResource(this.Resource);
+                        this.ActivityProcessor?.OnStart(activity);
                     }
-
-                    this.ActivityProcessor?.OnStart(activity);
                 },
 
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    this.ActivityProcessor?.OnEnd(activity);
+                    if (activity.IsAllDataRequested)
+                    {
+                        this.ActivityProcessor?.OnEnd(activity);
+                    }
                 },
 
                 // Setting this to true means TraceId will be always
