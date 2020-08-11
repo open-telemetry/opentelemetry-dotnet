@@ -141,7 +141,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 /* For Summary we emit one row for Sum, Count, Min, Max.
                 Min,Max exports as quantile 0 and 1.
-                In future, when OT implements more aggregation algorithms,
+                In future, when OTel implements more aggregation algorithms,
                 this section will need to be revisited.
                 Sample output:
                 MyMeasure_sum{dim1="value1"} 750 1587013352982
