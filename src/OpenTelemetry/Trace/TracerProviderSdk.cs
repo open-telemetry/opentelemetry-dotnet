@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace
 {
@@ -188,8 +189,8 @@ namespace OpenTelemetry.Trace
 
                 var activityDataRequest = shouldSample.Decision switch
                 {
-                    Decision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
-                    Decision.Record => ActivityDataRequest.AllData,
+                    SamplingDecision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
+                    SamplingDecision.Record => ActivityDataRequest.AllData,
                     _ => ActivityDataRequest.PropagationData
                 };
 

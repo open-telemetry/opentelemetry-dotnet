@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Implementation.Trace
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                     .SetSampler(testSampler)
                     .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(Decision.RecordAndSampled);
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.RecordAndSampled);
             using (var activity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(activity);
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.True(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(Decision.Record);
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.Record);
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.False(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(Decision.NotRecord);
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
         private class TestSampler : Sampler
         {
-            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(Decision.RecordAndSampled);
+            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(SamplingDecision.RecordAndSampled);
 
             public SamplingParameters LatestSamplingParameters { get; private set; }
 

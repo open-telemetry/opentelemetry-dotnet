@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
     /// Enumeration to define sampling decision.
     /// </summary>
-    public enum Decision
+    public enum SamplingDecision
     {
         /// <summary>
         /// The activity object needs to be created. It will have Name, Source, Id and Baggage.

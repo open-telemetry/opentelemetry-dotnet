@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace.Samplers
 {
     /// <summary>
     /// Sampling parameters passed to an <see cref="Sampler"/> for it to make a sampling decision.

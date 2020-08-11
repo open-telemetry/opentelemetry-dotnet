@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Tests.Implementation.Trace
 {
@@ -25,7 +25,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
 
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
-            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(Decision.RecordAndSampled);
+            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSampled);
         }
     }
 }

@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace
 {
@@ -101,9 +102,9 @@ namespace OpenTelemetry.Trace
                 activity.Links);
 
             var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            var isSampled = samplingDecision.Decision == Decision.Record || samplingDecision.Decision == Decision.RecordAndSampled;
+            var isSampled = samplingDecision.Decision == SamplingDecision.Record || samplingDecision.Decision == SamplingDecision.RecordAndSampled;
             activity.IsAllDataRequested = isSampled;
-            if (samplingDecision.Decision == Decision.RecordAndSampled)
+            if (samplingDecision.Decision == SamplingDecision.RecordAndSampled)
             {
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }

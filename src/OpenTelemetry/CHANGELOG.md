@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Modified Sampler implementation to match the
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
 * Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor` (#1015)
 * Introduce `SuppressInstrumentationScope` API (#988).
 * `ActivityProcessor` implements `IDisposable`.
@@ -14,8 +16,6 @@
 * Samplers now get the actual TraceId of the Activity to be created.
 * Default Sampler changed from AlwaysOn to ParentOrElse(AlwaysOn) to match the
   spec.
-* Modified Sampler implementation to match the
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
 
 ## 0.3.0-beta
 

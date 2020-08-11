@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Samplers;
 
 internal class MySampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        return new SamplingResult(Decision.NotRecord);
+        return new SamplingResult(SamplingDecision.NotRecord);
     }
 }
