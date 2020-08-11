@@ -88,10 +88,10 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                 };
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
-                            .AddProcessor(testActivityProcessor)
-                            .UseZPagesExporter()
-                            .Build();
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .UseZPagesExporter()
+                .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Zipkin Activity");
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             var zpagesProcessor = new ZPagesProcessor(exporter);
 
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .AddProcessor(zpagesProcessor)
                             .UseZPagesExporter()
                             .Build();
