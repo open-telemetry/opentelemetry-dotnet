@@ -32,4 +32,5 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
+
 </Project>

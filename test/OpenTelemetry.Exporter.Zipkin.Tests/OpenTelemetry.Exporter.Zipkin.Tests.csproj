@@ -13,12 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net452'" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
     <PackageReference Include="Moq" Version="$(MoqPkgVer)" />

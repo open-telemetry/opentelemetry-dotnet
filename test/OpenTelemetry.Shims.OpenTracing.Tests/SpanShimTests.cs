@@ -234,9 +234,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
 
-            // TODO: Activity object does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
-            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -286,9 +285,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
 
-            // TODO: .NET does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
-            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]

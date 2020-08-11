@@ -5,16 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="xunit.runner.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
     <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
     <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
