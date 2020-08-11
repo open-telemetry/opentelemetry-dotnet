@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Enumeration to define sampling decision.

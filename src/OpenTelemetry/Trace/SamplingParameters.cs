@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Sampling parameters passed to an <see cref="Sampler"/> for it to make a sampling decision.

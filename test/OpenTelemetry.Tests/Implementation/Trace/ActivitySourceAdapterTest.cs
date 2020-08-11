@@ -19,7 +19,6 @@ using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests.Implementation.Testing.Export;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Implementation.Trace

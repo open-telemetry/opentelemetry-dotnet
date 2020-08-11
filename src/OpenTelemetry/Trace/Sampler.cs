@@ -15,7 +15,7 @@
 // </copyright>
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Sampler to select data to be exported. This sampler executes before Activity object is created.

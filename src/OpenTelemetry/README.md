@@ -64,7 +64,6 @@ with sampling probability of 25%.
 ```csharp
 using OpenTelemetry;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 using var otel = Sdk.CreateTracerProvider(b => b
     .AddActivitySource("MyCompany.MyProduct.MyLibrary")

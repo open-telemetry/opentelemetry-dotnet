@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace.Samplers;
+using OpenTelemetry.Trace;
 
 internal class MySampler : Sampler
 {

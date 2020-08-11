@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace
 {

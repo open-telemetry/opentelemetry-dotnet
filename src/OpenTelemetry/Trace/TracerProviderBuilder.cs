@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace.Samplers;
 
 namespace OpenTelemetry.Trace
 {

@@ -23,7 +23,6 @@ using System.Threading.Tasks;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Tests.Implementation.Trace;
-using OpenTelemetry.Trace.Samplers;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Test

@@ -16,7 +16,7 @@
 using System;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
