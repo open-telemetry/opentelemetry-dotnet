@@ -69,12 +69,12 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             this.DisposedCalled = true;
         }
 
-        protected override void OnStartInternal(Activity activity)
+        protected override void OnStart(Activity activity)
         {
             this.StartAction?.Invoke(activity);
         }
 
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             this.EndAction?.Invoke(activity);
         }

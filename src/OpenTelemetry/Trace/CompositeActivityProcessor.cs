@@ -126,24 +126,24 @@ namespace OpenTelemetry.Trace
             this.disposed = true;
         }
 
-        protected override void OnStartInternal(Activity activity)
+        protected override void OnStart(Activity activity)
         {
             var cur = this.head;
 
             while (cur != null)
             {
-                cur.Value.OnStart(activity);
+                cur.Value.Start(activity);
                 cur = cur.Next;
             }
         }
 
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             var cur = this.head;
 
             while (cur != null)
             {
-                cur.Value.OnEnd(activity);
+                cur.Value.End(activity);
                 cur = cur.Next;
             }
         }

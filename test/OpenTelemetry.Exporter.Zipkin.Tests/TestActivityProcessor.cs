@@ -68,12 +68,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             this.DisposedCalled = true;
         }
 
-        protected override void OnStartInternal(Activity span)
+        protected override void OnStart(Activity span)
         {
             this.StartAction?.Invoke(span);
         }
 
-        protected override void OnEndInternal(Activity span)
+        protected override void OnEnd(Activity span)
         {
             this.EndAction?.Invoke(span);
         }

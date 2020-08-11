@@ -46,12 +46,12 @@ internal class MyActivityProcessor : ActivityProcessor
         return Task.CompletedTask;
     }
 
-    protected override void OnStartInternal(Activity activity)
+    protected override void OnStart(Activity activity)
     {
         Console.WriteLine($"{this}.OnStart");
     }
 
-    protected override void OnEndInternal(Activity activity)
+    protected override void OnEnd(Activity activity)
     {
         Console.WriteLine($"{this}.OnEnd");
     }

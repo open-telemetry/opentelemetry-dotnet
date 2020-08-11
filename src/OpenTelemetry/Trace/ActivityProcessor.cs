@@ -33,28 +33,28 @@ namespace OpenTelemetry.Trace
         /// Activity start hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public void OnStart(Activity activity)
+        public void Start(Activity activity)
         {
             if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
 
-            this.OnStartInternal(activity);
+            this.OnStart(activity);
         }
 
         /// <summary>
         /// Activity end hook.
         /// </summary>
         /// <param name="activity">Instance of activity to process.</param>
-        public void OnEnd(Activity activity)
+        public void End(Activity activity)
         {
             if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
 
-            this.OnEndInternal(activity);
+            this.OnEnd(activity);
         }
 
         /// <summary>
@@ -114,11 +114,11 @@ namespace OpenTelemetry.Trace
             this.disposed = true;
         }
 
-        protected virtual void OnStartInternal(Activity activity)
+        protected virtual void OnStart(Activity activity)
         {
         }
 
-        protected virtual void OnEndInternal(Activity activity)
+        protected virtual void OnEnd(Activity activity)
         {
         }
     }

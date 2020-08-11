@@ -101,7 +101,7 @@ namespace Examples.Console
 
         internal class MyProcessor : ActivityProcessor
         {
-            protected override void OnStartInternal(Activity activity)
+            protected override void OnStart(Activity activity)
             {
                 if (activity.IsAllDataRequested)
                 {
@@ -116,7 +116,7 @@ namespace Examples.Console
                 }
             }
 
-            protected override void OnEndInternal(Activity activity)
+            protected override void OnEnd(Activity activity)
             {
             }
         }

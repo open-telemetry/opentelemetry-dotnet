@@ -71,11 +71,11 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             var activity = new Activity("somename");
-            broadcastProcessor.OnStart(activity);
+            broadcastProcessor.Start(activity);
             Assert.True(start1Called);
             Assert.True(start2Called);
 
-            broadcastProcessor.OnEnd(activity);
+            broadcastProcessor.End(activity);
             Assert.True(end1Called);
             Assert.True(end2Called);
         }
@@ -123,11 +123,11 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             var broadcastProcessor = new FanOutActivityProcessor(new[] { processor1, processor2 });
 
             var activity = new Activity("somename");
-            broadcastProcessor.OnStart(activity);
+            broadcastProcessor.Start(activity);
             Assert.True(start1Called);
             Assert.True(start2Called);
 
-            broadcastProcessor.OnEnd(activity);
+            broadcastProcessor.End(activity);
             Assert.True(end1Called);
             Assert.True(end2Called);
         }

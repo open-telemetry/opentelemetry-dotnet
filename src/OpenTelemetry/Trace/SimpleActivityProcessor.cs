@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             try
             {
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.End), ex);
             }
         }
     }

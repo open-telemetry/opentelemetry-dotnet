@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        protected override void OnStartInternal(Activity activity)
+        protected override void OnStart(Activity activity)
         {
             if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity.DisplayName))
             {
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             try
             {

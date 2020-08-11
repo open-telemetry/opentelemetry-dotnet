@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace
             if (activity.IsAllDataRequested)
             {
                 activity.SetResource(this.resource);
-                this.activityProcessor.OnStart(activity);
+                this.activityProcessor.Start(activity);
             }
         }
 
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace
         {
             if (activity.IsAllDataRequested)
             {
-                this.activityProcessor.OnEnd(activity);
+                this.activityProcessor.End(activity);
             }
         }
 

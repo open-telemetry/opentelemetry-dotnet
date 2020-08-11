@@ -91,13 +91,13 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             foreach (var processor in this.processors)
             {
                 try
                 {
-                    processor.OnEnd(activity);
+                    processor.End(activity);
                 }
                 catch (Exception e)
                 {
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace.Internal
             }
         }
 
-        protected override void OnStartInternal(Activity activity)
+        protected override void OnStart(Activity activity)
         {
             if (Sdk.SuppressInstrumentation)
             {
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace.Internal
             {
                 try
                 {
-                    processor.OnStart(activity);
+                    processor.Start(activity);
                 }
                 catch (Exception e)
                 {

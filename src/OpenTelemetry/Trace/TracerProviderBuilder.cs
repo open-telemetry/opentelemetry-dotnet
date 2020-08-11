@@ -189,13 +189,13 @@ namespace OpenTelemetry.Trace
                         activity.SetResource(this.Resource);
                     }
 
-                    provider.ActivityProcessor?.OnStart(activity);
+                    provider.ActivityProcessor?.Start(activity);
                 },
 
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    provider.ActivityProcessor?.OnEnd(activity);
+                    provider.ActivityProcessor?.End(activity);
                 },
 
                 // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to

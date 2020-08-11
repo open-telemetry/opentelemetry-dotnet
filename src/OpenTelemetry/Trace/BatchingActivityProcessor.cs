@@ -185,7 +185,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override void OnEndInternal(Activity activity)
+        protected override void OnEnd(Activity activity)
         {
             // because of race-condition between checking the size and enqueueing,
             // we might end up with a bit more activities than maxQueueSize.
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Trace
                         }
                         catch (Exception ex)
                         {
-                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.End), ex);
                         }
                         finally
                         {
