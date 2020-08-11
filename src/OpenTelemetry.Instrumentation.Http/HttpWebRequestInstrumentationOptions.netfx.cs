@@ -15,6 +15,7 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
+using System.Collections.Generic;
 using System.Net;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
@@ -34,7 +35,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/>.
         /// </summary>
-        public ITextFormat TextFormat { get; set; } = new CompositePropagator(new System.Collections.Generic.List<ITextFormat>
+        public ITextFormat TextFormat { get; set; } = new CompositePropagator(new List<ITextFormat>
         {
             new TraceContextFormat(),
             new BaggageFormat(),
