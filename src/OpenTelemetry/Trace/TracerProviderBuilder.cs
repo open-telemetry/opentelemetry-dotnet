@@ -62,30 +62,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds given activitysource name to the list of subscribed sources.
-        /// </summary>
-        /// <param name="name">Activity source name.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddActivitySource(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException($"{nameof(name)} is null or whitespace.");
-            }
-
-            // TODO: We need to fix the listening model.
-            // Today it ignores version.
-            this.sources.Add(name);
-
-            return this;
-        }
-
-        /// <summary>
         /// Adds given activitysource names to the list of subscribed sources.
         /// </summary>
         /// <param name="names">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddActivitySource(IEnumerable<string> names)
+        public TracerProviderBuilder AddSource(params string[] names)
         {
             if (names == null)
             {
@@ -94,7 +75,14 @@ namespace OpenTelemetry.Trace
 
             foreach (var name in names)
             {
-                this.AddActivitySource(name);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
+                }
+
+                // TODO: We need to fix the listening model.
+                // Today it ignores version.
+                this.sources.Add(name);
             }
 
             return this;

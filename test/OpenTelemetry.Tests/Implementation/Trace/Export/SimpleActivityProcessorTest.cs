@@ -38,10 +38,10 @@ namespace OpenTelemetry.Trace.Test
         {
             this.activityExporter = new TestActivityExporter(null);
             this.openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddActivitySource(ActivitySourceName)
-                        .SetSampler(new AlwaysOnSampler())
-                        .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
-                        .Build();
+                .AddSource(ActivitySourceName)
+                .SetSampler(new AlwaysOnSampler())
+                .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
+                .Build();
 
             this.activitySource = new ActivitySource(ActivitySourceName);
         }
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace.Test
         {
             this.activityExporter = new TestActivityExporter(_ => throw new ArgumentException("123"));
             this.openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddActivitySource("random")
+                        .AddSource("random")
                         .SetSampler(new AlwaysOnSampler())
                         .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
                         .Build();
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Test
         {
             this.activityExporter = new TestActivityExporter(async _ => await Task.Delay(500));
             this.openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddActivitySource("random")
+                        .AddSource("random")
                         .AddProcessor(new SimpleActivityProcessor(this.activityExporter))
                         .Build();
 

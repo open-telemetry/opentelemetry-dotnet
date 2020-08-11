@@ -42,7 +42,7 @@ namespace WebApi
 
             services.AddOpenTelemetry((builder) => builder
                 .AddAspNetCoreInstrumentation()
-                .AddActivitySource(nameof(MessageSender))
+                .AddSource(nameof(MessageSender))
                 .UseZipkinExporter(b =>
                 {
                     var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
