@@ -28,13 +28,24 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
         /// </summary>
-        /// <param name="initialAttributes">Initial attributes for the <see cref="SpanAttributes"/>.</param>
-        public SpanAttributes(IEnumerable<KeyValuePair<string, object>> initialAttributes)
+        public SpanAttributes()
         {
-            this.Attributes = initialAttributes == null ? new ActivityTagsCollection() : new ActivityTagsCollection(initialAttributes);
+            this.Attributes = new ActivityTagsCollection();
         }
 
         internal ActivityTagsCollection Attributes { get; }
+
+        /// <summary>
+        /// Adds the elements of the specified collection to the <see cref="SpanAttributes"/>.
+        /// </summary>
+        /// <param name="initialAttributes">The collection whose elements should be added.</param>
+        public void AddRange(IEnumerable<KeyValuePair<string, object>> initialAttributes)
+        {
+            foreach (var attr in initialAttributes)
+            {
+                this.PrivateAdd(attr.Key, attr.Value);
+            }
+        }
 
         /// <summary>
         /// Add entry to the attributes.

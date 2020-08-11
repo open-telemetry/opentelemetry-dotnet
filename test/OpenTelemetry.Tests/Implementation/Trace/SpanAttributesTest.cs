@@ -23,23 +23,25 @@ namespace OpenTelemetry.Trace.Test
     public class SpanAttributesTest
     {
         [Fact]
-        public void ValidateNullParameter()
+        public void ValidateConstructor()
         {
-            var spanAttribute = new SpanAttributes(null);
+            var spanAttribute = new SpanAttributes();
             Assert.Empty(spanAttribute.Attributes);
         }
 
         [Fact]
-        public void ValidateEmptyParameter()
+        public void ValidateEmptyListToAddRange()
         {
-            var spanAttribute = new SpanAttributes(new Dictionary<string, object>());
+            var spanAttribute = new SpanAttributes();
+            spanAttribute.AddRange(new Dictionary<string, object>());
             Assert.Empty(spanAttribute.Attributes);
         }
 
         [Fact]
-        public void ValidateDictionaryParameter()
+        public void ValidateDictionaryToAddRange()
         {
-            var spanAttribute = new SpanAttributes(new Dictionary<string, object> { { "key", "value" } });
+            var spanAttribute = new SpanAttributes();
+            spanAttribute.AddRange(new Dictionary<string, object> { { "key", "value" } });
             Assert.Single(spanAttribute.Attributes);
             Assert.Equal("value", spanAttribute.Attributes["key"]);
         }
@@ -47,7 +49,7 @@ namespace OpenTelemetry.Trace.Test
         [Fact]
         public void ValidateAddMethods()
         {
-            var spanAttribute = new SpanAttributes(null);
+            var spanAttribute = new SpanAttributes();
             spanAttribute.Add("key_string", "string");
             spanAttribute.Add("key_a_string", new string[] { "string" });
 
@@ -64,9 +66,16 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
+        public void ValidateNullKey()
+        {
+            var spanAttribute = new SpanAttributes();
+            Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null, "null key"));
+        }
+
+        [Fact]
         public void ValidateSameKey()
         {
-            var spanAttribute = new SpanAttributes(null);
+            var spanAttribute = new SpanAttributes();
             spanAttribute.Add("key", "value1");
             spanAttribute.Add("key", "value2");
             Assert.Equal("value2", spanAttribute.Attributes["key"]);
