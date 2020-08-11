@@ -27,11 +27,7 @@ public class Program
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddActivitySources(
-            new string[]
-            {
-                "MyCompany.MyProduct.MyLibrary",
-            })
+            .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(new ConsoleExporterOptions())))
             .Build();
 
