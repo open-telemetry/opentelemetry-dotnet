@@ -107,7 +107,7 @@ namespace OpenTelemetry.Impl.Trace.Propagation
             var f = new TraceContextFormat();
             var ctx = f.Extract(default, headers, Getter);
 
-            Assert.False(ctx.IsValid());
+            Assert.False(ctx.ActivityContext.IsValid());
         }
 
         [Fact]
