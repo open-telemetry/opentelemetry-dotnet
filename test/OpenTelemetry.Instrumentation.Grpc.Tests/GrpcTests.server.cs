@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
             Assert.StartsWith("grpc-dotnet", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value);
 
-            // This attribute is added by the gRPC for .NET library. There is a discussion of having the OTel instrumentation remove it.
+            // This attribute is added by the gRPC for .NET library. There is a discussion of having the OpenTelemetry instrumentation remove it.
             // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/482#issuecomment-655753756
             Assert.Equal($"0", span.Tags.FirstOrDefault(i => i.Key == "grpc.status_code").Value);
         }
