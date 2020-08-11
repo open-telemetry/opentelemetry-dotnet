@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MyExporterExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,25 @@
 
 using OpenTelemetry.Trace;
 
-internal static class TracerProviderBuilderExtensions
+internal static class MyExporterExtensions
 {
+    public static TracerProvider AddMyExporter(this TracerProvider provider)
+    {
+        if (provider == null)
+        {
+            throw new ArgumentNullException(nameof(provider));
+        }
+
+        return provider.AddProcessor(new SimpleActivityProcessor(new MyExporter()));
+    }
+
     public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
     {
-        return builder?.AddProcessor(new SimpleActivityProcessor(new MyExporter()));
+        if (builder == null)
+        {
+            throw new ArgumentNullException(nameof(builder));
+        }
+
+        return builder.AddProcessor(new SimpleActivityProcessor(new MyExporter()));
     }
 }
