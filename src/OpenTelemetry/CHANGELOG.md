@@ -2,18 +2,30 @@
 
 ## Unreleased
 
-* Renaming `BroadcastActivityProcessor` to `FanOutActivityProcessor` (#1015)
-* Introduce `SuppressInstrumentationScope` API (#988).
-* `ActivityProcessor` implements `IDisposable`.
-  * When `Dispose` occurs, it calls `ShutdownAsync`.
-  * If you want a custom behavior for dispose, you will have to override the
-    `Dispose(bool disposing)`.
-* `BatchingActivityProcessor`/`SimpleActivityProcessor` is disposable and it
-  disposes the containing exporter.
-* `BroadcastActivityProcessor`is disposable and it disposes the processors.
+* Changed `ActivityProcessor` to implement `IDisposable`
+  ([#975](https://github.com/open-telemetry/opentelemetry-dotnet/pull/975))
 * Samplers now get the actual TraceId of the Activity to be created.
-* Default Sampler changed from AlwaysOn to ParentOrElse(AlwaysOn) to match the
-  spec.
+  ([#1007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1007))
+* Changed the default sampler from `AlwaysOn` to `ParentOrElse(AlwaysOn)` to
+  match the spec
+  ([#1013](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1013))
+* Added `SuppressInstrumentationScope` API
+  ([#988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/988))
+* Changed `BroadcastActivityProcessor` to `FanOutActivityProcessor`
+  ([#1015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1015))
+* Changed `TracerProviderBuilder` and `TracerProviderSdk` design to simply the
+  flow and usage
+  ([#1008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1008)
+  [#1027](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1027)
+  [#1035](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1035))
+* Changed `AddActivitySource` to `AddSource` with params support
+  ([#1036](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1036))
+
+## 0.4.0-beta.2
+
+Released 2020-07-24
+
+* First beta release
 
 ## 0.3.0-beta
 

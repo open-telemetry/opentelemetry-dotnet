@@ -31,11 +31,15 @@ namespace Benchmarks
 
         public OpenTelemetrySdkBenchmarks()
         {
-            using var openTelemetryAlwaysOnSample = Sdk.CreateTracerProviderBuilder().AddActivitySource("AlwaysOnSample")
-                .SetSampler(new AlwaysOnSampler()).Build();
+            using var openTelemetryAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
+                .AddSource("AlwaysOnSample")
+                .SetSampler(new AlwaysOnSampler())
+                .Build();
 
-            using var openTelemetryAlwaysOffSample = Sdk.CreateTracerProviderBuilder().AddActivitySource("AlwaysOffSample")
-                .SetSampler(new AlwaysOffSampler()).Build();
+            using var openTelemetryAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
+                .AddSource("AlwaysOffSample")
+                .SetSampler(new AlwaysOffSampler())
+                .Build();
 
             using var openTelemetryNoop = Sdk.CreateTracerProviderBuilder().Build();
 

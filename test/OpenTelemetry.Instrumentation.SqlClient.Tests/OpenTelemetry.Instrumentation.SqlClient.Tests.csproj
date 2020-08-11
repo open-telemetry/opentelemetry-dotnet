@@ -6,16 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="xunit.runner.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Implementation\Internal\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="SkipUnlessEnvVarFoundTheoryAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
