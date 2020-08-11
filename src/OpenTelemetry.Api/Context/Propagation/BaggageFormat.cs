@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +55,7 @@ namespace OpenTelemetry.Context.Propagation
                 var baggageCollection = getter(carrier, Baggage);
                 if (baggageCollection?.Any() ?? false)
                 {
-                    TryExtractTracestateBaggage(baggageCollection.ToArray(), out baggage);
+                    TryExtractBaggage(baggageCollection.ToArray(), out baggage);
                 }
 
                 return new TextFormatContext(
@@ -100,7 +101,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        internal static bool TryExtractTracestateBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
+        internal static bool TryExtractBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
         {
             int baggageLength = -1;
             Dictionary<string, string> baggageDictionary = null;
