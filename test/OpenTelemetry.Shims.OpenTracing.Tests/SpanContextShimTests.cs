@@ -51,7 +51,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var shim = GetSpanContextShim();
             var baggage = shim.GetBaggageItems();
-            Assert.Empty(baggage);
+            Assert.Null(baggage);
         }
 
         internal static SpanContextShim GetSpanContextShim()
