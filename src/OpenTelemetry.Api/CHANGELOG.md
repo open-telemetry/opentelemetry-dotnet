@@ -2,28 +2,30 @@
 
 ## Unreleased
 
-* Introduced `RuntimeContext` API
-([#948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/948)).
-* Link constructor changed to accept ActivityTagsCollection instead of
-  IDictionary<string, object> attributes.
-* TelemetrySpan adds more overloads for SetAttribute with value of type bool,
-int, double (string already existed).
-* TelemetrySpan's SetAttribute behavior
-changed to match the
-[spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes).
-  * Setting an attribute with an existing key now results in overwriting it.
-  * Setting null value has no impact except if null is set to an existing key, it
-  gets removed.
-    ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954)).
-* HttpStatusCode in all spans attribute (http.status_code) to use int value.
-* `ITextFormatActivity` got replaced by `ITextFormat` with an additional method
-  to be implemented (`IsInjected`)
-* Added `CompositePropagator` that accepts a list of `ITextFormat` following
-  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md#create-a-composite-propagator)
-* Added `StartRootSpan`, `StartActiveSpan` and modified `StartSpan` API.
-  ([#989](https://github.com/open-telemetry/opentelemetry-dotnet/issues/989)).
-   Modified StartSpan not to set the created span as Active to match
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span-creation).
+* Added `RuntimeContext` API
+  ([#948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/948))
+* Changed `Link` constructor to accept `ActivityTagsCollection` instead of
+  `IDictionary<string, object>` attributes
+  ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954))
+* Added more `TelemetrySpan.SetAttribute` overloads with value of type bool,
+  int, double (string already existed)
+  ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954))
+* Changed `TelemetrySpan.SetAttribute` to match the spec
+  ([#954](https://github.com/open-telemetry/opentelemetry-dotnet/pull/954))
+  * Setting an attribute with an existing key now results in overwriting it
+  * Setting null value has no impact except if null is set to an existing key,
+    it gets removed
+* Changed `HttpStatusCode` in all spans attribute (http.status_code) to use int
+  value
+  ([#998](https://github.com/open-telemetry/opentelemetry-dotnet/pull/998))
+* Added `CompositePropagator` which accepts a list of `ITextFormat` to match the
+  spec ([#923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/923))
+* Replaced `ITextFormatActivity` with `ITextFormat`
+  ([#923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/923))
+* Added `StartRootSpan` and `StartActiveSpan`
+  ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
+* Changed `StartSpan` to not set the created span as Active to match the spec
+  ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 
 ## 0.4.0-beta.2
 
