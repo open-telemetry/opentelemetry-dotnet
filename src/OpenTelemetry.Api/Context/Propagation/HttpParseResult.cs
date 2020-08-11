@@ -20,7 +20,7 @@ namespace OpenTelemetry.Context.Propagation
     internal enum HttpParseResult
     {
         /// <summary>
-        /// Parsed succesfully.
+        /// Parsed successfully.
         /// </summary>
         Parsed,
 

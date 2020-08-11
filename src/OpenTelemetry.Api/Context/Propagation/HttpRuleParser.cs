@@ -120,7 +120,7 @@ namespace OpenTelemetry.Context.Propagation
                 return HttpParseResult.NotParsed;
             }
 
-            // Quoted-char has 2 characters. Check wheter there are 2 chars left ('\' + char)
+            // Quoted-char has 2 characters. Check whether there are 2 chars left ('\' + char)
             // If so, check whether the character is in the range 0-127. If not, it's an invalid value.
             if ((startIndex + 2 > input.Length) || (input[startIndex + 1] > 127))
             {
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Context.Propagation
                     (GetQuotedPairLength(input, current, out quotedPairLength) == HttpParseResult.Parsed))
                 {
                     // We ignore invalid quoted-pairs. Invalid quoted-pairs may mean that it looked like a quoted pair,
-                    // but we actually have a quoted-string: e.g. "\ü" ('\' followed by a char >127 - quoted-pair only
+                    // but we actually have a quoted-string: e.g. "\u" ('\' followed by a char >127 - quoted-pair only
                     // allows ASCII chars after '\'; qdtext allows both '\' and >127 chars).
                     current = current + quotedPairLength;
                     continue;
