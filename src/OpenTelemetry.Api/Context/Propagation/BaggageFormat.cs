@@ -72,12 +72,6 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
         {
-            if (context == null)
-            {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
-                return;
-            }
-
             if (carrier == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");

@@ -97,7 +97,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
         {
-            if (context == null || context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
+            if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
                 OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
                 return;
