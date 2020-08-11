@@ -25,11 +25,11 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderSdk : TracerProvider
     {
-        public readonly List<object> Instrumentations;
-        public Resource Resource;
-        public ActivityProcessor ActivityProcessor;
-        public ActivityListener ActivityListener;
-        public Sampler Sampler;
+        private readonly List<object> instrumentations;
+        private readonly ActivityListener listener;
+        private readonly Resource resource;
+        private readonly Sampler sampler;
+        private ActivityProcessor processor;
 
         static TracerProviderSdk()
         {
@@ -49,18 +49,18 @@ namespace OpenTelemetry.Trace
                 this.AddProcessor(processor);
             }
 
-            this.Sampler = sampler;
+            this.sampler = sampler;
 
-            this.Resource = resource;
+            this.resource = resource;
 
             if (instrumentationFactories != null)
             {
                 // TODO: check if individual element is null
-                this.Instrumentations = new List<object>();
-                var adapter = new ActivitySourceAdapter(this.Sampler, this.ActivityProcessor, this.Resource);
+                this.instrumentations = new List<object>();
+                var adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
-                    this.Instrumentations.Add(instrumentationFactory.Factory(adapter));
+                    this.instrumentations.Add(instrumentationFactory.Factory(adapter));
                 }
             }
 
@@ -71,16 +71,16 @@ namespace OpenTelemetry.Trace
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.SetResource(this.Resource);
+                        activity.SetResource(resource);
                     }
 
-                    this.ActivityProcessor?.OnStart(activity);
+                    this.processor?.OnStart(activity);
                 },
 
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    this.ActivityProcessor?.OnEnd(activity);
+                    this.processor?.OnEnd(activity);
                 },
 
                 // Setting this to true means TraceId will be always
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace
                 AutoGenerateRootContextTraceId = true,
 
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, this.Sampler),
+                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
 
             if (sources != null & sources.Any())
@@ -134,28 +134,55 @@ namespace OpenTelemetry.Trace
             }
 
             ActivitySource.AddActivityListener(listener);
-            this.ActivityListener = listener;
+            this.listener = listener;
+        }
+
+        internal TracerProviderSdk AddProcessor(ActivityProcessor processor)
+        {
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
+            if (this.processor == null)
+            {
+                this.processor = processor;
+            }
+            else if (this.processor is CompositeActivityProcessor compositeProcessor)
+            {
+                compositeProcessor.AddProcessor(processor);
+            }
+            else
+            {
+                this.processor = new CompositeActivityProcessor(new[]
+                {
+                    this.processor,
+                    processor,
+                });
+            }
+
+            return this;
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (this.Instrumentations != null)
+            if (this.instrumentations != null)
             {
-                foreach (var item in this.Instrumentations)
+                foreach (var item in this.instrumentations)
                 {
                     (item as IDisposable)?.Dispose();
                 }
 
-                this.Instrumentations.Clear();
+                this.instrumentations.Clear();
             }
 
-            (this.Sampler as IDisposable)?.Dispose();
-            this.ActivityProcessor?.Dispose();
+            (this.sampler as IDisposable)?.Dispose();
+            this.processor?.Dispose();
 
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
             // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
             // sessions that were open.
-            this.ActivityListener?.Dispose();
+            this.listener?.Dispose();
 
             base.Dispose(disposing);
         }
