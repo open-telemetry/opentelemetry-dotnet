@@ -131,8 +131,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                // TODO: Fix this test. This is mostly broken because Status is stored in tags.
-                // Assert.Contains(span.Tags, i => i.Key == kv.Key && i.Value.Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+                Assert.Contains(span.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
 
             Assert.Equal(expectedResource, span.GetResource());
