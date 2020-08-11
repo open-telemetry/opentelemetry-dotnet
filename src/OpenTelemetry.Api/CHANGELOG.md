@@ -24,7 +24,7 @@
   ([#923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/923))
 * Added `StartRootSpan` and `StartActiveSpan`
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
-* Modified `StartSpan` to not set the created span as Active to match the spec
+* Changed `StartSpan` to not set the created span as Active to match the spec
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 
 ## 0.4.0-beta.2
