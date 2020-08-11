@@ -161,15 +161,15 @@ namespace OpenTelemetry.Shims.OpenTracing
             // If specified, this takes precedence.
             if (this.ignoreActiveSpan)
             {
-                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, default, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpan != null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpan, null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpan, default, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpanContext.IsValid)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, default, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpan == null && !this.parentSpanContext.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
             {
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (span == null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), null, null, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), default, null, this.explicitStartTime ?? default);
             }
 
             foreach (var kvp in this.attributes)
