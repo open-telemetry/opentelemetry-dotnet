@@ -79,11 +79,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        protected override void OnStartInternal(Activity activity)
-        {
-        }
-
-        /// <inheritdoc />
         protected override void OnEndInternal(Activity activity)
         {
             try

@@ -114,8 +114,12 @@ namespace OpenTelemetry.Trace
             this.disposed = true;
         }
 
-        protected abstract void OnStartInternal(Activity activity);
+        protected virtual void OnStartInternal(Activity activity)
+        {
+        }
 
-        protected abstract void OnEndInternal(Activity activity);
+        protected virtual void OnEndInternal(Activity activity)
+        {
+        }
     }
 }

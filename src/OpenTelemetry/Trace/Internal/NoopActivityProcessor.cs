@@ -14,18 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Trace.Internal
 {
     internal sealed class NoopActivityProcessor : ActivityProcessor
     {
-        protected override void OnStartInternal(Activity activity)
-        {
-        }
-
-        protected override void OnEndInternal(Activity activity)
-        {
-        }
     }
 }

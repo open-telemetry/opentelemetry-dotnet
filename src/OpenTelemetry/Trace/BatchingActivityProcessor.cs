@@ -185,11 +185,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override void OnStartInternal(Activity activity)
-        {
-        }
-
-        /// <inheritdoc/>
         protected override void OnEndInternal(Activity activity)
         {
             // because of race-condition between checking the size and enqueueing,

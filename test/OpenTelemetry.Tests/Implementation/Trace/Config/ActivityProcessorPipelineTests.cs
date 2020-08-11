@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Trace;
@@ -234,14 +233,6 @@ namespace OpenTelemetry.Tests.Impl.Trace.Config
             {
                 this.Next = next;
                 this.Name = name;
-            }
-
-            protected override void OnStartInternal(Activity span)
-            {
-            }
-
-            protected override void OnEndInternal(Activity span)
-            {
             }
         }
     }
