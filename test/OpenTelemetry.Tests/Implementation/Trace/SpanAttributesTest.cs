@@ -30,23 +30,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void ValidateEmptyListToAddRange()
-        {
-            var spanAttribute = new SpanAttributes();
-            spanAttribute.AddRange(new Dictionary<string, object>());
-            Assert.Empty(spanAttribute.Attributes);
-        }
-
-        [Fact]
-        public void ValidateDictionaryToAddRange()
-        {
-            var spanAttribute = new SpanAttributes();
-            spanAttribute.AddRange(new Dictionary<string, object> { { "key", "value" } });
-            Assert.Single(spanAttribute.Attributes);
-            Assert.Equal("value", spanAttribute.Attributes["key"]);
-        }
-
-        [Fact]
         public void ValidateAddMethods()
         {
             var spanAttribute = new SpanAttributes();

@@ -36,18 +36,6 @@ namespace OpenTelemetry.Trace
         internal ActivityTagsCollection Attributes { get; }
 
         /// <summary>
-        /// Adds the elements of the specified collection to the <see cref="SpanAttributes"/>.
-        /// </summary>
-        /// <param name="initialAttributes">The collection whose elements should be added.</param>
-        public void AddRange(IEnumerable<KeyValuePair<string, object>> initialAttributes)
-        {
-            foreach (var attr in initialAttributes)
-            {
-                this.PrivateAdd(attr.Key, attr.Value);
-            }
-        }
-
-        /// <summary>
         /// Add entry to the attributes.
         /// </summary>
         /// <param name="key">Entry key.</param>
