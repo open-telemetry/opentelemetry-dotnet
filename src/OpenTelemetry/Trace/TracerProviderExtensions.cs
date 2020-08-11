@@ -39,24 +39,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException($"{nameof(provider)} is not an instance of TracerProviderSdk");
             }
 
-            if (trait.ActivityProcessor == null)
-            {
-                trait.ActivityProcessor = processor;
-            }
-            else if (trait.ActivityProcessor is CompositeActivityProcessor compositeProcessor)
-            {
-                compositeProcessor.AddProcessor(processor);
-            }
-            else
-            {
-                trait.ActivityProcessor = new CompositeActivityProcessor(new[]
-                {
-                    trait.ActivityProcessor,
-                    processor,
-                });
-            }
-
-            return provider;
+            return trait.AddProcessor(processor);
         }
     }
 }

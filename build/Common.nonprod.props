@@ -11,6 +11,12 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <ItemGroup Condition="$(MSBuildProjectName.Contains('.Tests'))">
+    <Content Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <PropertyGroup Label="Package versions used in by test projects">
     <!--
       Please sort alphabetically.
@@ -20,7 +26,7 @@
     <DotNetXUnitCliVer>[2.3.1,3.0)</DotNetXUnitCliVer>
     <MicrosoftNETTestSdkPkgVer>[16.6.1,17.0)</MicrosoftNETTestSdkPkgVer>
     <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
-    <XUnitRunnerVisualStudioPkgVer>[2.4.2,3.0)</XUnitRunnerVisualStudioPkgVer>
+    <XUnitRunnerVisualStudioPkgVer>[2.4.3,3.0)</XUnitRunnerVisualStudioPkgVer>
     <XUnitPkgVer>[2.4.1,3.0)</XUnitPkgVer>
   </PropertyGroup>
 

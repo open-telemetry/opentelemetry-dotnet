@@ -139,17 +139,17 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            // because of race-condition between checking the size and enqueueing,
-            // we might end up with a bit more activities than maxQueueSize.
-            // Let's just tolerate it to avoid extra synchronization.
-            if (this.currentQueueSize >= this.maxQueueSize)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
-                return;
-            }
-
             if (activity.Recorded)
             {
+                // because of race-condition between checking the size and enqueueing,
+                // we might end up with a bit more activities than maxQueueSize.
+                // Let's just tolerate it to avoid extra synchronization.
+                if (this.currentQueueSize >= this.maxQueueSize)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
+                    return;
+                }
+
                 var size = Interlocked.Increment(ref this.currentQueueSize);
 
                 this.exportQueue.Enqueue(activity);

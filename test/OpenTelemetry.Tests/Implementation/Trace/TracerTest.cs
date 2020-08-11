@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Test
             var span2 = this.tracer.StartRootSpan(null, SpanKind.Client);
             Assert.Null(span2.Activity.DisplayName);
 
-            var span3 = this.tracer.StartRootSpan(null, SpanKind.Client, null);
+            var span3 = this.tracer.StartRootSpan(null, SpanKind.Client, default);
             Assert.Null(span3.Activity.DisplayName);
         }
 
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Trace.Test
             var span1 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, null);
+            var span2 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Test
             var span1 = this.tracer.StartSpan(null, SpanKind.Client, blankContext);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client, blankContext, null);
+            var span2 = this.tracer.StartSpan(null, SpanKind.Client, blankContext, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Trace.Test
             var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, null);
+            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Trace.Test
             var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext, null);
+            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
