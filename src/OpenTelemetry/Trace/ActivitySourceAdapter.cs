@@ -104,15 +104,15 @@ namespace OpenTelemetry.Trace
 
             switch (samplingResult.Decision)
             {
+                case SamplingDecision.NotRecord:
+                    activity.IsAllDataRequested = false;
+                    break;
                 case SamplingDecision.Record:
                     activity.IsAllDataRequested = true;
                     break;
                 case SamplingDecision.RecordAndSampled:
                     activity.IsAllDataRequested = true;
                     activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                    break;
-                case SamplingDecision.NotRecord:
-                    activity.IsAllDataRequested = false;
                     break;
             }
         }

@@ -2,8 +2,7 @@
 
 ## Unreleased
 
-* Modified Sampler implementation to match the
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+* Modified Sampler implementation to match the spec
   ([#1037](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1037))
 * Changed `ActivityProcessor` to implement `IDisposable`
   ([#975](https://github.com/open-telemetry/opentelemetry-dotnet/pull/975))
