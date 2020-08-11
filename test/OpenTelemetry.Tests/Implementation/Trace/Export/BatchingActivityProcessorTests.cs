@@ -90,10 +90,10 @@ namespace OpenTelemetry.Trace.Test
             var activityExporter = new TestActivityExporter(null, sleepMilliseconds: 5000);
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(0), 1);
             using (var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
-                            .SetSampler(new AlwaysOnSampler())
-                            .AddProcessor(activityProcessor)
-                            .Build())
+                .AddSource(ActivitySourceName)
+                .SetSampler(new AlwaysOnSampler())
+                .AddProcessor(activityProcessor)
+                .Build())
             {
                 var activity1 = this.CreateActivity(ActivityName1);
             } // Force everything to flush out of the processor.
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace.Test
             var activityExporter = new TestActivityExporter(null);
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 128);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build();
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace.Test
 
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, TimeSpan.FromMilliseconds(30), DefaultTimeout, 10);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build();
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Test
             });
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 1, TimeSpan.FromMilliseconds(100), DefaultTimeout, 1);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build();
@@ -200,7 +200,7 @@ namespace OpenTelemetry.Trace.Test
 
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 3);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                                        .AddActivitySource(ActivitySourceName)
+                                        .AddSource(ActivitySourceName)
                                         .SetSampler(new AlwaysOnSampler())
                                         .AddProcessor(activityProcessor)
                                         .Build();
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Trace.Test
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                                        .AddActivitySource(ActivitySourceName)
+                                        .AddSource(ActivitySourceName)
                                         .SetSampler(new ParentOrElseSampler(new AlwaysOffSampler()))
                                         .AddProcessor(activityProcessor)
                                         .Build();
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Trace.Test
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 128);
 
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                                        .AddActivitySource(ActivitySourceName)
+                                        .AddSource(ActivitySourceName)
                                         .SetSampler(new AlwaysOnSampler())
                                         .AddProcessor(activityProcessor)
                                         .Build();
@@ -296,7 +296,7 @@ namespace OpenTelemetry.Trace.Test
             using var activityProcessor =
                 new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build())
@@ -343,7 +343,7 @@ namespace OpenTelemetry.Trace.Test
             using var activityProcessor =
                 new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build())
@@ -386,7 +386,7 @@ namespace OpenTelemetry.Trace.Test
             var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
             using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize);
             using (var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(activityProcessor)
                             .Build())
@@ -432,7 +432,7 @@ namespace OpenTelemetry.Trace.Test
             using (var batchingActivityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, batchSize))
             {
                 using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddActivitySource(ActivitySourceName)
+                            .AddSource(ActivitySourceName)
                             .SetSampler(new AlwaysOnSampler())
                             .AddProcessor(batchingActivityProcessor)
                             .Build();

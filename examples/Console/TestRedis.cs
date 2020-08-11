@@ -53,7 +53,7 @@ namespace Examples.Console
                         // changing flushinterval from 10s to 5s
                         options.FlushInterval = TimeSpan.FromSeconds(5);
                     })
-                    .AddActivitySource("redis-test")
+                    .AddSource("redis-test")
                     .Build();
 
             ActivitySource activitySource = new ActivitySource("redis-test");
