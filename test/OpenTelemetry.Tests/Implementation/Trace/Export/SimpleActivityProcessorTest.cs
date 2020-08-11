@@ -134,34 +134,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
-        {
-            var testSampler = new TestSampler();
-            testSampler.SamplingAction = (samplingParameters) =>
-            {
-                return new SamplingResult(SamplingDecision.NotRecord);
-            };
-
-            using var exporter = new TestActivityExporter(null);
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddSource("random")
-                        .AddProcessor(new SimpleActivityProcessor(exporter))
-                        .SetSampler(testSampler)
-                        .Build();
-
-            using ActivitySource source = new ActivitySource("random");
-            var activity = source.StartActivity("somename");
-            activity.Stop();
-
-            Assert.False(activity.IsAllDataRequested);
-            Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
-            Assert.False(activity.Recorded);
-
-            var exported = this.WaitForSpans(exporter, 0, TimeSpan.FromMilliseconds(100));
-            Assert.Empty(exported);
-        }
-
-        [Fact]
         public async Task ShutdownTwice()
         {
             var activityProcessor = new SimpleActivityProcessor(new TestActivityExporter(null));

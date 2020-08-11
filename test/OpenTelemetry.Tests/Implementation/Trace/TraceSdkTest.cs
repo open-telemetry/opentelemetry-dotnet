@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Tests.Implementation.Testing.Export;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -144,6 +145,45 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                     Assert.Null(innerActivity);
                 }
             }
+        }
+
+        [Fact]
+        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
+        {
+            var testSampler = new TestSampler();
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddSource("random")
+                        .AddProcessor(testActivityProcessor)
+                        .SetSampler(testSampler)
+                        .Build();
+
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            using ActivitySource source = new ActivitySource("random");
+            var activity = source.StartActivity("somename");
+            activity.Stop();
+
+            Assert.False(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+            Assert.False(activity.Recorded);
+            Assert.False(startCalled);
+            Assert.False(endCalled);
         }
 
         private class TestSampler : Sampler

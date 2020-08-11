@@ -166,46 +166,6 @@ namespace OpenTelemetry.Trace.Test
         }
 
         [Fact]
-        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
-        {
-            var testSampler = new TestSampler();
-            testSampler.SamplingAction = (samplingParameters) =>
-            {
-                return new SamplingResult(SamplingDecision.NotRecord);
-            };
-
-            int exportCalledCount = 0;
-            var activityExporter = new TestActivityExporter(_ => Interlocked.Increment(ref exportCalledCount));
-            using var activityProcessor = new BatchingActivityProcessor(activityExporter, 128, DefaultDelay, DefaultTimeout, 1);
-            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                                        .AddSource(ActivitySourceName)
-                                        .AddProcessor(activityProcessor)
-                                        .SetSampler(testSampler)
-                                        .Build();
-
-            using (var activity = Source.StartActivity("root"))
-            {
-                // Even if sampling returns false, for root activities,
-                // activity is still created with PropagationOnly.
-                Assert.NotNull(activity);
-                Assert.False(activity.IsAllDataRequested);
-                Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
-                Assert.False(activity.Recorded);
-
-                using (var innerActivity = Source.StartActivity("inner"))
-                {
-                    // This is not a root activity.
-                    // If sampling returns false, no activity is created at all.
-                    Assert.Null(innerActivity);
-                }
-            }
-
-            var exported = this.WaitForActivities(activityExporter, 0, DefaultTimeout);
-            Assert.Equal(0, exportCalledCount);
-            Assert.Empty(exported);
-        }
-
-        [Fact]
         public void ExportDifferentSampledActivities()
         {
             var activityExporter = new TestActivityExporter(null);
