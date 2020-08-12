@@ -5,25 +5,31 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
 
-```sh dotnet new console --output getting-started cd getting-started dotnet run
+```sh
+dotnet new console --output getting-started cd getting-started dotnet run
 ```
 
 You should see the following output:
 
-```console Hello World! ```
+```console
+Hello World!
+```
 
 Install the
 [OpenTelemetry.Exporter.Console](../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
-```sh dotnet add package OpenTelemetry.Exporter.Console -v 0.4.0-beta.2 ```
+```sh
+dotnet add package OpenTelemetry.Exporter.Console -v 0.4.0-beta.2
+```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
 
 Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
 
-```text Activity.Id:
+```text
+Activity.Id:
 00-55c1ae1c6c23784bbc4fca463d7e15ca-bfe3220d9e489e4b-01 Activity.ParentId:
 00-55c1ae1c6c23784bbc4fca463d7e15ca-0000000000000000-00 Activity.DisplayName:
 SayHello Activity.Kind:        Internal Activity.StartTime:
