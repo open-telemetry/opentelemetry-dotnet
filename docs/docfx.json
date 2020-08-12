@@ -28,10 +28,9 @@
     "resource": [
       {
         "files": [
-          "docs/**.png",
+          "docs/**.cs",
           "examples/**.cs",
-          "src/**.cs",
-          "docs/**.cs"
+          "src/**.cs"
         ]
       }
     ],

@@ -6,12 +6,14 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started cd getting-started dotnet run
+dotnet new console --output getting-started
+cd getting-started
+dotnet run
 ```
 
 You should see the following output:
 
-```console
+```text
 Hello World!
 ```
 
@@ -29,13 +31,16 @@ Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
 
 ```text
-Activity.Id:
-00-55c1ae1c6c23784bbc4fca463d7e15ca-bfe3220d9e489e4b-01 Activity.ParentId:
-00-55c1ae1c6c23784bbc4fca463d7e15ca-0000000000000000-00 Activity.DisplayName:
-SayHello Activity.Kind:        Internal Activity.StartTime:
-2020-08-12T07:37:40.9681787Z Activity.Duration:    00:00:00.0047972
+Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
+Activity.ParentId:    00-8389584945550f40820b96ce1ceb9299-0000000000000000-00
+Activity.DisplayName: SayHello
+Activity.Kind:        Internal
+Activity.StartTime:   2020-08-12T15:59:10.4461835Z
+Activity.Duration:    00:00:00.0066039
 Activity.TagObjects:
-    foo: 1 bar: Hello, World! baz: [1, 2, 3]
+    foo: 1
+    bar: Hello, World!
+    baz: [1, 2, 3]
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.
