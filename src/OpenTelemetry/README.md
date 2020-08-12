@@ -40,7 +40,7 @@ the following.
 ## Getting started
 
 Please follow the tutorial and [get started in 5
-minutes](../../docs/trace/getting-started.md).
+minutes](../../docs/trace/getting-started/README.md).
 
 ## Configuration
 

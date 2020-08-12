@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Implementation\Internal\TestHttpServer.cs" Link="TestHttpServer.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Internal\TestHttpServer.cs" Link="TestHttpServer.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\BaseEventSourceTest.cs" Link="BaseEventSourceTest.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>

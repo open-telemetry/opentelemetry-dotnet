@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace;
 
 public class Program
