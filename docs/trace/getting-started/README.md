@@ -47,13 +47,13 @@ Congratulations! You are now collecting traces using OpenTelemetry.
 
 What does the above program do?
 
-The program creates an `ActivitySource` which represents [OpenTelemetry
+The program creates an `ActivitySource` which represents an [OpenTelemetry
 Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracer).
-The activitysource instance is used to start an `Activity` which represent
+The `ActivitySource` instance is used to start an `Activity` which represents an
 [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span).
 An OpenTelemetry
 [TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracerprovider)
-configured to subscribe to the activities from the source
+is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
 `ConsoleExporter` simply displays it on the console.

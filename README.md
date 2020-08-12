@@ -12,13 +12,14 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Getting Started
 
-If you are new here, please [get started in 5 minutes](./docs/trace/getting-started/README.md).
-This repository includes multiple installable components, available on
-[NuGet](https://www.nuget.org/profiles/OpenTelemetry).
+If you are new here, please see [get started in 5
+minutes](./docs/trace/getting-started/README.md).
 
-Each package has its individual `README.md` file, which covers the instruction
-on how to install and how to get started. To find all the available components,
-please take a look at the `src` folder.
+This repository includes multiple installable components, available on
+[NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
+individual `README.md` file, which covers the instruction on how to install and
+how to get started. To find all the available components, please take a look at
+the `src` folder.
 
 Here are the most commonly used components:
 
