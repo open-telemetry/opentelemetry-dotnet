@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     internal class TestMetricExporter : MetricExporter
     {

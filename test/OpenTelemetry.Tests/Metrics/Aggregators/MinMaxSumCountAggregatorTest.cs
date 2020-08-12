@@ -18,7 +18,7 @@ using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Metrics.Export;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     public class MinMaxSumCountAggregatorTest
     {

@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using Xunit;
 
-namespace OpenTelemetry.Context.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class DistributedContextRoundtripTest
     {

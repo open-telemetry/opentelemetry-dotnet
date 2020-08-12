@@ -20,7 +20,7 @@ using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricsTest
     {

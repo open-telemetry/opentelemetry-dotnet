@@ -20,7 +20,7 @@ using System.Linq;
 using OpenTelemetry.Resources;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Impl.Resources
+namespace OpenTelemetry.Resources.Tests
 {
     public class ResourcesTests
     {

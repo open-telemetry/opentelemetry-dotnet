@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     public class LabelSetTest
     {

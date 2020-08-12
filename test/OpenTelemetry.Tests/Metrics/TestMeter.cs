@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Metrics.Export;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     internal class TestMeter : MeterSdk
     {

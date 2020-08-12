@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using Xunit;
 
-namespace OpenTelemetry.Context.Test
+namespace OpenTelemetry.Context.Tests
 {
     public class CorrelationContextBuilderTest
     {

@@ -20,7 +20,7 @@ using System.Text;
 using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Context.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class DistributedContextDeserializationTest
     {

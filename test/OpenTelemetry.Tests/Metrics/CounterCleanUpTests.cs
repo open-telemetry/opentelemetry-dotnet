@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Metrics.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     public class CounterCleanUpTests
     {
