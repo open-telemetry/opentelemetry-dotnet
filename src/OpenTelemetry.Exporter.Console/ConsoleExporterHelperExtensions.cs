@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ConsoleExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using OpenTelemetry.Exporter.Console;
 
 namespace OpenTelemetry.Trace
 {
-    public static class TracerProviderBuilderExtensions
+    public static class ConsoleExporterHelperExtensions
     {
         /// <summary>
         /// Registers a ConsoleActivity exporter to a processing pipeline.
@@ -27,18 +27,16 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
         {
-            // TODO: Rename to AddConsoleExporter?
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new ConsoleExporterOptions();
-            configure?.Invoke(exporterOptions);
-            var consoleExporter = new ConsoleExporter(exporterOptions);
-            return builder.AddProcessor(new SimpleActivityProcessor(consoleExporter));
+            var options = new ConsoleExporterOptions();
+            configure?.Invoke(options);
+            return builder.AddProcessor(new SimpleActivityProcessor(new ConsoleExporter(options)));
         }
     }
 }

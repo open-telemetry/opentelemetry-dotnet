@@ -34,7 +34,7 @@ namespace Examples.Console
                 .AddSource("MyCompany.MyProduct.MyWebServer")
                 .SetResource(Resources.CreateServiceResource("MyServiceName"))
                 .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
-                .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
                 .Build();
 
             // The above line is required only in applications
