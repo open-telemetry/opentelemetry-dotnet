@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseZPagesExporter(
+        public static TracerProviderBuilder AddZPagesExporter(
             this TracerProviderBuilder builder,
             Action<ZPagesExporterOptions> configure = null)
         {
