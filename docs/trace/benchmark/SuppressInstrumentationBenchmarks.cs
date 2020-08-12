@@ -79,6 +79,21 @@ public class SuppressInstrumentationBenchmarks
     }
 
     [Benchmark]
+    public void SuppressInstrumentationTrueNested()
+    {
+        using (Sdk.SuppressInstrumentation.Begin())
+        {
+            using (Sdk.SuppressInstrumentation.Begin())
+            {
+                using (var activity = this.sourceWithSuppressInstrumentation.StartActivity("Benchmark"))
+                {
+                    // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+                }
+            }
+        }
+    }
+
+    [Benchmark]
     public void NoneListener()
     {
         using (var activity = this.sourceWithNoneListener.StartActivity("Benchmark"))
