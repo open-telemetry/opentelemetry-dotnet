@@ -71,16 +71,18 @@ namespace OpenTelemetry.Trace
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.SetResource(resource);
+                        activity.SetResource(this.resource);
+                        this.processor?.OnStart(activity);
                     }
-
-                    this.processor?.OnStart(activity);
                 },
 
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    this.processor?.OnEnd(activity);
+                    if (activity.IsAllDataRequested)
+                    {
+                        this.processor?.OnEnd(activity);
+                    }
                 },
 
                 // Setting this to true means TraceId will be always
@@ -210,9 +212,17 @@ namespace OpenTelemetry.Trace
                     options.Links);
 
                 var shouldSample = sampler.ShouldSample(samplingParameters);
-                if (shouldSample.IsSampled)
+
+                var activityDataRequest = shouldSample.Decision switch
                 {
-                    return ActivityDataRequest.AllDataAndRecorded;
+                    SamplingDecision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
+                    SamplingDecision.Record => ActivityDataRequest.AllData,
+                    _ => ActivityDataRequest.PropagationData
+                };
+
+                if (activityDataRequest != ActivityDataRequest.PropagationData)
+                {
+                    return activityDataRequest;
                 }
             }
 

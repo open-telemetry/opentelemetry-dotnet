@@ -1,4 +1,4 @@
-﻿// <copyright file="AlwaysOnSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="AlwaysOffSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which samples every activity.
-    /// This sampler will be used as the default Sampler, if no other Sampler is configured.
+    /// Sampler implementation which never samples any activity.
     /// </summary>
-    public sealed class AlwaysOnSampler : Sampler
+    public sealed class AlwaysOffSampler : Sampler
     {
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
-            return new SamplingResult(true);
+            return new SamplingResult(SamplingDecision.NotRecord);
         }
     }
 }
