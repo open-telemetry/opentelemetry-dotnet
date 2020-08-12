@@ -71,7 +71,7 @@ namespace Examples.AspNetCore
                     services.AddOpenTelemetry((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .UseZipkinExporter(o =>
+                        .AddZipkinExporter(o =>
                         {
                             o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
                             o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));

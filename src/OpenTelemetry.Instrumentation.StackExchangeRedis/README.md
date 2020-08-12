@@ -21,7 +21,7 @@ using var connection = ConnectionMultiplexer.Connect("localhost:6379");
 // Pass the connection to AddRedisInstrumentation.
 using var openTelemetry = Sdk.CreateTracerProvider(b => b
     .AddRedisInstrumentation(connection)
-    .UseZipkinExporter()
+    .AddZipkinExporter()
     .SetResource(Resources.CreateServiceResource("my-service"));
 ```
 
