@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Extension methods to simplify registering a Jaeger exporter.
     /// </summary>
-    public static class TracerProviderBuilderExtensions
+    public static class JaegerExporterHelperExtensions
     {
         /// <summary>
         /// Adds Jaeger exporter to the TracerProvider.
