@@ -16,7 +16,7 @@ Hello World!
 ```
 
 Install the
-[OpenTelemetry.Exporter.Console](../../src/OpenTelemetry.Exporter.Console/README.md)
+[OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
