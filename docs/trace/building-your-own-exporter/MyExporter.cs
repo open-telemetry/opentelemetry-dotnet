@@ -27,7 +27,7 @@ internal class MyExporter : ActivityExporter
     public override Task<ExportResult> ExportAsync(
         IEnumerable<Activity> batch, CancellationToken cancellationToken)
     {
-        using var scope = Sdk.SuppressInstrumentation.Begin();
+        using var scope = Sdk.BeginSuppressInstrumentationScope();
 
         foreach (var activity in batch)
         {

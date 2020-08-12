@@ -29,9 +29,36 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
-        public static readonly SuppressInstrumentationScope SuppressInstrumentation = new SuppressInstrumentationScope(false);
-
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// Gets a value indicating whether instrumentation is suppressed (disabled).
+        /// </summary>
+        public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+        /// <summary>
+        /// Begins a new scope in which instrumentation is suppressed (disabled).
+        /// </summary>
+        /// <param name="value">Value indicating whether to suppress instrumentation.</param>
+        /// <returns>Object to dispose to end the scope.</returns>
+        /// <remarks>
+        /// This is typically used to prevent infinite loops created by
+        /// collection of internal operations, such as exporting traces over HTTP.
+        /// <code>
+        ///     public override async Task&lt;ExportResult&gt; ExportAsync(
+        ///         IEnumerable&lt;Activity&gt; batch,
+        ///         CancellationToken cancellationToken)
+        ///     {
+        ///         using (Sdk.BeginSuppressInstrumentationScope())
+        ///         {
+        ///             // Instrumentation is suppressed (i.e., Sdk.SuppressInstrumentation == true)
+        ///         }
+        ///
+        ///         // Instrumentation is not suppressed (i.e., Sdk.SuppressInstrumentation == false)
+        ///     }
+        /// </code>
+        /// </remarks>
+        public static SuppressInstrumentationScope BeginSuppressInstrumentationScope(bool value = true) => SuppressInstrumentationScope.Begin(value);
 
         /// <summary>
         /// Creates MeterProvider with the configuration provided.
