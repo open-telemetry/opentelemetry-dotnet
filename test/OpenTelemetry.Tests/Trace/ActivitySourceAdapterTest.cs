@@ -18,10 +18,10 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests.Implementation.Testing.Export;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Tests.Implementation.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Implementation.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class ActivitySourceAdapterTest : IDisposable
     {

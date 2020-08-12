@@ -15,7 +15,7 @@
 // </copyright>
 using Xunit;
 
-namespace OpenTelemetry.Trace.Test
+namespace OpenTelemetry.Trace.Tests
 {
     public class StatusTest
     {

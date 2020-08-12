@@ -21,7 +21,7 @@ using System.Linq;
 using OpenTelemetry.Context.Propagation;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class CompositePropagatorTest
     {

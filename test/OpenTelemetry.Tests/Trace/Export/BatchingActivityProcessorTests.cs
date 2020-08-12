@@ -25,7 +25,7 @@ using OpenTelemetry.Tests;
 using OpenTelemetry.Tests.Implementation.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Test
+namespace OpenTelemetry.Trace.Tests
 {
     public class BatchingActivityProcessorTests : IDisposable
     {

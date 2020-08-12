@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Tests.Implementation.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class TestPropagator : ITextFormat
     {

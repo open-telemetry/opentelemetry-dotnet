@@ -19,7 +19,7 @@ using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Context.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class B3FormatTest
     {

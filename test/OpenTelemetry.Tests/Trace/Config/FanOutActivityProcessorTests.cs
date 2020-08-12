@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Impl.Trace.Config
+namespace OpenTelemetry.Tests
 {
     public class FanOutActivityProcessorTests
     {

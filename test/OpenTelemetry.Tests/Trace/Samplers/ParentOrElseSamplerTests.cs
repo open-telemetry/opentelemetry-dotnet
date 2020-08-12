@@ -16,7 +16,7 @@
 using System.Diagnostics;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Samplers.Test
+namespace OpenTelemetry.Trace.Tests
 {
     public class ParentOrElseSamplerTests
     {

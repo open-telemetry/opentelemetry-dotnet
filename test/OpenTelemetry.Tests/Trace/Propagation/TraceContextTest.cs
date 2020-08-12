@@ -19,7 +19,7 @@ using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using Xunit;
 
-namespace OpenTelemetry.Impl.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class TraceContextTest
     {

@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Trace.Tests
 {
     internal static class AttributesExtensions
     {
