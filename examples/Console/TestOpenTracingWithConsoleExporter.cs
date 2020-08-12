@@ -32,7 +32,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                    .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
                     .Build();
 
             // The above line is required only in applications
