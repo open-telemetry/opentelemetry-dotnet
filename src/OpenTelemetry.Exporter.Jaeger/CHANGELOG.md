@@ -6,6 +6,8 @@
   were sent as `CHILD_OF`.
   ([#970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/970))
 
+* Rename extension method `UseJaegerExporter` to `AddJaegerExporter`.
+
 ## 0.3.0-beta
 
 Released 2020-07-23

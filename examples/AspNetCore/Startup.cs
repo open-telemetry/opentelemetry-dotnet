@@ -60,7 +60,7 @@ namespace Examples.AspNetCore
                     services.AddOpenTelemetry((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .UseJaegerExporter(o =>
+                        .AddJaegerExporter(o =>
                         {
                             o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
                             o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");

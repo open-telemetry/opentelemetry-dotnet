@@ -35,7 +35,7 @@ namespace Examples.AspNet
             this.openTelemetry = Sdk.CreateTracerProviderBuilder()
                  .AddHttpClientInstrumentation()
                  .AddAspNetInstrumentation()
-                 .UseJaegerExporter(c =>
+                 .AddJaegerExporter(c =>
                 {
                     c.AgentHost = "localhost";
                     c.AgentPort = 6831;
