@@ -41,15 +41,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
             var parentContext = new ActivityContext(this.traceId, this.parentSpanId, flags);
             var link = new ActivityLink(parentContext);
 
-            Assert.True(
-                    new AlwaysOnSampler()
-                        .ShouldSample(new SamplingParameters(
-                            parentContext,
-                            this.traceId,
-                            "Another name",
-                            ActivityKindServer,
-                            null,
-                            new List<ActivityLink> { link })).IsSampled);
+            Assert.Equal(
+                SamplingDecision.RecordAndSampled,
+                new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
         }
 
         [Fact]
@@ -66,15 +60,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
             var parentContext = new ActivityContext(this.traceId, this.parentSpanId, flags);
             var link = new ActivityLink(parentContext);
 
-            Assert.False(
-                    new AlwaysOffSampler()
-                        .ShouldSample(new SamplingParameters(
-                            parentContext,
-                            this.traceId,
-                            "Another name",
-                            ActivityKindServer,
-                            null,
-                            new List<ActivityLink> { link })).IsSampled);
+            Assert.Equal(
+                SamplingDecision.NotRecord,
+                new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
         }
 
         [Fact]

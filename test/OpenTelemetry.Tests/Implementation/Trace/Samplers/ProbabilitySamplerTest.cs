@@ -64,14 +64,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                       0,
                     });
-            Assert.False(
-                    defaultProbability.ShouldSample(new SamplingParameters(
-                        default,
-                        notSampledtraceId,
-                        ActivityDisplayName,
-                        ActivityKindServer,
-                        null,
-                        null)).IsSampled);
+            Assert.Equal(
+                SamplingDecision.NotRecord,
+                defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
 
             // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
@@ -96,14 +91,9 @@ namespace OpenTelemetry.Trace.Samplers.Test
                       0,
                       0,
                     });
-            Assert.True(
-                    defaultProbability.ShouldSample(new SamplingParameters(
-                        default,
-                        sampledtraceId,
-                        ActivityDisplayName,
-                        ActivityKindServer,
-                        null,
-                        null)).IsSampled);
+            Assert.Equal(
+                SamplingDecision.RecordAndSampled,
+                defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
         }
 
         [Fact]

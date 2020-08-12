@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Modified Sampler implementation to match the spec
+  ([#1037](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1037))
 * Changed `ActivityProcessor` to implement `IDisposable`
   ([#975](https://github.com/open-telemetry/opentelemetry-dotnet/pull/975))
 * Samplers now get the actual TraceId of the Activity to be created.
