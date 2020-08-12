@@ -17,7 +17,7 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Config.Test
+namespace OpenTelemetry.Metrics.Tests
 {
     public class MeterProviderTests : IDisposable
     {

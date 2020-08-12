@@ -16,13 +16,11 @@
 
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
-using OpenTelemetry.Metrics.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Configuration.Tests
+namespace OpenTelemetry.Metrics.Tests
 {
     public class MeterFactoryTests
     {

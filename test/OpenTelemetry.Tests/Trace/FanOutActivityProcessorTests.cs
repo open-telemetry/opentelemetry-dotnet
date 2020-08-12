@@ -17,11 +17,10 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Tests.Shared;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Trace.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Trace.Tests
 {
     public class FanOutActivityProcessorTests
     {
