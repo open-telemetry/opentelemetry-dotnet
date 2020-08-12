@@ -36,5 +36,5 @@ jobs:
 
     - name: Publish MyGet
       run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }}  
+        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
