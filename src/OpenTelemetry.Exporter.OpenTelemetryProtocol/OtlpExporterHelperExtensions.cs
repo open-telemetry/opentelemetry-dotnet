@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="OtlpExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,15 +22,15 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
-    public static class TracerProviderBuilderExtensions
+    public static class OtlpExporterHelperExtensions
     {
         /// <summary>
-        /// Enables the OpenTelemetry Protocol (OTLP) exporter.
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder">Open Telemetry builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
             if (builder == null)
             {
