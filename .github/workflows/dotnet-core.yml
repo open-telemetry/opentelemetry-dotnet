@@ -35,8 +35,6 @@ jobs:
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
-      env:
-        MYGET_TOKEN: ${{ secrets.MYGET_TOKEN }}
       run: |
-        nuget setApiKey $MYGET_TOKEN  
+        nuget setApiKey ${{ secrets.MYGET_TOKEN }}  
         nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
