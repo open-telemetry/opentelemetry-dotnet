@@ -12,7 +12,8 @@
   match the spec
   ([#1013](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1013))
 * Added `SuppressInstrumentationScope` API
-  ([#988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/988))
+  ([#988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/988)
+  [#1067](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1067))
 * Changed `BroadcastActivityProcessor` to `FanOutActivityProcessor`
   ([#1015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1015))
 * Changed `TracerProviderBuilder` and `TracerProviderSdk` design to simply the
