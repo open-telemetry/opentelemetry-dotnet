@@ -25,7 +25,7 @@ package:
 dotnet add package OpenTelemetry.Exporter.Console -v 0.4.0-beta.2
 ```
 
-Update the `Program.cs` file with the code from [here](.\Program.cs):
+Update the `Program.cs` file with the code from Program.cs:
 
 Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
