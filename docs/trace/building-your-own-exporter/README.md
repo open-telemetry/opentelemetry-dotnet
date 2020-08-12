@@ -42,5 +42,3 @@ the following command from this folder.
 ```sh
 dotnet run
 ```
-
-
