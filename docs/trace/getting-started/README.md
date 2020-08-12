@@ -53,6 +53,6 @@ The activitysource instance is used to start an `Activity` which represent
 [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span).
 OpenTelemetry TracerProvider which is setup at the beginning is
-configured subscribe to the activities from the source
+configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`, which
 simply displays it on the console.
