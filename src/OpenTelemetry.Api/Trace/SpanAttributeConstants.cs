@@ -22,8 +22,8 @@ namespace OpenTelemetry.Trace
     public static class SpanAttributeConstants
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public const string StatusCodeKey = "ot.status_code";
-        public const string StatusDescriptionKey = "ot.status_description";
+        public const string StatusCodeKey = "otel.status_code";
+        public const string StatusDescriptionKey = "otel.status_description";
 
         public const string HttpPathKey = "http.path";
 

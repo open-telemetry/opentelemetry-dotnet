@@ -301,9 +301,9 @@ OpenTelemetry defines a concept called
 to be associated with `Activity`. There is no `Status` class in .NET, and hence
 `Status` is set to an `Activity` using the following special tags
 
-`ot.status_code` is the `Tag` name used to store the [Status Canonical
+`otel.status_code` is the `Tag` name used to store the [Status Canonical
 Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#statuscanonicalcode).
-`ot.status_description` is the `Tag` name used to store the optional
+`otel.status_description` is the `Tag` name used to store the optional
 [Description](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#getdescription)
 
 Example:

@@ -40,7 +40,7 @@ namespace Examples.Console
                     .Build();
 
             // The above lines are required only in Applications
-            // which decide to use OT.
+            // which decide to use OpenTelemetry.
 
             using (var sample = new InstrumentationWithActivitySource())
             {
