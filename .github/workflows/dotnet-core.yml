@@ -1,8 +1,8 @@
-name: .NET
+name: Pack and publish to Myget
 
 on:
   schedule:
-    - cron: '0 0 * * *' # one in a day at 00:00
+    - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
   build-pack:
@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
-    
+
     - name: Install dependencies
       run: dotnet restore
 
