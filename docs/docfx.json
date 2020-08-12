@@ -30,7 +30,8 @@
         "files": [
           "docs/**.png",
           "examples/**.cs",
-          "src/**.cs"
+          "src/**.cs",
+          "docs/**.cs"
         ]
       }
     ],
