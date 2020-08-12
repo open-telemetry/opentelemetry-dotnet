@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Renaming from `ot` to `otel`
+  ([#1046](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1046))
 * Added `RuntimeContext` API
   ([#948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/948))
 * Changed `Link` constructor to accept `ActivityTagsCollection` instead of

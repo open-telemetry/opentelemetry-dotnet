@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Tests.Implementation.Testing.Export;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -110,7 +111,7 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                     .SetSampler(testSampler)
                     .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(true);
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.RecordAndSampled);
             using (var activity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(activity);
@@ -118,7 +119,17 @@ namespace OpenTelemetry.Tests.Implementation.Trace
                 Assert.True(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(false);
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.Record);
+            using (var activity = activitySource.StartActivity("root"))
+            {
+                // Even if sampling returns false, for root activities,
+                // activity is still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.True(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+            }
+
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -136,9 +147,48 @@ namespace OpenTelemetry.Tests.Implementation.Trace
             }
         }
 
+        [Fact]
+        public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
+        {
+            var testSampler = new TestSampler();
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddSource("random")
+                        .AddProcessor(testActivityProcessor)
+                        .SetSampler(testSampler)
+                        .Build();
+
+            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            using ActivitySource source = new ActivitySource("random");
+            var activity = source.StartActivity("somename");
+            activity.Stop();
+
+            Assert.False(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+            Assert.False(activity.Recorded);
+            Assert.False(startCalled);
+            Assert.False(endCalled);
+        }
+
         private class TestSampler : Sampler
         {
-            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(true);
+            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(SamplingDecision.RecordAndSampled);
 
             public SamplingParameters LatestSamplingParameters { get; private set; }
 

@@ -182,7 +182,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             // Once a pull model is implemented, we'll not have this issue and we need to add tests
             // at that time.
 
-            // If in future, there is a official .NET Prometheus Client library, and OT Exporter
+            // If in future, there is an official .NET Prometheus Client library, and OpenTelemetry Exporter
             // choses to take a dependency on it, then none of these concerns arise.
         }
     }

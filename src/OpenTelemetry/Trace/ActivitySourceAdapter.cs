@@ -100,11 +100,20 @@ namespace OpenTelemetry.Trace
                 activity.TagObjects,
                 activity.Links);
 
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
+            var samplingResult = this.sampler.ShouldSample(samplingParameters);
+
+            switch (samplingResult.Decision)
             {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                case SamplingDecision.NotRecord:
+                    activity.IsAllDataRequested = false;
+                    break;
+                case SamplingDecision.Record:
+                    activity.IsAllDataRequested = true;
+                    break;
+                case SamplingDecision.RecordAndSampled:
+                    activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                    break;
             }
         }
     }

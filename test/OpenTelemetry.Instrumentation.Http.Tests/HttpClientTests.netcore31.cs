@@ -124,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 
-            var normalizedAttributes = span.TagObjects.Where(kv => !kv.Key.StartsWith("ot")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
+            var normalizedAttributes = span.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
             var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
             Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);

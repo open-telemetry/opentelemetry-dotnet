@@ -16,7 +16,7 @@
 using System;
 using System.Globalization;
 
-namespace OpenTelemetry.Trace.Samplers
+namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Samples traces according to the specified probability.
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace.Samplers
             // code is executed in-line for every Activity creation).
             Span<byte> traceIdBytes = stackalloc byte[16];
             samplingParameters.TraceId.CopyTo(traceIdBytes);
-            return Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound ? new SamplingResult(true) : new SamplingResult(false);
+            return new SamplingResult(Math.Abs(this.GetLowerLong(traceIdBytes)) < this.idUpperBound);
         }
 
         private long GetLowerLong(ReadOnlySpan<byte> bytes)

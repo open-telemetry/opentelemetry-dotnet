@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class ActivityExtensions
     {
-        internal const string ResourcePropertyName = "ot.resource";
+        internal const string ResourcePropertyName = "otel.resource";
 
         /// <summary>
         /// Gets the Resource associated with the Activity.

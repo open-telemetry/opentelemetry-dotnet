@@ -20,6 +20,6 @@ internal class MySampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        return new SamplingResult(false);
+        return new SamplingResult(SamplingDecision.NotRecord);
     }
 }
