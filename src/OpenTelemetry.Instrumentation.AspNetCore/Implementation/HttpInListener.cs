@@ -67,12 +67,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var request = context.Request;
             if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted from w3ctraceparent header or
-                // using the format TextFormat supports.
-
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
-                if (ctx.ActivityContext != default)
+
+                if (ctx.ActivityContext != activity.Context)
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
@@ -80,17 +77,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     Activity newOne = new Activity(ActivityNameByHttpInListener);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
-                    if (ctx.ActivityBaggage != null)
-                    {
-                        foreach (var baggageItem in ctx.ActivityBaggage)
-                        {
-                            newOne.AddBaggage(baggageItem.Key, baggageItem.Value);
-                        }
-                    }
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
                     activity = newOne;
+                }
+
+                if (ctx.ActivityBaggage != null)
+                {
+                    foreach (var baggageItem in ctx.ActivityBaggage)
+                    {
+                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
+                    }
                 }
             }
 

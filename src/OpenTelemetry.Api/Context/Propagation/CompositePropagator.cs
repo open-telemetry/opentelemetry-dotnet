@@ -31,9 +31,9 @@ namespace OpenTelemetry.Context.Propagation
         /// Initializes a new instance of the <see cref="CompositePropagator"/> class.
         /// </summary>
         /// <param name="textFormats">List of <see cref="ITextFormat"/> wire context propagator.</param>
-        public CompositePropagator(List<ITextFormat> textFormats)
+        public CompositePropagator(IEnumerable<ITextFormat> textFormats)
         {
-            this.textFormats = textFormats ?? throw new ArgumentNullException(nameof(textFormats));
+            this.textFormats = new List<ITextFormat>(textFormats ?? throw new ArgumentNullException(nameof(textFormats)));
         }
 
         /// <inheritdoc/>
