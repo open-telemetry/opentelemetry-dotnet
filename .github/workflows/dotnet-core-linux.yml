@@ -1,4 +1,4 @@
-name: .NET Linux
+name: Linux
 
 on:
   pull_request:
@@ -26,7 +26,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
-    
+
     # For linux, we have to apply a workaround to enable both dotnet versions at same time
     - name: .net SxS
       run: |
