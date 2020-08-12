@@ -20,9 +20,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Testing.Export;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Tests.Implementation.Trace;
+using OpenTelemetry.Tests.Shared;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests

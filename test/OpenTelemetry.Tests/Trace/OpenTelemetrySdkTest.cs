@@ -19,7 +19,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Implementation.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class OpenTelemetrySdkTest
     {

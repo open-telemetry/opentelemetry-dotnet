@@ -15,11 +15,10 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Tests.Implementation.Testing.Export;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Tests.Shared;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Implementation.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class TraceSdkTest
     {

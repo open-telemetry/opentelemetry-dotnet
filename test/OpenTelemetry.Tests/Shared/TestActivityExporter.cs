@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Testing.Export
+namespace OpenTelemetry.Tests.Shared
 {
     public class TestActivityExporter : ActivityExporter
     {

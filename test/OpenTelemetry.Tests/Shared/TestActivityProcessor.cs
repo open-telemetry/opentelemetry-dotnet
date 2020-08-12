@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Tests.Implementation.Testing.Export
+namespace OpenTelemetry.Tests.Shared
 {
     public class TestActivityProcessor : ActivityProcessor
     {

@@ -18,9 +18,9 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Testing.Export;
-using OpenTelemetry.Tests.Implementation.Trace;
+using OpenTelemetry.Tests.Shared;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
