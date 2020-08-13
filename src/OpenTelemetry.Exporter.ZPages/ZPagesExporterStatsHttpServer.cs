@@ -105,6 +105,7 @@ namespace OpenTelemetry.Exporter.ZPages
             if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();
+                this.Dispose();
             }
         }
 
