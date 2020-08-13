@@ -60,21 +60,21 @@ namespace Examples.AspNetCore
                     services.AddOpenTelemetry((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .UseJaegerExporter(o =>
+                        .AddJaegerExporter(jaegerOptions =>
                         {
-                            o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
-                            o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
                         }));
                     break;
                 case "zipkin":
                     services.AddOpenTelemetry((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .UseZipkinExporter(o =>
+                        .AddZipkinExporter(zipkinOptions =>
                         {
-                            o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
-                            o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
+                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                         }));
                     break;
                 default:

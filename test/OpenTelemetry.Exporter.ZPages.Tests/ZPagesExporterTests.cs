@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         public void ZPagesExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseZPagesExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddZPagesExporter());
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .AddProcessor(testActivityProcessor)
-                .UseZPagesExporter()
+                .AddZPagesExporter()
                 .Build();
 
             var source = new ActivitySource(ActivitySourceName);
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
                             .AddProcessor(zpagesProcessor)
-                            .UseZPagesExporter()
+                            .AddZPagesExporter()
                             .Build();
 
             var source = new ActivitySource(ActivitySourceName);

@@ -37,7 +37,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("zpages-test")
                     .AddProcessor(zpagesProcessor)
-                    .UseZPagesExporter()
+                    .AddZPagesExporter()
                     .Build();
 
             ActivitySource activitySource = new ActivitySource("zpages-test");
