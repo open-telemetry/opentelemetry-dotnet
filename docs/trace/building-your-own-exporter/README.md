@@ -33,7 +33,7 @@ dotnet run
 
 ## References
 
-* [Exporter specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)  
+* [Exporter specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)
 * Exporters provided by this repository.
   * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
   * [Jaeger](../../../src/OpenTelemetry.Exporter.Jaeger/README.md)
