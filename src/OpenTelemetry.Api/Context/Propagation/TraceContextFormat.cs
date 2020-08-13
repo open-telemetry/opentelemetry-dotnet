@@ -213,22 +213,10 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
+            byte options1;
             try
             {
                 spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan().Slice(VersionAndTraceIdLength, SpanIdLength));
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // it's ok to still parse tracestate
-                return false;
-            }
-
-            byte options0;
-            byte options1;
-
-            try
-            {
-                options0 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]);
                 options1 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
             }
             catch (ArgumentOutOfRangeException)

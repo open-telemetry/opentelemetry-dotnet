@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return (this.Activity == null) ? false : this.Activity.IsAllDataRequested;
+                return this.Activity != null && this.Activity.IsAllDataRequested;
             }
         }
 

@@ -52,7 +52,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
         {
             var context = activity.Context;
-            var startTimestamp = activity.StartTimeUtc.ToEpochMicroseconds();
 
             string parentId = EncodeSpanId(activity.ParentSpanId);
             if (string.Equals(parentId, InvalidSpanId, StringComparison.Ordinal))
@@ -112,7 +111,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 ToActivityKind(activity),
                 activity.DisplayName,
                 activity.StartTimeUtc.ToEpochMicroseconds(),
-                duration: (long)activity.Duration.ToEpochMicroseconds(),
+                duration: activity.Duration.ToEpochMicroseconds(),
                 localEndpoint,
                 remoteEndpoint,
                 annotations,

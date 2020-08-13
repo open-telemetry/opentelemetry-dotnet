@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 #if NETFRAMEWORK
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 #endif
 
@@ -35,14 +34,8 @@ namespace OpenTelemetry.Utils
         internal static readonly double StopwatchTicksToTimeSpanTicks = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
 #if NETFRAMEWORK
-        private static readonly Timer SyncTimeUpdater;
+        private static readonly Timer SyncTimeUpdater = InitializeSyncTimer();
         private static TimeSync timeSync = new TimeSync();
-
-        [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline", Justification = "Enforcing static fields initialization.")]
-        static PreciseTimestamp()
-        {
-            SyncTimeUpdater = InitializeSyncTimer();
-        }
 #endif
 
         /// <summary>

@@ -153,9 +153,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public bool Equals(SpanContext ctx)
+        public bool Equals(SpanContext other)
         {
-            return this.ActivityContext.Equals(ctx.ActivityContext);
+            return this.ActivityContext.Equals(other.ActivityContext);
         }
 
         private bool IsTraceIdValid(ActivityTraceId traceId)
