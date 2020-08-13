@@ -89,10 +89,17 @@ namespace OpenTelemetry.Trace
                 // available in sampling callbacks and will be the actual
                 // traceid used, if activity ends up getting created.
                 AutoGenerateRootContextTraceId = true,
-
-                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler),
             };
+
+            if (sampler is AlwaysOnSampler)
+            {
+                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllDataAndRecorded;
+            }
+            else
+            {
+                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler);
+            }
 
             if (sources != null & sources.Any())
             {
@@ -195,11 +202,6 @@ namespace OpenTelemetry.Trace
         {
             if (sampler != null && !(sampler is AlwaysOffSampler))
             {
-                if (sampler is AlwaysOnSampler)
-                {
-                    return ActivityDataRequest.AllDataAndRecorded;
-                }
-
                 // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
                 // Parent.TraceId will always be the TraceId of the to-be-created Activity,
                 // if it get created.
