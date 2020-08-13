@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
     /// This class is meant to be only used when writing new Instrumentation for
     /// libraries which are already instrumented with DiagnosticSource/Activity
     /// following this doc:
-    /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md
+    /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md.
     /// </remarks>
     public class ActivitySourceAdapter
     {
