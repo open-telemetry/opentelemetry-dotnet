@@ -55,6 +55,20 @@ namespace OpenTelemetry.Context
         public IEnumerable<KeyValuePair<string, string>> Correlations => this.activity?.Baggage ?? EmptyBaggage;
 
         /// <summary>
+        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator ==(CorrelationContext left, CorrelationContext right) => left.Equals(right);
+
+        /// <summary>
+        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator !=(CorrelationContext left, CorrelationContext right) => !(left == right);
+
+        /// <summary>
         /// Retrieves a correlation item.
         /// </summary>
         /// <param name="key">Correlation item key.</param>
@@ -76,21 +90,7 @@ namespace OpenTelemetry.Context
         }
 
         /// <summary>
-        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
-        /// </summary>
-        /// <param name="left">First Entry to compare.</param>
-        /// <param name="right">Second Entry to compare.</param>
-        public static bool operator ==(CorrelationContext left, CorrelationContext right) => left.Equals(right);
-
-        /// <summary>
-        /// Compare two entries of <see cref="CorrelationContext"/> for equality.
-        /// </summary>
-        /// <param name="left">First Entry to compare.</param>
-        /// <param name="right">Second Entry to compare.</param>
-        public static bool operator !=(CorrelationContext left, CorrelationContext right) => !(left == right);
-
-        /// <summary>
-        /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.
+        /// Adds correlation items.
         /// </summary>
         /// <param name="correlations">Correlation items.</param>
         /// <returns>The <see cref="CorrelationContext"/> instance for chaining.</returns>
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return this.entries.GetHashCode();
+            return this.Correlations.GetHashCode();
         }
     }
 }
