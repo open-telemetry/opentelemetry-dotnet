@@ -19,25 +19,25 @@
   Package](https://www.nuget.org/packages/opentelemetry).
 * Depending on user's choice and load on the application, `ExportAsync` may get
   called with zero or more activities.
-* Exporters should expect to receive only sampled-in and ended activities.
+* Exporters will only receive sampled-in and ended activities.
 * Exporters must not throw.
 * Exporters should not modify activities they receive (the same activity may be
   exported again by different exporter).
-* Exporters are expected to handle failures and destination appropriate retry
-  logic.
+* Any retry logic that is required by the exporter is the responsibility of the
+  exporter, as the SDK does not implement retry logic.
 
 ## Example
 
-A sample exporter, which simply writes activity name
-to the console is shown [here](./MyExporter.cs).
+A sample exporter, which simply writes activity name to the console is shown
+[here](./MyExporter.cs).
 
-Apart from the exporter itself, you should also provide extensions methods to
-simplify adding the exporter to the `TracerProvider` as shown
-[here](./MyExporterHelperExtensions.cs). This allows users to add the Exporter to
-the `TracerProvider` as shown in the sample code [here](./Program.cs).
+Apart from the exporter itself, you should also provide extension methods as
+shown [here](./MyExporterHelperExtensions.cs). This allows users to add the
+Exporter to the `TracerProvider` as shown in the sample code
+[here](./Program.cs).
 
-To run the full example code demonstrating the exporter, run
-the following command from this folder.
+To run the full example code demonstrating the exporter, run the following
+command from this folder.
 
 ```sh
 dotnet run
