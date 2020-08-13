@@ -193,11 +193,13 @@ namespace OpenTelemetry.Trace
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            var isRootSpan = /*TODO: Put back once AutoGenerateRootContextTraceId is removed.
-                              options.Parent.TraceId == default ||*/ options.Parent.SpanId == default;
-
-            if (sampler != null)
+            if (sampler != null && !(sampler is AlwaysOffSampler))
             {
+                if (sampler is AlwaysOnSampler)
+                {
+                    return ActivityDataRequest.AllDataAndRecorded;
+                }
+
                 // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
                 // Parent.TraceId will always be the TraceId of the to-be-created Activity,
                 // if it get created.
@@ -225,6 +227,9 @@ namespace OpenTelemetry.Trace
                     return activityDataRequest;
                 }
             }
+
+            var isRootSpan = /*TODO: Put back once AutoGenerateRootContextTraceId is removed.
+                              options.Parent.TraceId == default ||*/ options.Parent.SpanId == default;
 
             // If it is the root span select PropagationData so the trace ID is preserved
             // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
