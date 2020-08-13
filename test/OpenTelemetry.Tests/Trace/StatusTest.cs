@@ -41,9 +41,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var status1 = new Status(StatusCanonicalCode.Ok);
             var status2 = new Status(StatusCanonicalCode.Ok);
+            object status3 = new Status(StatusCanonicalCode.Ok);
 
             Assert.Equal(status1, status2);
             Assert.True(status1 == status2);
+            Assert.True(status1.Equals(status3));
         }
 
         [Fact]
@@ -61,9 +63,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var status1 = new Status(StatusCanonicalCode.Ok);
             var status2 = new Status(StatusCanonicalCode.Unknown);
+            object notStatus = 1;
 
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
+            Assert.False(status1.Equals(notStatus));
         }
 
         [Fact]
@@ -84,6 +88,20 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotEqual(status1, status2);
             Assert.True(status1 != status2);
+        }
+
+        [Fact]
+        public void TestToString()
+        {
+            var status = new Status(StatusCanonicalCode.Ok);
+            Assert.Equal($"Status{{CanonicalCode={status.CanonicalCode}, Description={status.Description}}}", status.ToString());
+        }
+
+        [Fact]
+        public void TestGetHashCode()
+        {
+            var status = new Status(StatusCanonicalCode.Ok);
+            Assert.NotEqual(0, status.GetHashCode());
         }
     }
 }

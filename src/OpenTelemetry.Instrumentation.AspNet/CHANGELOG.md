@@ -9,6 +9,12 @@
     Baggage](https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md)
     header will now be parsed and set on incoming Http spans.
 
+## 0.4.0-beta.2
+
+Released 2020-07-24
+
+* First beta release
+
 ## 0.3.0-beta
 
 Released 2020-07-23

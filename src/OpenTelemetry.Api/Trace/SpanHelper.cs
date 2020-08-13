@@ -25,7 +25,6 @@ namespace OpenTelemetry.Trace
     public static class SpanHelper
     {
         private static readonly Status DefaultStatus = default;
-
         private static readonly Dictionary<StatusCanonicalCode, string> StatusCanonicalCodeToStringCache = new Dictionary<StatusCanonicalCode, string>()
         {
             [StatusCanonicalCode.Ok] = StatusCanonicalCode.Ok.ToString(),

@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Sampling decision.
     /// </summary>
-    public readonly struct SamplingResult
+    public readonly struct SamplingResult : System.IEquatable<SamplingResult>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
@@ -103,6 +103,12 @@ namespace OpenTelemetry.Trace
             result = (31 * result) + this.Decision.GetHashCode();
             result = (31 * result) + this.Attributes.GetHashCode();
             return result;
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(SamplingResult that)
+        {
+            return this.Decision == that.Decision && this.Attributes.SequenceEqual(that.Attributes);
         }
     }
 }

@@ -24,19 +24,15 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerProviderBuilder
     {
+        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<ActivityProcessor> processors = new List<ActivityProcessor>();
-
         private readonly List<string> sources = new List<string>();
-
-        private Sampler sampler = new ParentOrElseSampler(new AlwaysOnSampler());
-
         private Resource resource = Resource.Empty;
+        private Sampler sampler = new ParentOrElseSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilder()
         {
         }
-
-        internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
 
         /// <summary>
         /// Sets sampler.
@@ -45,6 +41,11 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder SetSampler(Sampler sampler)
         {
+            if (sampler == null)
+            {
+                throw new ArgumentNullException(nameof(sampler));
+            }
+
             this.sampler = sampler;
             return this;
         }
@@ -56,7 +57,12 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder SetResource(Resource resource)
         {
-            this.resource = resource ?? Resource.Empty;
+            if (resource == null)
+            {
+                throw new ArgumentNullException(nameof(resource));
+            }
+
+            this.resource = resource;
             return this;
         }
 
@@ -90,16 +96,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds processor to the provider.
         /// </summary>
-        /// <param name="activityProcessor">Activity processor to add.</param>
+        /// <param name="processor">Activity processor to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddProcessor(ActivityProcessor activityProcessor)
+        public TracerProviderBuilder AddProcessor(ActivityProcessor processor)
         {
-            if (activityProcessor == null)
+            if (processor == null)
             {
-                throw new ArgumentNullException(nameof(activityProcessor));
+                throw new ArgumentNullException(nameof(processor));
             }
 
-            this.processors.Add(activityProcessor);
+            this.processors.Add(processor);
 
             return this;
         }
@@ -119,12 +125,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
-            if (this.InstrumentationFactories == null)
-            {
-                this.InstrumentationFactories = new List<InstrumentationFactory>();
-            }
-
-            this.InstrumentationFactories.Add(
+            this.instrumentationFactories.Add(
                 new InstrumentationFactory(
                     typeof(TInstrumentation).Name,
                     "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
@@ -135,7 +136,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build()
         {
-            return new TracerProviderSdk(this.sources, this.processors, this.InstrumentationFactories, this.sampler, this.resource);
+            return new TracerProviderSdk(this.resource, this.sources, this.instrumentationFactories, this.sampler, this.processors);
         }
 
         internal readonly struct InstrumentationFactory
