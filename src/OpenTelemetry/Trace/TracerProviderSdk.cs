@@ -46,6 +46,12 @@ namespace OpenTelemetry.Trace
             List<ActivityProcessor> processors)
         {
             this.resource = resource;
+            this.sampler = sampler;
+
+            foreach (var processor in processors)
+            {
+                this.AddProcessor(processor);
+            }
 
             if (instrumentationFactories.Any())
             {
@@ -54,13 +60,6 @@ namespace OpenTelemetry.Trace
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory(adapter));
                 }
-            }
-
-            this.sampler = sampler;
-
-            foreach (var processor in processors)
-            {
-                this.AddProcessor(processor);
             }
 
             var listener = new ActivityListener
