@@ -101,6 +101,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();
+                this.httpListener.Close();
             }
         }
 

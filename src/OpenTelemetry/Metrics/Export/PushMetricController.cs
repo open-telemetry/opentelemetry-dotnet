@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics.Export
 
         internal async Task ExportAsync(IEnumerable<Metric> metricToExport, CancellationToken cancellationToken)
         {
-            var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
+            var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken).ConfigureAwait(false);
             if (exportResult != MetricExporter.ExportResult.Success)
             {
                 OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics.Export
                 try
                 {
                     var metricToExport = this.Collect(sw);
-                    await this.ExportAsync(metricToExport, cancellationToken);
+                    await this.ExportAsync(metricToExport, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

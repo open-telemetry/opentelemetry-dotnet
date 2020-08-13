@@ -122,6 +122,19 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void Equality4()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+            var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            object context2 = new SpanContext(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+
+            Assert.Equal(context1, context2);
+            Assert.True(context1.Equals(context2));
+        }
+
+        [Fact]
         public void Not_Equality_DifferentTraceId()
         {
             var spanId = ActivitySpanId.CreateRandom();
@@ -181,6 +194,17 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotEqual(context1, context2);
             Assert.True(context1 != context2);
+        }
+
+        [Fact]
+        public void TestGetHashCode()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
+            var context1 = new SpanContext(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
+
+            Assert.NotEqual(0, context1.GetHashCode());
         }
     }
 }

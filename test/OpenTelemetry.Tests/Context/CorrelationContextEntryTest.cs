@@ -63,5 +63,40 @@ namespace OpenTelemetry.Context.Tests
             Assert.Equal("foo", entry.Key);
             Assert.Empty(entry.Value);
         }
+
+        [Fact]
+        public void TestEquality()
+        {
+            var entry1 = new CorrelationContextEntry("key", "value1");
+            var entry2 = new CorrelationContextEntry("key", "value1");
+            object entry3 = entry2;
+            var entry4 = new CorrelationContextEntry("key", "value2");
+
+            Assert.True(entry1 == entry2);
+            Assert.True(entry1.Equals(entry2));
+            Assert.True(entry1.Equals(entry3));
+
+            Assert.True(entry1 != entry4);
+        }
+
+        [Fact]
+        public void TestToString()
+        {
+            var entry1 = new CorrelationContextEntry("key1", "value1");
+            Assert.Equal("CorrelationContextEntry{Key=key1, Value=value1}", entry1.ToString());
+
+            var entry2 = new CorrelationContextEntry(null, "value1");
+            Assert.Equal("CorrelationContextEntry{Key=, Value=value1}", entry2.ToString());
+        }
+
+        [Fact]
+        public void TestGetHashCode()
+        {
+            var entry1 = new CorrelationContextEntry("key1", "value1");
+            Assert.NotEqual(0, entry1.GetHashCode());
+
+            var entry2 = new CorrelationContextEntry(null, "value1");
+            Assert.NotEqual(0, entry2.GetHashCode());
+        }
     }
 }

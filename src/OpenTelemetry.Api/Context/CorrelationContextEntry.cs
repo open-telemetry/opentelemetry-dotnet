@@ -21,7 +21,7 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Distributed Context entry with the key, value and metadata.
     /// </summary>
-    public readonly struct CorrelationContextEntry
+    public readonly struct CorrelationContextEntry : System.IEquatable<CorrelationContextEntry>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CorrelationContextEntry"/> struct with the key and value.
@@ -94,32 +94,32 @@ namespace OpenTelemetry.Context
         public static bool operator !=(CorrelationContextEntry entry1, CorrelationContextEntry entry2) => !entry1.Equals(entry2);
 
         /// <inheritdoc/>
-        public override bool Equals(object o)
+        public override bool Equals(object obj)
         {
-            return o is CorrelationContextEntry that && this.Key == that.Key && this.Value == that.Value;
+            return obj is CorrelationContextEntry that && this.Key == that.Key && this.Value == that.Value;
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return this.Key is null ? "{}" : $"{nameof(CorrelationContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
+            return $"{nameof(CorrelationContextEntry)}{{{nameof(this.Key)}={this.Key}, {nameof(this.Value)}={this.Value}}}";
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            if (this.Key is null)
-            {
-                // Default instance
-                return 0;
-            }
-
             var h = 1;
             h *= 1000003;
             h ^= this.Key.GetHashCode();
             h *= 1000003;
             h ^= this.Value.GetHashCode();
             return h;
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(CorrelationContextEntry that)
+        {
+            return this.Key == that.Key && this.Value == that.Value;
         }
     }
 }
