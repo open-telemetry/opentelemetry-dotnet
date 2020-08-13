@@ -108,7 +108,7 @@ namespace OpenTelemetry.Trace
         public override Task ForceFlushAsync(CancellationToken cancellationToken)
         {
             var cur = this.head;
-            var task = cur.Value.ShutdownAsync(cancellationToken);
+            var task = cur.Value.ForceFlushAsync(cancellationToken);
 
             for (cur = cur.Next; cur != null; cur = cur.Next)
             {
