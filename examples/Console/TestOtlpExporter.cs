@@ -33,7 +33,11 @@ namespace Examples.Console
              *
              * Open a terminal window and run the OpenTelemetry Collector with an OTLP receiver, by running:
              *
+             *  - On Unix based systems use:
              *     docker run --rm -it -p 55680:55680 -v $(pwd):/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/opentelemetry-collector-otlp-example.yaml
+             *
+             *  - On Windows use:
+             *     docker run --rm -it -p 55680:55680 -v "%cd%":/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/opentelemetry-collector-otlp-example.yaml
              *
              * On another terminal window launch the OTLP example by running:
              *
