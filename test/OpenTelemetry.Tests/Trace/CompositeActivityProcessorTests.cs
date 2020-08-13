@@ -33,57 +33,32 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_CallsAllProcessorSequentially()
         {
-            bool start1Called = false;
-            bool start2Called = false;
-            bool end1Called = false;
-            bool end2Called = false;
-            var processor1 = new TestActivityProcessor(
-                ss =>
-            {
-                start1Called = true;
-                Assert.False(start2Called);
-                Assert.False(end1Called);
-                Assert.False(end2Called);
-            }, se =>
-            {
-                end1Called = true;
-                Assert.True(start1Called);
-                Assert.True(start2Called);
-                Assert.False(end2Called);
-            });
-            var processor2 = new TestActivityProcessor(
-                ss =>
-            {
-                start2Called = true;
-                Assert.True(start1Called);
-                Assert.False(end1Called);
-                Assert.False(end2Called);
-            }, se =>
-            {
-                end2Called = true;
-                Assert.True(start1Called);
-                Assert.True(start2Called);
-                Assert.True(end1Called);
-            });
+            var result = "";
 
-            var compositeActivityProcessor = new CompositeActivityProcessor(new[] { processor1, processor2 });
+            var p1 = new TestActivityProcessor(
+                activity => { result += "1"; },
+                activity => { result += "3"; });
+            var p2 = new TestActivityProcessor(
+                activity => { result += "2"; },
+                activity => { result += "4"; });
 
-            var activity = new Activity("somename");
-            compositeActivityProcessor.OnStart(activity);
-            Assert.True(start1Called);
-            Assert.True(start2Called);
+            var activity = new Activity("test");
 
-            compositeActivityProcessor.OnEnd(activity);
-            Assert.True(end1Called);
-            Assert.True(end2Called);
+            using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
+            {
+                processor.OnStart(activity);
+                processor.OnEnd(activity);
+            }
+
+            Assert.Equal(result, "1234");
         }
 
         [Fact]
         public void CompositeActivityProcessor_ProcessorThrows()
         {
             var p1 = new TestActivityProcessor(
-                ss => { throw new Exception("Start exception"); },
-                se => { throw new Exception("End exception"); });
+                activity => { throw new Exception("Start exception"); },
+                activity => { throw new Exception("End exception"); });
 
             var activity = new Activity("test");
 
