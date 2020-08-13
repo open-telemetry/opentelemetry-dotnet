@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZPagesExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +15,37 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Jaeger;
+
+using OpenTelemetry.Exporter.ZPages;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering a Jaeger exporter.
+    /// Extension methods to simplify registering of Zipkin exporter.
     /// </summary>
-    public static class TracerProviderBuilderExtensions
+    public static class ZPagesExporterHelperExtensions
     {
         /// <summary>
-        /// Registers a Jaeger exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
+        public static TracerProviderBuilder AddZPagesExporter(
+            this TracerProviderBuilder builder,
+            Action<ZPagesExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new JaegerExporterOptions();
+            var exporterOptions = new ZPagesExporterOptions();
             configure?.Invoke(exporterOptions);
-            var jaegerExporter = new JaegerExporter(exporterOptions);
+            var zpagesExporter = new ZPagesExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on JaegerExporterOptions
-            return builder.AddProcessor(new SimpleActivityProcessor(jaegerExporter));
+            // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(zpagesExporter));
         }
     }
 }

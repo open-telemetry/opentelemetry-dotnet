@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void OtlpExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseOtlpExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddOtlpExporter());
         }
 
         [Fact]
@@ -262,7 +262,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
                             .AddProcessor(testActivityProcessor)
-                            .UseOtlpExporter()
+                            .AddOtlpExporter()
                             .Build();
 
             var source = new ActivitySource(ActivitySourceName);

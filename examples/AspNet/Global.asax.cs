@@ -28,18 +28,18 @@ namespace Examples.AspNet
     public class WebApiApplication : HttpApplication
 #pragma warning restore SA1649 // File name should match first type name
     {
-        private IDisposable openTelemetry;
+        private IDisposable tracerProvider;
 
         protected void Application_Start()
         {
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                  .AddHttpClientInstrumentation()
                  .AddAspNetInstrumentation()
-                 .UseJaegerExporter(c =>
-                {
-                    c.AgentHost = "localhost";
-                    c.AgentPort = 6831;
-                })
+                 .AddJaegerExporter(jaegerOptions =>
+                 {
+                     jaegerOptions.AgentHost = "localhost";
+                     jaegerOptions.AgentPort = 6831;
+                 })
                  .Build();
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
@@ -50,7 +50,7 @@ namespace Examples.AspNet
 
         protected void Application_End()
         {
-            this.openTelemetry?.Dispose();
+            this.tracerProvider?.Dispose();
         }
     }
 }
