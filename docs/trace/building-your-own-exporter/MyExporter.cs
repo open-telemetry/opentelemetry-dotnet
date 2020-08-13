@@ -27,6 +27,10 @@ internal class MyExporter : ActivityExporter
     public override Task<ExportResult> ExportAsync(
         IEnumerable<Activity> batch, CancellationToken cancellationToken)
     {
+        // Exporter code which can generate further
+        // telemetry should do so inside SuppressInstrumentation
+        // scope. This suppresses telemetry from
+        // exporter's own code to avoid live-loop situation.
         using var scope = Sdk.SuppressInstrumentation.Begin();
 
         foreach (var activity in batch)

@@ -79,10 +79,10 @@ using var otel = Sdk.CreateTracerProvider(b => b
 * Metrics
   * [Building your own Exporter](../../docs/metrics/building-your-own-exporter.md)
 * Trace
-  * [Building your own Exporter](../../docs/trace/building-your-own-exporter.md)
+  * [Building your own Exporter](../../docs/trace/building-your-own-exporter/README.md)
   * [Building your own Instrumentation
     Library](../../docs/trace/building-your-own-instrumentation-library.md)
-  * [Building your own Sampler](../../docs/trace/building-your-own-sampler.md)
+  * [Building your own Sampler](../../docs/trace/building-your-own-sampler/README.md)
 
 ## References
 
