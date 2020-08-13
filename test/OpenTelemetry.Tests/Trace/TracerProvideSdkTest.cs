@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceSdkTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProvideSdkTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,19 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Tests.Shared;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class TraceSdkTest
+    public class TracerProvideSdkTest
     {
         private const string ActivitySourceName = "TraceSdkTest";
 
         [Fact]
-        public void TracerSdkInvokesSamplingWithCorrectParameters()
+        public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
@@ -185,6 +186,97 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(endCalled);
         }
 
+        [Fact]
+        public void TracerProvideSdkCreatesActivitySource()
+        {
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            TestInstrumentation testInstrumentation = null;
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddProcessor(testActivityProcessor)
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            var adapter = testInstrumentation.Adapter;
+            Activity activity = new Activity("test");
+            activity.Start();
+            adapter.Start(activity);
+            adapter.Stop(activity);
+            activity.Stop();
+
+            Assert.True(startCalled);
+            Assert.True(endCalled);
+
+            /*
+             * Uncomment when issue 1075 is fixed.
+            TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
+
+            bool startCalledNew = false;
+            bool endCalledNew = false;
+
+            testActivityProcessorNew.StartAction =
+                (a) =>
+                {
+                    startCalledNew = true;
+                };
+
+            testActivityProcessorNew.EndAction =
+                (a) =>
+                {
+                    endCalledNew = true;
+                };
+
+            tracerProvider.AddProcessor(testActivityProcessorNew);
+            Activity activityNew = new Activity("test");
+            activityNew.Start();
+            adapter.Start(activityNew);
+            adapter.Stop(activityNew);
+            activityNew.Stop();
+
+            Assert.True(startCalledNew);
+            Assert.True(endCalledNew);
+            */
+        }
+
+        [Fact]
+        public void TracerProvideSdkCreatesAndDiposesInstrumentation()
+        {
+            TestInstrumentation testInstrumentation = null;
+            var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            Assert.NotNull(testInstrumentation);
+            var adapter = testInstrumentation.Adapter;
+            Assert.NotNull(adapter);
+            Assert.False(testInstrumentation.IsDisposed);
+            tracerProvider.Dispose();
+            Assert.True(testInstrumentation.IsDisposed);
+        }
+
         private class TestSampler : Sampler
         {
             public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(SamplingDecision.RecordAndSampled);
@@ -195,6 +287,23 @@ namespace OpenTelemetry.Trace.Tests
             {
                 this.LatestSamplingParameters = samplingParameters;
                 return this.DesiredSamplingResult;
+            }
+        }
+
+        private class TestInstrumentation : IDisposable
+        {
+            public bool IsDisposed;
+            public ActivitySourceAdapter Adapter;
+
+            public TestInstrumentation(ActivitySourceAdapter adapter)
+            {
+                this.Adapter = adapter;
+                this.IsDisposed = false;
+            }
+
+            public void Dispose()
+            {
+                this.IsDisposed = true;
             }
         }
     }
