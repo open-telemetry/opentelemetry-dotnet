@@ -28,14 +28,14 @@ namespace OpenTelemetry.Trace
     public enum ExportResultSync
     {
         /// <summary>
-        /// Batch is successfully exported.
+        /// Batch export succeeded.
         /// </summary>
-        Succeeded = 0,
+        Success = 0,
 
         /// <summary>
         /// Batch export failed.
         /// </summary>
-        Failed = 1,
+        Failure = 1,
     }
 
     /// <summary>
