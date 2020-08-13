@@ -34,6 +34,11 @@ namespace OpenTelemetry
 
         internal static bool IsSuppressed => Slot.Get();
 
+        public static IDisposable Begin(bool value = true)
+        {
+            return new SuppressInstrumentationScope(value);
+        }
+
         /// <inheritdoc/>
         public void Dispose()
         {
@@ -42,11 +47,6 @@ namespace OpenTelemetry
                 Slot.Set(this.previousValue);
                 this.disposed = true;
             }
-        }
-
-        internal static IDisposable Begin(bool value = true)
-        {
-            return new SuppressInstrumentationScope(value);
         }
     }
 }
