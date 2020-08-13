@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Tests
                 processor.OnEnd(activity);
             }
 
-            Assert.Equal(result, "1234");
+            Assert.Equal("1234", result);
         }
 
         [Fact]
