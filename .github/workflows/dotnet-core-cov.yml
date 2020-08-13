@@ -1,4 +1,4 @@
-name: .NET Code Coverage
+name: Code Coverage
 
 on:
   push:
