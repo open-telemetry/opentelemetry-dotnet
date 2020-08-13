@@ -25,11 +25,11 @@ namespace OpenTelemetry.Tests
         {
             Assert.False(Sdk.SuppressInstrumentation);
 
-            using (var scope = Sdk.BeginSuppressInstrumentationScope())
+            using (var scope = SuppressInstrumentationScope.Begin())
             {
                 Assert.True(Sdk.SuppressInstrumentation);
 
-                using (var innerScope = Sdk.BeginSuppressInstrumentationScope())
+                using (var innerScope = SuppressInstrumentationScope.Begin())
                 {
                     innerScope.Dispose();
 
