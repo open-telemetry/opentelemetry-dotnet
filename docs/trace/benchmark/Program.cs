@@ -72,20 +72,20 @@ public class Program
             });
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(null)
+                .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithOneProcessor.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(null)
+                .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithTwoProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(null)
+                .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithThreeProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())

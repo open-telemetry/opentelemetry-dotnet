@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Span execution status.
     /// </summary>
-    public readonly struct Status
+    public readonly struct Status : System.IEquatable<Status>
     {
         /// <summary>
         /// The operation completed successfully.
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Trace
         {
             var result = 1;
             result = (31 * result) + this.CanonicalCode.GetHashCode();
-            result = (31 * result) + this.Description.GetHashCode();
+            result = (31 * result) + (this.Description?.GetHashCode() ?? 0);
             return result;
         }
 
@@ -228,6 +228,12 @@ namespace OpenTelemetry.Trace
                 + nameof(this.CanonicalCode) + "=" + this.CanonicalCode + ", "
                 + nameof(this.Description) + "=" + this.Description
                 + "}";
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(Status that)
+        {
+            return this.IsValid == that.IsValid && this.CanonicalCode == that.CanonicalCode && this.Description == that.Description;
         }
     }
 }

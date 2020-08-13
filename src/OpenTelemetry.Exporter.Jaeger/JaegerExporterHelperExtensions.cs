@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="JaegerExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +15,34 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Exporter.Jaeger;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of Zipkin exporter.
+    /// Extension methods to simplify registering a Jaeger exporter.
     /// </summary>
-    public static class TracerProviderBuilderExtensions
+    public static class JaegerExporterHelperExtensions
     {
         /// <summary>
-        /// Registers a Zipkin exporter that will receive <see cref="System.Diagnostics.Activity"/> instances.
+        /// Adds Jaeger exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null)
+        public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new ZipkinExporterOptions();
+            var exporterOptions = new JaegerExporterOptions();
             configure?.Invoke(exporterOptions);
-            var zipkinExporter = new ZipkinExporter(exporterOptions);
+            var jaegerExporter = new JaegerExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
-            return builder.AddProcessor(new SimpleActivityProcessor(zipkinExporter));
+            // TODO: Pick Simple vs Batching based on JaegerExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(jaegerExporter));
         }
     }
 }

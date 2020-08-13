@@ -59,9 +59,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var link1 = new Link(this.spanContext);
             var link2 = new Link(this.spanContext);
+            object link3 = new Link(this.spanContext);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
+            Assert.True(link1.Equals(link3));
         }
 
         [Fact]
@@ -69,9 +71,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var link1 = new Link(this.spanContext, this.tags);
             var link2 = new Link(this.spanContext, this.tags);
+            object link3 = new Link(this.spanContext, this.tags);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
+            Assert.True(link1.Equals(link3));
         }
 
         [Fact]
@@ -94,6 +98,13 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotEqual(link1, link2);
             Assert.True(link1 != link2);
+        }
+
+        [Fact]
+        public void TestGetHashCode()
+        {
+            var link1 = new Link(this.spanContext, this.tags);
+            Assert.NotEqual(0, link1.GetHashCode());
         }
 
         public void Dispose()

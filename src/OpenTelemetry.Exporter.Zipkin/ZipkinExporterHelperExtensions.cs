@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZipkinExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +15,34 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
+using OpenTelemetry.Exporter.Zipkin;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
+    /// Extension methods to simplify registering of Zipkin exporter.
     /// </summary>
-    public static class TracerProviderBuilderExtensions
+    public static class ZipkinExporterHelperExtensions
     {
         /// <summary>
-        /// Enables the OpenTelemetry Protocol (OTLP) exporter.
+        /// Adds Zipkin exporter to the TracerProvider.
         /// </summary>
-        /// <param name="builder">Open Telemetry builder to use.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder UseOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static TracerProviderBuilder AddZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new OtlpExporterOptions();
+            var exporterOptions = new ZipkinExporterOptions();
             configure?.Invoke(exporterOptions);
-            var otlpExporter = new OtlpExporter(exporterOptions);
+            var zipkinExporter = new ZipkinExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on OtlpExporterOptions
-            return builder.AddProcessor(new SimpleActivityProcessor(otlpExporter));
+            // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
+            return builder.AddProcessor(new SimpleActivityProcessor(zipkinExporter));
         }
     }
 }

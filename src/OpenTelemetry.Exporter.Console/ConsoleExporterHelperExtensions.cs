@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     public static class ConsoleExporterHelperExtensions
     {
         /// <summary>
-        /// Registers a ConsoleActivity exporter to a processing pipeline.
+        /// Adds Console exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>

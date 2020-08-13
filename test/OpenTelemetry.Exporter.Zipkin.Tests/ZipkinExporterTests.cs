@@ -88,7 +88,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         public void ZipkinExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseZipkinExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
         }
 
         [Theory]
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .AddProcessor(testActivityProcessor)
-                .UseZipkinExporter(o =>
+                .AddZipkinExporter(o =>
                 {
                     o.ServiceName = "test-zipkin";
                     o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");

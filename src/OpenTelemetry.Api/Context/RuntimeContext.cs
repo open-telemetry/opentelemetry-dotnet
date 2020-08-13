@@ -23,7 +23,7 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Generic runtime context management API.
     /// </summary>
-    public sealed class RuntimeContext
+    public static class RuntimeContext
     {
         private static readonly ConcurrentDictionary<string, object> Slots = new ConcurrentDictionary<string, object>();
 
