@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_CallsAllProcessorSequentially()
         {
-            var result = "";
+            var result = string.Empty;
 
             var p1 = new TestActivityProcessor(
                 activity => { result += "1"; },
