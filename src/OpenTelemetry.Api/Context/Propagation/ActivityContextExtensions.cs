@@ -30,7 +30,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <returns>whether the context is a valid one or not.</returns>
         public static bool IsValid(this ActivityContext ctx)
         {
-            return !(ctx == default);
+            return ctx != default;
         }
     }
 }

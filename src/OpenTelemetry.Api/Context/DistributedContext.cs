@@ -70,6 +70,26 @@ namespace OpenTelemetry.Context
         public CorrelationContext CorrelationContext => this.correlationContext;
 
         /// <summary>
+        /// Compare two entries of <see cref="DistributedContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator ==(DistributedContext left, DistributedContext right)
+        {
+            return left.Equals(right);
+        }
+
+        /// <summary>
+        /// Compare two entries of <see cref="DistributedContext"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator !=(DistributedContext left, DistributedContext right)
+        {
+            return !(left == right);
+        }
+
+        /// <summary>
         /// Sets the current <see cref="DistributedContext"/>.
         /// </summary>
         /// <param name="context">Context to set as current.</param>
@@ -80,6 +100,18 @@ namespace OpenTelemetry.Context
         public bool Equals(DistributedContext other)
         {
             return this.CorrelationContext.Equals(other.CorrelationContext);
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            return obj is DistributedContext context && this.Equals(context);
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return this.correlationContext.GetHashCode();
         }
     }
 }

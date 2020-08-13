@@ -111,18 +111,24 @@ namespace OpenTelemetry.Context.Tests
         {
             var dc1 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
             var dc2 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V2) });
+            object odc2 = dc2;
             var dc3 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K2, V2), new CorrelationContextEntry(K1, V1) });
             var dc4 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V1), new CorrelationContextEntry(K2, V1) });
             var dc5 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(2) { new CorrelationContextEntry(K1, V2), new CorrelationContextEntry(K2, V1) });
+            var dc6 = CorrelationContextBuilder.CreateContext(new List<CorrelationContextEntry>(3) { new CorrelationContextEntry(K1, V2) });
 
             Assert.True(dc1.Equals(dc2));
+            Assert.True(dc1.Equals(odc2));
+            Assert.True(dc1 == dc2);
             Assert.True(dc1.Equals(dc3));
 
             Assert.False(dc1.Equals(dc4));
+            Assert.True(dc1 != dc4);
             Assert.False(dc2.Equals(dc4));
             Assert.False(dc3.Equals(dc4));
             Assert.False(dc5.Equals(dc4));
             Assert.False(dc4.Equals(dc5));
+            Assert.False(dc5.Equals(dc6));
         }
     }
 }
