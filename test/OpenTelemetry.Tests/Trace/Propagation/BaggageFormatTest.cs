@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace OpenTelemetry.Context.Propagation.Test
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class BaggageFormatTest
     {
@@ -27,6 +27,12 @@ namespace OpenTelemetry.Context.Propagation.Test
             {
                 d.TryGetValue(k, out var v);
                 return new string[] { v };
+            };
+
+        private static readonly Func<IList<KeyValuePair<string, string>>, string, IEnumerable<string>> GetterList =
+            (d, k) =>
+            {
+                return d.Where(i => i.Key == k).Select(i => i.Value);
             };
 
         private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
@@ -81,6 +87,32 @@ namespace OpenTelemetry.Context.Propagation.Test
 
             Assert.Equal("name", array[0].Key);
             Assert.Equal("test", array[0].Value);
+        }
+
+        [Fact]
+        public void ValidateMultipleBaggageExtraction()
+        {
+            var carrier = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("baggage", "name1=test1"),
+                new KeyValuePair<string, string>("baggage", "name2=test2"),
+                new KeyValuePair<string, string>("baggage", "name2=test2"),
+            };
+
+            var textFormatContext = this.baggage.Extract(default, carrier, GetterList);
+
+            Assert.False(textFormatContext == default);
+            Assert.True(textFormatContext.ActivityContext == default);
+
+            Assert.Equal(2, textFormatContext.ActivityBaggage.Count());
+
+            var array = textFormatContext.ActivityBaggage.ToArray();
+
+            Assert.Equal("name1", array[0].Key);
+            Assert.Equal("test1", array[0].Value);
+
+            Assert.Equal("name2", array[1].Key);
+            Assert.Equal("test2", array[1].Value);
         }
 
         [Fact]

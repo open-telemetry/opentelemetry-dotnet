@@ -75,6 +75,24 @@ namespace OpenTelemetry.Context
             return this;
         }
 
+        /// <summary>
+        /// Adds correlation items.
+        /// </summary>
+        /// <param name="correlations">Correlation items.</param>
+        /// <returns>The <see cref="CorrelationContext"/> instance for chaining.</returns>
+        public CorrelationContext AddCorrelation(IEnumerable<KeyValuePair<string, string>> correlations)
+        {
+            if (correlations != null)
+            {
+                foreach (KeyValuePair<string, string> correlation in correlations)
+                {
+                    this.activity?.AddBaggage(correlation.Key, correlation.Value);
+                }
+            }
+
+            return this;
+        }
+
         /// <inheritdoc/>
         public bool Equals(CorrelationContext other)
         {
