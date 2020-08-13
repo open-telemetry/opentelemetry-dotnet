@@ -31,6 +31,7 @@ namespace OpenTelemetry.Trace
         private readonly Resource resource;
         private readonly Sampler sampler;
         private ActivityProcessor processor;
+        private ActivitySourceAdapter adapter;
 
         static TracerProviderSdk()
         {
@@ -55,10 +56,10 @@ namespace OpenTelemetry.Trace
 
             if (instrumentationFactories.Any())
             {
-                var adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
+                this.adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory(adapter));
+                    this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
                 }
             }
 
@@ -173,6 +174,8 @@ namespace OpenTelemetry.Trace
                     processor,
                 });
             }
+
+            this.adapter?.UpdateProcessor(this.processor);
 
             return this;
         }
