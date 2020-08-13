@@ -58,7 +58,7 @@ namespace OpenTelemetry
         ///     }
         /// </code>
         /// </remarks>
-        public static SuppressInstrumentationScope BeginSuppressInstrumentationScope(bool value = true) => SuppressInstrumentationScope.Begin(value);
+        public static IDisposable BeginSuppressInstrumentationScope(bool value = true) => SuppressInstrumentationScope.Begin(value);
 
         /// <summary>
         /// Creates MeterProvider with the configuration provided.

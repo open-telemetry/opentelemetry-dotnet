@@ -44,7 +44,7 @@ namespace OpenTelemetry
             }
         }
 
-        internal static SuppressInstrumentationScope Begin(bool value = true)
+        internal static IDisposable Begin(bool value = true)
         {
             return new SuppressInstrumentationScope(value);
         }
