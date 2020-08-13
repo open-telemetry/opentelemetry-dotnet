@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderSdk : TracerProvider
     {
-        private readonly List<object> instrumentations;
+        private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Resource resource;
         private readonly Sampler sampler;
@@ -39,25 +39,22 @@ namespace OpenTelemetry.Trace
         }
 
         internal TracerProviderSdk(
+            Resource resource,
             IEnumerable<string> sources,
-            List<ActivityProcessor> processors,
-            IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories = null,
-            Sampler sampler = null,
-            Resource resource = null)
+            IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
+            Sampler sampler,
+            List<ActivityProcessor> processors)
         {
+            this.resource = resource;
+            this.sampler = sampler;
+
             foreach (var processor in processors)
             {
                 this.AddProcessor(processor);
             }
 
-            this.sampler = sampler;
-
-            this.resource = resource;
-
-            if (instrumentationFactories != null)
+            if (instrumentationFactories.Any())
             {
-                // TODO: check if individual element is null
-                this.instrumentations = new List<object>();
                 var adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
@@ -108,7 +105,7 @@ namespace OpenTelemetry.Trace
                 listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler);
             }
 
-            if (sources != null & sources.Any())
+            if (sources.Any())
             {
                 // Sources can be null. This happens when user
                 // is only interested in InstrumentationLibraries
@@ -207,34 +204,31 @@ namespace OpenTelemetry.Trace
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            if (sampler != null)
+            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
+            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
+            // if it get created.
+            ActivityTraceId traceId = options.Parent.TraceId;
+
+            var samplingParameters = new SamplingParameters(
+                options.Parent,
+                traceId,
+                options.Name,
+                options.Kind,
+                options.Tags,
+                options.Links);
+
+            var shouldSample = sampler.ShouldSample(samplingParameters);
+
+            var activityDataRequest = shouldSample.Decision switch
             {
-                // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
-                // Parent.TraceId will always be the TraceId of the to-be-created Activity,
-                // if it get created.
-                ActivityTraceId traceId = options.Parent.TraceId;
+                SamplingDecision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
+                SamplingDecision.Record => ActivityDataRequest.AllData,
+                _ => ActivityDataRequest.PropagationData
+            };
 
-                var samplingParameters = new SamplingParameters(
-                    options.Parent,
-                    traceId,
-                    options.Name,
-                    options.Kind,
-                    options.Tags,
-                    options.Links);
-
-                var shouldSample = sampler.ShouldSample(samplingParameters);
-
-                var activityDataRequest = shouldSample.Decision switch
-                {
-                    SamplingDecision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
-                    SamplingDecision.Record => ActivityDataRequest.AllData,
-                    _ => ActivityDataRequest.PropagationData
-                };
-
-                if (activityDataRequest != ActivityDataRequest.PropagationData)
-                {
-                    return activityDataRequest;
-                }
+            if (activityDataRequest != ActivityDataRequest.PropagationData)
+            {
+                return activityDataRequest;
             }
 
             /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
