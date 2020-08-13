@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         // This could potentially be made public, and combined with an
         // option to override Encoder, can avoid reencoding of labels
         // at Exporter level.
-        private string labelSetEncoded;
+        private readonly string labelSetEncoded;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LabelSetSdk"/> class.
