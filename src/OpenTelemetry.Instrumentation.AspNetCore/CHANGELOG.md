@@ -10,7 +10,6 @@
     is created for the underlying HTTP call in the event both gRPC and HTTP
     instrumentation are enabled.
 
-    
 ## 0.4.0-beta.2
 
 Released 2020-07-24

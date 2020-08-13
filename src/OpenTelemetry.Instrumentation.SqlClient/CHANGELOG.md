@@ -4,7 +4,6 @@
 
 * Renamed from `AddSqlClientDependencyInstrumentation` to `AddSqlClientInstrumentation`
 
-
 ## 0.4.0-beta.2
 
 Released 2020-07-24
