@@ -1,17 +1,5 @@
 # Building your own Exporter
 
-## Background
-
-* [ActivityExporter](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)
-  export activities to specific destination.
-* OpenTelemetry .NET repo provides official exporters for
-  [Console](../../../src/OpenTelemetry.Exporter.Console/README.md),
-  [Jaeger](../../../src/OpenTelemetry.Exporter.Jaeger/README.md),
-  [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-  and [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md).
-
-## Building own Exporter
-
 * To export telemetry to a specific destination, custom exporters must be
   written.
 * Exporters should inherit from `ActivityExporter` and implement `ExportAsync`
@@ -42,3 +30,12 @@ command from this folder.
 ```sh
 dotnet run
 ```
+
+## References
+
+* [Exporter specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)  
+* Exporters provided by this repository.
+  * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+  * [Jaeger](../../../src/OpenTelemetry.Exporter.Jaeger/README.md)
+  * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+  * [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md)
