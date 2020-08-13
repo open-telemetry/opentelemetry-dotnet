@@ -28,6 +28,26 @@ namespace Examples.Console
 
         private static object RunWithActivitySource(string endpoint)
         {
+            /*
+             * Setup an OpenTelemetry Collector to run on local docker.
+             *
+             * Open a terminal window and run the OpenTelemetry Collector with an OTLP receiver, by running:
+             *
+             *     docker run --rm -it -p 55680:55680 -v $(pwd):/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/opentelemetry-collector-otlp-example.yaml
+             *
+             * On another terminal window launch the OTLP example by running:
+             *
+             *     dotnet run
+             *
+             * The OpenTelemetry Collector will output all received spans to the stdout of that terminal until
+             * it is stopped via CTRL+C.
+             *
+             *     dotnet run -p Examples.Console.csproj otlp
+             *
+             * For more information about the OpenTelemetry Collector go to https://github.com/open-telemetry/opentelemetry-collector
+             *
+             */
+
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
@@ -42,7 +62,7 @@ namespace Examples.Console
                 sample.Start();
 
                 System.Console.WriteLine("Traces are being created and exported" +
-                    "to OTLP in the background." +
+                    "to OTLP in the background. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }
