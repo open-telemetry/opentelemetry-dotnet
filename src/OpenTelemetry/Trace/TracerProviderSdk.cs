@@ -89,21 +89,8 @@ namespace OpenTelemetry.Trace
                 AutoGenerateRootContextTraceId = true,
             };
 
-            if (sampler is AlwaysOnSampler)
-            {
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllDataAndRecorded;
-            }
-            else if (sampler is AlwaysOffSampler)
-            {
-                /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
-                        once AutoGenerateRootContextTraceId is removed.*/
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => PropagateOrIgnoreData(options.Parent.SpanId);
-            }
-            else
-            {
-                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler);
-            }
+            // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+            listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler);
 
             if (sources.Any())
             {
@@ -204,6 +191,23 @@ namespace OpenTelemetry.Trace
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return ActivityDataRequest.None;
+            }
+
+            if (sampler is AlwaysOnSampler)
+            {
+                return ActivityDataRequest.AllDataAndRecorded;
+            }
+
+            if (sampler is AlwaysOffSampler)
+            {
+                /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
+                        once AutoGenerateRootContextTraceId is removed.*/
+                return PropagateOrIgnoreData(options.Parent.SpanId);
+            }
+
             // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
             // Parent.TraceId will always be the TraceId of the to-be-created Activity,
             // if it get created.
