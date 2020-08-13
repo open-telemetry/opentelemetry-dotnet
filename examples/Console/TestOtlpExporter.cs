@@ -37,12 +37,10 @@ namespace Examples.Console
              *
              * On another terminal window launch the OTLP example by running:
              *
-             *     dotnet run
-             *
-             * The OpenTelemetry Collector will output all received spans to the stdout of that terminal until
-             * it is stopped via CTRL+C.
-             *
              *     dotnet run -p Examples.Console.csproj otlp
+             *
+             * The OpenTelemetry Collector will output all received spans to the stdout of its terminal until
+             * it is stopped via CTRL+C.
              *
              * For more information about the OpenTelemetry Collector go to https://github.com/open-telemetry/opentelemetry-collector
              *
