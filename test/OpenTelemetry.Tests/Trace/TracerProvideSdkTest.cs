@@ -150,7 +150,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
         {
-            using var scope = Sdk.SuppressInstrumentation.Begin();
+            using var scope = SuppressInstrumentationScope.Begin();
 
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);

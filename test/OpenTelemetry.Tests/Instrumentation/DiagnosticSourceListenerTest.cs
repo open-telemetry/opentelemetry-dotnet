@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Tests
         [InlineData(false)]
         public void ListenerHandlerIsNotInvokedWhenSuppressInstrumentationTrue(bool suppressInstrumentation)
         {
-            using var scope = Sdk.SuppressInstrumentation.Begin(suppressInstrumentation);
+            using var scope = SuppressInstrumentationScope.Begin(suppressInstrumentation);
 
             var activity = new Activity("Main");
             this.diagnosticSource.StartActivity(activity, null);
