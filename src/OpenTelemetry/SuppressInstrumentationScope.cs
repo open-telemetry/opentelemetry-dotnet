@@ -32,7 +32,7 @@ namespace OpenTelemetry
             Slot.Set(value);
         }
 
-        public static implicit operator bool(SuppressInstrumentationScope unused) => Slot.Get();
+        internal static bool IsSuppressed => Slot.Get();
 
         /// <summary>
         /// Begins a new scope in which instrumentation is suppressed (disabled).
@@ -43,20 +43,20 @@ namespace OpenTelemetry
         /// This is typically used to prevent infinite loops created by
         /// collection of internal operations, such as exporting traces over HTTP.
         /// <code>
-        ///    public override async Task&lt;ExportResult&gt; ExportAsync(
-        ///        IEnumerable&lt;Activity&gt; batch,
-        ///        CancellationToken cancellationToken)
-        ///    {
-        ///       using (Sdk.SuppressInstrumentation.Begin())
-        ///       {
-        ///           // Instrumentation is suppressed (i.e., Sdk.SuppressInstrumentation == true)
-        ///       }
+        ///     public override async Task&lt;ExportResult&gt; ExportAsync(
+        ///         IEnumerable&lt;Activity&gt; batch,
+        ///         CancellationToken cancellationToken)
+        ///     {
+        ///         using (SuppressInstrumentationScope.Begin())
+        ///         {
+        ///             // Instrumentation is suppressed (i.e., Sdk.SuppressInstrumentation == true)
+        ///         }
         ///
-        ///       // Instrumentation is not suppressed (i.e., Sdk.SuppressInstrumentation == false)
-        ///    }
+        ///         // Instrumentation is not suppressed (i.e., Sdk.SuppressInstrumentation == false)
+        ///     }
         /// </code>
         /// </remarks>
-        public IDisposable Begin(bool value = true)
+        public static IDisposable Begin(bool value = true)
         {
             return new SuppressInstrumentationScope(value);
         }
