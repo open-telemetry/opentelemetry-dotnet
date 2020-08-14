@@ -29,9 +29,12 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
-        public static readonly SuppressInstrumentationScope SuppressInstrumentation = new SuppressInstrumentationScope(false);
-
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// Gets a value indicating whether instrumentation is suppressed (disabled).
+        /// </summary>
+        public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
         /// <summary>
         /// Creates MeterProvider with the configuration provided.
