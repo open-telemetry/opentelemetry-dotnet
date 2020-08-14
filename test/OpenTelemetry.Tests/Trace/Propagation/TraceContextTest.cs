@@ -121,7 +121,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var f = new TraceContextFormat();
             var ctx = f.Extract(default, headers, Getter);
 
-            Assert.Empty(ctx.ActivityContext.TraceState);
+            Assert.Null(ctx.ActivityContext.TraceState);
         }
 
         [Fact]

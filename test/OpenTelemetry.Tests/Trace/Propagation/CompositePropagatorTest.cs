@@ -119,5 +119,37 @@ namespace OpenTelemetry.Context.Propagation.Tests
             // if that's true, we skipped the first one since we have a logic to for the default result
             Assert.Equal(2, count);
         }
+
+        [Fact]
+        public void CompositePropagator_ActivityContext_Baggage()
+        {
+            var compositePropagator = new CompositePropagator(new List<ITextFormat>
+            {
+                new TraceContextFormat(),
+                new BaggageFormat(),
+            });
+
+            var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
+            var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
+
+            TextFormatContext textFormatContextActivityOnly = new TextFormatContext(activityContext, null);
+            TextFormatContext textFormatContextBaggageOnly = new TextFormatContext(default, baggage);
+            TextFormatContext textFormatContextBoth = new TextFormatContext(activityContext, baggage);
+
+            var carrier = new Dictionary<string, string>();
+            compositePropagator.Inject(textFormatContextActivityOnly, carrier, Setter);
+            TextFormatContext extractedContext = compositePropagator.Extract(default, carrier, Getter);
+            Assert.Equal(textFormatContextActivityOnly, extractedContext);
+
+            carrier = new Dictionary<string, string>();
+            compositePropagator.Inject(textFormatContextBaggageOnly, carrier, Setter);
+            extractedContext = compositePropagator.Extract(default, carrier, Getter);
+            Assert.Equal(textFormatContextBaggageOnly, extractedContext);
+
+            carrier = new Dictionary<string, string>();
+            compositePropagator.Inject(textFormatContextBoth, carrier, Setter);
+            extractedContext = compositePropagator.Extract(default, carrier, Getter);
+            Assert.Equal(textFormatContextBoth, extractedContext);
+        }
     }
 }

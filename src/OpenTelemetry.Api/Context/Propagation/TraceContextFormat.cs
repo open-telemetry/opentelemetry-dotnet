@@ -74,7 +74,7 @@ namespace OpenTelemetry.Context.Propagation
                     return context;
                 }
 
-                string tracestate = string.Empty;
+                string tracestate = null;
                 var tracestateCollection = getter(carrier, TraceState);
                 if (tracestateCollection?.Any() ?? false)
                 {
