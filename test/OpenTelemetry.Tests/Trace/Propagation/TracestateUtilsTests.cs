@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using OpenTelemetry.Context.Propagation;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests

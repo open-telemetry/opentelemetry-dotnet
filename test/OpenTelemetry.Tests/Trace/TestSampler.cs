@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Trace.Tests
 {
