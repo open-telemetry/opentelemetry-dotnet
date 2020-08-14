@@ -18,14 +18,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Context.Propagation;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class CompositePropagatorTest
     {
-        private const string TraceParent = "traceparent";
         private static readonly string[] Empty = new string[0];
         private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
         {
@@ -47,21 +45,6 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
         private readonly ActivityTraceId traceId = ActivityTraceId.CreateRandom();
         private readonly ActivitySpanId spanId = ActivitySpanId.CreateRandom();
-
-        static CompositePropagatorTest()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
-            var listener = new ActivityListener
-            {
-                ShouldListenTo = _ => true,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
-            };
-
-            ActivitySource.AddActivityListener(listener);
-        }
 
         [Fact]
         public void CompositePropagator_NullTextFormatList()
