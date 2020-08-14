@@ -28,6 +28,12 @@ namespace OpenTelemetry.Trace
     /// activies created without ActivitySource, into something which closely
     /// matches the one created using ActivitySource.
     /// </summary>
+    /// <remarks>
+    /// This class is meant to be only used when writing new Instrumentation for
+    /// libraries which are already instrumented with DiagnosticSource/Activity
+    /// following this doc:
+    /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md.
+    /// </remarks>
     public class ActivitySourceAdapter
     {
         private readonly Sampler sampler;
