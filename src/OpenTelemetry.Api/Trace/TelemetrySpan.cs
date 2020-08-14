@@ -67,6 +67,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Gets the span baggage.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> Baggage => this.Activity?.Baggage ?? EmptyBaggage;
+
+        /// <summary>
         /// Sets the status of the span execution.
         /// </summary>
         /// <param name="value">Status to be set.</param>
@@ -74,11 +79,6 @@ namespace OpenTelemetry.Trace
         {
             this.Activity?.SetStatus(value);
         }
-
-        /// <summary>
-        /// Gets the span baggage.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Baggage => this.Activity?.Baggage ?? EmptyBaggage;
 
         /// <summary>
         /// Updates the <see cref="TelemetrySpan"/> name.
