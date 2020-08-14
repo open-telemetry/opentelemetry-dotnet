@@ -80,10 +80,12 @@ namespace Examples.AspNetCore
                 default:
                     services.AddOpenTelemetry((builder) => builder
                         .AddAspNetCoreInstrumentation()
+						.SetSampler(new ExternalPrioritySampler(0.1))
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
                     break;
             }
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

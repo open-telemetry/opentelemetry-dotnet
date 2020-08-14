@@ -42,6 +42,7 @@ namespace OpenTelemetry.Trace
         {
             this.Decision = isSampled ? SamplingDecision.RecordAndSampled : SamplingDecision.NotRecord;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.Tracestate = null;
         }
 
         /// <summary>
@@ -50,7 +51,8 @@ namespace OpenTelemetry.Trace
         /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
-        public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes)
+        /// <param name="tracestate">Tracestate for the span to be created.</param>
+        public SamplingResult(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes, string tracestate = null)
         {
             this.Decision = decision;
 
@@ -58,6 +60,7 @@ namespace OpenTelemetry.Trace
             // Current implementation has no means to ensure the collection will not be modified by the caller.
             // If this behavior will be abused we must switch to cloning of the collection.
             this.Attributes = attributes;
+            this.Tracestate = tracestate;
         }
 
         /// <summary>
@@ -69,6 +72,11 @@ namespace OpenTelemetry.Trace
         /// Gets a map of attributes associated with the sampling decision.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+        /// <summary>
+        /// Gets a map of attributes associated with the sampling decision.
+        /// </summary>
+        public string Tracestate { get; }
 
         /// <summary>
         /// Compare two <see cref="SamplingResult"/> for equality.
@@ -93,7 +101,9 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (SamplingResult)obj;
-            return this.Decision == that.Decision && this.Attributes == that.Attributes;
+            return this.IsSampled == that.IsSampled &&
+                   this.Attributes == that.Attributes &&
+                   this.Tracestate == that.Tracestate;
         }
 
         /// <inheritdoc/>
@@ -102,6 +112,7 @@ namespace OpenTelemetry.Trace
             var result = 1;
             result = (31 * result) + this.Decision.GetHashCode();
             result = (31 * result) + this.Attributes.GetHashCode();
+            result = (31 * result) + this.Tracestate.GetHashCode();
             return result;
         }
 
