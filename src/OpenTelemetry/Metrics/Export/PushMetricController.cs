@@ -28,9 +28,9 @@ namespace OpenTelemetry.Metrics.Export
     {
         private readonly TimeSpan pushInterval;
         private readonly Task worker;
-        private MetricExporter metricExporter;
-        private MetricProcessor metricProcessor;
-        private Dictionary<MeterRegistryKey, MeterSdk> meters;
+        private readonly MetricExporter metricExporter;
+        private readonly MetricProcessor metricProcessor;
+        private readonly Dictionary<MeterRegistryKey, MeterSdk> meters;
 
         public PushMetricController(
             Dictionary<MeterRegistryKey, MeterSdk> meters,

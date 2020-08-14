@@ -46,6 +46,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
+        [NonEvent]
+        public void FailedClose(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.FailedClose(ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Failed to send spans: '{0}'", Level = EventLevel.Error)]
         public void FailedFlush(string exception)
         {
@@ -56,6 +65,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public void UnexpectedError(string exception)
         {
             this.WriteEvent(2, exception);
+        }
+
+        [Event(3, Message = "Failed to close: '{0}'", Level = EventLevel.Error)]
+        public void FailedClose(string exception)
+        {
+            this.WriteEvent(3, exception);
         }
     }
 }
