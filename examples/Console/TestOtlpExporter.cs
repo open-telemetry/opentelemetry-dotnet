@@ -31,15 +31,17 @@ namespace Examples.Console
             /*
              * Setup an OpenTelemetry Collector to run on local docker.
              *
-             * Open a terminal window and run the OpenTelemetry Collector with an OTLP receiver, by running:
+             * Open a terminal window at the examples/Console/ directory and
+             * launch the OpenTelemetry Collector with an OTLP receiver, by running:
              *
              *  - On Unix based systems use:
-             *     docker run --rm -it -p 55680:55680 -v $(pwd):/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/opentelemetry-collector-otlp-example.yaml
+             *     docker run --rm -it -p 55680:55680 -v $(pwd):/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/otlp-collector-example/config.yaml
              *
              *  - On Windows use:
-             *     docker run --rm -it -p 55680:55680 -v "%cd%":/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/opentelemetry-collector-otlp-example.yaml
+             *     docker run --rm -it -p 55680:55680 -v "%cd%":/cfg otel/opentelemetry-collector:0.7.0 --config=/cfg/otlp-collector-example/config.yaml
              *
-             * On another terminal window launch the OTLP example by running:
+             * On another terminal window at the examples/Console/ directory and
+             * launch the OTLP example by running:
              *
              *     dotnet run -p Examples.Console.csproj otlp
              *
