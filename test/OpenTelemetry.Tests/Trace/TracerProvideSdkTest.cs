@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
             var testSampler = new TestSampler();
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
             bool startCalled = false;
             bool endCalled = false;
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerProvideSdkCreatesActivitySource()
         {
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
             bool startCalled = false;
             bool endCalled = false;
