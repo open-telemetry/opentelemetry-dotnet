@@ -69,7 +69,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext != activity.Context)
+                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
