@@ -100,7 +100,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets a value indicating whether this <see cref="SpanContext"/> is valid.
         /// </summary>
-        public bool IsValid => this.IsTraceIdValid(this.TraceId) && this.IsSpanIdValid(this.SpanId);
+        public bool IsValid => IsTraceIdValid(this.TraceId) && IsSpanIdValid(this.SpanId);
 
         /// <summary>
         /// Gets the <see cref="TraceState"/> associated with this <see cref="SpanContext"/>.
@@ -153,17 +153,17 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public bool Equals(SpanContext ctx)
+        public bool Equals(SpanContext other)
         {
-            return this.ActivityContext.Equals(ctx.ActivityContext);
+            return this.ActivityContext.Equals(other.ActivityContext);
         }
 
-        private bool IsTraceIdValid(ActivityTraceId traceId)
+        private static bool IsTraceIdValid(ActivityTraceId traceId)
         {
             return traceId != default;
         }
 
-        private bool IsSpanIdValid(ActivitySpanId spanId)
+        private static bool IsSpanIdValid(ActivitySpanId spanId)
         {
             return spanId != default;
         }

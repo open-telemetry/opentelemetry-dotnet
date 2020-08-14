@@ -132,9 +132,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var response = context.Response;
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                if (this.TryGetGrpcMethod(activity, out var grpcMethod))
+                if (TryGetGrpcMethod(activity, out var grpcMethod))
                 {
-                    this.AddGrpcAttributes(activity, grpcMethod, context);
+                    AddGrpcAttributes(activity, grpcMethod, context);
                 }
                 else
                 {
@@ -228,13 +228,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-        private bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
+        private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
             grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
             return !string.IsNullOrEmpty(grpcMethod);
         }
 
-        private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
             // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
             // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
