@@ -31,10 +31,7 @@ namespace OpenTelemetry.Trace
             {
                 try
                 {
-                    if (activity.IsAllDataRequested)
-                    {
-                        scope.EnrichmentAction?.Invoke(activity);
-                    }
+                    scope.EnrichmentAction?.Invoke(activity);
                 }
                 catch
                 {
