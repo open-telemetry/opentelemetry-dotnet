@@ -162,6 +162,135 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Empty(activities[5].TagObjects);
         }
 
+        [Fact]
+        public void DisposeOutOfOrderTest1()
+        {
+            using var scope1 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope2 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope3 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+
+            // Close order: 2, 1, 3
+
+            Assert.NotNull(scope1);
+            Assert.NotNull(scope2);
+            Assert.NotNull(scope3);
+
+            Assert.Null(scope1.Parent);
+            Assert.Equal(scope1.Child, scope2);
+            Assert.Equal(scope2.Parent, scope1);
+            Assert.Equal(scope2.Child, scope3);
+            Assert.Equal(scope3.Parent, scope2);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope2);
+
+            Assert.Null(scope1.Parent);
+            Assert.Equal(scope1.Child, scope3);
+            Assert.Equal(scope3.Parent, scope1);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope1);
+
+            Assert.Null(scope3.Parent);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope3);
+
+            Assert.Null(EnrichmentScope.Current);
+        }
+
+        [Fact]
+        public void DisposeOutOfOrderTest2()
+        {
+            using var scope1 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope2 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope3 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+
+            // Close order: 2, 3, 1
+
+            Assert.NotNull(scope1);
+            Assert.NotNull(scope2);
+            Assert.NotNull(scope3);
+
+            Assert.Null(scope1.Parent);
+            Assert.Equal(scope1.Child, scope2);
+            Assert.Equal(scope2.Parent, scope1);
+            Assert.Equal(scope2.Child, scope3);
+            Assert.Equal(scope3.Parent, scope2);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope2);
+
+            Assert.Null(scope1.Parent);
+            Assert.Equal(scope1.Child, scope3);
+            Assert.Equal(scope3.Parent, scope1);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope3);
+
+            Assert.Null(scope1.Parent);
+            Assert.Null(scope1.Child);
+
+            Assert.Equal(scope1, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope1);
+
+            Assert.Null(EnrichmentScope.Current);
+        }
+
+        [Fact]
+        public void DisposeOutOfOrderTest3()
+        {
+            using var scope1 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope2 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+            using var scope3 = (EnrichmentScope)EnrichmentScope.Begin(EnrichmentAction);
+
+            // Close order: 1, 2, 3
+
+            Assert.NotNull(scope1);
+            Assert.NotNull(scope2);
+            Assert.NotNull(scope3);
+
+            Assert.Null(scope1.Parent);
+            Assert.Equal(scope1.Child, scope2);
+            Assert.Equal(scope2.Parent, scope1);
+            Assert.Equal(scope2.Child, scope3);
+            Assert.Equal(scope3.Parent, scope2);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope1);
+
+            Assert.Null(scope2.Parent);
+            Assert.Equal(scope2.Child, scope3);
+            Assert.Equal(scope3.Parent, scope2);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope2);
+
+            Assert.Null(scope3.Parent);
+            Assert.Null(scope3.Child);
+
+            Assert.Equal(scope3, EnrichmentScope.Current);
+
+            DisposeAndVerify(scope3);
+
+            Assert.Null(EnrichmentScope.Current);
+        }
+
         private static void EnsureActivityMatchesTags(Activity activity, params KeyValuePair<string, object>[] tags)
         {
             var tagObjects = activity.TagObjects;
@@ -172,6 +301,15 @@ namespace OpenTelemetry.Trace.Tests
             {
                 Assert.Contains(tagObjects, i => i.Key == tag.Key && i.Value.ToString() == tag.Value.ToString());
             }
+        }
+
+        private static void DisposeAndVerify(EnrichmentScope enrichmentScope)
+        {
+            enrichmentScope.Dispose();
+
+            Assert.Null(enrichmentScope.EnrichmentAction);
+            Assert.Null(enrichmentScope.Parent);
+            Assert.Null(enrichmentScope.Child);
         }
     }
 }

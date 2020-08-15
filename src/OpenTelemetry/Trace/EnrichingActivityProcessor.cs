@@ -38,12 +38,14 @@ namespace OpenTelemetry.Trace
                     // todo: Log
                 }
 
+                var nextParent = scope.Parent;
+
                 if (scope.EnrichmentTarget == EnrichmentScopeTarget.NextActivity)
                 {
                     scope.Dispose();
                 }
 
-                scope = scope.Parent;
+                scope = nextParent;
             }
         }
     }

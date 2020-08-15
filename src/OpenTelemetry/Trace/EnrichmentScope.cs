@@ -104,6 +104,8 @@ namespace OpenTelemetry.Trace
                     RuntimeContextSlot.Set(this.Parent);
                 }
 
+                this.Parent = null;
+                this.Child = null;
                 this.disposed = true;
             }
         }
