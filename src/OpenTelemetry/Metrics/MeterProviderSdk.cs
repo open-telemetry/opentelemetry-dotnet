@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
         public CancellationTokenSource CancellationTokenSource;
         public Dictionary<MeterRegistryKey, MeterSdk> MeterRegistry;
 
-        private readonly object lck = new object();
+        private readonly object syncObject = new object();
         private MeterSdk defaultMeter;
 
         internal MeterProviderSdk(MetricProcessor metricProcessor, Dictionary<MeterRegistryKey, MeterSdk> registry, PushMetricController controller, CancellationTokenSource cts)
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
                 return this.defaultMeter;
             }
 
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 var key = new MeterRegistryKey(name, version);
                 if (!this.MeterRegistry.TryGetValue(key, out var meter))
