@@ -80,12 +80,12 @@ using EnrichmentScope.Begin(
     enrichmentAction: a => a.AddTag("mycompany.user_id", 1234));
 ```
 
-The default behavior is `EnrichmentScopeTarget.FirstChild`.
+* **FirstChild**: The first child `Activity` created under the scope will be
+  enriched and then the scope will automatically be closed.
+* **AllChildren**: All child `Activity` objects created under the scope will be
+  enriched until the scope is closed.
 
-| Name | Description |
-| ---- | ----------- |
-| FirstChild  | The first child `Activity` created under the scope will<br/> be enriched and then the scope will automatically be closed. |
-| AllChildren | All child `Activity` objects created under the scope will<br/> be enriched until the scope is closed. |
+The default behavior is `EnrichmentScopeTarget.FirstChild`.
 
 ### Nesting Scopes
 
