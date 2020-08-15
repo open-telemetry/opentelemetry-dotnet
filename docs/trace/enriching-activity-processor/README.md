@@ -5,8 +5,8 @@ augment the data it provides with contextual information your application or
 library has available. For these cases OpenTelemetry .NET provides an
 `EnrichingActivityProcessor` and `EnrichmentScope` API.
 
-1. To enrich your spans first add the `EnrichingActivityProcessor` to your
-   `TracerProvider`:
+1. To enrich your `Activity` objects first add the `EnrichingActivityProcessor`
+   to your `TracerProvider`:
 
     ```csharp
     using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -53,10 +53,11 @@ library has available. For these cases OpenTelemetry .NET provides an
     }
     ```
 
-    In that example the span created for the call to `www.opentelemetry.io` will
-    be decorated with `mycompany.user_id` & `mycompany.customer_id` tags
-    (simulating contextual data) and `http.user_agent` & `http.content_type`
-    tags which are taken directly from the raw HTTP objects.
+    In that example the `Activity` created for the call to
+    `www.opentelemetry.io` will be decorated with `mycompany.user_id` &
+    `mycompany.customer_id` tags (simulating contextual data) and
+    `http.user_agent` & `http.content_type` tags which are taken directly from
+    the raw HTTP objects.
 
 ## Advanced Usage
 
