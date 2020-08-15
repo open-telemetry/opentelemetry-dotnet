@@ -9,11 +9,11 @@ library has available. For these cases OpenTelemetry .NET provides an
    `TracerProvider`:
 
     ```csharp
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation()
-                .AddProcessor(new EnrichingActivityProcessor())
-                .AddConsoleExporter()
-                .Build();
+    using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        .AddHttpClientInstrumentation()
+        .AddProcessor(new EnrichingActivityProcessor())
+        .AddConsoleExporter()
+        .Build();
     ```
 
     **Note:** Order is important. Make sure your `EnrichingActivityProcessor` is
