@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace
             {
                 this.EnrichmentAction = null;
 
-                if (this.Parent.Child == this)
+                if (this.Parent?.Child == this)
                 {
                     this.Parent.Child = this.Child;
                 }
