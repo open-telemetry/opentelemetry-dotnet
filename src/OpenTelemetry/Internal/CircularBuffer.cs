@@ -108,7 +108,7 @@ namespace OpenTelemetry.Internal
                 var index = (int)(this.tail % this.capacity);
                 var value = this.trait[index];
                 this.trait[index] = null;
-                this.tail += 1;
+                this.tail++;
                 yield return value;
             }
         }
