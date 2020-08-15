@@ -82,8 +82,14 @@ namespace OpenTelemetry.Internal
 
                 if (this.SwapIfNull(index, value))
                 {
-                    this.head = headSnapshot + 1;
-                    return true;
+                    if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) == headSnapshot)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        this.trait[index] = null;
+                    }
                 }
             }
         }
