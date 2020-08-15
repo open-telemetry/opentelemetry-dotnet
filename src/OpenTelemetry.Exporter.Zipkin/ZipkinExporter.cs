@@ -84,38 +84,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 #endif
         }
 
-        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
-        {
-            var requestUri = this.options.Endpoint;
-
-            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new JsonContent(this, batchActivity),
-            };
-
-            return this.httpClient.SendAsync(request, cancellationToken);
-        }
-
-        private ZipkinEndpoint GetLocalZipkinEndpoint()
-        {
-            var hostName = this.ResolveHostName();
-
-            string ipv4 = null;
-            string ipv6 = null;
-            if (!string.IsNullOrEmpty(hostName))
-            {
-                ipv4 = this.ResolveHostAddress(hostName, AddressFamily.InterNetwork);
-                ipv6 = this.ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
-            }
-
-            return new ZipkinEndpoint(
-                this.options.ServiceName,
-                ipv4,
-                ipv6,
-                null);
-        }
-
-        private string ResolveHostAddress(string hostName, AddressFamily family)
+        private static string ResolveHostAddress(string hostName, AddressFamily family)
         {
             string result = null;
 
@@ -145,7 +114,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        private string ResolveHostName()
+        private static string ResolveHostName()
         {
             string result = null;
 
@@ -169,6 +138,37 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             return result;
+        }
+
+        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
+        {
+            var requestUri = this.options.Endpoint;
+
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new JsonContent(this, batchActivity),
+            };
+
+            return this.httpClient.SendAsync(request, cancellationToken);
+        }
+
+        private ZipkinEndpoint GetLocalZipkinEndpoint()
+        {
+            var hostName = ResolveHostName();
+
+            string ipv4 = null;
+            string ipv6 = null;
+            if (!string.IsNullOrEmpty(hostName))
+            {
+                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
+                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
+            }
+
+            return new ZipkinEndpoint(
+                this.options.ServiceName,
+                ipv4,
+                ipv6,
+                null);
         }
 
         private class JsonContent : HttpContent

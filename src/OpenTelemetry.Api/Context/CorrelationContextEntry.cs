@@ -117,9 +117,9 @@ namespace OpenTelemetry.Context
         }
 
         /// <inheritdoc/>
-        public bool Equals(CorrelationContextEntry that)
+        public bool Equals(CorrelationContextEntry other)
         {
-            return this.Key == that.Key && this.Value == that.Value;
+            return this.Key == other.Key && this.Value == other.Value;
         }
     }
 }

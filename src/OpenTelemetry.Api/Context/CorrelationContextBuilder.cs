@@ -21,7 +21,7 @@ namespace OpenTelemetry.Context
     /// <summary>
     /// Correlation context Builder.
     /// </summary>
-    public struct CorrelationContextBuilder
+    public struct CorrelationContextBuilder : System.IEquatable<CorrelationContextBuilder>
     {
         private List<CorrelationContextEntry> entries;
 
@@ -57,6 +57,26 @@ namespace OpenTelemetry.Context
             }
 
             this.entries = new List<CorrelationContextEntry>(context.Entries);
+        }
+
+        /// <summary>
+        /// Compare two entries of <see cref="CorrelationContextBuilder"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator ==(CorrelationContextBuilder left, CorrelationContextBuilder right)
+        {
+            return left.Equals(right);
+        }
+
+        /// <summary>
+        /// Compare two entries of <see cref="CorrelationContextBuilder"/> for equality.
+        /// </summary>
+        /// <param name="left">First Entry to compare.</param>
+        /// <param name="right">Second Entry to compare.</param>
+        public static bool operator !=(CorrelationContextBuilder left, CorrelationContextBuilder right)
+        {
+            return !(left == right);
         }
 
         /// <summary>
@@ -194,6 +214,25 @@ namespace OpenTelemetry.Context
             var context = new CorrelationContext(this.entries);
             this.entries = null; // empty current builder entries.
             return context;
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            return obj is CorrelationContextBuilder builder &&
+                   EqualityComparer<List<CorrelationContextEntry>>.Default.Equals(this.entries, builder.entries);
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return this.entries.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(CorrelationContextBuilder other)
+        {
+            return EqualityComparer<List<CorrelationContextEntry>>.Default.Equals(this.entries, other.entries);
         }
     }
 }

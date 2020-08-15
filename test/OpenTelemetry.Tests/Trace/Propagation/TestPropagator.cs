@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {

@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
-        private readonly object lck = new object();
+        private readonly object syncObject = new object();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
         public void Start(CancellationToken token = default)
         {
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 if (this.tokenSource != null)
                 {
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         public void Stop()
         {
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 if (this.tokenSource == null)
                 {
