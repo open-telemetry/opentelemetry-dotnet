@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Threading;
 
-namespace OpenTelemetry.Tests.Shared
+namespace OpenTelemetry.Tests
 {
     /// <summary>
     /// Event listener for testing event sources.

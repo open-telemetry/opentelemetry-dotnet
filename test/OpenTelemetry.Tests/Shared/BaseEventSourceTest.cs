@@ -20,7 +20,6 @@ using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using OpenTelemetry.Tests.Shared;
 
 namespace OpenTelemetry.Tests
 {
