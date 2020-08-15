@@ -84,9 +84,15 @@ namespace OpenTelemetry.Trace
             if (!this.disposed)
             {
                 this.EnrichmentAction = null;
-                RuntimeContextSlot.Set(this.Parent);
+
                 this.Parent.Child = this.Child;
-                this.Child.Parent = this.Parent;
+                if (this.Child != null)
+                {
+                    this.Child.Parent = this.Parent;
+                }
+
+                RuntimeContextSlot.Set(this.Parent);
+
                 this.disposed = true;
             }
         }
