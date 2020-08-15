@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -33,9 +35,9 @@ namespace OpenTelemetry.Trace
                 {
                     scope.EnrichmentAction?.Invoke(activity);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // todo: Log
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(EnrichingActivityProcessor), ex);
                 }
 
                 var nextParent = scope.Parent;
