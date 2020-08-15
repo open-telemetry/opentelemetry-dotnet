@@ -91,8 +91,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
-                            activity.AddTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
-                            activity.AddTag(SemanticConventions.AttributeDbName, (string)database);
+                            activity.SetTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
+                            activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 
@@ -101,25 +101,25 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                 switch (commandType)
                                 {
                                     case CommandType.StoredProcedure:
-                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
+                                        activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
                                         if (this.options.SetStoredProcedureCommandName)
                                         {
-                                            activity.AddTag(SemanticConventions.AttributeDbStatement, (string)commandText);
+                                            activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
 
                                         break;
 
                                     case CommandType.Text:
-                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
+                                        activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
                                         if (this.options.SetTextCommandContent)
                                         {
-                                            activity.AddTag(SemanticConventions.AttributeDbStatement, (string)commandText);
+                                            activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
 
                                         break;
 
                                     case CommandType.TableDirect:
-                                        activity.AddTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
+                                        activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
                                         break;
                                 }
                             }

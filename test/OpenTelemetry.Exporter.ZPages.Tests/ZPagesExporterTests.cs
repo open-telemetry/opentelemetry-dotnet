@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -50,7 +49,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         public void ZPagesExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseZPagesExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddZPagesExporter());
         }
 
         [Fact]
@@ -88,10 +87,11 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseZPagesExporter(
-                                processorConfigure: p => p.AddProcessor((next) => testActivityProcessor)));
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .AddZPagesExporter()
+                .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Zipkin Activity");
@@ -129,10 +129,11 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             ZPagesExporter exporter = new ZPagesExporter(options);
             var zpagesProcessor = new ZPagesProcessor(exporter);
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseZPagesExporter(
-                                processorConfigure: p => p.AddProcessor((next) => zpagesProcessor)));
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            .AddSource(ActivitySourceName)
+                            .AddProcessor(zpagesProcessor)
+                            .AddZPagesExporter()
+                            .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity0 = source.StartActivity("Test Zipkin Activity");
@@ -209,17 +210,17 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                 new ActivityEvent(
                     "Event1",
                     eventTimestamp,
-                    new Dictionary<string, object>
+                    new ActivityTagsCollection(new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }),
+                    })),
                 new ActivityEvent(
                     "Event2",
                     eventTimestamp,
-                    new Dictionary<string, object>
+                    new ActivityTagsCollection(new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }),
+                    })),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
@@ -227,7 +228,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
+                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
                     : null;
             var links = addLinks ?
                     new[]

@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -29,28 +27,29 @@ namespace Examples.Console
         internal static object Run(ConsoleOptions options)
         {
             // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"
-            // and use a single pipeline with a custom MyProcessor, and Console exporter.
-            using var tracerProvider = Sdk.CreateTracerProvider(
-                (builder) => builder.AddActivitySource("MyCompany.MyProduct.MyWebServer")
-                    .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson,
-                                                (p) => p.AddProcessor((next) => new MyProcessor(next))));
+            // and use a custom MyProcessor, along with Console exporter.
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource("MyCompany.MyProduct.MyWebServer")
+                .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
+                .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                .Build();
 
             // The above line is required only in applications
             // which decide to use Open Telemetry.
 
             // Libraries would simply write the following lines of code to
-            // emit activities, which are the .NET representation of OT Spans.
+            // emit activities, which are the .NET representation of OpenTelemetry Spans.
             var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
 
             // The below commented out line shows more likely code in a real world webserver.
             // using (var parent = source.StartActivity("HttpIn", ActivityKind.Server, HttpContext.Request.Headers["traceparent"] ))
             using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
             {
-                // TagNames can follow the OT guidelines
+                // TagNames can follow the OpenTelemetry guidelines
                 // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
-                parent?.AddTag("http.method", "GET");
-                parent?.AddTag("http.host", "MyHostName");
+                parent?.SetTag("http.method", "GET");
+                parent?.SetTag("http.host", "MyHostName");
                 if (parent != null)
                 {
                     parent.DisplayName = "HttpIn DisplayName";
@@ -58,7 +57,7 @@ namespace Examples.Console
                     // IsAllDataRequested is the equivalent of Span.IsRecording
                     if (parent.IsAllDataRequested)
                     {
-                        parent.AddTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
+                        parent.SetTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
                     }
                 }
 
@@ -72,25 +71,25 @@ namespace Examples.Console
                     // In this example HttpOut is a child of HttpIn.
                     using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
                     {
-                        child?.AddTag("http.url", "www.mydependencyapi.com");
+                        child?.SetTag("http.url", "www.mydependencyapi.com");
                         try
                         {
                             // do actual work.
 
                             child?.AddEvent(new ActivityEvent("sample activity event."));
-                            child?.AddTag("http.status_code", "200");
+                            child?.SetTag("http.status_code", "200");
                         }
                         catch (Exception)
                         {
-                            child?.AddTag("http.status_code", "500");
+                            child?.SetTag("http.status_code", "500");
                         }
                     }
 
-                    parent?.AddTag("http.status_code", "200");
+                    parent?.SetTag("http.status_code", "200");
                 }
                 catch (Exception)
                 {
-                    parent?.AddTag("http.status_code", "500");
+                    parent?.SetTag("http.status_code", "500");
                 }
             }
 
@@ -101,43 +100,19 @@ namespace Examples.Console
 
         internal class MyProcessor : ActivityProcessor
         {
-            private ActivityProcessor next;
-
-            public MyProcessor(ActivityProcessor next)
-            {
-                this.next = next;
-            }
-
-            public override void OnEnd(Activity activity)
-            {
-                this.next.OnEnd(activity);
-            }
-
             public override void OnStart(Activity activity)
             {
                 if (activity.IsAllDataRequested)
                 {
                     if (activity.Kind == ActivityKind.Server)
                     {
-                        activity.AddTag("customServerTag", "Custom Tag Value for server");
+                        activity.SetTag("customServerTag", "Custom Tag Value for server");
                     }
                     else if (activity.Kind == ActivityKind.Client)
                     {
-                        activity.AddTag("customClientTag", "Custom Tag Value for Client");
+                        activity.SetTag("customClientTag", "Custom Tag Value for Client");
                     }
                 }
-
-                this.next.OnStart(activity);
-            }
-
-            public override Task ShutdownAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ShutdownAsync(cancellationToken);
-            }
-
-            public override Task ForceFlushAsync(CancellationToken cancellationToken)
-            {
-                return this.next.ForceFlushAsync(cancellationToken);
             }
         }
     }

@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
     /// </summary>
-    public class BatchingActivityProcessor : ActivityProcessor, IDisposable
+    public class BatchingActivityProcessor : ActivityProcessor
     {
         private const int DefaultMaxQueueSize = 2048;
         private const int DefaultMaxExportBatchSize = 512;
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
         private readonly SemaphoreSlim flushLock = new SemaphoreSlim(1);
         private readonly System.Timers.Timer flushTimer;
         private volatile int currentQueueSize;
-        private bool isDisposed;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchingActivityProcessor"/> class with default parameters:
@@ -137,47 +137,45 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            // because of race-condition between checking the size and enqueueing,
-            // we might end up with a bit more activities than maxQueueSize.
-            // Let's just tolerate it to avoid extra synchronization.
-            if (this.currentQueueSize >= this.maxQueueSize)
+            if (activity.Recorded)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
-                return;
-            }
-
-            var size = Interlocked.Increment(ref this.currentQueueSize);
-
-            this.exportQueue.Enqueue(activity);
-
-            if (size >= this.maxExportBatchSize)
-            {
-                bool lockTaken = this.flushLock.Wait(0);
-                if (lockTaken)
+                // because of race-condition between checking the size and enqueueing,
+                // we might end up with a bit more activities than maxQueueSize.
+                // Let's just tolerate it to avoid extra synchronization.
+                if (this.currentQueueSize >= this.maxQueueSize)
                 {
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-                        }
-                        finally
-                        {
-                            this.flushLock.Release();
-                        }
-                    });
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
                     return;
+                }
+
+                var size = Interlocked.Increment(ref this.currentQueueSize);
+
+                this.exportQueue.Enqueue(activity);
+
+                if (size >= this.maxExportBatchSize)
+                {
+                    bool lockTaken = this.flushLock.Wait(0);
+                    if (lockTaken)
+                    {
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await this.FlushAsyncInternal(drain: false, lockAlreadyHeld: true, CancellationToken.None).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                            }
+                            finally
+                            {
+                                this.flushLock.Release();
+                            }
+                        });
+                        return;
+                    }
                 }
             }
         }
@@ -202,24 +200,15 @@ namespace OpenTelemetry.Trace
             OpenTelemetrySdkEventSource.Log.ForceFlushCompleted(this.currentQueueSize);
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
         {
-            this.Dispose(true);
-        }
+            base.Dispose(disposing);
 
-        protected virtual void Dispose(bool isDisposing)
-        {
-            try
-            {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-            }
-
-            if (isDisposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 if (this.exporter is IDisposable disposableExporter)
                 {
@@ -235,7 +224,7 @@ namespace OpenTelemetry.Trace
 
                 this.flushTimer.Dispose();
                 this.flushLock.Dispose();
-                this.isDisposed = true;
+                this.disposed = true;
             }
         }
 
@@ -266,12 +255,12 @@ namespace OpenTelemetry.Trace
                         {
                             exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException ocex)
+                        catch (OperationCanceledException)
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
                                 // User-supplied cancellation, bubble up the exception.
-                                throw ocex;
+                                throw;
                             }
 
                             OpenTelemetrySdkEventSource.Log.SpanExporterTimeout(Math.Min(queueSize, this.maxExportBatchSize));

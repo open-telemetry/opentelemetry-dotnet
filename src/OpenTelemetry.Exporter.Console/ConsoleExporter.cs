@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace OpenTelemetry.Exporter.Console
                 WriteIndented = true,
             };
 
-            this.displayAsJson = options.DisplayAsJson;
+            this.displayAsJson = options?.DisplayAsJson ?? false;
 
             this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
             this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
@@ -55,54 +56,70 @@ namespace OpenTelemetry.Exporter.Console
                 }
                 else
                 {
-                    System.Console.WriteLine("Activity ID - " + activity.Id);
+                    System.Console.WriteLine($"Activity.Id:          {activity.Id}");
                     if (!string.IsNullOrEmpty(activity.ParentId))
                     {
-                        System.Console.WriteLine("Activity ParentId - " + activity.ParentId);
+                        System.Console.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                     }
 
-                    System.Console.WriteLine("Activity DisplayName - " + activity.DisplayName);
-                    System.Console.WriteLine("Activity Kind - " + activity.Kind);
-                    System.Console.WriteLine("Activity StartTime - " + activity.StartTimeUtc);
-                    System.Console.WriteLine("Activity Duration - " + activity.Duration);
-                    if (activity.Tags.Count() > 0)
+                    System.Console.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
+                    System.Console.WriteLine($"Activity.Kind:        {activity.Kind}");
+                    System.Console.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    System.Console.WriteLine($"Activity.Duration:    {activity.Duration}");
+                    if (activity.TagObjects.Any())
                     {
-                        System.Console.WriteLine("Activity Tags");
-                        foreach (var tag in activity.Tags)
+                        System.Console.WriteLine("Activity.TagObjects:");
+                        foreach (var tag in activity.TagObjects)
                         {
-                            System.Console.WriteLine($"\t {tag.Key} : {tag.Value}");
+                            var array = tag.Value as Array;
+
+                            if (array == null)
+                            {
+                                System.Console.WriteLine($"    {tag.Key}: {tag.Value}");
+                                continue;
+                            }
+
+                            System.Console.Write($"    {tag.Key}: [");
+
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                System.Console.Write(i != 0 ? ", " : string.Empty);
+                                System.Console.Write($"{array.GetValue(i)}");
+                            }
+
+                            System.Console.WriteLine($"]");
                         }
                     }
 
                     if (activity.Events.Any())
                     {
-                        System.Console.WriteLine("Activity Events");
+                        System.Console.WriteLine("Activity.Events:");
                         foreach (var activityEvent in activity.Events)
                         {
-                            System.Console.WriteLine($"Event Name: {activityEvent.Name} TimeStamp: {activityEvent.Timestamp}");
-                            foreach (var attribute in activityEvent.Attributes)
+                            System.Console.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
+                            foreach (var attribute in activityEvent.Tags)
                             {
-                                System.Console.WriteLine($"\t {attribute.Key} : {attribute.Value}");
+                                System.Console.WriteLine($"        {attribute.Key}: {attribute.Value}");
                             }
                         }
                     }
 
                     if (activity.Baggage.Any())
                     {
-                        System.Console.WriteLine("Activity Baggage");
+                        System.Console.WriteLine("Activity.Baggage:");
                         foreach (var baggage in activity.Baggage)
                         {
-                            System.Console.WriteLine($"\t {baggage.Key} : {baggage.Value}");
+                            System.Console.WriteLine($"    {baggage.Key}: {baggage.Value}");
                         }
                     }
 
                     var resource = activity.GetResource();
                     if (resource != Resource.Empty)
                     {
-                        System.Console.WriteLine("Resource associated with Activity");
+                        System.Console.WriteLine("Resource associated with Activity:");
                         foreach (var resourceAttribute in resource.Attributes)
                         {
-                            System.Console.WriteLine($"\t {resourceAttribute.Key} : {resourceAttribute.Value}");
+                            System.Console.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
                         }
                     }
 

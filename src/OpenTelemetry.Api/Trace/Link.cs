@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Link associated with the span.
     /// </summary>
-    public readonly struct Link
+    public readonly struct Link : System.IEquatable<Link>
     {
         internal readonly ActivityLink ActivityLink;
 
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="spanContext">Span context of a linked span.</param>
         /// <param name="attributes">Link attributes.</param>
-        public Link(in SpanContext spanContext, IDictionary<string, object> attributes)
+        public Link(in SpanContext spanContext, ActivityTagsCollection attributes)
         {
             this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes);
         }
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return this.ActivityLink.Attributes;
+                return this.ActivityLink.Tags;
             }
         }
 
@@ -91,6 +91,12 @@ namespace OpenTelemetry.Trace
         public override int GetHashCode()
         {
             return this.ActivityLink.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(Link other)
+        {
+            return this.ActivityLink.Equals(other.ActivityLink);
         }
     }
 }

@@ -22,21 +22,22 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Grpc;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        private static readonly string UnknownHostName = "UNKNOWN-HOST";
-        private static readonly string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private const string UnknownHostName = "UNKNOWN-HOST";
+        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
         private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
         private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
         private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
-        private readonly bool hostingSupportsW3C = false;
+        private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -50,9 +51,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            var context = this.startContextFetcher.Fetch(payload) as HttpContext;
-
-            if (context == null)
+            if (!(this.startContextFetcher.Fetch(payload) is HttpContext context))
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
@@ -72,18 +71,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // using the context extracted from w3ctraceparent header or
                 // using the format TextFormat supports.
 
-                var ctx = this.options.TextFormat.Extract(request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                if (ctx != default)
+                {
+                    // Create a new activity with its parent set from the extracted context.
+                    // This makes the new activity as a "sibling" of the activity created by
+                    // Asp.Net Core.
+                    Activity newOne = new Activity(ActivityNameByHttpInListener);
+                    newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
+                    newOne.TraceStateString = ctx.TraceState;
 
-                // Create a new activity with its parent set from the extracted context.
-                // This makes the new activity as a "sibling" of the activity created by
-                // Asp.Net Core.
-                Activity newOne = new Activity(ActivityNameByHttpInListener);
-                newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
-                newOne.TraceStateString = ctx.TraceState;
-
-                // Starting the new activity make it the Activity.Current one.
-                newOne.Start();
-                activity = newOne;
+                    // Starting the new activity make it the Activity.Current one.
+                    newOne.Start();
+                    activity = newOne;
+                }
             }
 
             activity.SetKind(ActivityKind.Server);
@@ -99,21 +100,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (request.Host.Port == 80 || request.Host.Port == 443)
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
+                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
                 else
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
+                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
                 }
 
-                activity.AddTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.AddTag(SpanAttributeConstants.HttpPathKey, path);
-                activity.AddTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.AddTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
             }
         }
@@ -129,10 +130,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.AddTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode.ToString());
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                if (TryGetGrpcMethod(activity, out var grpcMethod))
+                {
+                    AddGrpcAttributes(activity, grpcMethod, context);
+                }
+                else
+                {
+                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener))
@@ -175,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = template;
-                        activity.AddTag(SemanticConventions.AttributeHttpRoute, template);
+                        activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
                     }
 
                     // TODO: Should we get values from RouteData?
@@ -218,6 +226,31 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             return builder.ToString();
+        }
+
+        private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
+        {
+            grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+            return !string.IsNullOrEmpty(grpcMethod);
+        }
+
+        private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        {
+            // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
+            // activity.DisplayName = grpcMethod?.Trim('/');
+
+            activity.AddTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+
+            if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
+            {
+                activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
+                activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+            }
+
+            activity.AddTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
+            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }
 }

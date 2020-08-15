@@ -88,7 +88,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         public void ZipkinExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseZipkinExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
         }
 
         [Theory]
@@ -157,14 +157,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseZipkinExporter(
-                                o =>
-                            {
-                                o.ServiceName = "test-zipkin";
-                                o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
-                            }, p => p.AddProcessor((next) => testActivityProcessor)));
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .AddZipkinExporter(o =>
+                {
+                    o.ServiceName = "test-zipkin";
+                    o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+                })
+                .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Zipkin Activity");
@@ -211,17 +212,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 new ActivityEvent(
                     "Event1",
                     eventTimestamp,
-                    new Dictionary<string, object>
+                    new ActivityTagsCollection(new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }),
+                    })),
                 new ActivityEvent(
                     "Event2",
                     eventTimestamp,
-                    new Dictionary<string, object>
+                    new ActivityTagsCollection(new Dictionary<string, object>
                     {
                         { "key", "value" },
-                    }),
+                    })),
             };
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
@@ -229,7 +230,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.ToString()))
+                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
                     : null;
             var links = addLinks ?
                     new[]

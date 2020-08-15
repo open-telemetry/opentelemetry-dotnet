@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using global::OpenTracing;
 using OpenTelemetry.Trace;
 
@@ -160,34 +161,27 @@ namespace OpenTelemetry.Shims.OpenTracing
             // If specified, this takes precedence.
             if (this.ignoreActiveSpan)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartRootSpan(this.spanName, this.spanKind, default, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpan != null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpan, null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpan, default, this.links, this.explicitStartTime ?? default);
             }
             else if (this.parentSpanContext.IsValid)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, null, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, default, this.links, this.explicitStartTime ?? default);
             }
-            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && (this.tracer.CurrentSpan == null || !this.tracer.CurrentSpan.Context.IsValid))
+            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
             {
-                // TODO: We need to know if we should inherit an existing Activity-based context or start a new one.
-                /*
-                if (System.Diagnostics.Activity.Current != null && System.Diagnostics.Activity.Current.IdFormat == System.Diagnostics.ActivityIdFormat.W3C)
+                if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(Activity.Current.OperationName))
                 {
-                    var currentActivity = System.Diagnostics.Activity.Current;
-                    if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(currentActivity.OperationName))
-                    {
-                        this.tracer.StartSpanFromActivity(this.spanName, currentActivity, this.spanKind, this.links);
-                        span = this.tracer.CurrentSpan;
-                    }
-                }*/
+                    span = this.tracer.CurrentSpan;
+                }
             }
 
             if (span == null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), null, null, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), default, null, this.explicitStartTime ?? default);
             }
 
             foreach (var kvp in this.attributes)
@@ -197,7 +191,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (this.error)
             {
-                span.Status = Trace.Status.Unknown;
+                span.SetStatus(Trace.Status.Unknown);
             }
 
             return new SpanShim(span);
@@ -226,24 +220,14 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/ for special key handling.
             if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key))
             {
-                switch (value)
+                this.spanKind = value switch
                 {
-                    case global::OpenTracing.Tag.Tags.SpanKindClient:
-                        this.spanKind = Trace.SpanKind.Client;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindServer:
-                        this.spanKind = Trace.SpanKind.Server;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindProducer:
-                        this.spanKind = Trace.SpanKind.Producer;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindConsumer:
-                        this.spanKind = Trace.SpanKind.Consumer;
-                        break;
-                    default:
-                        this.spanKind = Trace.SpanKind.Internal;
-                        break;
-                }
+                    global::OpenTracing.Tag.Tags.SpanKindClient => Trace.SpanKind.Client,
+                    global::OpenTracing.Tag.Tags.SpanKindServer => Trace.SpanKind.Server,
+                    global::OpenTracing.Tag.Tags.SpanKindProducer => Trace.SpanKind.Producer,
+                    global::OpenTracing.Tag.Tags.SpanKindConsumer => Trace.SpanKind.Consumer,
+                    _ => Trace.SpanKind.Internal,
+                };
             }
             else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key) && bool.TryParse(value, out var booleanValue))
             {
@@ -294,12 +278,22 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             if (int.TryParse(value, out var result))
             {
                 return this.WithTag(tag.Key, result);
@@ -311,12 +305,22 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 

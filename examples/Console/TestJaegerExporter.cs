@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
-
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
@@ -31,19 +29,18 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Jaeger exporter.
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                builder => builder
-                    .AddActivitySource("Samples.SampleServer")
-                    .AddActivitySource("Samples.SampleClient")
-                    .UseJaegerExporter(o =>
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .AddSource("Samples.SampleClient", "Samples.SampleServer")
+                    .AddJaegerExporter(o =>
                     {
                         o.ServiceName = "jaeger-test";
                         o.AgentHost = host;
                         o.AgentPort = port;
-                    }));
+                    })
+                    .Build();
 
             // The above lines are required only in Applications
-            // which decide to use OT.
+            // which decide to use OpenTelemetry.
 
             using (var sample = new InstrumentationWithActivitySource())
             {

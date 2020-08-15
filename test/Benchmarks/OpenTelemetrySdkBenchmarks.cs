@@ -18,7 +18,6 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Tracing;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 namespace Benchmarks
 {
@@ -31,17 +30,21 @@ namespace Benchmarks
 
         public OpenTelemetrySdkBenchmarks()
         {
-            using var openTelemetryAlwaysOnSample = Sdk.CreateTracerProvider(
-                (builder) => builder.AddActivitySource("AlwaysOnSample").SetSampler(new AlwaysOnSampler()));
+            using var openTelemetryAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
+                .AddSource("AlwaysOnSample")
+                .SetSampler(new AlwaysOnSampler())
+                .Build();
 
-            using var openTelemetryAlwaysOffSample = Sdk.CreateTracerProvider(
-                (builder) => builder.AddActivitySource("AlwaysOffSample").SetSampler(new AlwaysOffSampler()));
+            using var openTelemetryAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
+                .AddSource("AlwaysOffSample")
+                .SetSampler(new AlwaysOffSampler())
+                .Build();
 
-            using var openTelemetryNoOp = Sdk.CreateTracerProvider(null);
+            using var openTelemetryNoop = Sdk.CreateTracerProviderBuilder().Build();
 
             this.alwaysSampleTracer = TracerProvider.Default.GetTracer("AlwaysOnSample");
             this.neverSampleTracer = TracerProvider.Default.GetTracer("AlwaysOffSample");
-            this.noopTracer = TracerProvider.Default.GetTracer("NoOp");
+            this.noopTracer = TracerProvider.Default.GetTracer("Noop");
         }
 
         [Benchmark]

@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal readonly struct Int128
     {
-        public static Int128 Empty = default;
+        public static Int128 Empty;
 
         private const int SpanIdBytes = 8;
         private const int TraceIdBytes = 16;

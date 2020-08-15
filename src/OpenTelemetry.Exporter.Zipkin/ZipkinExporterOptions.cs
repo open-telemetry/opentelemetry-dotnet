@@ -41,6 +41,6 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.
         /// </summary>
-        public bool UseShortTraceIds { get; set; } = false;
+        public bool UseShortTraceIds { get; set; }
     }
 }

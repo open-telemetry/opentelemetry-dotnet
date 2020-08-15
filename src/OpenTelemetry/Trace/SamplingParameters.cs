@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Trace
             ActivityTraceId traceId,
             string name,
             ActivityKind kind,
-            IEnumerable<KeyValuePair<string, string>> tags = null, // TODO: Empty
+            IEnumerable<KeyValuePair<string, object>> tags = null, // TODO: Empty
             IEnumerable<ActivityLink> links = null)
         {
             this.ParentContext = parentContext;
@@ -75,7 +76,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the tags to be associated to the span/activity to be created.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> Tags { get; }
+        public IEnumerable<KeyValuePair<string, object>> Tags { get; }
 
         /// <summary>
         /// Gets the links to be added to the activity to be created.

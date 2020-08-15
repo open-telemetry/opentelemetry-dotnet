@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private readonly System.Timers.Timer maxFlushIntervalTimer;
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
-        private bool isDisposed;
+        private bool disposed;
 
         public JaegerUdpBatcher(JaegerExporterOptions options, TTransport clientTransport = null)
         {
@@ -134,8 +134,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing).
             this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected async ValueTask<int> AppendInternalAsync(JaegerSpan jaegerSpan, CancellationToken cancellationToken)
@@ -218,29 +218,31 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
             catch (Exception ex)
             {
-                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Value.SpanMessages.Count()).Sum()} spans", ex);
+                throw new JaegerExporterException($"Could not send {batches.Select(b => b.Value.SpanMessages.Count).Sum()} spans", ex);
             }
         }
 
-        protected virtual void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool disposing)
         {
             try
             {
                 this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
-            catch
+            catch (Exception ex)
             {
+                JaegerExporterEventSource.Log.FailedClose(ex);
             }
 
-            if (isDisposing && !this.isDisposed)
+            if (disposing && !this.disposed)
             {
                 this.maxFlushIntervalTimer.Dispose();
                 this.thriftClient.Dispose();
                 this.clientTransport.Dispose();
+                this.memoryTransport.Dispose();
                 this.memoryProtocol.Dispose();
                 this.flushLock.Dispose();
 
-                this.isDisposed = true;
+                this.disposed = true;
             }
         }
 

@@ -22,6 +22,8 @@ namespace OpenTelemetry.Instrumentation.Grpc
 {
     internal static class GrpcTagHelper
     {
+        public const string RpcSystemGrpc = "grpc";
+
         // The Grpc.Net.Client library adds its own tags to the activity.
         // These tags are used to source the tags added by the OpenTelemetry instrumentation.
         public const string GrpcMethodTagName = "grpc.method";

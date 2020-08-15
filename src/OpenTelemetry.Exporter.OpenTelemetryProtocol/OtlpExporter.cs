@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         public OtlpExporter(OtlpExporterOptions options)
         {
             this.headers = options.Headers;
-            this.channel = new Channel(options.Endpoint, options.Credentials);
+            this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
             this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }
 

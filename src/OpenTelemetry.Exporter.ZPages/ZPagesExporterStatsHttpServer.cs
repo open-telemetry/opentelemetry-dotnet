@@ -32,7 +32,6 @@ namespace OpenTelemetry.Exporter.ZPages
     /// </summary>
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
-        private readonly ZPagesExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
         private readonly object lck = new object();
 
@@ -45,7 +44,6 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
-            this.exporter = exporter;
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
@@ -94,9 +92,20 @@ namespace OpenTelemetry.Exporter.ZPages
         /// </summary>
         public void Dispose()
         {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
             if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();
+                this.Dispose();
             }
         }
 
@@ -137,8 +146,6 @@ namespace OpenTelemetry.Exporter.ZPages
                     // Put span information in each row of the table
                     foreach (var spanName in currentHourSpanList.Keys)
                     {
-                        ZPagesActivityAggregate minuteSpanInformation = new ZPagesActivityAggregate();
-                        ZPagesActivityAggregate hourSpanInformation = new ZPagesActivityAggregate();
                         long countInLastMinute = 0;
                         long countInLastHour = 0;
                         long averageLatencyInLastMinute = 0;
@@ -148,13 +155,13 @@ namespace OpenTelemetry.Exporter.ZPages
 
                         if (currentMinuteSpanList.ContainsKey(spanName))
                         {
-                            currentMinuteSpanList.TryGetValue(spanName, out minuteSpanInformation);
+                            currentMinuteSpanList.TryGetValue(spanName, out ZPagesActivityAggregate minuteSpanInformation);
                             countInLastMinute = minuteSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
                             averageLatencyInLastMinute = minuteSpanInformation.AvgLatencyTotal;
                             errorCountInLastMinute = minuteSpanInformation.ErrorCount;
                         }
 
-                        currentHourSpanList.TryGetValue(spanName, out hourSpanInformation);
+                        currentHourSpanList.TryGetValue(spanName, out ZPagesActivityAggregate hourSpanInformation);
                         countInLastHour = hourSpanInformation.EndedCount + ZPagesActivityTracker.ProcessingList[spanName];
                         averageLatencyInLastHour = hourSpanInformation.AvgLatencyTotal;
                         errorCountInLastHour = hourSpanInformation.ErrorCount;

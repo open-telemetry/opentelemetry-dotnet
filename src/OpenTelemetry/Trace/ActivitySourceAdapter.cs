@@ -28,11 +28,17 @@ namespace OpenTelemetry.Trace
     /// activies created without ActivitySource, into something which closely
     /// matches the one created using ActivitySource.
     /// </summary>
+    /// <remarks>
+    /// This class is meant to be only used when writing new Instrumentation for
+    /// libraries which are already instrumented with DiagnosticSource/Activity
+    /// following this doc:
+    /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md.
+    /// </remarks>
     public class ActivitySourceAdapter
     {
-        private Sampler sampler;
-        private ActivityProcessor activityProcessor;
-        private Resource resource;
+        private readonly Sampler sampler;
+        private readonly ActivityProcessor activityProcessor;
+        private readonly Resource resource;
 
         internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
         {
@@ -45,6 +51,10 @@ namespace OpenTelemetry.Trace
         {
         }
 
+        /// <summary>
+        /// Method that starts an <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> to be started.</param>
         public void Start(Activity activity)
         {
             this.RunGetRequestedData(activity);
@@ -55,6 +65,10 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <summary>
+        /// Method that stops an <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
             if (activity.IsAllDataRequested)
@@ -68,20 +82,20 @@ namespace OpenTelemetry.Trace
             ActivityContext parentContext;
             if (string.IsNullOrEmpty(activity.ParentId))
             {
-                parentContext = default(ActivityContext);
+                parentContext = default;
+            }
+            else if (activity.Parent != null)
+            {
+                parentContext = activity.Parent.Context;
             }
             else
             {
-                if (activity.Parent != null)
-                {
-                    parentContext = activity.Parent.Context;
-                }
-                else
-                {
-                    parentContext = new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString);
-
-                    // TODO: once IsRemote is exposed on ActivityContext set parentContext's IsRemote=true
-                }
+                parentContext = new ActivityContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
             }
 
             var samplingParameters = new SamplingParameters(
@@ -89,14 +103,23 @@ namespace OpenTelemetry.Trace
                 activity.TraceId,
                 activity.DisplayName,
                 activity.Kind,
-                activity.Tags,
+                activity.TagObjects,
                 activity.Links);
 
-            var samplingDecision = this.sampler.ShouldSample(samplingParameters);
-            activity.IsAllDataRequested = samplingDecision.IsSampled;
-            if (samplingDecision.IsSampled)
+            var samplingResult = this.sampler.ShouldSample(samplingParameters);
+
+            switch (samplingResult.Decision)
             {
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                case SamplingDecision.NotRecord:
+                    activity.IsAllDataRequested = false;
+                    break;
+                case SamplingDecision.Record:
+                    activity.IsAllDataRequested = true;
+                    break;
+                case SamplingDecision.RecordAndSampled:
+                    activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                    break;
             }
         }
     }

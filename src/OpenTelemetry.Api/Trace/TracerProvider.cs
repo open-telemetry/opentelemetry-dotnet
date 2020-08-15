@@ -37,8 +37,10 @@ namespace OpenTelemetry.Trace
         public static TracerProvider Default { get; } = new TracerProvider();
 
         /// <inheritdoc/>
-        public virtual void Dispose()
+        public void Dispose()
         {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -55,6 +57,14 @@ namespace OpenTelemetry.Trace
             }
 
             return new Tracer(new ActivitySource(name, version));
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
         }
     }
 }

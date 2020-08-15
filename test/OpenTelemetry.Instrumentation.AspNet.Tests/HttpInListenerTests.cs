@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
+            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
                 ActivityTraceFlags.Recorded));
@@ -137,8 +137,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (openTelemetry = Sdk.CreateTracerProvider(
-            (builder) => builder.AddAspNetInstrumentation(
+            using (openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetInstrumentation(
                 (options) =>
                 {
                     options.RequestFilter = httpContext =>
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     }
                 })
             .SetResource(expectedResource)
-            .AddProcessorPipeline(p => p.AddProcessor(_ => activityProcessor.Object))))
+            .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
                 this.fakeAspNetDiagnosticSource.Write(
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin/end/dispose was called
             span = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
@@ -202,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(
-                "200",
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+                200,
+                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
 
             Assert.Equal(
                 "Ok",

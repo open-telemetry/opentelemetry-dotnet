@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using Grpc.Core;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -39,5 +40,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// Gets or sets optional headers for the connection.
         /// </summary>
         public Metadata Headers { get; set; } = new Metadata();
+
+        /// <summary>
+        /// Gets or sets the gRPC channel options.
+        /// </summary>
+        public IEnumerable<ChannelOption> ChannelOptions { get; set; }
     }
 }

@@ -98,7 +98,7 @@ namespace OpenTelemetry.Context.Propagation
 
                     traceStateSpan = traceStateSpan.Slice(pairEnd + 1);
                 }
-                while (traceStateSpan.Length > 0);
+                while (!traceStateSpan.IsEmpty);
 
                 if (!isValid)
                 {
@@ -144,9 +144,9 @@ namespace OpenTelemetry.Context.Propagation
                 {
                     // take last MaxKeyValuePairsCount pairs, ignore last (oldest) pairs
                     sb.Append(entry.Key)
-                        .Append("=")
+                        .Append('=')
                         .Append(entry.Value)
-                        .Append(",");
+                        .Append(',');
                 }
             }
 
@@ -233,13 +233,10 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if (vendorLength > 0)
+            if (vendorLength > 0 && i > 242)
             {
-                if (i > 242)
-                {
-                    // tenant section should be less than 241 characters long
-                    return false;
-                }
+                // tenant section should be less than 241 characters long
+                return false;
             }
 
             for (; i < key.Length; i++)

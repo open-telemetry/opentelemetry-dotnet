@@ -34,12 +34,11 @@ namespace Examples.Console
             // Start the server
             httpServer.Start();
 
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                builder => builder
-                    .AddActivitySource("zpages-test")
-                    .UseZPagesExporter(
-                        processorConfigure: processor => processor
-                            .AddProcessor((next) => zpagesProcessor)));
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .AddSource("zpages-test")
+                    .AddProcessor(zpagesProcessor)
+                    .AddZPagesExporter()
+                    .Build();
 
             ActivitySource activitySource = new ActivitySource("zpages-test");
 

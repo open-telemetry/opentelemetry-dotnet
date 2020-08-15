@@ -184,11 +184,11 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
             {
-                this.Span.Status = value ? Trace.Status.Unknown : Trace.Status.Ok;
+                this.Span.SetStatus(value ? Trace.Status.Unknown : Trace.Status.Ok);
             }
             else
             {
-                this.Span.SetAttribute(key, value.ToString());
+                this.Span.SetAttribute(key, value);
             }
 
             return this;
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value.ToString());
+            this.Span.SetAttribute(key, value);
             return this;
         }
 
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(key));
             }
 
-            this.Span.SetAttribute(key, value.ToString());
+            this.Span.SetAttribute(key, value);
             return this;
         }
 

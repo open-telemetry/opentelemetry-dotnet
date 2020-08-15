@@ -28,9 +28,9 @@ namespace OpenTelemetry.Metrics.Export
     {
         private readonly TimeSpan pushInterval;
         private readonly Task worker;
-        private MetricExporter metricExporter;
-        private MetricProcessor metricProcessor;
-        private Dictionary<MeterRegistryKey, MeterSdk> meters;
+        private readonly MetricExporter metricExporter;
+        private readonly MetricProcessor metricProcessor;
+        private readonly Dictionary<MeterRegistryKey, MeterSdk> meters;
 
         public PushMetricController(
             Dictionary<MeterRegistryKey, MeterSdk> meters,
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics.Export
 
         internal async Task ExportAsync(IEnumerable<Metric> metricToExport, CancellationToken cancellationToken)
         {
-            var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken);
+            var exportResult = await this.metricExporter.ExportAsync(metricToExport, cancellationToken).ConfigureAwait(false);
             if (exportResult != MetricExporter.ExportResult.Success)
             {
                 OpenTelemetrySdkEventSource.Log.MetricExporterErrorResult((int)exportResult);
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics.Export
                 try
                 {
                     var metricToExport = this.Collect(sw);
-                    await this.ExportAsync(metricToExport, cancellationToken);
+                    await this.ExportAsync(metricToExport, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

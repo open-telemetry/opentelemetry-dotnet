@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseJaegerExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddJaegerExporter());
         }
 
         [Fact]
@@ -54,10 +54,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseJaegerExporter(
-                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .AddJaegerExporter()
+                .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Jaeger Activity");

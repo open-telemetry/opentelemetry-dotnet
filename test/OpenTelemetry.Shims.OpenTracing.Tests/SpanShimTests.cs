@@ -119,7 +119,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Single(shim.Span.Activity.Events);
             var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
-            Assert.False(first.Attributes.Any());
+            Assert.False(first.Tags.Any());
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var first = shim.Span.Activity.Events.First();
             Assert.Equal("foo", first.Name);
             Assert.Equal(now, first.Timestamp);
-            Assert.False(first.Attributes.Any());
+            Assert.False(first.Tags.Any());
         }
 
         [Fact]
@@ -163,10 +163,10 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Equal(2, shim.Span.Activity.Events.Count());
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Attributes.Any());
+            Assert.True(first.Tags.Any());
 
             Assert.Equal("foo", last.Name);
-            Assert.False(last.Attributes.Any());
+            Assert.False(last.Tags.Any());
         }
 
         [Fact]
@@ -194,11 +194,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var last = shim.Span.Activity.Events.Last();
 
             Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Attributes.Any());
+            Assert.True(first.Tags.Any());
             Assert.Equal(now, first.Timestamp);
 
             Assert.Equal("foo", last.Name);
-            Assert.False(last.Attributes.Any());
+            Assert.False(last.Tags.Any());
             Assert.Equal(now, last.Timestamp);
         }
 
@@ -228,15 +228,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag("foo", true);
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, true);
 
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.True(bool.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
 
-            // TODO: Activity object does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
-            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -249,9 +248,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             shim.SetTag("foo", 1);
 
-            Assert.Single(shim.Span.Activity.Tags);
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Single(shim.Span.Activity.TagObjects);
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
         }
 
         [Fact]
@@ -264,9 +263,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             shim.SetTag("foo", 1D);
 
-            Assert.Single(shim.Span.Activity.Tags);
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal(1, double.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Single(shim.Span.Activity.TagObjects);
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.Equal(1, (double)shim.Span.Activity.TagObjects.First().Value);
         }
 
         [Fact]
@@ -280,15 +279,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag(new BooleanTag("foo"), true);
             shim.SetTag(new BooleanTag(global::OpenTracing.Tag.Tags.Error.Key), true);
 
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.True(bool.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
 
-            // TODO: .NET does not allow Tags update. Below lines of code needs to be enabled after .NET introducing SetTag on Activity.
-            // shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
-            // Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -316,9 +314,9 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             shim.SetTag(new IntTag("foo"), 1);
 
-            Assert.Single(shim.Span.Activity.Tags);
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Single(shim.Span.Activity.TagObjects);
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
         }
 
         [Fact]
@@ -332,13 +330,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             shim.SetTag(new IntOrStringTag("foo"), 1);
             shim.SetTag(new IntOrStringTag("bar"), "baz");
 
-            Assert.Equal(2, shim.Span.Activity.Tags.Count());
+            Assert.Equal(2, shim.Span.Activity.TagObjects.Count());
 
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal(1L, int.Parse(shim.Span.Activity.Tags.First().Value));
+            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
 
-            Assert.Equal("bar", shim.Span.Activity.Tags.Last().Key);
-            Assert.Equal("baz", shim.Span.Activity.Tags.Last().Value);
+            Assert.Equal("bar", shim.Span.Activity.TagObjects.Last().Key);
+            Assert.Equal("baz", shim.Span.Activity.TagObjects.Last().Value);
         }
     }
 }

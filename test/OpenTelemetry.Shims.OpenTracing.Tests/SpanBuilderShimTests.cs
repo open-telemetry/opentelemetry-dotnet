@@ -121,19 +121,24 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Start_ActivityOperationRootSpanChecks()
         {
+            // Create an activity
+            var activity = new Activity("foo")
+                .SetIdFormat(System.Diagnostics.ActivityIdFormat.W3C)
+                .Start();
+
             // matching root operation name
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo", new List<string> { "foo" });
-            var spanShim = (SpanShim)shim.Start();
+            var spanShim1 = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
+            Assert.Equal("foo", spanShim1.Span.Activity.OperationName);
 
             // mis-matched root operation name
             shim = new SpanBuilderShim(tracer, "foo", new List<string> { "bar" });
-            spanShim = (SpanShim)shim.Start();
+            var spanShim2 = (SpanShim)shim.Start();
 
-            Assert.Equal("foo", spanShim.Span.Activity.OperationName);
-            Assert.Equal("foo", spanShim.Span.Activity.Parent.OperationName);
+            Assert.Equal("foo", spanShim2.Span.Activity.OperationName);
+            Assert.Equal(spanShim1.Context.TraceId, spanShim2.Context.TraceId);
         }
 
         [Fact]

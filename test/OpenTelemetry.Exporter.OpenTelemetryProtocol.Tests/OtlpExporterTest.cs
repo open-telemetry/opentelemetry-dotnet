@@ -52,14 +52,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void OtlpExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.UseOtlpExporter());
+            Assert.Throws<ArgumentNullException>(() => builder.AddOtlpExporter());
         }
 
         [Fact]
         public void ToOtlpResourceSpansTest()
         {
-            var evenTags = new[] { new KeyValuePair<string, string>("k0", "v0") };
-            var oddTags = new[] { new KeyValuePair<string, string>("k1", "v1") };
+            var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
+            var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
             var sources = new[]
             {
                 new ActivitySource("even", "2.4.6"),
@@ -73,10 +73,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 });
 
             // This following is done just to set Resource to Activity.
-            using var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                .AddActivitySource(sources[0].Name)
-                .AddActivitySource(sources[1].Name)
-                .SetResource(resource));
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(sources[0].Name)
+                .AddSource(sources[1].Name)
+                .SetResource(resource)
+                .Build();
 
             var activities = new List<Activity>();
             Activity activity = null;
@@ -145,14 +146,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("long", 1L),
                 new KeyValuePair<string, object>("string", "text"),
                 new KeyValuePair<string, object>("double", 3.14),
-
-                // TODO: update if arrays of standard attribute types are supported
-                new KeyValuePair<string, object>("unknown_attrib_type", new byte[] { 1 }),
+                new KeyValuePair<string, object>("int", 1),
+                new KeyValuePair<string, object>("datetime", DateTime.UtcNow),
+                new KeyValuePair<string, object>("bool_array", new bool[] { true, false }),
+                new KeyValuePair<string, object>("int_array", new int[] { 1, 2 }),
+                new KeyValuePair<string, object>("double_array", new double[] { 1.0, 2.09 }),
+                new KeyValuePair<string, object>("string_array", new string[] { "a", "b" }),
             };
 
             foreach (var kvp in attributes)
             {
-                rootActivity.AddTag(kvp.Key, kvp.Value.ToString());
+                rootActivity.SetTag(kvp.Key, kvp.Value);
             }
 
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
@@ -184,14 +188,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(otlpSpan.Status);
             Assert.Empty(otlpSpan.Events);
             Assert.Empty(otlpSpan.Links);
-            AssertActivityTagsIntoOtlpAttributes(attributes, otlpSpan.Attributes);
+            AssertOtlpAttributes(attributes, otlpSpan.Attributes);
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
             var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
             Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-            var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, attributes) };
+            var childLinks = new List<ActivityLink> { new ActivityLink(rootActivity.Context, new ActivityTagsCollection(attributes)) };
             var childActivity = activitySource.StartActivity(
                 "child",
                 ActivityKind.Client,
@@ -200,7 +204,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             childActivity.SetStatus(Status.NotFound);
 
-            var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", attributes) };
+            var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", default, new ActivityTagsCollection(attributes)) };
             childActivity.AddEvent(childEvents[0]);
             childActivity.AddEvent(childEvents[1]);
 
@@ -223,14 +227,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             for (var i = 0; i < childEvents.Count; i++)
             {
                 Assert.Equal(childEvents[i].Name, otlpSpan.Events[i].Name);
-                AssertOtlpAttributes(childEvents[i].Attributes.ToList(), otlpSpan.Events[i].Attributes);
+                AssertOtlpAttributes(childEvents[i].Tags.ToList(), otlpSpan.Events[i].Attributes);
             }
 
             childLinks.Reverse();
             Assert.Equal(childLinks.Count, otlpSpan.Links.Count);
             for (var i = 0; i < childLinks.Count; i++)
             {
-                AssertOtlpAttributes(childLinks[i].Attributes.ToList(), otlpSpan.Links[i].Attributes);
+                AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
             }
         }
 
@@ -255,10 +259,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProvider(b => b
-                            .AddActivitySource(ActivitySourceName)
-                            .UseOtlpExporter(
-                                null, p => p.AddProcessor((next) => testActivityProcessor)));
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            .AddSource(ActivitySourceName)
+                            .AddProcessor(testActivityProcessor)
+                            .AddOtlpExporter()
+                            .Build();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Otlp Activity");
@@ -268,28 +273,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.True(endCalled);
         }
 
-        private static void AssertActivityTagsIntoOtlpAttributes(
-            List<KeyValuePair<string, object>> expectedTags,
-            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
-        {
-            Assert.Equal(expectedTags.Count, otlpAttributes.Count);
-            for (var i = 0; i < expectedTags.Count; i++)
-            {
-                Assert.Equal(expectedTags[i].Key, otlpAttributes[i].Key);
-                AssertOtlpAttributeValue(expectedTags[i].Value, otlpAttributes[i]);
-            }
-        }
-
         private static void AssertOtlpAttributes(
             List<KeyValuePair<string, object>> expectedAttributes,
             RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
         {
-            Assert.Equal(expectedAttributes.Count(), otlpAttributes.Count);
-            for (int i = 0; i < otlpAttributes.Count; i++)
+            int expectedSize = 0;
+            for (int i = 0; i < expectedAttributes.Count; i++)
             {
-                Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i].Key);
-                AssertOtlpAttributeValue(expectedAttributes[i].Value, otlpAttributes[i]);
+                var current = expectedAttributes[i].Value;
+
+                if (current.GetType().IsArray)
+                {
+                    if (current is bool[] boolArray)
+                    {
+                        int index = 0;
+                        foreach (var item in boolArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is int[] intArray)
+                    {
+                        int index = 1;
+                        foreach (var item in intArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is double[] doubleArray)
+                    {
+                        int index = 2;
+                        foreach (var item in doubleArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                    else if (current is string[] stringArray)
+                    {
+                        int index = 3;
+                        foreach (var item in stringArray)
+                        {
+                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
+                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
+                            index++;
+                            expectedSize++;
+                        }
+                    }
+                }
+                else
+                {
+                    Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i].Key);
+                    AssertOtlpAttributeValue(current, otlpAttributes[i]);
+                    expectedSize++;
+                }
             }
+
+            Assert.Equal(expectedSize, otlpAttributes.Count);
         }
 
         private static void AssertOtlpAttributeValue(object originalValue, OtlpCommon.KeyValue akv)
@@ -307,6 +355,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     break;
                 case double d:
                     Assert.Equal(d, akv.Value.DoubleValue);
+                    break;
+                case int i:
+                    Assert.Equal(i, akv.Value.IntValue);
                     break;
                 default:
                     Assert.Equal(originalValue.ToString(), akv.Value.StringValue);

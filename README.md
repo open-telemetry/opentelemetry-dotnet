@@ -6,19 +6,20 @@ chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https:/
 Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 [![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Api.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Getting Started
 
-If you are new here, please [get started in 5 minutes](./docs/trace/getting-started.md).
+If you are new here, please see [get started in 5
+minutes](./docs/trace/getting-started/README.md).
 
 This repository includes multiple installable components, available on
-[NuGet](https://www.nuget.org/profiles/OpenTelemetry).
-
-Each package has its individual `README.md` file, which covers the instruction
-on how to install and how to get started. To find all the available components,
-please take a look at the `src` folder.
+[NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
+individual `README.md` file, which covers the instruction on how to install and
+how to get started. To find all the available components, please take a look at
+the `src` folder.
 
 Here are the most commonly used components:
 

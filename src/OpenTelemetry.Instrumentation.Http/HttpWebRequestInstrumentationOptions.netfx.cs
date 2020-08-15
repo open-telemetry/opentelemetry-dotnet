@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHttpFlavor"/> tag. Default value: False.
         /// </summary>
-        public bool SetHttpFlavor { get; set; } = false;
+        public bool SetHttpFlavor { get; set; }
 
         /// <summary>
         /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="TraceContextFormat"/>.

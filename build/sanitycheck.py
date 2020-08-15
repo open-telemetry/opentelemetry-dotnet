@@ -35,11 +35,18 @@ def sanitycheck(pattern, allow_utf8 = False):
 
 retval = 0
 retval += sanitycheck('**/*.cmd')
+retval += sanitycheck('**/*.config', allow_utf8 = True)
 retval += sanitycheck('**/*.cs', allow_utf8 = True)
+retval += sanitycheck('**/*.cshtml', allow_utf8 = True)
 retval += sanitycheck('**/*.csproj', allow_utf8 = True)
+retval += sanitycheck('**/*.htm')
+retval += sanitycheck('**/*.html')
 retval += sanitycheck('**/*.md')
-retval += sanitycheck('**/*.proj', allow_utf8 = True)
+retval += sanitycheck('**/*.proj')
+retval += sanitycheck('**/*.props')
 retval += sanitycheck('**/*.py')
-retval += sanitycheck('**/*.xml', allow_utf8 = True)
+retval += sanitycheck('**/*.ruleset', allow_utf8 = True)
+retval += sanitycheck('**/*.sln', allow_utf8 = True)
+retval += sanitycheck('**/*.xml')
 
 sys.exit(retval)

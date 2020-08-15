@@ -1,4 +1,20 @@
-﻿using System;
+﻿// <copyright file="Startup.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
@@ -36,35 +52,38 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger by commenting out one of the following.
-
-            /*
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpInstrumentation()
-                .UseJaegerActivityExporter(o =>
-                {
-                    o.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
-                    o.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                    o.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                }));
-            */
-
-            /*
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpInstrumentation()
-                .UseZipkinExporter(o =>
-                {
-                    o.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
-                    o.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                }));
-            */
-
-            services.AddOpenTelemetry((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .UseConsoleExporter());
+            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
+            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+            switch (exporter)
+            {
+                case "jaeger":
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddJaegerExporter(jaegerOptions =>
+                        {
+                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                        }));
+                    break;
+                case "zipkin":
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddZipkinExporter(zipkinOptions =>
+                        {
+                            zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
+                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                        }));
+                    break;
+                default:
+                    services.AddOpenTelemetry((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddConsoleExporter());
+                    break;
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

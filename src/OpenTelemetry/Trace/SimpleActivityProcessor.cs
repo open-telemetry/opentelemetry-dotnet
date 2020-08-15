@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements simple activity processor that exports activities in OnEnd call without batching.
     /// </summary>
-    public class SimpleActivityProcessor : ActivityProcessor, IDisposable
+    public class SimpleActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporter exporter;
         private bool stopped;
@@ -39,19 +39,16 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override void OnStart(Activity activity)
-        {
-        }
-
-        /// <inheritdoc />
         public override void OnEnd(Activity activity)
         {
             try
             {
-                // do not await, just start export
-                // it can still throw in synchronous part
-
-                _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
+                if (activity.Recorded)
+                {
+                    // do not await, just start export
+                    // it can still throw in synchronous part
+                    _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
+                }
             }
             catch (Exception ex)
             {
@@ -75,34 +72,15 @@ namespace OpenTelemetry.Trace
 #endif
         }
 
-        /// <inheritdoc />
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
         {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
+            base.Dispose(disposing);
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-        }
-
-        protected virtual void Dispose(bool isDisposing)
-        {
-            try
-            {
-                this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-            }
-
-            if (isDisposing)
+            if (disposing)
             {
                 if (this.exporter is IDisposable disposableExporter)
                 {

@@ -42,9 +42,8 @@ namespace Examples.Console
             var connection = ConnectionMultiplexer.Connect("localhost");
 
             // Configure exporter to export traces to Zipkin
-            using var openTelemetry = Sdk.CreateTracerProvider(
-                builder => builder
-                    .UseZipkinExporter(o =>
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .AddZipkinExporter(o =>
                     {
                         o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);
@@ -54,7 +53,8 @@ namespace Examples.Console
                         // changing flushinterval from 10s to 5s
                         options.FlushInterval = TimeSpan.FromSeconds(5);
                     })
-                    .AddActivitySource("redis-test"));
+                    .AddSource("redis-test")
+                    .Build();
 
             ActivitySource activitySource = new ActivitySource("redis-test");
 
@@ -96,8 +96,8 @@ namespace Examples.Console
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.AddTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
-                    activity.AddTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
+                    activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
                 }
 
                 // Annotate our activity to capture metadata about our operation
@@ -105,7 +105,8 @@ namespace Examples.Console
                 {
                     { "use", "demo" },
                 };
-                activity.AddEvent(new ActivityEvent("Invoking DoWork", attributes));
+                ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
+                activity.AddEvent(new ActivityEvent("Invoking DoWork", default, eventTags));
             }
         }
     }

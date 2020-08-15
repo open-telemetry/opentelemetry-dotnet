@@ -55,11 +55,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<ActivityProcessor>();
-            using (Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddRedisInstrumentation(connection);
-            }))
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddRedisInstrumentation(connection)
+                .Build())
             {
                 var db = connection.GetDatabase();
 
@@ -75,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             // Disposing SDK should flush the Redis profiling session immediately.
 
-            Assert.Equal(4, activityProcessor.Invocations.Count);
+            Assert.Equal(5, activityProcessor.Invocations.Count);
 
             VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0]);
             VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0]);
@@ -110,11 +109,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             var activityProcessor = new Mock<ActivityProcessor>();
             Assert.Throws<ArgumentNullException>(() =>
-            Sdk.CreateTracerProvider(b =>
-            {
-                b.AddProcessorPipeline(c => c.AddProcessor(ap => activityProcessor.Object));
-                b.AddRedisInstrumentation(null);
-            }));
+            Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddRedisInstrumentation(null)
+                .Build());
         }
 
         private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)

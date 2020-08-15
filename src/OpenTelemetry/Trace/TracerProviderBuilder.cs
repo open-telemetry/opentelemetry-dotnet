@@ -20,55 +20,33 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Build TracerProvider pipeline with Sampler, Processors and Exporters.
+    /// Build TracerProvider with Resource, Sampler, Processors and Instrumentation.
     /// </summary>
     public class TracerProviderBuilder
     {
+        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
+        private readonly List<ActivityProcessor> processors = new List<ActivityProcessor>();
+        private readonly List<string> sources = new List<string>();
+        private Resource resource = Resource.Empty;
+        private Sampler sampler = new ParentOrElseSampler(new AlwaysOnSampler());
+
         internal TracerProviderBuilder()
         {
         }
 
-        internal List<ActivityProcessorPipelineBuilder> ProcessingPipelines { get; private set; }
-
-        internal List<InstrumentationFactory> InstrumentationFactories { get; private set; }
-
-        internal Sampler Sampler { get; private set; }
-
-        internal Resource Resource { get; private set; } = Resource.Empty;
-
-        internal HashSet<string> ActivitySourceNames { get; private set; }
-
         /// <summary>
-        /// Sets processing and exporting pipeline.
-        /// </summary>
-        /// <param name="configure">Function that configures pipeline.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddProcessorPipeline(Action<ActivityProcessorPipelineBuilder> configure)
-        {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            if (this.ProcessingPipelines == null)
-            {
-                this.ProcessingPipelines = new List<ActivityProcessorPipelineBuilder>();
-            }
-
-            var pipelineBuilder = new ActivityProcessorPipelineBuilder();
-            configure(pipelineBuilder);
-            this.ProcessingPipelines.Add(pipelineBuilder);
-            return this;
-        }
-
-        /// <summary>
-        /// Configures sampler.
+        /// Sets sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            this.Sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            if (sampler == null)
+            {
+                throw new ArgumentNullException(nameof(sampler));
+            }
+
+            this.sampler = sampler;
             return this;
         }
 
@@ -79,25 +57,56 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder SetResource(Resource resource)
         {
-            this.Resource = resource ?? Resource.Empty;
+            if (resource == null)
+            {
+                throw new ArgumentNullException(nameof(resource));
+            }
+
+            this.resource = resource;
             return this;
         }
 
         /// <summary>
-        /// Adds given activitysource name to the list of subscribed sources.
+        /// Adds given activitysource names to the list of subscribed sources.
         /// </summary>
-        /// <param name="activitySourceName">Activity source name.</param>
+        /// <param name="names">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddActivitySource(string activitySourceName)
+        public TracerProviderBuilder AddSource(params string[] names)
         {
-            // TODO: We need to fix the listening model.
-            // Today it ignores version.
-            if (this.ActivitySourceNames == null)
+            if (names == null)
             {
-                this.ActivitySourceNames = new HashSet<string>();
+                throw new ArgumentNullException(nameof(names));
             }
 
-            this.ActivitySourceNames.Add(activitySourceName.ToUpperInvariant());
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
+                }
+
+                // TODO: We need to fix the listening model.
+                // Today it ignores version.
+                this.sources.Add(name);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds processor to the provider.
+        /// </summary>
+        /// <param name="processor">Activity processor to add.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public TracerProviderBuilder AddProcessor(ActivityProcessor processor)
+        {
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
+            this.processors.Add(processor);
+
             return this;
         }
 
@@ -116,18 +125,18 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
-            if (this.InstrumentationFactories == null)
-            {
-                this.InstrumentationFactories = new List<InstrumentationFactory>();
-            }
-
-            this.InstrumentationFactories.Add(
+            this.instrumentationFactories.Add(
                 new InstrumentationFactory(
                     typeof(TInstrumentation).Name,
                     "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
                     instrumentationFactory));
 
             return this;
+        }
+
+        public TracerProvider Build()
+        {
+            return new TracerProviderSdk(this.resource, this.sources, this.instrumentationFactories, this.sampler, this.processors);
         }
 
         internal readonly struct InstrumentationFactory

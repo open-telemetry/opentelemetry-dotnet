@@ -2,30 +2,25 @@
   <PropertyGroup>
     <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
-  </PropertyGroup>
-
-   <!--
-  Uncomment for development. This will disable the verification that every public method needs to be documented.
-  //TODO: Disable this exception, and actually do document all public API. Quite a lot are missing now.
-  -->
-
-  <PropertyGroup>
+    <!--
+    TODO: Disable this exception, and actually do document all public API.
+    -->
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
-    <Compile Include="..\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
-    <Compile Include="..\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePkgVer)" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
 </Project>
