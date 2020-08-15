@@ -23,40 +23,40 @@ library has available. For these cases OpenTelemetry .NET provides an
 2. Use `EnrichmentScope.Begin` to wrap the call you want to instrument:
 
     ```csharp
-            using (EnrichmentScope.Begin(a =>
-            {
-                a.AddTag("mycompany.user_id", 1234);
-                a.AddTag("mycompany.customer_id", 5678);
+    using (EnrichmentScope.Begin(a =>
+    {
+        a.AddTag("mycompany.user_id", 1234);
+        a.AddTag("mycompany.customer_id", 5678);
 
-                HttpRequestMessage request = (HttpRequestMessage)a.GetCustomProperty("HttpHandler.Request");
-                if (request != null)
-                {
-                    a.AddTag("http.user_agent", request.Headers.UserAgent.ToString());
-                }
+        HttpRequestMessage request = (HttpRequestMessage)a.GetCustomProperty("HttpHandler.Request");
+        if (request != null)
+        {
+            a.AddTag("http.user_agent", request.Headers.UserAgent.ToString());
+        }
 
-                HttpResponseMessage response = (HttpResponseMessage)a.GetCustomProperty("HttpHandler.Response");
-                if (response != null)
-                {
-                    a.AddTag("http.content_type", response.Content.Headers.ContentType.ToString());
-                }
-            }))
-            {
-                using var request = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri("https://www.google.com/"),
-                };
+        HttpResponseMessage response = (HttpResponseMessage)a.GetCustomProperty("HttpHandler.Response");
+        if (response != null)
+        {
+            a.AddTag("http.content_type", response.Content.Headers.ContentType.ToString());
+        }
+    }))
+    {
+        using var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri("https://www.opentelemetry.io/"),
+        };
 
-                request.Headers.UserAgent.TryParseAdd("mycompany/mylibrary");
+        request.Headers.UserAgent.TryParseAdd("mycompany/mylibrary");
 
-                using var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
-            }
+        using var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
+    }
     ```
 
-    In that example the span created for the call to Google will be decorated
-    with `mycompany.user_id` & `mycompany.customer_id` tags (simulating
-    contextual data) and `http.user_agent` & `http.content_type` tags which are
-    taken directly from the raw HTTP objects.
+    In that example the span created for the call to `www.opentelemetry.io` will
+    be decorated with `mycompany.user_id` & `mycompany.customer_id` tags
+    (simulating contextual data) and `http.user_agent` & `http.content_type`
+    tags which are taken directly from the raw HTTP objects.
 
 ## Advanced Usage
 
@@ -95,19 +95,19 @@ using EnrichmentScope.Begin(
         target: EnrichmentScopeTarget.FirstChild,
         enrichmentAction: a => a.AddTag("mycompany.user_id", 1234))
     {
-        using var response1 = await HttpClient.GetAsync("https://www.google.com/").ConfigureAwait(false);
+        using var response1 = await HttpClient.GetAsync("https://www.opentelemetry.io/").ConfigureAwait(false);
     }
 
     using EnrichmentScope.Begin(
         target: EnrichmentScopeTarget.FirstChild,
         enrichmentAction: a => a.AddTag("mycompany.user_id", 1818))
     {
-        using var response2 = await HttpClient.GetAsync("https://www.bing.com/").ConfigureAwait(false);
+        using var response2 = await HttpClient.GetAsync("https://www.cncf.io/").ConfigureAwait(false);
     }
 }
 ```
 
-In that example the request to `www.google.com` will be enriched with the
+In that example the request to `www.opentelemetry.io` will be enriched with the
 `mycompany.user_id=1234` and `mycompany.customer_id=5678` tags (in that order)
-and the request to `www.bing.com` will be enriched with the
+and the request to `www.cncf.com` will be enriched with the
 `mycompany.user_id=1818` and `mycompany.customer_id=5678` tags (in that order).

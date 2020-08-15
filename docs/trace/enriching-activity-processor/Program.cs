@@ -53,7 +53,7 @@ public class Program
             using var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri("https://www.google.com/"),
+                RequestUri = new Uri("https://www.opentelemetry.io/"),
             };
 
             request.Headers.UserAgent.TryParseAdd("mycompany/mylibrary");
