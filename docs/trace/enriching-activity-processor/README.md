@@ -21,8 +21,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 ```
 
 **Note:** Order is important. Make sure your `EnrichingActivityProcessor` is
-registered before your `Exporter` and any other `ActivityProcessor`s you are
-using.
+added before your `Exporter` and any other `ActivityProcessor`s you are using.
 
 ### Use `EnrichmentScope.Begin`
 
@@ -85,8 +84,8 @@ The default behavior is `EnrichmentScopeTarget.FirstChild`.
 
 | Name | Description |
 | ---- | ----------- |
-| FirstChild  | The first child `Activity` created under the scope will be enriched and then the scope will automatically be closed. |
-| AllChildren | All child `Activity` objects created under the scope will be enriched until the scope is closed. |
+| FirstChild  | The first child `Activity` created under the scope will<br/> be enriched and then the scope will automatically be closed. |
+| AllChildren | All child `Activity` objects created under the scope will<br/> be enriched until the scope is closed. |
 
 ### Nesting Scopes
 

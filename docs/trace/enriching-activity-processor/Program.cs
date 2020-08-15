@@ -60,8 +60,5 @@ public class Program
 
             using var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
         }
-
-        Console.WriteLine("Press any key to exit.");
-        Console.ReadKey();
     }
 }
