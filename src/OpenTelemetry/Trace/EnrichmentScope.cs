@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Context;
@@ -85,13 +86,30 @@ namespace OpenTelemetry.Trace
             {
                 this.EnrichmentAction = null;
 
-                this.Parent.Child = this.Child;
-                if (this.Child != null)
+                if (this.Parent.Child == this)
+                {
+                    this.Parent.Child = this.Child;
+                }
+
+                if (this.Child?.Parent == this)
                 {
                     this.Child.Parent = this.Parent;
                 }
 
-                RuntimeContextSlot.Set(this.Parent);
+                if (RuntimeContextSlot.Get() == this)
+                {
+                    var parent = this.Parent;
+                    while (true)
+                    {
+                        if (parent == null || !parent.disposed)
+                        {
+                            RuntimeContextSlot.Set(parent);
+                            break;
+                        }
+
+                        parent = parent.Parent;
+                    }
+                }
 
                 this.disposed = true;
             }
