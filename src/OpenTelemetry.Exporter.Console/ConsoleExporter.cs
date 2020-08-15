@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -47,7 +46,6 @@ namespace OpenTelemetry.Exporter.Console
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
         public override ExportResultSync Export(IEnumerable<Activity> batch)
         {
             foreach (var activity in batch)
