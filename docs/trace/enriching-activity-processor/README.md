@@ -77,8 +77,8 @@ using EnrichmentScope.Begin(
 
 The default behavior is `EnrichmentScopeTarget.FirstChild`.
 
-| Name        | Description                                                  |
-| ----------- | ------------------------------------------------------------ |
+| Name | Description |
+| ---- | ----------- |
 | FirstChild  | The first child `Activity` created under the scope will be enriched and then the scope will automatically be closed. |
 | AllChildren | All child `Activity` objects created under the scope will be enriched until the scope is closed. |
 
@@ -97,7 +97,7 @@ using EnrichmentScope.Begin(
     {
         using var response1 = await HttpClient.GetAsync("https://www.google.com/").ConfigureAwait(false);
     }
-    
+
     using EnrichmentScope.Begin(
         target: EnrichmentScopeTarget.FirstChild,
         enrichmentAction: a => a.AddTag("mycompany.user_id", 1818))
