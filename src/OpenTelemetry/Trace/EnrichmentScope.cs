@@ -40,7 +40,10 @@ namespace OpenTelemetry.Trace
             this.EnrichmentTarget = target;
 
             this.Parent = Current;
-            this.Parent.Child = this;
+            if (this.Parent != null)
+            {
+                this.Parent.Child = this;
+            }
 
             RuntimeContextSlot.Set(this);
         }
@@ -98,17 +101,7 @@ namespace OpenTelemetry.Trace
 
                 if (RuntimeContextSlot.Get() == this)
                 {
-                    var parent = this.Parent;
-                    while (true)
-                    {
-                        if (parent == null || !parent.disposed)
-                        {
-                            RuntimeContextSlot.Set(parent);
-                            break;
-                        }
-
-                        parent = parent.Parent;
-                    }
+                    RuntimeContextSlot.Set(this.Parent);
                 }
 
                 this.disposed = true;

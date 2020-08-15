@@ -25,7 +25,4 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Testing\Export\" />
-  </ItemGroup>
 </Project>

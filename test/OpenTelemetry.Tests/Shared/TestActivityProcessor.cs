@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,24 +25,27 @@ namespace OpenTelemetry.Tests.Shared
 {
     public class TestActivityProcessor : ActivityProcessor
     {
-        public Action<Activity> StartAction;
-        public Action<Activity> EndAction;
+        private readonly bool collectEndedSpans;
+        private readonly List<Activity> endedActivityObjects = new List<Activity>();
 
-        public TestActivityProcessor()
+        public TestActivityProcessor(Action<Activity> onStartAction = null, Action<Activity> onEndAction = null, bool collectEndedSpans = false)
         {
+            this.StartAction = onStartAction;
+            this.EndAction = onEndAction;
+            this.collectEndedSpans = collectEndedSpans;
         }
 
-        public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
-        {
-            this.StartAction = onStart;
-            this.EndAction = onEnd;
-        }
+        public Action<Activity> StartAction { get; set; }
 
-        public bool ShutdownCalled { get; private set; } = false;
+        public Action<Activity> EndAction { get; set; }
 
-        public bool ForceFlushCalled { get; private set; } = false;
+        public bool ShutdownCalled { get; private set; }
 
-        public bool DisposedCalled { get; private set; } = false;
+        public bool ForceFlushCalled { get; private set; }
+
+        public bool DisposedCalled { get; private set; }
+
+        public IList<Activity> EndedActivityObjects => this.endedActivityObjects;
 
         public override void OnStart(Activity span)
         {
@@ -51,6 +55,11 @@ namespace OpenTelemetry.Tests.Shared
         public override void OnEnd(Activity span)
         {
             this.EndAction?.Invoke(span);
+
+            if (this.collectEndedSpans)
+            {
+                this.endedActivityObjects.Add(span);
+            }
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken)
@@ -73,9 +82,34 @@ namespace OpenTelemetry.Tests.Shared
 #endif
         }
 
+        public IDisposable ResetWhenDone() => new ResetScope(this);
+
+        public void Reset()
+        {
+            this.endedActivityObjects.Clear();
+            this.ShutdownCalled = false;
+            this.ForceFlushCalled = false;
+            this.DisposedCalled = false;
+        }
+
         protected override void Dispose(bool disposing)
         {
             this.DisposedCalled = true;
+        }
+
+        private class ResetScope : IDisposable
+        {
+            private readonly TestActivityProcessor testActivityProcessor;
+
+            public ResetScope(TestActivityProcessor testActivityProcessor)
+            {
+                this.testActivityProcessor = testActivityProcessor;
+            }
+
+            public void Dispose()
+            {
+                this.testActivityProcessor.Reset();
+            }
         }
     }
 }

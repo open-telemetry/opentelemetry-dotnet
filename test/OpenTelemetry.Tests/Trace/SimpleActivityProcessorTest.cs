@@ -19,11 +19,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Tests.Shared;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Resources.Tests
+namespace OpenTelemetry.Trace.Tests
 {
     public class SimpleActivityProcessorTest : IDisposable
     {

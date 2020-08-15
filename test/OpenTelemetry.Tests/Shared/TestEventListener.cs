@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Threading;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests.Shared
 {
     /// <summary>
     /// Event listener for testing event sources.
@@ -91,11 +91,7 @@ namespace OpenTelemetry.Tests
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             // Check for null because this method is called by the base class constror before we can initialize it
-            Action<EventSource> callback = this.OnOnEventSourceCreated;
-            if (callback != null)
-            {
-                callback(eventSource);
-            }
+            this.OnOnEventSourceCreated?.Invoke(eventSource);
         }
     }
 }
