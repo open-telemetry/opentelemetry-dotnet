@@ -38,11 +38,21 @@ namespace Examples.AspNetCore.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get(int? zipPostalCode = null)
         {
-            using var scope = EnrichmentScope.Begin(a =>
-            {
-                if (zipPostalCode.HasValue)
-                    a.AddTag("user.zip_postal", zipPostalCode.Value.ToString());
-            });
+            using var scope = EnrichmentScope.Begin(
+                target: EnrichmentScopeTarget.NextActivity,
+                enrichmentAction: a =>
+                {
+                    if (zipPostalCode.HasValue)
+                    {
+                        a.AddTag("user.zip_postal", zipPostalCode.Value);
+                    }
+
+                    HttpRequestMessage request = (HttpRequestMessage)a.GetCustomProperty("HttpWebRequest.Request");
+                    if (request != null)
+                    {
+                        a.AddTag("http.content_type", request.Content.Headers.ContentType.ToString());
+                    }
+                });
 
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated

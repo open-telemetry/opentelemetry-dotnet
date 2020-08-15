@@ -79,24 +79,6 @@ namespace OpenTelemetry.Trace
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        EnrichmentScope scope = EnrichmentScope.Current;
-                        while (scope != null)
-                        {
-                            try
-                            {
-                                if (activity.IsAllDataRequested)
-                                {
-                                    scope.EnrichmentAction?.Invoke(activity);
-                                }
-                            }
-                            catch
-                            {
-                                // todo: Log
-                            }
-
-                            scope.Dispose();
-                        }
-
                         this.processor?.OnEnd(activity);
                     }
                 },

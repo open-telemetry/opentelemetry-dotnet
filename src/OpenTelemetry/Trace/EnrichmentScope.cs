@@ -32,11 +32,14 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="EnrichmentScope"/> class.
         /// </summary>
         /// <param name="enrichmentAction">Callback action for performing <see cref="Activity"/> enrichment.</param>
-        public EnrichmentScope(Action<Activity> enrichmentAction)
+        /// <param name="target">The target for the enrichment scope.</param>
+        private EnrichmentScope(Action<Activity> enrichmentAction, EnrichmentScopeTarget target)
         {
             this.EnrichmentAction = enrichmentAction ?? throw new ArgumentNullException(nameof(enrichmentAction));
+            this.EnrichmentTarget = target;
 
             this.Parent = Current;
+            this.Parent.Child = this;
 
             RuntimeContextSlot.Set(this);
         }
@@ -52,17 +55,28 @@ namespace OpenTelemetry.Trace
         public EnrichmentScope Parent { get; internal set; }
 
         /// <summary>
+        /// Gets the child <see cref="EnrichmentScope"/>.
+        /// </summary>
+        public EnrichmentScope Child { get; internal set; }
+
+        /// <summary>
         /// Gets the enrichment action.
         /// </summary>
         public Action<Activity> EnrichmentAction { get; private set; }
 
         /// <summary>
+        /// Gets the enrichment target.
+        /// </summary>
+        public EnrichmentScopeTarget EnrichmentTarget { get; private set; }
+
+        /// <summary>
         /// Registers an action that will be called to enrich the next <see cref="Activity"/> processed under the current scope if it has been sampled.
         /// </summary>
         /// <param name="enrichmentAction">Action to be called.</param>
+        /// <param name="target">The target for the enrichment scope.</param>
         /// <returns><see cref="IDisposable"/> to cancel the enrichment scope.</returns>
-        public static IDisposable Begin(Action<Activity> enrichmentAction)
-            => new EnrichmentScope(enrichmentAction);
+        public static IDisposable Begin(Action<Activity> enrichmentAction, EnrichmentScopeTarget target = EnrichmentScopeTarget.NextActivity)
+            => new EnrichmentScope(enrichmentAction, target);
 
         /// <inheritdoc/>
         public void Dispose()
@@ -71,6 +85,8 @@ namespace OpenTelemetry.Trace
             {
                 this.EnrichmentAction = null;
                 RuntimeContextSlot.Set(this.Parent);
+                this.Parent.Child = this.Child;
+                this.Child.Parent = this.Parent;
                 this.disposed = true;
             }
         }
