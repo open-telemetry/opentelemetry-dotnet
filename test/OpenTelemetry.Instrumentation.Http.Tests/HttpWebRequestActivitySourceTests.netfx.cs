@@ -25,7 +25,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 

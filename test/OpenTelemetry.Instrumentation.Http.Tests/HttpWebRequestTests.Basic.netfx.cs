@@ -21,7 +21,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
