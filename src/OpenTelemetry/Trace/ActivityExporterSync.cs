@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="batch">Batch of activities to export.</param>
         /// <returns>Result of export.</returns>
-        public abstract ExportResult Export(IEnumerable<Activity> batch);
+        public abstract ExportResultSync Export(IEnumerable<Activity> batch);
 
         /// <summary>
         /// Shuts down the exporter.

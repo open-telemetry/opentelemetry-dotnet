@@ -23,70 +23,27 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Implements simple activity processor that exports activities in OnEnd call without batching.
+    /// Implements activity processor that exports <see cref="Activity"/> at each OnEnd call.
     /// </summary>
-    public class SimpleExportActivityProcessor : ActivityProcessor
+    public class SimpleExportActivityProcessor : ReentrantExportActivityProcessor
     {
-        private readonly ActivityExporterSync exporter;
-        private bool stopped;
+        private readonly object lck = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Activity exporter instance.</param>
         public SimpleExportActivityProcessor(ActivityExporterSync exporter)
+            : base(exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <inheritdoc />
         public override void OnEnd(Activity activity)
         {
-            try
+            lock (this.lck)
             {
-                // TODO: avoid heap allocation
-                _ = this.exporter.Export(new[] { activity });
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-            }
-        }
-
-        /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            if (!this.stopped)
-            {
-                this.exporter.Shutdown();
-                this.stopped = true;
-            }
-
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            if (disposing)
-            {
-                try
-                {
-                    this.exporter.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
+                base.OnEnd(activity);
             }
         }
     }
