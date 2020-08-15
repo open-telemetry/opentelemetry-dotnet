@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class SimpleExportActivityProcessor : ReentrantExportActivityProcessor
     {
-        private readonly object lck = new object();
+        private readonly object syncObject = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleExportActivityProcessor"/> class.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override void OnEnd(Activity activity)
         {
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 base.OnEnd(activity);
             }
