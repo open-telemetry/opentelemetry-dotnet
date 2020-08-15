@@ -2,7 +2,7 @@
 
 Sometimes the built-in instrumentation doesn't add enough data or you want to
 augment the data it provides with contextual information your application or
-library has available. For these cases OpenTelemetry-dotnet provides an
+library has available. For these cases OpenTelemetry .NET provides an
 `EnrichingActivityProcessor` and `EnrichmentScope` API.
 
 1. To enrich your spans first add the `EnrichingActivityProcessor` to your
