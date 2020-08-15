@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
         /// <param name="enrichmentAction">Action to be called.</param>
         /// <param name="target">The target for the enrichment scope.</param>
         /// <returns><see cref="IDisposable"/> to cancel the enrichment scope.</returns>
-        public static IDisposable Begin(Action<Activity> enrichmentAction, EnrichmentScopeTarget target = EnrichmentScopeTarget.NextActivity)
+        public static IDisposable Begin(Action<Activity> enrichmentAction, EnrichmentScopeTarget target = EnrichmentScopeTarget.FirstChild)
             => new EnrichmentScope(enrichmentAction, target);
 
         /// <inheritdoc/>

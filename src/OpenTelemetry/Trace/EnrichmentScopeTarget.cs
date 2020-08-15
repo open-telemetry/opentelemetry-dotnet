@@ -24,12 +24,12 @@ namespace OpenTelemetry.Trace
     public enum EnrichmentScopeTarget
     {
         /// <summary>
-        /// The next <see cref="Activity"/> created will be enriched and then the scope will automatically be closed.
+        /// The first child <see cref="Activity"/> created under the scope will be enriched and then the scope will automatically be closed.
         /// </summary>
-        NextActivity,
+        FirstChild,
 
         /// <summary>
-        /// All children created under the scope will be enriched until the scope is closed.
+        /// All child <see cref="Activity"/> objects created under the scope will be enriched until the scope is closed.
         /// </summary>
         AllChildren,
     }

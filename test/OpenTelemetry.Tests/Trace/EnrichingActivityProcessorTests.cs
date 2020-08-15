@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Activity activity;
 
-            using (EnrichmentScope.Begin(EnrichmentAction, EnrichmentScopeTarget.NextActivity))
+            using (EnrichmentScope.Begin(EnrichmentAction, EnrichmentScopeTarget.FirstChild))
             {
                 activity = this.activitySource.StartActivity("Test1", ActivityKind.Internal);
                 activity.Stop();
@@ -123,13 +123,13 @@ namespace OpenTelemetry.Trace.Tests
                 activity = this.activitySource.StartActivity("Test1", ActivityKind.Internal); // Test1 <- enrichment.top
                 activity.Stop();
 
-                using (EnrichmentScope.Begin((a) => a.AddTag("enrichment.next", 1), EnrichmentScopeTarget.NextActivity))
+                using (EnrichmentScope.Begin((a) => a.AddTag("enrichment.next", 1), EnrichmentScopeTarget.FirstChild))
                 {
                     activity = this.activitySource.StartActivity("Test2", ActivityKind.Internal); // Test2 <- enrichment.top, enrichment.next=1
                     activity.Stop();
                 }
 
-                using (EnrichmentScope.Begin((a) => a.AddTag("enrichment.next", 2), EnrichmentScopeTarget.NextActivity))
+                using (EnrichmentScope.Begin((a) => a.AddTag("enrichment.next", 2), EnrichmentScopeTarget.FirstChild))
                 {
                     using (EnrichmentScope.Begin((a) => a.AddTag("enrichment.inner", true), EnrichmentScopeTarget.AllChildren))
                     {

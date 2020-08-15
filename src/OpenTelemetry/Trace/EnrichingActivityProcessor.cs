@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
 
                 var nextParent = scope.Parent;
 
-                if (scope.EnrichmentTarget == EnrichmentScopeTarget.NextActivity)
+                if (scope.EnrichmentTarget == EnrichmentScopeTarget.FirstChild)
                 {
                     scope.Dispose();
                 }
