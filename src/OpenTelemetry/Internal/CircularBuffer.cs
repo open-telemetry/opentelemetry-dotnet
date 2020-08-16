@@ -168,7 +168,7 @@ namespace OpenTelemetry.Internal
 
                 if (spinCountDown == 0)
                 {
-                    return false; // exeeded maximum spin count
+                    return false; // exceeded maximum spin count
                 }
             }
         }
