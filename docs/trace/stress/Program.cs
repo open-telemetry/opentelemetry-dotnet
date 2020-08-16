@@ -25,7 +25,6 @@ using OpenTelemetry.Internal;
 
 public class Program
 {
-    private static volatile bool bContinue = true;
     private static long cntEvents = 0;
 
     public static int Main()
@@ -36,35 +35,21 @@ public class Program
     private static int EntryPoint()
     {
         var cntWriter = Environment.ProcessorCount; // configure the number of writers
-        var buffer = new CircularBuffer<Item>(1); // configure the circular buffer capacity, change to a smaller number to test the congestion
+        var buffer = new CircularBuffer<Item>(500000); // configure the circular buffer capacity, change to a smaller number to test the congestion
         long bound = 100000000L; // each writer will write [1, bound]
         var statistics = new long[cntWriter];
         var retry = new long[cntWriter];
         long result = bound * (bound + 1) * cntWriter / 2;
 
-        Console.WriteLine("Running, press <Esc> to stop...");
+        Console.WriteLine($"Inserting [0, {bound}] from {cntWriter} writers to a buffer with capacity={buffer.Capacity}.");
 
         Parallel.Invoke(
         () =>
         {
             var watch = new Stopwatch();
 
-            while (true)
+            while (result != 0)
             {
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(true).Key;
-
-                    switch (key)
-                    {
-                        case ConsoleKey.Escape:
-                            bContinue = false;
-                            return;
-                    }
-
-                    continue;
-                }
-
                 cntEvents = statistics.Sum();
                 watch.Restart();
                 Thread.Sleep(200);
@@ -83,7 +68,7 @@ public class Program
 
                 Console.WriteLine($"Writer {i} started.");
 
-                while (bContinue)
+                while (true)
                 {
                     var item = new Item(num);
 
@@ -107,16 +92,23 @@ public class Program
         {
             Console.WriteLine($"Reader started.");
 
-            while (bContinue)
+            while (true)
             {
                 foreach (var item in buffer.Consume(100))
                 {
                     result -= item.Value;
                 }
+
+                if (result == 0)
+                {
+                    break;
+                }
             }
 
             Console.WriteLine($"Reader finished.");
         });
+
+        Console.WriteLine("Succedded!");
         return 0;
     }
 
