@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.ZPages
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
         private readonly HttpListener httpListener = new HttpListener();
-        private readonly object lck = new object();
+        private readonly object syncObject = new object();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the http server.</param>
         public void Start(CancellationToken token = default)
         {
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 if (this.tokenSource != null)
                 {
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// </summary>
         public void Stop()
         {
-            lock (this.lck)
+            lock (this.syncObject)
             {
                 if (this.tokenSource == null)
                 {
