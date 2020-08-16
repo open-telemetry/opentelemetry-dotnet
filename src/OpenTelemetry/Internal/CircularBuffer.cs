@@ -25,7 +25,7 @@ namespace OpenTelemetry.Internal
     /// Lock free implementation of single-reader multi-writer circular buffer.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    internal class CircularBuffer<T>
+    public class CircularBuffer<T>
         where T : class
     {
         private readonly int capacity;
