@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the number of <see cref="Activity"/> processed by the underlying exporter.
         /// </summary>
-        internal long RemovedCount
+        internal long ProcessedCount
         {
             get
             {
