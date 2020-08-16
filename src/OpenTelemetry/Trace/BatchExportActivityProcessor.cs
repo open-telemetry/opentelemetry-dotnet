@@ -113,7 +113,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            if (this.queue.TryAdd(activity))
+            if (this.queue.TryAdd(activity, maxSpinCount: 50000))
             {
                 if (this.queue.Count >= this.maxExportBatchSize)
                 {
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Trace
                 return; // enqueue succeeded
             }
 
-            // drop item on the floor
+            // either queue is full or exceeded spin count, drop item on the floor
             Interlocked.Increment(ref this.droppedCount);
         }
 
