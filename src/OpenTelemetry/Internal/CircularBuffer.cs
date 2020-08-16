@@ -44,6 +44,14 @@ namespace OpenTelemetry.Internal
             this.trait = new T[capacity];
         }
 
+        public int Capacity
+        {
+            get
+            {
+                return this.capacity;
+            }
+        }
+
         /// <summary>
         /// Gets the number of items contained in the <see cref="CircularBuffer{T}"/>.
         /// </summary>
@@ -86,10 +94,8 @@ namespace OpenTelemetry.Internal
                     {
                         return true;
                     }
-                    else
-                    {
-                        this.trait[index] = null;
-                    }
+
+                    this.trait[index] = null;
                 }
             }
         }
