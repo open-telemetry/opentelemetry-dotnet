@@ -36,7 +36,7 @@ public class Program
     private static int EntryPoint()
     {
         var cntWriter = Environment.ProcessorCount; // configure the number of writers
-        var buffer = new CircularBuffer<Item>(10000); // configure the circular buffer capacity, change to a smaller number to test the congestion
+        var buffer = new CircularBuffer<Item>(1); // configure the circular buffer capacity, change to a smaller number to test the congestion
         long bound = 100000000L; // each writer will write [1, bound]
         var statistics = new long[cntWriter];
         var retry = new long[cntWriter];
