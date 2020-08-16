@@ -65,6 +65,28 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
+        /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
+        /// </summary>
+        public long AddedCount
+        {
+            get
+            {
+                return this.head;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
+        /// </summary>
+        public long RemovedCount
+        {
+            get
+            {
+                return this.tail;
+            }
+        }
+
+        /// <summary>
         /// Attempts to add the specified item to the buffer.
         /// </summary>
         /// <param name="value">The value to add.</param>

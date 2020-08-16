@@ -28,11 +28,12 @@ namespace OpenTelemetry.Trace
     public class BatchExportActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporterSync exporter;
-        private readonly int maxQueueSize;
+        private readonly CircularBuffer<Activity> queue;
         private readonly TimeSpan scheduledDelay;
         private readonly TimeSpan exporterTimeout;
         private readonly int maxExportBatchSize;
         private bool disposed;
+        private long droppedCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class with custom settings.
@@ -70,17 +71,60 @@ namespace OpenTelemetry.Trace
             }
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-            this.maxQueueSize = maxQueueSize;
+            this.queue = new CircularBuffer<Activity>(maxQueueSize);
             this.scheduledDelay = TimeSpan.FromMilliseconds(scheduledDelayMillis);
             this.exporterTimeout = TimeSpan.FromMilliseconds(exporterTimeoutMillis);
             this.maxExportBatchSize = maxExportBatchSize;
         }
 
+        /// <summary>
+        /// Gets the number of <see cref="Activity"/> dropped (when the queue is full).
+        /// </summary>
+        internal long DroppedCount
+        {
+            get
+            {
+                return this.droppedCount;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of <see cref="Activity"/> received by the processor.
+        /// </summary>
+        internal long ReceivedCount
+        {
+            get
+            {
+                return this.queue.AddedCount + this.DroppedCount;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of <see cref="Activity"/> processed by the underlying exporter.
+        /// </summary>
+        internal long ProcessedCount
+        {
+            get
+            {
+                return this.queue.RemovedCount;
+            }
+        }
+
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            // TODO
-            throw new NotImplementedException();
+            if (this.queue.TryAdd(activity))
+            {
+                if (this.queue.Count >= this.maxExportBatchSize)
+                {
+                    // TODO: signal the exporter
+                }
+
+                return; // enqueue succeeded
+            }
+
+            // drop item on the floor
+            Interlocked.Increment(ref this.droppedCount);
         }
 
         /// <inheritdoc/>
