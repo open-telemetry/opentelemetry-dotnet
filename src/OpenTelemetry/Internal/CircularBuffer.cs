@@ -67,7 +67,7 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long Ingress
+        public long AddedCount
         {
             get
             {
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long Egress
+        public long RemovedCount
         {
             get
             {

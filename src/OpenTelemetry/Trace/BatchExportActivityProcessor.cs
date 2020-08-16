@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace
         private readonly TimeSpan exporterTimeout;
         private readonly int maxExportBatchSize;
         private bool disposed;
-        private long dropCount = 0;
+        private long droppedCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class with custom settings.
@@ -80,33 +80,33 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the number of <see cref="Activity"/> dropped (when the queue is full).
         /// </summary>
-        internal long Regress
+        internal long DroppedCount
         {
             get
             {
-                return this.dropCount;
+                return this.droppedCount;
             }
         }
 
         /// <summary>
         /// Gets the number of <see cref="Activity"/> received by the processor.
         /// </summary>
-        internal long Ingress
+        internal long ReceivedCount
         {
             get
             {
-                return this.queue.Ingress + this.dropCount;
+                return this.queue.AddedCount + this.DroppedCount;
             }
         }
 
         /// <summary>
         /// Gets the number of <see cref="Activity"/> processed by the underlying exporter.
         /// </summary>
-        internal long Egress
+        internal long RemovedCount
         {
             get
             {
-                return this.queue.Egress;
+                return this.queue.RemovedCount;
             }
         }
 
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace
             }
 
             // drop item on the floor
-            Interlocked.Increment(ref this.dropCount);
+            Interlocked.Increment(ref this.droppedCount);
         }
 
         /// <inheritdoc/>
