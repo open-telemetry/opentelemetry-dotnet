@@ -37,9 +37,6 @@ namespace OpenTelemetry.Internal
         /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
         /// </summary>
         /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
-        /// <remarks>
-        /// This is a lock-free implementation of single-reader multi-writer circular buffer.
-        /// </remarks>
         public CircularBuffer(int capacity)
         {
             if (capacity <= 0)
