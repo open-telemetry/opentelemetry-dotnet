@@ -87,11 +87,11 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Attempts to add the specified item to the buffer.
+        /// Adds the specified item to the buffer.
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <returns>Returns true if the item was added to the buffer successfully; false if the buffer is full.</returns>
-        public bool TryAdd(T value)
+        public bool Add(T value)
         {
             if (value == null)
             {
@@ -118,6 +118,57 @@ namespace OpenTelemetry.Internal
                     }
 
                     this.trait[index] = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to add the specified item to the buffer.
+        /// </summary>
+        /// <param name="value">The value to add.</param>
+        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number of zero, will spin indefinitely.</param>
+        /// <returns>Returns true if the item was added to the buffer successfully; false if the buffer is full or the spin count exeeded maxSpinCount.</returns>
+        public bool TryAdd(T value, int maxSpinCount)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (maxSpinCount <= 0)
+            {
+                return this.Add(value);
+            }
+
+            var spinCountDown = maxSpinCount;
+
+            while (true)
+            {
+                var tailSnapshot = this.tail;
+                var headSnapshot = this.head;
+
+                if (headSnapshot - tailSnapshot >= this.capacity)
+                {
+                    return false; // buffer is full
+                }
+
+                var index = (int)(headSnapshot % this.capacity);
+
+                if (this.SwapIfNull(index, value))
+                {
+                    if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) == headSnapshot)
+                    {
+                        return true;
+                    }
+
+                    this.trait[index] = null;
+                }
+
+                spinCountDown--;
+
+                if (spinCountDown == 0)
+                {
+                    return false; // exceeded maximum spin count
                 }
             }
         }
