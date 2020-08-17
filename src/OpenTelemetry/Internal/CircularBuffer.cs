@@ -136,7 +136,7 @@ namespace OpenTelemetry.Internal
         /// Attempts to add the specified item to the buffer.
         /// </summary>
         /// <param name="value">The value to add.</param>
-        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number of zero, will spin indefinitely.</param>
+        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number or zero, will spin indefinitely.</param>
         /// <returns>
         /// Returns <c>true</c> if the item was added to the buffer successfully;
         /// <c>false</c> if the buffer is full or the spin count exceeded <paramref name="maxSpinCount"/>.
