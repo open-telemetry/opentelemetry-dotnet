@@ -27,10 +27,10 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleExporter : ActivityExporter
+    public class ConsoleExporter : ActivityExporterSync
     {
         private readonly JsonSerializerOptions serializerOptions;
-        private bool displayAsJson;
+        private readonly bool displayAsJson;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
@@ -46,9 +46,9 @@ namespace OpenTelemetry.Exporter.Console
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
+        public override ExportResultSync Export(IEnumerable<Activity> batch)
         {
-            foreach (var activity in activityBatch)
+            foreach (var activity in batch)
             {
                 if (this.displayAsJson)
                 {
@@ -127,12 +127,7 @@ namespace OpenTelemetry.Exporter.Console
                 }
             }
 
-            return Task.FromResult(ExportResult.Success);
-        }
-
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
+            return ExportResultSync.Success;
         }
     }
 }
