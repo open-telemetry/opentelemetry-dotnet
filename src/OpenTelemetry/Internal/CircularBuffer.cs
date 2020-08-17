@@ -189,7 +189,10 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Consumes up to <paramref name="maxCount"/> items from the queue.
         /// </summary>
-        /// <param name="maxCount">The maximum number of items to be consumed, the actual number of item returned will be <c>Math.Min(maxCount, this.Count)</c>.</param>
+        /// <param name="maxCount">
+        /// The maximum number of items to be consumed, the actual number of
+        /// item returned will be <c>Math.Min(maxCount, this.Count)</c>.
+        /// </param>
         /// <returns>An <see cref="IEnumerable{T}"/> of items.</returns>
         /// <remarks>
         /// This function is not reentrant-safe, only one reader is allowed at any given time.
