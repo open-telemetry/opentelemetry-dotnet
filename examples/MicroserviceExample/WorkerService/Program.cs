@@ -41,7 +41,7 @@ namespace WorkerService
                     {
                         builder
                             .AddSource(nameof(MessageReceiver))
-                            .UseZipkinExporter(b =>
+                            .AddZipkinExporter(b =>
                             {
                                 var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                                 b.ServiceName = nameof(WorkerService);

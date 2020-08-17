@@ -32,11 +32,11 @@ namespace Examples.Console
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .UseOtlpExporter(opt => opt.Endpoint = endpoint)
+                    .AddOtlpExporter(opt => opt.Endpoint = endpoint)
                     .Build();
 
             // The above line is required only in Applications
-            // which decide to use OT.
+            // which decide to use OpenTelemetry.
             using (var sample = new InstrumentationWithActivitySource())
             {
                 sample.Start();

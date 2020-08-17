@@ -1,10 +1,8 @@
-name: .NET
+name: Pack and publish to Myget
 
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-    - '**.md'
+  schedule:
+    - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
   build-pack:
@@ -18,11 +16,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
-
-    - name: Setup .NET Core 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.x
 
     - name: Install dependencies
       run: dotnet restore
@@ -38,3 +31,8 @@ jobs:
       with:
         name: ${{ matrix.os }}-packages
         path: '**/bin/**/*.*nupkg'
+
+    - name: Publish MyGet
+      run: |
+        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package

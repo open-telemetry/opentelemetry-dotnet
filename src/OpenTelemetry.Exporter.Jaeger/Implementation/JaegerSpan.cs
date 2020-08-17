@@ -82,7 +82,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             try
             {
                 var struc = new TStruct("Span");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken);
+                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
 
                 var field = new TField
                 {
@@ -91,85 +91,85 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.TraceIdLow, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.TraceIdLow, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "traceIdHigh";
                 field.Type = TType.I64;
                 field.ID = 2;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.TraceIdHigh, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.TraceIdHigh, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "spanId";
                 field.Type = TType.I64;
                 field.ID = 3;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.SpanId, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.SpanId, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "parentSpanId";
                 field.Type = TType.I64;
                 field.ID = 4;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.ParentSpanId, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.ParentSpanId, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "operationName";
                 field.Type = TType.String;
                 field.ID = 5;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteStringAsync(this.OperationName, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteStringAsync(this.OperationName, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 if (!this.References.IsEmpty)
                 {
                     field.Name = "references";
                     field.Type = TType.List;
                     field.ID = 6;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.References.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.References.Count), cancellationToken).ConfigureAwait(false);
 
                         for (int i = 0; i < this.References.Count; i++)
                         {
-                            await this.References[i].WriteAsync(oprot, cancellationToken);
+                            await this.References[i].WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
                         }
 
-                        await oprot.WriteListEndAsync(cancellationToken);
+                        await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    await oprot.WriteFieldEndAsync(cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 field.Name = "flags";
                 field.Type = TType.I32;
                 field.ID = 7;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI32Async(this.Flags, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI32Async(this.Flags, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "startTime";
                 field.Type = TType.I64;
                 field.ID = 8;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.StartTime, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.StartTime, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "duration";
                 field.Type = TType.I64;
                 field.ID = 9;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await oprot.WriteI64Async(this.Duration, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteI64Async(this.Duration, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 if (!this.Tags.IsEmpty)
                 {
@@ -177,19 +177,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Type = TType.List;
                     field.ID = 10;
 
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken).ConfigureAwait(false);
 
                         for (int i = 0; i < this.Tags.Count; i++)
                         {
-                            await this.Tags[i].WriteAsync(oprot, cancellationToken);
+                            await this.Tags[i].WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
                         }
 
-                        await oprot.WriteListEndAsync(cancellationToken);
+                        await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    await oprot.WriteFieldEndAsync(cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 if (!this.Logs.IsEmpty)
@@ -197,23 +197,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Name = "logs";
                     field.Type = TType.List;
                     field.ID = 11;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken);
+                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Logs.Count), cancellationToken);
+                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Logs.Count), cancellationToken).ConfigureAwait(false);
 
                         for (int i = 0; i < this.Logs.Count; i++)
                         {
-                            await this.Logs[i].WriteAsync(oprot, cancellationToken);
+                            await this.Logs[i].WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
                         }
 
-                        await oprot.WriteListEndAsync(cancellationToken);
+                        await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    await oprot.WriteFieldEndAsync(cancellationToken);
+                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                await oprot.WriteFieldStopAsync(cancellationToken);
-                await oprot.WriteStructEndAsync(cancellationToken);
+                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
+                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {

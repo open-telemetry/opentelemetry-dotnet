@@ -16,6 +16,7 @@
 #if NETSTANDARD2_1
 using System;
 #else
+using System;
 using System.Diagnostics;
 #endif
 using System.Net;
@@ -28,6 +29,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     internal class JaegerUdpClient : IJaegerClient
     {
         private readonly UdpClient client;
+        private bool disposed;
 
         public JaegerUdpClient()
         {
@@ -57,6 +59,30 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 #endif
         }
 
-        public void Dispose() => this.client.Dispose();
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.client.Dispose();
+            }
+
+            this.disposed = true;
+        }
     }
 }

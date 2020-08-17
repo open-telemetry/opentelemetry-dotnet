@@ -1,4 +1,4 @@
-name: .NET Windows
+name: Windows
 
 on:
   pull_request:

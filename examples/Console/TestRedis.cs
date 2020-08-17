@@ -43,7 +43,7 @@ namespace Examples.Console
 
             // Configure exporter to export traces to Zipkin
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                    .UseZipkinExporter(o =>
+                    .AddZipkinExporter(o =>
                     {
                         o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);

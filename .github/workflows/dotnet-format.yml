@@ -22,6 +22,6 @@ jobs:
 
     - name: Install format tool
       run: dotnet tool install -g dotnet-format
-    
+
     - name: dotnet format
       run: dotnet-format --folder --check

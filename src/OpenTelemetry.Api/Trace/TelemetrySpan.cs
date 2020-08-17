@@ -61,19 +61,17 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return (this.Activity == null) ? false : this.Activity.IsAllDataRequested;
+                return this.Activity != null && this.Activity.IsAllDataRequested;
             }
         }
 
         /// <summary>
         /// Sets the status of the span execution.
         /// </summary>
-        public Status Status
+        /// <param name="value">Status to be set.</param>
+        public void SetStatus(Status value)
         {
-            set
-            {
-                this.Activity?.SetStatus(value);
-            }
+            this.Activity?.SetStatus(value);
         }
 
         /// <summary>

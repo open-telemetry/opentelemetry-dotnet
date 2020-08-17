@@ -10,6 +10,12 @@
     is created for the underlying HTTP call in the event both gRPC and HTTP
     instrumentation are enabled.
 
+## 0.4.0-beta.2
+
+Released 2020-07-24
+
+* First beta release
+
 ## 0.3.0-beta
 
 Released 2020-07-23

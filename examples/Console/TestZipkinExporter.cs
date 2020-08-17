@@ -35,7 +35,7 @@ namespace Examples.Console
             // and use the Zipkin exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .UseZipkinExporter(o =>
+                    .AddZipkinExporter(o =>
                     {
                         o.ServiceName = "test-zipkin";
                         o.Endpoint = new Uri(zipkinUri);

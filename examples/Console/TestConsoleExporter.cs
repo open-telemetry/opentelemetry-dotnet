@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -34,21 +32,21 @@ namespace Examples.Console
                 .AddSource("MyCompany.MyProduct.MyWebServer")
                 .SetResource(Resources.CreateServiceResource("MyServiceName"))
                 .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
-                .UseConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
                 .Build();
 
             // The above line is required only in applications
             // which decide to use Open Telemetry.
 
             // Libraries would simply write the following lines of code to
-            // emit activities, which are the .NET representation of OT Spans.
+            // emit activities, which are the .NET representation of OpenTelemetry Spans.
             var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
 
             // The below commented out line shows more likely code in a real world webserver.
             // using (var parent = source.StartActivity("HttpIn", ActivityKind.Server, HttpContext.Request.Headers["traceparent"] ))
             using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
             {
-                // TagNames can follow the OT guidelines
+                // TagNames can follow the OpenTelemetry guidelines
                 // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
                 parent?.SetTag("http.method", "GET");
                 parent?.SetTag("http.host", "MyHostName");

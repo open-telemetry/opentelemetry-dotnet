@@ -40,7 +40,7 @@ the following.
 ## Getting started
 
 Please follow the tutorial and [get started in 5
-minutes](../../docs/trace/getting-started.md).
+minutes](../../docs/trace/getting-started/README.md).
 
 ## Configuration
 
@@ -64,7 +64,6 @@ with sampling probability of 25%.
 ```csharp
 using OpenTelemetry;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Samplers;
 
 using var otel = Sdk.CreateTracerProvider(b => b
     .AddActivitySource("MyCompany.MyProduct.MyLibrary")
@@ -80,10 +79,10 @@ using var otel = Sdk.CreateTracerProvider(b => b
 * Metrics
   * [Building your own Exporter](../../docs/metrics/building-your-own-exporter.md)
 * Trace
-  * [Building your own Exporter](../../docs/trace/building-your-own-exporter.md)
+  * [Building your own Exporter](../../docs/trace/building-your-own-exporter/README.md)
   * [Building your own Instrumentation
     Library](../../docs/trace/building-your-own-instrumentation-library.md)
-  * [Building your own Sampler](../../docs/trace/building-your-own-sampler.md)
+  * [Building your own Sampler](../../docs/trace/building-your-own-sampler/README.md)
 
 ## References
 

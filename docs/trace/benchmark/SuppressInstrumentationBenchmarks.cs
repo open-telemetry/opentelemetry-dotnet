@@ -69,7 +69,7 @@ public class SuppressInstrumentationBenchmarks
     [Benchmark]
     public void SuppressInstrumentationTrue()
     {
-        using (Sdk.SuppressInstrumentation.Begin())
+        using (SuppressInstrumentationScope.Begin())
         {
             using (var activity = this.sourceWithSuppressInstrumentation.StartActivity("Benchmark"))
             {
@@ -81,9 +81,9 @@ public class SuppressInstrumentationBenchmarks
     [Benchmark]
     public void SuppressInstrumentationTrueNested()
     {
-        using (Sdk.SuppressInstrumentation.Begin())
+        using (SuppressInstrumentationScope.Begin())
         {
-            using (Sdk.SuppressInstrumentation.Begin())
+            using (SuppressInstrumentationScope.Begin())
             {
                 using (var activity = this.sourceWithSuppressInstrumentation.StartActivity("Benchmark"))
                 {

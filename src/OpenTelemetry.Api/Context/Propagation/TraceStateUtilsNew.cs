@@ -233,13 +233,10 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if (vendorLength > 0)
+            if (vendorLength > 0 && i > 242)
             {
-                if (i > 242)
-                {
-                    // tenant section should be less than 241 characters long
-                    return false;
-                }
+                // tenant section should be less than 241 characters long
+                return false;
             }
 
             for (; i < key.Length; i++)

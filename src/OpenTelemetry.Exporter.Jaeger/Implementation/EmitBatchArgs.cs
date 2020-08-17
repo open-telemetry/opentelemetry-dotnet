@@ -25,13 +25,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         public static async Task WriteAsync(int seqId, byte[] processMessage, List<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
         {
-            await oprot.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, seqId), cancellationToken);
+            await oprot.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, seqId), cancellationToken).ConfigureAwait(false);
 
             oprot.IncrementRecursionDepth();
             try
             {
                 var struc = new TStruct("emitBatch_args");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken);
+                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
 
                 var field = new TField
                 {
@@ -40,20 +40,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken);
-                await Batch.WriteAsync(processMessage, spanMessages, oprot, cancellationToken);
-                await oprot.WriteFieldEndAsync(cancellationToken);
+                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await Batch.WriteAsync(processMessage, spanMessages, oprot, cancellationToken).ConfigureAwait(false);
+                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
-                await oprot.WriteFieldStopAsync(cancellationToken);
-                await oprot.WriteStructEndAsync(cancellationToken);
+                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
+                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
                 oprot.DecrementRecursionDepth();
             }
 
-            await oprot.WriteMessageEndAsync(cancellationToken);
-            await oprot.Transport.FlushAsync(cancellationToken);
+            await oprot.WriteMessageEndAsync(cancellationToken).ConfigureAwait(false);
+            await oprot.Transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
