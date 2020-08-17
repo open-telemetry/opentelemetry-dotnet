@@ -22,7 +22,7 @@ using System.Threading;
 namespace OpenTelemetry.Internal
 {
     /// <summary>
-    /// Lock free implementation of single-reader multi-writer circular buffer.
+    /// Lock-free implementation of single-reader multi-writer circular buffer.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
     internal class CircularBuffer<T>
@@ -33,6 +33,10 @@ namespace OpenTelemetry.Internal
         private long head = 0;
         private long tail = 0;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
+        /// </summary>
+        /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
         public CircularBuffer(int capacity)
         {
             if (capacity <= 0)
@@ -44,6 +48,9 @@ namespace OpenTelemetry.Internal
             this.trait = new T[capacity];
         }
 
+        /// <summary>
+        /// Gets the capacity of the <see cref="CircularBuffer{T}"/>.
+        /// </summary>
         public int Capacity
         {
             get
@@ -90,7 +97,10 @@ namespace OpenTelemetry.Internal
         /// Adds the specified item to the buffer.
         /// </summary>
         /// <param name="value">The value to add.</param>
-        /// <returns>Returns true if the item was added to the buffer successfully; false if the buffer is full.</returns>
+        /// <returns>
+        /// Returns <c>true</c> if the item was added to the buffer successfully;
+        /// <c>false</c> if the buffer is full.
+        /// </returns>
         public bool Add(T value)
         {
             if (value == null)
@@ -126,8 +136,11 @@ namespace OpenTelemetry.Internal
         /// Attempts to add the specified item to the buffer.
         /// </summary>
         /// <param name="value">The value to add.</param>
-        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number of zero, will spin indefinitely.</param>
-        /// <returns>Returns true if the item was added to the buffer successfully; false if the buffer is full or the spin count exeeded maxSpinCount.</returns>
+        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number or zero, will spin indefinitely.</param>
+        /// <returns>
+        /// Returns <c>true</c> if the item was added to the buffer successfully;
+        /// <c>false</c> if the buffer is full or the spin count exceeded <paramref name="maxSpinCount"/>.
+        /// </returns>
         public bool TryAdd(T value, int maxSpinCount)
         {
             if (value == null)
@@ -173,14 +186,25 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        public IEnumerable<T> Consume(int count)
+        /// <summary>
+        /// Consumes up to <paramref name="maxCount"/> items from the queue.
+        /// </summary>
+        /// <param name="maxCount">
+        /// The maximum number of items to be consumed, the actual number of
+        /// item returned will be <c>Math.Min(maxCount, this.Count)</c>.
+        /// </param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of items.</returns>
+        /// <remarks>
+        /// This function is not reentrant-safe, only one reader is allowed at any given time.
+        /// </remarks>
+        public IEnumerable<T> Consume(int maxCount)
         {
-            if (count <= 0)
+            if (maxCount <= 0)
             {
                 yield break;
             }
 
-            count = Math.Min(count, this.Count);
+            var count = Math.Min(maxCount, this.Count);
 
             for (int i = 0; i < count; i++)
             {
