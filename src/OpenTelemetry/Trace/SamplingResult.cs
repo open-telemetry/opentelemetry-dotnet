@@ -32,6 +32,7 @@ namespace OpenTelemetry.Trace
         {
             this.Decision = decision;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.Tracestate = null;
         }
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         /// <param name="tracestate">Tracestate for the span to be created.</param>
-        public SamplingResult(bool isSampled, IEnumerable<KeyValuePair<string, object>> attributes, string tracestate = null)
+        public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes, string tracestate = null)
         {
             this.Decision = decision;
 
@@ -101,7 +102,7 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (SamplingResult)obj;
-            return this.IsSampled == that.IsSampled &&
+            return this.Decision == that.Decision &&
                    this.Attributes == that.Attributes &&
                    this.Tracestate == that.Tracestate;
         }

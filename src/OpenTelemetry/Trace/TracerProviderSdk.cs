@@ -226,6 +226,8 @@ namespace OpenTelemetry.Trace
                 _ => ActivityDataRequest.PropagationData
             };
 
+            //TODO: update Activity tags and tracestate from shouldSample
+
             if (activityDataRequest != ActivityDataRequest.PropagationData)
             {
                 return activityDataRequest;

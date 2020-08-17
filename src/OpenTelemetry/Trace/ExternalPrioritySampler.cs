@@ -33,7 +33,7 @@ public class ExternalPrioritySampler : Sampler
 
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        // if not remote - TODO follow in-proc decision
+        // todo: optimize for in-proc parent
 
         string tracestate = samplingParameters.ParentContext.TraceState;
         if (!this.TryGetPriority(tracestate, out var priority))
@@ -49,12 +49,12 @@ public class ExternalPrioritySampler : Sampler
 
         bool result = priority <= this.probability;
         return new SamplingResult(
-            isSampled: result,
+            decision: result ? SamplingDecision.RecordAndSampled : SamplingDecision.NotRecord,
             attributes: result ? new[] { new KeyValuePair<string, object>(PriorityFlagName, priority) } : EmptyAttributes,
             tracestate: tracestate);
     }
 
-    private bool TryGetPriority(string tracestate, out double upstreamPriority)
+    private bool TryGetPriority(string tracestate, out float upstreamPriority)
     {
         if (!string.IsNullOrEmpty(tracestate))
         {
@@ -68,7 +68,7 @@ public class ExternalPrioritySampler : Sampler
                 }
 
                 start += PriorityFlagLength + 1; // sampling.priority=
-                if (double.TryParse(tracestate.Substring(start, end - start), out upstreamPriority))
+                if (float.TryParse(tracestate.Substring(start, end - start), out upstreamPriority))
                 {
                     return true;
                 }
