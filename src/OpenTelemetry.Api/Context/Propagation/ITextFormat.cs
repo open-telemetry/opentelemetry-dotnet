@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -36,28 +36,19 @@ namespace OpenTelemetry.Context.Propagation
         /// Injects textual representation of activity context to transmit over the wire.
         /// </summary>
         /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
-        /// <param name="activityContext">Activity context to transmit over the wire.</param>
+        /// <param name="context">The default context to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
-        void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter);
+        void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter);
 
         /// <summary>
         /// Extracts activity context from textual representation.
         /// </summary>
         /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
-        /// <param name="activityContext">The default activity context to be used if Extract fails.</param>
+        /// <param name="context">The default context to be used if Extract fails.</param>
         /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
-        /// <returns>Activity context from it's text representation.</returns>
-        ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter);
-
-        /// <summary>
-        /// Tests if an activity context has been injected into a carrier.
-        /// </summary>
-        /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
-        /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
-        /// <param name="getter">Function that will return string value of a key with the specified name.</param>
-        /// <returns><see langword="true" /> if the carrier has been injected with an activity context.</returns>
-        bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter);
+        /// <returns>Context from it's text representation.</returns>
+        PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

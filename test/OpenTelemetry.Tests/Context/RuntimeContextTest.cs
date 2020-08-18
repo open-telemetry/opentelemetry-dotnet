@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextState.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="RuntimeContextTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,27 @@
 // </copyright>
 
 using System;
+using Xunit;
 
-namespace OpenTelemetry.Context
+namespace OpenTelemetry.Context.Tests
 {
-    internal struct DistributedContextState : IDisposable
+    public class RuntimeContextTest : IDisposable
     {
-        private DistributedContext context;
-
-        internal DistributedContextState(in DistributedContext context)
+        public RuntimeContextTest()
         {
-            this.context = AsyncLocalDistributedContextCarrier.Instance.Current;
-            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in context);
+        }
+
+        [Fact]
+        public static void RegisterSlotWithSameName()
+        {
+            var slot = RuntimeContext.RegisterSlot<bool>("testslot");
+            Assert.NotNull(slot);
+            Assert.Throws<InvalidOperationException>(() => RuntimeContext.RegisterSlot<bool>("testslot"));
         }
 
         public void Dispose()
         {
-            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in this.context);
+            // RuntimeContext.Clear();
         }
     }
 }

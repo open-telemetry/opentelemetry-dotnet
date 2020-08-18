@@ -435,7 +435,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var traceparent = startRequest.Headers["traceparent"];
                 var tracestate = startRequest.Headers["tracestate"];
-                var correlationContext = startRequest.Headers["Correlation-Context"];
+                var correlationContext = startRequest.Headers["baggage"];
                 Assert.NotNull(traceparent);
                 Assert.Equal("some=state", tracestate);
                 Assert.Equal("k=v", correlationContext);
@@ -742,7 +742,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
                 WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty("HttpWebRequest.Request");
-                string[] correlationContext = thisRequest.Headers["Correlation-Context"].Split(',');
+                string[] correlationContext = thisRequest.Headers["baggage"].Split(',');
 
                 Assert.Equal(3, correlationContext.Length);
                 Assert.Contains("key=value", correlationContext);

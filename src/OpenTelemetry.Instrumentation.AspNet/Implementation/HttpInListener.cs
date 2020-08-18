@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
+            if (this.options.RequestFilter?.Invoke(context) == false)
             {
                 AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
@@ -61,17 +61,16 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (!(this.options.TextFormat is TraceContextFormat))
             {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted using the format TextFormat supports.
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
-                if (ctx != default)
+
+                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
-                    // Asp.Net.
+                    // ASP.NET.
                     Activity newOne = new Activity(ActivityNameByHttpInListener);
-                    newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
-                    newOne.TraceStateString = ctx.TraceState;
+                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+                    newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
@@ -82,6 +81,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     newOne.SetCustomProperty("ActivityByAspNet", activity);
                     activity.SetCustomProperty("ActivityByHttpInListener", newOne);
                     activity = newOne;
+                }
+
+                if (ctx.ActivityBaggage != null)
+                {
+                    foreach (var baggageItem in ctx.ActivityBaggage)
+                    {
+                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
+                    }
                 }
             }
 
@@ -114,6 +121,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public override void OnStopActivity(Activity activity, object payload)
         {
             Activity activityToEnrich = activity;
+            Activity createdActivity = null;
 
             if (!(this.options.TextFormat is TraceContextFormat))
             {
@@ -125,9 +133,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
-                    // then we need to retrieve the one created by HttpInListener
-                    // and populate tags to it.
-                    activityToEnrich = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                    // and we need to retrieve the one created by HttpInListener,
+                    // or an additional activity was never created.
+                    createdActivity = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                    activityToEnrich = createdActivity ?? activity;
                 }
             }
 
@@ -190,13 +199,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     var activityByAspNet = (Activity)activity.GetCustomProperty("ActivityByAspNet");
                     Activity.Current = activityByAspNet;
                 }
-                else if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                else if (createdActivity != null)
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // then we need to retrieve the one created by HttpInListener
                     // and stop it.
-                    var activityByHttpInListener = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
-                    activityByHttpInListener.Stop();
+                    createdActivity.Stop();
 
                     // Restore current back to the one created by Asp.Net
                     Activity.Current = activity;
