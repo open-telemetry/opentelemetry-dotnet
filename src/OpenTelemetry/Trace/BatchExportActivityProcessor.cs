@@ -135,10 +135,14 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Flushes the <see cref="Activity"/> currently in the queue, blocks
-        /// the current thread until flush completed or timed out. Using a
-        /// 32bit signed  integer to specify the time interval in milliseconds.
+        /// the current thread until flush completed, shutdown signaled or
+        /// timed out. Using a 32bit signed  integer to specify the time
+        /// interval in milliseconds.
         /// </summary>
-        /// <param name="timeoutMillis">The number of milliseconds to wait, or <c>Timeout.Infinite</c> to wait indefinitely.</param>
+        /// <param name="timeoutMillis">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
         /// </returns>
@@ -218,7 +222,10 @@ namespace OpenTelemetry.Trace
         /// current thread until shutdown completed or timed out. Using a
         /// 32bit signed integer to specify the time interval in milliseconds.
         /// </summary>
-        /// <param name="timeoutMillis">The number of milliseconds to wait, or <c>Timeout.Infinite</c> to wait indefinitely.</param>
+        /// <param name="timeoutMillis">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
         public void Shutdown(int timeoutMillis = Timeout.Infinite)
         {
             if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
