@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Flushes the <see cref="Activity"/> currently in the queue, blocks
         /// the current thread until flush completed, shutdown signaled or
-        /// timed out. Using a 32bit signed  integer to specify the time
+        /// timed out. Using a 32bit signed integer to specify the time
         /// interval in milliseconds.
         /// </summary>
         /// <param name="timeoutMillis">
