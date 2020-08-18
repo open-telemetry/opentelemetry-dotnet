@@ -71,10 +71,8 @@ namespace OpenTelemetry.Context
             {
                 return expectedSlot;
             }
-            else
-            {
-                return null;
-            }
+
+            throw new Exception("Slot with given name not found");
         }
 
         /*

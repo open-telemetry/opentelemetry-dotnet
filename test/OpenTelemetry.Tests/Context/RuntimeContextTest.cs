@@ -37,16 +37,14 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public void GetSlotReturnsNullForNonExistingSlot()
         {
-            var slot = RuntimeContext.GetSlot<bool>("testslot");
-            Assert.Null(slot);
+            Assert.Throws<Exception>(() => RuntimeContext.GetSlot<bool>("testslot"));
         }
 
         [Fact]
         public void GetSlotReturnsNullWhenTypeNotMatchingExistingSlot()
         {
             RuntimeContext.RegisterSlot<bool>("testslot");
-            var slot = RuntimeContext.GetSlot<int>("testslot");
-            Assert.Null(slot);
+            Assert.Throws<Exception>(() => RuntimeContext.GetSlot<int>("testslot"));
         }
 
         [Fact]
