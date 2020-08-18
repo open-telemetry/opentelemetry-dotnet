@@ -214,7 +214,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Attemp to drain the queue and shutdown the exporter, blocks the
+        /// Attempt to drain the queue and shutdown the exporter, blocks the
         /// current thread until shutdown completed or timed out. Using a
         /// 32bit signed integer to specify the time interval in milliseconds.
         /// </summary>
@@ -296,7 +296,7 @@ namespace OpenTelemetry.Trace
 
             while (true)
             {
-                // only wait when the queue doesn't have enough items, otherwise keep busy and send data continously
+                // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.queue.Count < this.maxExportBatchSize)
                 {
                     WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
