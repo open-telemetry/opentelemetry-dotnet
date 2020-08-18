@@ -28,11 +28,13 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public class BaggageFormat : ITextFormat
     {
-        private const string Baggage = "Baggage";
-        private const int MaxBaggageLength = 1024;
+        internal const string BaggageHeaderName = "Baggage";
+
+        private const int MaxBaggageLength = 8192;
+        private const int MaxBaggageItems = 180;
 
         /// <inheritdoc/>
-        public ISet<string> Fields => new HashSet<string> { Baggage };
+        public ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
         /// <inheritdoc/>
         public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
@@ -52,7 +54,7 @@ namespace OpenTelemetry.Context.Propagation
             try
             {
                 IEnumerable<KeyValuePair<string, string>> baggage = null;
-                var baggageCollection = getter(carrier, Baggage);
+                var baggageCollection = getter(carrier, BaggageHeaderName);
                 if (baggageCollection?.Any() ?? false)
                 {
                     TryExtractBaggage(baggageCollection.ToArray(), out baggage);
@@ -87,28 +89,30 @@ namespace OpenTelemetry.Context.Propagation
 
             using IEnumerator<KeyValuePair<string, string>> e = context.ActivityBaggage?.GetEnumerator();
 
-            if (e != null && e.MoveNext())
+            if (e?.MoveNext() == true)
             {
+                int itemCount = 1;
                 StringBuilder baggage = new StringBuilder();
                 do
                 {
                     KeyValuePair<string, string> item = e.Current;
                     baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
                 }
-                while (e.MoveNext());
+                while (e.MoveNext() && itemCount++ < MaxBaggageItems && baggage.Length < MaxBaggageLength);
                 baggage.Remove(baggage.Length - 1, 1);
-                setter(carrier, Baggage, baggage.ToString());
+                setter(carrier, BaggageHeaderName, baggage.ToString());
             }
         }
 
         internal static bool TryExtractBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
         {
             int baggageLength = -1;
+            bool done = false;
             Dictionary<string, string> baggageDictionary = null;
 
             foreach (var item in baggageCollection)
             {
-                if (baggageLength >= MaxBaggageLength)
+                if (done)
                 {
                     break;
                 }
@@ -122,8 +126,9 @@ namespace OpenTelemetry.Context.Propagation
                 {
                     baggageLength += pair.Length + 1; // pair and comma
 
-                    if (baggageLength >= MaxBaggageLength)
+                    if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
                     {
+                        done = true;
                         break;
                     }
 
