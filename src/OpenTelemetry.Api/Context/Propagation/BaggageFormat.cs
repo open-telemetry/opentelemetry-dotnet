@@ -39,6 +39,12 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (context.ActivityBaggage != null)
+            {
+                // If baggage has already been extracted, perform a noop.
+                return context;
+            }
+
             if (carrier == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggageFormat), "null carrier");

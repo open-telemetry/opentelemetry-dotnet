@@ -72,6 +72,12 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (context.ActivityContext.IsValid())
+            {
+                // If a valid context has already been extracted, perform a noop.
+                return context;
+            }
+
             if (carrier == null)
             {
                 OpenTelemetrySdkEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null carrier");
