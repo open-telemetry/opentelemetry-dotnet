@@ -148,6 +148,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         internal static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
         {
+            if (attribute.Value == null)
+            {
+                return true;
+            }
+
             if (attribute.Value is string strVal)
             {
                 string key = attribute.Key;
@@ -172,10 +177,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
             else
             {
-                if (attribute.Value != null)
-                {
-                    PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
-                }
+                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
             }
 
             return true;
