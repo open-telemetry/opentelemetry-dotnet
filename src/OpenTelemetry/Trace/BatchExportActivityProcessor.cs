@@ -29,9 +29,13 @@ namespace OpenTelemetry.Trace
     {
         private readonly ActivityExporterSync exporter;
         private readonly CircularBuffer<Activity> queue;
-        private readonly TimeSpan scheduledDelay;
-        private readonly TimeSpan exporterTimeout;
+        private readonly int scheduledDelayMillis;
+        private readonly int exporterTimeoutMillis;
         private readonly int maxExportBatchSize;
+        private readonly Thread exporterThread;
+        private readonly ManualResetEvent exportTrigger = new ManualResetEvent(false);
+        private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
+        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private bool disposed;
         private long droppedCount = 0;
 
@@ -72,9 +76,11 @@ namespace OpenTelemetry.Trace
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.queue = new CircularBuffer<Activity>(maxQueueSize);
-            this.scheduledDelay = TimeSpan.FromMilliseconds(scheduledDelayMillis);
-            this.exporterTimeout = TimeSpan.FromMilliseconds(exporterTimeoutMillis);
+            this.scheduledDelayMillis = scheduledDelayMillis;
+            this.exporterTimeoutMillis = exporterTimeoutMillis;
             this.maxExportBatchSize = maxExportBatchSize;
+            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc));
+            this.exporterThread.Start();
         }
 
         /// <summary>
@@ -117,7 +123,7 @@ namespace OpenTelemetry.Trace
             {
                 if (this.queue.Count >= this.maxExportBatchSize)
                 {
-                    // TODO: signal the exporter
+                    this.exportTrigger.Set();
                 }
 
                 return; // enqueue succeeded
@@ -127,12 +133,127 @@ namespace OpenTelemetry.Trace
             Interlocked.Increment(ref this.droppedCount);
         }
 
+        /// <summary>
+        /// Flushes the <see cref="Activity"/> currently in the queue, blocks
+        /// the current thread until flush completed or timed out. Using a
+        /// 32bit signed  integer to specify the time interval in milliseconds.
+        /// </summary>
+        /// <param name="timeoutMillis">The number of milliseconds to wait, or <c>Timeout.Infinite</c> to wait indefinitely.</param>
+        /// <returns>
+        /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
+        /// </returns>
+        public bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        {
+            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+            }
+
+            var tail = this.queue.RemovedCount;
+            var head = this.queue.AddedCount;
+
+            if (head == tail)
+            {
+                return true; // nothing to flush
+            }
+
+            this.exportTrigger.Set();
+
+            if (timeoutMillis == 0)
+            {
+                return false;
+            }
+
+            var triggers = new[] { this.dataExportedNotification, this.shutdownTrigger };
+
+            var sw = Stopwatch.StartNew();
+
+            try
+            {
+                while (true)
+                {
+                    if (timeoutMillis == Timeout.Infinite)
+                    {
+                        WaitHandle.WaitAny(triggers);
+                    }
+                    else
+                    {
+                        var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+
+                        if (timeout <= 0)
+                        {
+                            return this.queue.RemovedCount >= head;
+                        }
+
+                        WaitHandle.WaitAny(triggers, (int)timeout);
+                    }
+
+                    if (this.queue.RemovedCount >= head)
+                    {
+                        return true;
+                    }
+
+                    if (this.shutdownTrigger.WaitOne(0))
+                    {
+                        return false;
+                    }
+                }
+            }
+            finally
+            {
+                sw.Stop();
+            }
+        }
+
         /// <inheritdoc/>
         /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
         public override Task ForceFlushAsync(CancellationToken cancellationToken)
         {
             // TODO
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Attemp to drain the queue and shutdown the exporter, blocks the
+        /// current thread until shutdown completed or timed out. Using a
+        /// 32bit signed integer to specify the time interval in milliseconds.
+        /// </summary>
+        /// <param name="timeoutMillis">The number of milliseconds to wait, or <c>Timeout.Infinite</c> to wait indefinitely.</param>
+        public void Shutdown(int timeoutMillis = Timeout.Infinite)
+        {
+            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+            }
+
+            if (timeoutMillis == Timeout.Infinite)
+            {
+                this.ForceFlush();
+                this.shutdownTrigger.Set();
+                this.exporterThread.Join();
+                return;
+            }
+
+            if (timeoutMillis == 0)
+            {
+                this.shutdownTrigger.Set();
+                return;
+            }
+
+            var sw = Stopwatch.StartNew();
+
+            this.ForceFlush(timeoutMillis);
+
+            this.shutdownTrigger.Set();
+
+            sw.Stop();
+
+            var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+
+            if (timeout > 0)
+            {
+                this.exporterThread.Join((int)timeout);
+            }
         }
 
         /// <inheritdoc/>
@@ -153,6 +274,9 @@ namespace OpenTelemetry.Trace
 
             if (disposing && !this.disposed)
             {
+                // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
+                this.Shutdown(this.exporterTimeoutMillis);
+
                 try
                 {
                     this.exporter.Dispose();
@@ -163,6 +287,30 @@ namespace OpenTelemetry.Trace
                 }
 
                 this.disposed = true;
+            }
+        }
+
+        private void ExporterProc()
+        {
+            var triggers = new[] { this.exportTrigger, this.shutdownTrigger };
+
+            while (true)
+            {
+                // only wait when the queue doesn't have enough items, otherwise keep busy and send data continously
+                if (this.queue.Count < this.maxExportBatchSize)
+                {
+                    WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
+                }
+
+                this.exporter.Export(this.queue.Consume(this.maxExportBatchSize));
+
+                this.dataExportedNotification.Set();
+                this.dataExportedNotification.Reset();
+
+                if (this.shutdownTrigger.WaitOne(0))
+                {
+                    break;
+                }
             }
         }
     }
