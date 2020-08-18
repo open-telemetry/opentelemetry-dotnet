@@ -28,7 +28,7 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public class BaggageFormat : ITextFormat
     {
-        private const string Baggage = "baggage";
+        private const string Baggage = "Baggage";
         private const int MaxBaggageLength = 1024;
 
         /// <inheritdoc/>
