@@ -172,40 +172,33 @@ namespace OpenTelemetry.Trace
 
             var sw = Stopwatch.StartNew();
 
-            try
+            while (true)
             {
-                while (true)
+                if (timeoutMillis == Timeout.Infinite)
                 {
-                    if (timeoutMillis == Timeout.Infinite)
-                    {
-                        WaitHandle.WaitAny(triggers);
-                    }
-                    else
-                    {
-                        var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
-
-                        if (timeout <= 0)
-                        {
-                            return this.queue.RemovedCount >= head;
-                        }
-
-                        WaitHandle.WaitAny(triggers, (int)timeout);
-                    }
-
-                    if (this.queue.RemovedCount >= head)
-                    {
-                        return true;
-                    }
-
-                    if (this.shutdownTrigger.WaitOne(0))
-                    {
-                        return false;
-                    }
+                    WaitHandle.WaitAny(triggers);
                 }
-            }
-            finally
-            {
-                sw.Stop();
+                else
+                {
+                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+
+                    if (timeout <= 0)
+                    {
+                        return this.queue.RemovedCount >= head;
+                    }
+
+                    WaitHandle.WaitAny(triggers, (int)timeout);
+                }
+
+                if (this.queue.RemovedCount >= head)
+                {
+                    return true;
+                }
+
+                if (this.shutdownTrigger.WaitOne(0))
+                {
+                    return false;
+                }
             }
         }
 
@@ -252,8 +245,6 @@ namespace OpenTelemetry.Trace
             this.ForceFlush(timeoutMillis);
 
             this.shutdownTrigger.Set();
-
-            sw.Stop();
 
             var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
 
