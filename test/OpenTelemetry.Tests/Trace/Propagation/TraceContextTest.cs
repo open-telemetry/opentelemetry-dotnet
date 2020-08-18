@@ -149,10 +149,10 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
-            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, null);
             var carrier = new Dictionary<string, string>();
             var f = new TraceContextFormat();
-            f.Inject(textFormatContext, carrier, Setter);
+            f.Inject(propagationContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);
         }
@@ -169,10 +169,10 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
-            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, null);
             var carrier = new Dictionary<string, string>();
             var f = new TraceContextFormat();
-            f.Inject(textFormatContext, carrier, Setter);
+            f.Inject(propagationContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);
         }

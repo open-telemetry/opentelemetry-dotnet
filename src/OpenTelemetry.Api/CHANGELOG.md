@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* `TextFormatContext` is now used instead of `ActivityContext` in the
-    `ITextFormat`
+* `PropagationContext` is now used instead of `ActivityContext` in the
+    `ITextFormat` API
     ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
 * Added `BaggageFormat` an `ITextFormat` implementation for managing Baggage
     propagation via the [W3C

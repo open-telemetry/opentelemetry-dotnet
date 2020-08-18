@@ -37,7 +37,7 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
         /// <inheritdoc/>
-        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractBaggage(baggageCollection.ToArray(), out baggage);
                 }
 
-                return new TextFormatContext(
+                return new PropagationContext(
                     context.ActivityContext,
                     baggage ?? context.ActivityBaggage);
             }
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (carrier == null)
             {

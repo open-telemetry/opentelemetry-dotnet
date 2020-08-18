@@ -60,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            TextFormatContext textFormatContext = default;
+            PropagationContext propagationContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -81,10 +81,10 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                textFormatContext = this.textFormat.Extract(textFormatContext, carrierMap, GetCarrierKeyValue);
+                propagationContext = this.textFormat.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
-            return !textFormatContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(textFormatContext.ActivityContext), textFormatContext.ActivityBaggage);
+            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext), propagationContext.ActivityBaggage);
         }
 
         /// <inheritdoc/>
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
                 this.textFormat.Inject(
-                    new TextFormatContext(shim.SpanContext, shim.GetBaggageItems()),
+                    new PropagationContext(shim.SpanContext, shim.GetBaggageItems()),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }

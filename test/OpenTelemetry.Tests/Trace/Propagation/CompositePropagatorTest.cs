@@ -62,11 +62,11 @@ namespace OpenTelemetry.Context.Propagation.Tests
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, null);
             var carrier = new Dictionary<string, string>();
             var activity = new Activity("test");
 
-            compositePropagator.Inject(textFormatContext, carrier, Setter);
+            compositePropagator.Inject(propagationContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-1");
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-2");
         }
@@ -84,11 +84,11 @@ namespace OpenTelemetry.Context.Propagation.Tests
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            TextFormatContext textFormatContext = new TextFormatContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, null);
 
             var carrier = new Dictionary<string, string>();
 
-            compositePropagator.Inject(textFormatContext, carrier, Setter);
+            compositePropagator.Inject(propagationContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent");
 
             // checking if the latest propagator is the one with the data. So, it will replace the previous one.
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             // resetting counter
             count = 0;
-            TextFormatContext newTextFormatContext = compositePropagator.Extract(default, carrier, Getter);
+            compositePropagator.Extract(default, carrier, Getter);
 
             // checking if we accessed only two times: header/headerstate options
             // if that's true, we skipped the first one since we have a logic to for the default result
@@ -115,24 +115,24 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
             var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
 
-            TextFormatContext textFormatContextActivityOnly = new TextFormatContext(activityContext, null);
-            TextFormatContext textFormatContextBaggageOnly = new TextFormatContext(default, baggage);
-            TextFormatContext textFormatContextBoth = new TextFormatContext(activityContext, baggage);
+            PropagationContext propagationContextActivityOnly = new PropagationContext(activityContext, null);
+            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, baggage);
+            PropagationContext propagationContextBoth = new PropagationContext(activityContext, baggage);
 
             var carrier = new Dictionary<string, string>();
-            compositePropagator.Inject(textFormatContextActivityOnly, carrier, Setter);
-            TextFormatContext extractedContext = compositePropagator.Extract(default, carrier, Getter);
-            Assert.Equal(textFormatContextActivityOnly, extractedContext);
+            compositePropagator.Inject(propagationContextActivityOnly, carrier, Setter);
+            PropagationContext extractedContext = compositePropagator.Extract(default, carrier, Getter);
+            Assert.Equal(propagationContextActivityOnly, extractedContext);
 
             carrier = new Dictionary<string, string>();
-            compositePropagator.Inject(textFormatContextBaggageOnly, carrier, Setter);
+            compositePropagator.Inject(propagationContextBaggageOnly, carrier, Setter);
             extractedContext = compositePropagator.Extract(default, carrier, Getter);
-            Assert.Equal(textFormatContextBaggageOnly, extractedContext);
+            Assert.Equal(propagationContextBaggageOnly, extractedContext);
 
             carrier = new Dictionary<string, string>();
-            compositePropagator.Inject(textFormatContextBoth, carrier, Setter);
+            compositePropagator.Inject(propagationContextBoth, carrier, Setter);
             extractedContext = compositePropagator.Extract(default, carrier, Getter);
-            Assert.Equal(textFormatContextBoth, extractedContext);
+            Assert.Equal(propagationContextBoth, extractedContext);
         }
     }
 }

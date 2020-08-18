@@ -36,7 +36,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
         public ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
-        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (this.defaultContext)
             {
@@ -62,12 +62,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 TraceContextFormat.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
-            return new TextFormatContext(
+            return new PropagationContext(
                 new ActivityContext(traceId, spanId, traceoptions, tracestate),
                 context.ActivityBaggage);
         }
 
-        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 

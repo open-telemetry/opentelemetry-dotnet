@@ -43,7 +43,7 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
 
         /// <inheritdoc/>
-        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return new TextFormatContext(
+                return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true),
                     context.ActivityBaggage);
             }
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {

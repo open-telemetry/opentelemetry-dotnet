@@ -187,7 +187,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.TextFormat.Inject(new TextFormatContext(activity.Context, activity.Baggage), request, HttpWebRequestHeaderValuesSetter);
+            => Options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)

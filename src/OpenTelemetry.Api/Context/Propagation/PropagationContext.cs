@@ -1,4 +1,4 @@
-﻿// <copyright file="TextFormatContext.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="PropagationContext.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,16 +22,16 @@ using System.Linq;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// TextFormat context.
+    /// Stores propagation data.
     /// </summary>
-    public readonly struct TextFormatContext : IEquatable<TextFormatContext>
+    public readonly struct PropagationContext : IEquatable<PropagationContext>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TextFormatContext"/> struct.
+        /// Initializes a new instance of the <see cref="PropagationContext"/> struct.
         /// </summary>
         /// <param name="activityContext">Entries for activity context.</param>
         /// <param name="activityBaggage">Entries for activity baggage.</param>
-        public TextFormatContext(ActivityContext activityContext, IEnumerable<KeyValuePair<string, string>> activityBaggage)
+        public PropagationContext(ActivityContext activityContext, IEnumerable<KeyValuePair<string, string>> activityBaggage)
         {
             this.ActivityContext = activityContext;
             this.ActivityBaggage = activityBaggage;
@@ -48,21 +48,21 @@ namespace OpenTelemetry.Context.Propagation
         public IEnumerable<KeyValuePair<string, string>> ActivityBaggage { get; }
 
         /// <summary>
-        /// Compare two entries of <see cref="TextFormatContext"/> for equality.
+        /// Compare two entries of <see cref="PropagationContext"/> for equality.
         /// </summary>
         /// <param name="left">First Entry to compare.</param>
         /// <param name="right">Second Entry to compare.</param>
-        public static bool operator ==(TextFormatContext left, TextFormatContext right) => left.Equals(right);
+        public static bool operator ==(PropagationContext left, PropagationContext right) => left.Equals(right);
 
         /// <summary>
-        /// Compare two entries of <see cref="TextFormatContext"/> for not equality.
+        /// Compare two entries of <see cref="PropagationContext"/> for not equality.
         /// </summary>
         /// <param name="left">First Entry to compare.</param>
         /// <param name="right">Second Entry to compare.</param>
-        public static bool operator !=(TextFormatContext left, TextFormatContext right) => !(left == right);
+        public static bool operator !=(PropagationContext left, PropagationContext right) => !(left == right);
 
         /// <inheritdoc/>
-        public bool Equals(TextFormatContext value)
+        public bool Equals(PropagationContext value)
         {
             if (this.ActivityContext != value.ActivityContext
                 || this.ActivityBaggage is null != value.ActivityBaggage is null)
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj) => (obj is TextFormatContext context) && this.Equals(context);
+        public override bool Equals(object obj) => (obj is PropagationContext context) && this.Equals(context);
 
         /// <inheritdoc/>
         public override int GetHashCode()

@@ -70,7 +70,7 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (carrier == null)
             {
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static TextFormatContext ExtractFromMultipleHeaders<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static PropagationContext ExtractFromMultipleHeaders<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new TextFormatContext(
+                return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
                     context.ActivityBaggage);
             }
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        private static TextFormatContext ExtractFromSingleHeader<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static PropagationContext ExtractFromSingleHeader<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Context.Propagation
                     }
                 }
 
-                return new TextFormatContext(
+                return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
                     context.ActivityBaggage);
             }

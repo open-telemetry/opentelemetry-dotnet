@@ -121,8 +121,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<TextFormatContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<TextFormatContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);

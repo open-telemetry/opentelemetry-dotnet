@@ -40,7 +40,7 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => EmptyFields;
 
         /// <inheritdoc/>
-        public TextFormatContext Extract<T>(TextFormatContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             foreach (var textFormat in this.textFormats)
             {
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(TextFormatContext context, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             foreach (var textFormat in this.textFormats)
             {

@@ -52,24 +52,24 @@ namespace OpenTelemetry.Context.Propagation.Tests
         [Fact]
         public void ValidateDefaultCarrierExtraction()
         {
-            var textFormatContext = this.baggage.Extract<string>(default, null, null);
-            Assert.Equal(default, textFormatContext);
+            var propagationContext = this.baggage.Extract<string>(default, null, null);
+            Assert.Equal(default, propagationContext);
         }
 
         [Fact]
         public void ValidateDefaultGetterExtraction()
         {
             var carrier = new Dictionary<string, string>();
-            var textFormatContext = this.baggage.Extract(default, carrier, null);
-            Assert.Equal(default, textFormatContext);
+            var propagationContext = this.baggage.Extract(default, carrier, null);
+            Assert.Equal(default, propagationContext);
         }
 
         [Fact]
         public void ValidateNoBaggageExtraction()
         {
             var carrier = new Dictionary<string, string>();
-            var textFormatContext = this.baggage.Extract(default, carrier, Getter);
-            Assert.Equal(default, textFormatContext);
+            var propagationContext = this.baggage.Extract(default, carrier, Getter);
+            Assert.Equal(default, propagationContext);
         }
 
         [Fact]
@@ -79,11 +79,11 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { BaggageFormat.BaggageHeaderName, "name=test" },
             };
-            var textFormatContext = this.baggage.Extract(default, carrier, Getter);
-            Assert.False(textFormatContext == default);
-            Assert.Single(textFormatContext.ActivityBaggage);
+            var propagationContext = this.baggage.Extract(default, carrier, Getter);
+            Assert.False(propagationContext == default);
+            Assert.Single(propagationContext.ActivityBaggage);
 
-            var array = textFormatContext.ActivityBaggage.ToArray();
+            var array = propagationContext.ActivityBaggage.ToArray();
 
             Assert.Equal("name", array[0].Key);
             Assert.Equal("test", array[0].Value);
@@ -99,14 +99,14 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 new KeyValuePair<string, string>(BaggageFormat.BaggageHeaderName, "name2=test2"),
             };
 
-            var textFormatContext = this.baggage.Extract(default, carrier, GetterList);
+            var propagationContext = this.baggage.Extract(default, carrier, GetterList);
 
-            Assert.False(textFormatContext == default);
-            Assert.True(textFormatContext.ActivityContext == default);
+            Assert.False(propagationContext == default);
+            Assert.True(propagationContext.ActivityContext == default);
 
-            Assert.Equal(2, textFormatContext.ActivityBaggage.Count());
+            Assert.Equal(2, propagationContext.ActivityBaggage.Count());
 
-            var array = textFormatContext.ActivityBaggage.ToArray();
+            var array = propagationContext.ActivityBaggage.ToArray();
 
             Assert.Equal("name1", array[0].Key);
             Assert.Equal("test1", array[0].Value);
@@ -122,11 +122,11 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { BaggageFormat.BaggageHeaderName, $"name={new string('x', 8186)},clientId=1234" },
             };
-            var textFormatContext = this.baggage.Extract(default, carrier, Getter);
-            Assert.False(textFormatContext == default);
-            Assert.Single(textFormatContext.ActivityBaggage);
+            var propagationContext = this.baggage.Extract(default, carrier, Getter);
+            Assert.False(propagationContext == default);
+            Assert.Single(propagationContext.ActivityBaggage);
 
-            var array = textFormatContext.ActivityBaggage.ToArray();
+            var array = propagationContext.ActivityBaggage.ToArray();
 
             Assert.Equal("name", array[0].Key);
             Assert.Equal(new string('x', 8186), array[0].Value);
@@ -145,13 +145,13 @@ namespace OpenTelemetry.Context.Propagation.Tests
         public void ValidateBaggageInjection()
         {
             var carrier = new Dictionary<string, string>();
-            var textFormatContext = new TextFormatContext(default, new Dictionary<string, string>
+            var propagationContext = new PropagationContext(default, new Dictionary<string, string>
             {
                 { "key1", "value1" },
                 { "key2", "value2" },
             });
 
-            this.baggage.Inject(textFormatContext, carrier, Setter);
+            this.baggage.Inject(propagationContext, carrier, Setter);
 
             Assert.Single(carrier);
             Assert.Equal("key1=value1,key2=value2", carrier[BaggageFormat.BaggageHeaderName]);

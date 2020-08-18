@@ -144,7 +144,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract(It.IsAny<TextFormatContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new TextFormatContext(
+            textFormat.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
                 new ActivityContext(
                 expectedTraceId,
                 expectedSpanId,
