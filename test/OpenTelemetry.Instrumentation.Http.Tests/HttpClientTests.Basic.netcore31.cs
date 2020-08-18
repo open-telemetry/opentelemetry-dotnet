@@ -73,22 +73,23 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             // Ensure that the header value func does not throw if the header key can't be found
             var mockTextFormat = new Mock<ITextFormat>();
-            var isInjectedHeaderValueGetterThrows = false;
-            mockTextFormat
-                .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
-                .Callback<HttpRequestMessage, Func<HttpRequestMessage, string, IEnumerable<string>>>(
-                    (carrier, getter) =>
-                    {
-                        try
-                        {
-                            // traceparent doesn't exist
-                            getter(carrier, "traceparent");
-                        }
-                        catch
-                        {
-                            isInjectedHeaderValueGetterThrows = true;
-                        }
-                    });
+
+            // var isInjectedHeaderValueGetterThrows = false;
+            // mockTextFormat
+            //     .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
+            //     .Callback<HttpRequestMessage, Func<HttpRequestMessage, string, IEnumerable<string>>>(
+            //         (carrier, getter) =>
+            //         {
+            //             try
+            //             {
+            //                 // traceparent doesn't exist
+            //                 getter(carrier, "traceparent");
+            //             }
+            //             catch
+            //             {
+            //                 isInjectedHeaderValueGetterThrows = true;
+            //             }
+            //         });
 
             using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation(o => o.TextFormat = mockTextFormat.Object)
@@ -114,19 +115,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00-{span.Context.TraceId}-{span.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
-
-            mockTextFormat.Verify(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()), Times.Once);
-            Assert.False(isInjectedHeaderValueGetterThrows);
         }
 
         [Fact]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<ActivityContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<ActivityContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
-                    action(message, "custom_traceparent", $"00/{context.TraceId}/{context.SpanId}/01");
+                    action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 

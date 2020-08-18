@@ -60,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentNullException(nameof(carrier));
             }
 
-            ActivityContext activityContext = default;
+            PropagationContext propagationContext = default;
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     carrierMap.Add(entry.Key, new[] { entry.Value });
                 }
 
-                IEnumerable<string> GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
+                static IEnumerable<string> GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
                 {
                     if (key == null || !source.TryGetValue(key, out var value))
                     {
@@ -81,10 +81,10 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                activityContext = this.textFormat.Extract(default, carrierMap, GetCarrierKeyValue);
+                propagationContext = this.textFormat.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
-            return !activityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(activityContext));
+            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext), propagationContext.ActivityBaggage);
         }
 
         /// <inheritdoc/>
@@ -115,7 +115,10 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(shim.SpanContext, textMapCarrier, (instrumentation, key, value) => instrumentation.Set(key, value));
+                this.textFormat.Inject(
+                    new PropagationContext(shim.SpanContext, shim.GetBaggageItems()),
+                    textMapCarrier,
+                    (instrumentation, key, value) => instrumentation.Set(key, value));
             }
         }
     }
