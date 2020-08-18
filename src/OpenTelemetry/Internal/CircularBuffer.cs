@@ -160,6 +160,14 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        /// <summary>
+        /// Reads an item from the <see cref="CircularBuffer{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// This function is not reentrant-safe, only one reader is allowed at any given time.
+        /// Warning: There is no bounds check in this method. Do not call unless you have verified Count > 0.
+        /// </remarks>
+        /// <returns>Item read.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read()
         {

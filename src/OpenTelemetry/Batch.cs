@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityBatch.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Batch.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,63 +20,70 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Stores a batch of completed <see cref="Activity"/> objects to be exported.
+    /// Stores a batch of completed <typeparamref name="T"/> objects to be exported.
     /// </summary>
-    public readonly struct ActivityBatch
+    /// <typeparam name="T">The type of object in the <see cref="Batch{T}"/>.</typeparam>
+    public readonly struct Batch<T>
+        where T : class
     {
-        private readonly Activity activity;
-        private readonly CircularBuffer<Activity> circularBuffer;
+        private readonly T item;
+        private readonly CircularBuffer<T> circularBuffer;
+        private readonly int maxSize;
 
-        internal ActivityBatch(Activity activity)
+        internal Batch(T item)
         {
-            this.activity = activity ?? throw new ArgumentNullException(nameof(activity));
+            this.item = item ?? throw new ArgumentNullException(nameof(item));
             this.circularBuffer = null;
+            this.maxSize = 1;
         }
 
-        internal ActivityBatch(CircularBuffer<Activity> circularBuffer)
+        internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
-            this.activity = null;
+            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
+
+            this.item = null;
             this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
+            this.maxSize = maxSize;
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="ActivityBatch"/>.
+        /// Returns an enumerator that iterates through the <see cref="Batch{T}"/>.
         /// </summary>
-        /// <returns><see cref="ActivityEnumerator"/>.</returns>
-        public ActivityEnumerator GetEnumerator()
+        /// <returns><see cref="Enumerator"/>.</returns>
+        public Enumerator GetEnumerator()
         {
             return this.circularBuffer != null
-                ? new ActivityEnumerator(this.circularBuffer)
-                : new ActivityEnumerator(this.activity);
+                ? new Enumerator(this.circularBuffer, this.maxSize)
+                : new Enumerator(this.item);
         }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="ActivityBatch"/>.
+        /// Enumerates the elements of a <see cref="Batch{T}"/>.
         /// </summary>
-        public struct ActivityEnumerator : IEnumerator<Activity>
+        public struct Enumerator : IEnumerator<T>
         {
-            private readonly CircularBuffer<Activity> circularBuffer;
+            private readonly CircularBuffer<T> circularBuffer;
             private int count;
 
-            internal ActivityEnumerator(Activity activity)
+            internal Enumerator(T item)
             {
-                this.Current = activity;
+                this.Current = item;
                 this.circularBuffer = null;
                 this.count = -1;
             }
 
-            internal ActivityEnumerator(CircularBuffer<Activity> circularBuffer)
+            internal Enumerator(CircularBuffer<T> circularBuffer, int maxSize)
             {
                 this.Current = null;
                 this.circularBuffer = circularBuffer;
-                this.count = circularBuffer.Count;
+                this.count = Math.Min(maxSize, circularBuffer.Count);
             }
 
             /// <inheritdoc/>
-            public Activity Current { get; private set; }
+            public T Current { get; private set; }
 
             /// <inheritdoc/>
             object IEnumerator.Current => this.Current;

@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
         {
             try
             {
-                _ = this.exporter.Export(new ActivityBatch(activity));
+                _ = this.exporter.Export(new Batch<Activity>(activity));
             }
             catch (Exception ex)
             {
