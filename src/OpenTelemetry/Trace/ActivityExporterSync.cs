@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
@@ -46,7 +44,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="batch">Batch of activities to export.</param>
         /// <returns>Result of export.</returns>
-        public abstract ExportResultSync Export(IEnumerable<Activity> batch);
+        public abstract ExportResultSync Export(in ActivityBatch batch);
 
         /// <summary>
         /// Shuts down the exporter.
