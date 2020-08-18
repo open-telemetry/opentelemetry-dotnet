@@ -221,6 +221,8 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             Activity.Current = null;
+            this.testProcessor.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

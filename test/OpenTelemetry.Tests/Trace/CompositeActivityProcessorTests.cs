@@ -35,10 +35,10 @@ namespace OpenTelemetry.Trace.Tests
         {
             var result = string.Empty;
 
-            var p1 = new TestActivityProcessor(
+            using var p1 = new TestActivityProcessor(
                 activity => { result += "1"; },
                 activity => { result += "3"; });
-            var p2 = new TestActivityProcessor(
+            using var p2 = new TestActivityProcessor(
                 activity => { result += "2"; },
                 activity => { result += "4"; });
 
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_ProcessorThrows()
         {
-            var p1 = new TestActivityProcessor(
+            using var p1 = new TestActivityProcessor(
                 activity => { throw new Exception("Start exception"); },
                 activity => { throw new Exception("End exception"); });
 
@@ -72,8 +72,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_ShutsDownAll()
         {
-            var p1 = new TestActivityProcessor(null, null);
-            var p2 = new TestActivityProcessor(null, null);
+            using var p1 = new TestActivityProcessor(null, null);
+            using var p2 = new TestActivityProcessor(null, null);
 
             using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
             {
@@ -86,8 +86,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_ForceFlush()
         {
-            var p1 = new TestActivityProcessor(null, null);
-            var p2 = new TestActivityProcessor(null, null);
+            using var p1 = new TestActivityProcessor(null, null);
+            using var p2 = new TestActivityProcessor(null, null);
 
             using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
             {

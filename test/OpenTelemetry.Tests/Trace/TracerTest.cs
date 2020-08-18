@@ -23,11 +23,13 @@ namespace OpenTelemetry.Trace.Tests
     public class TracerTest : IDisposable
     {
         // TODO: This is only a basic test. This must cover the entire shim API scenarios.
+        private readonly TracerProvider tracerProvider;
         private readonly Tracer tracer;
 
         public TracerTest()
         {
-            this.tracer = TracerProvider.Default.GetTracer("tracername", "tracerversion");
+            this.tracerProvider = TracerProvider.Default;
+            this.tracer = this.tracerProvider.GetTracer("tracername", "tracerversion");
         }
 
         [Fact]
@@ -248,6 +250,8 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             Activity.Current = null;
+            this.tracerProvider.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private static bool IsNoopSpan(TelemetrySpan span)

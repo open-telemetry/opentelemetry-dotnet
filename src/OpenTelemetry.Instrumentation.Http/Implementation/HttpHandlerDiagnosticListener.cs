@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (this.options.TextFormat.IsInjected(request, HttpRequestMessageHeaderValuesGetter))
+            if (this.options.TextFormat.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
             {
-                this.options.TextFormat.Inject(activity.Context, request, HttpRequestMessageHeaderValueSetter);
+                this.options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 

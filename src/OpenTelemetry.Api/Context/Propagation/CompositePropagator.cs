@@ -16,8 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -33,42 +31,32 @@ namespace OpenTelemetry.Context.Propagation
         /// Initializes a new instance of the <see cref="CompositePropagator"/> class.
         /// </summary>
         /// <param name="textFormats">List of <see cref="ITextFormat"/> wire context propagator.</param>
-        public CompositePropagator(List<ITextFormat> textFormats)
+        public CompositePropagator(IEnumerable<ITextFormat> textFormats)
         {
-            this.textFormats = textFormats ?? throw new ArgumentNullException(nameof(textFormats));
+            this.textFormats = new List<ITextFormat>(textFormats ?? throw new ArgumentNullException(nameof(textFormats)));
         }
 
         /// <inheritdoc/>
         public ISet<string> Fields => EmptyFields;
 
         /// <inheritdoc/>
-        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             foreach (var textFormat in this.textFormats)
             {
-                activityContext = textFormat.Extract(activityContext, carrier, getter);
-                if (activityContext.IsValid())
-                {
-                    return activityContext;
-                }
+                context = textFormat.Extract(context, carrier, getter);
             }
 
-            return activityContext;
+            return context;
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             foreach (var textFormat in this.textFormats)
             {
-                textFormat.Inject(activityContext, carrier, setter);
+                textFormat.Inject(context, carrier, setter);
             }
-        }
-
-        /// <inheritdoc/>
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            return this.textFormats.All(textFormat => textFormat.IsInjected(carrier, getter));
         }
     }
 }

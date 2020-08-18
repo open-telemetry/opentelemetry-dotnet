@@ -22,7 +22,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class SpanContextShim : ISpanContext
     {
-        public SpanContextShim(in Trace.SpanContext spanContext)
+        private readonly IEnumerable<KeyValuePair<string, string>> baggage;
+
+        public SpanContextShim(in Trace.SpanContext spanContext, IEnumerable<KeyValuePair<string, string>> baggage = null)
         {
             if (!spanContext.IsValid)
             {
@@ -30,6 +32,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             this.SpanContext = spanContext;
+            this.baggage = baggage;
         }
 
         public Trace.SpanContext SpanContext { get; private set; }
@@ -42,9 +45,6 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         /// <inheritdoc/>
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
-        {
-            // TODO
-            throw new NotImplementedException();
-        }
+            => this.baggage;
     }
 }
