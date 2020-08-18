@@ -15,13 +15,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -46,7 +43,7 @@ namespace OpenTelemetry.Exporter.Console
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override ExportResultSync Export(IEnumerable<Activity> batch)
+        public override ExportResultSync Export(in Batch<Activity> batch)
         {
             foreach (var activity in batch)
             {
