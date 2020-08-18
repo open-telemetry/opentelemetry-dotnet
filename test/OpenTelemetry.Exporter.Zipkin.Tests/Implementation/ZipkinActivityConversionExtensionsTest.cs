@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal;
 using Xunit;
 using static OpenTelemetry.Exporter.Zipkin.Implementation.ZipkinActivityConversionExtensions;
@@ -28,16 +27,33 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         [InlineData("int", 1)]
         [InlineData("string", "s")]
         [InlineData("bool", true)]
+        [InlineData("double", 1.0)]
         public void CheckProcessTag(string key, object value)
         {
             var attributeEnumerationState = new AttributeEnumerationState
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
-            ZipkinActivityConversionExtensions.ProcessTags(ref attributeEnumerationState, new KeyValuePair<string, object>(key, value));
+            ProcessTags(ref attributeEnumerationState, new KeyValuePair<string, object>(key, value));
 
             Assert.Equal(key, attributeEnumerationState.Tags[0].Key);
             Assert.Equal(value, attributeEnumerationState.Tags[0].Value);
+        }
+
+        [Theory]
+        [InlineData("int", null)]
+        [InlineData("string", null)]
+        [InlineData("bool", null)]
+        [InlineData("double", null)]
+        public void CheckNullValueProcessTag(string key, object value)
+        {
+            var attributeEnumerationState = new AttributeEnumerationState
+            {
+                Tags = PooledList<KeyValuePair<string, object>>.Create(),
+            };
+            ProcessTags(ref attributeEnumerationState, new KeyValuePair<string, object>(key, value));
+
+            Assert.Empty(attributeEnumerationState.Tags);
         }
     }
 }

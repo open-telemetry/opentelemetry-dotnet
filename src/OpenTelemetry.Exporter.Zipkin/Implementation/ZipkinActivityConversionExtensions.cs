@@ -172,7 +172,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
             else
             {
-                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
+                if (attribute.Value != null)
+                {
+                    PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
+                }
             }
 
             return true;
