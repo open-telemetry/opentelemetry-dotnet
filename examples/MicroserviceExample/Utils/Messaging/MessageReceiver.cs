@@ -63,7 +63,7 @@ namespace Utils.Messaging
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
             var activityName = $"{ea.RoutingKey} receive";
 
-            using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext))
+            using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext.ActivityContext))
             {
                 try
                 {

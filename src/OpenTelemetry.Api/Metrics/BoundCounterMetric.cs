@@ -38,6 +38,6 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="context">the associated distributed context.</param>
         /// <param name="value">value by which the bound counter metric should be added.</param>
-        public abstract void Add(in DistributedContext context, T value);
+        public abstract void Add(in CorrelationContext context, T value);
     }
 }
