@@ -67,7 +67,14 @@ namespace OpenTelemetry.Context
         /// <returns>The slot previously registered.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string name)
         {
-            return (RuntimeContextSlot<T>)Slots[name];
+            if (Slots.TryGetValue(name, out var slot) && slot is RuntimeContextSlot<T> expectedSlot)
+            {
+                return expectedSlot;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /*
@@ -121,6 +128,9 @@ namespace OpenTelemetry.Context
         }
 
         // For testing purpose
-        // private static Clear
+        internal static void Clear()
+        {
+            Slots.Clear();
+        }
     }
 }

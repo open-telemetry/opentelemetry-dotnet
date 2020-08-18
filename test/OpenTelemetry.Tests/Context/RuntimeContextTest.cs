@@ -23,6 +23,7 @@ namespace OpenTelemetry.Context.Tests
     {
         public RuntimeContextTest()
         {
+            RuntimeContext.Clear();
         }
 
         [Fact]
@@ -33,9 +34,35 @@ namespace OpenTelemetry.Context.Tests
             Assert.Throws<InvalidOperationException>(() => RuntimeContext.RegisterSlot<bool>("testslot"));
         }
 
+        [Fact]
+        public void GetSlotReturnsNullForNonExistingSlot()
+        {
+            var slot = RuntimeContext.GetSlot<bool>("testslot");
+            Assert.Null(slot);
+        }
+
+        [Fact]
+        public void GetSlotReturnsNullWhenTypeNotMatchingExistingSlot()
+        {
+            RuntimeContext.RegisterSlot<bool>("testslot");
+            var slot = RuntimeContext.GetSlot<int>("testslot");
+            Assert.Null(slot);
+        }
+
+        [Fact]
+        public void RegisterAndGetSlot()
+        {
+            var expectedSlot = RuntimeContext.RegisterSlot<int>("testslot");
+            Assert.NotNull(expectedSlot);
+            expectedSlot.Set(100);
+            var actualSlot = RuntimeContext.GetSlot<int>("testslot");
+            Assert.Same(expectedSlot, actualSlot);
+            Assert.Equal(100, expectedSlot.Get());
+        }
+
         public void Dispose()
         {
-            // RuntimeContext.Clear();
+            RuntimeContext.Clear();
         }
     }
 }
