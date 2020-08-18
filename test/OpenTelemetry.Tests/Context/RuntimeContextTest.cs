@@ -1,4 +1,4 @@
-﻿// <copyright file="TestSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="RuntimeContextTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,27 @@
 // </copyright>
 
 using System;
+using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Context.Tests
 {
-    internal class TestSampler : Sampler
+    public class RuntimeContextTest : IDisposable
     {
-        public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
-
-        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+        public RuntimeContextTest()
         {
-            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSampled);
+        }
+
+        [Fact]
+        public static void RegisterSlotWithSameName()
+        {
+            var slot = RuntimeContext.RegisterSlot<bool>("testslot");
+            Assert.NotNull(slot);
+            Assert.Throws<InvalidOperationException>(() => RuntimeContext.RegisterSlot<bool>("testslot"));
+        }
+
+        public void Dispose()
+        {
+            // RuntimeContext.Clear();
         }
     }
 }
