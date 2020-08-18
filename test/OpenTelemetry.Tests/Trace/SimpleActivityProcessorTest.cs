@@ -19,11 +19,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Tests.Shared;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Resources.Tests
+namespace OpenTelemetry.Trace.Tests
 {
     public class SimpleActivityProcessorTest : IDisposable
     {
@@ -174,7 +172,7 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(span2, exported);
         }
 
-        [Fact(Skip = "Reenable once AlwaysParentSampler is added")]
+        [Fact]
         public void ExportNotSampledSpans()
         {
             using var exporter = new TestActivityExporter(null);
@@ -206,20 +204,20 @@ namespace OpenTelemetry.Resources.Tests
 
         private Activity CreateSampledEndedSpan(string spanName)
         {
-            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
 
             using ActivitySource activitySource = new ActivitySource(ActivitySourceName);
-            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, context);
-            activity.Stop();
+            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, parentContext);
+            activity?.Stop();
             return activity;
         }
 
         private Activity CreateNotSampledEndedSpan(string spanName)
         {
-            var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            var parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
             using ActivitySource activitySource = new ActivitySource(ActivitySourceName);
-            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, context);
-            activity.Stop();
+            var activity = activitySource.StartActivity(spanName, ActivityKind.Internal, parentContext);
+            activity?.Stop();
             return activity;
         }
 
