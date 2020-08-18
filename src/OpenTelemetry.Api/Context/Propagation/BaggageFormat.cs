@@ -41,13 +41,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggageFormat), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggageFormat), "null getter");
                 return context;
             }
 
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception ex)
             {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+                OpenTelemetryApiEventSource.Log.BaggageExtractException(nameof(BaggageFormat), ex);
             }
 
             return context;
@@ -77,13 +77,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggageFormat), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggageFormat), "null setter");
                 return;
             }
 

@@ -47,13 +47,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextFormat), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractContext("null getter");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextFormat), "null getter");
                 return context;
             }
 
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception ex)
             {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(ex);
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(TraceContextFormat), ex);
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
@@ -100,19 +100,19 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("Invalid context");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextFormat), "Invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextFormat), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext("null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextFormat), "null setter");
                 return;
             }
 
