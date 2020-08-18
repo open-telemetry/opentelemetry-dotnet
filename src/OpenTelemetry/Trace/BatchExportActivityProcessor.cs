@@ -79,7 +79,11 @@ namespace OpenTelemetry.Trace
             this.scheduledDelayMillis = scheduledDelayMillis;
             this.exporterTimeoutMillis = exporterTimeoutMillis;
             this.maxExportBatchSize = maxExportBatchSize;
-            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc));
+            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
+            {
+                IsBackground = true,
+                Name = $"OpenTelemetry-{nameof(BatchExportActivityProcessor)}-{exporter.GetType().Name}",
+            };
             this.exporterThread.Start();
         }
 
