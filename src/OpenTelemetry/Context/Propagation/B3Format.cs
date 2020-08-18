@@ -70,95 +70,64 @@ namespace OpenTelemetry.Context.Propagation
         public ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        public bool IsInjected<T>(T carrier, Func<T, string, IEnumerable<string>> getter)
+        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            if (context.ActivityContext.IsValid())
+            {
+                // If a valid context has already been extracted, perform a noop.
+                return context;
+            }
+
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return false;
+                OpenTelemetrySdkEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null carrier");
+                return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return false;
-            }
-
-            try
-            {
-                if (this.singleHeader)
-                {
-                    var header = getter(carrier, XB3Combined)?.FirstOrDefault();
-                    return !string.IsNullOrWhiteSpace(header);
-                }
-                else
-                {
-                    var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
-                    var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
-
-                    return traceIdStr != null && spanIdStr != null;
-                }
-            }
-            catch (Exception e)
-            {
-                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return false;
-            }
-        }
-
-        /// <inheritdoc/>
-        public ActivityContext Extract<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
-        {
-            if (carrier == null)
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null carrier");
-                return activityContext;
-            }
-
-            if (getter == null)
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractContext("null getter");
-                return activityContext;
+                OpenTelemetrySdkEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null getter");
+                return context;
             }
 
             if (this.singleHeader)
             {
-                return ExtractFromSingleHeader(activityContext, carrier, getter);
+                return ExtractFromSingleHeader(context, carrier, getter);
             }
             else
             {
-                return ExtractFromMultipleHeaders(activityContext, carrier, getter);
+                return ExtractFromMultipleHeaders(context, carrier, getter);
             }
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(ActivityContext activityContext, T carrier, Action<T, string, string> setter)
+        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            if (!activityContext.IsValid())
+            if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("invalid context");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null carrier");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectContext("null setter");
+                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null setter");
                 return;
             }
 
             if (this.singleHeader)
             {
                 var sb = new StringBuilder();
-                sb.Append(activityContext.TraceId.ToHexString());
+                sb.Append(context.ActivityContext.TraceId.ToHexString());
                 sb.Append(XB3CombinedDelimiter);
-                sb.Append(activityContext.SpanId.ToHexString());
-                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                sb.Append(context.ActivityContext.SpanId.ToHexString());
+                if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     sb.Append(XB3CombinedDelimiter);
                     sb.Append(SampledValue);
@@ -168,16 +137,16 @@ namespace OpenTelemetry.Context.Propagation
             }
             else
             {
-                setter(carrier, XB3TraceId, activityContext.TraceId.ToHexString());
-                setter(carrier, XB3SpanId, activityContext.SpanId.ToHexString());
-                if ((activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+                setter(carrier, XB3TraceId, context.ActivityContext.TraceId.ToHexString());
+                setter(carrier, XB3SpanId, context.ActivityContext.SpanId.ToHexString());
+                if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                 {
                     setter(carrier, XB3Sampled, SampledValue);
                 }
             }
         }
 
-        private static ActivityContext ExtractFromMultipleHeaders<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static PropagationContext ExtractFromMultipleHeaders<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
@@ -195,7 +164,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 ActivitySpanId spanId;
@@ -206,7 +175,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
                 else
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
@@ -216,35 +185,37 @@ namespace OpenTelemetry.Context.Propagation
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
+                return new PropagationContext(
+                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                    context.ActivityBaggage);
             }
             catch (Exception e)
             {
-                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return activityContext;
+                OpenTelemetrySdkEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
+                return context;
             }
         }
 
-        private static ActivityContext ExtractFromSingleHeader<T>(ActivityContext activityContext, T carrier, Func<T, string, IEnumerable<string>> getter)
+        private static PropagationContext ExtractFromSingleHeader<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             try
             {
                 var header = getter(carrier, XB3Combined)?.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(header))
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 var parts = header.Split(XB3CombinedDelimiter);
                 if (parts.Length < 2 || parts.Length > 4)
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 var traceIdStr = parts[0];
                 if (string.IsNullOrWhiteSpace(traceIdStr))
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 if (traceIdStr.Length == 16)
@@ -258,7 +229,7 @@ namespace OpenTelemetry.Context.Propagation
                 var spanIdStr = parts[1];
                 if (string.IsNullOrWhiteSpace(spanIdStr))
                 {
-                    return activityContext;
+                    return context;
                 }
 
                 var spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
@@ -274,12 +245,14 @@ namespace OpenTelemetry.Context.Propagation
                     }
                 }
 
-                return new ActivityContext(traceId, spanId, traceOptions, isRemote: true);
+                return new PropagationContext(
+                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                    context.ActivityBaggage);
             }
             catch (Exception e)
             {
-                OpenTelemetrySdkEventSource.Log.ContextExtractException(e);
-                return activityContext;
+                OpenTelemetrySdkEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
+                return context;
             }
         }
     }
