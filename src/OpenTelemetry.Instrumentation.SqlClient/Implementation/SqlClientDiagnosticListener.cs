@@ -85,6 +85,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         var database = this.databaseFetcher.Fetch(connection);
 
                         activity.DisplayName = (string)database;
+                        activity.SetCustomProperty("SqlHandler.Command", command);
 
                         if (activity.IsAllDataRequested)
                         {

@@ -48,6 +48,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Implementation
 
             activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
+            activity.SetCustomProperty("GrpcHandler.Request", request);
 
             this.activitySource.Start(activity);
 
