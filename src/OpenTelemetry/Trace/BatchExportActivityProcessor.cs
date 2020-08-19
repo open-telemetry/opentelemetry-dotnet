@@ -176,11 +176,15 @@ namespace OpenTelemetry.Trace
 
             var sw = Stopwatch.StartNew();
 
+            // There is a chance that the export thread finished processing all the data from the queue,
+            // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
+            const int pollingMillis = 1000;
+
             while (true)
             {
                 if (timeoutMillis == Timeout.Infinite)
                 {
-                    WaitHandle.WaitAny(triggers);
+                    WaitHandle.WaitAny(triggers, pollingMillis);
                 }
                 else
                 {
@@ -191,7 +195,7 @@ namespace OpenTelemetry.Trace
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, (int)timeout);
+                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMillis));
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -199,7 +203,7 @@ namespace OpenTelemetry.Trace
                     return true;
                 }
 
-                if (this.shutdownTrigger.WaitOne(0))
+                if (this.shutdownDrainTarget != long.MaxValue)
                 {
                     return false;
                 }
