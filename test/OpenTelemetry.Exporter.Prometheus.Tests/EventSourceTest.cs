@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Fact]
         public void EventSourceTest_PrometheusExporterEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(PrometheusExporterEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(PrometheusExporterEventSource.Log);
         }
     }
 }
