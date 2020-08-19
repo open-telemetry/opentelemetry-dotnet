@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace;
 
 namespace TestApp.AspNetCore._3._1
 {
@@ -39,6 +40,9 @@ namespace TestApp.AspNetCore._3._1
             services.AddSingleton<HttpClient>();
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
+            services.AddOpenTelemetry((builder) => builder
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
