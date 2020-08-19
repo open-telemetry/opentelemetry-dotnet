@@ -37,8 +37,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// </remarks>
     internal static class HttpWebRequestActivitySource
     {
-        internal const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
-        internal const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+        public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
+        public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+
+        public const string RequestCustomPropertyName = "OTel.HttpWebRequest.Request";
+        public const string ResponseCustomPropertyName = "OTel.HttpWebRequest.Response";
+        public const string ExceptionCustomPropertyName = "OTel.HttpWebRequest.Exception";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
@@ -97,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             InstrumentRequest(request, activity);
 
-            activity.SetCustomProperty("HttpWebRequest.Request", request);
+            activity.SetCustomProperty(RequestCustomPropertyName, request);
 
             if (activity.IsAllDataRequested)
             {
@@ -114,7 +118,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
-            activity.SetCustomProperty("HttpWebRequest.Response", response);
+            activity.SetCustomProperty(ResponseCustomPropertyName, response);
 
             if (activity.IsAllDataRequested)
             {
@@ -130,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddExceptionTags(Exception exception, Activity activity)
         {
-            activity.SetCustomProperty("HttpWebRequest.Exception", exception);
+            activity.SetCustomProperty(ExceptionCustomPropertyName, exception);
 
             if (!activity.IsAllDataRequested)
             {

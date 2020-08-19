@@ -185,7 +185,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
             Assert.NotNull(response);
 
             VerifyActivityStopTags(200, "OK", activity);
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
             Assert.NotNull(response);
 
             Assert.Empty(activity.Tags);
@@ -401,7 +401,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
             Assert.NotNull(response);
 
             VerifyActivityStopTags(200, "OK", activity);
@@ -518,9 +518,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebRequest stopRequest = (HttpWebRequest)stopEvent.Value.GetCustomProperty("HttpWebRequest.Request");
+            HttpWebRequest stopRequest = (HttpWebRequest)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
             Assert.Equal(startRequest, stopRequest);
-            HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty("HttpWebRequest.Response");
+            HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
             Assert.NotNull(stopResponse);
 
             VerifyActivityStopTags(204, "No Content", activity);
@@ -587,9 +587,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            HttpWebRequest exceptionRequest = (HttpWebRequest)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Request");
+            HttpWebRequest exceptionRequest = (HttpWebRequest)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
             Assert.Equal(startRequest, exceptionRequest);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
             Assert.Equal(webException, exceptionException);
 
             Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
@@ -631,7 +631,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
             Assert.DoesNotContain(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
@@ -672,7 +672,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
@@ -716,7 +716,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty("HttpWebRequest.Exception");
+            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
             Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
@@ -741,7 +741,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
                 Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-                WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty("HttpWebRequest.Request");
+                WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
                 string[] correlationContext = thisRequest.Headers["baggage"].Split(',');
 
                 Assert.Equal(3, correlationContext.Length);
@@ -809,7 +809,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     pair.Key == "Stop",
                     "An unexpected event of name " + pair.Key + "was received");
 
-                WebRequest request = (WebRequest)activity.GetCustomProperty("HttpWebRequest.Request");
+                WebRequest request = (WebRequest)activity.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
                 Assert.Equal("HttpWebRequest", request.GetType().Name);
 
                 if (pair.Key == "Start")
@@ -831,7 +831,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 else
                 {
                     // This must be the response.
-                    WebResponse response = (WebResponse)activity.GetCustomProperty("HttpWebRequest.Response");
+                    WebResponse response = (WebResponse)activity.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
                     Assert.Equal("HttpWebResponse", response.GetType().Name);
 
                     // By the time we see the response, the request object may already have been redirected with a different
@@ -871,7 +871,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> startEvent));
             Assert.Equal("Start", startEvent.Key);
-            HttpWebRequest startRequest = (HttpWebRequest)startEvent.Value.GetCustomProperty("HttpWebRequest.Request");
+            HttpWebRequest startRequest = (HttpWebRequest)startEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
             Assert.NotNull(startRequest);
             return (startEvent.Value, startRequest);
         }
