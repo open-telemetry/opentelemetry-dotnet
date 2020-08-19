@@ -48,14 +48,14 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_BadArgs()
+        public void CheckingBadArgs()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZPagesExporter());
         }
 
         [Fact]
-        public async Task ZPagesExporter_Integration()
+        public async Task CheckingIntegration()
         {
             var batchActivity = new List<Activity> { CreateTestActivity() };
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_CustomActivityProcessor()
+        public void CheckingCustomActivityProcessor()
         {
             const string ActivitySourceName = "zpages.test";
             Guid requestId = Guid.NewGuid();
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_CheckingCustomOptions()
+        public void CheckingCustomOptions()
         {
             ZPagesExporterOptions options = new ZPagesExporterOptions
             {
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public async Task ZPagesExporter_ZPagesProcessor()
+        public async Task CheckingZPagesProcessor()
         {
             const string ActivitySourceName = "zpages.test";
             ZPagesExporterOptions options = new ZPagesExporterOptions
@@ -185,6 +185,20 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             zpagesProcessor.Dispose();
             zpagesServer.Dispose();
             exporter.Dispose();
+        }
+
+        [Fact]
+        public void CheckingPurge()
+        {
+            ZPagesActivityTracker.CurrentHourList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
+            Assert.Single(ZPagesActivityTracker.CurrentHourList);
+            ZPagesActivityTracker.PurgeCurrentHourData(null, null);
+            Assert.Empty(ZPagesActivityTracker.CurrentHourList);
+
+            ZPagesActivityTracker.CurrentMinuteList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
+            Assert.Single(ZPagesActivityTracker.CurrentHourList);
+            ZPagesActivityTracker.PurgeCurrentMinuteData(null, null);
+            Assert.Empty(ZPagesActivityTracker.CurrentHourList);
         }
 
         internal static Activity CreateTestActivity(
