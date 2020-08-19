@@ -226,8 +226,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(startCalled);
             Assert.True(endCalled);
 
-            /*
-             * Uncomment when issue 1075 is fixed.
             TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
 
             bool startCalledNew = false;
@@ -254,7 +252,6 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(startCalledNew);
             Assert.True(endCalledNew);
-            */
         }
 
         [Fact]
