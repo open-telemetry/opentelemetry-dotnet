@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public void EventSourceTest_HttpInstrumentationEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(HttpInstrumentationEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(HttpInstrumentationEventSource.Log);
         }
     }
 }
