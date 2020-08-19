@@ -1,4 +1,4 @@
-﻿// <copyright file="ZPagesActivityTrackerTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ZPagesActivityTrackerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,8 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
-    [Collection("ZPagesActivityTrackerTest")]
-    public class ZPagesActivityTrackerTest
+    [Collection("ZPagesActivityTrackerTests")]
+    public class ZPagesActivityTrackerTests
     {
         [Fact]
         public void CheckingPurge()
