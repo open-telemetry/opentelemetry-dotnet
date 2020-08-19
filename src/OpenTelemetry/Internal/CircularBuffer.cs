@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -28,10 +27,9 @@ namespace OpenTelemetry.Internal
     internal class CircularBuffer<T>
         where T : class
     {
-        private readonly int capacity;
         private readonly T[] trait;
-        private long head = 0;
-        private long tail = 0;
+        private long head;
+        private long tail;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
@@ -44,20 +42,14 @@ namespace OpenTelemetry.Internal
                 throw new ArgumentOutOfRangeException(nameof(capacity));
             }
 
-            this.capacity = capacity;
+            this.Capacity = capacity;
             this.trait = new T[capacity];
         }
 
         /// <summary>
         /// Gets the capacity of the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public int Capacity
-        {
-            get
-            {
-                return this.capacity;
-            }
-        }
+        public int Capacity { get; }
 
         /// <summary>
         /// Gets the number of items contained in the <see cref="CircularBuffer{T}"/>.
@@ -74,24 +66,12 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long AddedCount
-        {
-            get
-            {
-                return this.head;
-            }
-        }
+        public long AddedCount => this.head;
 
         /// <summary>
         /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long RemovedCount
-        {
-            get
-            {
-                return this.tail;
-            }
-        }
+        public long RemovedCount => this.tail;
 
         /// <summary>
         /// Adds the specified item to the buffer.
@@ -113,22 +93,20 @@ namespace OpenTelemetry.Internal
                 var tailSnapshot = this.tail;
                 var headSnapshot = this.head;
 
-                if (headSnapshot - tailSnapshot >= this.capacity)
+                if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var index = (int)(headSnapshot % this.capacity);
-
-                if (this.SwapIfNull(index, value))
+                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
+                if (head != headSnapshot)
                 {
-                    if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) == headSnapshot)
-                    {
-                        return true;
-                    }
-
-                    this.trait[index] = null;
+                    continue;
                 }
+
+                var index = (int)(head % this.Capacity);
+                this.trait[index] = value;
+                return true;
             }
         }
 
@@ -143,14 +121,14 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool TryAdd(T value, int maxSpinCount)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             if (maxSpinCount <= 0)
             {
                 return this.Add(value);
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
             }
 
             var spinCountDown = maxSpinCount;
@@ -160,73 +138,53 @@ namespace OpenTelemetry.Internal
                 var tailSnapshot = this.tail;
                 var headSnapshot = this.head;
 
-                if (headSnapshot - tailSnapshot >= this.capacity)
+                if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var index = (int)(headSnapshot % this.capacity);
-
-                if (this.SwapIfNull(index, value))
+                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
+                if (head != headSnapshot)
                 {
-                    if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) == headSnapshot)
+                    if (spinCountDown-- == 0)
                     {
-                        return true;
+                        return false; // exceeded maximum spin count
                     }
 
-                    this.trait[index] = null;
+                    continue;
                 }
 
-                spinCountDown--;
-
-                if (spinCountDown == 0)
-                {
-                    return false; // exceeded maximum spin count
-                }
+                var index = (int)(head % this.Capacity);
+                this.trait[index] = value;
+                return true;
             }
         }
 
         /// <summary>
-        /// Consumes up to <paramref name="maxCount"/> items from the queue.
+        /// Reads an item from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        /// <param name="maxCount">
-        /// The maximum number of items to be consumed, the actual number of
-        /// item returned will be <c>Math.Min(maxCount, this.Count)</c>.
-        /// </param>
-        /// <returns>An <see cref="IEnumerable{T}"/> of items.</returns>
         /// <remarks>
         /// This function is not reentrant-safe, only one reader is allowed at any given time.
+        /// Warning: There is no bounds check in this method. Do not call unless you have verified Count > 0.
         /// </remarks>
-        public IEnumerable<T> Consume(int maxCount)
+        /// <returns>Item read.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Read()
         {
-            if (maxCount <= 0)
+            var index = (int)(this.tail % this.Capacity);
+            while (true)
             {
-                yield break;
-            }
+                T value = this.trait[index];
+                if (value == null)
+                {
+                    // If we got here it means a writer isn't done.
+                    continue;
+                }
 
-            var count = Math.Min(maxCount, this.Count);
-
-            for (int i = 0; i < count; i++)
-            {
-                var index = (int)(this.tail % this.capacity);
-                var value = this.trait[index];
                 this.trait[index] = null;
                 this.tail++;
-                yield return value;
+                return value;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CompareAndSwap(int index, T value, T comparand)
-        {
-            var result = Interlocked.CompareExchange(ref this.trait[index], value, comparand);
-            return object.ReferenceEquals(result, comparand);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool SwapIfNull(int index, T value)
-        {
-            return this.CompareAndSwap(index, value, null);
         }
     }
 }

@@ -44,8 +44,7 @@ namespace OpenTelemetry.Trace
         {
             try
             {
-                // TODO: avoid heap allocation
-                _ = this.exporter.Export(new[] { activity });
+                _ = this.exporter.Export(new Batch<Activity>(activity));
             }
             catch (Exception ex)
             {
