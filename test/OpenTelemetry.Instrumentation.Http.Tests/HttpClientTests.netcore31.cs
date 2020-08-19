@@ -25,7 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 

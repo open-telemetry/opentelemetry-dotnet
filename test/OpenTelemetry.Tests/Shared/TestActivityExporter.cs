@@ -21,9 +21,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Tests.Shared
+namespace OpenTelemetry.Tests
 {
-    public class TestActivityExporter : ActivityExporter
+    internal class TestActivityExporter : ActivityExporter
     {
         private readonly ConcurrentQueue<Activity> activities = new ConcurrentQueue<Activity>();
         private readonly Action<IEnumerable<Activity>> onExport;

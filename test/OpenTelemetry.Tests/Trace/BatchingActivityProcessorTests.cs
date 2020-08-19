@@ -21,7 +21,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Tests.Shared;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests

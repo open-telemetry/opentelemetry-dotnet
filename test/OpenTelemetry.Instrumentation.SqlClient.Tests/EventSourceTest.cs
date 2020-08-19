@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [Fact]
         public void EventSourceTest_SqlClientInstrumentationEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(SqlClientInstrumentationEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(SqlClientInstrumentationEventSource.Log);
         }
     }
 }
