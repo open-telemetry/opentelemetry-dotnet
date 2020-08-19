@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace
         private readonly int exporterTimeoutMillis;
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
-        private readonly ManualResetEvent exportTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
         private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private bool disposed;
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            var triggers = new[] { this.dataExportedNotification, this.shutdownTrigger };
+            var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
 
             var sw = Stopwatch.StartNew();
 
@@ -292,7 +292,7 @@ namespace OpenTelemetry.Trace
 
         private void ExporterProc()
         {
-            var triggers = new[] { this.exportTrigger, this.shutdownTrigger };
+            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
 
             while (true)
             {
