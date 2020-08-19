@@ -15,17 +15,13 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-internal class MyExporter : ActivityExporter
+internal class MyExporter : ActivityExporterSync
 {
-    public override Task<ExportResult> ExportAsync(
-        IEnumerable<Activity> batch, CancellationToken cancellationToken)
+    public override ExportResultSync Export(in Batch<Activity> batch)
     {
         // Exporter code which can generate further
         // telemetry should do so inside SuppressInstrumentation
@@ -38,17 +34,6 @@ internal class MyExporter : ActivityExporter
             Console.WriteLine($"{activity.DisplayName}");
         }
 
-        return Task.FromResult(ExportResult.Success);
-    }
-
-    public override Task ShutdownAsync(CancellationToken cancellationToken)
-    {
-        Console.WriteLine($"MyExporter.ShutdownAsync");
-        return Task.CompletedTask;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        Console.WriteLine($"MyExporter.Dispose");
+        return ExportResultSync.Success;
     }
 }

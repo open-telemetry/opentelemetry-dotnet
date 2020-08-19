@@ -26,6 +26,6 @@ internal static class MyExporterHelperExtensions
             throw new ArgumentNullException(nameof(builder));
         }
 
-        return builder.AddProcessor(new SimpleActivityProcessor(new MyExporter()));
+        return builder.AddProcessor(new BatchExportActivityProcessor(new MyExporter()));
     }
 }
