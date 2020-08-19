@@ -185,11 +185,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             zpagesProcessor.Dispose();
             zpagesServer.Dispose();
             exporter.Dispose();
-        }
 
-        [Fact]
-        public void CheckingPurge()
-        {
             ZPagesActivityTracker.CurrentHourList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
             Assert.Single(ZPagesActivityTracker.CurrentHourList);
             ZPagesActivityTracker.PurgeCurrentHourData(null, null);
