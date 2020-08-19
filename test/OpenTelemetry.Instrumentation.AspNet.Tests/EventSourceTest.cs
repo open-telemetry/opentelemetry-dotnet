@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void EventSourceTest_AspNetInstrumentationEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(AspNetInstrumentationEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(AspNetInstrumentationEventSource.Log);
         }
     }
 }

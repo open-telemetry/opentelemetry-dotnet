@@ -20,10 +20,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests
 {
-    /// <summary>
-    /// Used in unit tests to listen to the SDK EventSource events.
-    /// </summary>
-    public class InMemoryEventListener : EventListener
+    internal class InMemoryEventListener : EventListener
     {
         public ConcurrentQueue<EventWrittenEventArgs> Events = new ConcurrentQueue<EventWrittenEventArgs>();
 

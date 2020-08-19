@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 
 namespace Benchmarks.Exporter
 {
