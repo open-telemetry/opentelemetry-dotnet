@@ -15,40 +15,25 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-internal class MyExporter : ActivityExporter
+internal class MyExporter : ActivityExporterSync
 {
-    public override Task<ExportResult> ExportAsync(
-        IEnumerable<Activity> batch, CancellationToken cancellationToken)
+    public override ExportResultSync Export(in Batch<Activity> batch)
     {
         // Exporter code which can generate further
         // telemetry should do so inside SuppressInstrumentation
         // scope. This suppresses telemetry from
         // exporter's own code to avoid live-loop situation.
-        using var scope = Sdk.SuppressInstrumentation.Begin();
+        using var scope = SuppressInstrumentationScope.Begin();
 
         foreach (var activity in batch)
         {
             Console.WriteLine($"{activity.DisplayName}");
         }
 
-        return Task.FromResult(ExportResult.Success);
-    }
-
-    public override Task ShutdownAsync(CancellationToken cancellationToken)
-    {
-        Console.WriteLine($"MyExporter.ShutdownAsync");
-        return Task.CompletedTask;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        Console.WriteLine($"MyExporter.Dispose");
+        return ExportResultSync.Success;
     }
 }

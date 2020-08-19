@@ -1,4 +1,4 @@
-﻿// <copyright file="DistributedContextState.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="InMemoryEventListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Context
+namespace OpenTelemetry.Tests
 {
-    internal struct DistributedContextState : IDisposable
+    internal class InMemoryEventListener : EventListener
     {
-        private DistributedContext context;
+        public ConcurrentQueue<EventWrittenEventArgs> Events = new ConcurrentQueue<EventWrittenEventArgs>();
 
-        internal DistributedContextState(in DistributedContext context)
+        public InMemoryEventListener(EventLevel minLevel = EventLevel.Verbose)
         {
-            this.context = AsyncLocalDistributedContextCarrier.Instance.Current;
-            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in context);
+            this.EnableEvents(OpenTelemetrySdkEventSource.Log, minLevel);
         }
 
-        public void Dispose()
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            ((AsyncLocalDistributedContextCarrier)AsyncLocalDistributedContextCarrier.Instance).OverwriteCurrent(in this.context);
+            this.Events.Enqueue(eventData);
         }
     }
 }

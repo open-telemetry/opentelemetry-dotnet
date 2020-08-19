@@ -52,7 +52,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.spanContextShim = new SpanContextShim(this.Span.Context);
+            this.spanContextShim = new SpanContextShim(this.Span.Context, this.Span.Baggage);
         }
 
         public ISpanContext Context => this.spanContextShim;
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
             {
-                this.Span.Status = value ? Trace.Status.Unknown : Trace.Status.Ok;
+                this.Span.SetStatus(value ? Trace.Status.Unknown : Trace.Status.Ok);
             }
             else
             {

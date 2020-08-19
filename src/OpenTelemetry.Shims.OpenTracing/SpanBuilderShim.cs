@@ -191,7 +191,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (this.error)
             {
-                span.Status = Trace.Status.Unknown;
+                span.SetStatus(Trace.Status.Unknown);
             }
 
             return new SpanShim(span);
@@ -220,24 +220,14 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/ for special key handling.
             if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key))
             {
-                switch (value)
+                this.spanKind = value switch
                 {
-                    case global::OpenTracing.Tag.Tags.SpanKindClient:
-                        this.spanKind = Trace.SpanKind.Client;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindServer:
-                        this.spanKind = Trace.SpanKind.Server;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindProducer:
-                        this.spanKind = Trace.SpanKind.Producer;
-                        break;
-                    case global::OpenTracing.Tag.Tags.SpanKindConsumer:
-                        this.spanKind = Trace.SpanKind.Consumer;
-                        break;
-                    default:
-                        this.spanKind = Trace.SpanKind.Internal;
-                        break;
-                }
+                    global::OpenTracing.Tag.Tags.SpanKindClient => Trace.SpanKind.Client,
+                    global::OpenTracing.Tag.Tags.SpanKindServer => Trace.SpanKind.Server,
+                    global::OpenTracing.Tag.Tags.SpanKindProducer => Trace.SpanKind.Producer,
+                    global::OpenTracing.Tag.Tags.SpanKindConsumer => Trace.SpanKind.Consumer,
+                    _ => Trace.SpanKind.Internal,
+                };
             }
             else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key) && bool.TryParse(value, out var booleanValue))
             {
@@ -288,12 +278,22 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             if (int.TryParse(value, out var result))
             {
                 return this.WithTag(tag.Key, result);
@@ -305,12 +305,22 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
+            if (tag == null || tag.Key == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
             return this.WithTag(tag.Key, value);
         }
 

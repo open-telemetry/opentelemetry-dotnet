@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* `PropagationContext` is now used instead of `ActivityContext` in the
+    `ITextFormat` API
+    ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
+* Added `BaggageFormat` an `ITextFormat` implementation for managing Baggage
+    propagation via the [W3C
+    Baggage](https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md)
+    header
+    ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
+* Removed `DistributedContext` as it is no longer part of the spec
+  ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048)))
 * Renaming from `ot` to `otel`
   ([#1046](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1046))
 * Added `RuntimeContext` API

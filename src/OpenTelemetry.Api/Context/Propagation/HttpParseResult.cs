@@ -1,4 +1,4 @@
-﻿// <copyright file="TestSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HttpParseResult.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using OpenTelemetry.Trace;
-
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Context.Propagation
 {
-    internal class TestSampler : Sampler
+    // Adoptation of code from https://github.com/aspnet/HttpAbstractions/blob/07d115400e4f8c7a66ba239f230805f03a14ee3d/src/Microsoft.Net.Http.Headers/HttpParseResult.cs
+    internal enum HttpParseResult
     {
-        public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+        /// <summary>
+        /// Parsed successfully.
+        /// </summary>
+        Parsed,
 
-        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-        {
-            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSampled);
-        }
+        /// <summary>
+        /// Was not parsed.
+        /// </summary>
+        NotParsed,
+
+        /// <summary>
+        /// Invalid format.
+        /// </summary>
+        InvalidFormat,
     }
 }

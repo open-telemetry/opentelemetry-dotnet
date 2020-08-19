@@ -17,7 +17,7 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Tests.Shared;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -221,6 +221,8 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             Activity.Current = null;
+            this.testProcessor.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

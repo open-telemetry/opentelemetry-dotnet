@@ -25,8 +25,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
-using OpenTelemetry.Internal.Test;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
