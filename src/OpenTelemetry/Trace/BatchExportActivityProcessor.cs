@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
     public class BatchExportActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporterSync exporter;
-        private readonly CircularBuffer<Activity> queue;
+        private readonly CircularBuffer<Activity> circularBuffer;
         private readonly int scheduledDelayMillis;
         private readonly int exporterTimeoutMillis;
         private readonly int maxExportBatchSize;
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace
             }
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-            this.queue = new CircularBuffer<Activity>(maxQueueSize);
+            this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
             this.scheduledDelayMillis = scheduledDelayMillis;
             this.exporterTimeoutMillis = exporterTimeoutMillis;
             this.maxExportBatchSize = maxExportBatchSize;
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return this.queue.AddedCount + this.DroppedCount;
+                return this.circularBuffer.AddedCount + this.DroppedCount;
             }
         }
 
@@ -116,16 +116,16 @@ namespace OpenTelemetry.Trace
         {
             get
             {
-                return this.queue.RemovedCount;
+                return this.circularBuffer.RemovedCount;
             }
         }
 
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
-            if (this.queue.TryAdd(activity, maxSpinCount: 50000))
+            if (this.circularBuffer.TryAdd(activity, maxSpinCount: 50000))
             {
-                if (this.queue.Count >= this.maxExportBatchSize)
+                if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
                     this.exportTrigger.Set();
                 }
@@ -140,8 +140,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Flushes the <see cref="Activity"/> currently in the queue, blocks
         /// the current thread until flush completed, shutdown signaled or
-        /// timed out. Using a 32bit signed integer to specify the time
-        /// interval in milliseconds.
+        /// timed out.
         /// </summary>
         /// <param name="timeoutMillis">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
@@ -157,8 +156,8 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
             }
 
-            var tail = this.queue.RemovedCount;
-            var head = this.queue.AddedCount;
+            var tail = this.circularBuffer.RemovedCount;
+            var head = this.circularBuffer.AddedCount;
 
             if (head == tail)
             {
@@ -188,13 +187,13 @@ namespace OpenTelemetry.Trace
 
                     if (timeout <= 0)
                     {
-                        return this.queue.RemovedCount >= head;
+                        return this.circularBuffer.RemovedCount >= head;
                     }
 
                     WaitHandle.WaitAny(triggers, (int)timeout);
                 }
 
-                if (this.queue.RemovedCount >= head)
+                if (this.circularBuffer.RemovedCount >= head)
                 {
                     return true;
                 }
@@ -216,8 +215,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Attempt to drain the queue and shutdown the exporter, blocks the
-        /// current thread until shutdown completed or timed out. Using a
-        /// 32bit signed integer to specify the time interval in milliseconds.
+        /// current thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMillis">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
@@ -299,14 +297,14 @@ namespace OpenTelemetry.Trace
             while (true)
             {
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
-                if (this.queue.Count < this.maxExportBatchSize)
+                if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
                     WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
                 }
 
-                if (this.queue.Count > 0)
+                if (this.circularBuffer.Count > 0)
                 {
-                    this.exporter.Export(new Batch<Activity>(this.queue, this.maxExportBatchSize));
+                    this.exporter.Export(new Batch<Activity>(this.circularBuffer, this.maxExportBatchSize));
 
                     this.dataExportedNotification.Set();
                     this.dataExportedNotification.Reset();
