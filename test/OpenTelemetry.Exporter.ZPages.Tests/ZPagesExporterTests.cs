@@ -28,6 +28,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
+    [Collection("ZPagesExporterTests")]
     public class ZPagesExporterTests
     {
         private static readonly HttpClient HttpClient = new HttpClient();
@@ -183,22 +184,9 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Contains($"<td>Test Zipkin Activity 2</td>", content);
 
             zpagesProcessor.Dispose();
+            zpagesServer.Stop();
             zpagesServer.Dispose();
             exporter.Dispose();
-        }
-
-        [Fact]
-        public void CheckingPurge()
-        {
-            ZPagesActivityTracker.CurrentHourList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
-            Assert.NotEmpty(ZPagesActivityTracker.CurrentHourList);
-            ZPagesActivityTracker.PurgeCurrentHourData(null, null);
-            Assert.Empty(ZPagesActivityTracker.CurrentHourList);
-
-            ZPagesActivityTracker.CurrentMinuteList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
-            Assert.NotEmpty(ZPagesActivityTracker.CurrentHourList);
-            ZPagesActivityTracker.PurgeCurrentMinuteData(null, null);
-            Assert.Empty(ZPagesActivityTracker.CurrentHourList);
         }
 
         internal static Activity CreateTestActivity(
