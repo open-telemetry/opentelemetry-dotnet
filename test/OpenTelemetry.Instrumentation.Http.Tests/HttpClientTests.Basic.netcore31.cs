@@ -56,6 +56,31 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
+        public async void HttpClientInstrumentation_ChecksSuppressInstrumentation()
+        {
+            var spanProcessor = new Mock<ActivityProcessor>();
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(this.url),
+                Method = new HttpMethod("GET"),
+            };
+
+            var parent = new Activity("parent").Start();
+
+            using (Sdk.CreateTracerProviderBuilder()
+                        .AddHttpClientInstrumentation()
+                        .AddProcessor(spanProcessor.Object)
+                        .Build())
+            {
+                using var scope = SuppressInstrumentationScope.Begin();
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+            }
+
+            Assert.Equal(1, spanProcessor.Invocations.Count); // No instrumentation invoked - dispose is called on processor
+        }
+
+        [Fact]
         public async Task HttpClientInstrumentationInjectsHeadersAsync()
         {
             var spanProcessor = new Mock<ActivityProcessor>();

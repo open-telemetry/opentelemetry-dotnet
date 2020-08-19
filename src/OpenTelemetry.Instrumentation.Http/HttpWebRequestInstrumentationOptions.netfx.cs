@@ -47,6 +47,11 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal bool EventFilter(HttpWebRequest request)
         {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return false;
+            }
+
             Uri requestUri;
             if (request.Method == "POST"
                 && (requestUri = request.RequestUri) != null

@@ -56,6 +56,31 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
+        public async Task HttpWebRequestInstrumentation_ChecksSuppressInstrumentation()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation()
+                .Build();
+
+            using var scope = SuppressInstrumentationScope.Begin();
+
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
+
+            var parent = new Activity("parent").Start();
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            using var response = await request.GetResponseAsync();
+
+            Assert.Equal(0, activityProcessor.Invocations.Count); // No instrumentation invoked
+
+            parent.Stop();
+        }
+
+        [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<ActivityProcessor>();

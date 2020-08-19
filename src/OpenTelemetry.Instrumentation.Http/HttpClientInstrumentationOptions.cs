@@ -69,6 +69,11 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal bool EventFilter(string activityName, object arg1)
         {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return false;
+            }
+
             if (TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage))
             {
                 Uri requestUri;
