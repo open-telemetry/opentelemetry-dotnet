@@ -232,18 +232,10 @@ namespace OpenTelemetry.Trace
             this.drainSentry = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            if (timeoutMillis == Timeout.Infinite)
+            if (timeoutMillis != 0)
             {
-                this.exporterThread.Join();
-                return;
+                this.exporterThread.Join(timeoutMillis);
             }
-
-            if (timeoutMillis == 0)
-            {
-                return;
-            }
-
-            this.exporterThread.Join(timeoutMillis);
         }
 
         /// <inheritdoc/>
