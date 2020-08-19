@@ -28,11 +28,20 @@ namespace OpenTelemetry.Internal
         public static OpenTelemetryApiEventSource Log = new OpenTelemetryApiEventSource();
 
         [NonEvent]
-        public void ActivityContextExtractException(Exception ex)
+        public void ActivityContextExtractException(string format, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.FailedToExtractActivityContext(ex.ToInvariantString());
+                this.FailedToExtractActivityContext(format, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void BaggageExtractException(string format, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.FailedToExtractBaggage(format, ex.ToInvariantString());
             }
         }
 
@@ -93,22 +102,28 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(7, methodName, argumentName, issue);
         }
 
-        [Event(8, Message = "Failed to extract activity context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractActivityContext(string exception)
+        [Event(8, Message = "Failed to extract activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToExtractActivityContext(string format, string exception)
         {
-            this.WriteEvent(8, exception);
+            this.WriteEvent(8, format, exception);
         }
 
-        [Event(9, Message = "Failed to inject activity context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToInjectActivityContext(string error)
+        [Event(9, Message = "Failed to inject activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToInjectActivityContext(string format, string error)
         {
-            this.WriteEvent(9, error);
+            this.WriteEvent(9, format, error);
         }
 
-        [Event(10, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractContext(string error)
+        [Event(10, Message = "Failed to extract baggage in format: '{0}', baggage: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToExtractBaggage(string format, string exception)
         {
-            this.WriteEvent(10, error);
+            this.WriteEvent(10, format, exception);
+        }
+
+        [Event(11, Message = "Failed to inject baggage in format: '{0}', baggage: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToInjectBaggage(string format, string error)
+        {
+            this.WriteEvent(11, format, error);
         }
     }
 }

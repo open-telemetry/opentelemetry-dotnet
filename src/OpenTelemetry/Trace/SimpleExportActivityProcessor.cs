@@ -14,11 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {

@@ -16,12 +16,12 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Tests.Shared;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class TracerProvideSdkTest
+    public class TracerProvideSdkTest : IDisposable
     {
         private const string ActivitySourceName = "TraceSdkTest";
 
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
             var testSampler = new TestSampler();
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
             bool startCalled = false;
             bool endCalled = false;
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerProvideSdkCreatesActivitySource()
         {
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
             bool startCalled = false;
             bool endCalled = false;
@@ -244,8 +244,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(startCalled);
             Assert.True(endCalled);
 
-            /*
-             * Uncomment when issue 1075 is fixed.
             TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
 
             bool startCalledNew = false;
@@ -272,7 +270,6 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(startCalledNew);
             Assert.True(endCalledNew);
-            */
         }
 
         [Fact]
@@ -293,6 +290,11 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(testInstrumentation.IsDisposed);
             tracerProvider.Dispose();
             Assert.True(testInstrumentation.IsDisposed);
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
         private class TestSampler : Sampler

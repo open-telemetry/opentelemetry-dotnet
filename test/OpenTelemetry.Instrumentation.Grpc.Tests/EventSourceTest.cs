@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [Fact]
         public void EventSourceTest_GrpcInstrumentationEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(GrpcInstrumentationEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(GrpcInstrumentationEventSource.Log);
         }
     }
 }

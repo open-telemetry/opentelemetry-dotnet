@@ -22,19 +22,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
     internal class SqlClientDiagnosticListener : ListenerHandler
     {
-        internal const string ActivitySourceName = "OpenTelemetry.SqlClient";
-        internal const string ActivityName = ActivitySourceName + ".Execute";
+        public const string ActivitySourceName = "OpenTelemetry.SqlClient";
+        public const string ActivityName = ActivitySourceName + ".Execute";
 
-        internal const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
-        internal const string SqlMicrosoftBeforeExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandBefore";
+        public const string CommandCustomPropertyName = "OTel.SqlHandler.Command";
 
-        internal const string SqlDataAfterExecuteCommand = "System.Data.SqlClient.WriteCommandAfter";
-        internal const string SqlMicrosoftAfterExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandAfter";
+        public const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
+        public const string SqlMicrosoftBeforeExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandBefore";
 
-        internal const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
-        internal const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
+        public const string SqlDataAfterExecuteCommand = "System.Data.SqlClient.WriteCommandAfter";
+        public const string SqlMicrosoftAfterExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandAfter";
 
-        internal const string MicrosoftSqlServerDatabaseSystemName = "mssql";
+        public const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
+        public const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
+
+        public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
 
         private static readonly Version Version = typeof(SqlClientDiagnosticListener).Assembly.GetName().Version;
 #pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before SqlClientActivitySource otherwise null ref exception is thrown.
@@ -85,6 +87,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         var database = this.databaseFetcher.Fetch(connection);
 
                         activity.DisplayName = (string)database;
+                        activity.SetCustomProperty(CommandCustomPropertyName, command);
 
                         if (activity.IsAllDataRequested)
                         {

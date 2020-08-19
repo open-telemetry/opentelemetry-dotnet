@@ -30,6 +30,7 @@ namespace OpenTelemetry.Trace
     {
         internal static readonly TelemetrySpan NoopInstance = new TelemetrySpan(null);
         internal readonly Activity Activity;
+        private static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = new KeyValuePair<string, string>[0];
 
         internal TelemetrySpan(Activity activity)
         {
@@ -64,6 +65,11 @@ namespace OpenTelemetry.Trace
                 return this.Activity != null && this.Activity.IsAllDataRequested;
             }
         }
+
+        /// <summary>
+        /// Gets the span baggage.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> Baggage => this.Activity?.Baggage ?? EmptyBaggage;
 
         /// <summary>
         /// Sets the status of the span execution.
@@ -270,6 +276,31 @@ namespace OpenTelemetry.Trace
         {
             this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
             this.Activity?.Stop();
+        }
+
+        /// <summary>
+        /// Retrieves a baggage item.
+        /// </summary>
+        /// <param name="key">Baggage item key.</param>
+        /// <returns>Retrieved baggage value or <see langword="null"/> if no match was found.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string GetBaggageItem(string key)
+        {
+            return this.Activity?.GetBaggageItem(key);
+        }
+
+        /// <summary>
+        /// Adds a baggage item to the <see cref="TelemetrySpan"/>.
+        /// </summary>
+        /// <param name="key">Baggage item key.</param>
+        /// <param name="value">Baggage item value.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan AddBaggage(string key, string value)
+        {
+            this.Activity?.AddBaggage(key, value);
+
+            return this;
         }
 
         /// <inheritdoc/>

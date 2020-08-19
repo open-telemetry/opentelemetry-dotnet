@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace OpenTelemetry.Context
@@ -25,27 +26,33 @@ namespace OpenTelemetry.Context
     /// </summary>
     public readonly struct CorrelationContext : IEquatable<CorrelationContext>
     {
-        private static readonly List<CorrelationContextEntry> EmptyList = new List<CorrelationContextEntry>();
-        private readonly List<CorrelationContextEntry> entries;
+        internal static readonly CorrelationContext Empty = new CorrelationContext(null);
+        internal static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = new KeyValuePair<string, string>[0];
+        private readonly Activity activity;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CorrelationContext"/> struct.
-        /// </summary>
-        /// <param name="entries">Entries for correlation context.</param>
-        internal CorrelationContext(List<CorrelationContextEntry> entries)
+        internal CorrelationContext(in Activity activity)
         {
-            this.entries = entries;
+            this.activity = activity;
         }
 
         /// <summary>
-        /// Gets empty object of <see cref="CorrelationContext"/> struct.
+        /// Gets the current <see cref="CorrelationContext"/>.
         /// </summary>
-        public static CorrelationContext Empty { get; } = new CorrelationContext(EmptyList);
+        public static CorrelationContext Current
+        {
+            get
+            {
+                Activity activity = Activity.Current;
+                return activity == null
+                    ? Empty
+                    : new CorrelationContext(activity);
+            }
+        }
 
         /// <summary>
-        /// Gets all the <see cref="CorrelationContextEntry"/> in this <see cref="CorrelationContext"/>.
+        /// Gets the correlation values.
         /// </summary>
-        public IEnumerable<CorrelationContextEntry> Entries => this.entries;
+        public IEnumerable<KeyValuePair<string, string>> Correlations => this.activity?.Baggage ?? EmptyBaggage;
 
         /// <summary>
         /// Compare two entries of <see cref="CorrelationContext"/> for equality.
@@ -62,23 +69,62 @@ namespace OpenTelemetry.Context
         public static bool operator !=(CorrelationContext left, CorrelationContext right) => !(left == right);
 
         /// <summary>
-        /// Gets the <see cref="CorrelationContextEntry"/> with the specified name.
+        /// Retrieves a correlation item.
         /// </summary>
-        /// <param name="key">Name of the <see cref="CorrelationContextEntry"/> to get.</param>
-        /// <returns>The <see cref="string"/> with the specified name. If not found - null.</returns>
-        public string GetEntryValue(string key) => this.entries.LastOrDefault(x => x.Key == key).Value;
+        /// <param name="key">Correlation item key.</param>
+        /// <returns>Retrieved correlation value or <see langword="null"/> if no match was found.</returns>
+        public string GetCorrelation(string key)
+            => this.activity?.GetBaggageItem(key);
+
+        /// <summary>
+        /// Adds a correlation item.
+        /// </summary>
+        /// <param name="key">Correlation item key.</param>
+        /// <param name="value">Correlation item value.</param>
+        /// <returns>The <see cref="CorrelationContext"/> instance for chaining.</returns>
+        public CorrelationContext AddCorrelation(string key, string value)
+        {
+            this.activity?.AddBaggage(key, value);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds correlation items.
+        /// </summary>
+        /// <param name="correlations">Correlation items.</param>
+        /// <returns>The <see cref="CorrelationContext"/> instance for chaining.</returns>
+        public CorrelationContext AddCorrelation(IEnumerable<KeyValuePair<string, string>> correlations)
+        {
+            if (correlations != null)
+            {
+                foreach (KeyValuePair<string, string> correlation in correlations)
+                {
+                    this.activity?.AddBaggage(correlation.Key, correlation.Value);
+                }
+            }
+
+            return this;
+        }
 
         /// <inheritdoc/>
         public bool Equals(CorrelationContext other)
         {
-            if (this.entries.Count != other.entries.Count)
+            var thisCorrelations = this.Correlations;
+            var otherCorrelations = other.Correlations;
+
+            if (thisCorrelations.Count() != otherCorrelations.Count())
             {
                 return false;
             }
 
-            foreach (CorrelationContextEntry entry in this.entries)
+            var thisEnumerator = thisCorrelations.GetEnumerator();
+            var otherEnumerator = otherCorrelations.GetEnumerator();
+
+            while (thisEnumerator.MoveNext() && otherEnumerator.MoveNext())
             {
-                if (other.GetEntryValue(entry.Key) != entry.Value)
+                if (thisEnumerator.Current.Key != otherEnumerator.Current.Key
+                    || thisEnumerator.Current.Value != otherEnumerator.Current.Value)
                 {
                     return false;
                 }
@@ -96,7 +142,7 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return this.entries.GetHashCode();
+            return this.Correlations.GetHashCode();
         }
     }
 }

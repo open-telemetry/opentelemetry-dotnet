@@ -146,6 +146,43 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return microseconds - UnixEpochMicroseconds;
         }
 
+        internal static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
+        {
+            if (attribute.Value == null)
+            {
+                return true;
+            }
+
+            if (attribute.Value is string strVal)
+            {
+                string key = attribute.Key;
+                if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
+                    && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
+                {
+                    state.RemoteEndpointServiceName = strVal;
+                    state.RemoteEndpointServiceNamePriority = priority;
+                }
+                else if (key == Resource.ServiceNameKey)
+                {
+                    state.ServiceName = strVal;
+                }
+                else if (key == Resource.ServiceNamespaceKey)
+                {
+                    state.ServiceNamespace = strVal;
+                }
+                else
+                {
+                    PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
+                }
+            }
+            else
+            {
+                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
+            }
+
+            return true;
+        }
+
         private static string EncodeTraceId(ActivityTraceId traceId, bool useShortTraceIds)
         {
             var id = traceId.ToHexString();
@@ -176,41 +213,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return true;
         }
 
-        private static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
-        {
-            string key = attribute.Key;
-            string strVal = attribute.Value as string;
-
-            if (strVal != null)
-            {
-                if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
-                {
-                    state.RemoteEndpointServiceName = strVal;
-                    state.RemoteEndpointServiceNamePriority = priority;
-                }
-                else if (key == Resource.ServiceNameKey)
-                {
-                    state.ServiceName = strVal;
-                }
-                else if (key == Resource.ServiceNamespaceKey)
-                {
-                    state.ServiceNamespace = strVal;
-                }
-                else
-                {
-                    PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
-                }
-            }
-            else
-            {
-                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
-            }
-
-            return true;
-        }
-
-        private struct AttributeEnumerationState
+        internal struct AttributeEnumerationState
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 

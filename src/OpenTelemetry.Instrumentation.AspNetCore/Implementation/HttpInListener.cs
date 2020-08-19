@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter != null && !this.options.RequestFilter(context))
+            if (this.options.RequestFilter?.Invoke(context) == false)
             {
                 AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;
@@ -67,23 +67,28 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var request = context.Request;
             if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
             {
-                // This requires to ignore the current activity and create a new one
-                // using the context extracted from w3ctraceparent header or
-                // using the format TextFormat supports.
-
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
-                if (ctx != default)
+
+                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
                     Activity newOne = new Activity(ActivityNameByHttpInListener);
-                    newOne.SetParentId(ctx.TraceId, ctx.SpanId, ctx.TraceFlags);
-                    newOne.TraceStateString = ctx.TraceState;
+                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+                    newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
                     activity = newOne;
+                }
+
+                if (ctx.ActivityBaggage != null)
+                {
+                    foreach (var baggageItem in ctx.ActivityBaggage)
+                    {
+                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
+                    }
                 }
             }
 

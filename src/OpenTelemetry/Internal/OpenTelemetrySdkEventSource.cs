@@ -38,11 +38,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void ContextExtractException(Exception ex)
+        public void ActivityContextExtractException(string format, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.FailedToExtractContext(ex.ToInvariantString());
+                this.FailedToExtractActivityContext(format, ex.ToInvariantString());
             }
         }
 
@@ -139,16 +139,16 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(8, methodName, argumentName, issue);
         }
 
-        [Event(9, Message = "Failed to extract span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToExtractContext(string error)
+        [Event(9, Message = "Failed to extract activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToExtractActivityContext(string format, string error)
         {
-            this.WriteEvent(9, error);
+            this.WriteEvent(9, format, error);
         }
 
-        [Event(10, Message = "Failed to inject span context: '{0}'", Level = EventLevel.Warning)]
-        public void FailedToInjectContext(string error)
+        [Event(10, Message = "Failed to inject activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToInjectActivityContext(string format, string error)
         {
-            this.WriteEvent(10, error);
+            this.WriteEvent(10, format, error);
         }
 
         [Event(11, Message = "Failed to parse tracestate: too many items", Level = EventLevel.Warning)]
