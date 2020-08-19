@@ -39,22 +39,27 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Register a named context slot.
         /// </summary>
-        /// <param name="name">The name of the context slot.</param>
+        /// <param name="slotName">The name of the context slot.</param>
         /// <typeparam name="T">The type of the underlying value.</typeparam>
         /// <returns>The slot registered.</returns>
-        public static RuntimeContextSlot<T> RegisterSlot<T>(string name)
+        public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
         {
+            if (string.IsNullOrEmpty(slotName))
+            {
+                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
+            }
+
             lock (Slots)
             {
-                if (Slots.ContainsKey(name))
+                if (Slots.ContainsKey(slotName))
                 {
-                    throw new InvalidOperationException($"The context slot {name} is already registered.");
+                    throw new InvalidOperationException($"The context slot {slotName} is already registered.");
                 }
 
                 var type = ContextSlotType.MakeGenericType(typeof(T));
                 var ctor = type.GetConstructor(new Type[] { typeof(string) });
-                var slot = (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name });
-                Slots[name] = slot;
+                var slot = (RuntimeContextSlot<T>)ctor.Invoke(new object[] { slotName });
+                Slots[slotName] = slot;
                 return slot;
             }
         }
@@ -62,12 +67,18 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Get a registered slot from a given name.
         /// </summary>
-        /// <param name="name">The name of the context slot.</param>
+        /// <param name="slotName">The name of the context slot.</param>
         /// <typeparam name="T">The type of the underlying value.</typeparam>
         /// <returns>The slot previously registered.</returns>
-        public static RuntimeContextSlot<T> GetSlot<T>(string name)
+        public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
         {
-            return (RuntimeContextSlot<T>)Slots[name];
+            if (string.IsNullOrEmpty(slotName))
+            {
+                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
+            }
+
+            Slots.TryGetValue(slotName, out var slot);
+            return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} is not found.");
         }
 
         /*
@@ -121,6 +132,9 @@ namespace OpenTelemetry.Context
         }
 
         // For testing purpose
-        // private static Clear
+        internal static void Clear()
+        {
+            Slots.Clear();
+        }
     }
 }
