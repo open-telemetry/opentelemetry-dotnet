@@ -20,7 +20,6 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
-    [Collection("ZPagesActivityTrackerTests")]
     public class ZPagesActivityTrackerTests
     {
         [Fact]

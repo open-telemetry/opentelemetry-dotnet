@@ -28,7 +28,6 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
-    [Collection("ZPagesExporterTests")]
     public class ZPagesExporterTests
     {
         private static readonly HttpClient HttpClient = new HttpClient();
