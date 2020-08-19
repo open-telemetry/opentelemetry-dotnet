@@ -29,6 +29,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
+        public const string RequestCustomPropertyName = "OTel.HttpHandler.Request";
+        public const string ResponseCustomPropertyName = "OTel.HttpHandler.Response";
+        public const string ExceptionCustomPropertyName = "OTel.HttpHandler.Exception";
+
         private static readonly Func<HttpRequestMessage, string, IEnumerable<string>> HttpRequestMessageHeaderValuesGetter = (request, name) =>
         {
             if (request.Headers.TryGetValues(name, out var values))
@@ -90,6 +94,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+            activity.SetCustomProperty(RequestCustomPropertyName, request);
 
             this.activitySource.Start(activity);
 
@@ -135,7 +140,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
-                    // response could be null for DNS issues, timeouts, etc...
+                    activity.SetCustomProperty(ResponseCustomPropertyName, response);
+
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                     activity.SetStatus(
@@ -157,6 +163,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
                 }
+
+                activity.SetCustomProperty(ExceptionCustomPropertyName, exc);
 
                 if (exc is HttpRequestException)
                 {
