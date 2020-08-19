@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void EventSourceTest_JaegerExporterEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(JaegerExporterEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(JaegerExporterEventSource.Log);
         }
     }
 }

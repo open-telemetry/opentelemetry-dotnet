@@ -19,7 +19,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Moq;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
