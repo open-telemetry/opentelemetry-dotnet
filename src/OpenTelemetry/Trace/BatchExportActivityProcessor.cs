@@ -304,10 +304,13 @@ namespace OpenTelemetry.Trace
                     WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
                 }
 
-                this.exporter.Export(new Batch<Activity>(this.queue, this.maxExportBatchSize));
+                if (this.queue.Count > 0)
+                {
+                    this.exporter.Export(new Batch<Activity>(this.queue, this.maxExportBatchSize));
 
-                this.dataExportedNotification.Set();
-                this.dataExportedNotification.Reset();
+                    this.dataExportedNotification.Set();
+                    this.dataExportedNotification.Reset();
+                }
 
                 if (this.shutdownTrigger.WaitOne(0))
                 {

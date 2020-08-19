@@ -35,5 +35,13 @@ public class Program
             activity?.SetTag("bar", "Hello, World!");
             activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
+
+        using (var activity = MyActivitySource.StartActivity("SayHello2"))
+        {
+        }
+
+        using (var activity = MyActivitySource.StartActivity("SayHello3"))
+        {
+        }
     }
 }
