@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
         private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
-        private long drainSentry = -1;
+        private long shutdownDrainTarget = long.MaxValue;
         private bool disposed;
         private long droppedCount = 0;
 
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
             }
 
-            this.drainSentry = this.circularBuffer.AddedCount;
+            this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
             if (timeoutMillis != 0)
@@ -292,12 +292,9 @@ namespace OpenTelemetry.Trace
                     this.dataExportedNotification.Reset();
                 }
 
-                if (this.shutdownTrigger.WaitOne(0))
+                if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
-                    if (this.circularBuffer.RemovedCount >= this.drainSentry)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
         }
