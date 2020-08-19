@@ -37,8 +37,8 @@ namespace OpenTelemetry.Trace
     public class ActivitySourceAdapter
     {
         private readonly Sampler sampler;
-        private readonly ActivityProcessor activityProcessor;
         private readonly Resource resource;
+        private ActivityProcessor activityProcessor;
 
         internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
         {
@@ -75,6 +75,11 @@ namespace OpenTelemetry.Trace
             {
                 this.activityProcessor.OnEnd(activity);
             }
+        }
+
+        internal void UpdateProcessor(ActivityProcessor processor)
+        {
+            this.activityProcessor = processor;
         }
 
         private void RunGetRequestedData(Activity activity)
