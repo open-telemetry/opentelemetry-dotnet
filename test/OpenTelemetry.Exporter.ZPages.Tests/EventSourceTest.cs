@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         [Fact]
         public void EventSourceTest_ZPagesExporterEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(ZPagesExporterEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(ZPagesExporterEventSource.Log);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void EventSourceTest_OpenTelemetryProtocolExporterEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryProtocolExporterEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryProtocolExporterEventSource.Log);
         }
     }
 }

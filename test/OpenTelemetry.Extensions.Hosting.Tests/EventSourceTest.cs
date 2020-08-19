@@ -25,7 +25,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         [Fact]
         public void EventSourceTest_HostingExtensionsEventSource()
         {
-            BaseEventSourceTest.MethodsAreImplementedConsistentlyWithTheirAttributes(HostingExtensionsEventSource.Log);
+            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(HostingExtensionsEventSource.Log);
         }
     }
 }

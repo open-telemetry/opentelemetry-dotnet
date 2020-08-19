@@ -22,6 +22,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
+        public const string RequestCustomPropertyName = "OTel.GrpcHandler.Request";
+
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
@@ -48,6 +50,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Implementation
 
             activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
+            activity.SetCustomProperty(RequestCustomPropertyName, request);
 
             this.activitySource.Start(activity);
 
