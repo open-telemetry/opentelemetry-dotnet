@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
 
 public class Program
 {
@@ -25,10 +24,9 @@ public class Program
 
     public static void Main()
     {
-        var processor = new BatchExportActivityProcessor(new MyExporter());
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddProcessor(processor)
+            .AddMyExporter()
             .Build();
 
         using (var activity = MyActivitySource.StartActivity("SayHello"))
@@ -37,21 +35,5 @@ public class Program
             activity?.SetTag("bar", "Hello, World!");
             activity?.SetTag("baz", new int[] { 1, 2, 3 });
         }
-
-        using (var activity = MyActivitySource.StartActivity("SayHello2"))
-        {
-        }
-
-        processor.ForceFlush();
-        processor.ForceFlush();
-        processor.ForceFlush();
-        processor.ForceFlush();
-        processor.ForceFlush();
-
-        using (var activity = MyActivitySource.StartActivity("SayHello3"))
-        {
-        }
-
-        processor.ForceFlush();
     }
 }

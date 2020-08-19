@@ -23,8 +23,6 @@ internal class MyExporter : ActivityExporterSync
 {
     public override ExportResultSync Export(in Batch<Activity> batch)
     {
-        Console.WriteLine("Exporting...");
-
         // Exporter code which can generate further
         // telemetry should do so inside SuppressInstrumentation
         // scope. This suppresses telemetry from
