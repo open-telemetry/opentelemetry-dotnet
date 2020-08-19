@@ -15,16 +15,13 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal class MyExporter : ActivityExporterSync
 {
-    public override ExportResultSync Export(IEnumerable<Activity> batch)
+    public override ExportResultSync Export(in Batch<Activity> batch)
     {
         // Exporter code which can generate further
         // telemetry should do so inside SuppressInstrumentation
