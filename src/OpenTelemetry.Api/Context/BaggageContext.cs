@@ -162,7 +162,7 @@ namespace OpenTelemetry.Context
                     [name] = value,
                 });
 
-            RuntimeContextSlot.Set(baggageContext);
+            Current = baggageContext;
 
             return baggageContext;
         }
@@ -190,9 +190,7 @@ namespace OpenTelemetry.Context
             }
 
             var baggageContext = new BaggageContext(newBaggage);
-
-            RuntimeContextSlot.Set(baggageContext);
-
+            Current = baggageContext;
             return baggageContext;
         }
 
@@ -206,7 +204,7 @@ namespace OpenTelemetry.Context
             var baggage = new Dictionary<string, string>(this.baggage, StringComparer.OrdinalIgnoreCase);
             baggage.Remove(name);
             var baggageContext = new BaggageContext(baggage);
-            RuntimeContextSlot.Set(baggageContext);
+            Current = baggageContext;
             return baggageContext;
         }
 
@@ -217,7 +215,7 @@ namespace OpenTelemetry.Context
         public BaggageContext ClearBaggage()
         {
             var baggageContext = new BaggageContext(null);
-            RuntimeContextSlot.Set(baggageContext);
+            Current = baggageContext;
             return baggageContext;
         }
 
