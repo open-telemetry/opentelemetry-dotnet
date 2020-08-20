@@ -148,6 +148,24 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
+        {
+            using var scope = SuppressInstrumentationScope.Begin();
+
+            var testSampler = new TestSampler();
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                    .AddSource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
+
+            using (var activity = activitySource.StartActivity("root"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        [Fact]
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
             var testSampler = new TestSampler();
