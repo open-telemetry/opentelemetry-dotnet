@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProvideSdkTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderSdkTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class TracerProvideSdkTest : IDisposable
+    public class TracerProviderSdkTest : IDisposable
     {
         private const string ActivitySourceName = "TraceSdkTest";
 
@@ -111,7 +111,11 @@ namespace OpenTelemetry.Trace.Tests
                     .SetSampler(testSampler)
                     .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.RecordAndSampled);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.RecordAndSampled);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(activity);
@@ -119,7 +123,11 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.True(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.Record);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.Record);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -129,7 +137,11 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.False(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.NotRecord);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -192,7 +204,11 @@ namespace OpenTelemetry.Trace.Tests
                         .SetSampler(testSampler)
                         .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.NotRecord);
+            };
+
             using ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
             activity.Stop();
@@ -244,6 +260,9 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(startCalled);
             Assert.True(endCalled);
 
+            // As Processors can be added anytime after Provider construction,
+            // the following validates that updated processors are reflected
+            // in ActivitySourceAdapter.
             TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
 
             bool startCalledNew = false;
@@ -320,19 +339,6 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-        }
-
-        private class TestSampler : Sampler
-        {
-            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(SamplingDecision.RecordAndSampled);
-
-            public SamplingParameters LatestSamplingParameters { get; private set; }
-
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                this.LatestSamplingParameters = samplingParameters;
-                return this.DesiredSamplingResult;
-            }
         }
 
         private class TestInstrumentation : IDisposable

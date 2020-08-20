@@ -43,6 +43,20 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void ActivitySourceAdapterValidatesConstructor()
+        {
+            // Sampler null
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceAdapter(null, this.testProcessor, this.testResource));
+
+            // Resource null
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceAdapter(this.testSampler, this.testProcessor, null));
+
+            // Processor null. This is not expected to throw as processor can
+            // be null and can be later added.
+            var adapter = new ActivitySourceAdapter(this.testSampler, null, this.testResource);
+        }
+
+        [Fact]
         public void ActivitySourceAdapterSetsResource()
         {
             var activity = new Activity("test");
