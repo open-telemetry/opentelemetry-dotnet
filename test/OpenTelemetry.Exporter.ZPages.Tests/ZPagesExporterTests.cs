@@ -19,12 +19,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
 using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
@@ -53,19 +51,6 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZPagesExporter());
-        }
-
-        [Fact]
-        public async Task CheckingIntegration()
-        {
-            var batchActivity = new List<Activity> { CreateTestActivity() };
-
-            ZPagesExporter exporter = new ZPagesExporter(new ZPagesExporterOptions());
-
-            var exportResult = await exporter.ExportAsync(batchActivity, CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(ExportResult.Success, exportResult);
-
-            await exporter.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [Fact]
