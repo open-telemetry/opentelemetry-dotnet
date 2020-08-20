@@ -255,6 +255,26 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerProvideSdkCreatesActivitySourceWhenNoProcessor()
+        {
+            TestInstrumentation testInstrumentation = null;
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            var adapter = testInstrumentation.Adapter;
+            Activity activity = new Activity("test");
+            activity.Start();
+            adapter.Start(activity);
+            adapter.Stop(activity);
+            activity.Stop();
+        }
+
+        [Fact]
         public void TracerProvideSdkCreatesAndDiposesInstrumentation()
         {
             TestInstrumentation testInstrumentation = null;

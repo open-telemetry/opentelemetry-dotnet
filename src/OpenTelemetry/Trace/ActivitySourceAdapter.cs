@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
             if (activity.IsAllDataRequested)
             {
                 activity.SetResource(this.resource);
-                this.activityProcessor.OnStart(activity);
+                this.activityProcessor?.OnStart(activity);
             }
         }
 
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace
         {
             if (activity.IsAllDataRequested)
             {
-                this.activityProcessor.OnEnd(activity);
+                this.activityProcessor?.OnEnd(activity);
             }
         }
 
@@ -84,47 +84,59 @@ namespace OpenTelemetry.Trace
 
         private void RunGetRequestedData(Activity activity)
         {
-            ActivityContext parentContext;
-            if (string.IsNullOrEmpty(activity.ParentId))
+            if (this.sampler is AlwaysOnSampler)
             {
-                parentContext = default;
+                activity.IsAllDataRequested = true;
+                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
             }
-            else if (activity.Parent != null)
+            else if (this.sampler is AlwaysOffSampler)
             {
-                parentContext = activity.Parent.Context;
+                activity.IsAllDataRequested = false;
             }
             else
             {
-                parentContext = new ActivityContext(
+                ActivityContext parentContext;
+                if (string.IsNullOrEmpty(activity.ParentId))
+                {
+                    parentContext = default;
+                }
+                else if (activity.Parent != null)
+                {
+                    parentContext = activity.Parent.Context;
+                }
+                else
+                {
+                    parentContext = new ActivityContext(
+                        activity.TraceId,
+                        activity.ParentSpanId,
+                        activity.ActivityTraceFlags,
+                        activity.TraceStateString,
+                        isRemote: true);
+                }
+
+                var samplingParameters = new SamplingParameters(
+                    parentContext,
                     activity.TraceId,
-                    activity.ParentSpanId,
-                    activity.ActivityTraceFlags,
-                    activity.TraceStateString,
-                    isRemote: true);
-            }
+                    activity.DisplayName,
+                    activity.Kind,
+                    activity.TagObjects,
+                    activity.Links);
 
-            var samplingParameters = new SamplingParameters(
-                parentContext,
-                activity.TraceId,
-                activity.DisplayName,
-                activity.Kind,
-                activity.TagObjects,
-                activity.Links);
+                var samplingResult = this.sampler.ShouldSample(samplingParameters);
 
-            var samplingResult = this.sampler.ShouldSample(samplingParameters);
-
-            switch (samplingResult.Decision)
-            {
-                case SamplingDecision.NotRecord:
-                    activity.IsAllDataRequested = false;
-                    break;
-                case SamplingDecision.Record:
-                    activity.IsAllDataRequested = true;
-                    break;
-                case SamplingDecision.RecordAndSampled:
-                    activity.IsAllDataRequested = true;
-                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                    break;
+                switch (samplingResult.Decision)
+                {
+                    case SamplingDecision.NotRecord:
+                        activity.IsAllDataRequested = false;
+                        break;
+                    case SamplingDecision.Record:
+                        activity.IsAllDataRequested = true;
+                        break;
+                    case SamplingDecision.RecordAndSampled:
+                        activity.IsAllDataRequested = true;
+                        activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                        break;
+                }
             }
         }
     }
