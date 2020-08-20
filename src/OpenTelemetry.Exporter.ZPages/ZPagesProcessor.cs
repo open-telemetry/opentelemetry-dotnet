@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 #if NET452
 using OpenTelemetry.Internal;
@@ -68,10 +67,6 @@ namespace OpenTelemetry.Exporter.ZPages
         {
             try
             {
-                // do not await, just start export
-                // it can still throw in synchronous part
-                _ = this.exporter.ExportAsync(new[] { activity }, CancellationToken.None);
-
                 // If the span name is not in the current minute list, add it to the span list.
                 if (!ZPagesActivityTracker.CurrentMinuteList.ContainsKey(activity.DisplayName))
                 {
