@@ -34,7 +34,7 @@ namespace OpenTelemetry.Context
         /// Initializes a new instance of the <see cref="BaggageContext"/> struct.
         /// </summary>
         /// <param name="baggage">Baggage key/value pairs.</param>
-        public BaggageContext(Dictionary<string, string> baggage = null)
+        public BaggageContext(Dictionary<string, string> baggage)
         {
             this.baggage = baggage ?? EmptyBaggage;
         }
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Context
         /// <param name="name">Baggage item name.</param>
         /// <param name="baggageContext">Optional <see cref="BaggageContext"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
-        public static object GetBaggage(string name, BaggageContext baggageContext = default)
+        public static string GetBaggage(string name, BaggageContext baggageContext = default)
             => baggageContext == default ? Current.GetBaggage(name) : baggageContext.GetBaggage(name);
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="name">Baggage item name.</param>
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
-        public object GetBaggage(string name)
+        public string GetBaggage(string name)
         {
             return this.baggage.TryGetValue(name, out string value)
                 ? value
