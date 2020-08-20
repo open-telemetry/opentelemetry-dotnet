@@ -16,7 +16,7 @@
 
 using System.Diagnostics;
 
-namespace Benchmarks.Tracing
+namespace OpenTelemetry.Trace.Benchmarks
 {
     internal class ActivityCreationScenarios
     {
