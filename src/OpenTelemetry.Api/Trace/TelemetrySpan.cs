@@ -17,9 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -313,28 +312,18 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan RecordException(Exception ex)
         {
-            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
+            Dictionary<string, object> attributes = new Dictionary<string, object>
             {
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-                Dictionary<string, object> attributes = new Dictionary<string, object>
-                {
-                    { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
-                    { SemanticConventions.AttributeExceptionStacktrace, ex.ToString() },
-                };
+                { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
+                { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
+            };
 
-                if (!string.IsNullOrWhiteSpace(ex.Message))
-                {
-                    attributes.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
-                }
-
-                this.AddEvent(SemanticConventions.AttributeExceptionEventName, DateTime.UtcNow, attributes);
-            }
-            finally
+            if (!string.IsNullOrWhiteSpace(ex.Message))
             {
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                attributes.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
             }
+
+            this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
 
             return this;
         }
@@ -367,7 +356,7 @@ namespace OpenTelemetry.Trace
 
             if (attributes.Count != 0)
             {
-                this.AddEvent(SemanticConventions.AttributeExceptionEventName, DateTime.UtcNow, attributes);
+                this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
             }
 
             return this;
