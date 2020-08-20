@@ -4,8 +4,10 @@
 
 * Allow configurable gRPC channel options
   ([#1033](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1033))
-
-* Renamed extension method from `UseOtlpExporter` to `AddOtlpExporter`.
+* Renamed extension method from `UseOtlpExporter` to `AddOtlpExporter`
+  ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))
+* Changed `OtlpExporter` to use `BatchExportActivityProcessor` by default
+  ([#1104](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1104))
 
 ## 0.4.0-beta.2
 
