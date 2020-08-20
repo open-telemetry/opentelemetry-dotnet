@@ -72,6 +72,12 @@ To create a new PR, fork the project in GitHub and clone the upstream repo:
 git clone https://github.com/open-telemetry/opentelemetry-dotnet.git
 ```
 
+Navigate to the repo root:
+
+```sh
+cd opentelemetry-dotnet
+```
+
 Add your fork as an origin:
 
 ```sh
@@ -104,8 +110,7 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 
 ### How to Receive Comments
 
-* If the PR is not ready for review, please put `[WIP]` in the title or mark it
-  as
+* If the PR is not ready for review, please mark it as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
 * Make sure CLA is signed and CI is clear.
 
