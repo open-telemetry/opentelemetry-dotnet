@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 

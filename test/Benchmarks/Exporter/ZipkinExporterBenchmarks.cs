@@ -21,7 +21,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Zipkin;
-using OpenTelemetry.Internal.Test;
+using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 
 namespace Benchmarks.Exporter
 {
@@ -60,21 +61,19 @@ namespace Benchmarks.Exporter
         }
 
         [Benchmark]
-        public async Task ZipkinExporter_ExportAsync()
+        public void ZipkinExporter_Export()
         {
             var zipkinExporter = new ZipkinExporter(
                 new ZipkinExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
                 });
+            var processor = new SimpleExportActivityProcessor(zipkinExporter);
 
-            var activities = new List<Activity>(this.NumberOfActivities);
             for (int i = 0; i < this.NumberOfActivities; i++)
             {
-                activities.Add(this.testActivity);
+                processor.OnEnd(this.testActivity);
             }
-
-            await zipkinExporter.ExportAsync(activities, CancellationToken.None).ConfigureAwait(false);
         }
 
         private Activity CreateTestActivity()

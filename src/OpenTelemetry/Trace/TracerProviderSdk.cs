@@ -31,6 +31,7 @@ namespace OpenTelemetry.Trace
         private readonly Resource resource;
         private readonly Sampler sampler;
         private ActivityProcessor processor;
+        private ActivitySourceAdapter adapter;
 
         static TracerProviderSdk()
         {
@@ -55,10 +56,10 @@ namespace OpenTelemetry.Trace
 
             if (instrumentationFactories.Any())
             {
-                var adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
+                this.adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory(adapter));
+                    this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
                 }
             }
 
@@ -91,18 +92,21 @@ namespace OpenTelemetry.Trace
 
             if (sampler is AlwaysOnSampler)
             {
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllDataAndRecorded;
+                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? ActivityDataRequest.AllDataAndRecorded : ActivityDataRequest.None;
             }
             else if (sampler is AlwaysOffSampler)
             {
                 /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
                         once AutoGenerateRootContextTraceId is removed.*/
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => PropagateOrIgnoreData(options.Parent.SpanId);
+                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.SpanId) : ActivityDataRequest.None;
             }
             else
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ComputeActivityDataRequest(options, sampler);
+                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? ComputeActivityDataRequest(options, sampler) : ActivityDataRequest.None;
             }
 
             if (sources.Any())
@@ -173,6 +177,8 @@ namespace OpenTelemetry.Trace
                     processor,
                 });
             }
+
+            this.adapter?.UpdateProcessor(this.processor);
 
             return this;
         }

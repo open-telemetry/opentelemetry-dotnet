@@ -17,7 +17,7 @@
 using System;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Tests.Shared
+namespace OpenTelemetry.Tests
 {
     internal class TestSampler : Sampler
     {

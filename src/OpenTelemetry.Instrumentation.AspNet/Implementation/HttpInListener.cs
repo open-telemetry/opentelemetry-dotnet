@@ -78,8 +78,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // Both new activity and old one store the other activity
                     // inside them. This is required in the Stop step to
                     // correctly stop and restore Activity.Current.
-                    newOne.SetCustomProperty("ActivityByAspNet", activity);
-                    activity.SetCustomProperty("ActivityByHttpInListener", newOne);
+                    newOne.SetCustomProperty("OTel.ActivityByAspNet", activity);
+                    activity.SetCustomProperty("OTel.ActivityByHttpInListener", newOne);
                     activity = newOne;
                 }
 
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
                     // or an additional activity was never created.
-                    createdActivity = (Activity)activity.GetCustomProperty("ActivityByHttpInListener");
+                    createdActivity = (Activity)activity.GetCustomProperty("OTel.ActivityByHttpInListener");
                     activityToEnrich = createdActivity ?? activity;
                 }
             }
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activity.Stop();
 
                     // Restore the original activity as Current.
-                    var activityByAspNet = (Activity)activity.GetCustomProperty("ActivityByAspNet");
+                    var activityByAspNet = (Activity)activity.GetCustomProperty("OTel.ActivityByAspNet");
                     Activity.Current = activityByAspNet;
                 }
                 else if (createdActivity != null)
