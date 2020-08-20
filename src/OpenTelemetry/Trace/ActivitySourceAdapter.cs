@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 
@@ -39,10 +40,34 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly Resource resource;
         private ActivityProcessor activityProcessor;
+        private Action<Activity> getRequestedDataAction;
 
         internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
         {
+            if (sampler == null)
+            {
+                throw new ArgumentNullException(nameof(sampler));
+            }
+
+            if (resource == null)
+            {
+                throw new ArgumentNullException(nameof(resource));
+            }
+
             this.sampler = sampler;
+            if (this.sampler is AlwaysOnSampler)
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
+            }
+            else if (this.sampler is AlwaysOffSampler)
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
+            }
+            else
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
+            }
+
             this.activityProcessor = activityProcessor;
             this.resource = resource;
         }
@@ -57,11 +82,11 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be started.</param>
         public void Start(Activity activity)
         {
-            this.RunGetRequestedData(activity);
+            this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
             {
                 activity.SetResource(this.resource);
-                this.activityProcessor.OnStart(activity);
+                this.activityProcessor?.OnStart(activity);
             }
         }
 
@@ -73,7 +98,7 @@ namespace OpenTelemetry.Trace
         {
             if (activity.IsAllDataRequested)
             {
-                this.activityProcessor.OnEnd(activity);
+                this.activityProcessor?.OnEnd(activity);
             }
         }
 
@@ -82,7 +107,18 @@ namespace OpenTelemetry.Trace
             this.activityProcessor = processor;
         }
 
-        private void RunGetRequestedData(Activity activity)
+        private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = true;
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+        }
+
+        private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = false;
+        }
+
+        private void RunGetRequestedDataOtherSampler(Activity activity)
         {
             ActivityContext parentContext;
             if (string.IsNullOrEmpty(activity.ParentId))
