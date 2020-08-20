@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace OpenTelemetry.Trace
 {
@@ -299,6 +301,74 @@ namespace OpenTelemetry.Trace
         public TelemetrySpan AddBaggage(string key, string value)
         {
             this.Activity?.AddBaggage(key, value);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Record Exception.
+        /// </summary>
+        /// <param name="ex">Exception to be recorded.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan RecordException(Exception ex)
+        {
+            var originalUICulture = Thread.CurrentThread.CurrentUICulture;
+
+            try
+            {
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+                Dictionary<string, object> attributes = new Dictionary<string, object>
+                {
+                    { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
+                    { SemanticConventions.AttributeExceptionStacktrace, ex.ToString() },
+                };
+
+                if (!string.IsNullOrWhiteSpace(ex.Message))
+                {
+                    attributes.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
+                }
+
+                this.AddEvent(SemanticConventions.AttributeExceptionEventName, DateTime.UtcNow, attributes);
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentUICulture = originalUICulture;
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Record Exception.
+        /// </summary>
+        /// <param name="type">Type of the exception to be recorded.</param>
+        /// <param name="message">Message of the exception to be recorded.</param>
+        /// <param name="stacktrace">Stacktrace of the exception to be recorded.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        public TelemetrySpan RecordException(string type, string message, string stacktrace)
+        {
+            Dictionary<string, object> attributes = new Dictionary<string, object>();
+
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionType, type);
+            }
+
+            if (!string.IsNullOrWhiteSpace(stacktrace))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionStacktrace, stacktrace);
+            }
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionMessage, message);
+            }
+
+            if (attributes.Count != 0)
+            {
+                this.AddEvent(SemanticConventions.AttributeExceptionEventName, DateTime.UtcNow, attributes);
+            }
 
             return this;
         }
