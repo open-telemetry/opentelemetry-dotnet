@@ -106,9 +106,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public bool Equals(SamplingResult that)
+        public bool Equals(SamplingResult other)
         {
-            return this.Decision == that.Decision && this.Attributes.SequenceEqual(that.Attributes);
+            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes);
         }
     }
 }

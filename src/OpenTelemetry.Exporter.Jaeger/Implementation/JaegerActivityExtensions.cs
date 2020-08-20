@@ -231,10 +231,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
-            const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
-            const long UnixEpochTicks = 621355968000000000; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
-            const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
-
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
             long microseconds = utcDateTime.Ticks / TicksPerMicrosecond;

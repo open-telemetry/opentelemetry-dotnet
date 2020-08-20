@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
@@ -43,8 +44,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
-
-        private const string CorrelationContextHeaderName = "Correlation-Context";
 
         private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -188,32 +187,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-        {
-            Options.TextFormat.Inject(activity.Context, request, HttpWebRequestHeaderValuesSetter);
-
-            if (request.Headers.Get(CorrelationContextHeaderName) == null)
-            {
-                // we expect baggage to be empty or contain a few items
-                using IEnumerator<KeyValuePair<string, string>> e = activity.Baggage.GetEnumerator();
-
-                if (e.MoveNext())
-                {
-                    StringBuilder baggage = new StringBuilder();
-                    do
-                    {
-                        KeyValuePair<string, string> item = e.Current;
-                        baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
-                    }
-                    while (e.MoveNext());
-                    baggage.Remove(baggage.Length - 1, 1);
-                    request.Headers.Add(CorrelationContextHeaderName, baggage.ToString());
-                }
-            }
-        }
+            => Options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.TextFormat.IsInjected(request, HttpWebRequestHeaderValuesGetter);
+            => Options.TextFormat.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {

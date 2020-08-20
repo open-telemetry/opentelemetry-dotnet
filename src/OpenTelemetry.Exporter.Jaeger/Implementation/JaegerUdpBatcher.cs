@@ -228,8 +228,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
-            catch
+            catch (Exception ex)
             {
+                JaegerExporterEventSource.Log.FailedClose(ex);
             }
 
             if (disposing && !this.disposed)

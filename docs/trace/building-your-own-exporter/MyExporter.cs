@@ -31,7 +31,7 @@ internal class MyExporter : ActivityExporter
         // telemetry should do so inside SuppressInstrumentation
         // scope. This suppresses telemetry from
         // exporter's own code to avoid live-loop situation.
-        using var scope = Sdk.SuppressInstrumentation.Begin();
+        using var scope = SuppressInstrumentationScope.Begin();
 
         foreach (var activity in batch)
         {

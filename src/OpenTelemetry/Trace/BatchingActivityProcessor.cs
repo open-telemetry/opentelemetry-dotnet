@@ -255,12 +255,12 @@ namespace OpenTelemetry.Trace
                         {
                             exportedCount = await this.ExportBatchAsync(linkedCTS?.Token ?? cts.Token).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException ocex)
+                        catch (OperationCanceledException)
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
                                 // User-supplied cancellation, bubble up the exception.
-                                throw ocex;
+                                throw;
                             }
 
                             OpenTelemetrySdkEventSource.Log.SpanExporterTimeout(Math.Min(queueSize, this.maxExportBatchSize));

@@ -231,9 +231,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public bool Equals(Status that)
+        public bool Equals(Status other)
         {
-            return this.IsValid == that.IsValid && this.CanonicalCode == that.CanonicalCode && this.Description == that.Description;
+            return this.IsValid == other.IsValid && this.CanonicalCode == other.CanonicalCode && this.Description == other.Description;
         }
     }
 }

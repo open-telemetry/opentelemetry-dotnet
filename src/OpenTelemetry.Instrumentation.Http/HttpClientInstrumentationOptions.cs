@@ -31,9 +31,13 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="TraceContextFormat"/>.
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextFormat"/> &amp; <see cref="BaggageFormat"/>.
         /// </summary>
-        public ITextFormat TextFormat { get; set; } = new TraceContextFormat();
+        public ITextFormat TextFormat { get; set; } = new CompositePropagator(new ITextFormat[]
+        {
+            new TraceContextFormat(),
+            new BaggageFormat(),
+        });
 
         /// <summary>
         /// Gets or sets an optional callback method for filtering <see cref="HttpRequestMessage"/> requests that are sent through the instrumentation.
