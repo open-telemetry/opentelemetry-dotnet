@@ -35,9 +35,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CurrentSpanNullByDefault()
         {
-            var current = this.tracer.CurrentSpan;
-            Assert.True(IsNoopSpan(current));
-            Assert.False(current.Context.IsValid);
+            ActivitySource actSource = new ActivitySource("cijo");
+            actSource.StartActivity(null);
+            Activity act = new Activity(null);
+            Assert.Null(act.OperationName);
         }
 
         [Fact]
@@ -60,112 +61,29 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void Tracer_StartRootSpan_BadArgs_NullSpanName()
         {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var span1 = this.tracer.StartRootSpan(null);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartRootSpan(null, SpanKind.Client);
-            Assert.Null(span2.Activity.DisplayName);
-
-            var span3 = this.tracer.StartRootSpan(null, SpanKind.Client, default);
-            Assert.Null(span3.Activity.DisplayName);
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartRootSpan(null));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartRootSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartRootSpan(null, SpanKind.Client, default));
         }
 
         [Fact]
         public void Tracer_StartSpan_BadArgs_NullSpanName()
         {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var span1 = this.tracer.StartSpan(null);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client);
-            Assert.Null(span2.Activity.DisplayName);
-
-            var span3 = this.tracer.StartSpan(null, SpanKind.Client, null);
-            Assert.Null(span3.Activity.DisplayName);
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartSpan(null));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartSpan(null, SpanKind.Client, null));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartSpan(null, SpanKind.Client, default(SpanContext)));
         }
 
         [Fact]
         public void Tracer_StartActiveSpan_BadArgs_NullSpanName()
         {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var span1 = this.tracer.StartActiveSpan(null);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client);
-            Assert.Null(span2.Activity.DisplayName);
-
-            var span3 = this.tracer.StartActiveSpan(null, SpanKind.Client, null);
-            Assert.Null(span3.Activity.DisplayName);
-        }
-
-        [Fact]
-        public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
-        {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var span1 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
-            Assert.Null(span2.Activity.DisplayName);
-        }
-
-        [Fact]
-        public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
-        {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var blankContext = default(SpanContext);
-
-            var span1 = this.tracer.StartSpan(null, SpanKind.Client, blankContext);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client, blankContext, default);
-            Assert.Null(span2.Activity.DisplayName);
-        }
-
-        [Fact]
-        public void Tracer_StartActiveSpan_FromParent_BadArgs_NullSpanName()
-        {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance, default);
-            Assert.Null(span2.Activity.DisplayName);
-        }
-
-        [Fact]
-        public void Tracer_StartActiveSpan_FromParentContext_BadArgs_NullSpanName()
-        {
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
-                .Build();
-
-            var blankContext = default(SpanContext);
-
-            var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext);
-            Assert.Null(span1.Activity.DisplayName);
-
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext, default);
-            Assert.Null(span2.Activity.DisplayName);
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartActiveSpan(null));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartActiveSpan(null, SpanKind.Client));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartActiveSpan(null, SpanKind.Client, null));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance));
+            Assert.Throws<ArgumentNullException>(() => this.tracer.StartActiveSpan(null, SpanKind.Client, default(SpanContext)));
         }
 
         [Fact]

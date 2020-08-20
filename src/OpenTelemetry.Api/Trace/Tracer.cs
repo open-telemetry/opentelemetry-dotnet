@@ -147,6 +147,11 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             if (!this.ActivitySource.HasListeners())
             {
                 return TelemetrySpan.NoopInstance;
