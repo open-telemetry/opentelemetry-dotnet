@@ -312,6 +312,11 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan RecordException(Exception ex)
         {
+            if (ex == null)
+            {
+                return this;
+            }
+
             Dictionary<string, object> attributes = new Dictionary<string, object>
             {
                 { SemanticConventions.AttributeExceptionType, ex.GetType().Name },

@@ -64,6 +64,9 @@ namespace OpenTelemetry.Tests.Trace
             using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(string.Empty, string.Empty, string.Empty);
             Assert.Empty(activity.Events);
+
+            telemetrySpan.RecordException(null);
+            Assert.Empty(activity.Events);
         }
     }
 }
