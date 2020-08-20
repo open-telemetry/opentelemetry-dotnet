@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added `RecordException` in `TelemetrySpan`
+  ([#1116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1116))
 * `PropagationContext` is now used instead of `ActivityContext` in the
     `ITextFormat` API
     ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
