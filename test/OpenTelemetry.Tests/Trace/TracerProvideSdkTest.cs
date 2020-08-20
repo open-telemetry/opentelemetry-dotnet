@@ -148,6 +148,24 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
+        {
+            using var scope = SuppressInstrumentationScope.Begin();
+
+            var testSampler = new TestSampler();
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                    .AddSource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
+
+            using (var activity = activitySource.StartActivity("root"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        [Fact]
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
             var testSampler = new TestSampler();
@@ -252,6 +270,31 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(startCalledNew);
             Assert.True(endCalledNew);
+        }
+
+        [Fact]
+        public void TracerProvideSdkCreatesActivitySourceWhenNoProcessor()
+        {
+            TestInstrumentation testInstrumentation = null;
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            var adapter = testInstrumentation.Adapter;
+            Activity activity = new Activity("test");
+            activity.Start();
+            adapter.Start(activity);
+            adapter.Stop(activity);
+            activity.Stop();
+
+            // No asserts here. Validates that no exception
+            // gets thrown when processors are not added,
+            // TODO: Refactor to have more proper unit test
+            // to target each individual classes.
         }
 
         [Fact]
