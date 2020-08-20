@@ -201,12 +201,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
             };
 
-            foreach (var attribute in from tag in activityLink.Tags
-                                      let attribute = ToOtlpAttributes(tag)
-                                      where attribute != null && attribute.Any()
-                                      select attribute)
+            if (activityLink.Tags != null)
             {
-                otlpLink.Attributes.AddRange(attribute);
+                foreach (var attribute in from tag in activityLink.Tags
+                                          let attribute = ToOtlpAttributes(tag)
+                                          where attribute != null && attribute.Any()
+                                          select attribute)
+                {
+                    otlpLink.Attributes.AddRange(attribute);
+                }
             }
 
             return otlpLink;

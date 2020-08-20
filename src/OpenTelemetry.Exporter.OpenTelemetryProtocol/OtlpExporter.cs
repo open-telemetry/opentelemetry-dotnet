@@ -16,14 +16,9 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
 using Grpc.Core;
-
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Trace;
-
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -32,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpExporter : ActivityExporter
+    public class OtlpExporter : ActivityExporterSync
     {
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
@@ -50,31 +45,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(
-            IEnumerable<Activity> activityBatch,
-            CancellationToken cancellationToken)
+        public override ExportResultSync Export(in Batch<Activity> activityBatch)
         {
             var exporterRequest = new OtlpCollector.ExportTraceServiceRequest();
-            exporterRequest.ResourceSpans.AddRange(activityBatch.ToOtlpResourceSpans());
+
+            var activities = new List<Activity>();
+            foreach (var activity in activityBatch)
+            {
+                activities.Add(activity);
+            }
+
+            exporterRequest.ResourceSpans.AddRange(activities.ToOtlpResourceSpans());
 
             try
             {
-                await this.traceClient.ExportAsync(exporterRequest, headers: this.headers, cancellationToken: cancellationToken);
+                this.traceClient.Export(exporterRequest, headers: this.headers);
             }
             catch (RpcException ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
-                return ExportResult.FailedRetryable;
+                return ExportResultSync.Failure;
             }
 
-            return ExportResult.Success;
-        }
-
-        /// <inheritdoc/>
-        public override async Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            await this.channel.ShutdownAsync().ConfigureAwait(false);
+            return ExportResultSync.Success;
         }
     }
 }
