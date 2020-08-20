@@ -94,10 +94,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task ZipkinExporterIntegrationTest(bool useShortTraceIds)
+        public void ZipkinExporterIntegrationTest(bool useShortTraceIds)
         {
-            var batchActivity = new List<Activity> { CreateTestActivity() };
-
             Guid requestId = Guid.NewGuid();
 
             ZipkinExporter exporter = new ZipkinExporter(
@@ -107,11 +105,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     UseShortTraceIds = useShortTraceIds,
                 });
 
-            await exporter.ExportAsync(batchActivity, CancellationToken.None).ConfigureAwait(false);
+            var activity = CreateTestActivity();
+            var processor = new SimpleExportActivityProcessor(exporter);
 
-            await exporter.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
+            processor.OnEnd(activity);
 
-            var activity = batchActivity[0];
             var context = activity.Context;
 
             var timestamp = activity.StartTimeUtc.ToEpochMicroseconds();
