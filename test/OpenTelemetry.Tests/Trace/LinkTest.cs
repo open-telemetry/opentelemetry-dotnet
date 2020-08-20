@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -34,11 +35,19 @@ namespace OpenTelemetry.Trace.Tests
             this.attributesMap.Add("MyAttributeKey1", 10L);
             this.attributesMap.Add("MyAttributeKey2", true);
             this.attributesMap.Add("MyAttributeKey3", 0.005);
+            this.attributesMap.Add("MyAttributeKey4", new long[] { 1, 2 });
+            this.attributesMap.Add("MyAttributeKey5", new string[] { "a", "b" });
+            this.attributesMap.Add("MyAttributeKey6", new bool[] { true, false });
+            this.attributesMap.Add("MyAttributeKey7", new double[] { 0.1, -0.1 });
             this.tags = new SpanAttributes();
             this.tags.Add("MyAttributeKey0", "MyStringAttribute");
             this.tags.Add("MyAttributeKey1", 10L);
             this.tags.Add("MyAttributeKey2", true);
             this.tags.Add("MyAttributeKey3", 0.005);
+            this.tags.Add("MyAttributeKey4", new long[] { 1, 2 });
+            this.tags.Add("MyAttributeKey5", new string[] { "a", "b" });
+            this.tags.Add("MyAttributeKey6", new bool[] { true, false });
+            this.tags.Add("MyAttributeKey7", new double[] { 0.1, -0.1 });
         }
 
         [Fact]
@@ -55,7 +64,11 @@ namespace OpenTelemetry.Trace.Tests
             var link = new Link(this.spanContext, this.tags);
             Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
             Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
-            Assert.Equal(this.attributesMap, link.Attributes);
+
+            foreach (var attributemap in this.attributesMap)
+            {
+                Assert.Equal(attributemap.Value, link.Attributes.FirstOrDefault(a => a.Key == attributemap.Key).Value);
+            }
         }
 
         [Fact]
