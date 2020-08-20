@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                     activities.Add(activity);
                 }
 
-                this.SendBatchActivityAsync(activities, CancellationToken.None).RunSynchronously();
+                this.SendBatchActivityAsync(activities, CancellationToken.None).GetAwaiter().GetResult();
 
                 return ExportResultSync.Success;
             }
