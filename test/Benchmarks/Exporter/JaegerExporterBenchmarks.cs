@@ -26,7 +26,7 @@ using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Transport;
 
-namespace Benchmarks.Exporter
+namespace OpenTelemetry.Exporter.Benchmarks
 {
     [MemoryDiagnoser]
 #if !NET462
