@@ -272,6 +272,11 @@ namespace OpenTelemetry.Trace.Tests
             adapter.Start(activity);
             adapter.Stop(activity);
             activity.Stop();
+
+            // No asserts here. Validates that no exception
+            // gets thrown when processors are not added,
+            // TODO: Refactor to have more proper unit test
+            // to target each individual classes.
         }
 
         [Fact]
