@@ -39,7 +39,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            if (context.ActivityBaggage != null)
+            if (context.BaggageContext != default)
             {
                 // If baggage has already been extracted, perform a noop.
                 return context;
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Context.Propagation
 
             try
             {
-                IEnumerable<KeyValuePair<string, string>> baggage = null;
+                Dictionary<string, string> baggage = null;
                 var baggageCollection = getter(carrier, BaggageHeaderName);
                 if (baggageCollection?.Any() ?? false)
                 {
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new PropagationContext(
                     context.ActivityContext,
-                    baggage ?? context.ActivityBaggage);
+                    baggage == null ? context.BaggageContext : new BaggageContext(baggage));
             }
             catch (Exception ex)
             {
@@ -93,9 +93,9 @@ namespace OpenTelemetry.Context.Propagation
                 return;
             }
 
-            using IEnumerator<KeyValuePair<string, string>> e = context.ActivityBaggage?.GetEnumerator();
+            using var e = context.BaggageContext.GetEnumerator();
 
-            if (e?.MoveNext() == true)
+            if (e.MoveNext() == true)
             {
                 int itemCount = 1;
                 StringBuilder baggage = new StringBuilder();
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Context.Propagation
             }
         }
 
-        internal static bool TryExtractBaggage(string[] baggageCollection, out IEnumerable<KeyValuePair<string, string>> baggage)
+        internal static bool TryExtractBaggage(string[] baggageCollection, out Dictionary<string, string> baggage)
         {
             int baggageLength = -1;
             bool done = false;

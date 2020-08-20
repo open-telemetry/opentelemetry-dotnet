@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -83,12 +84,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.ActivityBaggage != null)
+                if (ctx.BaggageContext != default)
                 {
-                    foreach (var baggageItem in ctx.ActivityBaggage)
-                    {
-                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
-                    }
+                    BaggageContext.Current = ctx.BaggageContext;
                 }
             }
 

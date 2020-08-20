@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -112,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
             {
-                this.options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpRequestMessageHeaderValueSetter);
+                this.options.TextFormat.Inject(new PropagationContext(activity.Context, BaggageContext.Current), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 

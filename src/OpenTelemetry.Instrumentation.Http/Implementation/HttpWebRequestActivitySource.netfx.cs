@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -191,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpWebRequestHeaderValuesSetter);
+            => Options.TextFormat.Inject(new PropagationContext(activity.Context, BaggageContext.Current), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)

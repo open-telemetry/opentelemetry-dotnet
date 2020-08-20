@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc;
 using OpenTelemetry.Trace;
@@ -83,12 +84,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.ActivityBaggage != null)
+                if (ctx.BaggageContext != default)
                 {
-                    foreach (var baggageItem in ctx.ActivityBaggage)
-                    {
-                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
-                    }
+                    BaggageContext.Current = ctx.BaggageContext;
                 }
             }
 
