@@ -16,10 +16,8 @@
 
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
-using Benchmarks.Tracing;
-using OpenTelemetry;
 
-namespace Benchmarks
+namespace OpenTelemetry.Trace.Benchmarks
 {
     [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarksActivity
