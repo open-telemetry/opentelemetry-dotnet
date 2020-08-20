@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // Processor null. This is not expected to throw as processor can
             // be null and can be later added.
-            var adatper = new ActivitySourceAdapter(this.testSampler, null, this.testResource);
+            var adapter = new ActivitySourceAdapter(this.testSampler, null, this.testResource);
         }
 
         [Fact]
