@@ -35,10 +35,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CurrentSpanNullByDefault()
         {
-            ActivitySource actSource = new ActivitySource("cijo");
-            actSource.StartActivity(null);
-            Activity act = new Activity(null);
-            Assert.Null(act.OperationName);
+            var current = this.tracer.CurrentSpan;
+            Assert.True(IsNoopSpan(current));
+            Assert.False(current.Context.IsValid);
         }
 
         [Fact]
