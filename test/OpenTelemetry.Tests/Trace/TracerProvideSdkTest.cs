@@ -273,6 +273,31 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerProvideSdkCreatesActivitySourceWhenNoProcessor()
+        {
+            TestInstrumentation testInstrumentation = null;
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            var adapter = testInstrumentation.Adapter;
+            Activity activity = new Activity("test");
+            activity.Start();
+            adapter.Start(activity);
+            adapter.Stop(activity);
+            activity.Stop();
+
+            // No asserts here. Validates that no exception
+            // gets thrown when processors are not added,
+            // TODO: Refactor to have more proper unit test
+            // to target each individual classes.
+        }
+
+        [Fact]
         public void TracerProvideSdkCreatesAndDiposesInstrumentation()
         {
             TestInstrumentation testInstrumentation = null;
