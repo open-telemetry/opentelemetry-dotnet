@@ -18,7 +18,9 @@ using System.Collections.Generic;
 #if NET452
 using Newtonsoft.Json;
 #else
+using System.Globalization;
 using System.Text.Json;
+using System.Threading;
 #endif
 using OpenTelemetry.Internal;
 
@@ -280,37 +282,40 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
 
+                // this will be used when we convert int, double, int[], double[] to string
+                var originalUICulture = Thread.CurrentThread.CurrentUICulture;
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
                 foreach (var tag in this.Tags.Value)
                 {
-                    if (tag.Value is int intValue)
+                    switch (tag.Value)
                     {
-                        writer.WriteNumber(tag.Key, intValue);
-                    }
-                    else if (tag.Value is bool boolVal)
-                    {
-                        writer.WriteBoolean(tag.Key, boolVal);
-                    }
-                    else if (tag.Value is double doubleVal)
-                    {
-                        writer.WriteNumber(tag.Key, doubleVal);
-                    }
-                    else if (tag.Value is string stringVal)
-                    {
-                        writer.WriteString(tag.Key, stringVal);
-                    }
-                    else
-                    {
-                        // Should we try to convert to string? Or
-                        // just drop it?
-                        writer.WriteString(tag.Key, tag.Value.ToString());
+                        case string stringVal:
+                            writer.WriteString(tag.Key, stringVal);
+                            break;
+                        case int[] intArrayValue:
+                            writer.WriteString(tag.Key, string.Join(",", intArrayValue));
+                            break;
+                        case double[] doubleArrayValue:
+                            writer.WriteString(tag.Key, string.Join(",", doubleArrayValue));
+                            break;
+                        case bool[] boolArrayValue:
+                            writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
+                            break;
+                        default:
+                            writer.WriteString(tag.Key, tag.Value.ToString());
+                            break;
                     }
                 }
+
+                Thread.CurrentThread.CurrentUICulture = originalUICulture;
 
                 writer.WriteEndObject();
             }
 
             writer.WriteEndObject();
         }
+
 #endif
     }
 }
