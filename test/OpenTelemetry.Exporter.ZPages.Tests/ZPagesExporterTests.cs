@@ -18,18 +18,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
 using Xunit;
 
 namespace OpenTelemetry.Exporter.ZPages.Tests
 {
     public class ZPagesExporterTests
     {
+        private static readonly HttpClient HttpClient = new HttpClient();
+
         static ZPagesExporterTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -46,14 +48,14 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_BadArgs()
+        public void CheckingBadArgs()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZPagesExporter());
         }
 
         [Fact]
-        public async Task ZPagesExporter_Integration()
+        public async Task CheckingIntegration()
         {
             var batchActivity = new List<Activity> { CreateTestActivity() };
 
@@ -66,7 +68,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_CustomActivityProcessor()
+        public void CheckingCustomActivityProcessor()
         {
             const string ActivitySourceName = "zpages.test";
             Guid requestId = Guid.NewGuid();
@@ -102,7 +104,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_CheckingCustomOptions()
+        public void CheckingCustomOptions()
         {
             ZPagesExporterOptions options = new ZPagesExporterOptions
             {
@@ -117,10 +119,9 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         }
 
         [Fact]
-        public void ZPagesExporter_ZPagesProcessor()
+        public async Task CheckingZPagesProcessor()
         {
             const string ActivitySourceName = "zpages.test";
-            Guid requestId = Guid.NewGuid();
             ZPagesExporterOptions options = new ZPagesExporterOptions
             {
                 RetentionTime = 100_000,
@@ -128,15 +129,12 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             };
             ZPagesExporter exporter = new ZPagesExporter(options);
             var zpagesProcessor = new ZPagesProcessor(exporter);
-
-            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddSource(ActivitySourceName)
-                            .AddProcessor(zpagesProcessor)
-                            .AddZPagesExporter()
-                            .Build();
+            var zpagesServer = new ZPagesExporterStatsHttpServer(exporter);
+            zpagesServer.Start();
 
             var source = new ActivitySource(ActivitySourceName);
             var activity0 = source.StartActivity("Test Zipkin Activity");
+            zpagesProcessor.OnStart(activity0);
 
             // checking size of dictionaries from ZPagesActivityTracker
             Assert.Equal(1, ZPagesActivityTracker.ProcessingList.First().Value);
@@ -146,6 +144,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
             var activity1 = source.StartActivity("Test Zipkin Activity");
+            zpagesProcessor.OnStart(activity1);
 
             // checking size of dictionaries from ZPagesActivityTracker
             Assert.Equal(2, ZPagesActivityTracker.ProcessingList.First().Value);
@@ -155,6 +154,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
             var activity2 = source.StartActivity("Test Zipkin Activity 2");
+            zpagesProcessor.OnStart(activity2);
 
             // checking size of dictionaries from ZPagesActivityTracker
             Assert.Equal(2, ZPagesActivityTracker.ProcessingList.Count);
@@ -166,11 +166,26 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             activity0?.Stop();
             activity1?.Stop();
             activity2?.Stop();
+            zpagesProcessor.OnEnd(activity0);
+            zpagesProcessor.OnEnd(activity1);
+            zpagesProcessor.OnEnd(activity2);
 
             // checking if activities were processed
             Assert.Equal(0, ZPagesActivityTracker.ProcessingList.First().Value);
             Assert.Equal(0, ZPagesActivityTracker.ProcessingList.Last().Value);
             Assert.Empty(ZPagesActivityTracker.ZQueue);
+
+            using var httpResponseMessage = await HttpClient.GetAsync("http://localhost:7284/rpcz/");
+            Assert.True(httpResponseMessage.IsSuccessStatusCode);
+
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+            Assert.Contains($"<td>Test Zipkin Activity</td>", content);
+            Assert.Contains($"<td>Test Zipkin Activity 2</td>", content);
+
+            zpagesProcessor.Dispose();
+            zpagesServer.Stop();
+            zpagesServer.Dispose();
+            exporter.Dispose();
         }
 
         internal static Activity CreateTestActivity(

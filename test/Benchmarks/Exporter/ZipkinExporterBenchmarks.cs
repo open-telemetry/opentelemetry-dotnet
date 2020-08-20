@@ -17,14 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
-namespace Benchmarks.Exporter
+namespace OpenTelemetry.Exporter.Benchmarks
 {
     [MemoryDiagnoser]
 #if !NET462
