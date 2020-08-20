@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace.Tests
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
         private readonly SpanContext spanContext;
-        private readonly ActivityTagsCollection tags;
+        private readonly SpanAttributes tags;
 
         public LinkTest()
         {
@@ -34,7 +34,11 @@ namespace OpenTelemetry.Trace.Tests
             this.attributesMap.Add("MyAttributeKey1", 10L);
             this.attributesMap.Add("MyAttributeKey2", true);
             this.attributesMap.Add("MyAttributeKey3", 0.005);
-            this.tags = new ActivityTagsCollection(this.attributesMap);
+            this.tags = new SpanAttributes();
+            this.tags.Add("MyAttributeKey0", "MyStringAttribute");
+            this.tags.Add("MyAttributeKey1", 10L);
+            this.tags.Add("MyAttributeKey2", true);
+            this.tags.Add("MyAttributeKey3", 0.005);
         }
 
         [Fact]
@@ -91,7 +95,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void NotEquality_WithAttributes()
         {
-            var tag1 = new ActivityTagsCollection(new Dictionary<string, object>());
+            var tag1 = new SpanAttributes();
             var tag2 = this.tags;
             var link1 = new Link(this.spanContext, tag1);
             var link2 = new Link(this.spanContext, tag2);
