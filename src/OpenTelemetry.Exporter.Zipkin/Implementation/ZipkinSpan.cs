@@ -15,10 +15,10 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 #if NET452
 using Newtonsoft.Json;
 #else
+using System.Globalization;
 using System.Text.Json;
 using System.Threading;
 #endif
@@ -282,6 +282,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
 
+                // this will be used when we convert int, double, int[], double[] to string
                 var originalUICulture = Thread.CurrentThread.CurrentUICulture;
                 Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -302,8 +303,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                             writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
                             break;
                         default:
-                            // Should we try to convert to string? Or
-                            // just drop it?
                             writer.WriteString(tag.Key, tag.Value.ToString());
                             break;
                     }
