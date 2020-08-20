@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
             var zpagesExporter = new ZPagesExporter(exporterOptions);
 
             // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
-            return builder.AddProcessor(new BatchExportActivityProcessor(zpagesExporter));
+            return builder.AddProcessor(new ZPagesProcessor(zpagesExporter));
         }
     }
 }

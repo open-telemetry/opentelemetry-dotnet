@@ -111,12 +111,14 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                 Url = "http://localhost:7284/rpcz/",
             };
             ZPagesExporter exporter = new ZPagesExporter(options);
-            var zpagesProcessor = new ZPagesProcessor(exporter);
 
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
-                            .AddProcessor(zpagesProcessor)
-                            .AddZPagesExporter()
+                            .AddZPagesExporter(o =>
+                            {
+                                o.RetentionTime = options.RetentionTime;
+                                o.Url = options.Url;
+                            })
                             .Build();
 
             var source = new ActivitySource(ActivitySourceName);
