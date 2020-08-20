@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 #if NET452
 using Newtonsoft.Json;
 #else
@@ -284,15 +285,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     if (tag.Value is int intValue)
                     {
-                        writer.WriteNumber(tag.Key, intValue);
-                    }
-                    else if (tag.Value is bool boolVal)
-                    {
-                        writer.WriteBoolean(tag.Key, boolVal);
+                        writer.WriteString(tag.Key, intValue.ToString(CultureInfo.InvariantCulture));
                     }
                     else if (tag.Value is double doubleVal)
                     {
-                        writer.WriteNumber(tag.Key, doubleVal);
+                        writer.WriteString(tag.Key, doubleVal.ToString(CultureInfo.InvariantCulture));
                     }
                     else if (tag.Value is string stringVal)
                     {
