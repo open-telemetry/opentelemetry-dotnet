@@ -317,20 +317,7 @@ namespace OpenTelemetry.Trace
                 return this;
             }
 
-            Dictionary<string, object> attributes = new Dictionary<string, object>
-            {
-                { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
-                { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
-            };
-
-            if (!string.IsNullOrWhiteSpace(ex.Message))
-            {
-                attributes.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
-            }
-
-            this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
-
-            return this;
+            return this.RecordException(ex.GetType().Name, ex.Message, ex.ToInvariantString());
         }
 
         /// <summary>
