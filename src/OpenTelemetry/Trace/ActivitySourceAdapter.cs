@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 
@@ -39,10 +40,34 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly Resource resource;
         private ActivityProcessor activityProcessor;
+        private Action<Activity> getRequestedDataAction;
 
         internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
         {
+            if (sampler == null)
+            {
+                throw new ArgumentNullException(nameof(sampler));
+            }
+
+            if (resource == null)
+            {
+                throw new ArgumentNullException(nameof(resource));
+            }
+
             this.sampler = sampler;
+            if (this.sampler is AlwaysOnSampler)
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
+            }
+            else if (this.sampler is AlwaysOffSampler)
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
+            }
+            else
+            {
+                this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
+            }
+
             this.activityProcessor = activityProcessor;
             this.resource = resource;
         }
@@ -57,7 +82,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be started.</param>
         public void Start(Activity activity)
         {
-            this.RunGetRequestedData(activity);
+            this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
             {
                 activity.SetResource(this.resource);
@@ -82,61 +107,60 @@ namespace OpenTelemetry.Trace
             this.activityProcessor = processor;
         }
 
-        private void RunGetRequestedData(Activity activity)
+        private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
         {
-            if (this.sampler is AlwaysOnSampler)
+            activity.IsAllDataRequested = true;
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+        }
+
+        private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = false;
+        }
+
+        private void RunGetRequestedDataOtherSampler(Activity activity)
+        {
+            ActivityContext parentContext;
+            if (string.IsNullOrEmpty(activity.ParentId))
             {
-                activity.IsAllDataRequested = true;
-                activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                parentContext = default;
             }
-            else if (this.sampler is AlwaysOffSampler)
+            else if (activity.Parent != null)
             {
-                activity.IsAllDataRequested = false;
+                parentContext = activity.Parent.Context;
             }
             else
             {
-                ActivityContext parentContext;
-                if (string.IsNullOrEmpty(activity.ParentId))
-                {
-                    parentContext = default;
-                }
-                else if (activity.Parent != null)
-                {
-                    parentContext = activity.Parent.Context;
-                }
-                else
-                {
-                    parentContext = new ActivityContext(
-                        activity.TraceId,
-                        activity.ParentSpanId,
-                        activity.ActivityTraceFlags,
-                        activity.TraceStateString,
-                        isRemote: true);
-                }
-
-                var samplingParameters = new SamplingParameters(
-                    parentContext,
+                parentContext = new ActivityContext(
                     activity.TraceId,
-                    activity.DisplayName,
-                    activity.Kind,
-                    activity.TagObjects,
-                    activity.Links);
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
+            }
 
-                var samplingResult = this.sampler.ShouldSample(samplingParameters);
+            var samplingParameters = new SamplingParameters(
+                parentContext,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.TagObjects,
+                activity.Links);
 
-                switch (samplingResult.Decision)
-                {
-                    case SamplingDecision.NotRecord:
-                        activity.IsAllDataRequested = false;
-                        break;
-                    case SamplingDecision.Record:
-                        activity.IsAllDataRequested = true;
-                        break;
-                    case SamplingDecision.RecordAndSampled:
-                        activity.IsAllDataRequested = true;
-                        activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
-                        break;
-                }
+            var samplingResult = this.sampler.ShouldSample(samplingParameters);
+
+            switch (samplingResult.Decision)
+            {
+                case SamplingDecision.NotRecord:
+                    activity.IsAllDataRequested = false;
+                    break;
+                case SamplingDecision.Record:
+                    activity.IsAllDataRequested = true;
+                    break;
+                case SamplingDecision.RecordAndSampled:
+                    activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                    break;
             }
         }
     }
