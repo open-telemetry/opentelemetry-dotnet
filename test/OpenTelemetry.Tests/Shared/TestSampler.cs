@@ -23,8 +23,11 @@ namespace OpenTelemetry.Tests
     {
         public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
 
+        public SamplingParameters LatestSamplingParameters { get; private set; }
+
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
+            this.LatestSamplingParameters = samplingParameters;
             return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSampled);
         }
     }
