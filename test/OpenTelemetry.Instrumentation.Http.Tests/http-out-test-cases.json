@@ -1,30 +1,30 @@
 ﻿[
   {
-    "name": "Successful GET call to https://example.com",
+    "name": "Successful GET call to localhost",
     "method": "GET",
-    "url": "https://example.com/",
+    "url": "http://{host}:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
       "http.method": "GET",
-      "http.host": "example.com",
+      "http.host": "{host}:{port}",
       "http.status_code": "200",
-      "http.url": "https://example.com/"
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
-    "name": "Successfully POST call to https://example.com",
+    "name": "Successfully POST call to localhost",
     "method": "POST",
-    "url": "https://example.com/",
+    "url": "http://{host}:{port}/",
     "spanName": "HTTP POST",
     "spanStatus": "OK",
     "spanKind": "Client",
     "spanAttributes": {
       "http.method": "POST",
-      "http.host": "example.com",
+      "http.host": "{host}:{port}",
       "http.status_code": "200",
-      "http.url": "https://example.com/"
+      "http.url": "http://{host}:{port}/"
     }
   },
   {
