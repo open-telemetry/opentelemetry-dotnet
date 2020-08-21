@@ -36,7 +36,7 @@ namespace OpenTelemetry.Context
         /// <param name="baggage">Baggage key/value pairs.</param>
         public BaggageContext(Dictionary<string, string> baggage)
         {
-            this.baggage = baggage ?? EmptyBaggage;
+            this.baggage = baggage;
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Gets the number of key/value pairs in the baggage.
         /// </summary>
-        public int Count => this.baggage.Count;
+        public int Count => this.baggage?.Count ?? 0;
 
         /// <summary>
         /// Compare two entries of <see cref="BaggageContext"/> for equality.
@@ -74,6 +74,14 @@ namespace OpenTelemetry.Context
         /// <returns>Baggage key/value pairs.</returns>
         public static IReadOnlyDictionary<string, string> GetBaggage(BaggageContext baggageContext = default)
             => baggageContext == default ? Current.GetBaggage() : baggageContext.GetBaggage();
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the <see cref="BaggageContext"/>.
+        /// </summary>
+        /// <param name="baggageContext">Optional <see cref="BaggageContext"/>. <see cref="Current"/> is used if not specified.</param>
+        /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
+        public static Dictionary<string,string>.Enumerator GetEnumerator(BaggageContext baggageContext = default)
+            => baggageContext == default ? Current.GetEnumerator() : baggageContext.GetEnumerator();
 
         /// <summary>
         /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
@@ -134,7 +142,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <returns>Baggage key/value pairs.</returns>
         public IReadOnlyDictionary<string, string> GetBaggage()
-            => this.baggage;
+            => this.baggage ?? EmptyBaggage;
 
         /// <summary>
         /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
@@ -143,7 +151,7 @@ namespace OpenTelemetry.Context
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
         public string GetBaggage(string name)
         {
-            return this.baggage.TryGetValue(name, out string value)
+            return this.baggage != null && this.baggage.TryGetValue(name, out string value)
                 ? value
                 : null;
         }
@@ -157,7 +165,7 @@ namespace OpenTelemetry.Context
         public BaggageContext SetBaggage(string name, string value)
         {
             var baggageContext = new BaggageContext(
-                new Dictionary<string, string>(this.baggage, StringComparer.OrdinalIgnoreCase)
+                new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
                 {
                     [name] = value,
                 });
@@ -182,7 +190,7 @@ namespace OpenTelemetry.Context
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public BaggageContext SetBaggage(IEnumerable<KeyValuePair<string, string>> baggage)
         {
-            var newBaggage = new Dictionary<string, string>(this.baggage, StringComparer.OrdinalIgnoreCase);
+            var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in baggage)
             {
@@ -201,7 +209,7 @@ namespace OpenTelemetry.Context
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public BaggageContext RemoveBaggage(string name)
         {
-            var baggage = new Dictionary<string, string>(this.baggage, StringComparer.OrdinalIgnoreCase);
+            var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
             baggage.Remove(name);
             var baggageContext = new BaggageContext(baggage);
             Current = baggageContext;
@@ -224,11 +232,20 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
         public Dictionary<string, string>.Enumerator GetEnumerator()
-            => this.baggage.GetEnumerator();
+            => (this.baggage ?? EmptyBaggage).GetEnumerator();
 
         /// <inheritdoc/>
         public bool Equals(BaggageContext other)
-            => this.baggage.SequenceEqual(other.baggage);
+        {
+            bool baggageIsNull = this.baggage == null;
+
+            if (baggageIsNull != (other.baggage == null))
+            {
+                return false;
+            }
+
+            return baggageIsNull || this.baggage.SequenceEqual(other.baggage);
+        }
 
         /// <inheritdoc/>
         public override bool Equals(object obj)
@@ -236,6 +253,6 @@ namespace OpenTelemetry.Context
 
         /// <inheritdoc/>
         public override int GetHashCode()
-            => this.baggage.GetHashCode();
+            => (this.baggage ?? EmptyBaggage).GetHashCode();
     }
 }
