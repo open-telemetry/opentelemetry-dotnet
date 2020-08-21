@@ -28,7 +28,6 @@ namespace Examples.Console
         {
             var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/", RetentionTime = 3600000 };
             var zpagesExporter = new ZPagesExporter(zpagesOptions);
-            var zpagesProcessor = new ZPagesProcessor(zpagesExporter);
             var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter);
 
             // Start the server
@@ -36,8 +35,11 @@ namespace Examples.Console
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("zpages-test")
-                    .AddProcessor(zpagesProcessor)
-                    .AddZPagesExporter()
+                    .AddZPagesExporter(o =>
+                    {
+                        o.Url = zpagesOptions.Url;
+                        o.RetentionTime = zpagesOptions.RetentionTime;
+                    })
                     .Build();
 
             ActivitySource activitySource = new ActivitySource("zpages-test");
