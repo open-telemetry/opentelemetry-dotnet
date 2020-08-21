@@ -103,7 +103,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(span);
+            ValidateHttpClientActivity(span, true);
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(span);
+            ValidateHttpClientActivity(span, true);
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
@@ -282,16 +282,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Activity.Current = null;
         }
 
-        private static void ValidateHttpClientActivity(Activity activityToValidate)
+        private static void ValidateHttpClientActivity(Activity activityToValidate, bool responseExpected)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
             var request = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.RequestCustomPropertyName);
             Assert.NotNull(request);
             Assert.True(request is HttpRequestMessage);
 
-            var response = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.ResponseCustomPropertyName);
-            Assert.NotNull(response);
-            Assert.True(response is HttpResponseMessage);
+            if (responseExpected)
+            {
+                var response = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.ResponseCustomPropertyName);
+                Assert.NotNull(response);
+                Assert.True(response is HttpResponseMessage);
+            }
         }
     }
 }

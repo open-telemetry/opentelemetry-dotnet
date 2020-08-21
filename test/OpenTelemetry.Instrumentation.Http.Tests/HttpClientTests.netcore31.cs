@@ -90,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(span);
+            ValidateHttpClientActivity(span, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, span.DisplayName);
 
             var d = new Dictionary<string, string>()
