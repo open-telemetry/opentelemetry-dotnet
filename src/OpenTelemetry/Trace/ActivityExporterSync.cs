@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Enumeration used to define the result of an export operation.
     /// </summary>
-    public enum ExportResultSync
+    public enum ExportResult
     {
         /// <summary>
         /// Batch export succeeded.
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
         /// <returns>Result of export.</returns>
-        public abstract ExportResultSync Export(in Batch<Activity> batch);
+        public abstract ExportResult Export(in Batch<Activity> batch);
 
         /// <summary>
         /// Shuts down the exporter.

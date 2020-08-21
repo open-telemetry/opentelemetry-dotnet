@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         /// <inheritdoc/>
-        public override ExportResultSync Export(in Batch<Activity> activityBatch)
+        public override ExportResult Export(in Batch<Activity> activityBatch)
         {
             var exporterRequest = new OtlpCollector.ExportTraceServiceRequest();
 
@@ -65,10 +65,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             {
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
-                return ExportResultSync.Failure;
+                return ExportResult.Failure;
             }
 
-            return ExportResultSync.Success;
+            return ExportResult.Success;
         }
     }
 }

@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 
 internal class MyExporter : ActivityExporterSync
 {
-    public override ExportResultSync Export(in Batch<Activity> batch)
+    public override ExportResult Export(in Batch<Activity> batch)
     {
         // Exporter code which can generate further
         // telemetry should do so inside SuppressInstrumentation
@@ -34,6 +34,6 @@ internal class MyExporter : ActivityExporterSync
             Console.WriteLine($"{activity.DisplayName}");
         }
 
-        return ExportResultSync.Success;
+        return ExportResult.Success;
     }
 }

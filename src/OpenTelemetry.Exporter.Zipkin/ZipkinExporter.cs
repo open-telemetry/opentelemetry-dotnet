@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         internal ZipkinEndpoint LocalEndpoint { get; }
 
         /// <inheritdoc/>
-        public override ExportResultSync Export(in Batch<Activity> batch)
+        public override ExportResult Export(in Batch<Activity> batch)
         {
             try
             {
@@ -70,14 +70,14 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.SendBatchActivityAsync(activities, CancellationToken.None).GetAwaiter().GetResult();
 
-                return ExportResultSync.Success;
+                return ExportResult.Success;
             }
             catch (Exception ex)
             {
                 ZipkinExporterEventSource.Log.FailedExport(ex);
 
                 // TODO distinguish retryable exceptions
-                return ExportResultSync.Failure;
+                return ExportResult.Failure;
             }
         }
 
