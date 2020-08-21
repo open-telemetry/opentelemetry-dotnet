@@ -15,7 +15,6 @@
 // </copyright>
 #if NETCOREAPP3_1
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -23,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -103,6 +103,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
+            ValidateHttpClientActivity(span, true);
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
@@ -154,6 +155,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
+            ValidateHttpClientActivity(span, true);
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
@@ -278,6 +280,21 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+        }
+
+        private static void ValidateHttpClientActivity(Activity activityToValidate, bool responseExpected)
+        {
+            Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
+            var request = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.RequestCustomPropertyName);
+            Assert.NotNull(request);
+            Assert.True(request is HttpRequestMessage);
+
+            if (responseExpected)
+            {
+                var response = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.ResponseCustomPropertyName);
+                Assert.NotNull(response);
+                Assert.True(response is HttpResponseMessage);
+            }
         }
     }
 }
