@@ -90,6 +90,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="ex">Exception to be recorded.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecordException(this Activity activity, Exception ex)
         {
             if (ex == null)
