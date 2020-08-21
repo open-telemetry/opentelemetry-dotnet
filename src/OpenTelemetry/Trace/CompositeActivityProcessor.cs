@@ -69,6 +69,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
             var cur = this.head;
@@ -80,6 +81,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void OnStart(Activity activity)
         {
             var cur = this.head;
@@ -91,36 +93,75 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
-        {
-            var cur = this.head;
-
-            while (cur != null)
-            {
-                // TODO: calcuate the remaining time
-                cur.Value.Shutdown(timeoutMillis);
-                cur = cur.Next;
-            }
-        }
-
+        /// <inheritdoc/>
         public override bool ForceFlush(int timeoutMillis = Timeout.Infinite)
         {
+            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+            }
+
             var cur = this.head;
+
+            var sw = Stopwatch.StartNew();
 
             while (cur != null)
             {
-                // TODO: calcuate the remaining time
-                var succeeded = cur.Value.ForceFlush(timeoutMillis);
-
-                if (!succeeded)
+                if (timeoutMillis == Timeout.Infinite)
                 {
-                    return false;
+                    var succeeded = cur.Value.ForceFlush(Timeout.Infinite);
+                }
+                else
+                {
+                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+
+                    if (timeout <= 0)
+                    {
+                        return false;
+                    }
+
+                    var succeeded = cur.Value.ForceFlush((int)timeout);
+
+                    if (!succeeded)
+                    {
+                        return false;
+                    }
                 }
 
                 cur = cur.Next;
             }
 
             return true;
+        }
+
+        /// <inheritdoc/>
+        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
+        {
+            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+            }
+
+            var cur = this.head;
+
+            var sw = Stopwatch.StartNew();
+
+            while (cur != null)
+            {
+                if (timeoutMillis == Timeout.Infinite)
+                {
+                    cur.Value.Shutdown(Timeout.Infinite);
+                }
+                else
+                {
+                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+
+                    // notify all the processors, even if we run overtime
+                    cur.Value.Shutdown((int)Math.Max(timeout, 0));
+                }
+
+                cur = cur.Next;
+            }
         }
 
         protected override void Dispose(bool disposing)
