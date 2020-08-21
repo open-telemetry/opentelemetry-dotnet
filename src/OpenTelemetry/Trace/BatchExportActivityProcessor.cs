@@ -150,7 +150,7 @@ namespace OpenTelemetry.Trace
         /// <returns>
         /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
         /// </returns>
-        public bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        public override bool ForceFlush(int timeoutMillis = Timeout.Infinite)
         {
             if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
             {
@@ -210,23 +210,15 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-            // TODO
-            throw new NotImplementedException();
-        }
-
         /// <summary>
-        /// Attempt to drain the queue and shutdown the exporter, blocks the
+        /// Attempts to drain the queue and shutdown the exporter, blocks the
         /// current thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMillis">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
-        public void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
         {
             if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
             {
@@ -240,14 +232,6 @@ namespace OpenTelemetry.Trace
             {
                 this.exporterThread.Join(timeoutMillis);
             }
-        }
-
-        /// <inheritdoc/>
-        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            // TODO
-            throw new NotImplementedException();
         }
 
         /// <summary>

@@ -91,32 +91,36 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
         {
             var cur = this.head;
-            var task = cur.Value.ShutdownAsync(cancellationToken);
 
-            for (cur = cur.Next; cur != null; cur = cur.Next)
+            while (cur != null)
             {
-                var processor = cur.Value;
-                task = task.ContinueWith(t => processor.ShutdownAsync(cancellationToken));
+                // TODO: calcuate the remaining time
+                cur.Value.Shutdown(timeoutMillis);
+                cur = cur.Next;
             }
-
-            return task;
         }
 
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        public override bool ForceFlush(int timeoutMillis = Timeout.Infinite)
         {
             var cur = this.head;
-            var task = cur.Value.ForceFlushAsync(cancellationToken);
 
-            for (cur = cur.Next; cur != null; cur = cur.Next)
+            while (cur != null)
             {
-                var processor = cur.Value;
-                task = task.ContinueWith(t => processor.ForceFlushAsync(cancellationToken));
+                // TODO: calcuate the remaining time
+                var succeeded = cur.Value.ForceFlush(timeoutMillis);
+
+                if (!succeeded)
+                {
+                    return false;
+                }
+
+                cur = cur.Next;
             }
 
-            return task;
+            return true;
         }
 
         protected override void Dispose(bool disposing)
