@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinExporter : ActivityExporter
+    public class ZipkinExporter : ActivityExporterSync
     {
         private readonly ZipkinExporterOptions options;
         private readonly HttpClient httpClient;
@@ -57,31 +57,28 @@ namespace OpenTelemetry.Exporter.Zipkin
         internal ZipkinEndpoint LocalEndpoint { get; }
 
         /// <inheritdoc/>
-        public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
+        public override ExportResultSync Export(in Batch<Activity> batch)
         {
             try
             {
-                await this.SendBatchActivityAsync(batchActivity, cancellationToken).ConfigureAwait(false);
+                // take a snapshot of the batch
+                var activities = new List<Activity>();
+                foreach (var activity in batch)
+                {
+                    activities.Add(activity);
+                }
 
-                return ExportResult.Success;
+                this.SendBatchActivityAsync(activities, CancellationToken.None).GetAwaiter().GetResult();
+
+                return ExportResultSync.Success;
             }
             catch (Exception ex)
             {
                 ZipkinExporterEventSource.Log.FailedExport(ex);
 
                 // TODO distinguish retryable exceptions
-                return ExportResult.FailedNotRetryable;
+                return ExportResultSync.Failure;
             }
-        }
-
-        /// <inheritdoc/>
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)

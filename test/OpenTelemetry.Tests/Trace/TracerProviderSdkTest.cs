@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProvideSdkTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TracerProviderSdkTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class TracerProvideSdkTest : IDisposable
+    public class TracerProviderSdkTest : IDisposable
     {
         private const string ActivitySourceName = "TraceSdkTest";
 
@@ -111,7 +111,11 @@ namespace OpenTelemetry.Trace.Tests
                     .SetSampler(testSampler)
                     .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.RecordAndSampled);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.RecordAndSampled);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(activity);
@@ -119,7 +123,11 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.True(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.Record);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.Record);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -129,7 +137,11 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.False(activity.Recorded);
             }
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.NotRecord);
+            };
+
             using (var activity = activitySource.StartActivity("root"))
             {
                 // Even if sampling returns false, for root activities,
@@ -144,6 +156,24 @@ namespace OpenTelemetry.Trace.Tests
                     // If sampling returns false, no activity is created at all.
                     Assert.Null(innerActivity);
                 }
+            }
+        }
+
+        [Fact]
+        public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
+        {
+            using var scope = SuppressInstrumentationScope.Begin();
+
+            var testSampler = new TestSampler();
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                    .AddSource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
+
+            using (var activity = activitySource.StartActivity("root"))
+            {
+                Assert.Null(activity);
             }
         }
 
@@ -174,7 +204,11 @@ namespace OpenTelemetry.Trace.Tests
                         .SetSampler(testSampler)
                         .Build();
 
-            testSampler.DesiredSamplingResult = new SamplingResult(SamplingDecision.NotRecord);
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.NotRecord);
+            };
+
             using ActivitySource source = new ActivitySource("random");
             var activity = source.StartActivity("somename");
             activity.Stop();
@@ -226,8 +260,9 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(startCalled);
             Assert.True(endCalled);
 
-            /*
-             * Uncomment when issue 1075 is fixed.
+            // As Processors can be added anytime after Provider construction,
+            // the following validates that updated processors are reflected
+            // in ActivitySourceAdapter.
             TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
 
             bool startCalledNew = false;
@@ -254,7 +289,31 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(startCalledNew);
             Assert.True(endCalledNew);
-            */
+        }
+
+        [Fact]
+        public void TracerProvideSdkCreatesActivitySourceWhenNoProcessor()
+        {
+            TestInstrumentation testInstrumentation = null;
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddInstrumentation((adapter) =>
+                        {
+                            testInstrumentation = new TestInstrumentation(adapter);
+                            return testInstrumentation;
+                        })
+                        .Build();
+
+            var adapter = testInstrumentation.Adapter;
+            Activity activity = new Activity("test");
+            activity.Start();
+            adapter.Start(activity);
+            adapter.Stop(activity);
+            activity.Stop();
+
+            // No asserts here. Validates that no exception
+            // gets thrown when processors are not added,
+            // TODO: Refactor to have more proper unit test
+            // to target each individual classes.
         }
 
         [Fact]
@@ -280,19 +339,6 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-        }
-
-        private class TestSampler : Sampler
-        {
-            public SamplingResult DesiredSamplingResult { get; set; } = new SamplingResult(SamplingDecision.RecordAndSampled);
-
-            public SamplingParameters LatestSamplingParameters { get; private set; }
-
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                this.LatestSamplingParameters = samplingParameters;
-                return this.DesiredSamplingResult;
-            }
         }
 
         private class TestInstrumentation : IDisposable

@@ -15,7 +15,7 @@
 // </copyright>
 using BenchmarkDotNet.Running;
 
-namespace Benchmarks
+namespace OpenTelemetry.Benchmarks
 {
     internal static class Program
     {
