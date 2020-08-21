@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CompositeActivityProcessor_BadArgs()
         {
             Assert.Throws<ArgumentNullException>(() => new CompositeActivityProcessor(null));
-            Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new SimpleActivityProcessor[0]));
+            Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new ActivityProcessor[0]));
         }
 
         [Fact]

@@ -23,6 +23,15 @@
   [#1035](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1035))
 * Changed `AddActivitySource` to `AddSource` with params support
   ([#1036](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1036))
+* Refactored simple export and batch export APIs
+  ([#1078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1078)
+  [#1081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1081)
+  [#1083](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1083)
+  [#1085](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1085)
+  [#1087](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1087)
+  [#1094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1094)
+  [#1113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1113)
+  [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127))
 
 ## 0.4.0-beta.2
 
