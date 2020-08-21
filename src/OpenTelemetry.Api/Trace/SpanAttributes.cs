@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -30,6 +31,23 @@ namespace OpenTelemetry.Trace
         public SpanAttributes()
         {
             this.Attributes = new ActivityTagsCollection();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
+        /// </summary>
+        /// <param name="list">Initial list to store in the collection.</param>
+        public SpanAttributes(IEnumerable<KeyValuePair<string, object>> list)
+        {
+            if (list == null)
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+
+            foreach (KeyValuePair<string, object> kvp in list)
+            {
+                this.PrivateAdd(kvp.Key, kvp.Value);
+            }
         }
 
         internal ActivityTagsCollection Attributes { get; }
