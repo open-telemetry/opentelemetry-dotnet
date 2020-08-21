@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -89,8 +90,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
+            ValidateHttpClientActivity(span, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, span.DisplayName);
-            Assert.Equal(tc.SpanKind, span.Kind.ToString());
 
             var d = new Dictionary<string, string>()
             {
