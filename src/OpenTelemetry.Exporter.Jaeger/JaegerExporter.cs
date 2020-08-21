@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporterSync
+    public class JaegerExporter : ActivityExporter
     {
         private bool libraryResourceApplied;
         private bool disposedValue; // To detect redundant dispose calls
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
         /// <inheritdoc/>
-        public override ExportResultSync Export(in Batch<Activity> activityBatch)
+        public override ExportResult Export(in Batch<Activity> activityBatch)
         {
             var activities = new List<Activity>();
             foreach (var activity in activityBatch)
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
 
             // TODO jaeger status to ExportResult
-            return ExportResultSync.Success;
+            return ExportResult.Success;
         }
 
         /// <inheritdoc/>
