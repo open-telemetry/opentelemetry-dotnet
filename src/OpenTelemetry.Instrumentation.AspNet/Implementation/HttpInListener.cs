@@ -26,6 +26,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        public const string RequestCustomPropertyName = "OTel.AspNet.Request";
+        public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
@@ -102,6 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(RequestCustomPropertyName, request);
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Url.Host);
@@ -151,6 +154,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
+                activityToEnrich.SetCustomProperty(ResponseCustomPropertyName, response);
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 activityToEnrich.SetStatus(

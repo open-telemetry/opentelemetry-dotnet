@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleExporter : ActivityExporterSync
+    public class ConsoleExporter : ActivityExporter
     {
         private readonly JsonSerializerOptions serializerOptions;
         private readonly bool displayAsJson;
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Console
             this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override ExportResultSync Export(in Batch<Activity> batch)
+        public override ExportResult Export(in Batch<Activity> batch)
         {
             foreach (var activity in batch)
             {
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Exporter.Console
                 }
             }
 
-            return ExportResultSync.Success;
+            return ExportResult.Success;
         }
     }
 }

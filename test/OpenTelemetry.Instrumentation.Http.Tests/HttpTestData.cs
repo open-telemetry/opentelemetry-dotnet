@@ -65,7 +65,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             public string SpanName { get; set; }
 
-            public string SpanKind { get; set; }
+            public bool ResponseExpected { get; set; }
 
             public string SpanStatus { get; set; }
 

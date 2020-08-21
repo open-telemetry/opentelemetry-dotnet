@@ -2,9 +2,10 @@
 
 ## Unreleased
 
-* Grpc instrumentation will now add the raw Request object to the Activity it
-  creates
+* Grpc Instrumentation automatically populates HttpRequest in
+  Activity custom property
   ([#1099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1099))
+  ([#1128](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1128))
 
 ## 0.4.0-beta.2
 

@@ -50,12 +50,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Implementation
 
             activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
-            activity.SetCustomProperty(RequestCustomPropertyName, request);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(RequestCustomPropertyName, request);
                 activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
