@@ -327,8 +327,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         public TelemetrySpan RecordException(string type, string message, string stacktrace)
         {
-            Dictionary<string, object> attributes = new Dictionary<string, object>();
-
+            SpanAttributes attributes = new SpanAttributes();
             if (!string.IsNullOrWhiteSpace(type))
             {
                 attributes.Add(SemanticConventions.AttributeExceptionType, type);
@@ -344,7 +343,7 @@ namespace OpenTelemetry.Trace
                 attributes.Add(SemanticConventions.AttributeExceptionMessage, message);
             }
 
-            if (attributes.Count != 0)
+            if (attributes.Attributes.Count != 0)
             {
                 this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
             }
