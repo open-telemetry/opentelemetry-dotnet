@@ -237,10 +237,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
         {
-            ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, default, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes.Attributes));
             return this;
         }
 
@@ -252,10 +251,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
         {
-            var eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes.Attributes));
             return this;
         }
 
@@ -329,8 +327,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         public TelemetrySpan RecordException(string type, string message, string stacktrace)
         {
-            Dictionary<string, object> attributes = new Dictionary<string, object>();
-
+            SpanAttributes attributes = new SpanAttributes();
             if (!string.IsNullOrWhiteSpace(type))
             {
                 attributes.Add(SemanticConventions.AttributeExceptionType, type);
@@ -346,7 +343,7 @@ namespace OpenTelemetry.Trace
                 attributes.Add(SemanticConventions.AttributeExceptionMessage, message);
             }
 
-            if (attributes.Count != 0)
+            if (attributes.Attributes.Count != 0)
             {
                 this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
             }

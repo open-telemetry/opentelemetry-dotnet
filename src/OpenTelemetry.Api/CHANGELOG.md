@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
+  `ActivityTagsCollection` or `Dictionary`
+  ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))
 * Added `RecordException` in `TelemetrySpan`
   ([#1116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1116))
 * `PropagationContext` is now used instead of `ActivityContext` in the
