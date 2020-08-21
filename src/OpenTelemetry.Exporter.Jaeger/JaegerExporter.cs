@@ -13,19 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporter
+    public class JaegerExporter : ActivityExporterSync
     {
         private bool libraryResourceApplied;
         private bool disposedValue; // To detect redundant dispose calls
@@ -37,26 +36,34 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
 
-        public override async Task<ExportResult> ExportAsync(IEnumerable<Activity> activityBatch, CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        public override ExportResultSync Export(in Batch<Activity> activityBatch)
         {
-            if (!this.libraryResourceApplied && activityBatch.Any())
+            var activities = new List<Activity>();
+            foreach (var activity in activityBatch)
             {
-                var libraryResource = activityBatch.First().GetResource();
+                activities.Add(activity);
+            }
+
+            if (!this.libraryResourceApplied && activities.Any())
+            {
+                var libraryResource = activities.First().GetResource();
 
                 this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
 
                 this.libraryResourceApplied = true;
             }
 
-            await this.JaegerAgentUdpBatcher.AppendBatchAsync(activityBatch, cancellationToken).ConfigureAwait(false);
+            this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
 
             // TODO jaeger status to ExportResult
-            return ExportResult.Success;
+            return ExportResultSync.Success;
         }
 
-        public override async Task ShutdownAsync(CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        public override void Shutdown()
         {
-            await this.JaegerAgentUdpBatcher.FlushAsync(cancellationToken).ConfigureAwait(false);
+            this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)
