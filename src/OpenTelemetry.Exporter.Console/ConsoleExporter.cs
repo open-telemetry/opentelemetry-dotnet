@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    public class ConsoleExporter : ActivityExporterSync
+    public class ConsoleExporter : ActivityExporter
     {
         private readonly JsonSerializerOptions serializerOptions;
         private readonly bool displayAsJson;

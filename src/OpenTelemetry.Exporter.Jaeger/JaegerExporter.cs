@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporterSync
+    public class JaegerExporter : ActivityExporter
     {
         private bool libraryResourceApplied;
         private bool disposedValue; // To detect redundant dispose calls

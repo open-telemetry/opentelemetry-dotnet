@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinExporter : ActivityExporterSync
+    public class ZipkinExporter : ActivityExporter
     {
         private readonly ZipkinExporterOptions options;
         private readonly HttpClient httpClient;

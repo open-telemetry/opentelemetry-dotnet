@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpExporter : ActivityExporterSync
+    public class OtlpExporter : ActivityExporter
     {
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;

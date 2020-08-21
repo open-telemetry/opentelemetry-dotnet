@@ -19,7 +19,7 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-internal class MyExporter : ActivityExporterSync
+internal class MyExporter : ActivityExporter
 {
     public override ExportResult Export(in Batch<Activity> batch)
     {

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="SimpleExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Activity exporter instance.</param>
-        public SimpleExportActivityProcessor(ActivityExporterSync exporter)
+        public SimpleExportActivityProcessor(ActivityExporter exporter)
             : base(exporter)
         {
         }

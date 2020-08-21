@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements ZPages exporter.
     /// </summary>
-    public class ZPagesExporter : ActivityExporterSync
+    public class ZPagesExporter : ActivityExporter
     {
         internal readonly ZPagesExporterOptions Options;
         private readonly Timer minuteTimer;
