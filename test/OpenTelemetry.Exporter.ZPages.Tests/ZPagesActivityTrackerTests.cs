@@ -34,6 +34,8 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.NotEmpty(ZPagesActivityTracker.CurrentMinuteList);
             ZPagesActivityTracker.PurgeCurrentMinuteData(null, null);
             Assert.Empty(ZPagesActivityTracker.CurrentMinuteList);
+
+            ZPagesActivityTracker.ProcessingList.Clear();
         }
     }
 }

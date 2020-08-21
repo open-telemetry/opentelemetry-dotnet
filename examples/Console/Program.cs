@@ -32,6 +32,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "localhost:55680"
+        /// dotnet run -p Examples.Console.csproj zpages
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\src\examples\Console\).

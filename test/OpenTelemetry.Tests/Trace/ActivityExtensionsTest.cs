@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
+using System.Linq;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -113,6 +115,19 @@ namespace OpenTelemetry.Trace.Tests
             activity.SetKind(inputOutput);
 
             Assert.Equal(inputOutput, activity.Kind);
+        }
+
+        [Fact]
+        public void CheckRecordException()
+        {
+            var message = "message";
+            var exception = new ArgumentNullException(message, new Exception(message));
+            var activity = new Activity("test-activity");
+            activity.RecordException(exception);
+
+            var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
+            Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
+            Assert.Equal(exception.GetType().Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
         }
     }
 }

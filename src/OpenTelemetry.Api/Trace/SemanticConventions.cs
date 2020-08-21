@@ -23,7 +23,8 @@ namespace OpenTelemetry.Trace
     internal static class SemanticConventions
     {
         // The set of constants matches the specification as of this commit.
-        // https://github.com/open-telemetry/opentelemetry-specification/tree/709293fe132709705f0e0dd4252992e87a6ec899/specification/trace/semantic_conventions
+        // https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string AttributeServiceName = "service.name";
         public const string AttributeServiceNamespace = "service.namespace";
@@ -147,6 +148,11 @@ namespace OpenTelemetry.Trace
         public const string AttributeMessagingPayloadSize = "messaging.message_payload_size_bytes";
         public const string AttributeMessagingPayloadCompressedSize = "messaging.message_payload_compressed_size_bytes";
         public const string AttributeMessagingOperation = "messaging.operation";
+
+        public const string AttributeExceptionEventName = "exception";
+        public const string AttributeExceptionType = "exception.type";
+        public const string AttributeExceptionMessage = "exception.message";
+        public const string AttributeExceptionStacktrace = "exception.stacktrace";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
