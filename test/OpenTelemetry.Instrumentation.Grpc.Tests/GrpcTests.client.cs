@@ -16,9 +16,11 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
+using OpenTelemetry.Instrumentation.Grpc.Implementation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -57,13 +59,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
             var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
 
+            ValidateGrpcActivity(span, expectedResource);
             Assert.Equal(parent.TraceId, span.Context.TraceId);
             Assert.Equal(parent.SpanId, span.ParentSpanId);
             Assert.NotEqual(parent.SpanId, span.Context.SpanId);
             Assert.NotEqual(default, span.Context.SpanId);
 
             Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
-            Assert.Equal("Client", span.Kind.ToString());
             Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
             Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
             Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
@@ -88,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void GrpcAndHttpClientInstrumentationIsInvoked()
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
-
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var spanProcessor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
@@ -96,6 +98,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
+                    .SetResource(expectedResource)
                     .AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddProcessor(spanProcessor.Object)
@@ -110,6 +113,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var httpSpan = (Activity)spanProcessor.Invocations[2].Arguments[0];
             var grpcSpan = (Activity)spanProcessor.Invocations[3].Arguments[0];
 
+            ValidateGrpcActivity(grpcSpan, expectedResource);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
@@ -120,6 +124,19 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddGrpcClientInstrumentation());
+        }
+
+        private static void ValidateGrpcActivity(Activity activityToValidate, Resources.Resource expectedResource)
+        {
+            Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
+            Assert.Equal(expectedResource, activityToValidate.GetResource());
+            var request = activityToValidate.GetCustomProperty(GrpcClientDiagnosticListener.RequestCustomPropertyName);
+            Assert.NotNull(request);
+            Assert.True(request is HttpRequestMessage);
+
+            var response = activityToValidate.GetCustomProperty(GrpcClientDiagnosticListener.RequestCustomPropertyName);
+            Assert.NotNull(response);
+            Assert.True(response is HttpRequestMessage);
         }
     }
 }

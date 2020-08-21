@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivityExporterSync.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ActivityExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Enumeration used to define the result of an export operation.
     /// </summary>
-    public enum ExportResultSync
+    public enum ExportResult
     {
         /// <summary>
         /// Batch export succeeded.
@@ -36,16 +36,16 @@ namespace OpenTelemetry.Trace
     }
 
     /// <summary>
-    /// ActivityExporterSync base class.
+    /// ActivityExporter base class.
     /// </summary>
-    public abstract class ActivityExporterSync : IDisposable
+    public abstract class ActivityExporter : IDisposable
     {
         /// <summary>
         /// Export a batch of <see cref="Activity"/> objects.
         /// </summary>
         /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
         /// <returns>Result of export.</returns>
-        public abstract ExportResultSync Export(in Batch<Activity> batch);
+        public abstract ExportResult Export(in Batch<Activity> batch);
 
         /// <summary>
         /// Shuts down the exporter.
