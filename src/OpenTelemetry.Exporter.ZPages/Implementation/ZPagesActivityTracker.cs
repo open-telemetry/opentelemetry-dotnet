@@ -122,5 +122,17 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
             // Clear the last hour's activity information list
             CurrentHourList.Clear();
         }
+
+        internal static void Reset()
+        {
+            TotalCount.Clear();
+            TotalLatency.Clear();
+            CurrentHourList.Clear();
+            CurrentMinuteList.Clear();
+            ZQueue.Clear();
+            ProcessingList.Clear();
+            TotalEndedCount.Clear();
+            TotalErrorCount.Clear();
+        }
     }
 }

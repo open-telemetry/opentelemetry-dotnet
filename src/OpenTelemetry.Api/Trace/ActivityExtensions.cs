@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -82,6 +83,33 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
             SetKindProperty(activity, kind);
+        }
+
+        /// <summary>
+        /// Record Exception.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="ex">Exception to be recorded.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RecordException(this Activity activity, Exception ex)
+        {
+            if (ex == null)
+            {
+                return;
+            }
+
+            var tagsCollection = new ActivityTagsCollection
+            {
+                { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
+                { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
+            };
+
+            if (!string.IsNullOrWhiteSpace(ex.Message))
+            {
+                tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
+            }
+
+            activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
