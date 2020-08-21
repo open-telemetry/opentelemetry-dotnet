@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* `Link` is using `SpanAttributes` instead of `ActivityCollect`
+* `Link` is using `SpanAttributes` instead of `ActivityTagsCollection `
   ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))
 * `PropagationContext` is now used instead of `ActivityContext` in the
     `ITextFormat` API
