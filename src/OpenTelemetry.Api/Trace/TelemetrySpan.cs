@@ -236,10 +236,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
         {
-            ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, default, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes.Attributes));
             return this;
         }
 
@@ -251,10 +250,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
         {
-            var eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes.Attributes));
             return this;
         }
 
