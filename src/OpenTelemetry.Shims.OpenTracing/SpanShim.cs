@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using global::OpenTracing;
+using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.spanContextShim = new SpanContextShim(this.Span.Context, this.Span.Baggage);
+            this.spanContextShim = new SpanContextShim(this.Span.Context);
         }
 
         public ISpanContext Context => this.spanContextShim;
@@ -73,14 +74,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         /// <inheritdoc/>
         public string GetBaggageItem(string key)
-        {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            return this.Context.GetBaggageItems().FirstOrDefault(kvp => kvp.Key.Equals(key)).Value;
-        }
+            => BaggageContext.GetBaggage(key);
 
         /// <inheritdoc/>
         public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
@@ -139,13 +133,8 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetBaggageItem(string key, string value)
         {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            // TODO Revisit once CorrelationContext is finalized
-            throw new NotImplementedException();
+            BaggageContext.SetBaggage(key, value);
+            return this;
         }
 
         /// <inheritdoc/>

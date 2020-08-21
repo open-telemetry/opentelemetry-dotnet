@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using global::OpenTracing.Propagation;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -84,7 +85,12 @@ namespace OpenTelemetry.Shims.OpenTracing
                 propagationContext = this.textFormat.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
-            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext), propagationContext.ActivityBaggage);
+            // TODO:
+            //  Not sure what to do here. Really, BaggageContext should be returned and not set until this ISpanContext is turned into a live Span.
+            //  But that code doesn't seem to exist.
+            // BaggageContext.Current = propagationContext.BaggageContext;
+
+            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
         }
 
         /// <inheritdoc/>
@@ -116,7 +122,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
                 this.textFormat.Inject(
-                    new PropagationContext(shim.SpanContext, shim.GetBaggageItems()),
+                    new PropagationContext(shim.SpanContext, BaggageContext.Current),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }
