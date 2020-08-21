@@ -236,6 +236,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
+            var command = activity.GetCustomProperty(SqlClientDiagnosticListener.CommandCustomPropertyName);
+            Assert.NotNull(command);
+            Assert.True(command is SqlCommand);
 
             if (!isFailure)
             {
