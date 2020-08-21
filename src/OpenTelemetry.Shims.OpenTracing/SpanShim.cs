@@ -92,10 +92,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             var payload = ConvertToEventPayload(fields);
             var eventName = payload.Item1;
-            var eventAttributes = payload.Item2;
 
             var spanAttributes = new SpanAttributes();
-            foreach (var field in fields)
+            foreach (var field in payload.Item2)
             {
                 switch (field.Value)
                 {
