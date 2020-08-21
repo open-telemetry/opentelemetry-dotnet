@@ -134,12 +134,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddExceptionTags(Exception exception, Activity activity)
         {
-            activity.SetCustomProperty(ExceptionCustomPropertyName, exception);
-
             if (!activity.IsAllDataRequested)
             {
                 return;
             }
+
+            activity.SetCustomProperty(ExceptionCustomPropertyName, exception);
 
             Status status;
             if (exception is WebException wexc)
