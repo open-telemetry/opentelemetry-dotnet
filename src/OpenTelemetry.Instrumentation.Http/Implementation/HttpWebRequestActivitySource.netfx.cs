@@ -101,10 +101,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             InstrumentRequest(request, activity);
 
-            activity.SetCustomProperty(RequestCustomPropertyName, request);
-
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(RequestCustomPropertyName, request);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
@@ -118,10 +117,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddResponseTags(HttpWebResponse response, Activity activity)
         {
-            activity.SetCustomProperty(ResponseCustomPropertyName, response);
-
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(ResponseCustomPropertyName, response);
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                 activity.SetStatus(
