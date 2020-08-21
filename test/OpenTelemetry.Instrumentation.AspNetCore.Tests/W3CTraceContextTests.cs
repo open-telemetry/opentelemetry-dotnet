@@ -26,17 +26,20 @@ using TestApp.AspNetCore._2._1;
 using TestApp.AspNetCore._3._1;
 #endif
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class W3CTraceContextTests
         : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
     {
+        private readonly ITestOutputHelper output;
         private readonly WebApplicationFactory<Startup> factory;
         private TracerProvider openTelemetrySdk = null;
 
-        public W3CTraceContextTests(WebApplicationFactory<Startup> factory)
+        public W3CTraceContextTests(ITestOutputHelper output, WebApplicationFactory<Startup> factory)
         {
+            this.output = output;
             this.factory = factory;
         }
 
@@ -60,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Act
                 // Run Python script in test folder of W3C Trace Context repository
-                string output = RunCommand("python", "trace-context/test/test.py http://127.0.0.1:5000/api/forward");
+                string result = RunCommand("python", "trace-context/test/test.py http://127.0.0.1:5000/api/forward");
 
                 // Assert
                 // Assert on the last line
@@ -68,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Sample failure message: "FAILED (failures=3, errors=8)"
                 // string lastLine = ParseLastLine(output);
                 // Assert.StartsWith("FAILED", lastLine);
-                LogW3CTraceContextTestSuiteOutput(output);
+                this.output.WriteLine(result);
             }
         }
 
@@ -111,12 +114,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // The output ends with '\n', which should be ignored.
             var lastNewLineCharacterPos = output.LastIndexOf('\n', output.Length - 2);
             return output.Substring(lastNewLineCharacterPos + 1);
-        }
-
-        private static void LogW3CTraceContextTestSuiteOutput(string message)
-        {
-            using StreamWriter writer = File.AppendText("W3CTraceContextTestSuiteOutput.txt");
-            writer.WriteLine(string.Format("{0}: {1}", DateTime.Now.ToString("u"), message));
         }
     }
 }
