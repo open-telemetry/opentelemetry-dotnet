@@ -27,14 +27,14 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class ReentrantExportActivityProcessor : ActivityProcessor
     {
-        private readonly ActivityExporterSync exporter;
+        private readonly ActivityExporter exporter;
         private bool stopped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReentrantExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Activity exporter instance.</param>
-        public ReentrantExportActivityProcessor(ActivityExporterSync exporter)
+        public ReentrantExportActivityProcessor(ActivityExporter exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }

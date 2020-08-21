@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class BatchExportActivityProcessor : ActivityProcessor
     {
-        private readonly ActivityExporterSync exporter;
+        private readonly ActivityExporter exporter;
         private readonly CircularBuffer<Activity> circularBuffer;
         private readonly int scheduledDelayMillis;
         private readonly int exporterTimeoutMillis;
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
         /// <param name="exporterTimeoutMillis">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
         public BatchExportActivityProcessor(
-            ActivityExporterSync exporter,
+            ActivityExporter exporter,
             int maxQueueSize = 2048,
             int scheduledDelayMillis = 5000,
             int exporterTimeoutMillis = 30000,
