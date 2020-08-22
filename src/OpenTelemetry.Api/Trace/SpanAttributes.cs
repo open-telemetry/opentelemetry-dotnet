@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
         /// </summary>
-        /// <param name="attributes">Initial list to store in the collection.</param>
+        /// <param name="attributes">Initial attributes to store in the collection.</param>
         public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
