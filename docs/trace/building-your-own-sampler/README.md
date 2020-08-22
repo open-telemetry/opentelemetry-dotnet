@@ -6,13 +6,11 @@
   critical code path.
 
 ```csharp
-class MySampler : Sampler
+internal class MySampler : Sampler
 {
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        var shouldSample = true;
-
-        return new SamplingResult(shouldSample);
+        return new SamplingResult(SamplingDecision.RecordAndSampled);
     }
 }
 ```

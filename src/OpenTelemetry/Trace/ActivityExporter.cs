@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace OpenTelemetry.Trace
 {
@@ -48,9 +49,14 @@ namespace OpenTelemetry.Trace
         public abstract ExportResult Export(in Batch<Activity> batch);
 
         /// <summary>
-        /// Shuts down the exporter.
+        /// Attempts to shutdown the exporter, blocks the current thread until
+        /// shutdown completed or timed out.
         /// </summary>
-        public virtual void Shutdown()
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
         }
 
