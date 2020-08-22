@@ -53,19 +53,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (!this.stopped)
             {
+                // TODO: pass down the timeout to exporter
                 this.exporter.Shutdown();
                 this.stopped = true;
             }
-
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
         }
 
         /// <summary>

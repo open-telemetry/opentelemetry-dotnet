@@ -135,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                             opt.SetTextCommandContent = captureTextCommandContent;
                             opt.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                         })
-                    .AddProcessor(spanProcessor.Object)
+                    .AddProcessor(processor.Object)
                     .Build())
             {
                 var operationId = Guid.NewGuid();
@@ -173,9 +173,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
 
-            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
+            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)processor.Invocations[1].Arguments[0]);
         }
 
         [Theory]
@@ -186,10 +186,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation()
-                .AddProcessor(spanProcessor.Object)
+                .AddProcessor(processor.Object)
                 .Build())
             {
                 var operationId = Guid.NewGuid();
@@ -220,9 +220,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(3, spanProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, processor.Invocations.Count); // begin and end was called
 
-            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)spanProcessor.Invocations[1].Arguments[0]);
+            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)processor.Invocations[1].Arguments[0]);
         }
 
         private static void VerifyActivityData(

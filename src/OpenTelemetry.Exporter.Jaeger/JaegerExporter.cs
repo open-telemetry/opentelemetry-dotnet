@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -61,7 +62,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         }
 
         /// <inheritdoc/>
-        public override void Shutdown()
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
         }
