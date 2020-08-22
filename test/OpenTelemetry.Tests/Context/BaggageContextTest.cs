@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -23,18 +24,21 @@ namespace OpenTelemetry.Context.Tests
     {
         private const string K1 = "Key1";
         private const string K2 = "Key2";
+        private const string K3 = "Key3";
 
         private const string V1 = "Value1";
         private const string V2 = "Value2";
+        private const string V3 = "Value3";
 
         [Fact]
-        public void EmptyContext()
+        public void EmptyContextTest()
         {
             Assert.Empty(BaggageContext.GetBaggage());
+            Assert.Empty(BaggageContext.Current.GetBaggage());
         }
 
         [Fact]
-        public void NonEmptyContext()
+        public void AddAndGetContextTest()
         {
             var list = new List<KeyValuePair<string, string>>(2)
             {
@@ -43,7 +47,7 @@ namespace OpenTelemetry.Context.Tests
             };
 
             BaggageContext.SetBaggage(K1, V1);
-            BaggageContext.SetBaggage(K2, V2);
+            BaggageContext.Current.SetBaggage(K2, V2);
 
             Assert.NotEmpty(BaggageContext.GetBaggage());
             Assert.Equal(list, BaggageContext.GetBaggage());
@@ -52,24 +56,95 @@ namespace OpenTelemetry.Context.Tests
             Assert.Equal(V1, BaggageContext.GetBaggage(K1.ToLower()));
             Assert.Equal(V1, BaggageContext.GetBaggage(K1.ToUpper()));
             Assert.Null(BaggageContext.GetBaggage("NO_KEY"));
+            Assert.Equal(V2, BaggageContext.Current.GetBaggage(K2));
+
+            Assert.Throws<ArgumentNullException>(() => BaggageContext.GetBaggage(null));
         }
 
         [Fact]
-        public void AddExistingKey()
+        public void AddExistingKeyTest()
         {
             var list = new List<KeyValuePair<string, string>>(2)
             {
                 new KeyValuePair<string, string>(K1, V1),
             };
 
-            BaggageContext.SetBaggage(K1, V1);
+            BaggageContext.Current.SetBaggage(K1, V1);
             BaggageContext.SetBaggage(K1, V1);
 
             Assert.Equal(list, BaggageContext.GetBaggage());
         }
 
         [Fact]
-        public void TestEnumerator()
+        public void AddNullValueTest()
+        {
+            BaggageContext.Current.SetBaggage(K1, V1);
+
+            Assert.Equal(1, BaggageContext.Current.Count);
+
+            BaggageContext.Current.SetBaggage(K2, null);
+
+            Assert.Equal(1, BaggageContext.Current.Count);
+
+            Assert.Empty(BaggageContext.SetBaggage(K1, null).GetBaggage());
+        }
+
+        [Fact]
+        public void RemoveTest()
+        {
+            var context = BaggageContext.SetBaggage(new Dictionary<string, string>
+            {
+                [K1] = V1,
+                [K2] = V2,
+                [K3] = V3,
+            });
+
+            var context2 = BaggageContext.RemoveBaggage(K1);
+
+            Assert.Equal(3, context.Count);
+            Assert.Equal(2, context2.Count);
+
+            Assert.DoesNotContain(new KeyValuePair<string, string>(K1, V1), context2.GetBaggage());
+        }
+
+        [Fact]
+        public void ClearTest()
+        {
+            var context = BaggageContext.SetBaggage(new Dictionary<string, string>
+            {
+                [K1] = V1,
+                [K2] = V2,
+                [K3] = V3,
+            });
+
+            Assert.Equal(3, context.Count);
+
+            BaggageContext.ClearBaggage();
+
+            Assert.Equal(0, BaggageContext.Current.Count);
+        }
+
+        [Fact]
+        public void ContextFlowTest()
+        {
+            var context = BaggageContext.SetBaggage(K1, V1);
+            var context2 = BaggageContext.Current.SetBaggage(K2, V2);
+            var context3 = BaggageContext.SetBaggage(K3, V3);
+
+            Assert.Equal(1, context.Count);
+            Assert.Equal(2, context2.Count);
+            Assert.Equal(3, context3.Count);
+
+            BaggageContext.Current = context;
+
+            var context4 = BaggageContext.SetBaggage(K3, V3);
+
+            Assert.Equal(2, context4.Count);
+            Assert.DoesNotContain(new KeyValuePair<string, string>(K2, V2), context4.GetBaggage());
+        }
+
+        [Fact]
+        public void EnumeratorTest()
         {
             var list = new List<KeyValuePair<string, string>>(2)
             {
@@ -92,7 +167,7 @@ namespace OpenTelemetry.Context.Tests
         }
 
         [Fact]
-        public void TestEquals()
+        public void EqualsTest()
         {
             var bc1 = new BaggageContext(new Dictionary<string, string>() { [K1] = V1, [K2] = V2 });
             var bc2 = new BaggageContext(new Dictionary<string, string>() { [K1] = V1, [K2] = V2 });

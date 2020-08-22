@@ -34,7 +34,7 @@ namespace OpenTelemetry.Context
         /// Initializes a new instance of the <see cref="BaggageContext"/> struct.
         /// </summary>
         /// <param name="baggage">Baggage key/value pairs.</param>
-        public BaggageContext(Dictionary<string, string> baggage)
+        internal BaggageContext(Dictionary<string, string> baggage)
         {
             this.baggage = baggage;
         }
@@ -66,6 +66,32 @@ namespace OpenTelemetry.Context
         /// <param name="left">First Entry to compare.</param>
         /// <param name="right">Second Entry to compare.</param>
         public static bool operator !=(BaggageContext left, BaggageContext right) => !(left == right);
+
+        /// <summary>
+        /// Create a <see cref="BaggageContext"/> instance from dictionary of baggage key/value pairs.
+        /// </summary>
+        /// <param name="baggage">Key/value pairs.</param>
+        /// <returns><see cref="BaggageContext"/>.</returns>
+        public static BaggageContext Create(Dictionary<string, string> baggage)
+        {
+            if (baggage == null)
+            {
+                return default;
+            }
+
+            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, string> baggageItem in baggageCopy)
+            {
+                if (string.IsNullOrEmpty(baggageItem.Value))
+                {
+                    continue;
+                }
+
+                baggageCopy[baggageItem.Key] = baggageItem.Value;
+            }
+
+            return new BaggageContext(baggageCopy);
+        }
 
         /// <summary>
         /// Returns the name/value pairs in the <see cref="BaggageContext"/>.
@@ -101,15 +127,6 @@ namespace OpenTelemetry.Context
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public static BaggageContext SetBaggage(string name, string value, BaggageContext baggageContext = default)
             => baggageContext == default ? Current.SetBaggage(name, value) : baggageContext.SetBaggage(name, value);
-
-        /// <summary>
-        /// Returns a new <see cref="BaggageContext"/> which contains the new key/value pair.
-        /// </summary>
-        /// <param name="baggageContext">Optional <see cref="BaggageContext"/>. <see cref="Current"/> is used if not specified.</param>
-        /// <param name="baggage">Baggage key/value pairs.</param>
-        /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
-        public static BaggageContext SetBaggage(BaggageContext baggageContext = default, params KeyValuePair<string, string>[] baggage)
-            => baggageContext == default ? Current.SetBaggage(baggage) : baggageContext.SetBaggage(baggage);
 
         /// <summary>
         /// Returns a new <see cref="BaggageContext"/> which contains the new key/value pair.
@@ -169,15 +186,16 @@ namespace OpenTelemetry.Context
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public BaggageContext SetBaggage(string name, string value)
         {
-            var baggageContext = new BaggageContext(
+            if (string.IsNullOrEmpty(value))
+            {
+                return this.RemoveBaggage(name);
+            }
+
+            return Current = new BaggageContext(
                 new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
                 {
                     [name] = value,
                 });
-
-            Current = baggageContext;
-
-            return baggageContext;
         }
 
         /// <summary>
@@ -204,12 +222,17 @@ namespace OpenTelemetry.Context
 
             foreach (var item in baggage)
             {
-                newBaggage[item.Key] = item.Value;
+                if (string.IsNullOrEmpty(item.Value))
+                {
+                    newBaggage.Remove(item.Key);
+                }
+                else
+                {
+                    newBaggage[item.Key] = item.Value;
+                }
             }
 
-            var baggageContext = new BaggageContext(newBaggage);
-            Current = baggageContext;
-            return baggageContext;
+            return Current = new BaggageContext(newBaggage);
         }
 
         /// <summary>
@@ -221,9 +244,8 @@ namespace OpenTelemetry.Context
         {
             var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
             baggage.Remove(name);
-            var baggageContext = new BaggageContext(baggage);
-            Current = baggageContext;
-            return baggageContext;
+
+            return Current = new BaggageContext(baggage);
         }
 
         /// <summary>
@@ -231,11 +253,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public BaggageContext ClearBaggage()
-        {
-            var baggageContext = new BaggageContext(null);
-            Current = baggageContext;
-            return baggageContext;
-        }
+            => Current = default;
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="BaggageContext"/>.
