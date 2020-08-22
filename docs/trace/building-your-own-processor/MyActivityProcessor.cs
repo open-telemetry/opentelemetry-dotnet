@@ -39,13 +39,13 @@ internal class MyActivityProcessor : ActivityProcessor
         Console.WriteLine($"{this}.OnEnd");
     }
 
-    protected override bool ForceFlushInternal(int timeoutMilliseconds = Timeout.Infinite)
+    protected override bool ForceFlushInternal(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this}.ForceFlush");
         return true;
     }
 
-    protected override void ShutdownInternal(int timeoutMilliseconds = Timeout.Infinite)
+    protected override void ShutdownInternal(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this}.Shutdown");
     }
