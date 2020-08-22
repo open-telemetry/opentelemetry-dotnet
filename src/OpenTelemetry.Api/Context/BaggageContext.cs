@@ -80,7 +80,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="baggageContext">Optional <see cref="BaggageContext"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
-        public static Dictionary<string,string>.Enumerator GetEnumerator(BaggageContext baggageContext = default)
+        public static Dictionary<string, string>.Enumerator GetEnumerator(BaggageContext baggageContext = default)
             => baggageContext == default ? Current.GetEnumerator() : baggageContext.GetEnumerator();
 
         /// <summary>
@@ -151,6 +151,11 @@ namespace OpenTelemetry.Context
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
         public string GetBaggage(string name)
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             return this.baggage != null && this.baggage.TryGetValue(name, out string value)
                 ? value
                 : null;
