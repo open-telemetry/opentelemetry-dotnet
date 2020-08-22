@@ -36,17 +36,17 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
         /// </summary>
-        /// <param name="list">Initial list to store in the collection.</param>
-        public SpanAttributes(IEnumerable<KeyValuePair<string, object>> list)
+        /// <param name="attributes">Initial list to store in the collection.</param>
+        public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
         {
-            if (list == null)
+            if (attributes == null)
             {
-                throw new ArgumentNullException(nameof(list));
+                throw new ArgumentNullException(nameof(attributes));
             }
 
-            foreach (KeyValuePair<string, object> kvp in list)
+            foreach (KeyValuePair<string, object> kvp in attributes)
             {
-                this.PrivateAdd(kvp.Key, kvp.Value);
+                this.AddInternal(kvp.Key, kvp.Value);
             }
         }
 
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Entry value.</param>
         public void Add(string key, long value)
         {
-            this.PrivateAdd(key, value);
+            this.AddInternal(key, value);
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Entry value.</param>
         public void Add(string key, string value)
         {
-            this.PrivateAdd(key, value);
+            this.AddInternal(key, value);
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Entry value.</param>
         public void Add(string key, bool value)
         {
-            this.PrivateAdd(key, value);
+            this.AddInternal(key, value);
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace
         /// <param name="value">Entry value.</param>
         public void Add(string key, double value)
         {
-            this.PrivateAdd(key, value);
+            this.AddInternal(key, value);
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Trace
         /// <param name="values">Entry value.</param>
         public void Add(string key, long[] values)
         {
-            this.PrivateAdd(key, values);
+            this.AddInternal(key, values);
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Trace
         /// <param name="values">Entry value.</param>
         public void Add(string key, string[] values)
         {
-            this.PrivateAdd(key, values);
+            this.AddInternal(key, values);
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Trace
         /// <param name="values">Entry value.</param>
         public void Add(string key, bool[] values)
         {
-            this.PrivateAdd(key, values);
+            this.AddInternal(key, values);
         }
 
         /// <summary>
@@ -129,10 +129,10 @@ namespace OpenTelemetry.Trace
         /// <param name="values">Entry value.</param>
         public void Add(string key, double[] values)
         {
-            this.PrivateAdd(key, values);
+            this.AddInternal(key, values);
         }
 
-        private void PrivateAdd(string key, object value)
+        private void AddInternal(string key, object value)
         {
             if (key == null)
             {
