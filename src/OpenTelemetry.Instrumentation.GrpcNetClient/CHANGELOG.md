@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-* Grpc Instrumentation automatically populates HttpRequest in
+* NuGet package renamed to OpenTelemetry.Instrumentation.GrpcNetClient to
+  more clearly indicate that this package is specifically for gRPC client
+  instrumentation. The package was previously named
+  OpenTelemetry.Instrumentation.Grpc.
+  ([#1136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1136))
+* Grpc.Net.Client Instrumentation automatically populates HttpRequest in
   Activity custom property
   ([#1099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1099))
   ([#1128](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1128))
