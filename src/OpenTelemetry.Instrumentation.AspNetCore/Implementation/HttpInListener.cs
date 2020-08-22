@@ -22,7 +22,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Grpc;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation

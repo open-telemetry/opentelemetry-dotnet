@@ -5,6 +5,8 @@
 
 Automatically instruments the incoming requests to [ASP.NET
 Core](https://docs.microsoft.com/en-us/aspnet/core).
+This includes incoming gRPC requests using
+[Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore).
 
 ## Installation
 
