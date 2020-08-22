@@ -53,24 +53,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             this.EndAction?.Invoke(span);
         }
 
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            this.ShutdownCalled = true;
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
             this.ForceFlushCalled = true;
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
+            return true;
+        }
+
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            this.ShutdownCalled = true;
         }
 
         protected override void Dispose(bool disposing)
