@@ -76,7 +76,6 @@ namespace OpenTelemetry.Extensions.Hosting
             var host = builder.Build();
 
             var tracerProvider1 = host.Services.GetRequiredService<TracerProvider>();
-            Assert.True(tracerProvider1 is TracerProviderSdk);
             var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
 
             Assert.Same(tracerProvider1, tracerProvider2);
