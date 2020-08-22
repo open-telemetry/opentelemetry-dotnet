@@ -27,10 +27,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class BatchExportActivityProcessor : ActivityProcessor
     {
-        private readonly ActivityExporterSync exporter;
+        private readonly ActivityExporter exporter;
         private readonly CircularBuffer<Activity> circularBuffer;
-        private readonly int scheduledDelayMillis;
-        private readonly int exporterTimeoutMillis;
+        private readonly int scheduledDelayMilliseconds;
+        private readonly int exporterTimeoutMilliseconds;
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
@@ -45,14 +45,14 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">The maximum queue size. After the size is reached data are dropped. The default value is 2048.</param>
-        /// <param name="scheduledDelayMillis">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
-        /// <param name="exporterTimeoutMillis">How long the export can run before it is cancelled. The default value is 30000.</param>
+        /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
+        /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
         public BatchExportActivityProcessor(
-            ActivityExporterSync exporter,
+            ActivityExporter exporter,
             int maxQueueSize = 2048,
-            int scheduledDelayMillis = 5000,
-            int exporterTimeoutMillis = 30000,
+            int scheduledDelayMilliseconds = 5000,
+            int exporterTimeoutMilliseconds = 30000,
             int maxExportBatchSize = 512)
         {
             if (maxQueueSize <= 0)
@@ -65,20 +65,20 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
-            if (scheduledDelayMillis <= 0)
+            if (scheduledDelayMilliseconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMillis));
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds));
             }
 
-            if (exporterTimeoutMillis < 0)
+            if (exporterTimeoutMilliseconds < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
             }
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
-            this.scheduledDelayMillis = scheduledDelayMillis;
-            this.exporterTimeoutMillis = exporterTimeoutMillis;
+            this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
+            this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.maxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
@@ -143,18 +143,18 @@ namespace OpenTelemetry.Trace
         /// the current thread until flush completed, shutdown signaled or
         /// timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
         /// </returns>
-        public bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             var tail = this.circularBuffer.RemovedCount;
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace
 
             this.exportTrigger.Set();
 
-            if (timeoutMillis == 0)
+            if (timeoutMilliseconds == 0)
             {
                 return false;
             }
@@ -178,24 +178,24 @@ namespace OpenTelemetry.Trace
 
             // There is a chance that the export thread finished processing all the data from the queue,
             // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
-            const int pollingMillis = 1000;
+            const int pollingMilliseconds = 1000;
 
             while (true)
             {
-                if (timeoutMillis == Timeout.Infinite)
+                if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    WaitHandle.WaitAny(triggers, pollingMillis);
+                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
                 }
                 else
                 {
-                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     if (timeout <= 0)
                     {
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMillis));
+                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -210,44 +210,28 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
-        {
-            // TODO
-            throw new NotImplementedException();
-        }
-
         /// <summary>
-        /// Attempt to drain the queue and shutdown the exporter, blocks the
+        /// Attempts to drain the queue and shutdown the exporter, blocks the
         /// current thread until shutdown completed or timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
-        public void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            if (timeoutMillis != 0)
+            if (timeoutMilliseconds != 0)
             {
-                this.exporterThread.Join(timeoutMillis);
+                this.exporterThread.Join(timeoutMilliseconds);
             }
-        }
-
-        /// <inheritdoc/>
-        /// <exception cref="OperationCanceledException">If the <paramref name="cancellationToken"/> is canceled.</exception>
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            // TODO
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -261,7 +245,7 @@ namespace OpenTelemetry.Trace
             if (disposing && !this.disposed)
             {
                 // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
-                this.Shutdown(this.exporterTimeoutMillis);
+                this.Shutdown(this.exporterTimeoutMilliseconds);
 
                 try
                 {
@@ -285,7 +269,7 @@ namespace OpenTelemetry.Trace
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
+                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
                 }
 
                 if (this.circularBuffer.Count > 0)

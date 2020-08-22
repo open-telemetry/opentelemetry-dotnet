@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Instrumentation.Grpc.Implementation;
+using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Instrumentation.Grpc
+namespace OpenTelemetry.Instrumentation.GrpcNetClient
 {
     /// <summary>
     /// GrpcClient instrumentation.

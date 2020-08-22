@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Unit test project for OpenTelemetry GrpcClient instrumentation</Description>
+    <Description>Unit test project for OpenTelemetry Grpc for .NET instrumentation</Description>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
 
@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Grpc\OpenTelemetry.Instrumentation.Grpc.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\OpenTelemetry.Instrumentation.GrpcNetClient.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />

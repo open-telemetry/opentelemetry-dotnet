@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements ZPages exporter.
     /// </summary>
-    public class ZPagesExporter : ActivityExporterSync
+    public class ZPagesExporter : ActivityExporter
     {
         internal readonly ZPagesExporterOptions Options;
         private readonly Timer minuteTimer;
@@ -53,10 +53,10 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        public override ExportResultSync Export(in Batch<Activity> batch)
+        public override ExportResult Export(in Batch<Activity> batch)
         {
             // var spanDatas = batch as SpanData[] ?? batch.ToArray();
-            return ExportResultSync.Success;
+            return ExportResult.Success;
         }
     }
 }

@@ -39,15 +39,14 @@ internal class MyActivityProcessor : ActivityProcessor
         Console.WriteLine($"{this}.OnEnd");
     }
 
-    public override Task ForceFlushAsync(CancellationToken cancellationToken)
+    public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
     {
-        Console.WriteLine($"{this}.ForceFlushAsync");
-        return Task.CompletedTask;
+        Console.WriteLine($"{this}.ForceFlush");
+        return true;
     }
 
-    public override Task ShutdownAsync(CancellationToken cancellationToken)
+    public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
     {
-        Console.WriteLine($"{this}.ShutdownAsync");
-        return Task.CompletedTask;
+        Console.WriteLine($"{this}.Shutdown");
     }
 }

@@ -26,17 +26,18 @@ namespace OpenTelemetry.Extensions.Hosting
     public class HostingExtensionsTests
     {
         [Fact]
-        public async Task AddOpenTelemetryInstrumentationCreationAndDisposal()
+        public async Task AddOpenTelemetryTracerProviderInstrumentationCreationAndDisposal()
         {
             var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetry(builder =>
+                services.AddOpenTelemetryTracerProvider(builder =>
                 {
                     builder.AddInstrumentation((activitySource) =>
                     {
+                        Assert.NotNull(activitySource);
                         callbackRun = true;
                         return testInstrumentation;
                     });
@@ -65,29 +66,29 @@ namespace OpenTelemetry.Extensions.Hosting
         }
 
         [Fact]
-        public void AddOpenTelemetry_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
+        public void AddOpenTelemetryTracerProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetry();
+                services.AddOpenTelemetryTracerProvider();
             });
 
             var host = builder.Build();
 
-            var tracerFactoryBase1 = host.Services.GetRequiredService<TracerProvider>();
-            var tracerFactoryBase2 = host.Services.GetRequiredService<TracerProvider>();
+            var tracerProvider1 = host.Services.GetRequiredService<TracerProvider>();
+            var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
 
-            Assert.Same(tracerFactoryBase1, tracerFactoryBase2);
+            Assert.Same(tracerProvider1, tracerProvider2);
         }
 
         [Fact]
-        public void AddOpenTelemetry_ServiceProviderArgument_ServicesRegistered()
+        public void AddOpenTelemetryTracerProvider_ServiceProviderArgument_ServicesRegistered()
         {
             var testInstrumentation = new TestInstrumentation();
 
             var services = new ServiceCollection();
             services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetry((provider, builder) =>
+            services.AddOpenTelemetryTracerProvider((provider, builder) =>
             {
                 builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             });
@@ -105,12 +106,12 @@ namespace OpenTelemetry.Extensions.Hosting
         }
 
         [Fact]
-        public void AddOpenTelemetry_BadArgs()
+        public void AddOpenTelemetryTracerProvider_BadArgs_NullServiceCollection()
         {
             ServiceCollection services = null;
-            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetry());
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryTracerProvider());
             Assert.Throws<ArgumentNullException>(() =>
-            services.AddOpenTelemetry((provider, builder) =>
+            services.AddOpenTelemetryTracerProvider((provider, builder) =>
             {
                 builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
             }));

@@ -18,7 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Instrumentation.Grpc
+namespace OpenTelemetry.Instrumentation.GrpcNetClient
 {
     internal static class GrpcTagHelper
     {

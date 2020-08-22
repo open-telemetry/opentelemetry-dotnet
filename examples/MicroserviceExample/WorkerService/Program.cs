@@ -37,7 +37,7 @@ namespace WorkerService
 
                     services.AddSingleton<MessageReceiver>();
 
-                    services.AddOpenTelemetry((builder) =>
+                    services.AddOpenTelemetryTracerProvider((builder) =>
                     {
                         builder
                             .AddSource(nameof(MessageReceiver))
