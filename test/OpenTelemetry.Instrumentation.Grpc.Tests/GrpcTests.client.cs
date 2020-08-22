@@ -20,8 +20,8 @@ using System.Net.Http;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
-using OpenTelemetry.Instrumentation.Grpc.Implementation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
+using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 

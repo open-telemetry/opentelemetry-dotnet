@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Instrumentation.Grpc;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
 
 namespace OpenTelemetry.Trace
 {
