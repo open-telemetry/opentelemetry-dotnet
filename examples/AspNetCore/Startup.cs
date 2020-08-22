@@ -23,6 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNetCore
@@ -57,7 +58,7 @@ namespace Examples.AspNetCore
             switch (exporter)
             {
                 case "jaeger":
-                    services.AddOpenTelemetry((builder) => builder
+                    services.AddOpenTelemetryTracerProvider((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
@@ -68,7 +69,7 @@ namespace Examples.AspNetCore
                         }));
                     break;
                 case "zipkin":
-                    services.AddOpenTelemetry((builder) => builder
+                    services.AddOpenTelemetryTracerProvider((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddZipkinExporter(zipkinOptions =>
@@ -78,7 +79,7 @@ namespace Examples.AspNetCore
                         }));
                     break;
                 default:
-                    services.AddOpenTelemetry((builder) => builder
+                    services.AddOpenTelemetryTracerProvider((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
