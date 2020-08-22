@@ -18,6 +18,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
@@ -67,10 +68,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 .UseEnvironment("Production");
             builder.ConfigureServices(services =>
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                services.AddOpenTelemetry((builder) => builder
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .Build();
+                    .AddHttpClientInstrumentation());
             });
             this.hostingEngine = builder.Build();
             this.hostingEngine.Start();
