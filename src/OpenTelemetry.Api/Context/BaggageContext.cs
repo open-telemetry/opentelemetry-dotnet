@@ -190,6 +190,11 @@ namespace OpenTelemetry.Context
         /// <returns>New <see cref="BaggageContext"/> containing the key/value pair.</returns>
         public BaggageContext SetBaggage(IEnumerable<KeyValuePair<string, string>> baggage)
         {
+            if ((baggage?.Count() ?? 0) <= 0)
+            {
+                return this;
+            }
+
             var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in baggage)
