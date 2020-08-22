@@ -50,14 +50,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
-                               .AddProcessor(activityProcessor.Object)
+                               .AddProcessor(processor.Object)
                                .SetResource(expectedResource)
                                .Build())
             {
@@ -87,8 +87,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // start/end/dispose was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, activity.DisplayName);

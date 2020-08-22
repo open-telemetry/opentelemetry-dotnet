@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationInjectsHeadersAsync()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -93,15 +93,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation(o => o.TextFormat = mockTextFormat.Object)
-                        .AddProcessor(activityProcessor.Object)
+                        .AddProcessor(processor.Object)
                         .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // start/end/dispose was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             var request = new HttpRequestMessage
             {
@@ -145,15 +145,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation((opt) => opt.TextFormat = textFormat.Object)
-                   .AddProcessor(activityProcessor.Object)
+                   .AddProcessor(processor.Object)
                    .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // start/end/dispose was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -173,45 +173,45 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
-                   .AddProcessor(activityProcessor.Object)
+                   .AddProcessor(processor.Object)
                    .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
 
-            Assert.Single(activityProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(activityProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(activityProcessor.Invocations[1].Arguments[0]);
+            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
+            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
+            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
-                   .AddProcessor(activityProcessor.Object)
+                   .AddProcessor(processor.Object)
                    .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
 
-            Assert.Single(activityProcessor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(activityProcessor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(activityProcessor.Invocations[1].Arguments[0]);
+            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
+            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
+            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
         }
 
         [Fact]
         public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             var request = new HttpRequestMessage
             {
@@ -223,41 +223,41 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
-                   .AddProcessor(activityProcessor.Object)
+                   .AddProcessor(processor.Object)
                    .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(1, activityProcessor.Invocations.Count); // dispose
+            Assert.Equal(1, processor.Invocations.Count); // dispose
         }
 
         [Fact]
         public async void HttpClientInstrumentationFiltersOutRequests()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
-                               .AddProcessor(activityProcessor.Object)
+                               .AddProcessor(processor.Object)
                                .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(1, activityProcessor.Invocations.Count);  // dispose
+            Assert.Equal(1, processor.Invocations.Count);  // dispose
         }
 
         [Fact]
         public async Task HttpClientInstrumentationFiltersOutRequestsToExporterEndpoints()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation()
-                               .AddProcessor(activityProcessor.Object)
+                               .AddProcessor(processor.Object)
                                .Build())
             {
                 using var c = new HttpClient();
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(1, activityProcessor.Invocations.Count);  // dispose
+            Assert.Equal(1, processor.Invocations.Count);  // dispose
         }
 
         public void Dispose()

@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
                 .Start();
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation()
                     .SetResource(expectedResource)
-                    .AddProcessor(spanProcessor.Object)
+                    .AddProcessor(processor.Object)
                     .Build())
             {
                 var channel = GrpcChannel.ForAddress(uri);
@@ -56,34 +56,34 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
-            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateGrpcActivity(span, expectedResource);
-            Assert.Equal(parent.TraceId, span.Context.TraceId);
-            Assert.Equal(parent.SpanId, span.ParentSpanId);
-            Assert.NotEqual(parent.SpanId, span.Context.SpanId);
-            Assert.NotEqual(default, span.Context.SpanId);
+            ValidateGrpcActivity(activity, expectedResource);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
 
-            Assert.Equal($"greet.Greeter/SayHello", span.DisplayName);
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
+            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
             else
             {
-                Assert.Null(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(uri.Host, span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(uri.Port.ToString(), span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
-            Assert.Equal(Status.Ok, span.GetStatus());
-            Assert.Equal(expectedResource, span.GetResource());
+            Assert.Equal(uri.Port.ToString(), activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(Status.Ok, activity.GetStatus());
+            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             var parent = new Activity("parent")
                 .Start();
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .SetResource(expectedResource)
                     .AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddProcessor(spanProcessor.Object)
+                    .AddProcessor(processor.Object)
                     .Build())
             {
                 var channel = GrpcChannel.ForAddress(uri);
@@ -109,9 +109,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(5, spanProcessor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call + dispose
-            var httpSpan = (Activity)spanProcessor.Invocations[2].Arguments[0];
-            var grpcSpan = (Activity)spanProcessor.Invocations[3].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call + dispose
+            var httpSpan = (Activity)processor.Invocations[2].Arguments[0];
+            var grpcSpan = (Activity)processor.Invocations[3].Arguments[0];
 
             ValidateGrpcActivity(grpcSpan, expectedResource);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);

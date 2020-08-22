@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             int statusCode,
             string reasonPhrase)
         {
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
 
             // Arrange
             using (var client = this.factory
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
                         services.AddOpenTelemetry((builder) => builder.AddAspNetCoreInstrumentation()
-                        .AddProcessor(spanProcessor.Object));
+                        .AddProcessor(processor.Object));
                     }))
                 .CreateClient())
             {
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (spanProcessor.Invocations.Count == 2)
+                    if (processor.Invocations.Count == 2)
                     {
                         break;
                     }
@@ -95,20 +95,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("localhost:", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
-            Assert.Equal("GET", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
-            Assert.Equal(urlPath, span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal($"http://localhost{urlPath}", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
-            Assert.Equal(statusCode, span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("localhost:", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
+            Assert.Equal("GET", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
+            Assert.Equal(urlPath, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal($"http://localhost{urlPath}", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
+            Assert.Equal(statusCode, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
 
             Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            this.ValidateTagValue(span, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
-            this.ValidateTagValue(span, SemanticConventions.AttributeHttpUserAgent, userAgent);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            this.ValidateTagValue(activity, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
+            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
         }
 
         private void ValidateTagValue(Activity activity, string attribute, string expectedValue)

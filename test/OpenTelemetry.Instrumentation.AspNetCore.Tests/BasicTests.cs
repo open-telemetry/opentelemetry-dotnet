@@ -124,14 +124,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("api/Values/{id}", span.DisplayName);
-            Assert.Equal("/api/values/2", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("api/Values/{id}", activity.DisplayName);
+            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
 
-            Assert.Equal(expectedTraceId, span.Context.TraceId);
-            Assert.Equal(expectedSpanId, span.ParentSpanId);
+            Assert.Equal(expectedTraceId, activity.Context.TraceId);
+            Assert.Equal(expectedSpanId, activity.ParentSpanId);
         }
 
         [Fact]
@@ -169,15 +169,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // begin and end was called once each.
             Assert.Equal(2, activityProcessor.Invocations.Count);
-            var span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.True(span.Duration != TimeSpan.Zero);
-            Assert.Equal("api/Values/{id}", span.DisplayName);
-            Assert.Equal("/api/values/2", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.True(activity.Duration != TimeSpan.Zero);
+            Assert.Equal("api/Values/{id}", activity.DisplayName);
+            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
 
-            Assert.Equal(expectedTraceId, span.Context.TraceId);
-            Assert.Equal(expectedSpanId, span.ParentSpanId);
+            Assert.Equal(expectedTraceId, activity.Context.TraceId);
+            Assert.Equal(expectedSpanId, activity.ParentSpanId);
         }
 
         [Fact]
@@ -213,10 +213,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // we should only create one span and never call processor with another
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("/api/values", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
         }
 
         public void Dispose()
