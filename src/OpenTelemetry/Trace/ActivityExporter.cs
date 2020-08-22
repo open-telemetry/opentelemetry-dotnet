@@ -52,11 +52,11 @@ namespace OpenTelemetry.Trace
         /// Attempts to shutdown the exporter, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
-        public virtual void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
         }
 

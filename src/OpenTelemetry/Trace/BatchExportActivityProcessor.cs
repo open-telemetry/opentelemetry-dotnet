@@ -143,18 +143,18 @@ namespace OpenTelemetry.Trace
         /// the current thread until flush completed, shutdown signaled or
         /// timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
         /// </returns>
-        public override bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             var tail = this.circularBuffer.RemovedCount;
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Trace
 
             this.exportTrigger.Set();
 
-            if (timeoutMillis == 0)
+            if (timeoutMilliseconds == 0)
             {
                 return false;
             }
@@ -182,13 +182,13 @@ namespace OpenTelemetry.Trace
 
             while (true)
             {
-                if (timeoutMillis == Timeout.Infinite)
+                if (timeoutMilliseconds == Timeout.Infinite)
                 {
                     WaitHandle.WaitAny(triggers, pollingMillis);
                 }
                 else
                 {
-                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     if (timeout <= 0)
                     {
@@ -214,23 +214,23 @@ namespace OpenTelemetry.Trace
         /// Attempts to drain the queue and shutdown the exporter, blocks the
         /// current thread until shutdown completed or timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
-        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            if (timeoutMillis != 0)
+            if (timeoutMilliseconds != 0)
             {
-                this.exporterThread.Join(timeoutMillis);
+                this.exporterThread.Join(timeoutMilliseconds);
             }
         }
 

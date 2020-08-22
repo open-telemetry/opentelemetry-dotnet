@@ -94,11 +94,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             var cur = this.head;
@@ -107,13 +107,13 @@ namespace OpenTelemetry.Trace
 
             while (cur != null)
             {
-                if (timeoutMillis == Timeout.Infinite)
+                if (timeoutMilliseconds == Timeout.Infinite)
                 {
                     var succeeded = cur.Value.ForceFlush(Timeout.Infinite);
                 }
                 else
                 {
-                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     if (timeout <= 0)
                     {
@@ -135,11 +135,11 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMillis < 0 && timeoutMillis != Timeout.Infinite)
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
             }
 
             var cur = this.head;
@@ -148,13 +148,13 @@ namespace OpenTelemetry.Trace
 
             while (cur != null)
             {
-                if (timeoutMillis == Timeout.Infinite)
+                if (timeoutMilliseconds == Timeout.Infinite)
                 {
                     cur.Value.Shutdown(Timeout.Infinite);
                 }
                 else
                 {
-                    var timeout = (long)timeoutMillis - sw.ElapsedMilliseconds;
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     // notify all the processors, even if we run overtime
                     cur.Value.Shutdown((int)Math.Max(timeout, 0));

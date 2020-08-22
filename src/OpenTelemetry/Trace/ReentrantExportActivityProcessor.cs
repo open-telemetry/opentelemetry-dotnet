@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (!this.stopped)
             {

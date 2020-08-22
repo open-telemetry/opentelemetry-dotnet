@@ -49,14 +49,14 @@ namespace OpenTelemetry.Trace
         /// Flushes the <see cref="ActivityProcessor"/>, blocks the current
         /// thread until flush completed, shutdown signaled or timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
         /// </returns>
-        public virtual bool ForceFlush(int timeoutMillis = Timeout.Infinite)
+        public virtual bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
             return true;
         }
@@ -65,11 +65,11 @@ namespace OpenTelemetry.Trace
         /// Attempts to shutdown the processor, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>
-        /// <param name="timeoutMillis">
+        /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
-        public virtual void Shutdown(int timeoutMillis = Timeout.Infinite)
+        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
         }
 
