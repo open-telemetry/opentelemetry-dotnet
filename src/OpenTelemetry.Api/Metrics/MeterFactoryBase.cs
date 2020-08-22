@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics
         }
 
         // for tests
-        internal void Reset()
+        internal static void Reset()
         {
             proxyMeter = new ProxyMeter();
             isInitialized = false;

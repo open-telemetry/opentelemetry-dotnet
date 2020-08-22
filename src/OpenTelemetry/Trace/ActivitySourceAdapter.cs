@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
-            if (activity.IsAllDataRequested)
+            if (activity?.IsAllDataRequested ?? false)
             {
                 this.activityProcessor?.OnEnd(activity);
             }

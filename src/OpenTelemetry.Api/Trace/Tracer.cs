@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the current span from the context.
         /// </summary>
-        public TelemetrySpan CurrentSpan
+        public static TelemetrySpan CurrentSpan
         {
             get
             {
@@ -51,6 +51,18 @@ namespace OpenTelemetry.Trace
                     return new TelemetrySpan(currentActivity);
                 }
             }
+        }
+
+        /// <summary>
+        /// Makes the given span as the current one.
+        /// </summary>
+        /// <param name="span">The span to be made current.</param>
+        /// <returns>The current span.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TelemetrySpan WithSpan(TelemetrySpan span)
+        {
+            span?.Activate();
+            return span;
         }
 
         /// <summary>
@@ -132,16 +144,18 @@ namespace OpenTelemetry.Trace
             return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
         }
 
-        /// <summary>
-        /// Makes the given span as the current one.
-        /// </summary>
-        /// <param name="span">The span to be made current.</param>
-        /// <returns>The current span.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan WithSpan(TelemetrySpan span)
+        private static ActivityKind ConvertToActivityKind(SpanKind kind)
         {
-            span.Activate();
-            return span;
+            return kind switch
+            {
+                SpanKind.Client => ActivityKind.Client,
+                SpanKind.Consumer => ActivityKind.Consumer,
+                SpanKind.Internal => ActivityKind.Internal,
+                SpanKind.Producer => ActivityKind.Producer,
+                SpanKind.Server => ActivityKind.Server,
+                _ => ActivityKind.Internal,
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,7 +166,7 @@ namespace OpenTelemetry.Trace
                 return TelemetrySpan.NoopInstance;
             }
 
-            var activityKind = this.ConvertToActivityKind(kind);
+            var activityKind = ConvertToActivityKind(kind);
             var activityLinks = links?.Select(l => l.ActivityLink);
 
             Activity previousActivity = null;
@@ -173,20 +187,6 @@ namespace OpenTelemetry.Trace
             }
 
             return new TelemetrySpan(activity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ActivityKind ConvertToActivityKind(SpanKind kind)
-        {
-            return kind switch
-            {
-                SpanKind.Client => ActivityKind.Client,
-                SpanKind.Consumer => ActivityKind.Consumer,
-                SpanKind.Internal => ActivityKind.Internal,
-                SpanKind.Producer => ActivityKind.Producer,
-                SpanKind.Server => ActivityKind.Server,
-                _ => ActivityKind.Internal,
-            };
         }
     }
 }

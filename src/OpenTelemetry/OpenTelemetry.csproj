@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Context\Propagation\TraceStateUtilsNew.cs" Link="Utils\TraceStateUtilsNew.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Utils\PreciseTimestamp.cs" Link="Utils\PreciseTimestamp.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Internal\ExceptionExtensions.cs" />
   </ItemGroup>
 

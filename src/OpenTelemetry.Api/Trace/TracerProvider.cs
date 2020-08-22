@@ -36,20 +36,13 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static TracerProvider Default { get; } = new TracerProvider();
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         /// <summary>
         /// Gets a tracer with given name and version.
         /// </summary>
         /// <param name="name">Name identifying the instrumentation library.</param>
         /// <param name="version">Version of the instrumentation library.</param>
         /// <returns>Tracer instance.</returns>
-        public Tracer GetTracer(string name, string version = null)
+        public static Tracer GetTracer(string name, string version = null)
         {
             if (name == null)
             {
@@ -57,6 +50,13 @@ namespace OpenTelemetry.Trace
             }
 
             return new Tracer(new ActivitySource(name, version));
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

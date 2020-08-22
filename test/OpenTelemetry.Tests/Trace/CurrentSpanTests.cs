@@ -29,20 +29,20 @@ namespace OpenTelemetry.Trace.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
 
-            this.tracer = TracerProvider.Default.GetTracer(null);
+            this.tracer = TracerProvider.GetTracer(null);
         }
 
         [Fact]
         public void CurrentSpan_WhenNoContext()
         {
-            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
+            Assert.False(Tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
         public void CurrentSpan_WhenActivityExists()
         {
-            var a = new Activity("foo").Start();
-            Assert.True(this.tracer.CurrentSpan.Context.IsValid);
+            _ = new Activity("foo").Start();
+            Assert.True(Tracer.CurrentSpan.Context.IsValid);
         }
 
         public void Dispose()

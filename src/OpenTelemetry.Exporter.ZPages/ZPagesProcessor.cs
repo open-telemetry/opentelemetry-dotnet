@@ -43,22 +43,22 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <inheritdoc />
         public override void OnStart(Activity activity)
         {
-            if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity.DisplayName))
+            if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity?.DisplayName))
             {
                 // If the span name is not in the processing span list, add it to the span list, the total count list, the ended count list and the error count list.
-                ZPagesActivityTracker.ProcessingList.Add(activity.DisplayName, 1);
-                ZPagesActivityTracker.TotalCount.Add(activity.DisplayName, 1);
-                ZPagesActivityTracker.TotalEndedCount.Add(activity.DisplayName, 0);
-                ZPagesActivityTracker.TotalErrorCount.Add(activity.DisplayName, 0);
-                ZPagesActivityTracker.TotalLatency.Add(activity.DisplayName, 0);
+                ZPagesActivityTracker.ProcessingList.Add(activity?.DisplayName, 1);
+                ZPagesActivityTracker.TotalCount.Add(activity?.DisplayName, 1);
+                ZPagesActivityTracker.TotalEndedCount.Add(activity?.DisplayName, 0);
+                ZPagesActivityTracker.TotalErrorCount.Add(activity?.DisplayName, 0);
+                ZPagesActivityTracker.TotalLatency.Add(activity?.DisplayName, 0);
             }
             else
             {
                 // If the span name already exists, then increment the numbers in processing list as well as the total count list.
-                ZPagesActivityTracker.ProcessingList.TryGetValue(activity.DisplayName, out var activeCount);
-                ZPagesActivityTracker.ProcessingList[activity.DisplayName] = activeCount + 1;
-                ZPagesActivityTracker.TotalCount.TryGetValue(activity.DisplayName, out var totalCount);
-                ZPagesActivityTracker.TotalCount[activity.DisplayName] = totalCount + 1;
+                ZPagesActivityTracker.ProcessingList.TryGetValue(activity?.DisplayName, out var activeCount);
+                ZPagesActivityTracker.ProcessingList[activity?.DisplayName] = activeCount + 1;
+                ZPagesActivityTracker.TotalCount.TryGetValue(activity?.DisplayName, out var totalCount);
+                ZPagesActivityTracker.TotalCount[activity?.DisplayName] = totalCount + 1;
             }
         }
 
@@ -68,40 +68,40 @@ namespace OpenTelemetry.Exporter.ZPages
             try
             {
                 // If the span name is not in the current minute list, add it to the span list.
-                if (!ZPagesActivityTracker.CurrentMinuteList.ContainsKey(activity.DisplayName))
+                if (!ZPagesActivityTracker.CurrentMinuteList.ContainsKey(activity?.DisplayName))
                 {
-                    ZPagesActivityTracker.CurrentMinuteList.TryAdd(activity.DisplayName, new ZPagesActivityAggregate(activity));
+                    ZPagesActivityTracker.CurrentMinuteList.TryAdd(activity?.DisplayName, new ZPagesActivityAggregate(activity));
                 }
 
                 // If the span name is not in the current hour list, add it to the span list.
-                if (!ZPagesActivityTracker.CurrentHourList.ContainsKey(activity.DisplayName))
+                if (!ZPagesActivityTracker.CurrentHourList.ContainsKey(activity?.DisplayName))
                 {
-                    ZPagesActivityTracker.CurrentHourList.TryAdd(activity.DisplayName, new ZPagesActivityAggregate(activity));
+                    ZPagesActivityTracker.CurrentHourList.TryAdd(activity?.DisplayName, new ZPagesActivityAggregate(activity));
                 }
 
-                ZPagesActivityTracker.CurrentMinuteList.TryGetValue(activity.DisplayName, out var minuteSpanInformation);
-                ZPagesActivityTracker.CurrentHourList.TryGetValue(activity.DisplayName, out var hourSpanInformation);
-                ZPagesActivityTracker.ProcessingList.TryGetValue(activity.DisplayName, out var activeCount);
+                ZPagesActivityTracker.CurrentMinuteList.TryGetValue(activity?.DisplayName, out var minuteSpanInformation);
+                ZPagesActivityTracker.CurrentHourList.TryGetValue(activity?.DisplayName, out var hourSpanInformation);
+                ZPagesActivityTracker.ProcessingList.TryGetValue(activity?.DisplayName, out var activeCount);
 
                 // Decrement the active span count in processing list, Increment the count of ended spans and calculate the average latency values for one minute and one hour.
-                ZPagesActivityTracker.ProcessingList[activity.DisplayName] = activeCount - 1;
+                ZPagesActivityTracker.ProcessingList[activity?.DisplayName] = activeCount - 1;
                 minuteSpanInformation.EndedCount++;
                 hourSpanInformation.EndedCount++;
                 minuteSpanInformation.TotalLatency += (long)activity.Duration.TotalMilliseconds;
                 hourSpanInformation.TotalLatency += (long)activity.Duration.TotalMilliseconds;
-                ZPagesActivityTracker.TotalLatency[activity.DisplayName] += (long)activity.Duration.TotalMilliseconds;
+                ZPagesActivityTracker.TotalLatency[activity?.DisplayName] += (long)activity.Duration.TotalMilliseconds;
                 minuteSpanInformation.GetTotalAverageLatency();
                 hourSpanInformation.GetTotalAverageLatency();
-                ZPagesActivityTracker.TotalEndedCount.TryGetValue(activity.DisplayName, out var endedCount);
-                ZPagesActivityTracker.TotalEndedCount[activity.DisplayName] = endedCount + 1;
+                ZPagesActivityTracker.TotalEndedCount.TryGetValue(activity?.DisplayName, out var endedCount);
+                ZPagesActivityTracker.TotalEndedCount[activity?.DisplayName] = endedCount + 1;
 
                 // Increment the error count, if it applies in all applicable lists.
                 if (activity.GetStatus() != Status.Ok)
                 {
                     minuteSpanInformation.ErrorCount++;
                     hourSpanInformation.ErrorCount++;
-                    ZPagesActivityTracker.TotalErrorCount.TryGetValue(activity.DisplayName, out var errorCount);
-                    ZPagesActivityTracker.TotalErrorCount[activity.DisplayName] = errorCount + 1;
+                    ZPagesActivityTracker.TotalErrorCount.TryGetValue(activity?.DisplayName, out var errorCount);
+                    ZPagesActivityTracker.TotalErrorCount[activity?.DisplayName] = errorCount + 1;
                 }
 
                 // Set the last updated timestamp.
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.ZPages
             catch (Exception ex)
             {
                 ZPagesExporterEventSource.Log.FailedProcess(ex);
-                Console.Write("OnEnd", ex);
+                Console.Write("OnEnd {0}", ex);
             }
         }
     }

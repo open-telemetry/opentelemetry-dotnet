@@ -27,7 +27,11 @@ namespace OpenTelemetry.Context
     public readonly struct CorrelationContext : IEquatable<CorrelationContext>
     {
         internal static readonly CorrelationContext Empty = new CorrelationContext(null);
+#if NET452
         internal static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = new KeyValuePair<string, string>[0];
+#else
+        internal static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = Array.Empty<KeyValuePair<string, string>>();
+#endif
         private readonly Activity activity;
 
         internal CorrelationContext(in Activity activity)

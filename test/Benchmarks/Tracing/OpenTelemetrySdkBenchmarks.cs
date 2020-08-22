@@ -39,9 +39,9 @@ namespace OpenTelemetry.Trace.Benchmarks
 
             using var openTelemetryNoop = Sdk.CreateTracerProviderBuilder().Build();
 
-            this.alwaysSampleTracer = TracerProvider.Default.GetTracer("AlwaysOnSample");
-            this.neverSampleTracer = TracerProvider.Default.GetTracer("AlwaysOffSample");
-            this.noopTracer = TracerProvider.Default.GetTracer("Noop");
+            this.alwaysSampleTracer = TracerProvider.GetTracer("AlwaysOnSample");
+            this.neverSampleTracer = TracerProvider.GetTracer("AlwaysOffSample");
+            this.noopTracer = TracerProvider.GetTracer("Noop");
         }
 
         [Benchmark]
