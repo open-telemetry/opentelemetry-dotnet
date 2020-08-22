@@ -14,33 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.IO;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#else
-using TestApp.AspNetCore._3._1;
-#endif
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
+namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 {
     public class W3CTraceContextTests
-        : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
     {
         private readonly ITestOutputHelper output;
-        private readonly WebApplicationFactory<Startup> factory;
-        private TracerProvider openTelemetrySdk = null;
 
-        public W3CTraceContextTests(ITestOutputHelper output, WebApplicationFactory<Startup> factory)
+        public W3CTraceContextTests(ITestOutputHelper output)
         {
             this.output = output;
-            this.factory = factory;
         }
 
         [Fact]
@@ -49,18 +35,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             RunCommand("git", "clone https://github.com/w3c/trace-context.git");
 
             // Arrange
-            using (var testFactory = this.factory
-                .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(services =>
-                    {
-                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation()
-                            .AddHttpClientInstrumentation()
-                            .Build();
-                    })))
+            using (var server = new InProcessServer(this.output))
             {
-                using var client = testFactory.CreateClient();
-
                 // Act
                 // Run Python script in test folder of W3C Trace Context repository
                 string result = RunCommand("python", "trace-context/test/test.py http://127.0.0.1:5000/api/forward");
@@ -68,16 +44,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 // Assert on the last line
                 // TODO: fix W3C Trace Context test suite
-                // Sample failure message: "FAILED (failures=3, errors=8)"
-                // string lastLine = ParseLastLine(output);
-                // Assert.StartsWith("FAILED", lastLine);
+                // ASP NET Core 2.1: FAILED (failures=4, errors=7)
+                // ASP NET Core 3.1: FAILED (failures=6, errors=7)
+                string lastLine = ParseLastLine(result);
+                Assert.StartsWith("FAILED", lastLine);
                 this.output.WriteLine(result);
             }
-        }
-
-        public void Dispose()
-        {
-            this.openTelemetrySdk?.Dispose();
         }
 
         private static string RunCommand(string command, string args)
