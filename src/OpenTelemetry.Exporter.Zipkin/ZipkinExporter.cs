@@ -141,7 +141,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         {
             var requestUri = this.options.Endpoint;
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
                 Content = new JsonContent(this, batchActivity),
             };
