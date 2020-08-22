@@ -27,14 +27,14 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class ReentrantExportActivityProcessor : ActivityProcessor
     {
-        private readonly ActivityExporterSync exporter;
+        private readonly ActivityExporter exporter;
         private bool stopped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReentrantExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Activity exporter instance.</param>
-        public ReentrantExportActivityProcessor(ActivityExporterSync exporter)
+        public ReentrantExportActivityProcessor(ActivityExporter exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
@@ -53,19 +53,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (!this.stopped)
             {
+                // TODO: pass down the timeout to exporter
                 this.exporter.Shutdown();
                 this.stopped = true;
             }
-
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
         }
 
         /// <summary>

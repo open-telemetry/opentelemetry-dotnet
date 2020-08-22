@@ -83,14 +83,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        var connection = this.connectionFetcher.Fetch(command);
-                        var database = this.databaseFetcher.Fetch(connection);
-
-                        activity.DisplayName = (string)database;
-                        activity.SetCustomProperty(CommandCustomPropertyName, command);
-
                         if (activity.IsAllDataRequested)
                         {
+                            var connection = this.connectionFetcher.Fetch(command);
+                            var database = this.databaseFetcher.Fetch(connection);
+
+                            activity.DisplayName = (string)database;
+                            activity.SetCustomProperty(CommandCustomPropertyName, command);
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 

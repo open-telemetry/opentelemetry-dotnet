@@ -39,7 +39,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
                 // The sole purpose of this HostedService is to ensure
                 // all instrumentations are created and started.
                 // This method is invoked when host starts, and
-                // by requesting the OpenTelemetrySdk from DI
+                // by requesting the TracerProvider from DI
                 // it ensures all instrumentations gets started.
                 this.serviceProvider.GetRequiredService<TracerProvider>();
             }

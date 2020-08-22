@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -49,14 +50,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var spanProcessor = new Mock<ActivityProcessor>();
+            var processor = new Mock<ActivityProcessor>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
-                               .AddProcessor(spanProcessor.Object)
+                               .AddProcessor(processor.Object)
                                .SetResource(expectedResource)
                                .Build())
             {
@@ -86,11 +87,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(3, spanProcessor.Invocations.Count); // start/end/dispose was called
-            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            Assert.Equal(tc.SpanName, span.DisplayName);
-            Assert.Equal(tc.SpanKind, span.Kind.ToString());
+            ValidateHttpClientActivity(activity, tc.ResponseExpected);
+            Assert.Equal(tc.SpanName, activity.DisplayName);
 
             var d = new Dictionary<string, string>()
             {
@@ -116,25 +117,25 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value]);
+                    d[activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value]);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
-                var desc = span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+                var desc = activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 
-            var normalizedAttributes = span.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
+            var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
             var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
             Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                Assert.Contains(span.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
 
-            Assert.Equal(expectedResource, span.GetResource());
+            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]

@@ -2,10 +2,10 @@
 
 * To export telemetry to a specific destination, custom exporters must be
   written.
-* Exporters should inherit from `ActivityExporter` and implement `ExportAsync`
-  and `ShutdownAsync` methods. `ActivityExporter` is part of the [OpenTelemetry
+* Exporters should inherit from `ActivityExporter` and implement `Export` and
+  `Shutdown` methods. `ActivityExporter` is part of the [OpenTelemetry
   Package](https://www.nuget.org/packages/opentelemetry).
-* Depending on user's choice and load on the application, `ExportAsync` may get
+* Depending on user's choice and load on the application, `Export` may get
   called with zero or more activities.
 * Exporters will only receive sampled-in and ended activities.
 * Exporters must not throw.

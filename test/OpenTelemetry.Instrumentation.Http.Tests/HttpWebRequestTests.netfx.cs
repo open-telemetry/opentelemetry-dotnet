@@ -22,6 +22,7 @@ using System.Linq;
 using System.Net;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -78,13 +79,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             catch (Exception)
             {
                 // test case can intentionally send request that will result in exception
+                tc.ResponseExpected = false;
             }
 
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
-
+            ValidateHttpWebRequestActivity(activity, expectedResource, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, activity.DisplayName);
-            Assert.Equal(tc.SpanKind, activity.Kind.ToString());
 
             var d = new Dictionary<string, string>()
             {
@@ -144,8 +145,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 Assert.Equal(value, tag.Value);
             }
-
-            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]
@@ -172,6 +171,22 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
   }
 ")));
             this.HttpOutCallsAreCollectedSuccessfullyAsync(input);
+        }
+
+        private static void ValidateHttpWebRequestActivity(Activity activityToValidate, Resources.Resource expectedResource, bool responseExpected)
+        {
+            Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
+            Assert.Equal(expectedResource, activityToValidate.GetResource());
+            var request = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
+            Assert.NotNull(request);
+            Assert.True(request is HttpWebRequest);
+
+            if (responseExpected)
+            {
+                var response = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
+                Assert.NotNull(response);
+                Assert.True(response is HttpWebResponse);
+            }
         }
     }
 }

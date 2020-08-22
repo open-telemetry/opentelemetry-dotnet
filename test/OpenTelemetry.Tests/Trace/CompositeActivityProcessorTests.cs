@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CompositeActivityProcessor_BadArgs()
         {
             Assert.Throws<ArgumentNullException>(() => new CompositeActivityProcessor(null));
-            Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new SimpleActivityProcessor[0]));
+            Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new ActivityProcessor[0]));
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace.Tests
 
             using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
             {
-                processor.ShutdownAsync(default).Wait();
+                processor.Shutdown();
                 Assert.True(p1.ShutdownCalled);
                 Assert.True(p2.ShutdownCalled);
             }
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Tests
 
             using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
             {
-                processor.ForceFlushAsync(default).Wait();
+                processor.ForceFlush();
                 Assert.True(p1.ForceFlushCalled);
                 Assert.True(p2.ForceFlushCalled);
             }

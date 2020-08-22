@@ -92,15 +92,49 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             var payload = ConvertToEventPayload(fields);
             var eventName = payload.Item1;
-            var eventAttributes = payload.Item2;
+
+            var spanAttributes = new SpanAttributes();
+            foreach (var field in payload.Item2)
+            {
+                switch (field.Value)
+                {
+                    case long value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case long[] value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case bool value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case bool[] value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case double value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case double[] value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case string value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+                    case string[] value:
+                        spanAttributes.Add(field.Key, value);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
 
             if (timestamp == DateTimeOffset.MinValue)
             {
-                this.Span.AddEvent(eventName, eventAttributes);
+                this.Span.AddEvent(eventName, spanAttributes);
             }
             else
             {
-                this.Span.AddEvent(eventName, timestamp, eventAttributes);
+                this.Span.AddEvent(eventName, timestamp, spanAttributes);
             }
 
             return this;

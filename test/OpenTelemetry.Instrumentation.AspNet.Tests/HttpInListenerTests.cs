@@ -24,6 +24,7 @@ using System.Web;
 using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.AspNet.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -265,6 +266,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value as string);
 
             Assert.Equal(expectedResource, span.GetResource());
+            var request = span.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
+            Assert.NotNull(request);
+            Assert.True(request is HttpRequest);
+
+            var response = span.GetCustomProperty(HttpInListener.ResponseCustomPropertyName);
+            Assert.NotNull(response);
+            Assert.True(response is HttpResponse);
         }
 
         private class FakeAspNetDiagnosticSource : IDisposable
