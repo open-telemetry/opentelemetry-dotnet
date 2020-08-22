@@ -29,8 +29,8 @@ namespace OpenTelemetry.Trace
     {
         private readonly ActivityExporter exporter;
         private readonly CircularBuffer<Activity> circularBuffer;
-        private readonly int scheduledDelayMillis;
-        private readonly int exporterTimeoutMillis;
+        private readonly int scheduledDelayMilliseconds;
+        private readonly int exporterTimeoutMilliseconds;
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
@@ -45,14 +45,14 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">The maximum queue size. After the size is reached data are dropped. The default value is 2048.</param>
-        /// <param name="scheduledDelayMillis">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
-        /// <param name="exporterTimeoutMillis">How long the export can run before it is cancelled. The default value is 30000.</param>
+        /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
+        /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
         public BatchExportActivityProcessor(
             ActivityExporter exporter,
             int maxQueueSize = 2048,
-            int scheduledDelayMillis = 5000,
-            int exporterTimeoutMillis = 30000,
+            int scheduledDelayMilliseconds = 5000,
+            int exporterTimeoutMilliseconds = 30000,
             int maxExportBatchSize = 512)
         {
             if (maxQueueSize <= 0)
@@ -65,20 +65,20 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
             }
 
-            if (scheduledDelayMillis <= 0)
+            if (scheduledDelayMilliseconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMillis));
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds));
             }
 
-            if (exporterTimeoutMillis < 0)
+            if (exporterTimeoutMilliseconds < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMillis));
+                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
             }
 
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
-            this.scheduledDelayMillis = scheduledDelayMillis;
-            this.exporterTimeoutMillis = exporterTimeoutMillis;
+            this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
+            this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.maxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
@@ -178,13 +178,13 @@ namespace OpenTelemetry.Trace
 
             // There is a chance that the export thread finished processing all the data from the queue,
             // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
-            const int pollingMillis = 1000;
+            const int pollingMilliseconds = 1000;
 
             while (true)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    WaitHandle.WaitAny(triggers, pollingMillis);
+                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
                 }
                 else
                 {
@@ -195,7 +195,7 @@ namespace OpenTelemetry.Trace
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMillis));
+                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Trace
             if (disposing && !this.disposed)
             {
                 // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
-                this.Shutdown(this.exporterTimeoutMillis);
+                this.Shutdown(this.exporterTimeoutMilliseconds);
 
                 try
                 {
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Trace
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMillis);
+                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
                 }
 
                 if (this.circularBuffer.Count > 0)
