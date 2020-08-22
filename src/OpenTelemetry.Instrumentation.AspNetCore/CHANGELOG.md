@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Asp.Net Core Instrumentation automatically populates HttpRequest,
+  HttpResponse in Activity custom property
+
 * Changed the default propagation to support W3C Baggage
   ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
   * The default ITextFormat is now `CompositePropagator(TraceContextFormat,

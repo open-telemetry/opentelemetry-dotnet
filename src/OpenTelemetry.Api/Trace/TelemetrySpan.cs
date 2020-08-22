@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -230,10 +231,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
         {
-            ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, default, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes.Attributes));
             return this;
         }
 
@@ -245,10 +245,9 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes for the event.</param>
         /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, IDictionary<string, object> attributes)
+        public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
         {
-            var eventTags = new ActivityTagsCollection(attributes);
-            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, eventTags));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes.Attributes));
             return this;
         }
 
@@ -270,6 +269,55 @@ namespace OpenTelemetry.Trace
         {
             this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
             this.Activity?.Stop();
+        }
+
+        /// <summary>
+        /// Record Exception.
+        /// </summary>
+        /// <param name="ex">Exception to be recorded.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TelemetrySpan RecordException(Exception ex)
+        {
+            if (ex == null)
+            {
+                return this;
+            }
+
+            return this.RecordException(ex.GetType().Name, ex.Message, ex.ToInvariantString());
+        }
+
+        /// <summary>
+        /// Record Exception.
+        /// </summary>
+        /// <param name="type">Type of the exception to be recorded.</param>
+        /// <param name="message">Message of the exception to be recorded.</param>
+        /// <param name="stacktrace">Stacktrace of the exception to be recorded.</param>
+        /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
+        public TelemetrySpan RecordException(string type, string message, string stacktrace)
+        {
+            SpanAttributes attributes = new SpanAttributes();
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionType, type);
+            }
+
+            if (!string.IsNullOrWhiteSpace(stacktrace))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionStacktrace, stacktrace);
+            }
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                attributes.Add(SemanticConventions.AttributeExceptionMessage, message);
+            }
+
+            if (attributes.Attributes.Count != 0)
+            {
+                this.AddEvent(SemanticConventions.AttributeExceptionEventName, attributes);
+            }
+
+            return this;
         }
 
         /// <inheritdoc/>

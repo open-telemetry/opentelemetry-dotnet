@@ -30,6 +30,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        public const string RequestCustomPropertyName = "OTel.AspNetCore.Request";
+        public const string ResponseCustomPropertyName = "OTel.AspNetCore.Response";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -96,6 +98,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(RequestCustomPropertyName, request);
+
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
@@ -133,6 +137,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
+                activity.SetCustomProperty(ResponseCustomPropertyName, response);
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 if (TryGetGrpcMethod(activity, out var grpcMethod))

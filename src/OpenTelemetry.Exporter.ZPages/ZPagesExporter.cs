@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
@@ -56,16 +53,10 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        public override Task<ExportResult> ExportAsync(IEnumerable<Activity> batch, CancellationToken cancellationToken)
+        public override ExportResult Export(in Batch<Activity> batch)
         {
             // var spanDatas = batch as SpanData[] ?? batch.ToArray();
-            return Task.FromResult(ExportResult.Success);
-        }
-
-        /// <inheritdoc />
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromResult(ExportResult.Success);
+            return ExportResult.Success;
         }
     }
 }

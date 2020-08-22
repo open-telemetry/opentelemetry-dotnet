@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -80,13 +81,13 @@ namespace OpenTelemetry.Context.Propagation
 
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null getter");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(B3Format), "null getter");
                 return context;
             }
 
@@ -105,19 +106,19 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "invalid context");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetrySdkEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Format), "null setter");
                 return;
             }
 
@@ -191,7 +192,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception e)
             {
-                OpenTelemetrySdkEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
                 return context;
             }
         }
@@ -251,7 +252,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception e)
             {
-                OpenTelemetrySdkEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(B3Format), e);
                 return context;
             }
         }
