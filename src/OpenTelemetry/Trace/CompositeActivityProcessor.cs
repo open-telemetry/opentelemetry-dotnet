@@ -94,13 +94,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        protected override bool ForceFlushInternal(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             var cur = this.head;
 
             var sw = Stopwatch.StartNew();
@@ -135,13 +130,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        protected override void ShutdownInternal(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             var cur = this.head;
 
             var sw = Stopwatch.StartNew();
