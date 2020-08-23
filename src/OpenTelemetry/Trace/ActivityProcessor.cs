@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
         /// wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
         /// </returns>
         /// <exception cref="System.ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace
 
             try
             {
-                return this.ForceFlushInternal(timeoutMilliseconds);
+                return this.OnForceFlush(timeoutMilliseconds);
             }
             catch (Exception ex)
             {
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Trace
 
             try
             {
-                this.ShutdownInternal(timeoutMilliseconds);
+                this.OnShutdown(timeoutMilliseconds);
             }
             catch (Exception ex)
             {
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Flushes the <see cref="ActivityProcessor"/>, blocks the current
+        /// Called by <c>ForceFlush</c>. This function should block the current
         /// thread until flush completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
@@ -148,19 +148,19 @@ namespace OpenTelemetry.Trace
         /// wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This function should be thread-safe, and should not throw exception.
         /// </remarks>
-        protected virtual bool ForceFlushInternal(int timeoutMilliseconds)
+        protected virtual bool OnForceFlush(int timeoutMilliseconds)
         {
             return true;
         }
 
         /// <summary>
-        /// Attempts to shutdown the <see cref="ActivityProcessor"/>, blocks
-        /// the current thread until shutdown completed or timed out.
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace
         /// <remarks>
         /// This function should not throw exception.
         /// </remarks>
-        protected virtual void ShutdownInternal(int timeoutMilliseconds)
+        protected virtual void OnShutdown(int timeoutMilliseconds)
         {
         }
 

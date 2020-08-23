@@ -121,7 +121,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override bool ForceFlushInternal(int timeoutMilliseconds)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var tail = this.circularBuffer.RemovedCount;
             var head = this.circularBuffer.AddedCount;
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        protected override void ShutdownInternal(int timeoutMilliseconds)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();

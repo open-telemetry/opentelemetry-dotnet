@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace
 
             try
             {
-                this.ShutdownInternal(timeoutMilliseconds);
+                this.OnShutdown(timeoutMilliseconds);
             }
             catch (Exception ex)
             {
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace
         /// <remarks>
         /// This function should not throw exception.
         /// </remarks>
-        protected virtual void ShutdownInternal(int timeoutMilliseconds)
+        protected virtual void OnShutdown(int timeoutMilliseconds)
         {
         }
 

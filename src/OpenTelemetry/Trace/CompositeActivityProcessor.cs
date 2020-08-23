@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override bool ForceFlushInternal(int timeoutMilliseconds)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var cur = this.head;
 
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override void ShutdownInternal(int timeoutMilliseconds)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             var cur = this.head;
 

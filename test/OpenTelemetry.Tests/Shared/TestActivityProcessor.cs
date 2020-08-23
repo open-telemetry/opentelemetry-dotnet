@@ -53,13 +53,13 @@ namespace OpenTelemetry.Tests
             this.EndAction?.Invoke(span);
         }
 
-        protected override bool ForceFlushInternal(int timeoutMilliseconds)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             this.ForceFlushCalled = true;
             return true;
         }
 
-        protected override void ShutdownInternal(int timeoutMilliseconds)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalled = true;
         }

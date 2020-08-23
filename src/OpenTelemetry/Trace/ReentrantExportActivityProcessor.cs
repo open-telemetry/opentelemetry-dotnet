@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        protected override void ShutdownInternal(int timeoutMilliseconds)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.exporter.Shutdown(timeoutMilliseconds);
         }
