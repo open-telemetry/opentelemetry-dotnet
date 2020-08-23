@@ -14,14 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Implements activity processor that exports <see cref="Activity"/> at each OnEnd call.
     /// </summary>
-    public class SimpleExportActivityProcessor : ReentrantExportActivityProcessor
+    public class SimpleExportActivityProcessor : BaseExportActivityProcessor
     {
         private readonly object syncObject = new object();
 
@@ -39,7 +41,14 @@ namespace OpenTelemetry.Trace
         {
             lock (this.syncObject)
             {
-                base.OnEnd(activity);
+                try
+                {
+                    this.exporter.Export(new Batch<Activity>(activity));
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                }
             }
         }
     }

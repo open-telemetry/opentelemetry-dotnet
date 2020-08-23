@@ -27,7 +27,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class ActivityProcessor : IDisposable
     {
-        private bool disposed;
         private int shutdownCount;
 
         /// <summary>
@@ -187,24 +186,6 @@ namespace OpenTelemetry.Trace
         /// </param>
         protected virtual void Dispose(bool disposing)
         {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
-                {
-                    this.Shutdown();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-            }
-
-            this.disposed = true;
         }
     }
 }
