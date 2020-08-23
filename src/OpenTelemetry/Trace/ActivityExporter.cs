@@ -92,8 +92,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Attempts to shutdown the exporter, blocks the current thread until
-        /// shutdown completed or timed out.
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
