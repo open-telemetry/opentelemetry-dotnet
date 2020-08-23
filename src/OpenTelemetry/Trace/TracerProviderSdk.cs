@@ -197,6 +197,7 @@ namespace OpenTelemetry.Trace
 
             (this.sampler as IDisposable)?.Dispose();
 
+            // Wait for up to 5 seconds grace period
             this.processor?.Shutdown(5000);
             this.processor?.Dispose();
 
