@@ -28,7 +28,6 @@ namespace OpenTelemetry.Trace
     public class ReentrantExportActivityProcessor : ActivityProcessor
     {
         private readonly ActivityExporter exporter;
-        private bool stopped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReentrantExportActivityProcessor"/> class.
@@ -52,21 +51,12 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc />
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
-            if (!this.stopped)
-            {
-                // TODO: pass down the timeout to exporter
-                this.exporter.Shutdown();
-                this.stopped = true;
-            }
+            this.exporter.Shutdown(timeoutMilliseconds);
         }
 
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
