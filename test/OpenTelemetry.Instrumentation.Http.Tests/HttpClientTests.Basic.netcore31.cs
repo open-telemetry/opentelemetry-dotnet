@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(1, processor.Invocations.Count); // dispose
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(1, processor.Invocations.Count);  // dispose
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(1, processor.Invocations.Count);  // dispose
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         public void Dispose()
