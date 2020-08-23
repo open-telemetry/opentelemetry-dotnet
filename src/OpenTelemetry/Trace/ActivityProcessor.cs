@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <remarks>
         /// This function is called synchronously on the thread which started
-        /// the activity. This function guarantees thread-safety, and will not
+        /// the activity. This function should be thread-safe, and should not
         /// block indefinitely or throw exceptions.
         /// </remarks>
         public virtual void OnStart(Activity activity)
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <remarks>
         /// This function is called synchronously on the thread which ended
-        /// the activity. This function guarantees thread-safety, and will not
+        /// the activity. This function should be thread-safe, and should not
         /// block indefinitely or throw exceptions.
         /// </remarks>
         public virtual void OnEnd(Activity activity)
@@ -151,7 +151,9 @@ namespace OpenTelemetry.Trace
         /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
-        /// This function should be thread-safe, and should not throw exception.
+        /// This function is called synchronously on the thread which called
+        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// not throw exception.
         /// </remarks>
         protected virtual bool OnForceFlush(int timeoutMilliseconds)
         {
@@ -167,7 +169,9 @@ namespace OpenTelemetry.Trace
         /// wait indefinitely.
         /// </param>
         /// <remarks>
-        /// This function should not throw exception.
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exception.
         /// </remarks>
         protected virtual void OnShutdown(int timeoutMilliseconds)
         {
