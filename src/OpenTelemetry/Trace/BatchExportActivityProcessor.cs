@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -174,6 +173,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
