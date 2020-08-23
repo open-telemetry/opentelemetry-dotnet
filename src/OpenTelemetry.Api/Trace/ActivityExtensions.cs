@@ -37,14 +37,15 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void SetStatus(this Activity activity, Status status)
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            activity?.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
             if (!string.IsNullOrEmpty(status.Description))
             {
-                activity?.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+                activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
             }
         }
 
@@ -56,12 +57,13 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <returns>Activity execution status.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static Status GetStatus(this Activity activity)
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            var statusCanonicalCode = activity?.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
-            var statusDescription = activity?.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+            var statusCanonicalCode = activity.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
+            var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
 
