@@ -55,11 +55,11 @@ namespace OpenTelemetry.Instrumentation.Http
             }
 
             // applicationinsights
-            if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                originalString.StartsWith("https://rt.services.visualstudio") ||
-                originalString.StartsWith("https://dc.applicationinsights") ||
-                originalString.StartsWith("https://live.applicationinsights") ||
-                originalString.StartsWith("https://quickpulse.applicationinsights"))
+            if (originalString.StartsWith("https://dc.services.visualstudio", StringComparison.Ordinal) ||
+                originalString.StartsWith("https://rt.services.visualstudio", StringComparison.Ordinal) ||
+                originalString.StartsWith("https://dc.applicationinsights", StringComparison.Ordinal) ||
+                originalString.StartsWith("https://live.applicationinsights", StringComparison.Ordinal) ||
+                originalString.StartsWith("https://quickpulse.applicationinsights", StringComparison.Ordinal))
             {
                 return true;
             }

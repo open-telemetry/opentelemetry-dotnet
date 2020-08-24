@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
@@ -70,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 var match = CoreAppMajorVersionCheckRegex.Match(framework);
 
-                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value) >= 3;
+                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
             }
 
             this.options = options;

@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
         private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
-        private long droppedCount = 0;
+        private long droppedCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class.
