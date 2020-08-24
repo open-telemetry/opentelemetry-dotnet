@@ -82,11 +82,14 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be started.</param>
         public void Start(Activity activity)
         {
-            this.getRequestedDataAction(activity);
-            if (activity.IsAllDataRequested)
+            if (!Sdk.SuppressInstrumentation)
             {
-                activity.SetResource(this.resource);
-                this.activityProcessor?.OnStart(activity);
+                this.getRequestedDataAction(activity);
+                if (activity.IsAllDataRequested)
+                {
+                    activity.SetResource(this.resource);
+                    this.activityProcessor?.OnStart(activity);
+                }
             }
         }
 
@@ -96,9 +99,12 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
-            if (activity.IsAllDataRequested)
+            if (!Sdk.SuppressInstrumentation)
             {
-                this.activityProcessor?.OnEnd(activity);
+                if (activity.IsAllDataRequested)
+                {
+                    this.activityProcessor?.OnEnd(activity);
+                }
             }
         }
 
