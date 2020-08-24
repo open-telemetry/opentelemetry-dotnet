@@ -137,6 +137,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             var requestUri = this.options.Endpoint;
