@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -25,17 +23,15 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements activity processor that exports <see cref="Activity"/> at each OnEnd call without synchronization.
     /// </summary>
-    public class ReentrantExportActivityProcessor : ActivityProcessor
+    public class ReentrantExportActivityProcessor : BaseExportActivityProcessor
     {
-        private readonly ActivityExporter exporter;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ReentrantExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Activity exporter instance.</param>
         public ReentrantExportActivityProcessor(ActivityExporter exporter)
+            : base(exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <inheritdoc />
@@ -43,34 +39,11 @@ namespace OpenTelemetry.Trace
         {
             try
             {
-                _ = this.exporter.Export(new Batch<Activity>(activity));
+                this.exporter.Export(new Batch<Activity>(activity));
             }
             catch (Exception ex)
             {
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
-            }
-        }
-
-        protected override void OnShutdown(int timeoutMilliseconds)
-        {
-            this.exporter.Shutdown(timeoutMilliseconds);
-        }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            if (disposing)
-            {
-                try
-                {
-                    this.exporter.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
             }
         }
     }

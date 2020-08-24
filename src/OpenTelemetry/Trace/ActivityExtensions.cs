@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The resource.</returns>
         public static Resource GetResource(this Activity activity)
         {
-            if (activity.GetCustomProperty(ResourcePropertyName) is Resource res)
+            if (activity?.GetCustomProperty(ResourcePropertyName) is Resource res)
             {
                 return res;
             }

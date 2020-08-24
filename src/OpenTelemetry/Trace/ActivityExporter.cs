@@ -38,14 +38,14 @@ namespace OpenTelemetry.Trace
     }
 
     /// <summary>
-    /// ActivityExporter base class.
+    /// Activity exporter base class.
     /// </summary>
     public abstract class ActivityExporter : IDisposable
     {
         private int shutdownCount;
 
         /// <summary>
-        /// Export a batch of <see cref="Activity"/> objects.
+        /// Exports a batch of <see cref="Activity"/> objects.
         /// </summary>
         /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
         /// <returns>Result of the export operation.</returns>
@@ -62,6 +62,10 @@ namespace OpenTelemetry.Trace
         /// <exception cref="System.ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety. Only the first call will
+        /// win, subsequent calls will be no-op.
+        /// </remarks>
         public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
@@ -100,7 +104,9 @@ namespace OpenTelemetry.Trace
         /// wait indefinitely.
         /// </param>
         /// <remarks>
-        /// This function should not throw exception.
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
         /// </remarks>
         protected virtual void OnShutdown(int timeoutMilliseconds)
         {

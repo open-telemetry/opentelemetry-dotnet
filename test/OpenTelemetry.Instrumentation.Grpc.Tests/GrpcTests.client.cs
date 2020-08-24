@@ -56,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateGrpcActivity(activity, expectedResource);
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // begin and end was called for Grpc call and underlying Http call + dispose
+            Assert.Equal(6, processor.Invocations.Count); // OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
             var httpSpan = (Activity)processor.Invocations[2].Arguments[0];
             var grpcSpan = (Activity)processor.Invocations[3].Arguments[0];
 

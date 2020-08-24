@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
 

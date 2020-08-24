@@ -42,6 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.activitySource = activitySource;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
             var context = HttpContext.Current;

@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -104,7 +103,7 @@ namespace OpenTelemetry.Trace
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    var succeeded = cur.Value.ForceFlush(Timeout.Infinite);
+                    _ = cur.Value.ForceFlush(Timeout.Infinite);
                 }
                 else
                 {
