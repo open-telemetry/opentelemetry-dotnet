@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         }
 
         /// <inheritdoc/>
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             _ = this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
         }
