@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, tc.ResponseExpected);

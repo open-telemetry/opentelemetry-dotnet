@@ -193,11 +193,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     // Need to do something here, but user can't currently set the filter
                     // so it wil always noop. When we support user filter,
                     // treat this as a todo: define exception behavior.
-                    Assert.Equal(2, activityProcessor.Invocations.Count); // Stop & Disposed called.
+                    Assert.Equal(3, activityProcessor.Invocations.Count); // OnEnd/OnShutdown/Dispose called.
                 }
                 else
                 {
-                    Assert.Equal(1, activityProcessor.Invocations.Count); // Only disposed was called because request was filtered.
+                    Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
                 }
 
                 return;
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin/end/dispose was called
+            Assert.Equal(4, activityProcessor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             span = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);

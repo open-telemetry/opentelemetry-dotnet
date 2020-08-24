@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -25,9 +24,8 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
     /// </summary>
-    public class BatchExportActivityProcessor : ActivityProcessor
+    public class BatchExportActivityProcessor : BaseExportActivityProcessor
     {
-        private readonly ActivityExporter exporter;
         private readonly CircularBuffer<Activity> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -37,8 +35,7 @@ namespace OpenTelemetry.Trace
         private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
-        private bool disposed;
-        private long droppedCount;
+        private long droppedCount = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class.
@@ -54,6 +51,7 @@ namespace OpenTelemetry.Trace
             int scheduledDelayMilliseconds = 5000,
             int exporterTimeoutMilliseconds = 30000,
             int maxExportBatchSize = 512)
+            : base(exporter)
         {
             if (maxQueueSize <= 0)
             {
@@ -75,7 +73,6 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
             }
 
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
@@ -176,6 +173,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
@@ -184,32 +182,6 @@ namespace OpenTelemetry.Trace
             if (timeoutMilliseconds != 0)
             {
                 this.exporterThread.Join(timeoutMilliseconds);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            if (disposing && !this.disposed)
-            {
-                // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
-                this.Shutdown(this.exporterTimeoutMilliseconds);
-                this.exportTrigger.Dispose();
-                this.dataExportedNotification.Dispose();
-                this.shutdownTrigger.Dispose();
-
-                try
-                {
-                    this.exporter.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-
-                this.disposed = true;
             }
         }
 

@@ -26,7 +26,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class ActivityProcessor : IDisposable
     {
-        private bool disposed;
         private int shutdownCount;
 
         /// <summary>
@@ -37,7 +36,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <remarks>
         /// This function is called synchronously on the thread which started
-        /// the activity. This function guarantees thread-safety, and will not
+        /// the activity. This function should be thread-safe, and should not
         /// block indefinitely or throw exceptions.
         /// </remarks>
         public virtual void OnStart(Activity activity)
@@ -52,7 +51,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         /// <remarks>
         /// This function is called synchronously on the thread which ended
-        /// the activity. This function guarantees thread-safety, and will not
+        /// the activity. This function should be thread-safe, and should not
         /// block indefinitely or throw exceptions.
         /// </remarks>
         public virtual void OnEnd(Activity activity)
@@ -150,7 +149,9 @@ namespace OpenTelemetry.Trace
         /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
-        /// This function should be thread-safe, and should not throw exception.
+        /// This function is called synchronously on the thread which called
+        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// not throw exceptions.
         /// </remarks>
         protected virtual bool OnForceFlush(int timeoutMilliseconds)
         {
@@ -166,7 +167,9 @@ namespace OpenTelemetry.Trace
         /// wait indefinitely.
         /// </param>
         /// <remarks>
-        /// This function should not throw exception.
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
         /// </remarks>
         protected virtual void OnShutdown(int timeoutMilliseconds)
         {
@@ -182,24 +185,6 @@ namespace OpenTelemetry.Trace
         /// </param>
         protected virtual void Dispose(bool disposing)
         {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
-                {
-                    this.Shutdown();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-            }
-
-            this.disposed = true;
         }
     }
 }
