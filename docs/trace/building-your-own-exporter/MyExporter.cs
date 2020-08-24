@@ -36,4 +36,9 @@ internal class MyExporter : ActivityExporter
 
         return ExportResult.Success;
     }
+
+    protected override void OnShutdown(int timeoutMilliseconds)
+    {
+        Console.WriteLine($"MyExporter.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
+    }
 }
