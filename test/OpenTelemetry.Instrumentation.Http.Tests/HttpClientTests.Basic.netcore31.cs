@@ -265,7 +265,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 try
                 {
                     await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(string.Empty), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
                 }
                 catch
                 {
