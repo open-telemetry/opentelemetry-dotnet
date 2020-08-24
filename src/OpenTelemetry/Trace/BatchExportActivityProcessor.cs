@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
         private bool disposed;
-        private long droppedCount = 0;
+        private long droppedCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class.
@@ -196,6 +196,9 @@ namespace OpenTelemetry.Trace
             {
                 // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
                 this.Shutdown(this.exporterTimeoutMilliseconds);
+                this.exportTrigger.Dispose();
+                this.dataExportedNotification.Dispose();
+                this.shutdownTrigger.Dispose();
 
                 try
                 {

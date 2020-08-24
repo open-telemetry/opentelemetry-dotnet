@@ -29,13 +29,13 @@ namespace OpenTelemetry.Trace.Tests
         public TracerTest()
         {
             this.tracerProvider = TracerProvider.Default;
-            this.tracer = this.tracerProvider.GetTracer("tracername", "tracerversion");
+            this.tracer = TracerProvider.Default.GetTracer("tracername", "tracerversion");
         }
 
         [Fact]
         public void CurrentSpanNullByDefault()
         {
-            var current = this.tracer.CurrentSpan;
+            var current = Tracer.CurrentSpan;
             Assert.True(IsNoopSpan(current));
             Assert.False(current.Context.IsValid);
         }
@@ -43,8 +43,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerStartWithSpan()
         {
-            this.tracer.WithSpan(TelemetrySpan.NoopInstance);
-            var current = this.tracer.CurrentSpan;
+            Tracer.WithSpan(TelemetrySpan.NoopInstance);
+            var current = Tracer.CurrentSpan;
             Assert.Same(current, TelemetrySpan.NoopInstance);
         }
 
@@ -176,20 +176,20 @@ namespace OpenTelemetry.Trace.Tests
                 .Build();
 
             var span1 = this.tracer.StartActiveSpan("Test");
-            Assert.Equal(span1.Activity.SpanId, this.tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span1.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
             var span2 = this.tracer.StartActiveSpan("Test", SpanKind.Client);
-            Assert.Equal(span2.Activity.SpanId, this.tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span2.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
             var span = this.tracer.StartSpan("foo");
-            this.tracer.WithSpan(span);
+            Tracer.WithSpan(span);
 
             var span3 = this.tracer.StartActiveSpan("Test", SpanKind.Client, span);
-            Assert.Equal(span3.Activity.SpanId, this.tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span3.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
 
             var spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span4 = this.tracer.StartActiveSpan("Test", SpanKind.Client, spanContext);
-            Assert.Equal(span4.Activity.SpanId, this.tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span4.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
         }
 
         [Fact]
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Trace.Tests
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddSource("tracername")
                 .Build();
-            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
+            Assert.False(Tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Trace.Tests
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddSource("tracername")
                 .Build();
-            var current = this.tracer.CurrentSpan;
+            var current = Tracer.CurrentSpan;
             current.End();
         }
 
@@ -219,10 +219,10 @@ namespace OpenTelemetry.Trace.Tests
                 .Build();
 
             var span = this.tracer.StartSpan("foo");
-            this.tracer.WithSpan(span);
+            Tracer.WithSpan(span);
 
-            Assert.Equal(span.Context.SpanId, this.tracer.CurrentSpan.Context.SpanId);
-            Assert.True(this.tracer.CurrentSpan.Context.IsValid);
+            Assert.Equal(span.Context.SpanId, Tracer.CurrentSpan.Context.SpanId);
+            Assert.True(Tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
