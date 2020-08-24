@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace
         /// <remarks>
         /// This function is called synchronously on the thread which made the
         /// first call to <c>Shutdown</c>. This function should not throw
-        /// exception.
+        /// exceptions.
         /// </remarks>
         protected virtual void OnShutdown(int timeoutMilliseconds)
         {
