@@ -61,6 +61,38 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Gets the parent span context.
+        /// </summary>
+        public SpanContext ParentSpanContext
+        {
+            get
+            {
+                if (this.Activity == null || this.Activity.Parent == null)
+                {
+                    return default;
+                }
+
+                return new SpanContext(this.Activity.Parent.Context);
+            }
+        }
+
+        /// <summary>
+        /// Gets the parent span.
+        /// </summary>
+        public TelemetrySpan ParentSpan
+        {
+            get
+            {
+                if (this.Activity == null || this.Activity.Parent == null)
+                {
+                    return default;
+                }
+
+                return new TelemetrySpan(this.Activity.Parent);
+            }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether this span will be recorded.
         /// </summary>
         public bool IsRecording

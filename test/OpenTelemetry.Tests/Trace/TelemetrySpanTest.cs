@@ -24,12 +24,14 @@ namespace OpenTelemetry.Tests.Trace
 {
     public class TelemetrySpanTest
     {
+        private const string DisplayName = "test";
+
         [Fact]
         public void CheckRecordExceptionData()
         {
             string message = "message";
 
-            using Activity activity = new Activity("exception-test");
+            using Activity activity = new Activity(DisplayName);
             using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
             Assert.Single(activity.Events);
@@ -46,7 +48,7 @@ namespace OpenTelemetry.Tests.Trace
             string message = "message";
             string stack = "stack";
 
-            using Activity activity = new Activity("exception-test");
+            using Activity activity = new Activity(DisplayName);
             using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(type, message, stack);
             Assert.Single(activity.Events);
@@ -60,7 +62,7 @@ namespace OpenTelemetry.Tests.Trace
         [Fact]
         public void CheckRecordExceptionEmpty()
         {
-            using Activity activity = new Activity("exception-test");
+            using Activity activity = new Activity(DisplayName);
             using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(string.Empty, string.Empty, string.Empty);
             Assert.Empty(activity.Events);
