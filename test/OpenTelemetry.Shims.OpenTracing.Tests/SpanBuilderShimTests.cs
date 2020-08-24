@@ -47,7 +47,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void CtorArgumentValidation()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(null, "foo"));
             Assert.Throws<ArgumentNullException>(() => new SpanBuilderShim(tracer, null));
         }
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void IgnoreActiveSpan()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent. The shim requires that the ISpan implementation be a SpanShim
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void StartWithExplicitTimestamp()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             var startTimestamp = DateTimeOffset.Now;
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOf_WithNullSpan()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a null parent
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOf_WithSpan()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent.
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
                 .Start();
 
             // matching root operation name
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo", new List<string> { "foo" });
             var spanShim1 = (SpanShim)shim.Start();
 
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOf_MultipleCallsWithSpan()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOf_WithNullSpanContext()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a null parent
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOfWithSpanContext()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent
@@ -197,7 +197,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void AsChildOf_MultipleCallsWithSpanContext()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_KeyIsSpanKindStringValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.SpanKind.Key, global::OpenTracing.Tag.Tags.SpanKindClient);
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_KeyIsErrorStringValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, "true");
@@ -254,7 +254,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_KeyIsNullStringValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag((string)null, "unused");
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_ValueIsNullStringValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag("foo", null);
@@ -285,7 +285,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_KeyIsErrorBoolValue()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag(global::OpenTracing.Tag.Tags.Error.Key, true);
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void WithTag_VariousValueTypes()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             shim.WithTag("foo", "unused");
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void Start()
         {
-            var tracer = TracerProvider.GetTracer(TracerName);
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // build

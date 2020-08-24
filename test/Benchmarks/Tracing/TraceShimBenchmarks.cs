@@ -22,10 +22,10 @@ namespace OpenTelemetry.Trace.Benchmarks
     [MemoryDiagnoser]
     public class TraceShimBenchmarks
     {
-        private readonly Tracer tracerWithNoListener = TracerProvider.GetTracer("Benchmark.NoListener");
-        private readonly Tracer tracerWithOneProcessor = TracerProvider.GetTracer("Benchmark.OneProcessor");
-        private readonly Tracer tracerWithTwoProcessors = TracerProvider.GetTracer("Benchmark.TwoProcessors");
-        private readonly Tracer tracerWithThreeProcessors = TracerProvider.GetTracer("Benchmark.ThreeProcessors");
+        private readonly Tracer tracerWithNoListener = TracerProvider.Default.GetTracer("Benchmark.NoListener");
+        private readonly Tracer tracerWithOneProcessor = TracerProvider.Default.GetTracer("Benchmark.OneProcessor");
+        private readonly Tracer tracerWithTwoProcessors = TracerProvider.Default.GetTracer("Benchmark.TwoProcessors");
+        private readonly Tracer tracerWithThreeProcessors = TracerProvider.Default.GetTracer("Benchmark.ThreeProcessors");
 
         public TraceShimBenchmarks()
         {

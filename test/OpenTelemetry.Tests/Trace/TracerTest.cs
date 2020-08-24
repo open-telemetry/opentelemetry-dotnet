@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Tests
         public TracerTest()
         {
             this.tracerProvider = TracerProvider.Default;
-            this.tracer = TracerProvider.GetTracer("tracername", "tracerversion");
+            this.tracer = TracerProvider.Default.GetTracer("tracername", "tracerversion");
         }
 
         [Fact]
