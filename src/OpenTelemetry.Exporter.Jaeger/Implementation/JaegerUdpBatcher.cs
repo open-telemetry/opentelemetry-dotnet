@@ -226,7 +226,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             try
             {
-                this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
+                _ = this.CloseAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

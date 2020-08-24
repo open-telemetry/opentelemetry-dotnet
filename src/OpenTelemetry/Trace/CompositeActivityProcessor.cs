@@ -103,7 +103,7 @@ namespace OpenTelemetry.Trace
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    var succeeded = cur.Value.ForceFlush(Timeout.Infinite);
+                    _ = cur.Value.ForceFlush(Timeout.Infinite);
                 }
                 else
                 {

@@ -175,7 +175,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(Activity.Current.OperationName))
                 {
-                    span = this.tracer.CurrentSpan;
+                    span = Tracer.CurrentSpan;
                 }
             }
 
