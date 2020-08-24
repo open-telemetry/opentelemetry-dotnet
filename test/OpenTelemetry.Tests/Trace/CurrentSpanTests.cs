@@ -35,14 +35,14 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CurrentSpan_WhenNoContext()
         {
-            Assert.False(this.tracer.CurrentSpan.Context.IsValid);
+            Assert.False(Tracer.CurrentSpan.Context.IsValid);
         }
 
         [Fact]
         public void CurrentSpan_WhenActivityExists()
         {
-            var a = new Activity("foo").Start();
-            Assert.True(this.tracer.CurrentSpan.Context.IsValid);
+            _ = new Activity("foo").Start();
+            Assert.True(Tracer.CurrentSpan.Context.IsValid);
         }
 
         public void Dispose()

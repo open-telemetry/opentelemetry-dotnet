@@ -31,7 +31,11 @@ namespace OpenTelemetry.Trace
     {
         internal static readonly TelemetrySpan NoopInstance = new TelemetrySpan(null);
         internal readonly Activity Activity;
+#if NET452
         private static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = new KeyValuePair<string, string>[0];
+#else
+        private static readonly IEnumerable<KeyValuePair<string, string>> EmptyBaggage = Array.Empty<KeyValuePair<string, string>>();
+#endif
 
         internal TelemetrySpan(Activity activity)
         {
@@ -239,7 +243,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
         {
-            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes.Attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes?.Attributes));
             return this;
         }
 
@@ -253,7 +257,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
         {
-            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes.Attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes?.Attributes));
             return this;
         }
 

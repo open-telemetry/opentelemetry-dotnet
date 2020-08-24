@@ -41,8 +41,11 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnStart(Activity activity)
         {
+            Debug.Assert(activity != null, "Activity should not be null");
+
             if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity.DisplayName))
             {
                 // If the span name is not in the processing span list, add it to the span list, the total count list, the ended count list and the error count list.
@@ -63,8 +66,10 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnEnd(Activity activity)
         {
+            Debug.Assert(activity != null, "Activity should not be null");
             try
             {
                 // If the span name is not in the current minute list, add it to the span list.
@@ -111,7 +116,7 @@ namespace OpenTelemetry.Exporter.ZPages
             catch (Exception ex)
             {
                 ZPagesExporterEventSource.Log.FailedProcess(ex);
-                Console.Write("OnEnd", ex);
+                Console.Write("OnEnd {0}", ex);
             }
         }
     }

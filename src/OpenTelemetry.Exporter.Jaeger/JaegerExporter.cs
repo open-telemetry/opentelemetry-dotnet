@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 this.libraryResourceApplied = true;
             }
 
-            this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
+            _ = this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
 
             // TODO jaeger status to ExportResult
             return ExportResult.Success;
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// <inheritdoc/>
         public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
+            _ = this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)

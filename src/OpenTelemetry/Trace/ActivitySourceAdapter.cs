@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
         {
             if (!Sdk.SuppressInstrumentation)
             {
-                if (activity.IsAllDataRequested)
+                if (activity?.IsAllDataRequested ?? false)
                 {
                     this.activityProcessor?.OnEnd(activity);
                 }
