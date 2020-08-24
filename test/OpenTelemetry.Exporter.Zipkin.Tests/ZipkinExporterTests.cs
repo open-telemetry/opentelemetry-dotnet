@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -87,6 +88,52 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
+        }
+
+        [Fact]
+        public void ZipkinExporter_SuppresssesInstrumentation()
+        {
+            const string ActivitySourceName = "zipkin.test";
+            Guid requestId = Guid.NewGuid();
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            int endCalledCount = 0;
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalledCount++;
+                };
+
+            var exporterOptions = new ZipkinExporterOptions();
+            exporterOptions.ServiceName = "test-zipkin";
+            exporterOptions.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+            var zipkinExporter = new ZipkinExporter(exporterOptions);
+            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter, scheduledDelayMilliseconds: 1);
+
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .AddProcessor(exportActivityProcessor)
+                .AddHttpClientInstrumentation()
+                .Build();
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Zipkin Activity");
+            activity?.Stop();
+
+            // This test currently uses the BatchExportActivityProcessor, so we
+            // wait a short amount of time for the exporter to be invoked.
+            // Ideally, once the Zipkin exporter is able to be configured with
+            // the SimpleExportActivityProcessor the test could use that and
+            // this wait would not be needed.
+            // Simply using the SimpleExportActivityProcessor in this test does
+            // not work at the moment because doing so causes deadlock in the
+            // exporter as it uses .GetAwaiter().GetResult() to make the HTTP
+            // call synchronously.
+            Thread.Sleep(1000);
+
+            Assert.Equal(1, endCalledCount);
         }
 
         [Theory]
