@@ -301,11 +301,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan AddBaggage(string key, string value)
         {
-            if (this.IsRecording)
-            {
-                this.Activity?.AddBaggage(key, value);
-            }
-
+            this.Activity?.AddBaggage(key, value);
             return this;
         }
 
