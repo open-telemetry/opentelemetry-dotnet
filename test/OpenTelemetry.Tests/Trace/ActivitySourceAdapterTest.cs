@@ -232,32 +232,6 @@ namespace OpenTelemetry.Trace.Tests
             activityLocalParent.Stop();
         }
 
-        [Fact]
-        public void ActivitySourceAdapterDoesNotInvokeProcessorWhenSuppressInstrumentationIsTrue()
-        {
-            using var scope = SuppressInstrumentationScope.Begin();
-            bool startCalled = false, stopCalled = false;
-            this.testProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                };
-
-            this.testProcessor.EndAction =
-                (a) =>
-                {
-                    stopCalled = true;
-                };
-
-            var activity = new Activity("test");
-            activity.Start();
-            this.activitySourceAdapter.Start(activity);
-            Assert.False(startCalled);
-            activity.Stop();
-            this.activitySourceAdapter.Stop(activity);
-            Assert.False(stopCalled);
-        }
-
         public void Dispose()
         {
             Activity.Current = null;

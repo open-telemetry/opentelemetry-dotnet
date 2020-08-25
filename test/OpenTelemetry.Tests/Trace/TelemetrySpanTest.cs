@@ -17,9 +17,10 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Tests.Trace
 {
     public class TelemetrySpanTest
     {
