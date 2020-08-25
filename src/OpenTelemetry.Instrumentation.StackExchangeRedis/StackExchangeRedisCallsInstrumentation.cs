@@ -91,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 // Try to reuse a session for all activities created under the same TraceId+SpanId.
                 var cacheKey = (parent.TraceId, parent.SpanId);
-                if ( !this.cache.TryGetValue(cacheKey, out var session))
+                if (!this.cache.TryGetValue(cacheKey, out var session))
                 {
                     session = (parent, new ProfilingSession());
                     this.cache.TryAdd(cacheKey, session);
