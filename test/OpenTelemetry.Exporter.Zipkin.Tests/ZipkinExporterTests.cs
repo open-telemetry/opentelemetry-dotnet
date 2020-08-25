@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -89,6 +90,48 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
         }
 
+        [Fact]
+        public void ZipkinExporter_SuppresssesInstrumentation()
+        {
+            const string ActivitySourceName = "zipkin.test";
+            Guid requestId = Guid.NewGuid();
+            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            int endCalledCount = 0;
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalledCount++;
+                };
+
+            var exporterOptions = new ZipkinExporterOptions();
+            exporterOptions.ServiceName = "test-zipkin";
+            exporterOptions.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+            var zipkinExporter = new ZipkinExporter(exporterOptions);
+            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter);
+
+            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .AddProcessor(testActivityProcessor)
+                .AddProcessor(exportActivityProcessor)
+                .AddHttpClientInstrumentation()
+                .Build();
+
+            var source = new ActivitySource(ActivitySourceName);
+            var activity = source.StartActivity("Test Zipkin Activity");
+            activity?.Stop();
+
+            // We call ForceFlush on the exporter twice, so that in the event
+            // of a regression, this should give any operations performed in
+            // the Zipkin exporter itself enough time to be instrumented and
+            // loop back through the exporter.
+            exportActivityProcessor.ForceFlush();
+            exportActivityProcessor.ForceFlush();
+
+            Assert.Equal(1, endCalledCount);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -127,48 +170,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""Open Telemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""OpenTelemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
                 Responses[requestId]);
-        }
-
-        [Fact]
-        public void UseZipkinExporterWithCustomActivityProcessor()
-        {
-            const string ActivitySourceName = "zipkin.test";
-            Guid requestId = Guid.NewGuid();
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
-
-            bool startCalled = false;
-            bool endCalled = false;
-
-            testActivityProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                };
-
-            testActivityProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                };
-
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
-                .AddProcessor(testActivityProcessor)
-                .AddZipkinExporter(o =>
-                {
-                    o.ServiceName = "test-zipkin";
-                    o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
-                })
-                .Build();
-
-            var source = new ActivitySource(ActivitySourceName);
-            var activity = source.StartActivity("Test Zipkin Activity");
-            activity?.Stop();
-
-            Assert.True(startCalled);
-            Assert.True(endCalled);
         }
 
         internal static Activity CreateTestActivity(

@@ -44,42 +44,10 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
-        internal static bool IsInternalUrl(Uri requestUri)
-        {
-            var originalString = requestUri.OriginalString;
-
-            // zipkin
-            if (originalString.Contains(":9411/api/v2/spans"))
-            {
-                return true;
-            }
-
-            // applicationinsights
-            if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                originalString.StartsWith("https://rt.services.visualstudio") ||
-                originalString.StartsWith("https://dc.applicationinsights") ||
-                originalString.StartsWith("https://live.applicationinsights") ||
-                originalString.StartsWith("https://quickpulse.applicationinsights"))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         internal bool EventFilter(string activityName, object arg1)
         {
             if (TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage))
             {
-                Uri requestUri;
-                if (requestMessage.Method == HttpMethod.Post && (requestUri = requestMessage.RequestUri) != null)
-                {
-                    if (IsInternalUrl(requestUri))
-                    {
-                        return false;
-                    }
-                }
-
                 return this.FilterFunc?.Invoke(requestMessage) ?? true;
             }
 
