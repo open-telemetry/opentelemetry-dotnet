@@ -131,46 +131,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 Responses[requestId]);
         }
 
-        [Fact]
-        public void UseZipkinExporterWithCustomActivityProcessor()
-        {
-            const string ActivitySourceName = "zipkin.test";
-            Guid requestId = Guid.NewGuid();
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
-
-            bool startCalled = false;
-            bool endCalled = false;
-
-            testActivityProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                };
-
-            testActivityProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                };
-
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
-                .AddProcessor(testActivityProcessor)
-                .AddZipkinExporter(o =>
-                {
-                    o.ServiceName = "test-zipkin";
-                    o.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
-                })
-                .Build();
-
-            var source = new ActivitySource(ActivitySourceName);
-            var activity = source.StartActivity("Test Zipkin Activity");
-            activity?.Stop();
-
-            Assert.True(startCalled);
-            Assert.True(endCalled);
-        }
-
         internal static Activity CreateTestActivity(
            bool setAttributes = true,
            Dictionary<string, object> additionalAttributes = null,
