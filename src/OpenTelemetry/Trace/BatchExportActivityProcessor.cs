@@ -179,10 +179,23 @@ namespace OpenTelemetry.Trace
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            if (timeoutMilliseconds != 0)
+            if (timeoutMilliseconds == Timeout.Infinite)
             {
-                this.exporterThread.Join(timeoutMilliseconds);
+                this.exporterThread.Join();
+                this.exporter.Shutdown();
+                return;
             }
+
+            if (timeoutMilliseconds == 0)
+            {
+                this.exporter.Shutdown(0);
+                return;
+            }
+
+            var sw = Stopwatch.StartNew();
+            this.exporterThread.Join(timeoutMilliseconds);
+            var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+            this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 
         private void ExporterProc()
