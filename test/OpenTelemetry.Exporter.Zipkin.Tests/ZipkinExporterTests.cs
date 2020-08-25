@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             exporterOptions.ServiceName = "test-zipkin";
             exporterOptions.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
             var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter, scheduledDelayMilliseconds: 1);
+            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter);
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -123,15 +123,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             activity?.Stop();
 
             // This test currently uses the BatchExportActivityProcessor, so we
-            // wait a short amount of time for the exporter to be invoked.
+            // call ForceFlush on the exporter.
             // Ideally, once the Zipkin exporter is able to be configured with
             // the SimpleExportActivityProcessor the test could use that and
-            // this wait would not be needed.
+            // this ForceFlush would not be needed.
             // Simply using the SimpleExportActivityProcessor in this test does
             // not work at the moment because doing so causes deadlock in the
             // exporter as it uses .GetAwaiter().GetResult() to make the HTTP
             // call synchronously.
-            Thread.Sleep(1000);
+            exportActivityProcessor.ForceFlush(5000);
 
             Assert.Equal(1, endCalledCount);
         }
