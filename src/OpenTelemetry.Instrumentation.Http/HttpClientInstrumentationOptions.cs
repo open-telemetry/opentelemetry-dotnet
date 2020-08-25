@@ -46,18 +46,6 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal static bool IsInternalUrl(Uri requestUri)
         {
-            var originalString = requestUri.OriginalString;
-
-            // applicationinsights
-            if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                originalString.StartsWith("https://rt.services.visualstudio") ||
-                originalString.StartsWith("https://dc.applicationinsights") ||
-                originalString.StartsWith("https://live.applicationinsights") ||
-                originalString.StartsWith("https://quickpulse.applicationinsights"))
-            {
-                return true;
-            }
-
             return false;
         }
 
