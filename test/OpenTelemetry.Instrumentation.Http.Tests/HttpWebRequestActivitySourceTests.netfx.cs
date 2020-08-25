@@ -211,39 +211,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Theory]
-        [InlineData("GET")]
-        [InlineData("POST")]
-        public async Task TestBasicReceiveAndResponseEventsWitPassThroughSampling(string method)
-        {
-            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.PropagationData);
-
-            // Send a random Http request to generate some events
-            using (var client = new HttpClient())
-            {
-                (method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl())
-                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
-            }
-
-            // We should have exactly one Start and one Stop event
-            Assert.Equal(2, eventRecords.Records.Count);
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
-
-            // Check to make sure: The first record must be a request, the next record must be a response.
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-
-            VerifyHeaders(startRequest);
-
-            Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
-            Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-            Assert.NotNull(response);
-
-            Assert.Empty(activity.Tags);
-        }
-
-        [Theory]
         [InlineData("GET", 0)]
         [InlineData("GET", 1)]
         [InlineData("GET", 2)]

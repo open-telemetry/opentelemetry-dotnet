@@ -40,9 +40,9 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="spanContext">Span context of a linked span.</param>
         /// <param name="attributes">Link attributes.</param>
-        public Link(in SpanContext spanContext, ActivityTagsCollection attributes)
+        public Link(in SpanContext spanContext, SpanAttributes attributes)
         {
-            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes);
+            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes.Attributes);
         }
 
         /// <summary>

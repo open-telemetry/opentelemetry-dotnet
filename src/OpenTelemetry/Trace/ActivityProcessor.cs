@@ -46,31 +46,31 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Shuts down Activity processor asynchronously.
+        /// Flushes the <see cref="ActivityProcessor"/>, blocks the current
+        /// thread until flush completed, shutdown signaled or timed out.
         /// </summary>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>Returns <see cref="Task"/>.</returns>
-        public virtual Task ShutdownAsync(CancellationToken cancellationToken)
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
+        /// </returns>
+        public virtual bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
+            return true;
         }
 
         /// <summary>
-        /// Flushes all activities that have not yet been processed.
+        /// Attempts to shutdown the processor, blocks the current thread until
+        /// shutdown completed or timed out.
         /// </summary>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>Returns <see cref="Task"/>.</returns>
-        public virtual Task ForceFlushAsync(CancellationToken cancellationToken)
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
         }
 
         /// <inheritdoc/>
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace
             {
                 try
                 {
-                    this.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    this.Shutdown();
                 }
                 catch (Exception ex)
                 {

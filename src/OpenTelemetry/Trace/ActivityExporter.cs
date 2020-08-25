@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Trace
 {
@@ -27,19 +26,14 @@ namespace OpenTelemetry.Trace
     public enum ExportResult
     {
         /// <summary>
-        /// Batch is successfully exported.
+        /// Batch export succeeded.
         /// </summary>
         Success = 0,
 
         /// <summary>
-        /// Batch export failed. Caller must not retry.
+        /// Batch export failed.
         /// </summary>
-        FailedNotRetryable = 1,
-
-        /// <summary>
-        /// Batch export failed transiently. Caller should record error and may retry.
-        /// </summary>
-        FailedRetryable = 2,
+        Failure = 1,
     }
 
     /// <summary>
@@ -48,19 +42,23 @@ namespace OpenTelemetry.Trace
     public abstract class ActivityExporter : IDisposable
     {
         /// <summary>
-        /// Exports batch of activities asynchronously.
+        /// Export a batch of <see cref="Activity"/> objects.
         /// </summary>
-        /// <param name="batch">Batch of activities to export.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
         /// <returns>Result of export.</returns>
-        public abstract Task<ExportResult> ExportAsync(IEnumerable<Activity> batch, CancellationToken cancellationToken);
+        public abstract ExportResult Export(in Batch<Activity> batch);
 
         /// <summary>
-        /// Shuts down exporter asynchronously.
+        /// Attempts to shutdown the exporter, blocks the current thread until
+        /// shutdown completed or timed out.
         /// </summary>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>Returns <see cref="Task"/>.</returns>
-        public abstract Task ShutdownAsync(CancellationToken cancellationToken);
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        {
+        }
 
         /// <inheritdoc/>
         public void Dispose()

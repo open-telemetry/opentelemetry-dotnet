@@ -94,12 +94,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
-            activity.SetCustomProperty(RequestCustomPropertyName, request);
 
             this.activitySource.Start(activity);
 
             if (activity.IsAllDataRequested)
             {
+                activity.SetCustomProperty(RequestCustomPropertyName, request);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
