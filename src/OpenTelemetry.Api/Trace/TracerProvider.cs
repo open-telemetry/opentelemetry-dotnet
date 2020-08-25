@@ -36,13 +36,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static TracerProvider Default { get; } = new TracerProvider();
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         /// <summary>
         /// Gets a tracer with given name and version.
         /// </summary>
@@ -57,6 +50,13 @@ namespace OpenTelemetry.Trace
             }
 
             return new Tracer(new ActivitySource(name, version));
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

@@ -17,7 +17,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace OpenTelemetry.Instrumentation.Grpc.Implementation
+namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class PropertyFetcher
     {

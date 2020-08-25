@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -54,16 +55,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                 this.libraryResourceApplied = true;
             }
 
-            this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
+            _ = this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
 
             // TODO jaeger status to ExportResult
             return ExportResult.Success;
-        }
-
-        /// <inheritdoc/>
-        public override void Shutdown()
-        {
-            this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)
@@ -118,6 +113,13 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
+        /// <inheritdoc/>
+        protected override void OnShutdown(int timeoutMilliseconds)
+        {
+            _ = this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
+        }
+
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (!this.disposedValue)

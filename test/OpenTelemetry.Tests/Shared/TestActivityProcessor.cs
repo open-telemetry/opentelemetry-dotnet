@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests
@@ -53,24 +51,15 @@ namespace OpenTelemetry.Tests
             this.EndAction?.Invoke(span);
         }
 
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            this.ShutdownCalled = true;
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
-        }
-
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             this.ForceFlushCalled = true;
-#if NET452
-            return Task.FromResult(0);
-#else
-            return Task.CompletedTask;
-#endif
+            return true;
+        }
+
+        protected override void OnShutdown(int timeoutMilliseconds)
+        {
+            this.ShutdownCalled = true;
         }
 
         protected override void Dispose(bool disposing)

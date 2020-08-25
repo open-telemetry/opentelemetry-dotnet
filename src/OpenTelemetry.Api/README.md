@@ -309,8 +309,8 @@ Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/
 Example:
 
 ```csharp
-activity?.SetTag("ot.status_code", "status canonical code");
-activity?.SetTag("ot.status_description", "status description");
+activity?.SetTag("otel.status_code", "status canonical code");
+activity?.SetTag("otel.status_description", "status description");
 ```
 
 ## Instrumenting a library/application with OpenTelemetry.API Shim

@@ -32,7 +32,8 @@
   [#1094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1094)
   [#1113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1113)
   [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127)
-  [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129))
+  [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129)
+  [#1135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1135))
 
 ## 0.4.0-beta.2
 

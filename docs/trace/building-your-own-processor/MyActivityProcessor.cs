@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
 internal class MyActivityProcessor : ActivityProcessor
@@ -39,15 +37,14 @@ internal class MyActivityProcessor : ActivityProcessor
         Console.WriteLine($"{this}.OnEnd");
     }
 
-    public override Task ForceFlushAsync(CancellationToken cancellationToken)
+    protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this}.ForceFlushAsync");
-        return Task.CompletedTask;
+        Console.WriteLine($"{this}.OnForceFlush");
+        return true;
     }
 
-    public override Task ShutdownAsync(CancellationToken cancellationToken)
+    protected override void OnShutdown(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this}.ShutdownAsync");
-        return Task.CompletedTask;
+        Console.WriteLine($"{this}.OnShutdown");
     }
 }

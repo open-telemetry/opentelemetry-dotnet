@@ -130,7 +130,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
             shutdownSignal.Dispose();
-            Assert.Equal(3, activityProcessor.Invocations.Count);
+            Assert.Equal(4, activityProcessor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             shutdownSignal.Dispose();
 
-            Assert.Single(activityProcessor.Invocations);
+            Assert.Equal(2, activityProcessor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             fakeSqlEventSource.WriteEndExecuteEvent("arg1", "arg2", "arg3", "arg4");
             shutdownSignal.Dispose();
 
-            Assert.Single(activityProcessor.Invocations);
+            Assert.Equal(2, activityProcessor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         private static void VerifyActivityData(

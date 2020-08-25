@@ -23,7 +23,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Grpc;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.activitySource = activitySource;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
             if (!(this.startContextFetcher.Fetch(payload) is HttpContext context))

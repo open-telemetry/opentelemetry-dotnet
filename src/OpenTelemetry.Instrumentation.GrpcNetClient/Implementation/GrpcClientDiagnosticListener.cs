@@ -18,7 +18,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Instrumentation.Grpc.Implementation
+namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {

@@ -41,35 +41,35 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
-            var spanProcessor = this.fixture.GrpcServerSpanProcessor;
+            var processor = this.fixture.GrpcServerSpanProcessor;
 
             var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
             var rs = client.SayHello(new HelloRequest());
 
-            WaitForProcessorInvocations(spanProcessor, 2);
+            WaitForProcessorInvocations(processor, 2);
 
-            Assert.Equal(2, spanProcessor.Invocations.Count); // begin and end was called
-            var span = (Activity)spanProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            Assert.Equal(ActivityKind.Server, span.Kind);
-            Assert.Equal("grpc", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
-            Assert.Contains(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
-            Assert.True(!string.IsNullOrEmpty(span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
-            Assert.Equal(Status.Ok, span.GetStatus());
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Contains(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
+            Assert.True(!string.IsNullOrEmpty(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
+            Assert.Equal(Status.Ok, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
-            Assert.Equal($"localhost:{this.fixture.Port}", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
-            Assert.Equal("POST", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
-            Assert.Equal("/greet.Greeter/SayHello", span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
-            Assert.StartsWith("grpc-dotnet", span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value);
+            Assert.Equal($"localhost:{this.fixture.Port}", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
+            Assert.Equal("POST", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
+            Assert.Equal("/greet.Greeter/SayHello", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
+            Assert.StartsWith("grpc-dotnet", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value);
 
             // This attribute is added by the gRPC for .NET library. There is a discussion of having the OpenTelemetry instrumentation remove it.
             // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/482#issuecomment-655753756
-            Assert.Equal($"0", span.Tags.FirstOrDefault(i => i.Key == "grpc.status_code").Value);
+            Assert.Equal($"0", activity.Tags.FirstOrDefault(i => i.Key == "grpc.status_code").Value);
         }
 
         private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)

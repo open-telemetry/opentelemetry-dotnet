@@ -24,6 +24,7 @@ using Opentelemetry.Proto.Common.V1;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;

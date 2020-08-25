@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
-using OpenTelemetry.Instrumentation.Grpc;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.GrpcClient.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public class GrpcTagHelperTests
     {

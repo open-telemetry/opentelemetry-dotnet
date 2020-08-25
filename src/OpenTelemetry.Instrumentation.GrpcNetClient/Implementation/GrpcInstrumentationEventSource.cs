@@ -16,7 +16,7 @@
 
 using System.Diagnostics.Tracing;
 
-namespace OpenTelemetry.Instrumentation.Grpc.Implementation
+namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     /// <summary>
     /// EventSource events emitted from the project.

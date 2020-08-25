@@ -233,7 +233,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
         {
-            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes.Attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, default, attributes?.Attributes));
             return this;
         }
 
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
         {
-            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes.Attributes));
+            this.Activity?.AddEvent(new ActivityEvent(name, timestamp, attributes?.Attributes));
             return this;
         }
 

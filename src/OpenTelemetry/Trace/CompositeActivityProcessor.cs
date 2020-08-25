@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -69,6 +68,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        /// <inheritdoc/>
         public override void OnEnd(Activity activity)
         {
             var cur = this.head;
@@ -80,6 +80,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
+        /// <inheritdoc/>
         public override void OnStart(Activity activity)
         {
             var cur = this.head;
@@ -91,32 +92,65 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public override Task ShutdownAsync(CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var cur = this.head;
-            var task = cur.Value.ShutdownAsync(cancellationToken);
 
-            for (cur = cur.Next; cur != null; cur = cur.Next)
+            var sw = Stopwatch.StartNew();
+
+            while (cur != null)
             {
-                var processor = cur.Value;
-                task = task.ContinueWith(t => processor.ShutdownAsync(cancellationToken));
+                if (timeoutMilliseconds == Timeout.Infinite)
+                {
+                    _ = cur.Value.ForceFlush(Timeout.Infinite);
+                }
+                else
+                {
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                    if (timeout <= 0)
+                    {
+                        return false;
+                    }
+
+                    var succeeded = cur.Value.ForceFlush((int)timeout);
+
+                    if (!succeeded)
+                    {
+                        return false;
+                    }
+                }
+
+                cur = cur.Next;
             }
 
-            return task;
+            return true;
         }
 
-        public override Task ForceFlushAsync(CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             var cur = this.head;
-            var task = cur.Value.ForceFlushAsync(cancellationToken);
 
-            for (cur = cur.Next; cur != null; cur = cur.Next)
+            var sw = Stopwatch.StartNew();
+
+            while (cur != null)
             {
-                var processor = cur.Value;
-                task = task.ContinueWith(t => processor.ForceFlushAsync(cancellationToken));
-            }
+                if (timeoutMilliseconds == Timeout.Infinite)
+                {
+                    cur.Value.Shutdown(Timeout.Infinite);
+                }
+                else
+                {
+                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-            return task;
+                    // notify all the processors, even if we run overtime
+                    cur.Value.Shutdown((int)Math.Max(timeout, 0));
+                }
+
+                cur = cur.Next;
+            }
         }
 
         protected override void Dispose(bool disposing)
