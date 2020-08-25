@@ -104,7 +104,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [Fact]
         public async Task ProfilerSessionsHandleMultipleSpans()
         {
-            var connectionOptions = new ConfigurationOptions {AbortOnConnectFail = false,};
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
             connectionOptions.EndPoints.Add("localhost:6379");
 
             var connection = ConnectionMultiplexer.Connect(connectionOptions);
