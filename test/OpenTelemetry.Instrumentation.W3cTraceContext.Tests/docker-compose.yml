@@ -1,0 +1,13 @@
+﻿# Start a container and then run OpenTelemetry W3C Trace Context tests.
+# This should be run from the root of the repo:
+#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build
+version: '3.1'
+
+services:
+  w3c_trace_context_tests:
+    build:
+      context: .
+      dockerfile: ./test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile
+    command: --filter CategoryName=W3CTraceContextTests
+    environment:
+      - OTEL_W3CTRACECONTEXT=enabled

@@ -36,7 +36,6 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         private readonly int port;
 
         private IWebHost hostingEngine;
-        private TracerProvider openTelemetrySdk;
 
         public InProcessServer(ITestOutputHelper output)
         {
@@ -49,7 +48,6 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         public void Dispose()
         {
             this.DisposeServer();
-            this.openTelemetrySdk?.Dispose();
         }
 
         private static string GetTimestamp()

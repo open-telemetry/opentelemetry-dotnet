@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -22,6 +23,12 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 {
     public class W3CTraceContextTests
     {
+        /*
+            To run the tests, invoke docker-compose.yml from the root of the repo:
+            opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build
+         */
+
+        private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
         private readonly ITestOutputHelper output;
 
         public W3CTraceContextTests(ITestOutputHelper output)
@@ -29,11 +36,12 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             this.output = output;
         }
 
-        [Fact]
-        public void W3CTraceContextTestSuite()
+        [Trait("CategoryName", "W3CTraceContextTests")]
+        [SkipUnlessEnvVarFoundTheory(W3cTraceContextEnvVarName)]
+        [InlineData("placeholder")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters", Justification = "Need to use SkipUnlessEnvVarFoundTheory")]
+        public void W3CTraceContextTestSuite(string value)
         {
-            RunCommand("git", "clone https://github.com/w3c/trace-context.git");
-
             // Arrange
             using (var server = new InProcessServer(this.output))
             {
@@ -46,9 +54,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 // TODO: fix W3C Trace Context test suite
                 // ASP NET Core 2.1: FAILED (failures=4, errors=7)
                 // ASP NET Core 3.1: FAILED (failures=6, errors=7)
-                // string lastLine = ParseLastLine(result);
-                // Assert.StartsWith("FAILED", lastLine);
-                this.output.WriteLine(result);
+                string lastLine = ParseLastLine(result);
+                this.output.WriteLine("result:" + result);
+                Assert.StartsWith("FAILED", lastLine);
             }
         }
 

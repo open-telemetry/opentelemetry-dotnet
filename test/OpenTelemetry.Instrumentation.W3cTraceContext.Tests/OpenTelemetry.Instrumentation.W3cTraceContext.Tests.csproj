@@ -31,4 +31,8 @@
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
+  </ItemGroup>
+
 </Project>
