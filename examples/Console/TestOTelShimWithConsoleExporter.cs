@@ -33,7 +33,7 @@ namespace Examples.Console
                     .Build();
 
             // The above line is required only in applications
-            // which decide to use Open Telemetry.
+            // which decide to use OpenTelemetry.
 
             var tracer = TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer");
             var span = tracer.StartSpan("parent span");
