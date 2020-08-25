@@ -7,14 +7,14 @@ labels: bug
 # Bug Report
 
 List of [NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and
-version that you are using:
+version that you are using (e.g. `OpenTelemetry 0.4.0-beta.2`):
 
-* `OpenTelemetry 0.4.0-beta.2`
+*
 
-Runtime version (e.g. net461, net48, netcoreapp2.1, netcoreapp3.1, etc. You can
-find this information from the `*.csproj` file):
+Runtime version (e.g. `net461`, `net48`, `netcoreapp2.1`, `netcoreapp3.1`, etc.
+You can find this information from the `*.csproj` file):
 
-* `netcoreapp3.1`
+*
 
 ## Symptom
 
