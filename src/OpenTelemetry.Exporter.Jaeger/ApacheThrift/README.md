@@ -1,4 +1,4 @@
-# Open Telemetry - Jaeger Exporter - Apache Thrift
+# OpenTelemetry - Jaeger Exporter - Apache Thrift
 
 This folder contains a stripped-down fork of the [ApacheThrift
 0.13.0.1](https://www.nuget.org/packages/ApacheThrift/0.13.0.1) library from
