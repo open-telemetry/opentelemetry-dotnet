@@ -1,22 +1,26 @@
 # Building your own Exporter
 
-* To export telemetry to a specific destination, custom exporters must be
-  written.
-* Exporters should inherit from `ActivityExporter` and implement `Export` and
-  `Shutdown` methods. `ActivityExporter` is part of the [OpenTelemetry
-  Package](https://www.nuget.org/packages/opentelemetry).
+Custom exporters can be implemented to send telemetry data to places which are
+not covered by the built-in exporters.
+
+Here is the guidance for writing a custom exporter:
+
+* Exporters should derive from `ActivityExporter` (which belongs to the
+  [OpenTelemetry](https://www.nuget.org/packages/opentelemetry) package) and
+  implement `Export` method.
+* Exporters can optionally implement `OnShutdown`.
 * Depending on user's choice and load on the application, `Export` may get
-  called with zero or more activities.
+  called with one or more activities.
 * Exporters will only receive sampled-in and ended activities.
-* Exporters must not throw.
+* Exporters should not throw exceptions.
 * Exporters should not modify activities they receive (the same activity may be
   exported again by different exporter).
-* Any retry logic that is required by the exporter is the responsibility of the
-  exporter, as the SDK does not implement retry logic.
+* Exporters are responsible for any retry logic needed by the scenario. The SDK
+  does not implement any retry logic.
 
 ## Example
 
-A sample exporter, which simply writes activity name to the console is shown
+A demo exporter which simply writes activity name to the console is shown
 [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
