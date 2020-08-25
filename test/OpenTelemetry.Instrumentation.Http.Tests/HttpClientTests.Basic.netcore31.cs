@@ -298,7 +298,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count);
+            Assert.Equal(4, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
