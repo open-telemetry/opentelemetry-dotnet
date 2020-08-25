@@ -388,7 +388,7 @@ namespace OpenTelemetry.Trace
         {
             if (this.IsRecording)
             {
-                this.Activity?.SetTag(key, value);
+                this.Activity.SetTag(key, value);
             }
         }
 
@@ -396,7 +396,7 @@ namespace OpenTelemetry.Trace
         {
             if (this.IsRecording)
             {
-                this.Activity?.AddEvent(new ActivityEvent(name, timestamp, tags));
+                this.Activity.AddEvent(new ActivityEvent(name, timestamp, tags));
             }
         }
     }
