@@ -137,17 +137,16 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The object should not be disposed")]
-        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
+        private async Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             var requestUri = this.options.Endpoint;
 
-            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
                 Content = new JsonContent(this, batchActivity),
             };
 
-            return this.httpClient.SendAsync(request, cancellationToken);
+            await this.httpClient.SendAsync(request, cancellationToken);
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()
