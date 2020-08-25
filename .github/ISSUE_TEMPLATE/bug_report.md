@@ -20,9 +20,13 @@ find this information from the `*.csproj` file):
 
 A clear and concise description of what the bug is.
 
-**The expected behavior:** what did you expect to see?
+**What is the expected behavior?**
 
-**The actual behavior:** what did you see instead?
+What did you expect to see?
+
+**What is the actual behavior?**
+
+What did you see instead?
 
 ## Reproduce
 
