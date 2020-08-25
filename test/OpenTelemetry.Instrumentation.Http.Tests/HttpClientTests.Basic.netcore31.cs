@@ -250,31 +250,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
-        [Fact]
-        public async Task HttpClientInstrumentationFiltersOutRequestsToExporterEndpoints()
-        {
-            var processor = new Mock<ActivityProcessor>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation()
-                               .AddProcessor(processor.Object)
-                               .Build())
-            {
-                using var c = new HttpClient();
-                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-                try
-                {
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
-                }
-                catch
-                {
-                    // ignore all, whatever response is, we don't want anything tracked
-                }
-            }
-
-            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
-        }
-
         public void Dispose()
         {
             this.serverLifeTime?.Dispose();

@@ -47,14 +47,6 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal bool EventFilter(HttpWebRequest request)
         {
-            Uri requestUri;
-            if (request.Method == "POST"
-                && (requestUri = request.RequestUri) != null
-                && HttpClientInstrumentationOptions.IsInternalUrl(requestUri))
-            {
-                return false;
-            }
-
             return this.FilterFunc?.Invoke(request) ?? true;
         }
     }

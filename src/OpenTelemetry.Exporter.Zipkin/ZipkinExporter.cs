@@ -59,6 +59,9 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
+            // Prevent Zipkin's HTTP operations from being instrumented.
+            using var scope = SuppressInstrumentationScope.Begin();
+
             try
             {
                 // take a snapshot of the batch
