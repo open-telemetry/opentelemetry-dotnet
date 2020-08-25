@@ -122,16 +122,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var activity = source.StartActivity("Test Zipkin Activity");
             activity?.Stop();
 
-            // This test currently uses the BatchExportActivityProcessor, so we
-            // call ForceFlush on the exporter.
-            // Ideally, once the Zipkin exporter is able to be configured with
-            // the SimpleExportActivityProcessor the test could use that and
-            // this ForceFlush would not be needed.
-            // Simply using the SimpleExportActivityProcessor in this test does
-            // not work at the moment because doing so causes deadlock in the
-            // exporter as it uses .GetAwaiter().GetResult() to make the HTTP
-            // call synchronously.
-            exportActivityProcessor.ForceFlush(5000);
+            // We call ForceFlush on the exporter twice, so that in the event
+            // of a regression, this should give any operations performed in
+            // the Zipkin exporter itself enough time to be instrumented and
+            // loop back through the exporter.
+            exportActivityProcessor.ForceFlush();
+            exportActivityProcessor.ForceFlush();
 
             Assert.Equal(1, endCalledCount);
         }
