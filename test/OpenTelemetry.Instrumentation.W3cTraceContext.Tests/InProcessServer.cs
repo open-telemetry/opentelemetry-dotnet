@@ -66,7 +66,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 .UseEnvironment("Production");
             builder.ConfigureServices(services =>
             {
-                services.AddOpenTelemetry((builder) => builder
+                services.AddOpenTelemetryTracerProvider((builder) => builder
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation());
             });
