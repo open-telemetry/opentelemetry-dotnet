@@ -54,16 +54,6 @@ namespace OpenTelemetry.Instrumentation.Http
                 return true;
             }
 
-            // applicationinsights
-            if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                originalString.StartsWith("https://rt.services.visualstudio") ||
-                originalString.StartsWith("https://dc.applicationinsights") ||
-                originalString.StartsWith("https://live.applicationinsights") ||
-                originalString.StartsWith("https://quickpulse.applicationinsights"))
-            {
-                return true;
-            }
-
             return false;
         }
 
