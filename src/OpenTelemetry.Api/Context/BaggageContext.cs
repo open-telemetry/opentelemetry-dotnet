@@ -72,7 +72,7 @@ namespace OpenTelemetry.Context
         /// </summary>
         /// <param name="baggage">Key/value pairs.</param>
         /// <returns><see cref="BaggageContext"/>.</returns>
-        public static BaggageContext Create(Dictionary<string, string> baggage)
+        public static BaggageContext Create(Dictionary<string, string> baggage = null)
         {
             if (baggage == null)
             {
@@ -80,10 +80,11 @@ namespace OpenTelemetry.Context
             }
 
             Dictionary<string, string> baggageCopy = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (KeyValuePair<string, string> baggageItem in baggageCopy)
+            foreach (KeyValuePair<string, string> baggageItem in baggage)
             {
                 if (string.IsNullOrEmpty(baggageItem.Value))
                 {
+                    baggageCopy.Remove(baggageItem.Key);
                     continue;
                 }
 
@@ -265,14 +266,14 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         public bool Equals(BaggageContext other)
         {
-            bool baggageIsNull = this.baggage == null;
+            bool baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
 
-            if (baggageIsNull != (other.baggage == null))
+            if (baggageIsNullOrEmpty != (other.baggage == null || other.baggage.Count <= 0))
             {
                 return false;
             }
 
-            return baggageIsNull || this.baggage.SequenceEqual(other.baggage);
+            return baggageIsNullOrEmpty || this.baggage.SequenceEqual(other.baggage);
         }
 
         /// <inheritdoc/>

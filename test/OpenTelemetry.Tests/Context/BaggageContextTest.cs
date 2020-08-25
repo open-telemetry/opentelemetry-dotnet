@@ -50,7 +50,7 @@ namespace OpenTelemetry.Context.Tests
             BaggageContext.Current.SetBaggage(K2, V2);
 
             Assert.NotEmpty(BaggageContext.GetBaggage());
-            Assert.Equal(list, BaggageContext.GetBaggage());
+            Assert.Equal(list, BaggageContext.GetBaggage(BaggageContext.Current));
 
             Assert.Equal(V1, BaggageContext.GetBaggage(K1));
             Assert.Equal(V1, BaggageContext.GetBaggage(K1.ToLower()));
@@ -69,8 +69,9 @@ namespace OpenTelemetry.Context.Tests
                 new KeyValuePair<string, string>(K1, V1),
             };
 
-            BaggageContext.Current.SetBaggage(K1, V1);
-            BaggageContext.SetBaggage(K1, V1);
+            BaggageContext.Current.SetBaggage(new KeyValuePair<string, string>(K1, V1));
+            var baggage = BaggageContext.SetBaggage(K1, V1);
+            BaggageContext.SetBaggage(new Dictionary<string, string> { [K1] = V1 }, baggage);
 
             Assert.Equal(list, BaggageContext.GetBaggage());
         }
@@ -78,20 +79,35 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public void AddNullValueTest()
         {
-            BaggageContext.Current.SetBaggage(K1, V1);
+            var baggage = BaggageContext.Current;
+            baggage = BaggageContext.SetBaggage(K1, V1, baggage);
 
             Assert.Equal(1, BaggageContext.Current.Count);
+            Assert.Equal(1, baggage.Count);
 
             BaggageContext.Current.SetBaggage(K2, null);
 
             Assert.Equal(1, BaggageContext.Current.Count);
 
             Assert.Empty(BaggageContext.SetBaggage(K1, null).GetBaggage());
+
+            BaggageContext.SetBaggage(K1, V1);
+            BaggageContext.SetBaggage(new Dictionary<string, string>
+            {
+                [K1] = null,
+                [K2] = V2,
+            });
+            Assert.Equal(1, BaggageContext.Current.Count);
+            Assert.Contains(BaggageContext.GetBaggage(), kvp => kvp.Key == K2);
         }
 
         [Fact]
         public void RemoveTest()
         {
+            var empty = BaggageContext.Current;
+            var empty2 = BaggageContext.RemoveBaggage(K1);
+            Assert.True(empty == empty2);
+
             var context = BaggageContext.SetBaggage(new Dictionary<string, string>
             {
                 [K1] = V1,
@@ -99,7 +115,7 @@ namespace OpenTelemetry.Context.Tests
                 [K3] = V3,
             });
 
-            var context2 = BaggageContext.RemoveBaggage(K1);
+            var context2 = BaggageContext.RemoveBaggage(K1, context);
 
             Assert.Equal(3, context.Count);
             Assert.Equal(2, context2.Count);
@@ -152,10 +168,10 @@ namespace OpenTelemetry.Context.Tests
                 new KeyValuePair<string, string>(K2, V2),
             };
 
-            BaggageContext.SetBaggage(K1, V1);
-            BaggageContext.SetBaggage(K2, V2);
+            var baggage = BaggageContext.SetBaggage(K1, V1);
+            baggage = BaggageContext.SetBaggage(K2, V2, baggage);
 
-            var enumerator = BaggageContext.GetEnumerator();
+            var enumerator = BaggageContext.GetEnumerator(baggage);
 
             Assert.True(enumerator.MoveNext());
             var tag1 = enumerator.Current;
@@ -164,6 +180,12 @@ namespace OpenTelemetry.Context.Tests
             Assert.False(enumerator.MoveNext());
 
             Assert.Equal(list, new List<KeyValuePair<string, string>> { tag1, tag2 });
+
+            BaggageContext.ClearBaggage();
+
+            enumerator = BaggageContext.GetEnumerator();
+
+            Assert.False(enumerator.MoveNext());
         }
 
         [Fact]
@@ -183,6 +205,52 @@ namespace OpenTelemetry.Context.Tests
             Assert.False(bc3.Equals(bc4));
             Assert.False(bc5.Equals(bc4));
             Assert.False(bc4.Equals(bc5));
+        }
+
+        [Fact]
+        public void CreateBaggageTest()
+        {
+            var baggage = BaggageContext.Create(null);
+
+            Assert.Equal(default, baggage);
+
+            baggage = BaggageContext.Create(new Dictionary<string, string>
+            {
+                [K1] = V1,
+                ["key2"] = "value2",
+                ["KEY2"] = "VALUE2",
+                ["KEY3"] = "VALUE3",
+                ["Key3"] = null,
+            });
+
+            Assert.Equal(2, baggage.Count);
+            Assert.Contains(baggage.GetBaggage(), kvp => kvp.Key == K1);
+            Assert.Equal("VALUE2", BaggageContext.GetBaggage("key2", baggage));
+        }
+
+        [Fact]
+        public void EqualityTests()
+        {
+            var emptyBaggage = BaggageContext.Create(null);
+
+            var baggage = BaggageContext.SetBaggage(K1, V1);
+
+            Assert.NotEqual(emptyBaggage, baggage);
+
+            Assert.True(emptyBaggage != baggage);
+
+            baggage = BaggageContext.ClearBaggage(baggage);
+
+            Assert.Equal(emptyBaggage, baggage);
+
+            baggage = BaggageContext.SetBaggage(K1, V1);
+
+            var baggage2 = BaggageContext.SetBaggage(null);
+
+            Assert.Equal(baggage, baggage2);
+
+            Assert.False(baggage.Equals(this));
+            Assert.True(baggage.Equals((object)baggage2));
         }
     }
 }
