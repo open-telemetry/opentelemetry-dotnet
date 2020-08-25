@@ -66,7 +66,7 @@ namespace OpenTelemetry.Trace
         /// This function guarantees thread-safety. Only the first call will
         /// win, subsequent calls will be no-op.
         /// </remarks>
-        public virtual void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        public void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {

@@ -36,7 +36,7 @@ namespace Examples.Console
                 .Build();
 
             // The above line is required only in applications
-            // which decide to use Open Telemetry.
+            // which decide to use OpenTelemetry.
 
             // Libraries would simply write the following lines of code to
             // emit activities, which are the .NET representation of OpenTelemetry Spans.
