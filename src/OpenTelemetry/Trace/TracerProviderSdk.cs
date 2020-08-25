@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
-                    if (activity.IsAllDataRequested)
+                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
                     {
                         activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    if (activity.IsAllDataRequested)
+                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
                     {
                         this.processor?.OnEnd(activity);
                     }
