@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
 #if NET452
 using Newtonsoft.Json;
 #else
-using System.Globalization;
 using System.Text.Json;
-using System.Threading;
 #endif
 using OpenTelemetry.Internal;
 
@@ -191,11 +192,34 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
 
+                // this will be used when we convert int, double, int[], double[] to string
+                var originalUICulture = Thread.CurrentThread.CurrentUICulture;
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
                 foreach (var tag in this.Tags.Value)
                 {
                     writer.WritePropertyName(tag.Key);
-                    writer.WriteValue(tag.Value);
+                    switch (tag.Value)
+                    {
+                        case string stringVal:
+                            writer.WriteValue(stringVal);
+                            break;
+                        case int[] intArrayValue:
+                            writer.WriteValue(string.Join(",", intArrayValue));
+                            break;
+                        case double[] doubleArrayValue:
+                            writer.WriteValue(string.Join(",", doubleArrayValue));
+                            break;
+                        case bool[] boolArrayValue:
+                            writer.WriteValue(string.Join(",", boolArrayValue));
+                            break;
+                        default:
+                            writer.WriteValue(tag.Value.ToString());
+                            break;
+                    }
                 }
+
+                Thread.CurrentThread.CurrentUICulture = originalUICulture;
 
                 writer.WriteEndObject();
             }

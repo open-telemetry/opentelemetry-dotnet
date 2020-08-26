@@ -229,7 +229,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
+                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value))
                     : null;
             var links = addLinks ?
                     new[]
