@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http;
 using OpenTelemetry.Trace;
 
@@ -74,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString());
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString(CultureInfo.InvariantCulture));
             }
         }
 

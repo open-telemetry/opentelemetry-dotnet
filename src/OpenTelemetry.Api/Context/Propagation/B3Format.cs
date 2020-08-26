@@ -180,8 +180,8 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
-                if (SampledValue.Equals(getter(carrier, XB3Sampled)?.FirstOrDefault())
-                    || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault()))
+                if (SampledValue.Equals(getter(carrier, XB3Sampled)?.FirstOrDefault(), StringComparison.Ordinal)
+                    || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
                 {
                     traceOptions |= ActivityTraceFlags.Recorded;
                 }
@@ -239,8 +239,8 @@ namespace OpenTelemetry.Context.Propagation
                 if (parts.Length > 2)
                 {
                     var traceFlagsStr = parts[2];
-                    if (SampledValue.Equals(traceFlagsStr)
-                        || FlagsValue.Equals(traceFlagsStr))
+                    if (SampledValue.Equals(traceFlagsStr, StringComparison.Ordinal)
+                        || FlagsValue.Equals(traceFlagsStr, StringComparison.Ordinal))
                     {
                         traceOptions |= ActivityTraceFlags.Recorded;
                     }

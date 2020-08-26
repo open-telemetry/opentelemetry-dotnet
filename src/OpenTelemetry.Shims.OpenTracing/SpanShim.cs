@@ -205,7 +205,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             // Special case the OpenTracing Error Tag
             // see https://opentracing.io/specification/conventions/
-            if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
+            if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
             {
                 this.Span.SetStatus(value ? Trace.Status.Unknown : Trace.Status.Ok);
             }
@@ -294,7 +294,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     continue;
                 }
 
-                if (eventName == null && field.Key.Equals(LogFields.Event) && field.Value is string value)
+                if (eventName == null && field.Key.Equals(LogFields.Event, StringComparison.Ordinal) && field.Value is string value)
                 {
                     // This is meant to be the event name
                     eventName = value;
