@@ -90,7 +90,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true),
-                    context.BaggageContext);
+                    context.Baggage);
             }
             catch (Exception ex)
             {

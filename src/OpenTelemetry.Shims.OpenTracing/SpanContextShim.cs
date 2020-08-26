@@ -27,7 +27,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!spanContext.IsValid)
             {
-                throw new ArgumentException($"{nameof(spanContext)} must be valid.");
+                throw new ArgumentException(nameof(spanContext));
             }
 
             this.SpanContext = spanContext;
@@ -42,6 +42,6 @@ namespace OpenTelemetry.Shims.OpenTracing
         public string SpanId => this.SpanContext.SpanId.ToString();
 
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
-            => BaggageContext.GetBaggage();
+            => Baggage.GetBaggage();
     }
 }

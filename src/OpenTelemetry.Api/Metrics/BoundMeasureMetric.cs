@@ -36,8 +36,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Record the given value to the bound measure metric.
         /// </summary>
-        /// <param name="context">the associated <see cref="BaggageContext"/>.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">the measurement to be recorded.</param>
-        public abstract void Record(in BaggageContext context, T value);
+        public abstract void Record(in Baggage context, T value);
     }
 }

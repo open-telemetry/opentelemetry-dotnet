@@ -28,11 +28,11 @@ namespace OpenTelemetry.Context.Propagation
         /// Initializes a new instance of the <see cref="PropagationContext"/> struct.
         /// </summary>
         /// <param name="activityContext"><see cref="System.Diagnostics.ActivityContext"/>.</param>
-        /// <param name="baggageContext"><see cref="Context.BaggageContext"/>.</param>
-        public PropagationContext(ActivityContext activityContext, BaggageContext baggageContext)
+        /// <param name="baggage"><see cref="Baggage"/>.</param>
+        public PropagationContext(ActivityContext activityContext, Baggage baggage)
         {
             this.ActivityContext = activityContext;
-            this.BaggageContext = baggageContext;
+            this.Baggage = baggage;
         }
 
         /// <summary>
@@ -41,9 +41,9 @@ namespace OpenTelemetry.Context.Propagation
         public ActivityContext ActivityContext { get; }
 
         /// <summary>
-        /// Gets <see cref="Context.BaggageContext"/>.
+        /// Gets <see cref="Baggage"/>.
         /// </summary>
-        public BaggageContext BaggageContext { get; }
+        public Baggage Baggage { get; }
 
         /// <summary>
         /// Compare two entries of <see cref="PropagationContext"/> for equality.
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Context.Propagation
         public bool Equals(PropagationContext value)
         {
             return this.ActivityContext == value.ActivityContext
-                && this.BaggageContext == value.BaggageContext;
+                && this.Baggage == value.Baggage;
         }
 
         /// <inheritdoc/>
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Context.Propagation
         {
             var hashCode = 323591981;
             hashCode = (hashCode * -1521134295) + this.ActivityContext.GetHashCode();
-            hashCode = (hashCode * -1521134295) + this.BaggageContext.GetHashCode();
+            hashCode = (hashCode * -1521134295) + this.Baggage.GetHashCode();
             return hashCode;
         }
     }

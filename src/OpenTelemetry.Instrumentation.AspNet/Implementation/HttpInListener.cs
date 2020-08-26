@@ -87,9 +87,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.BaggageContext != default)
+                if (ctx.Baggage != default)
                 {
-                    BaggageContext.Current = ctx.BaggageContext;
+                    Baggage.Current = ctx.Baggage;
                 }
             }
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 // this instrumentation created in Start.
                 // This is because Asp.Net, under certain circumstances, restores Activity.Current
                 // to its own activity.
-                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start", StringComparison.Ordinal))
+                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (!(this.options.TextFormat is TraceContextFormat))
             {
-                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
                 {
                     // If instrumentation started a new Activity, it must
                     // be stopped here.

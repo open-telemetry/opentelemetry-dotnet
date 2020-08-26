@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -88,9 +87,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.BaggageContext != default)
+                if (ctx.Baggage != default)
                 {
-                    BaggageContext.Current = ctx.BaggageContext;
+                    Baggage.Current = ctx.Baggage;
                 }
             }
 
@@ -153,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
@@ -259,7 +258,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             activity.AddTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString(CultureInfo.InvariantCulture));
+            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }

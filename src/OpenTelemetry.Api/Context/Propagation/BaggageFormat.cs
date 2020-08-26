@@ -39,7 +39,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            if (context.BaggageContext != default)
+            if (context.Baggage != default)
             {
                 // If baggage has already been extracted, perform a noop.
                 return context;
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new PropagationContext(
                     context.ActivityContext,
-                    baggage == null ? context.BaggageContext : new BaggageContext(baggage));
+                    baggage == null ? context.Baggage : new Baggage(baggage));
             }
             catch (Exception ex)
             {
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Context.Propagation
                 return;
             }
 
-            using var e = context.BaggageContext.GetEnumerator();
+            using var e = context.Baggage.GetEnumerator();
 
             if (e.MoveNext() == true)
             {

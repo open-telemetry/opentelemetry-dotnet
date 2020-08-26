@@ -36,8 +36,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Adds the given value to the bound counter metric.
         /// </summary>
-        /// <param name="context">the associated <see cref="BaggageContext"/>.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value by which the bound counter metric should be added.</param>
-        public abstract void Add(in BaggageContext context, T value);
+        public abstract void Add(in Baggage context, T value);
     }
 }

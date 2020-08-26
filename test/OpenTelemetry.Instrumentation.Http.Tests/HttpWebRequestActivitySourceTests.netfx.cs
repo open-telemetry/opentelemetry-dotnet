@@ -387,7 +387,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 parent.TraceStateString = "some=state";
                 parent.Start();
 
-                BaggageContext.SetBaggage("k", "v");
+                Baggage.SetBaggage("k", "v");
 
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
@@ -694,7 +694,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task TestInvalidBaggage()
         {
-            BaggageContext
+            Baggage
                 .SetBaggage("key", "value")
                 .SetBaggage("bad/key", "value")
                 .SetBaggage("goodkey", "bad/value");

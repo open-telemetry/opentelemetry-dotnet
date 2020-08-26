@@ -46,18 +46,18 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Adds or Increments the counter.
         /// </summary>
-        /// <param name="context">the associated <see cref="BaggageContext"/>.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public abstract void Add(in BaggageContext context, T value, LabelSet labelset);
+        public abstract void Add(in Baggage context, T value, LabelSet labelset);
 
         /// <summary>
         /// Adds or Increments the counter.
         /// </summary>
-        /// <param name="context">the associated <see cref="BaggageContext"/>.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public abstract void Add(in BaggageContext context, T value, IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract void Add(in Baggage context, T value, IEnumerable<KeyValuePair<string, string>> labels);
 
         /// <summary>
         /// Gets the bound counter metric with given labelset.

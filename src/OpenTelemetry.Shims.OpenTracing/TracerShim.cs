@@ -85,9 +85,9 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             // TODO:
-            //  Not sure what to do here. Really, BaggageContext should be returned and not set until this ISpanContext is turned into a live Span.
+            //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanContext is turned into a live Span.
             //  But that code doesn't seem to exist.
-            // BaggageContext.Current = propagationContext.BaggageContext;
+            // Baggage.Current = propagationContext.Baggage;
 
             return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
         }
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
                 this.textFormat.Inject(
-                    new PropagationContext(shim.SpanContext, BaggageContext.Current),
+                    new PropagationContext(shim.SpanContext, Baggage.Current),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }

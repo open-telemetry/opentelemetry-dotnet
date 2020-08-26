@@ -74,7 +74,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         /// <inheritdoc/>
         public string GetBaggageItem(string key)
-            => BaggageContext.GetBaggage(key);
+            => Baggage.GetBaggage(key);
 
         /// <inheritdoc/>
         public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetBaggageItem(string key, string value)
         {
-            BaggageContext.SetBaggage(key, value);
+            Baggage.SetBaggage(key, value);
             return this;
         }
 

@@ -116,8 +116,8 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
 
             PropagationContext propagationContextActivityOnly = new PropagationContext(activityContext, default);
-            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, new BaggageContext(baggage));
-            PropagationContext propagationContextBoth = new PropagationContext(activityContext, new BaggageContext(baggage));
+            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, new Baggage(baggage));
+            PropagationContext propagationContextBoth = new PropagationContext(activityContext, new Baggage(baggage));
 
             var carrier = new Dictionary<string, string>();
             compositePropagator.Inject(propagationContextActivityOnly, carrier, Setter);

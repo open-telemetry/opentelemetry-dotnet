@@ -262,7 +262,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             parent.Start();
 
-            BaggageContext.SetBaggage("k2", "v2");
+            Baggage.SetBaggage("k2", "v2");
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
