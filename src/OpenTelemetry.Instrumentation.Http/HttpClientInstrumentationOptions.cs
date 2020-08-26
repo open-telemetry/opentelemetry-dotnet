@@ -45,6 +45,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
             return
