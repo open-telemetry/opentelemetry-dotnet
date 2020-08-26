@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -44,16 +45,16 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
-            if (TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage))
-            {
-                return this.FilterFunc?.Invoke(requestMessage) ?? true;
-            }
-
-            return true;
+            return
+                this.FilterFunc == null ||
+                !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
+                this.FilterFunc(requestMessage);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryParseHttpRequestMessage(string activityName, object arg1, out HttpRequestMessage requestMessage)
         {
             return (requestMessage = arg1 as HttpRequestMessage) != null && activityName == "System.Net.Http.HttpRequestOut";
