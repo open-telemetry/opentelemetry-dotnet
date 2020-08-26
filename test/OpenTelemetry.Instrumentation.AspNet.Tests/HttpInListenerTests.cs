@@ -185,21 +185,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 activity.Stop();
             }
 
-            if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
+            if (HttpContext.Current.Request.Path == filter)
             {
-                if (filter == "{ThrowException}")
-                {
-                    // This behavior is not good. If filter throws, Stop is called without Start.
-                    // Need to do something here, but user can't currently set the filter
-                    // so it wil always noop. When we support user filter,
-                    // treat this as a todo: define exception behavior.
-                    Assert.Equal(3, activityProcessor.Invocations.Count); // OnEnd/OnShutdown/Dispose called.
-                }
-                else
-                {
-                    Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
-                }
-
+                Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
                 return;
             }
 
