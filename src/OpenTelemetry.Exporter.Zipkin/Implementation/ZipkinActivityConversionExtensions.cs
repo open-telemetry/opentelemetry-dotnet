@@ -42,7 +42,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+
+#if !NET452
+        private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<(string, int), ZipkinEndpoint>();
+#else
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+#endif
 
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessTagsRef = ProcessTags;
         private static readonly ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessActivityEventsRef = ProcessActivityEvents;
@@ -101,16 +106,24 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 if ((attributeEnumerationState.RemoteEndpointServiceName == null || attributeEnumerationState.RemoteEndpointServiceNamePriority > 0)
                     && hostNameOrIpAddress != null)
                 {
+#if !NET452
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((hostNameOrIpAddress, attributeEnumerationState.Port), ZipkinEndpoint.Create);
+#else
                     var remoteEndpointStr = attributeEnumerationState.Port != default
                         ? $"{hostNameOrIpAddress}:{attributeEnumerationState.Port}"
                         : hostNameOrIpAddress;
 
                     remoteEndpoint = RemoteEndpointCache.GetOrAdd(remoteEndpointStr, ZipkinEndpoint.Create);
+#endif
                 }
 
                 if (remoteEndpoint == null && attributeEnumerationState.RemoteEndpointServiceName != null)
                 {
+#if !NET452
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((attributeEnumerationState.RemoteEndpointServiceName, default), ZipkinEndpoint.Create);
+#else
                     remoteEndpoint = RemoteEndpointCache.GetOrAdd(attributeEnumerationState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
+#endif
                 }
             }
 
