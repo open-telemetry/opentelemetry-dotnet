@@ -1,4 +1,4 @@
-﻿// <copyright file="BaggageFormat.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BaggagePropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// W3C baggage: https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md.
     /// </summary>
-    public class BaggageFormat : ITextFormat
+    public class BaggagePropagator : ITextFormat
     {
         internal const string BaggageHeaderName = "Baggage";
 
@@ -47,13 +47,13 @@ namespace OpenTelemetry.Context.Propagation
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggageFormat), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggagePropagator), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggageFormat), "null getter");
+                OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggagePropagator), "null getter");
                 return context;
             }
 
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception ex)
             {
-                OpenTelemetryApiEventSource.Log.BaggageExtractException(nameof(BaggageFormat), ex);
+                OpenTelemetryApiEventSource.Log.BaggageExtractException(nameof(BaggagePropagator), ex);
             }
 
             return context;
@@ -83,13 +83,13 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggageFormat), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggagePropagator), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggageFormat), "null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectBaggage(nameof(BaggagePropagator), "null setter");
                 return;
             }
 

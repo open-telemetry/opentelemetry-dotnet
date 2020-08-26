@@ -108,8 +108,8 @@ namespace OpenTelemetry.Context.Propagation.Tests
         {
             var compositePropagator = new CompositePropagator(new List<ITextFormat>
             {
-                new TraceContextFormat(),
-                new BaggageFormat(),
+                new TextMapPropagator(),
+                new BaggagePropagator(),
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
