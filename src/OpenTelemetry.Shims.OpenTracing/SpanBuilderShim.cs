@@ -218,7 +218,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         public ISpanBuilder WithTag(string key, string value)
         {
             // see https://opentracing.io/specification/conventions/ for special key handling.
-            if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key))
+            if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key, StringComparison.Ordinal))
             {
                 this.spanKind = value switch
                 {
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     _ => Trace.SpanKind.Internal,
                 };
             }
-            else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key) && bool.TryParse(value, out var booleanValue))
+            else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal) && bool.TryParse(value, out var booleanValue))
             {
                 this.error = booleanValue;
             }
@@ -249,7 +249,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(string key, bool value)
         {
-            if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key))
+            if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
             {
                 this.error = value;
             }

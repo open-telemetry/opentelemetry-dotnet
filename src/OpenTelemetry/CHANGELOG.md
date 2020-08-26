@@ -34,6 +34,8 @@
   [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127)
   [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129)
   [#1135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1135))
+* Renamed `ParentOrElseSampler` to `ParentBasedSampler`
+  ([#1173](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1173))
 
 ## 0.4.0-beta.2
 
