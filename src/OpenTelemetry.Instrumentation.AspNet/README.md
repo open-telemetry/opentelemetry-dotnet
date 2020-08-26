@@ -38,24 +38,23 @@ Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
     ```csharp
     public class WebApiApplication : HttpApplication
     {
-        private TracerFactory tracerFactory;
+        private TracerFactory tracerProvider;
         protected void Application_Start()
         {
-            this.tracerFactory = TracerFactory.Create(builder =>
-            {
-                builder
-                    .UseJaeger(c =>
-                    {
-                        c.AgentHost = "localhost";
-                        c.AgentPort = 6831;
-                    })
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
-            });
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                 .AddHttpClientInstrumentation()
+                 .AddAspNetInstrumentation()
+                 .AddJaegerExporter(jaegerOptions =>
+                 {
+                     jaegerOptions.AgentHost = "localhost";
+                     jaegerOptions.AgentPort = 6831;
+                 })
+                 .Build();
         }
+
         protected void Application_End()
         {
-            this.tracerFactory?.Dispose();
+            this.tracerProvider?.Dispose();
         }
     }
     ```
