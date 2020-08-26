@@ -196,30 +196,35 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 var originalUICulture = Thread.CurrentThread.CurrentUICulture;
                 Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-                foreach (var tag in this.Tags.Value)
+                try
                 {
-                    writer.WritePropertyName(tag.Key);
-                    switch (tag.Value)
+                    foreach (var tag in this.Tags.Value)
                     {
-                        case string stringVal:
-                            writer.WriteValue(stringVal);
-                            break;
-                        case int[] intArrayValue:
-                            writer.WriteValue(string.Join(",", intArrayValue));
-                            break;
-                        case double[] doubleArrayValue:
-                            writer.WriteValue(string.Join(",", doubleArrayValue));
-                            break;
-                        case bool[] boolArrayValue:
-                            writer.WriteValue(string.Join(",", boolArrayValue));
-                            break;
-                        default:
-                            writer.WriteValue(tag.Value.ToString());
-                            break;
+                        writer.WritePropertyName(tag.Key);
+                        switch (tag.Value)
+                        {
+                            case string stringVal:
+                                writer.WriteValue(stringVal);
+                                break;
+                            case int[] intArrayValue:
+                                writer.WriteValue(string.Join(",", intArrayValue));
+                                break;
+                            case double[] doubleArrayValue:
+                                writer.WriteValue(string.Join(",", doubleArrayValue));
+                                break;
+                            case bool[] boolArrayValue:
+                                writer.WriteValue(string.Join(",", boolArrayValue));
+                                break;
+                            default:
+                                writer.WriteValue(tag.Value.ToString());
+                                break;
+                        }
                     }
                 }
-
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                finally
+                {
+                    Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                }
 
                 writer.WriteEndObject();
             }
@@ -310,29 +315,34 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 var originalUICulture = Thread.CurrentThread.CurrentUICulture;
                 Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-                foreach (var tag in this.Tags.Value)
+                try
                 {
-                    switch (tag.Value)
+                    foreach (var tag in this.Tags.Value)
                     {
-                        case string stringVal:
-                            writer.WriteString(tag.Key, stringVal);
-                            break;
-                        case int[] intArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", intArrayValue));
-                            break;
-                        case double[] doubleArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", doubleArrayValue));
-                            break;
-                        case bool[] boolArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
-                            break;
-                        default:
-                            writer.WriteString(tag.Key, tag.Value.ToString());
-                            break;
+                        switch (tag.Value)
+                        {
+                            case string stringVal:
+                                writer.WriteString(tag.Key, stringVal);
+                                break;
+                            case int[] intArrayValue:
+                                writer.WriteString(tag.Key, string.Join(",", intArrayValue));
+                                break;
+                            case double[] doubleArrayValue:
+                                writer.WriteString(tag.Key, string.Join(",", doubleArrayValue));
+                                break;
+                            case bool[] boolArrayValue:
+                                writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
+                                break;
+                            default:
+                                writer.WriteString(tag.Key, tag.Value.ToString());
+                                break;
+                        }
                     }
                 }
-
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                finally
+                {
+                    Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                }
 
                 writer.WriteEndObject();
             }
