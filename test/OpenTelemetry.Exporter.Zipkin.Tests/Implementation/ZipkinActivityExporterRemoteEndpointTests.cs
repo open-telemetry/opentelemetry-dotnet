@@ -59,7 +59,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
+            var activity = ZipkinExporterTests.CreateTestActivity(
+                additionalAttributes: testCase.RemoteEndpointAttributes,
+                convertAttributeValuesToString: false);
 
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);

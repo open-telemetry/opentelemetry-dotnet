@@ -177,6 +177,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         internal static Activity CreateTestActivity(
            bool setAttributes = true,
            Dictionary<string, object> additionalAttributes = null,
+           bool convertAttributeValuesToString = true,
            bool addEvents = true,
            bool addLinks = true,
            Resource resource = null,
@@ -228,9 +229,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
-            var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
-                    : null;
+            IEnumerable<KeyValuePair<string, object>> tags = null;
+            if (setAttributes)
+            {
+                tags = convertAttributeValuesToString
+                    ? attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
+                    : attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value));
+            }
+
             var links = addLinks ?
                     new[]
                     {
