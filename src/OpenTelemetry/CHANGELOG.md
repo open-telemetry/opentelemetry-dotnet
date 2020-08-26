@@ -34,6 +34,8 @@
   [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127)
   [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129)
   [#1135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1135))
+* Renamed `ProbabilitySampler` to `TraceIdRatioBasedSampler`
+  ([#1174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1174))
 
 ## 0.4.0-beta.2
 
