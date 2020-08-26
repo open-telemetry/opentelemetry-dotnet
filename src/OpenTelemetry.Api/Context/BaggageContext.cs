@@ -21,8 +21,11 @@ using System.Linq;
 namespace OpenTelemetry.Context
 {
     /// <summary>
-    /// Baggage context.
+    /// Baggage implementation.
     /// </summary>
+    /// <remarks>
+    /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md">Baggage API</a>.
+    /// </remarks>
     public readonly struct BaggageContext : IEquatable<BaggageContext>
     {
         private static readonly RuntimeContextSlot<BaggageContext> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageContext>("otel.baggage_context");
