@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -44,48 +45,16 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
 
-        internal static bool IsInternalUrl(Uri requestUri)
-        {
-            var originalString = requestUri.OriginalString;
-
-            // zipkin
-            if (originalString.Contains(":9411/api/v2/spans"))
-            {
-                return true;
-            }
-
-            // applicationinsights
-            if (originalString.StartsWith("https://dc.services.visualstudio") ||
-                originalString.StartsWith("https://rt.services.visualstudio") ||
-                originalString.StartsWith("https://dc.applicationinsights") ||
-                originalString.StartsWith("https://live.applicationinsights") ||
-                originalString.StartsWith("https://quickpulse.applicationinsights"))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
-            if (TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage))
-            {
-                Uri requestUri;
-                if (requestMessage.Method == HttpMethod.Post && (requestUri = requestMessage.RequestUri) != null)
-                {
-                    if (IsInternalUrl(requestUri))
-                    {
-                        return false;
-                    }
-                }
-
-                return this.FilterFunc?.Invoke(requestMessage) ?? true;
-            }
-
-            return true;
+            return
+                this.FilterFunc == null ||
+                !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
+                this.FilterFunc(requestMessage);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryParseHttpRequestMessage(string activityName, object arg1, out HttpRequestMessage requestMessage)
         {
             return (requestMessage = arg1 as HttpRequestMessage) != null && activityName == "System.Net.Http.HttpRequestOut";

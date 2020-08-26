@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
-            this.httpListener.Prefixes.Add(exporter.Options.Url);
+            this.httpListener.Prefixes.Add(exporter?.Options?.Url ?? throw new ArgumentNullException(nameof(exporter)));
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.ZPages
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew((Action)this.WorkerThread, TaskCreationOptions.LongRunning);
+                this.workerThread = Task.Factory.StartNew(this.WorkerThread, TaskCreationOptions.LongRunning);
             }
         }
 

@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
-                    if (activity.IsAllDataRequested)
+                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
                     {
                         activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    if (activity.IsAllDataRequested)
+                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
                     {
                         this.processor?.OnEnd(activity);
                     }
@@ -196,6 +196,9 @@ namespace OpenTelemetry.Trace
             }
 
             (this.sampler as IDisposable)?.Dispose();
+
+            // Wait for up to 5 seconds grace period
+            this.processor?.Shutdown(5000);
             this.processor?.Dispose();
 
             // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.

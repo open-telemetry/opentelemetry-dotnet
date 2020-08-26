@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            return this.labelSetEncoded.Equals(((LabelSetSdk)obj).labelSetEncoded);
+            return this.labelSetEncoded.Equals(((LabelSetSdk)obj).labelSetEncoded, StringComparison.Ordinal);
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SortAndDedup(IEnumerable<KeyValuePair<string, string>> labels)
@@ -74,7 +75,7 @@ namespace OpenTelemetry.Metrics
             dedupedList.Add(orderedList[dedupedListIndex]);
             for (int i = 1; i < orderedList.Count; i++)
             {
-                if (orderedList[i].Key.Equals(orderedList[i - 1].Key))
+                if (orderedList[i].Key.Equals(orderedList[i - 1].Key, StringComparison.Ordinal))
                 {
                     dedupedList[dedupedListIndex] = orderedList[i];
                 }

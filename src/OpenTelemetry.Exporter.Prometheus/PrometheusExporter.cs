@@ -22,7 +22,7 @@ using OpenTelemetry.Metrics.Export;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// Exporter of Open Telemetry metrics to Prometheus.
+    /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
     public class PrometheusExporter : MetricExporter
     {

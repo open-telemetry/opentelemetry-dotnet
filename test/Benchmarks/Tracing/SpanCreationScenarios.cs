@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace.Benchmarks
         public static TelemetrySpan CreateSpan_Propagate(Tracer tracer)
         {
             var span = tracer.StartSpan("span");
-            using (tracer.WithSpan(span))
+            using (Tracer.WithSpan(span))
             {
             }
 
@@ -59,10 +59,8 @@ namespace OpenTelemetry.Trace.Benchmarks
 
         public static TelemetrySpan CreateSpan_Active(Tracer tracer)
         {
-            using (var span = tracer.StartSpan("span"))
-            {
-                return span;
-            }
+            using var span = tracer.StartSpan("span");
+            return span;
         }
 
         public static TelemetrySpan CreateSpan_Active_GetCurrent(Tracer tracer)
@@ -71,7 +69,7 @@ namespace OpenTelemetry.Trace.Benchmarks
 
             using (tracer.StartSpan("span"))
             {
-                span = tracer.CurrentSpan;
+                span = Tracer.CurrentSpan;
             }
 
             return span;

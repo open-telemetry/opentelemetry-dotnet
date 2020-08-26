@@ -59,6 +59,9 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
+            // Prevent Zipkin's HTTP operations from being instrumented.
+            using var scope = SuppressInstrumentationScope.Begin();
+
             try
             {
                 // take a snapshot of the batch
@@ -137,16 +140,16 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        private Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
+        private async Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
         {
             var requestUri = this.options.Endpoint;
 
-            var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
                 Content = new JsonContent(this, batchActivity),
             };
 
-            return this.httpClient.SendAsync(request, cancellationToken);
+            await this.httpClient.SendAsync(request, cancellationToken);
         }
 
         private ZipkinEndpoint GetLocalZipkinEndpoint()

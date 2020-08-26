@@ -42,6 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.activitySource = activitySource;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
             var context = HttpContext.Current;
@@ -133,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 // this instrumentation created in Start.
                 // This is because Asp.Net, under certain circumstances, restores Activity.Current
                 // to its own activity.
-                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start", StringComparison.Ordinal))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
@@ -193,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (!(this.options.TextFormat is TraceContextFormat))
             {
-                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
                 {
                     // If instrumentation started a new Activity, it must
                     // be stopped here.

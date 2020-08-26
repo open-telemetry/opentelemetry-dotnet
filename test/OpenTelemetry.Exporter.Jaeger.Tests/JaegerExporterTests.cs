@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -31,41 +32,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddJaegerExporter());
-        }
-
-        [Fact]
-        public void UseJaegerExporterWithCustomActivityProcessor()
-        {
-            const string ActivitySourceName = "jaeger.test";
-            TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
-
-            bool startCalled = false;
-            bool endCalled = false;
-
-            testActivityProcessor.StartAction =
-                (a) =>
-                {
-                    startCalled = true;
-                };
-
-            testActivityProcessor.EndAction =
-                (a) =>
-                {
-                    endCalled = true;
-                };
-
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
-                .AddProcessor(testActivityProcessor)
-                .AddJaegerExporter()
-                .Build();
-
-            var source = new ActivitySource(ActivitySourceName);
-            var activity = source.StartActivity("Test Jaeger Activity");
-            activity?.Stop();
-
-            Assert.True(startCalled);
-            Assert.True(endCalled);
         }
 
         [Fact]

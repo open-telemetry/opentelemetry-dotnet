@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -94,13 +93,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             var cur = this.head;
 
             var sw = Stopwatch.StartNew();
@@ -109,7 +103,7 @@ namespace OpenTelemetry.Trace
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    var succeeded = cur.Value.ForceFlush(Timeout.Infinite);
+                    _ = cur.Value.ForceFlush(Timeout.Infinite);
                 }
                 else
                 {
@@ -135,13 +129,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             var cur = this.head;
 
             var sw = Stopwatch.StartNew();

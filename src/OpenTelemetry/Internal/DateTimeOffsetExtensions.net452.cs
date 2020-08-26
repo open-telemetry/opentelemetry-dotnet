@@ -15,6 +15,7 @@
 // </copyright>
 #if NET452
 using System;
+using System.Globalization;
 
 namespace OpenTelemetry.Internal
 {
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Internal
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(milliseconds),
-                    string.Format("milliseconds must be between {0} and {1}", MinMilliseconds, MaxMilliseconds));
+                    string.Format(CultureInfo.InvariantCulture, "milliseconds must be between {0} and {1}", MinMilliseconds, MaxMilliseconds));
             }
 
             long ticks = (milliseconds * TimeSpan.TicksPerMillisecond) + UnixEpochTicks;

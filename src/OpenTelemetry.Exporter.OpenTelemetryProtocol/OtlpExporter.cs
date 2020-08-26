@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Grpc.Core;
@@ -39,7 +40,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="options">Configuration options for the exporter.</param>
         public OtlpExporter(OtlpExporterOptions options)
         {
-            this.headers = options.Headers;
+            this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
             this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
             this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }

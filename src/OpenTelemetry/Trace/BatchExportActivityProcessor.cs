@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -25,9 +24,8 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
     /// </summary>
-    public class BatchExportActivityProcessor : ActivityProcessor
+    public class BatchExportActivityProcessor : BaseExportActivityProcessor
     {
-        private readonly ActivityExporter exporter;
         private readonly CircularBuffer<Activity> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -37,11 +35,10 @@ namespace OpenTelemetry.Trace
         private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
-        private bool disposed;
-        private long droppedCount = 0;
+        private long droppedCount;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class with custom settings.
+        /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class.
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">The maximum queue size. After the size is reached data are dropped. The default value is 2048.</param>
@@ -54,6 +51,7 @@ namespace OpenTelemetry.Trace
             int scheduledDelayMilliseconds = 5000,
             int exporterTimeoutMilliseconds = 30000,
             int maxExportBatchSize = 512)
+            : base(exporter)
         {
             if (maxQueueSize <= 0)
             {
@@ -75,7 +73,6 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
             }
 
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
             this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
@@ -89,37 +86,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> dropped (when the queue is full).
+        /// Gets the number of <see cref="Activity"/> objects dropped by the processor.
         /// </summary>
-        internal long DroppedCount
-        {
-            get
-            {
-                return this.droppedCount;
-            }
-        }
+        internal long DroppedCount => this.droppedCount;
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> received by the processor.
+        /// Gets the number of <see cref="Activity"/> objects received by the processor.
         /// </summary>
-        internal long ReceivedCount
-        {
-            get
-            {
-                return this.circularBuffer.AddedCount + this.DroppedCount;
-            }
-        }
+        internal long ReceivedCount => this.circularBuffer.AddedCount + this.DroppedCount;
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> processed by the underlying exporter.
+        /// Gets the number of <see cref="Activity"/> objects processed by the underlying exporter.
         /// </summary>
-        internal long ProcessedCount
-        {
-            get
-            {
-                return this.circularBuffer.RemovedCount;
-            }
-        }
+        internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
         /// <inheritdoc/>
         public override void OnEnd(Activity activity)
@@ -134,29 +113,13 @@ namespace OpenTelemetry.Trace
                 return; // enqueue succeeded
             }
 
-            // either queue is full or exceeded spin count, drop item on the floor
+            // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
         }
 
-        /// <summary>
-        /// Flushes the <see cref="Activity"/> currently in the queue, blocks
-        /// the current thread until flush completed, shutdown signaled or
-        /// timed out.
-        /// </summary>
-        /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
-        /// </param>
-        /// <returns>
-        /// Returns <c>true</c> when flush completed; otherwise, <c>false</c>.
-        /// </returns>
-        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        /// <inheritdoc/>
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             var tail = this.circularBuffer.RemovedCount;
             var head = this.circularBuffer.AddedCount;
 
@@ -210,54 +173,29 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <summary>
-        /// Attempts to drain the queue and shutdown the exporter, blocks the
-        /// current thread until shutdown completed or timed out.
-        /// </summary>
-        /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
-        /// </param>
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        /// <inheritdoc/>
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
-            }
-
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            if (timeoutMilliseconds != 0)
+            if (timeoutMilliseconds == Timeout.Infinite)
             {
-                this.exporterThread.Join(timeoutMilliseconds);
+                this.exporterThread.Join();
+                this.exporter.Shutdown();
+                return;
             }
-        }
 
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            if (disposing && !this.disposed)
+            if (timeoutMilliseconds == 0)
             {
-                // TODO: Dispose/Shutdown flow needs to be redesigned, currently it is convoluted.
-                this.Shutdown(this.exporterTimeoutMilliseconds);
-
-                try
-                {
-                    this.exporter.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-
-                this.disposed = true;
+                this.exporter.Shutdown(0);
+                return;
             }
+
+            var sw = Stopwatch.StartNew();
+            this.exporterThread.Join(timeoutMilliseconds);
+            var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+            this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 
         private void ExporterProc()

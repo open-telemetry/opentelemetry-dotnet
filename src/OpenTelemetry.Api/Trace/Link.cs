@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Link attributes.</param>
         public Link(in SpanContext spanContext, SpanAttributes attributes)
         {
-            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes.Attributes);
+            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes?.Attributes);
         }
 
         /// <summary>

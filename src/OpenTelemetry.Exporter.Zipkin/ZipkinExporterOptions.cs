@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <summary>
         /// Gets or sets the name of the service reporting telemetry.
         /// </summary>
-        public string ServiceName { get; set; } = "Open Telemetry Exporter";
+        public string ServiceName { get; set; } = "OpenTelemetry Exporter";
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.

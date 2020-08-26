@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Tests
     {
         public MeterProviderTests()
         {
-            MeterProvider.Default.Reset();
+            MeterProvider.Reset();
         }
 
         [Fact]
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         public void Dispose()
         {
-            MeterProvider.Default.Reset();
+            MeterProvider.Reset();
         }
     }
 }

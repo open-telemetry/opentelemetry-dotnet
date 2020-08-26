@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // start/end/dispose was called
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             ValidateHttpClientActivity(activity, true);
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(1, processor.Invocations.Count); // dispose
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -247,33 +247,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(1, processor.Invocations.Count);  // dispose
-        }
-
-        [Fact]
-        public async Task HttpClientInstrumentationFiltersOutRequestsToExporterEndpoints()
-        {
-            var processor = new Mock<ActivityProcessor>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation()
-                               .AddProcessor(processor.Object)
-                               .Build())
-            {
-                using var c = new HttpClient();
-                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-                try
-                {
-                    await c.PostAsync("https://dc.services.visualstudio.com/", new StringContent(string.Empty), cts.Token);
-                    await c.PostAsync("https://localhost:9411/api/v2/spans", new StringContent(string.Empty), cts.Token);
-                }
-                catch
-                {
-                    // ignore all, whatever response is, we don't want anything tracked
-                }
-            }
-
-            Assert.Equal(1, processor.Invocations.Count);  // dispose
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         public void Dispose()

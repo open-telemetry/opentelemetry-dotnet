@@ -20,12 +20,12 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporterOptions
     {
-        internal const string DefaultServiceName = "Open Telemetry Exporter";
+        internal const string DefaultServiceName = "OpenTelemetry Exporter";
 
         internal const int DefaultMaxPacketSize = 65000;
 
         /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. Default value: Open Telemetry Exporter.
+        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
         /// </summary>
         public string ServiceName { get; set; } = DefaultServiceName;
 

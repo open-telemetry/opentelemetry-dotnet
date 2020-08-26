@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests
@@ -53,13 +51,13 @@ namespace OpenTelemetry.Tests
             this.EndAction?.Invoke(span);
         }
 
-        public override bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             this.ForceFlushCalled = true;
             return true;
         }
 
-        public override void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        protected override void OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalled = true;
         }
