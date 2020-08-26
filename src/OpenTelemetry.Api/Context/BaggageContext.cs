@@ -282,6 +282,20 @@ namespace OpenTelemetry.Context
 
         /// <inheritdoc/>
         public override int GetHashCode()
-            => (this.baggage ?? EmptyBaggage).GetHashCode();
+        {
+            var baggage = this.baggage ?? EmptyBaggage;
+
+            unchecked
+            {
+                int res = 17;
+                foreach (var item in baggage)
+                {
+                    res = (res * 23) + baggage.Comparer.GetHashCode(item.Key);
+                    res = (res * 23) + item.Value.GetHashCode();
+                }
+
+                return res;
+            }
+        }
     }
 }

@@ -252,5 +252,22 @@ namespace OpenTelemetry.Context.Tests
             Assert.False(baggage.Equals(this));
             Assert.True(baggage.Equals((object)baggage2));
         }
+
+        [Fact]
+        public void GetHashCodeTests()
+        {
+            var baggage = BaggageContext.Current;
+            var emptyBaggage = BaggageContext.Create(null);
+
+            Assert.Equal(emptyBaggage.GetHashCode(), baggage.GetHashCode());
+
+            baggage = BaggageContext.SetBaggage(K1, V1, baggage);
+
+            Assert.NotEqual(emptyBaggage.GetHashCode(), baggage.GetHashCode());
+
+            var expectedBaggage = BaggageContext.Create(new Dictionary<string, string> { [K1] = V1 });
+
+            Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
+        }
     }
 }
