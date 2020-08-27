@@ -113,12 +113,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
         private static void CollectMetrics(UngroupedBatcher simpleProcessor, MetricExporter exporter)
         {
-            var meter = Sdk.CreateMeterProvider(mb =>
-            {
-                mb.SetMetricProcessor(simpleProcessor);
-                mb.SetMetricExporter(exporter);
-                mb.SetMetricPushInterval(TimeSpan.FromMilliseconds(MetricPushIntervalMsec));
-            }).GetMeter("library1");
+            var meter = Sdk.CreateMeterProviderBuilder()
+                .SetProcessor(simpleProcessor)
+                .SetExporter(exporter)
+                .SetPushInterval(TimeSpan.FromMilliseconds(MetricPushIntervalMsec))
+                .Build()
+                .GetMeter("library1");
 
             var testCounter = meter.CreateInt64Counter("testCounter");
             var testMeasure = meter.CreateInt64Measure("testMeasure");
