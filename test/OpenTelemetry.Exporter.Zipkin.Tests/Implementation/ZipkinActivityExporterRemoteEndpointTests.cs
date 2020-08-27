@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
@@ -53,23 +54,144 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
         }
 
-        [Fact]
-        public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolutionPriority()
+        [Theory]
+        [MemberData(nameof(RemoteEndpointPriorityTestCase.GetTestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
+        public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(
-                additionalAttributes: new Dictionary<string, object>
-                {
-                    ["http.host"] = "DiscardedRemoteServiceName",
-                    ["net.peer.name"] = "RemoteServiceName",
-                    ["peer.hostname"] = "DiscardedRemoteServiceName",
-                });
+            var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
 
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
 
             Assert.NotNull(zipkinSpan.RemoteEndpoint);
-            Assert.Equal("RemoteServiceName", zipkinSpan.RemoteEndpoint.ServiceName);
+            Assert.Equal(testCase.ExpectedResult, zipkinSpan.RemoteEndpoint.ServiceName);
+        }
+
+        public class RemoteEndpointPriorityTestCase
+        {
+            public string Name { get; set; }
+
+            public string ExpectedResult { get; set; }
+
+            public Dictionary<string, object> RemoteEndpointAttributes { get; set; }
+
+            public static IEnumerable<object[]> GetTestCases()
+            {
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Highest priority name = net.peer.name",
+                        ExpectedResult = "RemoteServiceName",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["http.host"] = "DiscardedRemoteServiceName",
+                            ["net.peer.name"] = "RemoteServiceName",
+                            ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Highest priority name = SemanticConventions.AttributePeerService",
+                        ExpectedResult = "RemoteServiceName",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            [SemanticConventions.AttributePeerService] = "RemoteServiceName",
+                            ["http.host"] = "DiscardedRemoteServiceName",
+                            ["net.peer.name"] = "DiscardedRemoteServiceName",
+                            ["net.peer.port"] = "1234",
+                            ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Only has net.peer.name and net.peer.port",
+                        ExpectedResult = "RemoteServiceName:1234",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["net.peer.name"] = "RemoteServiceName",
+                            ["net.peer.port"] = "1234",
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "net.peer.port is an int",
+                        ExpectedResult = "RemoteServiceName:1234",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["net.peer.name"] = "RemoteServiceName",
+                            ["net.peer.port"] = 1234,
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Has net.peer.name and net.peer.port",
+                        ExpectedResult = "RemoteServiceName:1234",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["http.host"] = "DiscardedRemoteServiceName",
+                            ["net.peer.name"] = "RemoteServiceName",
+                            ["net.peer.port"] = "1234",
+                            ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Has net.peer.ip and net.peer.port",
+                        ExpectedResult = "1.2.3.4:1234",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["http.host"] = "DiscardedRemoteServiceName",
+                            ["net.peer.ip"] = "1.2.3.4",
+                            ["net.peer.port"] = "1234",
+                            ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        },
+                    },
+                };
+
+                yield return new object[]
+                {
+                    new RemoteEndpointPriorityTestCase
+                    {
+                        Name = "Has net.peer.name, net.peer.ip, and net.peer.port",
+                        ExpectedResult = "RemoteServiceName:1234",
+                        RemoteEndpointAttributes = new Dictionary<string, object>
+                        {
+                            ["http.host"] = "DiscardedRemoteServiceName",
+                            ["net.peer.name"] = "RemoteServiceName",
+                            ["net.peer.ip"] = "1.2.3.4",
+                            ["net.peer.port"] = "1234",
+                            ["peer.hostname"] = "DiscardedRemoteServiceName",
+                        },
+                    },
+                };
+            }
+
+            public override string ToString()
+            {
+                return this.Name;
+            }
         }
     }
 }
