@@ -25,6 +25,7 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -166,9 +167,18 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
-                this.fakeAspNetDiagnosticSource.Write(
+
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                {
+                    this.fakeAspNetDiagnosticSource.Write(
                     "Start",
                     null);
+
+                    if (filter == "{ThrowException}")
+                    {
+                        Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                    }
+                }
 
                 if (restoreCurrentActivity)
                 {

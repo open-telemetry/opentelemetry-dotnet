@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
@@ -240,10 +241,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using var client = testFactory.CreateClient();
 
                 // Act
-                var response1 = await client.GetAsync("/api/values");
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
+                {
+                    var response1 = await client.GetAsync("/api/values");
 
-                // Assert
-                response1.EnsureSuccessStatusCode(); // Status Code 200-299
+                    response1.EnsureSuccessStatusCode(); // Status Code 200-299
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                }
 
                 WaitForProcessorInvocations(activityProcessor, 2);
             }

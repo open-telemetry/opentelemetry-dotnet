@@ -16,11 +16,13 @@
 #if NETFRAMEWORK
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -190,7 +192,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build();
 
             using var c = new HttpClient();
-            await c.GetAsync(this.url);
+            using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+            {
+                await c.GetAsync(this.url);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+            }
 
             Assert.Equal(2, activityProcessor.Invocations.Count);
         }
