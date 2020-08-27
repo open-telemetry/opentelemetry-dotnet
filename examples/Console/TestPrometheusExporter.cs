@@ -58,12 +58,11 @@ namespace Examples.Console
             // Application which decides to enable OpenTelemetry metrics
             // would setup a MeterProvider and make it default.
             // All meters from this factory will be configured with the common processing pipeline.
-            MeterProvider.SetDefault(Sdk.CreateMeterProvider(mb =>
-            {
-                mb.SetMetricProcessor(processor);
-                mb.SetMetricExporter(promExporter);
-                mb.SetMetricPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs));
-            }));
+            MeterProvider.SetDefault(Sdk.CreateMeterProviderBuilder()
+                .SetProcessor(processor)
+                .SetExporter(promExporter)
+                .SetPushInterval(TimeSpan.FromSeconds(pushIntervalInSecs))
+                .Build());
 
             // The following shows how libraries would obtain a MeterProvider.
             // MeterProvider is the entry point, which provides Meter.
