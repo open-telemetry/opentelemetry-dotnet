@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Rename FilterFunc to InstrumentationFilter.
+* Rename FilterFunc to Filter.
 
 * HttpClient/HttpWebRequest instrumentation will now add the raw Request,
   Response, and/or Exception objects to the Activity it creates

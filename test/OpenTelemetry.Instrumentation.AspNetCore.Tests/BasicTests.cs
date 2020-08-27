@@ -188,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.InstrumentationFilter = (ctx) => ctx.Request.Path == "/api/values/2")
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -227,7 +227,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.InstrumentationFilter = (ctx) => throw new Exception("from InstrumentationFilter"))
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => throw new Exception("from InstrumentationFilter"))
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
