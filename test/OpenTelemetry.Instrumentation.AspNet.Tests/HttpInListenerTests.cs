@@ -142,7 +142,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
-                    options.RequestFilter = httpContext =>
+                    options.InstrumentationFilter = httpContext =>
                     {
                         if (string.IsNullOrEmpty(filter))
                         {
