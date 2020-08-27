@@ -239,7 +239,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.InstrumentationFilter = (req) => req.RequestUri.OriginalString.Contains(this.url))
+                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
                                .Build())
             {
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.InstrumentationFilter = (req) => throw new Exception("From InstrumentationFilter"))
+                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
                                .AddProcessor(processor.Object)
                                .Build())
             {
