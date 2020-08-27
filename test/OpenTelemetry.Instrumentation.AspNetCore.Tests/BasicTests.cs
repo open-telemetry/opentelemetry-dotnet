@@ -181,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task FilterOutRequest()
+        public async Task InstrumentationFilterFiltersRequest()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
@@ -212,6 +212,44 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             // we should only create one span and never call processor with another
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+        }
+
+        [Fact]
+        public async Task InstrumentationFilterIsNotAppliedWhenException()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation((opt) => opt.InstrumentationFilter = (ctx) => throw new Exception("from InstrumentationFilter"))
+                    .AddProcessor(activityProcessor.Object)
+                    .Build();
+            }
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices)))
+            {
+                using var client = testFactory.CreateClient();
+
+                // Act
+                var response1 = await client.GetAsync("/api/values");
+
+                // Assert
+                response1.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            // As InstrumentationFilter threw, we continue as if the
+            // InstrumentationFilter did not exist.
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
