@@ -1,4 +1,4 @@
-﻿// <copyright file="ProbabilitySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceIdRatioBasedSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,19 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Samples traces according to the specified probability.
     /// </summary>
-    public sealed class ProbabilitySampler : Sampler
+    public sealed class TraceIdRatioBasedSampler
+        : Sampler
     {
         private readonly long idUpperBound;
         private readonly double probability;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProbabilitySampler"/> class.
+        /// Initializes a new instance of the <see cref="TraceIdRatioBasedSampler"/> class.
         /// </summary>
         /// <param name="probability">The desired probability of sampling. This must be between 0.0 and 1.0.
         /// Higher the value, higher is the probability of a given Activity to be sampled in.
         /// </param>
-        public ProbabilitySampler(double probability)
+        public TraceIdRatioBasedSampler(double probability)
         {
             if (probability < 0.0 || probability > 1.0)
             {
@@ -41,8 +42,8 @@ namespace OpenTelemetry.Trace
 
             this.probability = probability;
 
-            // The expected description is like ProbabilitySampler{0.000100}
-            this.Description = "ProbabilitySampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
+            // The expected description is like TraceIdRatioBasedSampler{0.000100}
+            this.Description = "TraceIdRatioBasedSampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
 
             // Special case the limits, to avoid any possible issues with lack of precision across
             // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
