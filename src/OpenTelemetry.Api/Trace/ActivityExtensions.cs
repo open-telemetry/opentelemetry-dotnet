@@ -73,7 +73,6 @@ namespace OpenTelemetry.Trace
             }
 
             return status;
-
         }
 
         /// <summary>
