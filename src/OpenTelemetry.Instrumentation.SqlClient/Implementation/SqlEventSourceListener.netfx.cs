@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
-            if (eventSource?.Name.StartsWith(AdoNetEventSourceName) == true)
+            if (eventSource?.Name.StartsWith(AdoNetEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.eventSource = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);

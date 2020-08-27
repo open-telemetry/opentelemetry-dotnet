@@ -1,4 +1,4 @@
-﻿// <copyright file="ProbabilitySamplerTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TraceIdRatioBasedSamplerTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,29 +19,29 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class ProbabilitySamplerTest
+    public class TraceIdRatioBasedSamplerTest
     {
         private const string ActivityDisplayName = "MyActivityName";
         private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
 
         [Fact]
-        public void ProbabilitySampler_OutOfRangeHighProbability()
+        public void OutOfRangeHighProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(1.01));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(1.01));
         }
 
         [Fact]
-        public void ProbabilitySampler_OutOfRangeLowProbability()
+        public void OutOfRangeLowProbability()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilitySampler(-0.00001));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(-0.00001));
         }
 
         [Fact]
-        public void ProbabilitySampler_SampleBasedOnTraceId()
+        public void SampleBasedOnTraceId()
         {
-            Sampler defaultProbability = new ProbabilitySampler(0.0001);
+            Sampler defaultProbability = new TraceIdRatioBasedSampler(0.0001);
 
-            // This traceId will not be sampled by the ProbabilitySampler because the first 8 bytes as long
+            // This traceId will not be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
             // is not less than probability * Long.MAX_VALUE;
             var notSampledtraceId =
                 ActivityTraceId.CreateFromBytes(
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Tests
                 SamplingDecision.NotRecord,
                 defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
 
-            // This traceId will be sampled by the ProbabilitySampler because the first 8 bytes as long
+            // This traceId will be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
             // is less than probability * Long.MAX_VALUE;
             var sampledtraceId =
                 ActivityTraceId.CreateFromBytes(
@@ -97,10 +97,10 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void ProbabilitySampler_GetDescription()
+        public void GetDescription()
         {
-            var expectedDescription = "ProbabilitySampler{0.500000}";
-            Assert.Equal(expectedDescription, new ProbabilitySampler(0.5).Description);
+            var expectedDescription = "TraceIdRatioBasedSampler{0.500000}";
+            Assert.Equal(expectedDescription, new TraceIdRatioBasedSampler(0.5).Description);
         }
     }
 }

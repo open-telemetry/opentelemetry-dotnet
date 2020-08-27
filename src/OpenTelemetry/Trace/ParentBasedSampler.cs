@@ -1,4 +1,4 @@
-﻿// <copyright file="ParentOrElseSampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ParentBasedSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,19 +22,19 @@ namespace OpenTelemetry.Trace
     /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
     /// Otherwise, samples root traces according to the specified delegate sampler.
     /// </summary>
-    public sealed class ParentOrElseSampler : Sampler
+    public sealed class ParentBasedSampler : Sampler
     {
         private readonly Sampler delegateSampler;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParentOrElseSampler"/> class.
+        /// Initializes a new instance of the <see cref="ParentBasedSampler"/> class.
         /// </summary>
         /// <param name="delegateSampler">The <see cref="Sampler"/> to be called to decide whether or not to sample a root trace.</param>
-        public ParentOrElseSampler(Sampler delegateSampler)
+        public ParentBasedSampler(Sampler delegateSampler)
         {
             this.delegateSampler = delegateSampler ?? throw new ArgumentNullException(nameof(delegateSampler));
 
-            this.Description = $"ParentOrElse{{{delegateSampler.Description}}}";
+            this.Description = $"ParentBased{{{delegateSampler.Description}}}";
         }
 
         /// <inheritdoc />

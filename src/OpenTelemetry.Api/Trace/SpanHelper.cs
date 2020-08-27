@@ -24,7 +24,9 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class SpanHelper
     {
+#pragma warning disable CA1805 // Do not initialize unnecessarily
         private static readonly Status DefaultStatus = default;
+#pragma warning restore CA1805 // Do not initialize unnecessarily
         private static readonly Dictionary<StatusCanonicalCode, string> StatusCanonicalCodeToStringCache = new Dictionary<StatusCanonicalCode, string>()
         {
             [StatusCanonicalCode.Ok] = StatusCanonicalCode.Ok.ToString(),
