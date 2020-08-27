@@ -62,7 +62,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            PropagationContext propagationContext = new PropagationContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, default);
             var carrier = new Dictionary<string, string>();
             var activity = new Activity("test");
 
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            PropagationContext propagationContext = new PropagationContext(activityContext, null);
+            PropagationContext propagationContext = new PropagationContext(activityContext, default);
 
             var carrier = new Dictionary<string, string>();
 
@@ -115,9 +115,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
             var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
 
-            PropagationContext propagationContextActivityOnly = new PropagationContext(activityContext, null);
-            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, baggage);
-            PropagationContext propagationContextBoth = new PropagationContext(activityContext, baggage);
+            PropagationContext propagationContextActivityOnly = new PropagationContext(activityContext, default);
+            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, new Baggage(baggage));
+            PropagationContext propagationContextBoth = new PropagationContext(activityContext, new Baggage(baggage));
 
             var carrier = new Dictionary<string, string>();
             compositePropagator.Inject(propagationContextActivityOnly, carrier, Setter);

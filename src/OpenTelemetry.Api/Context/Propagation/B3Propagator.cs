@@ -188,7 +188,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    context.ActivityBaggage);
+                    context.Baggage);
             }
             catch (Exception e)
             {
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 return new PropagationContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    context.ActivityBaggage);
+                    context.Baggage);
             }
             catch (Exception e)
             {
