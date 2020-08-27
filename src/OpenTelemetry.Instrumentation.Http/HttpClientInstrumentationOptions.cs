@@ -42,10 +42,12 @@ namespace OpenTelemetry.Instrumentation.Http
         });
 
         /// <summary>
-        /// Gets or sets an optional callback function for filtering <see cref="HttpRequestMessage"/>
-        /// requests that are sent through the instrumentation.
+        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// The functions gets the HttpRequestMessage, and should return a boolean indicating if the request
+        /// should be filtered or not.
         /// If functions returns true, the request is filtered.
-        /// If functions returns false or throws exceptions, the request is collected.
+        /// If functions returns false or throws exceptions, the request is collected. This is also the
+        /// default behavior is no filter is configured.
         /// </summary>
         public Func<HttpRequestMessage, bool> InstrumentationFilter { get; set; }
 
