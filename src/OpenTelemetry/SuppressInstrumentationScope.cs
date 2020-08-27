@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Context;
 
 namespace OpenTelemetry
@@ -22,6 +23,7 @@ namespace OpenTelemetry
     public sealed class SuppressInstrumentationScope : IDisposable
     {
         private static readonly RuntimeContextSlot<bool> Slot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
+        private static readonly RuntimeContextSlot<ActivitySpanId?> ActivitySlot = RuntimeContext.RegisterSlot<ActivitySpanId?>("otel.suppress_instrumentation_activity");
 
         private readonly bool previousValue;
         private bool disposed;
@@ -30,9 +32,10 @@ namespace OpenTelemetry
         {
             this.previousValue = Slot.Get();
             Slot.Set(value);
+            ActivitySlot.Set(Activity.Current?.SpanId);
         }
 
-        internal static bool IsSuppressed => Slot.Get();
+        internal static bool IsSuppressed => Slot.Get() && (ActivitySlot.Get() == null || ActivitySlot.Get() != Activity.Current?.SpanId);
 
         /// <summary>
         /// Begins a new scope in which instrumentation is suppressed (disabled).

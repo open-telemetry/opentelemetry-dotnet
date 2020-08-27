@@ -23,11 +23,12 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
         public const string RequestCustomPropertyName = "OTel.GrpcHandler.Request";
+        private readonly GrpcClientInstrumentationOptions options;
 
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
 
-        public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
+        public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
         {
             if (activitySource == null)
@@ -35,11 +36,14 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 throw new ArgumentNullException(nameof(activitySource));
             }
 
+            this.options = options;
             this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
         {
+            SuppressInstrumentationScope.Begin(this.options.SuppressInstrumentation);
+
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
