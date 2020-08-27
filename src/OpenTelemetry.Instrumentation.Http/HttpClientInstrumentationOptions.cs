@@ -47,7 +47,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// If Filter returns true, the request is collected.
         /// If Filter returns false, the request is filtered out.
         /// If Filter throws exception, then it is considered as if no filter is configured
-        /// and requested is collected.
+        /// and request is collected.
         /// </summary>
         public Func<HttpRequestMessage, bool> Filter { get; set; }
 

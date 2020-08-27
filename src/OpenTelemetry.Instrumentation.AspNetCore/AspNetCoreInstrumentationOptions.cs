@@ -40,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// If Filter returns true, the request is collected.
         /// If Filter returns false, the request is filtered out.
         /// If Filter throws exception, then it is considered as if no filter is configured
-        /// and requested is collected.
+        /// and request is collected.
         /// </summary>
         public Func<HttpContext, bool> Filter { get; set; }
     }
