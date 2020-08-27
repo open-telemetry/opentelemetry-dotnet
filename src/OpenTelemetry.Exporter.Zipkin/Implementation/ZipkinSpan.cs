@@ -201,24 +201,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     foreach (var tag in this.Tags.Value)
                     {
                         writer.WritePropertyName(tag.Key);
-                        switch (tag.Value)
-                        {
-                            case string stringVal:
-                                writer.WriteValue(stringVal);
-                                break;
-                            case int[] intArrayValue:
-                                writer.WriteValue(string.Join(",", intArrayValue));
-                                break;
-                            case double[] doubleArrayValue:
-                                writer.WriteValue(string.Join(",", doubleArrayValue));
-                                break;
-                            case bool[] boolArrayValue:
-                                writer.WriteValue(string.Join(",", boolArrayValue));
-                                break;
-                            default:
-                                writer.WriteValue(tag.Value.ToString());
-                                break;
-                        }
+                        writer.WriteValue(this.ConvertObjectToString(tag.Value));
                     }
                 }
                 finally
@@ -319,24 +302,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     foreach (var tag in this.Tags.Value)
                     {
-                        switch (tag.Value)
-                        {
-                            case string stringVal:
-                                writer.WriteString(tag.Key, stringVal);
-                                break;
-                            case int[] intArrayValue:
-                                writer.WriteString(tag.Key, string.Join(",", intArrayValue));
-                                break;
-                            case double[] doubleArrayValue:
-                                writer.WriteString(tag.Key, string.Join(",", doubleArrayValue));
-                                break;
-                            case bool[] boolArrayValue:
-                                writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
-                                break;
-                            default:
-                                writer.WriteString(tag.Key, tag.Value.ToString());
-                                break;
-                        }
+                        writer.WriteString(tag.Key, this.ConvertObjectToString(tag.Value));
                     }
                 }
                 finally
@@ -351,5 +317,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         }
 
 #endif
+
+        private string ConvertObjectToString(object obj)
+        {
+            return obj switch
+            {
+                string stringVal => stringVal,
+                int[] arrayValue => string.Join(",", arrayValue),
+                long[] arrayValue => string.Join(",", arrayValue),
+                double[] arrayValue => string.Join(",", arrayValue),
+                bool[] arrayValue => string.Join(",", arrayValue),
+                _ => obj.ToString(),
+            };
+        }
     }
 }
