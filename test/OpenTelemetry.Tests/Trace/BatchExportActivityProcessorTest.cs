@@ -78,8 +78,11 @@ namespace OpenTelemetry.Tests.Trace
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
 
-        [Fact]
-        public void CheckForceFlushExport()
+        [Theory]
+        [InlineData(Timeout.Infinite)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void CheckForceFlushExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
             using var processor = new BatchExportActivityProcessor(
@@ -101,7 +104,9 @@ namespace OpenTelemetry.Tests.Trace
             Assert.Empty(exporter.Exported);
 
             // forcing flush
-            processor.ForceFlush();
+            processor.ForceFlush(timeout);
+
+            Thread.Sleep(1_000);
             Assert.Equal(2, exporter.Exported.Count);
 
             Assert.Equal(2, processor.ProcessedCount);
