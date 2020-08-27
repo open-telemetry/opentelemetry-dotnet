@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading;
 #if NET452
 using Newtonsoft.Json;
@@ -318,6 +319,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
 #endif
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private string ConvertObjectToString(object obj)
         {
             return obj switch
