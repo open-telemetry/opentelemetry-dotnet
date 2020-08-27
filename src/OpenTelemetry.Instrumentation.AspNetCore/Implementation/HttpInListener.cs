@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            if (this.options.InstrumentationFilter?.Invoke(context) == false)
             {
                 AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                 activity.IsAllDataRequested = false;

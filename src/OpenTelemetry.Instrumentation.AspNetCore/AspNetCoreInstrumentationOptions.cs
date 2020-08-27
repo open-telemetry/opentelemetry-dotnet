@@ -37,6 +37,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
         /// </summary>
-        internal Predicate<HttpContext> RequestFilter { get; set; }
+        public Func<HttpContext, bool> InstrumentationFilter { get; set; }
     }
 }
