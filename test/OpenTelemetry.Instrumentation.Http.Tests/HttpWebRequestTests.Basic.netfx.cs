@@ -164,7 +164,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationFiltersOutRequests()
+        public async Task HttpClientInstrumentationInstrumentationFilterFiltersRequest()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
@@ -177,6 +177,22 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await c.GetAsync(this.url);
 
             Assert.Equal(0, activityProcessor.Invocations.Count);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationInstrumentationFilterException()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation(
+                    c => c.InstrumentationFilter = (req) => throw new Exception("From Instrumentation filter"))
+                .Build();
+
+            using var c = new HttpClient();
+            await c.GetAsync(this.url);
+
+            Assert.Equal(2, activityProcessor.Invocations.Count);
         }
     }
 }

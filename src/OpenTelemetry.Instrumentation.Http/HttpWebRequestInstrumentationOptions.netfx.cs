@@ -17,6 +17,7 @@
 using System;
 using System.Net;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -47,7 +48,15 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal bool EventFilter(HttpWebRequest request)
         {
-            return this.InstrumentationFilter?.Invoke(request) ?? true;
+            try
+            {
+                return this.InstrumentationFilter?.Invoke(request) ?? true;
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return true;
+            }
         }
     }
 }

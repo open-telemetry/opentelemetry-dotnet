@@ -17,6 +17,7 @@ using System;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -48,10 +49,18 @@ namespace OpenTelemetry.Instrumentation.Http
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
-            return
-                this.InstrumentationFilter == null ||
-                !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
-                this.InstrumentationFilter(requestMessage);
+            try
+            {
+                return
+                    this.InstrumentationFilter == null ||
+                    !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
+                    this.InstrumentationFilter(requestMessage);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return true;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
