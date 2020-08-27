@@ -38,10 +38,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
         /// The functions gets the HttpContext, and should return a boolean indicating if the request should be
         /// filtered or not.
-        /// If functions returns true, the request is filtered.
-        /// If functions returns false or throws exceptions, the request is collected. This is also the
-        /// default behavior is no filter is configured.
+        /// If functions returns true, the request is collected.
+        /// If functions returns false, the request is filtered out.
+        /// If filter throws exception, then this is considered as no filter being configured.
+        /// and requested is collected.
         /// </summary>
-        public Func<HttpContext, bool> InstrumentationFilter { get; set; }
+        public Func<HttpContext, bool> Filter { get; set; }
     }
 }

@@ -142,11 +142,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
-                    options.InstrumentationFilter = httpContext =>
+                    options.Filter = httpContext =>
                     {
                         if (string.IsNullOrEmpty(filter))
                         {
-                            return false;
+                            return true;
                         }
 
                         if (filter == "{ThrowException}")
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                             throw new InvalidOperationException();
                         }
 
-                        return httpContext.Request.Path == filter;
+                        return httpContext.Request.Path != filter;
                     };
 
                     if (!carrierFormat.Equals("TraceContext"))
