@@ -42,7 +42,10 @@ namespace OpenTelemetry.Instrumentation.Http
         });
 
         /// <summary>
-        /// Gets or sets an optional callback method for filtering <see cref="HttpRequestMessage"/> requests that are sent through the instrumentation.
+        /// Gets or sets an optional callback function for filtering <see cref="HttpRequestMessage"/>
+        /// requests that are sent through the instrumentation.
+        /// If functions returns true, the request is filtered.
+        /// If functions returns false or throws exceptions, the request is collected.
         /// </summary>
         public Func<HttpRequestMessage, bool> InstrumentationFilter { get; set; }
 
@@ -54,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.Http
                 return
                     this.InstrumentationFilter == null ||
                     !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
-                    this.InstrumentationFilter(requestMessage);
+                    !this.InstrumentationFilter(requestMessage);
             }
             catch (Exception ex)
             {
