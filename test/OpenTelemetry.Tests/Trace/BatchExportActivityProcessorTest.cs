@@ -38,7 +38,7 @@ namespace OpenTelemetry.Tests.Trace
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxExportBatchSize: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxExportBatchSize: 2049));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), exporterTimeoutMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
