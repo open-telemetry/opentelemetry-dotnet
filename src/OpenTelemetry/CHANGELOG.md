@@ -39,6 +39,8 @@
   ([#1149](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1149))
 * Renamed `ParentOrElseSampler` to `ParentBasedSampler`
   ([#1173](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1173))
+* Renamed `ProbabilitySampler` to `TraceIdRatioBasedSampler`
+  ([#1174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1174))
 
 ## 0.4.0-beta.2
 

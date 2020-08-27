@@ -58,7 +58,7 @@ reducing the number of samples of traces collected and sent to the backend. If
 no sampler is explicitly specified, the default is to use
 [AlwaysOnSampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#alwayson).
 The following example shows how to change it to
-[ProbabilitySampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#probability)
+[TraceIdRatioBasedSampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#traceidratiobased)
 with sampling probability of 25%.
 
 ```csharp
@@ -67,7 +67,7 @@ using OpenTelemetry.Trace;
 
 using var otel = Sdk.CreateTracerProvider(b => b
     .AddActivitySource("MyCompany.MyProduct.MyLibrary")
-    .SetSampler(new ProbabilitySampler(0.25))
+    .SetSampler(new TraceIdRatioBasedSampler(0.25))
     .UseConsoleExporter());
 ```
 
