@@ -80,8 +80,8 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="kind">Activity execution kind.</param>
-        /// <remarks>This is required for instrumentations which are dealing with "legacy" activities which has
-        /// the default 'internal' kind, and must be changed to right one.</remarks>
+        /// <remarks>This extension method should only be used on <see cref="Activity"/> instances that were created
+        /// via older means that predate <see cref="ActivitySource"/>.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetKind(this Activity activity, ActivityKind kind)
         {
