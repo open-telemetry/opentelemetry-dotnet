@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added InstrumentationFilter public API on AspNetCoreInstrumentationOptions to allow
+  filtering on instrumentation based on HttpContext.
+
 * Asp.Net Core Instrumentation automatically populates HttpRequest,
   HttpResponse in Activity custom property
 

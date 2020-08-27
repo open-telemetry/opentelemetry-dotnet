@@ -43,15 +43,15 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Gets or sets an optional callback method for filtering <see cref="HttpRequestMessage"/> requests that are sent through the instrumentation.
         /// </summary>
-        public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
+        public Func<HttpRequestMessage, bool> InstrumentationFilter { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
             return
-                this.FilterFunc == null ||
+                this.InstrumentationFilter == null ||
                 !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
-                this.FilterFunc(requestMessage);
+                this.InstrumentationFilter(requestMessage);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

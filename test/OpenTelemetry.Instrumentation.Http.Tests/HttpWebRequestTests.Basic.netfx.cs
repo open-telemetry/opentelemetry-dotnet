@@ -170,7 +170,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(
-                    c => c.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                    c => c.InstrumentationFilter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
             using var c = new HttpClient();

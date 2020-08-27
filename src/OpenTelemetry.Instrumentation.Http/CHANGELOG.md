@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-* ASP.NET Core instrumentation will now add the raw Request, Response, and/or
+* Rename FilterFunc to InstrumentationFilter.
+
+* HttpClient/HttpWebRequest instrumentation will now add the raw Request, Response, and/or
   Exception objects to the Activity it creates
   ([#1099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1099))
 * Changed the default propagation to support W3C Baggage

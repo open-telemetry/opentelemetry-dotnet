@@ -239,7 +239,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                        (opt) => opt.InstrumentationFilter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
                                .Build())
             {
