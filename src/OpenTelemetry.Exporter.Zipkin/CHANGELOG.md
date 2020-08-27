@@ -6,6 +6,9 @@
   ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))
 * Changed `ZipkinExporter` to use `BatchExportActivityProcessor` by default
   ([#1103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1103))
+* Fixed issue when span has both the `net.peer.name` and `net.peer.port`
+  attributes but did not include `net.peer.port` in the service address field
+  ([#1168](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1168)).
 
 ## 0.4.0-beta.2
 

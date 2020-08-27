@@ -33,18 +33,21 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
-            [SemanticConventions.AttributeNetPeerName] = 1,
-            [SemanticConventions.AttributeNetPeerIp] = 2,
-            ["peer.hostname"] = 2,
-            ["peer.address"] = 2,
-            [SemanticConventions.AttributeHttpHost] = 3, // RemoteEndpoint.ServiceName for Http.
-            [SemanticConventions.AttributeDbInstance] = 3, // RemoteEndpoint.ServiceName for Redis.
+            ["peer.hostname"] = 1,
+            ["peer.address"] = 1,
+            [SemanticConventions.AttributeHttpHost] = 2, // RemoteEndpoint.ServiceName for Http.
+            [SemanticConventions.AttributeDbInstance] = 2, // RemoteEndpoint.ServiceName for Redis.
         };
 
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
 
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+
+#if !NET452
+        private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<(string, int), ZipkinEndpoint>();
+#else
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
+#endif
 
         private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessTagsRef = ProcessTags;
         private static readonly ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessActivityEventsRef = ProcessActivityEvents;
@@ -96,9 +99,32 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             ZipkinEndpoint remoteEndpoint = null;
-            if ((activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer) && attributeEnumerationState.RemoteEndpointServiceName != null)
+            if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
-                remoteEndpoint = RemoteEndpointCache.GetOrAdd(attributeEnumerationState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
+                var hostNameOrIpAddress = attributeEnumerationState.HostName ?? attributeEnumerationState.IpAddress;
+
+                if ((attributeEnumerationState.RemoteEndpointServiceName == null || attributeEnumerationState.RemoteEndpointServiceNamePriority > 0)
+                    && hostNameOrIpAddress != null)
+                {
+#if !NET452
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((hostNameOrIpAddress, attributeEnumerationState.Port), ZipkinEndpoint.Create);
+#else
+                    var remoteEndpointStr = attributeEnumerationState.Port != default
+                        ? $"{hostNameOrIpAddress}:{attributeEnumerationState.Port}"
+                        : hostNameOrIpAddress;
+
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(remoteEndpointStr, ZipkinEndpoint.Create);
+#endif
+                }
+
+                if (remoteEndpoint == null && attributeEnumerationState.RemoteEndpointServiceName != null)
+                {
+#if !NET452
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((attributeEnumerationState.RemoteEndpointServiceName, default), ZipkinEndpoint.Create);
+#else
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(attributeEnumerationState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
+#endif
+                }
             }
 
             var annotations = PooledList<ZipkinAnnotation>.Create();
@@ -162,6 +188,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     state.RemoteEndpointServiceName = strVal;
                     state.RemoteEndpointServiceNamePriority = priority;
                 }
+                else if (key == SemanticConventions.AttributeNetPeerName)
+                {
+                    state.HostName = strVal;
+                }
+                else if (key == SemanticConventions.AttributeNetPeerIp)
+                {
+                    state.IpAddress = strVal;
+                }
+                else if (key == SemanticConventions.AttributeNetPeerPort && int.TryParse(strVal, out var port))
+                {
+                    state.Port = port;
+                }
                 else if (key == Resource.ServiceNameKey)
                 {
                     state.ServiceName = strVal;
@@ -174,6 +212,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
                 }
+            }
+            else if (attribute.Value is int intVal && attribute.Key == SemanticConventions.AttributeNetPeerPort)
+            {
+                state.Port = intVal;
             }
             else
             {
@@ -224,6 +266,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             public string ServiceName;
 
             public string ServiceNamespace;
+
+            public string HostName;
+
+            public string IpAddress;
+
+            public int Port;
         }
     }
 }
