@@ -81,12 +81,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
             var propagationContext = this.baggage.Extract(default, carrier, Getter);
             Assert.False(propagationContext == default);
-            Assert.Single(propagationContext.ActivityBaggage);
+            Assert.Single(propagationContext.Baggage.GetBaggage());
 
-            var array = propagationContext.ActivityBaggage.ToArray();
+            var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
-            Assert.Equal("name", array[0].Key);
-            Assert.Equal("test", array[0].Value);
+            Assert.Equal("name", baggage.Key);
+            Assert.Equal("test", baggage.Value);
         }
 
         [Fact]
@@ -104,9 +104,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             Assert.False(propagationContext == default);
             Assert.True(propagationContext.ActivityContext == default);
 
-            Assert.Equal(2, propagationContext.ActivityBaggage.Count());
+            Assert.Equal(2, propagationContext.Baggage.Count);
 
-            var array = propagationContext.ActivityBaggage.ToArray();
+            var array = propagationContext.Baggage.GetBaggage().ToArray();
 
             Assert.Equal("name1", array[0].Key);
             Assert.Equal("test1", array[0].Value);
@@ -124,9 +124,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
             var propagationContext = this.baggage.Extract(default, carrier, Getter);
             Assert.False(propagationContext == default);
-            Assert.Single(propagationContext.ActivityBaggage);
+            Assert.Single(propagationContext.Baggage.GetBaggage());
 
-            var array = propagationContext.ActivityBaggage.ToArray();
+            var array = propagationContext.Baggage.GetBaggage().ToArray();
 
             Assert.Equal("name", array[0].Key);
             Assert.Equal(new string('x', 8186), array[0].Value);
@@ -145,11 +145,13 @@ namespace OpenTelemetry.Context.Propagation.Tests
         public void ValidateBaggageInjection()
         {
             var carrier = new Dictionary<string, string>();
-            var propagationContext = new PropagationContext(default, new Dictionary<string, string>
-            {
-                { "key1", "value1" },
-                { "key2", "value2" },
-            });
+            var propagationContext = new PropagationContext(
+                default,
+                new Baggage(new Dictionary<string, string>
+                {
+                    { "key1", "value1" },
+                    { "key2", "value2" },
+                }));
 
             this.baggage.Inject(propagationContext, carrier, Setter);
 

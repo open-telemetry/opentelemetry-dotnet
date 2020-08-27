@@ -133,7 +133,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     expectedTraceId,
                     expectedSpanId,
                     ActivityTraceFlags.Recorded),
-                null));
+                default));
 
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);

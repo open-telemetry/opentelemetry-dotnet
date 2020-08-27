@@ -29,15 +29,15 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Record the given value to the bound measure metric.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
+        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
         /// <param name="value">the measurement to be recorded.</param>
         public abstract void Record(in SpanContext context, T value);
 
         /// <summary>
         /// Record the given value to the bound measure metric.
         /// </summary>
-        /// <param name="context">the associated distributed context.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">the measurement to be recorded.</param>
-        public abstract void Record(in CorrelationContext context, T value);
+        public abstract void Record(in Baggage context, T value);
     }
 }
