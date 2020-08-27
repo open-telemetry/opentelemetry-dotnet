@@ -49,11 +49,13 @@ namespace OpenTelemetry.Tests.Trace
             processor.OnStart(new Activity("start"));
             processor.OnEnd(new Activity("start"));
 
-            while (true)
+            int i = 0;
+            while (i < 10)
             {
                 if (exporter.Exported.Count == 0)
                 {
                     Thread.Sleep(500);
+                    i++;
                 }
                 else
                 {
@@ -62,6 +64,10 @@ namespace OpenTelemetry.Tests.Trace
             }
 
             Assert.Single(exporter.Exported);
+
+            Assert.Equal(1, processor.ProcessedCount);
+            Assert.Equal(1, processor.ReceivedCount);
+            Assert.Equal(0, processor.DroppedCount);
         }
 
         [Fact]
@@ -82,20 +88,32 @@ namespace OpenTelemetry.Tests.Trace
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnStart(new Activity("start"));
-            processor.OnEnd(new Activity("start"));
+            processor.OnStart(new Activity("start1"));
+            processor.OnEnd(new Activity("start1"));
 
-            // waiting to see if time is triggerint the exporter
+            processor.OnStart(new Activity("start2"));
+            processor.OnEnd(new Activity("start2"));
+
+            Assert.Equal(0, processor.ProcessedCount);
+
+            // waiting to see if time is triggering the exporter
             Thread.Sleep(1_000);
             Assert.Empty(exporter.Exported);
 
             // forcing flush
             processor.ForceFlush();
-            Assert.Single(exporter.Exported);
+            Assert.Equal(2, exporter.Exported.Count);
+
+            Assert.Equal(2, processor.ProcessedCount);
+            Assert.Equal(2, processor.ReceivedCount);
+            Assert.Equal(0, processor.DroppedCount);
         }
 
-        [Fact]
-        public void CheckShutdownExport()
+        [Theory]
+        [InlineData(Timeout.Infinite)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void CheckShutdownExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
             using var processor = new BatchExportActivityProcessor(
@@ -106,8 +124,14 @@ namespace OpenTelemetry.Tests.Trace
 
             processor.OnStart(new Activity("start"));
             processor.OnEnd(new Activity("start"));
-            processor.Shutdown();
+            processor.Shutdown(timeout);
+
+            Thread.Sleep(1_000);
             Assert.Single(exporter.Exported);
+
+            Assert.Equal(1, processor.ProcessedCount);
+            Assert.Equal(1, processor.ReceivedCount);
+            Assert.Equal(0, processor.DroppedCount);
         }
     }
 }
