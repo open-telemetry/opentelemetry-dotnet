@@ -49,6 +49,9 @@
   API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
   spec
   ([#1106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1106))
+* Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to
+  `BaggagePropagator`, and `B3Format` to `B3Propagator`
+  ([#1175](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1175))
 
 ## 0.4.0-beta.2
 

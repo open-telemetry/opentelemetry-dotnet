@@ -1,4 +1,4 @@
-﻿// <copyright file="BaggageFormatTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="BaggagePropagatorTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
-    public class BaggageFormatTest
+    public class BaggagePropagatorTest
     {
         private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
             (d, k) =>
@@ -40,12 +41,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
             carrier[name] = value;
         };
 
-        private readonly BaggageFormat baggage = new BaggageFormat();
+        private readonly BaggagePropagator baggage = new BaggagePropagator();
 
         [Fact]
         public void ValidateFieldsProperty()
         {
-            Assert.Equal(new HashSet<string> { BaggageFormat.BaggageHeaderName }, this.baggage.Fields);
+            Assert.Equal(new HashSet<string> { BaggagePropagator.BaggageHeaderName }, this.baggage.Fields);
             Assert.Single(this.baggage.Fields);
         }
 
@@ -77,7 +78,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         {
             var carrier = new Dictionary<string, string>
             {
-                { BaggageFormat.BaggageHeaderName, "name=test" },
+                { BaggagePropagator.BaggageHeaderName, "name=test" },
             };
             var propagationContext = this.baggage.Extract(default, carrier, Getter);
             Assert.False(propagationContext == default);
@@ -94,9 +95,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
         {
             var carrier = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>(BaggageFormat.BaggageHeaderName, "name1=test1"),
-                new KeyValuePair<string, string>(BaggageFormat.BaggageHeaderName, "name2=test2"),
-                new KeyValuePair<string, string>(BaggageFormat.BaggageHeaderName, "name2=test2"),
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name1=test1"),
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
             };
 
             var propagationContext = this.baggage.Extract(default, carrier, GetterList);
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         {
             var carrier = new Dictionary<string, string>
             {
-                { BaggageFormat.BaggageHeaderName, $"name={new string('x', 8186)},clientId=1234" },
+                { BaggagePropagator.BaggageHeaderName, $"name={new string('x', 8186)},clientId=1234" },
             };
             var propagationContext = this.baggage.Extract(default, carrier, Getter);
             Assert.False(propagationContext == default);
@@ -156,7 +157,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             this.baggage.Inject(propagationContext, carrier, Setter);
 
             Assert.Single(carrier);
-            Assert.Equal("key1=value1,key2=value2", carrier[BaggageFormat.BaggageHeaderName]);
+            Assert.Equal("key1=value1,key2=value2", carrier[BaggagePropagator.BaggageHeaderName]);
         }
     }
 }

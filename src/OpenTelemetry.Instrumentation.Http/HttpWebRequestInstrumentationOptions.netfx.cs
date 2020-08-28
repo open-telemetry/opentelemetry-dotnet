@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Net;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -32,22 +34,33 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextFormat"/> &amp; <see cref="BaggageFormat"/>.
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
         public ITextFormat TextFormat { get; set; } = new CompositePropagator(new ITextFormat[]
         {
-            new TraceContextFormat(),
-            new BaggageFormat(),
+            new TextMapPropagator(),
+            new BaggagePropagator(),
         });
 
         /// <summary>
-        /// Gets or sets an optional callback method for filtering <see cref="HttpWebRequest"/> requests that are sent through the instrumentation.
+        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// The Filter gets the HttpWebRequest, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-        public Func<HttpWebRequest, bool> FilterFunc { get; set; }
+        public Func<HttpWebRequest, bool> InstrumentationFilter { get; set; }
 
         internal bool EventFilter(HttpWebRequest request)
         {
-            return this.FilterFunc?.Invoke(request) ?? true;
+            try
+            {
+                return this.InstrumentationFilter?.Invoke(request) ?? true;
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
         }
     }
 }

@@ -61,15 +61,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            try
             {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                 activity.IsAllDataRequested = false;
                 return;
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
+            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TextMapPropagator))
             {
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
 
@@ -93,9 +102,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {

@@ -93,10 +93,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -111,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TextMapPropagator))
             {
                 this.options.TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }

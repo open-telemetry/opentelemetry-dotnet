@@ -13,14 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Threading;
 #if NET452
 using Newtonsoft.Json;
 #else
-using System.Globalization;
 using System.Text.Json;
-using System.Threading;
 #endif
 using OpenTelemetry.Internal;
 
@@ -191,10 +193,21 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
 
-                foreach (var tag in this.Tags.Value)
+                // this will be used when we convert int, double, int[], double[] to string
+                var originalUICulture = Thread.CurrentThread.CurrentUICulture;
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
+                try
                 {
-                    writer.WritePropertyName(tag.Key);
-                    writer.WriteValue(tag.Value);
+                    foreach (var tag in this.Tags.Value)
+                    {
+                        writer.WritePropertyName(tag.Key);
+                        writer.WriteValue(this.ConvertObjectToString(tag.Value));
+                    }
+                }
+                finally
+                {
+                    Thread.CurrentThread.CurrentUICulture = originalUICulture;
                 }
 
                 writer.WriteEndObject();
@@ -286,29 +299,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 var originalUICulture = Thread.CurrentThread.CurrentUICulture;
                 Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-                foreach (var tag in this.Tags.Value)
+                try
                 {
-                    switch (tag.Value)
+                    foreach (var tag in this.Tags.Value)
                     {
-                        case string stringVal:
-                            writer.WriteString(tag.Key, stringVal);
-                            break;
-                        case int[] intArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", intArrayValue));
-                            break;
-                        case double[] doubleArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", doubleArrayValue));
-                            break;
-                        case bool[] boolArrayValue:
-                            writer.WriteString(tag.Key, string.Join(",", boolArrayValue));
-                            break;
-                        default:
-                            writer.WriteString(tag.Key, tag.Value.ToString());
-                            break;
+                        writer.WriteString(tag.Key, this.ConvertObjectToString(tag.Value));
                     }
                 }
-
-                Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                finally
+                {
+                    Thread.CurrentThread.CurrentUICulture = originalUICulture;
+                }
 
                 writer.WriteEndObject();
             }
@@ -317,5 +318,19 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         }
 
 #endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string ConvertObjectToString(object obj)
+        {
+            return obj switch
+            {
+                string stringVal => stringVal,
+                int[] arrayValue => string.Join(",", arrayValue),
+                long[] arrayValue => string.Join(",", arrayValue),
+                double[] arrayValue => string.Join(",", arrayValue),
+                bool[] arrayValue => string.Join(",", arrayValue),
+                _ => obj.ToString(),
+            };
+        }
     }
 }

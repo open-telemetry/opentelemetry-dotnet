@@ -38,6 +38,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         }
 
         [NonEvent]
+        public void RequestFilterException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.RequestFilterException(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void ExceptionInitializingInstrumentation(string instrumentationType, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
@@ -62,6 +71,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         public void NullPayload(string handlerName, string eventName)
         {
             this.WriteEvent(3, handlerName, eventName);
+        }
+
+        [Event(4, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
+        public void RequestFilterException(string exception)
+        {
+            this.WriteEvent(4, exception);
         }
     }
 }
