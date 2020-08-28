@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceContextTest.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="TextMapPropagatorTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
-    public class TraceContextTest
+    public class TextMapPropagatorTest
     {
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         };
 
         [Fact]
-        public void TraceContextFormatCanParseExampleFromSpec()
+        public void CanParseExampleFromSpec()
         {
             var headers = new Dictionary<string, string>
             {
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01" },
             };
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
@@ -66,14 +66,14 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
-        public void TraceContextFormatNotSampled()
+        public void NotSampled()
         {
             var headers = new Dictionary<string, string>
             {
                 { TraceParent, $"00-{TraceId}-{SpanId}-00" },
             };
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
@@ -85,46 +85,46 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
-        public void TraceContextFormat_IsBlankIfNoHeader()
+        public void IsBlankIfNoHeader()
         {
             var headers = new Dictionary<string, string>();
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.False(ctx.ActivityContext.IsValid());
         }
 
         [Fact]
-        public void TraceContextFormat_IsBlankIfInvalid()
+        public void IsBlankIfInvalid()
         {
             var headers = new Dictionary<string, string>
             {
                 { TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01" },
             };
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.False(ctx.ActivityContext.IsValid());
         }
 
         [Fact]
-        public void TraceContextFormat_TracestateToStringEmpty()
+        public void TracestateToStringEmpty()
         {
             var headers = new Dictionary<string, string>
             {
                 { TraceParent, $"00-{TraceId}-{SpanId}-01" },
             };
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.Null(ctx.ActivityContext.TraceState);
         }
 
         [Fact]
-        public void TraceContextFormat_TracestateToString()
+        public void TracestateToString()
         {
             var headers = new Dictionary<string, string>
             {
@@ -132,14 +132,14 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 { TraceState, "k1=v1,k2=v2,k3=v3" },
             };
 
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.ActivityContext.TraceState);
         }
 
         [Fact]
-        public void TraceContextFormat_Inject_NoTracestate()
+        public void Inject_NoTracestate()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
@@ -151,14 +151,14 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
             PropagationContext propagationContext = new PropagationContext(activityContext, default);
             var carrier = new Dictionary<string, string>();
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             f.Inject(propagationContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);
         }
 
         [Fact]
-        public void TraceContextFormat_Inject_WithTracestate()
+        public void Inject_WithTracestate()
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
             PropagationContext propagationContext = new PropagationContext(activityContext, default);
             var carrier = new Dictionary<string, string>();
-            var f = new TraceContextFormat();
+            var f = new TextMapPropagator();
             f.Inject(propagationContext, carrier, Setter);
 
             Assert.Equal(expectedHeaders, carrier);

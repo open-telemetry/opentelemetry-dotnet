@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TextMapPropagator))
             {
                 this.options.TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }

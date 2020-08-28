@@ -63,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.TextFormat is TextMapPropagator))
             {
                 var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
 
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.TextFormat is TextMapPropagator))
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.TextFormat is TextMapPropagator))
             {
                 if (activity.OperationName.Equals(ActivityNameByHttpInListener))
                 {

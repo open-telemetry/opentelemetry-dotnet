@@ -28,7 +28,7 @@ namespace Utils.Messaging
     public class MessageSender : IDisposable
     {
         private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageSender));
-        private static readonly ITextFormat TextFormat = new TraceContextFormat();
+        private static readonly ITextFormat TextFormat = new TextMapPropagator();
 
         private readonly ILogger<MessageSender> logger;
         private readonly IConnection connection;
