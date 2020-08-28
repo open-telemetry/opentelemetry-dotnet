@@ -23,6 +23,7 @@ namespace OpenTelemetry.Tests.Shared
     internal class TestActivityExporter : ActivityExporter
     {
         internal readonly BlockingCollection<Activity> Exported = new BlockingCollection<Activity>();
+        private bool disposedValue; // To detect redundant dispose calls
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
@@ -32,6 +33,21 @@ namespace OpenTelemetry.Tests.Shared
             }
 
             return ExportResult.Success;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposedValue)
+            {
+                if (disposing)
+                {
+                    this.Exported.Dispose();
+                }
+
+                this.disposedValue = true;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
