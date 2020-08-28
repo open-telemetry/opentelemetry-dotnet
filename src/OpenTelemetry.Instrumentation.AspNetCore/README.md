@@ -43,20 +43,24 @@ internal class MyAspNetCoreEnrichingProcessor : ActivityProcessor
 {
     public override void OnStart(Activity activity)
     {
+        // Retrieve the HttpRequest object.
         var httpRequest = activity.GetCustomProperty("OTel.AspNetCore.Request") as HttpRequest;
         if (httpRequest != null)
         {
+            // Add more tags to the activity
             activity.SetTag("mycustomtag", httpRequest.Headers["myheader"]);
         }
     }
 
     public override void OnEnd(Activity activity)
     {
+        // Retrieve the HttpResponse object.
         var httpResponse = activity.GetCustomProperty("OTel.AspNetCore.Response") as HttpResponse;
         if (httpResponse != null)
         {
             var statusCode = httpResponse.StatusCode;
             bool success = statusCode < 400;
+            // Add more tags to the activity or replace an existing tag.
             activity.SetTag("mycustomSuccess", success);
         }
     }
