@@ -22,18 +22,18 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// CompositePropagator provides a mechanism for combining multiple propagators into a single one.
     /// </summary>
-    public class CompositePropagator : ITextFormat
+    public class CompositePropagator : IPropagator
     {
         private static readonly ISet<string> EmptyFields = new HashSet<string>();
-        private readonly List<ITextFormat> textFormats;
+        private readonly List<IPropagator> propagators;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompositePropagator"/> class.
         /// </summary>
-        /// <param name="textFormats">List of <see cref="ITextFormat"/> wire context propagator.</param>
-        public CompositePropagator(IEnumerable<ITextFormat> textFormats)
+        /// <param name="propagators">List of <see cref="IPropagator"/> wire context propagator.</param>
+        public CompositePropagator(IEnumerable<IPropagator> propagators)
         {
-            this.textFormats = new List<ITextFormat>(textFormats ?? throw new ArgumentNullException(nameof(textFormats)));
+            this.propagators = new List<IPropagator>(propagators ?? throw new ArgumentNullException(nameof(propagators)));
         }
 
         /// <inheritdoc/>
@@ -42,9 +42,9 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            foreach (var textFormat in this.textFormats)
+            foreach (var propagator in this.propagators)
             {
-                context = textFormat.Extract(context, carrier, getter);
+                context = propagator.Extract(context, carrier, getter);
             }
 
             return context;
@@ -53,9 +53,9 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            foreach (var textFormat in this.textFormats)
+            foreach (var propagator in this.propagators)
             {
-                textFormat.Inject(context, carrier, setter);
+                propagator.Inject(context, carrier, setter);
             }
         }
     }

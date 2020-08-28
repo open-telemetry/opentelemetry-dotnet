@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// W3C baggage: https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md.
     /// </summary>
-    public class BaggagePropagator : ITextFormat
+    public class BaggagePropagator : IPropagator
     {
         internal const string BaggageHeaderName = "Baggage";
 

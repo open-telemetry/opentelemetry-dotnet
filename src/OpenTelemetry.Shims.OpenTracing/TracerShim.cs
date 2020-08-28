@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using global::OpenTracing.Propagation;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -25,12 +24,12 @@ namespace OpenTelemetry.Shims.OpenTracing
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.Tracer tracer;
-        private readonly ITextFormat textFormat;
+        private readonly IPropagator propagator;
 
-        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
+        public TracerShim(Trace.Tracer tracer, IPropagator textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
+            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
 
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
@@ -81,7 +80,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                propagationContext = this.textFormat.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
+                propagationContext = this.propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
             // TODO:
@@ -120,7 +119,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(
+                this.propagator.Inject(
                     new PropagationContext(shim.SpanContext, Baggage.Current),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));

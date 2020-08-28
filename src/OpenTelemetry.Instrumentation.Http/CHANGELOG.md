@@ -18,6 +18,8 @@
   Framework) `TracerProviderBuilderExtensions`. `AddHttpClientInstrumentation`
   will now register `HttpClient` instrumentation on .NET Core and `HttpClient` +
   `HttpWebRequest` instrumentation on .NET Framework.
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.3.0-beta
 
