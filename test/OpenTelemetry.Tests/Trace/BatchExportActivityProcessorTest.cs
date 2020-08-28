@@ -36,7 +36,7 @@ namespace OpenTelemetry.Tests.Trace
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxQueueSize: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxQueueSize: 1, maxExportBatchSize: 2049));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), scheduledDelayMilliseconds: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), exporterTimeoutMilliseconds: -1));
         }
@@ -45,22 +45,17 @@ namespace OpenTelemetry.Tests.Trace
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new BatchExportActivityProcessor(exporter, maxQueueSize: 1, maxExportBatchSize: 1);
-            processor.OnStart(new Activity("start"));
+            using var processor = new BatchExportActivityProcessor(
+                exporter,
+                maxQueueSize: 1,
+                maxExportBatchSize: 1,
+                scheduledDelayMilliseconds: 100_000);
+
             processor.OnEnd(new Activity("start"));
 
-            int i = 0;
-            while (i < 10)
+            for (int i = 0; i < 10 && exporter.Exported.Count == 0; i++)
             {
-                if (exporter.Exported.Count == 0)
-                {
-                    Thread.Sleep(500);
-                    i++;
-                }
-                else
-                {
-                    break;
-                }
+                Thread.Sleep(500);
             }
 
             Assert.Single(exporter.Exported);
@@ -91,10 +86,7 @@ namespace OpenTelemetry.Tests.Trace
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnStart(new Activity("start1"));
             processor.OnEnd(new Activity("start1"));
-
-            processor.OnStart(new Activity("start2"));
             processor.OnEnd(new Activity("start2"));
 
             Assert.Equal(0, processor.ProcessedCount);
@@ -106,7 +98,12 @@ namespace OpenTelemetry.Tests.Trace
             // forcing flush
             processor.ForceFlush(timeout);
 
-            Thread.Sleep(1_000);
+            if (timeout == 0)
+            {
+                // ForceFlush(0) will trigger flush and return immediately, so let's sleep for a while
+                Thread.Sleep(1_000);
+            }
+
             Assert.Equal(2, exporter.Exported.Count);
 
             Assert.Equal(2, processor.ProcessedCount);
@@ -127,11 +124,15 @@ namespace OpenTelemetry.Tests.Trace
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnStart(new Activity("start"));
             processor.OnEnd(new Activity("start"));
             processor.Shutdown(timeout);
 
-            Thread.Sleep(1_000);
+            if (timeout == 0)
+            {
+                // ForceFlush(0) will trigger flush and return immediately, so let's sleep for a while
+                Thread.Sleep(1_000);
+            }
+
             Assert.Single(exporter.Exported);
 
             Assert.Equal(1, processor.ProcessedCount);

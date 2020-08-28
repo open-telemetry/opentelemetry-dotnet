@@ -36,11 +36,10 @@ namespace OpenTelemetry.Tests.Trace
         {
             using var exporter = new TestActivityExporter();
             using var processor = new ReentrantExportActivityProcessor(exporter);
-            processor.OnStart(new Activity("start1"));
+
             processor.OnEnd(new Activity("start1"));
             Assert.Single(exporter.Exported);
 
-            processor.OnStart(new Activity("start2"));
             processor.OnEnd(new Activity("start2"));
             Assert.Equal(2, exporter.Exported.Count);
         }
@@ -54,10 +53,7 @@ namespace OpenTelemetry.Tests.Trace
             using var exporter = new TestActivityExporter();
             using var processor = new ReentrantExportActivityProcessor(exporter);
 
-            processor.OnStart(new Activity("start1"));
             processor.OnEnd(new Activity("start1"));
-
-            processor.OnStart(new Activity("start2"));
             processor.OnEnd(new Activity("start2"));
 
             // checking before force flush
@@ -77,7 +73,6 @@ namespace OpenTelemetry.Tests.Trace
             using var exporter = new TestActivityExporter();
             using var processor = new ReentrantExportActivityProcessor(exporter);
 
-            processor.OnStart(new Activity("start"));
             processor.OnEnd(new Activity("start"));
 
             // checking before shutdown

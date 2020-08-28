@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Tests.Shared
 {
     internal class TestActivityExporter : ActivityExporter
     {
-        internal readonly List<Activity> Exported = new List<Activity>();
+        internal readonly BlockingCollection<Activity> Exported = new BlockingCollection<Activity>();
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
