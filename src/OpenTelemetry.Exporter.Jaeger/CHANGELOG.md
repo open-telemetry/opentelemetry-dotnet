@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
+Released 2020-08-28
+
 * Changed `JaegerExporter` to use `BatchExportActivityProcessor` by default
   ([#1125](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1125))
 * Span links will now be sent as `FOLLOWS_FROM` reference type. Previously they
