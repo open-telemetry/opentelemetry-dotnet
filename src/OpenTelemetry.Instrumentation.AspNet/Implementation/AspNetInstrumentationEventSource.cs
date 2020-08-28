@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
@@ -26,6 +28,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     {
         public static AspNetInstrumentationEventSource Log = new AspNetInstrumentationEventSource();
 
+        [NonEvent]
+        public void RequestFilterException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.RequestFilterException(ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
         public void NullPayload(string handlerName, string eventName)
         {
@@ -36,6 +47,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public void RequestIsFilteredOut(string eventName)
         {
             this.WriteEvent(2, eventName);
+        }
+
+        [Event(3, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
+        public void RequestFilterException(string exception)
+        {
+            this.WriteEvent(3, exception);
         }
     }
 }

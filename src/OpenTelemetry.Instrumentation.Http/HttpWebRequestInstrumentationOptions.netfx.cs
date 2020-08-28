@@ -18,6 +18,7 @@
 using System;
 using System.Net;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -42,13 +43,24 @@ namespace OpenTelemetry.Instrumentation.Http
         });
 
         /// <summary>
-        /// Gets or sets an optional callback method for filtering <see cref="HttpWebRequest"/> requests that are sent through the instrumentation.
+        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// The Filter gets the HttpWebRequest, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-        public Func<HttpWebRequest, bool> FilterFunc { get; set; }
+        public Func<HttpWebRequest, bool> InstrumentationFilter { get; set; }
 
         internal bool EventFilter(HttpWebRequest request)
         {
-            return this.FilterFunc?.Invoke(request) ?? true;
+            try
+            {
+                return this.InstrumentationFilter?.Invoke(request) ?? true;
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
         }
     }
 }

@@ -235,17 +235,38 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpClientInstrumentationFiltersOutRequests()
+        public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
                                .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
+            }
+
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+        }
+
+        [Fact]
+        public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
+        {
+            var processor = new Mock<ActivityProcessor>();
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation(
+                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
+                               .AddProcessor(processor.Object)
+                               .Build())
+            {
+                using var c = new HttpClient();
+                using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+                {
+                    await c.GetAsync(this.url);
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+                }
             }
 
             Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.

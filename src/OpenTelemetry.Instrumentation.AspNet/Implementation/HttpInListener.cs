@@ -53,9 +53,18 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            try
             {
-                AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
                 activity.IsAllDataRequested = false;
                 return;
             }
