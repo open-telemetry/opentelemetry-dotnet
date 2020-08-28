@@ -38,13 +38,14 @@ objects in the activity. This can be accessed in ActivityProcessors, and
 can be used to further enrich the Activity with additional tags as shown
 below.
 
-```
+```csharp
 internal class MyAspNetCoreEnrichingProcessor : ActivityProcessor
 {
     public override void OnStart(Activity activity)
     {
         // Retrieve the HttpRequest object.
-        var httpRequest = activity.GetCustomProperty("OTel.AspNetCore.Request") as HttpRequest;
+        var httpRequest = activity.GetCustomProperty("OTel.AspNetCore.Request")
+                          as HttpRequest;
         if (httpRequest != null)
         {
             // Add more tags to the activity
@@ -55,7 +56,8 @@ internal class MyAspNetCoreEnrichingProcessor : ActivityProcessor
     public override void OnEnd(Activity activity)
     {
         // Retrieve the HttpResponse object.
-        var httpResponse = activity.GetCustomProperty("OTel.AspNetCore.Response") as HttpResponse;
+        var httpResponse = activity.GetCustomProperty("OTel.AspNetCore.Response")
+                           as HttpResponse;
         if (httpResponse != null)
         {
             var statusCode = httpResponse.StatusCode;
