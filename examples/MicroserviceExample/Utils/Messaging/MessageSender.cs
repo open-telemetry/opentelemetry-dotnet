@@ -28,7 +28,7 @@ namespace Utils.Messaging
     public class MessageSender : IDisposable
     {
         private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageSender));
-        private static readonly ITextFormat TextFormat = new TextMapPropagator();
+        private static readonly IPropagator Propagator = new TextMapPropagator();
 
         private readonly ILogger<MessageSender> logger;
         private readonly IConnection connection;
@@ -62,7 +62,7 @@ namespace Utils.Messaging
                     if (activity != null)
                     {
                         // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                        TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
+                        Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
 
                         // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                         RabbitMqHelper.AddMessagingTags(activity);

@@ -52,6 +52,8 @@
 * Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to
   `BaggagePropagator`, and `B3Format` to `B3Propagator`
   ([#1175](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1175))
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 
