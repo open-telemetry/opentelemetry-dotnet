@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
 * .NET Core SqlClient instrumentation will now add the raw Command object to the
   Activity it creates
   ([#1099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1099))

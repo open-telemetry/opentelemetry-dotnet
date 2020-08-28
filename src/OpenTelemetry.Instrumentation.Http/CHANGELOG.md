@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
 * Rename FilterFunc to Filter.
 
 * HttpClient/HttpWebRequest instrumentation will now add the raw Request,

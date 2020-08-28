@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
 * NuGet package renamed to OpenTelemetry.Instrumentation.GrpcNetClient to
   more clearly indicate that this package is specifically for gRPC client
   instrumentation. The package was previously named
