@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerSdkSetsActivityDataRequestBasedOnSamplingDecision()
+        public void TracerSdkSetsActivitySamplingResultBasedOnSamplingDecision()
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
+        public void TracerSdkSetsActivitySamplingResultToNoneWhenSuppressInstrumentationIsTrue()
         {
             using var scope = SuppressInstrumentationScope.Begin();
 

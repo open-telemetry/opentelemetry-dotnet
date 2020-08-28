@@ -79,7 +79,7 @@
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.2.7" />
     <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.2.7" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
-      <Version>5.0.0-preview.8.20407.11</Version>
+      <Version>5.0.0-rc.1.20428.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
