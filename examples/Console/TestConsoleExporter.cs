@@ -102,16 +102,13 @@ namespace Examples.Console
         {
             public override void OnStart(Activity activity)
             {
-                if (activity.IsAllDataRequested)
+                if (activity.Kind == ActivityKind.Server)
                 {
-                    if (activity.Kind == ActivityKind.Server)
-                    {
-                        activity.SetTag("customServerTag", "Custom Tag Value for server");
-                    }
-                    else if (activity.Kind == ActivityKind.Client)
-                    {
-                        activity.SetTag("customClientTag", "Custom Tag Value for Client");
-                    }
+                    activity.SetTag("customServerTag", "Custom Tag Value for server");
+                }
+                else if (activity.Kind == ActivityKind.Client)
+                {
+                    activity.SetTag("customClientTag", "Custom Tag Value for Client");
                 }
             }
         }

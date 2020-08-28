@@ -34,7 +34,21 @@ namespace Examples.AspNet
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                  .AddHttpClientInstrumentation()
-                 .AddAspNetInstrumentation()
+                 .AddAspNetInstrumentation(
+                     (options) =>
+                     {
+                         options.Filter = (httpContext) =>
+                         {
+                             if (httpContext.Request.HttpMethod.Equals("POST"))
+                             {
+                                 return false;
+                             }
+                             else
+                             {
+                                 return true;
+                             }
+                         };
+                     })
                  .AddJaegerExporter(jaegerOptions =>
                  {
                      jaegerOptions.AgentHost = "localhost";
