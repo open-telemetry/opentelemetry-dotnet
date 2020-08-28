@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.WriteEvent(2, eventName);
         }
 
-        [Event(3, Message = "InstrumentationFilter threw exception and filter will not be applied. Exception {0}.", Level = EventLevel.Error)]
+        [Event(3, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
         public void RequestFilterException(string exception)
         {
             this.WriteEvent(3, exception);

@@ -195,9 +195,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 activity.Stop();
             }
 
-            if (HttpContext.Current.Request.Path == filter)
+            if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
+                // only Shutdown/Dispose are called because request was filtered.
+                Assert.Equal(2, activityProcessor.Invocations.Count);
                 return;
             }
 
