@@ -73,6 +73,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             catch (Exception ex)
             {
                 AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                activity.IsAllDataRequested = false;
+                return;
             }
 
             var request = context.Request;

@@ -184,7 +184,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task InstrumentationFilterFiltersRequest()
+        public async Task RequestNotCollectedWhenFilterIsApplied()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
@@ -223,14 +223,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task InstrumentationFilterIsNotAppliedWhenException()
+        public async Task RequestNotCollectedWhenFilterThrowException()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => throw new Exception("from InstrumentationFilter"))
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
+                    {
+                        if (ctx.Request.Path == "/api/values/2")
+                        {
+                            throw new Exception("from InstrumentationFilter");
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    })
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -246,8 +256,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
                 {
                     var response1 = await client.GetAsync("/api/values");
+                    var response2 = await client.GetAsync("/api/values/2");
 
                     response1.EnsureSuccessStatusCode(); // Status Code 200-299
+                    response2.EnsureSuccessStatusCode(); // Status Code 200-299
                     Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
                 }
 
