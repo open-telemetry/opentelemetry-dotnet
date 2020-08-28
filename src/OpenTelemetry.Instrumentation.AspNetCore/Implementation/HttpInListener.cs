@@ -78,9 +78,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TextMapPropagator))
+            if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
             {
-                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {

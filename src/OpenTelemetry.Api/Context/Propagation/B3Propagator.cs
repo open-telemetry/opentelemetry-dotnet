@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// B3 text propagator. See https://github.com/openzipkin/b3-propagation for the specification.
     /// </summary>
-    public sealed class B3Propagator : ITextFormat
+    public sealed class B3Propagator : IPropagator
     {
         internal const string XB3TraceId = "X-B3-TraceId";
         internal const string XB3SpanId = "X-B3-SpanId";

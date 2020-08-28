@@ -98,8 +98,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
                 .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options => options.TextFormat = textFormat.Object)
+                .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
                 .Build();
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
