@@ -16,10 +16,9 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 
 ## Enable AspNetCore Instrumentation
 
-OpenTelemetry.Instrumentation.AspNetCore must be enabled by using the extension
-method `AddAspNetCoreInstrumentation`. It is recommended to be
-done in the `ConfigureServices` method of your ASP.NET Core `Startup.cs`,
-as shown below.
+OpenTelemetry.Instrumentation.AspNetCore must be enabled at application
+startup, typically in the `ConfigureServices` method of your ASP.NET Core 
+application's `Startup.cs` class, as shown below.
 
 ```csharp
 services.AddOpenTelemetryTracerProvider(
@@ -29,6 +28,8 @@ services.AddOpenTelemetryTracerProvider(
 ```
 
 ## Filtering
+
+TODO.
 
 ## Enriching automaticaly collected activity with additional information
 
