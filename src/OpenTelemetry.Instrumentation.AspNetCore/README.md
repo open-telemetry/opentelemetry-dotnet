@@ -16,7 +16,7 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 
 ## Enable AspNetCore Instrumentation
 
-OpenTelemetry.Instrumentation.AspNetCore must be enabled at application
+`OpenTelemetry.Instrumentation.AspNetCore` must be enabled at application
 startup, typically in the `ConfigureServices` method of your ASP.NET Core
 application's `Startup.cs` class, as shown below.
 
@@ -63,7 +63,7 @@ internal class MyAspNetCoreEnrichingProcessor : ActivityProcessor
             var statusCode = httpResponse.StatusCode;
             bool success = statusCode < 400;
             // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("mycustomSuccess", success);
+            activity.SetTag("myCustomSuccess", success);
         }
     }
 }
