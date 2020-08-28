@@ -93,10 +93,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
