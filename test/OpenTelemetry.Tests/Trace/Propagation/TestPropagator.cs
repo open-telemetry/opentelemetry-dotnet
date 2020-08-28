@@ -49,7 +49,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return context;
             }
 
-            var traceparentParsed = TraceContextFormat.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
+            var traceparentParsed = TextMapPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
             if (!traceparentParsed)
             {
                 return context;
@@ -59,12 +59,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
             IEnumerable<string> tracestateCollection = getter(carrier, this.stateHeaderName);
             if (tracestateCollection?.Any() ?? false)
             {
-                TraceContextFormat.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                TextMapPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
             return new PropagationContext(
                 new ActivityContext(traceId, spanId, traceoptions, tracestate),
-                context.ActivityBaggage);
+                context.Baggage);
         }
 
         public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)

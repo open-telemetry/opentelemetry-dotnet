@@ -30,7 +30,7 @@ namespace Utils.Messaging
     public class MessageReceiver : IDisposable
     {
         private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageReceiver));
-        private static readonly ITextFormat TextFormat = new TraceContextFormat();
+        private static readonly ITextFormat TextFormat = new TextMapPropagator();
 
         private readonly ILogger<MessageReceiver> logger;
         private readonly IConnection connection;

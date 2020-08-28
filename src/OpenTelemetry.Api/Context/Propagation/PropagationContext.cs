@@ -15,9 +15,7 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -29,23 +27,23 @@ namespace OpenTelemetry.Context.Propagation
         /// <summary>
         /// Initializes a new instance of the <see cref="PropagationContext"/> struct.
         /// </summary>
-        /// <param name="activityContext">Entries for activity context.</param>
-        /// <param name="activityBaggage">Entries for activity baggage.</param>
-        public PropagationContext(ActivityContext activityContext, IEnumerable<KeyValuePair<string, string>> activityBaggage)
+        /// <param name="activityContext"><see cref="System.Diagnostics.ActivityContext"/>.</param>
+        /// <param name="baggage"><see cref="Baggage"/>.</param>
+        public PropagationContext(ActivityContext activityContext, Baggage baggage)
         {
             this.ActivityContext = activityContext;
-            this.ActivityBaggage = activityBaggage;
+            this.Baggage = baggage;
         }
 
         /// <summary>
-        /// Gets <see cref="ActivityContext"/>.
+        /// Gets <see cref="System.Diagnostics.ActivityContext"/>.
         /// </summary>
         public ActivityContext ActivityContext { get; }
 
         /// <summary>
-        /// Gets ActivityBaggage.
+        /// Gets <see cref="Baggage"/>.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> ActivityBaggage { get; }
+        public Baggage Baggage { get; }
 
         /// <summary>
         /// Compare two entries of <see cref="PropagationContext"/> for equality.
@@ -64,35 +62,8 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public bool Equals(PropagationContext value)
         {
-            if (this.ActivityContext != value.ActivityContext
-                || this.ActivityBaggage is null != value.ActivityBaggage is null)
-            {
-                return false;
-            }
-
-            if (this.ActivityBaggage is null)
-            {
-                return true;
-            }
-
-            if (this.ActivityBaggage.Count() != value.ActivityBaggage.Count())
-            {
-                return false;
-            }
-
-            var thisEnumerator = this.ActivityBaggage.GetEnumerator();
-            var valueEnumerator = value.ActivityBaggage.GetEnumerator();
-
-            while (thisEnumerator.MoveNext() && valueEnumerator.MoveNext())
-            {
-                if (thisEnumerator.Current.Key != valueEnumerator.Current.Key
-                    || thisEnumerator.Current.Value != valueEnumerator.Current.Value)
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return this.ActivityContext == value.ActivityContext
+                && this.Baggage == value.Baggage;
         }
 
         /// <inheritdoc/>
@@ -103,7 +74,7 @@ namespace OpenTelemetry.Context.Propagation
         {
             var hashCode = 323591981;
             hashCode = (hashCode * -1521134295) + this.ActivityContext.GetHashCode();
-            hashCode = (hashCode * -1521134295) + EqualityComparer<IEnumerable<KeyValuePair<string, string>>>.Default.GetHashCode(this.ActivityBaggage);
+            hashCode = (hashCode * -1521134295) + this.Baggage.GetHashCode();
             return hashCode;
         }
     }
