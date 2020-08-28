@@ -64,7 +64,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             return new PropagationContext(
                 new ActivityContext(traceId, spanId, traceoptions, tracestate),
-                context.ActivityBaggage);
+                context.Baggage);
         }
 
         public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)

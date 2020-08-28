@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
             this.sumAggregator.Update(value);
         }
 
-        public override void Add(in CorrelationContext context, double value)
+        public override void Add(in Baggage context, double value)
         {
             this.sumAggregator.Update(value);
         }

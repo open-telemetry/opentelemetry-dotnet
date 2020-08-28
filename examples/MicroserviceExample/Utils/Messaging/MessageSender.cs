@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using RabbitMQ.Client;
 
@@ -61,7 +62,7 @@ namespace Utils.Messaging
                     if (activity != null)
                     {
                         // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                        TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), props, this.InjectTraceContextIntoBasicProperties);
+                        TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
 
                         // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                         RabbitMqHelper.AddMessagingTags(activity);
