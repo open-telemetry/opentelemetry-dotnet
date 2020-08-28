@@ -84,14 +84,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
-        public void ZipkinExporter_BadArgs()
+        public void BadArgs()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
         }
 
         [Fact]
-        public void ZipkinExporter_SuppresssesInstrumentation()
+        public void SuppresssesInstrumentation()
         {
             const string ActivitySourceName = "zipkin.test";
             Guid requestId = Guid.NewGuid();
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ZipkinExporterIntegrationTest(bool useShortTraceIds)
+        public void IntegrationTest(bool useShortTraceIds)
         {
             Guid requestId = Guid.NewGuid();
 
@@ -204,7 +204,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 foreach (var attribute in additionalAttributes)
                 {
-                    attributes.Add(attribute.Key, attribute.Value);
+                    if (!attributes.ContainsKey(attribute.Key))
+                    {
+                        attributes.Add(attribute.Key, attribute.Value);
+                    }
                 }
             }
 
