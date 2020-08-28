@@ -4,7 +4,7 @@
 
 ## 0.5.0-beta.1
 
-Released 2020-Aug-28
+Released 2020-08-28
 
 * Renamed `ITextPropagator` to `IPropagator`
   ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))

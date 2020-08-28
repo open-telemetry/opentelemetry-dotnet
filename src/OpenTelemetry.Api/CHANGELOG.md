@@ -4,7 +4,7 @@
 
 ## 0.5.0-beta.1
 
-Released 2020-Aug-28
+Released 2020-08-28
 
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`

@@ -4,7 +4,7 @@
 
 ## 0.5.0-beta.1
 
-Released 2020-Aug-28
+Released 2020-08-28
 
 * Changed `JaegerExporter` to use `BatchExportActivityProcessor` by default
   ([#1125](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1125))
