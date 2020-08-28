@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
@@ -101,10 +101,11 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Producer);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
+            Assert.Equal(ActivityKind.Producer, activity.Kind);
             Assert.Equal(activity.IsAllDataRequested, startCalled);
             Assert.Equal(activity.IsAllDataRequested, endCalled);
         }
@@ -141,7 +142,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
@@ -162,7 +163,7 @@ namespace OpenTelemetry.Trace.Tests
             // and becomes root activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -193,7 +194,7 @@ namespace OpenTelemetry.Trace.Tests
             var activity = new Activity("test").SetParentId(remoteParentId);
             activity.TraceStateString = tracestate;
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -216,6 +217,7 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
                 Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
+                Assert.Equal(ActivityKind.Client, samplingParameters.Kind);
                 return new SamplingResult(SamplingDecision.RecordAndSampled);
             };
 
@@ -225,7 +227,7 @@ namespace OpenTelemetry.Trace.Tests
             // i.e of the parent Activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Client);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
