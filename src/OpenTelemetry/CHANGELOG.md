@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-* Modified Sampler implementation to match the spec
-  ([#1037](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1037))
+## 0.5.0-beta.1
+
+Released 2020-08-28
+
 * Changed `ActivityProcessor` to implement `IDisposable`
   ([#975](https://github.com/open-telemetry/opentelemetry-dotnet/pull/975))
 * Samplers now get the actual TraceId of the Activity to be created.
@@ -23,6 +25,8 @@
   [#1035](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1035))
 * Changed `AddActivitySource` to `AddSource` with params support
   ([#1036](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1036))
+* Modified Sampler implementation to match the spec
+  ([#1037](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1037))
 * Refactored simple export and batch export APIs
   ([#1078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1078)
   [#1081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1081)
@@ -34,6 +38,13 @@
   [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127)
   [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129)
   [#1135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1135))
+* Changed `MeterProviderBuilder` and `MeterProviderSdk` design to simply the
+  flow and usage
+  ([#1149](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1149))
+* Renamed `ParentOrElseSampler` to `ParentBasedSampler`
+  ([#1173](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1173))
+* Renamed `ProbabilitySampler` to `TraceIdRatioBasedSampler`
+  ([#1174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1174))
 
 ## 0.4.0-beta.2
 

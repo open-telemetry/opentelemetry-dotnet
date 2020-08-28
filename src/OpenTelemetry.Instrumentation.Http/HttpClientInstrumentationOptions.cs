@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -32,26 +34,37 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextFormat"/> &amp; <see cref="BaggageFormat"/>.
+        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public ITextFormat TextFormat { get; set; } = new CompositePropagator(new ITextFormat[]
+        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
         {
-            new TraceContextFormat(),
-            new BaggageFormat(),
+            new TextMapPropagator(),
+            new BaggagePropagator(),
         });
 
         /// <summary>
-        /// Gets or sets an optional callback method for filtering <see cref="HttpRequestMessage"/> requests that are sent through the instrumentation.
+        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// The Filter gets the HttpRequestMessage, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-        public Func<HttpRequestMessage, bool> FilterFunc { get; set; }
+        public Func<HttpRequestMessage, bool> Filter { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
-            return
-                this.FilterFunc == null ||
-                !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
-                this.FilterFunc(requestMessage);
+            try
+            {
+                return
+                    this.Filter == null ||
+                    !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
+                    this.Filter(requestMessage);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

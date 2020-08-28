@@ -43,12 +43,12 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override void Add(in CorrelationContext context, T value, LabelSet labelset)
+        public override void Add(in Baggage context, T value, LabelSet labelset)
         {
         }
 
         /// <inheritdoc/>
-        public override void Add(in CorrelationContext context, T value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Add(in Baggage context, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
         }
 

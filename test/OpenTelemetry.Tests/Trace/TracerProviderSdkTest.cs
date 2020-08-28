@@ -253,7 +253,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity);
+            adapter.Start(activity, ActivityKind.Internal);
             adapter.Stop(activity);
             activity.Stop();
 
@@ -283,7 +283,7 @@ namespace OpenTelemetry.Trace.Tests
             tracerProvider.AddProcessor(testActivityProcessorNew);
             Activity activityNew = new Activity("test");
             activityNew.Start();
-            adapter.Start(activityNew);
+            adapter.Start(activityNew, ActivityKind.Internal);
             adapter.Stop(activityNew);
             activityNew.Stop();
 
@@ -306,7 +306,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity);
+            adapter.Start(activity, ActivityKind.Internal);
             adapter.Stop(activity);
             activity.Stop();
 

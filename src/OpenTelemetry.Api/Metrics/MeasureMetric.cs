@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
+        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
         public void Record(in SpanContext context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
+        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
         public void Record(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
@@ -46,18 +46,18 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated distributed context.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Record(in CorrelationContext context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
+        public void Record(in Baggage context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
 
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated distributed context.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Record(in CorrelationContext context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
+        public void Record(in Baggage context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
 
         /// <summary>
         /// Gets the bound measure metric with given labelset.

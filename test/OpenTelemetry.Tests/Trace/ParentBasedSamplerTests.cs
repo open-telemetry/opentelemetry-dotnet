@@ -1,4 +1,4 @@
-﻿// <copyright file="ParentOrElseSamplerTests.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="ParentBasedSamplerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,28 +18,28 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class ParentOrElseSamplerTests
+    public class ParentBasedSamplerTests
     {
-        private readonly ParentOrElseSampler parentOrElseAlwaysOnSampler = new ParentOrElseSampler(new AlwaysOnSampler());
-        private readonly ParentOrElseSampler parentOrElseAlwaysOffSampler = new ParentOrElseSampler(new AlwaysOffSampler());
+        private readonly ParentBasedSampler parentBasedOnSampler = new ParentBasedSampler(new AlwaysOnSampler());
+        private readonly ParentBasedSampler parentBasedOffSampler = new ParentBasedSampler(new AlwaysOffSampler());
 
         [Fact]
-        public void ParentOrElseSampler_SampledParent()
+        public void SampledParent()
         {
             // No parent, use delegate sampler.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.RecordAndSampled),
-                this.parentOrElseAlwaysOnSampler.ShouldSample(default));
+                this.parentBasedOnSampler.ShouldSample(default));
 
             // No parent, use delegate sampler.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.NotRecord),
-                this.parentOrElseAlwaysOffSampler.ShouldSample(default));
+                this.parentBasedOffSampler.ShouldSample(default));
 
             // Not sampled parent, don't sample.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.NotRecord),
-                this.parentOrElseAlwaysOnSampler.ShouldSample(
+                this.parentBasedOnSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: new ActivityContext(
                             ActivityTraceId.CreateRandom(),
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Tests
             // Sampled parent, sample.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.RecordAndSampled),
-                this.parentOrElseAlwaysOffSampler.ShouldSample(
+                this.parentBasedOffSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: new ActivityContext(
                             ActivityTraceId.CreateRandom(),
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void ParentOrElseSampler_SampledParentLink()
+        public void SampledParentLink()
         {
             var notSampledLink = new ActivityLink[]
             {
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Tests
             // Not sampled link, don't sample.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.NotRecord),
-                this.parentOrElseAlwaysOnSampler.ShouldSample(
+                this.parentBasedOnSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: notSampledParent,
                         traceId: default,
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Trace.Tests
             // Sampled link, sample.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.RecordAndSampled),
-                this.parentOrElseAlwaysOffSampler.ShouldSample(
+                this.parentBasedOffSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: notSampledParent,
                         traceId: default,

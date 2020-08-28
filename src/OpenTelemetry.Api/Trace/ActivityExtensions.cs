@@ -76,18 +76,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Sets the kind of activity execution.
-        /// </summary>
-        /// <param name="activity">Activity instance.</param>
-        /// <param name="kind">Activity execution kind.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetKind(this Activity activity, ActivityKind kind)
-        {
-            Debug.Assert(activity != null, "Activity should not be null");
-            SetKindProperty(activity, kind);
-        }
-
-        /// <summary>
         /// Record Exception.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
@@ -112,18 +100,6 @@ namespace OpenTelemetry.Trace
             }
 
             activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
-        }
-
-#pragma warning disable SA1201 // Elements should appear in the correct order
-        private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
-#pragma warning restore SA1201 // Elements should appear in the correct order
-
-        private static Action<Activity, ActivityKind> CreateActivityKindSetter()
-        {
-            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
-            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
-            var body = Expression.Assign(Expression.Property(instance, "Kind"), propertyValue);
-            return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override void Record(in CorrelationContext context, T value)
+        public override void Record(in Baggage context, T value)
         {
         }
     }

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
+Released 2020-08-28
+
 ## 0.4.0-beta.2
 
 Released 2020-07-24
