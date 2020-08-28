@@ -128,8 +128,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
                 new ActivityContext(
                     expectedTraceId,
                     expectedSpanId,
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                     if (!carrierFormat.Equals("TraceContext"))
                     {
-                        options.TextFormat = textFormat.Object;
+                        options.Propagator = propagator.Object;
                     }
                 })
             .SetResource(expectedResource)
