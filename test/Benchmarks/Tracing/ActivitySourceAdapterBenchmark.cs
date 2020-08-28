@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace.Benchmarks
 
             public void Start(Activity activity)
             {
-                this.adapter.Start(activity);
+                this.adapter.Start(activity, ActivityKind.Internal);
             }
 
             public void Stop(Activity activity)
