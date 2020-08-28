@@ -16,13 +16,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 var match = CoreAppMajorVersionCheckRegex.Match(framework);
 
-                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
+                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value) >= 3;
             }
 
             this.options = options;
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
             {
-                this.options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpRequestMessageHeaderValueSetter);
+                this.options.TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 
