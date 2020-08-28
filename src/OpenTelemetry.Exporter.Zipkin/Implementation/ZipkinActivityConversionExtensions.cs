@@ -211,12 +211,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
             }
-            else if (attribute.Value is int intVal && attribute.Key == SemanticConventions.AttributeNetPeerPort)
-            {
-                state.Port = intVal;
-            }
             else
             {
+                if (attribute.Value is int intVal && attribute.Key == SemanticConventions.AttributeNetPeerPort)
+                {
+                    state.Port = intVal;
+                }
+
                 PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
             }
 
