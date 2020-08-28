@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0-beta.1
+
+Released 2020-08-28
+
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`
   ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))
@@ -52,6 +56,8 @@
 * Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to
   `BaggagePropagator`, and `B3Format` to `B3Propagator`
   ([#1175](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1175))
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 
