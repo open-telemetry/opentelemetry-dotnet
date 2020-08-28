@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-## 0.5.0-beta.1
-
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`
   ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))

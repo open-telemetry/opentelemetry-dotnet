@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-## 0.5.0-beta.1
-
 * Allow configurable gRPC channel options
   ([#1033](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1033))
 * Renamed extension method from `UseOtlpExporter` to `AddOtlpExporter`
