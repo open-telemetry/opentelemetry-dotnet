@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 var hostNameOrIpAddress = jaegerTags.HostName ?? jaegerTags.IpAddress;
 
                 // peer.service has not already been included, but net.peer.name/ip and optionally net.peer.port are present
-                if ((jaegerTags.PeerService == null || jaegerTags.PeerServicePriority > 0)
+                if ((jaegerTags.PeerService == null || addPeerServiceTag)
                     && hostNameOrIpAddress != null)
                 {
                     peerServiceName = jaegerTags.Port == default
