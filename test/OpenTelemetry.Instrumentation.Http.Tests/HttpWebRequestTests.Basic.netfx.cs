@@ -16,11 +16,13 @@
 #if NETFRAMEWORK
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -164,19 +166,37 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationFiltersOutRequests()
+        public async Task RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(
-                    c => c.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                    c => c.InstrumentationFilter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
             using var c = new HttpClient();
             await c.GetAsync(this.url);
 
             Assert.Equal(0, activityProcessor.Invocations.Count);
+        }
+
+        [Fact]
+        public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation(
+                    c => c.InstrumentationFilter = (req) => throw new Exception("From Instrumentation filter"))
+                .Build();
+
+            using var c = new HttpClient();
+            using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+            {
+                await c.GetAsync(this.url);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+            }
         }
     }
 }

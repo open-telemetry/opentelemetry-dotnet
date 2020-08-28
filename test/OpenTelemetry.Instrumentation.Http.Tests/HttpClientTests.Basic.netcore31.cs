@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
@@ -234,12 +235,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpClientInstrumentationFiltersOutRequests()
+        public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
                                .Build())
             {
@@ -248,6 +249,64 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+        }
+
+        [Fact]
+        public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
+        {
+            var processor = new Mock<ActivityProcessor>();
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation(
+                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
+                               .AddProcessor(processor.Object)
+                               .Build())
+            {
+                using var c = new HttpClient();
+                using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+                {
+                    await c.GetAsync(this.url);
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+                }
+            }
+
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationCorrelationAndBaggage()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+
+            using var parent = new Activity("w3c activity");
+            parent.SetIdFormat(ActivityIdFormat.W3C);
+            parent.AddBaggage("k1", "v1");
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            parent.Start();
+
+            Baggage.SetBaggage("k2", "v2");
+
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .AddProcessor(activityProcessor.Object)
+                .Build())
+            {
+                using var c = new HttpClient();
+                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+            }
+
+            Assert.Equal(4, activityProcessor.Invocations.Count);
+
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            HttpRequestMessage thisRequest = (HttpRequestMessage)activity.GetCustomProperty(HttpHandlerDiagnosticListener.RequestCustomPropertyName);
+
+            string[] correlationContext = thisRequest.Headers.GetValues("Correlation-Context").First().Split(',');
+            Assert.Single(correlationContext);
+            Assert.Contains("k1=v1", correlationContext);
+
+            string[] baggage = thisRequest.Headers.GetValues("Baggage").First().Split(',');
+            Assert.Single(baggage);
+            Assert.Contains("k2=v2", baggage);
         }
 
         public void Dispose()

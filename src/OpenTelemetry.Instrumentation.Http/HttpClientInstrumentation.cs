@@ -29,11 +29,11 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
-        /// <param name="activitySource">ActivitySource adapter instance.</param>
+        /// <param name="activitySourceAdapter">ActivitySource adapter instance.</param>
         /// <param name="options">Configuration options for HTTP client instrumentation.</param>
-        public HttpClientInstrumentation(ActivitySourceAdapter activitySource, HttpClientInstrumentationOptions options)
+        public HttpClientInstrumentation(ActivitySourceAdapter activitySourceAdapter, HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySource), (activitySource, arg1, arg2) => options?.EventFilter(activitySource, arg1) ?? true);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySourceAdapter), (activityName, arg1, arg2) => options?.EventFilter(activityName, arg1) ?? true);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
