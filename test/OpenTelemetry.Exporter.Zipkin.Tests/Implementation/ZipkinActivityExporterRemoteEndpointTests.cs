@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
 
         [Fact]
-        public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointOmittedByDefault()
+        public void GenerateActivity_RemoteEndpointOmittedByDefault()
         {
             // Arrange
             var activity = ZipkinExporterTests.CreateTestActivity();
@@ -34,11 +34,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
 
-            Assert.Null(zipkinSpan.RemoteEndpoint);
+            Assert.NotNull(zipkinSpan.RemoteEndpoint);
         }
 
         [Fact]
-        public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolution()
+        public void GenerateActivity_RemoteEndpointResolution()
         {
             // Arrange
             var activity = ZipkinExporterTests.CreateTestActivity(
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 
         [Theory]
         [MemberData(nameof(RemoteEndpointPriorityTestCase.GetTestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
-        public void ZipkinSpanConverterTest_GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
+        public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
         {
             // Arrange
             var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
