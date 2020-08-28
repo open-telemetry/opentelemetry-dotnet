@@ -10,3 +10,6 @@ For example, it can be used to add additional Tags to an `Activity`.
 
 ActivityProcessors should inherit from `ActivityProcessor`. [MyEnrichmentActivityProcessor](.\MyEnrichmentActivityProcessor.cs) shows how to add more Tags to
 an activity. [This](.\Program.cs) shows how to add the custom ActivityProcessor to the TracerProvider.
+ActivityProcessors are invoked in the same order they are added to the TracerProvider.
+Hence it is important to add this processor before any exporting processors, otherwise the enrichments
+done by the processor will not be reflected in exported data.
