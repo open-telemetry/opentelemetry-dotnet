@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
     /// </summary>
-    public class TextMapPropagator : ITextFormat
+    public class TextMapPropagator : IPropagator
     {
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
