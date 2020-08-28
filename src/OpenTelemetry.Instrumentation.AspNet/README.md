@@ -73,22 +73,22 @@ The following shows an example of Filter being used to filter out all POST reque
 
 ```csharp
 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                 .AddAspNetInstrumentation(
-                     (options) =>
-                     {
-                         options.Filter = (httpContext) =>
-                         {
-                             if (httpContext.Request.HttpMethod.Equals("POST"))
-                             {
-                                 return false;
-                             }
-                             else
-                             {
-                                 return true;
-                             }
-                         };
-                     })
-                 .Build();
+                .AddAspNetInstrumentation(
+                    (options) =>
+                    {
+                        options.Filter = (httpContext) =>
+                        {
+                            if (httpContext.Request.HttpMethod.Equals("POST"))
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        };
+                    })
+                .Build();
 ```
 
 ## References

@@ -33,6 +33,24 @@ namespace Examples.AspNet
         protected void Application_Start()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetInstrumentation(
+                    (options) =>
+                    {
+                        options.Filter = (httpContext) =>
+                        {
+                            if (httpContext.Request.HttpMethod.Equals("POST"))
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        };
+                    })
+                .Build();
+
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                  .AddHttpClientInstrumentation()
                  .AddAspNetInstrumentation(
                      (options) =>
