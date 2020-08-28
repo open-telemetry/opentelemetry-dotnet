@@ -17,7 +17,7 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 ## Enable AspNetCore Instrumentation
 
 OpenTelemetry.Instrumentation.AspNetCore must be enabled at application
-startup, typically in the `ConfigureServices` method of your ASP.NET Core 
+startup, typically in the `ConfigureServices` method of your ASP.NET Core
 application's `Startup.cs` class, as shown below.
 
 ```csharp
@@ -34,7 +34,7 @@ TODO.
 ## Enriching automaticaly collected activity with additional information
 
 This instrumentation library stores the raw `HttpRequest`, `HttpResponse`
-objects in the activity. This can be accessed in ActivityProcessors, and 
+objects in the activity. This can be accessed in ActivityProcessors, and
 can be used to further enrich the Activity with additional tags as shown
 below.
 
