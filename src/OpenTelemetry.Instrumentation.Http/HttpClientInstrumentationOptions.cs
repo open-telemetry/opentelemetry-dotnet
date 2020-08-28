@@ -46,9 +46,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
         /// The Filter gets the HttpRequestMessage, and should return a boolean.
         /// If Filter returns true, the request is collected.
-        /// If Filter returns false, the request is filtered out.
-        /// If Filter throws exception, then it is considered as if no filter is configured
-        /// and request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
         public Func<HttpRequestMessage, bool> Filter { get; set; }
 
@@ -65,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.Http
             catch (Exception ex)
             {
                 HttpInstrumentationEventSource.Log.RequestFilterException(ex);
-                return true;
+                return false;
             }
         }
 

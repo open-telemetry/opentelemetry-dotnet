@@ -235,7 +235,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpClientInstrumentationInstrumentationFilterFiltersRequest()
+        public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpClientInstrumentationInstrumentationFilterException()
+        public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // Start/Stop/OnShutdown/Dispose called.
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
         }
 
         [Fact]
