@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+ 
+## 0.5.0-beta.1
 
 * Renamed `ITextPropagator` to `IPropagator`
   ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))

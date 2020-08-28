@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+ 
+## 0.5.0-beta.1
 
 * Rename FilterFunc to Filter.
 
