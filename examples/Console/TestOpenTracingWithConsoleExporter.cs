@@ -40,7 +40,7 @@ namespace Examples.Console
 
             // Following shows how to use the OpenTracing shim
 
-            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextFormat());
+            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TextMapPropagator());
 
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {

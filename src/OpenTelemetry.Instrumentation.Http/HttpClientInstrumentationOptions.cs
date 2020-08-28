@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -32,12 +33,12 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextFormat"/> &amp; <see cref="BaggageFormat"/>.
+        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
         public ITextFormat TextFormat { get; set; } = new CompositePropagator(new ITextFormat[]
         {
-            new TraceContextFormat(),
-            new BaggageFormat(),
+            new TextMapPropagator(),
+            new BaggagePropagator(),
         });
 
         /// <summary>

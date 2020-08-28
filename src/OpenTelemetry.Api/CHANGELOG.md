@@ -44,6 +44,14 @@
 * Changed `StartSpan` to not set the created span as Active to match the spec
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0-preview.8.20407.11.
+* Removed `CorrelationContext` and added `Baggage`, an implementation of the
+  [`Baggage
+  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
+  spec
+  ([#1106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1106))
+* Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to
+  `BaggagePropagator`, and `B3Format` to `B3Propagator`
+  ([#1175](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1175))
 
 ## 0.4.0-beta.2
 
