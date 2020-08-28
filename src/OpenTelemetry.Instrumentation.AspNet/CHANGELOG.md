@@ -14,6 +14,8 @@
     BaggageFormat)`. Baggage sent via the [W3C
     Baggage](https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md)
     header will now be parsed and set on incoming Http spans.
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 
