@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
- 
-## 0.5.0-beta.1
 
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`

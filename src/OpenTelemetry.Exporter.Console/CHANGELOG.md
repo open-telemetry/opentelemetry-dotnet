@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
- 
-## 0.5.0-beta.1
 
 * Changed `UseConsoleExporter` to `AddConsoleExporter`, improved readability
   ([#1051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1051))

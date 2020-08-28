@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
- 
-## 0.5.0-beta.1
 
 * Renamed all extension methods from AddOpenTelemetry to AddOpenTelemetryTracerProvider
 

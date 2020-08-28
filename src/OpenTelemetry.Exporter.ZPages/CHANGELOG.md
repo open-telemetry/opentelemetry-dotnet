@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
- 
-## 0.5.0-beta.1
 
 * Renamed extension method from `UseZPagesExporter` to `AddZPagesExporter`
   ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))

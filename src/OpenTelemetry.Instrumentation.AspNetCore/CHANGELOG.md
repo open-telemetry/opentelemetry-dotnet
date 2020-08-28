@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
- 
-## 0.5.0-beta.1
 
 * Added Filter public API on AspNetCoreInstrumentationOptions to allow
   filtering of instrumentation based on HttpContext.
