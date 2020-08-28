@@ -69,6 +69,21 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Theory]
+        [InlineData(ActivityKind.Client)]
+        [InlineData(ActivityKind.Consumer)]
+        [InlineData(ActivityKind.Internal)]
+        [InlineData(ActivityKind.Producer)]
+        [InlineData(ActivityKind.Server)]
+        public void ActivitySourceAdapterSetsKind(ActivityKind kind)
+        {
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity, kind);
+
+            Assert.Equal(kind, activity.Kind);
+        }
+
+        [Theory]
         [InlineData(SamplingDecision.NotRecord)]
         [InlineData(SamplingDecision.Record)]
         [InlineData(SamplingDecision.RecordAndSampled)]
