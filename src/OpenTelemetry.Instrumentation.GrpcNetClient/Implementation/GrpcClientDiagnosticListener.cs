@@ -49,10 +49,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {

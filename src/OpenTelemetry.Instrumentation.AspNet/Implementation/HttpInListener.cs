@@ -106,9 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {

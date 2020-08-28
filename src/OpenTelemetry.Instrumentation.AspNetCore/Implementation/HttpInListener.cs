@@ -102,9 +102,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {
