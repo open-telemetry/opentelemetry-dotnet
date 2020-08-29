@@ -92,10 +92,8 @@ namespace OpenTelemetry.Trace
             }
             else if (sampler is AlwaysOffSampler)
             {
-                /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
-                        once AutoGenerateRootContextTraceId is removed.*/
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.SpanId) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
             }
             else
             {
@@ -208,14 +206,9 @@ namespace OpenTelemetry.Trace
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
-            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
-            // if it get created.
-            ActivityTraceId traceId = options.Parent.TraceId;
-
             var samplingParameters = new SamplingParameters(
                 options.Parent,
-                traceId,
+                options.TraceId,
                 options.Name,
                 options.Kind,
                 options.Tags,
@@ -235,15 +228,13 @@ namespace OpenTelemetry.Trace
                 return activitySamplingResult;
             }
 
-            /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
-                    once AutoGenerateRootContextTraceId is removed.*/
-            return PropagateOrIgnoreData(options.Parent.SpanId);
+            return PropagateOrIgnoreData(options.Parent.TraceId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ActivitySamplingResult PropagateOrIgnoreData(ActivitySpanId spanId)
+        private static ActivitySamplingResult PropagateOrIgnoreData(ActivityTraceId traceId)
         {
-            var isRootSpan = spanId == default;
+            var isRootSpan = traceId == default;
 
             // If it is the root span select PropagationData so the trace ID is preserved
             // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
