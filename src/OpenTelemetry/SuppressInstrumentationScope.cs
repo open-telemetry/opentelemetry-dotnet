@@ -15,24 +15,25 @@
 // </copyright>
 
 using System;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Context;
 
 namespace OpenTelemetry
 {
     public sealed class SuppressInstrumentationScope : IDisposable
     {
-        private static readonly RuntimeContextSlot<bool> Slot = RuntimeContext.RegisterSlot<bool>("otel.suppress_instrumentation");
+        private static readonly RuntimeContextSlot<int> Slot = RuntimeContext.RegisterSlot<int>("otel.suppress_instrumentation");
 
-        private readonly bool previousValue;
+        private readonly int previousValue;
         private bool disposed;
 
         internal SuppressInstrumentationScope(bool value = true)
         {
             this.previousValue = Slot.Get();
-            Slot.Set(value);
+            Slot.Set(value ? -1 : 0);
         }
 
-        internal static bool IsSuppressed => Slot.Get();
+        internal static bool IsSuppressed => Slot.Get() != 0;
 
         /// <summary>
         /// Begins a new scope in which instrumentation is suppressed (disabled).
@@ -61,6 +62,19 @@ namespace OpenTelemetry
             return new SuppressInstrumentationScope(value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Enter()
+        {
+            var value = Slot.Get();
+
+            if (value >= 0)
+            {
+                Slot.Set(++value);
+            }
+
+            return value;
+        }
+
         /// <inheritdoc/>
         public void Dispose()
         {
@@ -69,6 +83,32 @@ namespace OpenTelemetry
                 Slot.Set(this.previousValue);
                 this.disposed = true;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int TryEnter()
+        {
+            var value = Slot.Get();
+
+            if (value > 0)
+            {
+                Slot.Set(++value);
+            }
+
+            return value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int TryLeave()
+        {
+            var value = Slot.Get();
+
+            if (value > 0)
+            {
+                Slot.Set(--value);
+            }
+
+            return value;
         }
     }
 }
