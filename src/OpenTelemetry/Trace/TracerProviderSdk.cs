@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
-                    if (SuppressInstrumentationScope.TryEnter() == 0)
+                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                     {
                         activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
-                    if (SuppressInstrumentationScope.TryLeave() == 0)
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                     {
                         this.processor?.OnEnd(activity);
                     }

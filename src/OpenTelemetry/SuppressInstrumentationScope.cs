@@ -22,6 +22,10 @@ namespace OpenTelemetry
 {
     public sealed class SuppressInstrumentationScope : IDisposable
     {
+        // An integer value which controls whether instrumentation should be suppressed (disabled).
+        // * 0: instrumentation is not suppressed
+        // * [int.MinValue, -1]: instrumentation is always suppressed
+        // * [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
         private static readonly RuntimeContextSlot<int> Slot = RuntimeContext.RegisterSlot<int>("otel.suppress_instrumentation");
 
         private readonly int previousValue;
@@ -62,6 +66,13 @@ namespace OpenTelemetry
             return new SuppressInstrumentationScope(value);
         }
 
+        /// <summary>
+        /// Enters suppression mode.
+        /// If suppression mode is enabled (slot is a negative integer), do nothing.
+        /// If suppression mode is not enabled (slot is zero), enter reference-counting suppression mode.
+        /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
+        /// </summary>
+        /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Enter()
         {
@@ -86,7 +97,7 @@ namespace OpenTelemetry
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int TryEnter()
+        internal static int IncrementIfTriggered()
         {
             var value = Slot.Get();
 
@@ -99,7 +110,7 @@ namespace OpenTelemetry
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int TryLeave()
+        internal static int DecrementIfTriggered()
         {
             var value = Slot.Get();
 
