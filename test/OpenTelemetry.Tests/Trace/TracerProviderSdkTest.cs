@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -98,6 +99,37 @@ namespace OpenTelemetry.Trace.Tests
                 // non W3C Ids. Starting activity with non W3C Ids
                 // will result in no activity being created.
                 Assert.Null(fromInvalidW3CIdParent);
+            }
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.NotRecord)]
+        [InlineData(SamplingDecision.Record)]
+        [InlineData(SamplingDecision.RecordAndSampled)]
+        public void TracerProviderSdkSamplerAttributesAreAppliedToActivity(SamplingDecision sampling)
+        {
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParams) =>
+            {
+                var attributes = new Dictionary<string, object>();
+                attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                return new SamplingResult(sampling, attributes);
+            };
+
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(testSampler)
+                .Build();
+
+            using (var rootActivity = activitySource.StartActivity("root"))
+            {
+                Assert.NotNull(rootActivity);
+                Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                if (sampling != SamplingDecision.NotRecord)
+                {
+                    Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
+                }
             }
         }
 

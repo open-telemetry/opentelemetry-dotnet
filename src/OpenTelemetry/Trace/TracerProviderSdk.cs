@@ -225,6 +225,11 @@ namespace OpenTelemetry.Trace
 
             if (activitySamplingResult != ActivitySamplingResult.PropagationData)
             {
+                foreach (var att in shouldSample.Attributes)
+                {
+                    options.SamplingTags.Add(att.Key, att.Value);
+                }
+
                 return activitySamplingResult;
             }
 
