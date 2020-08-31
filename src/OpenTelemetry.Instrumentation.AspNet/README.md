@@ -10,8 +10,9 @@ Automatically instruments the incoming requests to
 
 ### Step1. Install Package
 
-Add a reference to the [`OpenTelemetry.Instrumentation.AspNet`](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet) package.
-Also, add any other instrumentations & exporters you will need.
+Add a reference to the
+[`OpenTelemetry.Instrumentation.AspNet`](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet)
+package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
 dotnet add package OpenTelemetry.Instrumentation.AspNet
@@ -39,7 +40,9 @@ to your `Web.config` when using IIS web server.
 OpenTelemetry tracing, along with the AspNet instrumentation must be enabled at
 application startup. This is typically done in the `Global.asax.cs` as shown
 below. This example also sets up the OpenTelemetry Jaeger exporter, which
-requires adding the package `OpenTelemetry.Exporter.Jaeger` to the application.
+requires adding the package
+[`OpenTelemetry.Exporter.Jaeger`](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
+to the application.
 
 ```csharp
 using OpenTelemetry;
@@ -75,7 +78,7 @@ It currently supports configuring `Propagators`, and adding `Filter` functions.
 
 TODO
 
-### Configure Filters
+### Configure Filter
 
 This instrumentation by default collects all the incoming http requests. It allows
 filtering of requests by using `Filter` function in `AspNetInstrumentationOptions`.
@@ -123,6 +126,7 @@ internal class MyAspNetEnrichingProcessor : ActivityProcessor
             activity.SetTag("mycustomtag", httpRequest.Headers["myheader"]);
         }
     }
+
     public override void OnEnd(Activity activity)
     {
         // Retrieve the HttpResponse object.
