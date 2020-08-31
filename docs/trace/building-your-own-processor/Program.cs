@@ -26,7 +26,8 @@ public class Program
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddProcessor(new MyEnrichmentActivityProcessor())
+            .AddProcessor(new MyActivityProcessor("A"))
+            .AddProcessor(new MyActivityProcessor("B"))
             .Build();
 
         using (var activity = MyActivitySource.StartActivity("Foo"))
