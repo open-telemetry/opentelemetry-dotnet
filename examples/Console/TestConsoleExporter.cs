@@ -108,7 +108,7 @@ namespace Examples.Console
                 }
                 else if (activity.Kind == ActivityKind.Client)
                 {
-                    activity.SetTag("customClientTag", "Custom Tag Value for Client");
+                    activity.SetTag("customClientTag", "Custom Tag Value for client");
                 }
             }
         }

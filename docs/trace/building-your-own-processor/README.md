@@ -1,8 +1,8 @@
 # Building your own Processor
 
-ActivityProcessor is the name used for OpenTelemetry
-[SpanProcessors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor).
-It allows hooks for Activity start and end method invocations.
+ActivityProcessor implements the OpenTelemetry
+[SpanProcessors specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor).
+It allows hooks for Activity start and end events.
 
 [Built-in
 processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
