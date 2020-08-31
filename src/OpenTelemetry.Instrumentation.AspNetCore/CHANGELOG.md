@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
 * Added Filter public API on AspNetCoreInstrumentationOptions to allow
   filtering of instrumentation based on HttpContext.
 
@@ -21,6 +25,8 @@
     calls where one span is created for the gRPC call and a separate span is
     created for the underlying HTTP call in the event both gRPC and HTTP
     instrumentation are enabled.
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 
