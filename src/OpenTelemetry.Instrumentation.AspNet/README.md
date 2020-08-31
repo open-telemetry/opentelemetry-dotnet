@@ -39,10 +39,9 @@ following shows changes required to your `Web.config` when using IIS web server.
 </system.webServer>
 ```
 
-### Step 3: Add OpenTelemetry tracing at application startup
+### Step 3: Enable ASP.NET Instrumentation at application startup
 
-OpenTelemetry tracing, along with the Asp.Net instrumentation must be enabled at
-application startup. This is typically done in the `Global.asax.cs` as shown
+Asp.Net instrumentation must be enabled at application startup. This is typically done in the `Global.asax.cs` as shown
 below. This example also sets up the OpenTelemetry Jaeger exporter, which
 requires adding the package
 [`OpenTelemetry.Exporter.Jaeger`](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
