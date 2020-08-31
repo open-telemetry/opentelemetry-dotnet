@@ -3,8 +3,10 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNet.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet)
 
-Automatically instruments the incoming requests to
-[ASP.NET](https://docs.microsoft.com/aspnet/overview).
+This is an [Instrumentation
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+which instruments [ASP.NET](https://docs.microsoft.com/aspnet/overview) and
+collect telemetry about incoming web requests.
 
 ## Steps to enable OpenTelemetry.Instrumentation.AspNet
 
@@ -20,9 +22,11 @@ dotnet add package OpenTelemetry.Instrumentation.AspNet
 
 ### Step 2: Modify Web.config
 
-OpenTelemetry.Instrumentation.AspNet requires adding an additional
-HttpModule to your web server. The following shows changes required
-to your `Web.config` when using IIS web server.
+`OpenTelemetry.Instrumentation.AspNet` requires adding an additional HttpModule
+to your web server. This additional HttpModule is shipped as part of
+[`Microsoft.AspNet.TelemetryCorrelation`](https://www.nuget.org/packages/Microsoft.AspNet.TelemetryCorrelation/)
+which is implicitly brought by `OpenTelemetry.Instrumentation.AspNet`. The
+following shows changes required to your `Web.config` when using IIS web server.
 
 ```xml
 <system.webServer>
@@ -37,7 +41,7 @@ to your `Web.config` when using IIS web server.
 
 ### Step 3: Add OpenTelemetry tracing at application startup
 
-OpenTelemetry tracing, along with the AspNet instrumentation must be enabled at
+OpenTelemetry tracing, along with the Asp.Net instrumentation must be enabled at
 application startup. This is typically done in the `Global.asax.cs` as shown
 below. This example also sets up the OpenTelemetry Jaeger exporter, which
 requires adding the package
@@ -55,11 +59,7 @@ public class WebApiApplication : HttpApplication
     {
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetInstrumentation()
-            .AddJaegerExporter(jaegerOptions =>
-            {
-                jaegerOptions.AgentHost = "localhost";
-                jaegerOptions.AgentPort = 6831;
-            })
+            .AddJaegerExporter()
             .Build();
     }
     protected void Application_End()
@@ -71,14 +71,15 @@ public class WebApiApplication : HttpApplication
 
 ## Advanced configuration
 
-`AspNetInstrumentationOptions` exposes configuration options for this instrumentation.
-It currently supports configuring `Propagators` and adding `Filter` functions.
+This instrumentation can be configured to change the default behavior by using
+`AspNetInstrumentationOptions`, which allows configuring `Propagator` and
+`Filter` as explained below.
 
-### Configure Propagators
+### Propagator
 
 TODO
 
-### Configure Filter
+### Filter
 
 This instrumentation by default collects all the incoming http requests. It allows
 filtering of requests by using `Filter` function in `AspNetInstrumentationOptions`.
