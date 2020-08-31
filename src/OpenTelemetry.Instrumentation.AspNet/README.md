@@ -41,7 +41,7 @@ following shows changes required to your `Web.config` when using IIS web server.
 
 ### Step 3: Enable ASP.NET Instrumentation at application startup
 
-Asp.Net instrumentation must be enabled at application startup. This is typically done in the `Global.asax.cs` as shown
+ASP.NET instrumentation must be enabled at application startup. This is typically done in the `Global.asax.cs` as shown
 below. This example also sets up the OpenTelemetry Jaeger exporter, which
 requires adding the package
 [`OpenTelemetry.Exporter.Jaeger`](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
@@ -155,11 +155,7 @@ changes done by them.
  this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddAspNetInstrumentation()
     .AddProcessor(new MyAspNetEnrichingProcessor())
-    .AddJaegerExporter(jaegerOptions =>
-    {
-        jaegerOptions.AgentHost = "localhost";
-        jaegerOptions.AgentPort = 6831;
-    })
+    .AddJaegerExporter()
     .Build();
 ```
 
