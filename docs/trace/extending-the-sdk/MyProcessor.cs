@@ -1,4 +1,4 @@
-﻿// <copyright file="MyActivityProcessor.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="MyProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,35 +16,41 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-internal class MyActivityProcessor : ActivityProcessor
+internal class MyProcessor : ActivityProcessor
 {
     private readonly string name;
 
-    public MyActivityProcessor(string name)
+    public MyProcessor(string name = "MyProcessor")
     {
         this.name = name;
     }
 
-    public override string ToString()
+    public override void OnStart(Activity activity)
     {
-        return $"{this.GetType()}({this.name})";
+        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
     }
 
     public override void OnEnd(Activity activity)
     {
-        Console.WriteLine($"{this}.OnEnd");
+        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this}.OnForceFlush");
+        Console.WriteLine($"{this.name}.OnForceFlush({timeoutMilliseconds})");
         return true;
     }
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this}.OnShutdown");
+        Console.WriteLine($"{this.name}.OnShutdown({timeoutMilliseconds})");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }
