@@ -17,22 +17,20 @@
 using System;
 using System.Collections.Generic;
 using global::OpenTracing;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class SpanContextShim : ISpanContext
     {
-        private readonly IEnumerable<KeyValuePair<string, string>> baggage;
-
-        public SpanContextShim(in Trace.SpanContext spanContext, IEnumerable<KeyValuePair<string, string>> baggage = null)
+        public SpanContextShim(in Trace.SpanContext spanContext)
         {
             if (!spanContext.IsValid)
             {
-                throw new ArgumentException($"{nameof(spanContext)} must be valid.");
+                throw new ArgumentException(nameof(spanContext));
             }
 
             this.SpanContext = spanContext;
-            this.baggage = baggage;
         }
 
         public Trace.SpanContext SpanContext { get; private set; }
@@ -43,8 +41,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public string SpanId => this.SpanContext.SpanId.ToString();
 
-        /// <inheritdoc/>
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
-            => this.baggage;
+            => Baggage.GetBaggage();
     }
 }

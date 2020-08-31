@@ -26,17 +26,20 @@ namespace OpenTelemetry.Instrumentation.AspNet
     public class AspNetInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="ITextFormat"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextFormat"/> &amp; <see cref="BaggageFormat"/>.
+        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public ITextFormat TextFormat { get; set; } = new CompositePropagator(new ITextFormat[]
+        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
         {
-            new TraceContextFormat(),
-            new BaggageFormat(),
+            new TextMapPropagator(),
+            new BaggagePropagator(),
         });
 
         /// <summary>
-        /// Gets or sets a hook to exclude calls based on domain or other per-request criterion.
+        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// The Filter gets the HttpContext, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-        internal Predicate<HttpContext> RequestFilter { get; set; }
+        public Func<HttpContext, bool> Filter { get; set; }
     }
 }

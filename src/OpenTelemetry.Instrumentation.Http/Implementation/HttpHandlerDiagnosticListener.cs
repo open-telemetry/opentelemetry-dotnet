@@ -16,13 +16,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 var match = CoreAppMajorVersionCheckRegex.Match(framework);
 
-                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
+                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value) >= 3;
             }
 
             this.options = options;
@@ -86,17 +86,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (this.options.TextFormat.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
+            if (this.options.Propagator.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
                 return;
             }
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -111,9 +110,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TraceContextFormat))
+            if (!(this.httpClientSupportsW3C && this.options.Propagator is TextMapPropagator))
             {
-                this.options.TextFormat.Inject(new PropagationContext(activity.Context, activity.Baggage), request, HttpRequestMessageHeaderValueSetter);
+                this.options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 

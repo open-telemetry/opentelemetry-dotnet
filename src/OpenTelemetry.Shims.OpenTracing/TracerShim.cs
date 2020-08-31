@@ -24,12 +24,12 @@ namespace OpenTelemetry.Shims.OpenTracing
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.Tracer tracer;
-        private readonly ITextFormat textFormat;
+        private readonly IPropagator propagator;
 
-        public TracerShim(Trace.Tracer tracer, ITextFormat textFormat)
+        public TracerShim(Trace.Tracer tracer, IPropagator textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.textFormat = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
+            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
 
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
@@ -80,10 +80,15 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                propagationContext = this.textFormat.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
+                propagationContext = this.propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
-            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext), propagationContext.ActivityBaggage);
+            // TODO:
+            //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanContext is turned into a live Span.
+            //  But that code doesn't seem to exist.
+            // Baggage.Current = propagationContext.Baggage;
+
+            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
         }
 
         /// <inheritdoc/>
@@ -114,8 +119,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
-                this.textFormat.Inject(
-                    new PropagationContext(shim.SpanContext, shim.GetBaggageItems()),
+                this.propagator.Inject(
+                    new PropagationContext(shim.SpanContext, Baggage.Current),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }

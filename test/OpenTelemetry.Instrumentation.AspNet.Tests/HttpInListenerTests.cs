@@ -25,6 +25,7 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -127,13 +128,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
                 new ActivityContext(
                     expectedTraceId,
                     expectedSpanId,
                     ActivityTraceFlags.Recorded),
-                null));
+                default));
 
             var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
             activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
@@ -142,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
-                    options.RequestFilter = httpContext =>
+                    options.Filter = httpContext =>
                     {
                         if (string.IsNullOrEmpty(filter))
                         {
@@ -159,16 +160,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                     if (!carrierFormat.Equals("TraceContext"))
                     {
-                        options.TextFormat = textFormat.Object;
+                        options.Propagator = propagator.Object;
                     }
                 })
             .SetResource(expectedResource)
             .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
-                this.fakeAspNetDiagnosticSource.Write(
+
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                {
+                    this.fakeAspNetDiagnosticSource.Write(
                     "Start",
                     null);
+
+                    if (filter == "{ThrowException}")
+                    {
+                        Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                    }
+                }
 
                 if (restoreCurrentActivity)
                 {
@@ -187,19 +197,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                if (filter == "{ThrowException}")
-                {
-                    // This behavior is not good. If filter throws, Stop is called without Start.
-                    // Need to do something here, but user can't currently set the filter
-                    // so it wil always noop. When we support user filter,
-                    // treat this as a todo: define exception behavior.
-                    Assert.Equal(3, activityProcessor.Invocations.Count); // OnEnd/OnShutdown/Dispose called.
-                }
-                else
-                {
-                    Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
-                }
-
+                // only Shutdown/Dispose are called because request was filtered.
+                Assert.Equal(2, activityProcessor.Invocations.Count);
                 return;
             }
 

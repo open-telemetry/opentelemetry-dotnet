@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -52,9 +53,18 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            try
             {
-                AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
                 activity.IsAllDataRequested = false;
                 return;
             }
@@ -62,9 +72,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
-                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
@@ -86,12 +96,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.ActivityBaggage != null)
+                if (ctx.Baggage != default)
                 {
-                    foreach (var baggageItem in ctx.ActivityBaggage)
-                    {
-                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
-                    }
+                    Baggage.Current = ctx.Baggage;
                 }
             }
 
@@ -99,9 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {
@@ -127,14 +132,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
                 // this instrumentation created in Start.
                 // This is because Asp.Net, under certain circumstances, restores Activity.Current
                 // to its own activity.
-                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start", StringComparison.Ordinal))
+                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
@@ -192,9 +197,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.TextFormat is TraceContextFormat))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
-                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
                 {
                     // If instrumentation started a new Activity, it must
                     // be stopped here.

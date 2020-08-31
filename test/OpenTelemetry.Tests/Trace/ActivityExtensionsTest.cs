@@ -103,20 +103,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(activity.GetStatus().IsOk);
         }
 
-        [Theory]
-        [InlineData(ActivityKind.Client)]
-        [InlineData(ActivityKind.Consumer)]
-        [InlineData(ActivityKind.Internal)]
-        [InlineData(ActivityKind.Producer)]
-        [InlineData(ActivityKind.Server)]
-        public void SetKindSimpleActivity(ActivityKind inputOutput)
-        {
-            var activity = new Activity("test-activity");
-            activity.SetKind(inputOutput);
-
-            Assert.Equal(inputOutput, activity.Kind);
-        }
-
         [Fact]
         public void CheckRecordException()
         {

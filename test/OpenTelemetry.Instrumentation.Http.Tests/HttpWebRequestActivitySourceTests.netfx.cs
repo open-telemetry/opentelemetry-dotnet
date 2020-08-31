@@ -24,6 +24,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Context;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -375,7 +376,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task TestTraceStateAndCorrelationContext()
+        public async Task TestTraceStateAndBaggage()
         {
             try
             {
@@ -384,8 +385,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 var parent = new Activity("w3c activity");
                 parent.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom());
                 parent.TraceStateString = "some=state";
-                parent.AddBaggage("k", "v");
                 parent.Start();
+
+                Baggage.SetBaggage("k", "v");
 
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
@@ -402,10 +404,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var traceparent = startRequest.Headers["traceparent"];
                 var tracestate = startRequest.Headers["tracestate"];
-                var correlationContext = startRequest.Headers["baggage"];
+                var baggage = startRequest.Headers["baggage"];
                 Assert.NotNull(traceparent);
                 Assert.Equal("some=state", tracestate);
-                Assert.Equal("k=v", correlationContext);
+                Assert.Equal("k=v", baggage);
                 Assert.StartsWith($"00-{parent.TraceId.ToHexString()}-", traceparent);
                 Assert.Matches("^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", traceparent);
             }
@@ -692,32 +694,29 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task TestInvalidBaggage()
         {
-            var parentActivity = new Activity("parent")
-                .AddBaggage("key", "value")
-                .AddBaggage("bad/key", "value")
-                .AddBaggage("goodkey", "bad/value")
-                .Start();
-            using (var eventRecords = new ActivitySourceRecorder())
+            Baggage
+                .SetBaggage("key", "value")
+                .SetBaggage("bad/key", "value")
+                .SetBaggage("goodkey", "bad/value");
+
+            using var eventRecords = new ActivitySourceRecorder();
+
+            using (var client = new HttpClient())
             {
-                using (var client = new HttpClient())
-                {
-                    (await client.GetAsync(this.BuildRequestUrl())).Dispose();
-                }
-
-                Assert.Equal(2, eventRecords.Records.Count());
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
-                Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
-
-                WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-                string[] correlationContext = thisRequest.Headers["baggage"].Split(',');
-
-                Assert.Equal(3, correlationContext.Length);
-                Assert.Contains("key=value", correlationContext);
-                Assert.Contains("bad%2Fkey=value", correlationContext);
-                Assert.Contains("goodkey=bad%2Fvalue", correlationContext);
+                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
             }
 
-            parentActivity.Stop();
+            Assert.Equal(2, eventRecords.Records.Count());
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+
+            WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
+            string[] baggage = thisRequest.Headers["Baggage"].Split(',');
+
+            Assert.Equal(3, baggage.Length);
+            Assert.Contains("key=value", baggage);
+            Assert.Contains("bad%2Fkey=value", baggage);
+            Assert.Contains("goodkey=bad%2Fvalue", baggage);
         }
 
         /// <summary>
