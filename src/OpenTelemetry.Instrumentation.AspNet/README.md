@@ -115,6 +115,7 @@ further enrich the Activity as shown below.
 
 The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
 The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
+(TODO: Expose the keys as public properties in AspNetIntrumentationOptions?)
 
 ```csharp
 internal class MyAspNetEnrichingProcessor : ActivityProcessor
