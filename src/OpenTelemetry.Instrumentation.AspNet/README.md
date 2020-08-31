@@ -10,7 +10,7 @@ Automatically instruments the incoming requests to
 
 ### Step1. Install Package
 
-Add a reference to the OpenTelemetry.Instrumentation.AspNet package.
+Add a reference to the `[OpenTelemetry.Instrumentation.AspNet](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet)` package.
 Also, add any other instrumentations & exporters you will need.
 
 ```shell
@@ -92,16 +92,8 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
         {
             options.Filter = (httpContext) =>
             {
-                if (httpContext.Request.HttpMethod.Equals("POST"))
-                {
-                    // False to filter out all POST requests.
-                    return false;
-                }
-                else
-                {
-                    // True to collect all other requests.
-                    return true;
-                }
+                // filter ot all HTTP POST requests.
+                !return httpContext.Request.HttpMethod.Equals("POST");
             };
         })
     .Build();
