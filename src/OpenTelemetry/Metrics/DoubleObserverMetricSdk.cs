@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
 {
     internal class DoubleObserverMetricSdk : DoubleObserverMetric
     {
-        private readonly IDictionary<LabelSet, DoubleObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk>();
+        private readonly ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk>();
         private readonly string metricName;
         private readonly Action<DoubleObserverMetric> callback;
 
@@ -34,13 +34,9 @@ namespace OpenTelemetry.Metrics
 
         public override void Observe(double value, LabelSet labelset)
         {
-            if (!this.observerHandles.TryGetValue(labelset, out var boundInstrument))
-            {
-                boundInstrument = new DoubleObserverMetricHandleSdk();
-
-                // TODO cleanup of handle/aggregator.   Issue #530
-                this.observerHandles.Add(labelset, boundInstrument);
-            }
+            // TODO cleanup of handle/aggregator.   Issue #530
+            var boundInstrument =
+                this.observerHandles.GetOrAdd(labelset, new DoubleObserverMetricHandleSdk());
 
             boundInstrument.Observe(value);
         }
@@ -55,7 +51,7 @@ namespace OpenTelemetry.Metrics
             this.callback(this);
         }
 
-        internal IDictionary<LabelSet, DoubleObserverMetricHandleSdk> GetAllHandles()
+        internal ConcurrentDictionary<LabelSet, DoubleObserverMetricHandleSdk> GetAllHandles()
         {
             return this.observerHandles;
         }

@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -28,6 +29,10 @@ namespace OpenTelemetry.Trace.Tests
         {
             Assert.Throws<ArgumentNullException>(() => new CompositeActivityProcessor(null));
             Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new ActivityProcessor[0]));
+
+            using var p1 = new TestActivityProcessor(null, null);
+            using var processor = new CompositeActivityProcessor(new[] { p1 });
+            Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null));
         }
 
         [Fact]
@@ -83,17 +88,29 @@ namespace OpenTelemetry.Trace.Tests
             }
         }
 
-        [Fact]
-        public void CompositeActivityProcessor_ForceFlush()
+        [Theory]
+        [InlineData(Timeout.Infinite)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void CompositeActivityProcessor_ForceFlush(int timeout)
         {
             using var p1 = new TestActivityProcessor(null, null);
             using var p2 = new TestActivityProcessor(null, null);
 
             using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
             {
-                processor.ForceFlush();
-                Assert.True(p1.ForceFlushCalled);
-                Assert.True(p2.ForceFlushCalled);
+                processor.ForceFlush(timeout);
+
+                if (timeout != 0)
+                {
+                    Assert.True(p1.ForceFlushCalled);
+                    Assert.True(p2.ForceFlushCalled);
+                }
+                else
+                {
+                    Assert.False(p1.ForceFlushCalled);
+                    Assert.False(p2.ForceFlushCalled);
+                }
             }
         }
     }
