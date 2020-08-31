@@ -134,7 +134,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 { B3Propagator.XB3SpanId, SpanIdBase16 },
                 { B3Propagator.XB3Sampled, "1" },
             };
-            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersEightBytes, Getter));
         }
 
