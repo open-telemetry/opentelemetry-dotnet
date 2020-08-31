@@ -97,7 +97,7 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             options.Filter = (httpContext) =>
             {
                 // filter ot all HTTP POST requests.
-                !return httpContext.Request.HttpMethod.Equals("POST");
+                return !httpContext.Request.HttpMethod.Equals("POST");
             };
         })
     .Build();
