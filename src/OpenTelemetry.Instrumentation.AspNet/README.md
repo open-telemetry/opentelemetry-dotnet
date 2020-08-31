@@ -10,7 +10,7 @@ Automatically instruments the incoming requests to
 
 ### Step1. Install Package
 
-Add a reference to the `[OpenTelemetry.Instrumentation.AspNet](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet)` package.
+Add a reference to the [`OpenTelemetry.Instrumentation.AspNet`](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet)` package.
 Also, add any other instrumentations & exporters you will need.
 
 ```shell
