@@ -8,7 +8,7 @@ Automatically instruments the incoming requests to
 
 ## Steps to enable OpenTelemetry.Instrumentation.AspNet
 
-### Step1. Install Package
+### Step 1: Install Package
 
 Add a reference to the
 [`OpenTelemetry.Instrumentation.AspNet`](https://www.nuget.org/packages/opentelemetry.instrumentation.aspnet)
@@ -18,7 +18,7 @@ package. Also, add any other instrumentations & exporters you will need.
 dotnet add package OpenTelemetry.Instrumentation.AspNet
 ```
 
-### Step2. Modify Web.config
+### Step 2: Modify Web.config
 
 OpenTelemetry.Instrumentation.AspNet requires adding an additional
 HttpModule to your web server. The following shows changes required
@@ -35,7 +35,7 @@ to your `Web.config` when using IIS web server.
 </system.webServer>
 ```
 
-### Step3. Add OpenTelemetry tracing at application startup
+### Step 3: Add OpenTelemetry tracing at application startup
 
 OpenTelemetry tracing, along with the AspNet instrumentation must be enabled at
 application startup. This is typically done in the `Global.asax.cs` as shown
@@ -72,7 +72,7 @@ public class WebApiApplication : HttpApplication
 ## Advanced configuration
 
 `AspNetInstrumentationOptions` exposes configuration options for this instrumentation.
-It currently supports configuring `Propagators`, and adding `Filter` functions.
+It currently supports configuring `Propagators` and adding `Filter` functions.
 
 ### Configure Propagators
 
@@ -104,13 +104,12 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ### Special topic - Enriching automatically collected telemetry
 
-AspNet instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
+ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
 `Activity`. These can be accessed in ActivityProcessors, and can be used to
 further enrich the Activity as shown below.
 
 The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
 The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
-(TODO: Expose the keys as public properties in AspNetIntrumentationOptions?)
 
 ```csharp
 internal class MyAspNetEnrichingProcessor : ActivityProcessor
