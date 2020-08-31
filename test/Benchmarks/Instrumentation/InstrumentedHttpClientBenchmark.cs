@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpBenchmark.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="InstrumentedHttpClientBenchmark.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,11 +27,17 @@ using OpenTelemetry.Trace;
 namespace Benchmarks.Instrumentation
 {
     [MemoryDiagnoser]
-    public class HttpBenchmark
+    public class InstrumentedHttpClientBenchmark
     {
-        private IDisposable serverLifeTime;
-        private string url;
+        private const string ActivityName = "incoming request";
+        private const string ResourceName = "http-service-example";
+        private const string SourceName = "http-client-test";
+
         private HttpClient httpClient;
+        private TracerProvider openTelemetry;
+        private IDisposable serverLifeTime;
+        private ActivitySource source;
+        private string url;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -45,20 +51,37 @@ namespace Benchmarks.Instrumentation
                 out var host,
                 out var port);
 
+            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .SetResource(Resources.CreateServiceResource(ResourceName))
+                .AddSource(SourceName)
+                .Build();
+
             this.url = $"http://{host}:{port}/";
             this.httpClient = new HttpClient();
+            this.source = new ActivitySource(SourceName);
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            this.serverLifeTime.Dispose();
             this.httpClient.Dispose();
+            this.openTelemetry.Dispose();
+            this.serverLifeTime.Dispose();
+            this.source.Dispose();
         }
 
         [Benchmark]
-        public async Task SimpleHttpClient()
+        public async Task InstrumentedHttpClient()
         {
+            var httpResponse = await this.httpClient.GetAsync(this.url);
+            httpResponse.EnsureSuccessStatusCode();
+        }
+
+        [Benchmark]
+        public async Task InstrumentedHttpClientWithParentActivity()
+        {
+            using var parent = this.source.StartActivity(ActivityName, ActivityKind.Server);
             var httpResponse = await this.httpClient.GetAsync(this.url);
             httpResponse.EnsureSuccessStatusCode();
         }
