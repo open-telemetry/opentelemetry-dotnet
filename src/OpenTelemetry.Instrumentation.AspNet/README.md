@@ -96,12 +96,17 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
         {
             options.Filter = (httpContext) =>
             {
-                // filter ot all HTTP POST requests.
+                // filter out all HTTP POST requests.
                 return !httpContext.Request.HttpMethod.Equals("POST");
             };
         })
     .Build();
 ```
+
+It is important to note that this `Filter` option is specific to this
+instrumentation. OpenTelemetry has a concept of
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
+and the `Filter` option does the filtering *before* the Sampler is invoked.
 
 ### Special topic - Enriching automatically collected telemetry
 
