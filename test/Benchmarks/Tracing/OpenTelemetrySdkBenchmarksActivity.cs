@@ -25,12 +25,12 @@ namespace OpenTelemetry.Trace.Benchmarks
         private readonly ActivitySource benchmarkSource = new ActivitySource("Benchmark");
         private readonly ActivityContext parentCtx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
         private readonly string parentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
-        private TracerProvider openTelemetrySdk;
+        private TracerProvider tracerProvider;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("BenchMark")
                 .Build();
         }
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace.Benchmarks
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            this.openTelemetrySdk.Dispose();
+            this.tracerProvider.Dispose();
             this.benchmarkSource.Dispose();
         }
 

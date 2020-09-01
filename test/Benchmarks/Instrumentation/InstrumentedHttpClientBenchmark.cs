@@ -34,7 +34,7 @@ namespace Benchmarks.Instrumentation
         private const string SourceName = "http-client-test";
 
         private HttpClient httpClient;
-        private TracerProvider openTelemetry;
+        private TracerProvider tracerProvider;
         private IDisposable serverLifeTime;
         private ActivitySource source;
         private string url;
@@ -51,7 +51,7 @@ namespace Benchmarks.Instrumentation
                 out var host,
                 out var port);
 
-            this.openTelemetry = Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .SetResource(Resources.CreateServiceResource(ResourceName))
                 .AddSource(SourceName)
@@ -66,7 +66,7 @@ namespace Benchmarks.Instrumentation
         public void GlobalCleanup()
         {
             this.httpClient.Dispose();
-            this.openTelemetry.Dispose();
+            this.tracerProvider.Dispose();
             this.serverLifeTime.Dispose();
             this.source.Dispose();
         }

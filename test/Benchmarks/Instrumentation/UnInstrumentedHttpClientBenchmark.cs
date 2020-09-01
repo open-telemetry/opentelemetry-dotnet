@@ -1,4 +1,4 @@
-﻿// <copyright file="UnInstrumentedHttpClientBenchmark.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="UninstrumentedHttpClientBenchmark.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ using OpenTelemetry.Tests;
 namespace Benchmarks.Instrumentation
 {
     [MemoryDiagnoser]
-    public class UnInstrumentedHttpClientBenchmark
+    public class UninstrumentedHttpClientBenchmark
     {
         private IDisposable serverLifeTime;
         private string url;
