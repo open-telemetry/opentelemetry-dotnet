@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracerProvider((builder) => builder.AddAspNetCoreInstrumentation()
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
                         .AddProcessor(processor.Object));
                     }))
                 .CreateClient())
