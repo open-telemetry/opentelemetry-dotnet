@@ -39,8 +39,7 @@ namespace OpenTelemetry.Trace.Benchmarks
                 ActivityStarted = null,
                 ActivityStopped = null,
                 ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithPropagationDataListner.Name,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.PropagationData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.PropagationData,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.PropagationData,
             });
 
             ActivitySource.AddActivityListener(new ActivityListener
@@ -48,8 +47,7 @@ namespace OpenTelemetry.Trace.Benchmarks
                 ActivityStarted = null,
                 ActivityStopped = null,
                 ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataListner.Name,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
             });
 
             ActivitySource.AddActivityListener(new ActivityListener
@@ -57,8 +55,7 @@ namespace OpenTelemetry.Trace.Benchmarks
                 ActivityStarted = null,
                 ActivityStopped = null,
                 ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataAndRecordedListner.Name,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllDataAndRecorded,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllDataAndRecorded,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
             });
 
             Sdk.CreateTracerProviderBuilder()

@@ -77,7 +77,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
             };
-            var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
+            var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headersNotSampled, Getter));
         }
 
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "1" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersSampled, Getter));
         }
 
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "0" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersNotSampled, Getter));
         }
 
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Flags, "1" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersFlagSampled, Getter));
         }
 
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Flags, "0" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersFlagNotSampled, Getter));
         }
 
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 { B3Propagator.XB3SpanId, SpanIdBase16 },
                 { B3Propagator.XB3Sampled, "1" },
             };
-            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersEightBytes, Getter));
         }
 
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3TraceId, TraceIdBase16EightBytes }, { B3Propagator.XB3SpanId, SpanIdBase16 },
             };
-            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersEightBytes, Getter));
         }
 
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3PropagatorSingleHeader.Extract(default, headersNotSampled, Getter));
         }
 
@@ -243,7 +243,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             Assert.Equal(
-                new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions), default),
+                new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true), default),
                 this.b3PropagatorSingleHeader.Extract(default, headersSampled, Getter));
         }
 
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             Assert.Equal(
-                new PropagationContext(new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None), default),
+                new PropagationContext(new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true), default),
                 this.b3PropagatorSingleHeader.Extract(default, headersNotSampled, Getter));
         }
 
@@ -267,7 +267,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3PropagatorSingleHeader.Extract(default, headersFlagSampled, Getter));
         }
 
@@ -278,7 +278,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-0" },
             };
-            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3PropagatorSingleHeader.Extract(default, headersFlagNotSampled, Getter));
         }
 
@@ -289,7 +289,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3Combined, $"{TraceIdBase16EightBytes}-{SpanIdBase16}-1" },
             };
-            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions);
+            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3PropagatorSingleHeader.Extract(default, headersEightBytes, Getter));
         }
 
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             {
                 { B3Propagator.XB3Combined, $"{TraceIdBase16EightBytes}-{SpanIdBase16}" },
             };
-            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None);
+            var activityContext = new ActivityContext(TraceIdEightBytes, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3PropagatorSingleHeader.Extract(default, headersEightBytes, Getter));
         }
 
