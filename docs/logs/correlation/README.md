@@ -1,7 +1,20 @@
 # Correlate Logs with Traces
 
-Logs from `ILogger` can be correlated with distributed tracing by enriching each
-log entry with the `TraceId` and `SpanId` from the enclosing `Activity`.
+Starting from `ILogger` version `5.0`, logs can be correlated with distributed
+tracing by enriching each log entry with the information from the enclosing
+`Activity`. This can be achieved by enabling the `ActivityTrackingOptions`:
+
+```csharp
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.Configure(options => options.ActivityTrackingOptions =
+        ActivityTrackingOptions.TraceId |
+        ActivityTrackingOptions.SpanId);
+});
+```
+
+`Microsoft.Extensions.Logging.ActivityTrackingOptions` supports `TraceId`,
+`SpanId`, `ParentId`, `TraceFlags` and `TraceState`.
 
 Please refer to the example [here](./Program.cs).
 
