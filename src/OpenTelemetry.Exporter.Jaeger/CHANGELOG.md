@@ -11,6 +11,9 @@ Released 2020-08-28
 * Span links will now be sent as `FOLLOWS_FROM` reference type. Previously they
   were sent as `CHILD_OF`.
   ([#970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/970))
+* Fixed issue when span has both the `net.peer.name` and `net.peer.port`
+  attributes but did not include `net.peer.port` in the `peer.service` field
+  ([#1195](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1195)).
 
 * Renamed extension method from `UseJaegerExporter` to `AddJaegerExporter`.
 
