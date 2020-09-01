@@ -16,29 +16,47 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal class MyExporter : ActivityExporter
 {
+    private readonly string name;
+
+    public MyExporter(string name = "MyExporter")
+    {
+        this.name = name;
+    }
+
     public override ExportResult Export(in Batch<Activity> batch)
     {
-        // Exporter code which can generate further
-        // telemetry should do so inside SuppressInstrumentation
-        // scope. This suppresses telemetry from
-        // exporter's own code to avoid live-loop situation.
+        // SuppressInstrumentationScope should be used to prevent exporter
+        // code from generating telemetry and causing live-loop.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        var sb = new StringBuilder();
         foreach (var activity in batch)
         {
-            Console.WriteLine($"{activity.DisplayName}");
+            if (sb.Length > 0)
+            {
+                sb.Append(", ");
+            }
+
+            sb.Append(activity.DisplayName);
         }
 
+        Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
         return ExportResult.Success;
     }
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        Console.WriteLine($"MyExporter.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
+        Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

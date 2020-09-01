@@ -16,24 +16,31 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Trace;
 
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new ActivitySource(
-        "MyCompany.MyProduct.MyLibrary");
+    private static readonly ActivitySource DemoSource = new ActivitySource("OTel.Demo");
 
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .SetSampler(new MySampler())
+            .AddSource("OTel.Demo")
+            .AddProcessor(new MyProcessor("ProcessorA"))
+            .AddProcessor(new MyProcessor("ProcessorB"))
+            .AddProcessor(new SimpleExportActivityProcessor(new MyExporter("ExporterX")))
             .AddMyExporter()
             .Build();
 
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        using (var foo = DemoSource.StartActivity("Foo"))
         {
-            activity?.SetTag("foo", 1);
-            activity?.SetTag("bar", "Hello, World!");
-            activity?.SetTag("baz", new int[] { 1, 2, 3 });
+            using (var bar = DemoSource.StartActivity("Bar"))
+            {
+                using (var baz = DemoSource.StartActivity("Baz"))
+                {
+                }
+            }
         }
     }
 }
