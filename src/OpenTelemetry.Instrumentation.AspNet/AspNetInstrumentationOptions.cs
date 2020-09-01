@@ -21,7 +21,7 @@ using OpenTelemetry.Context.Propagation;
 namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
-    /// Options for Asp.Net instrumentation.
+    /// Options for requests instrumentation.
     /// </summary>
     public class AspNetInstrumentationOptions
     {
