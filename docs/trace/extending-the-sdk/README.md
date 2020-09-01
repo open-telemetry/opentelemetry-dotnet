@@ -38,8 +38,7 @@ A demo exporter which simply writes activity name to the console is shown
 
 Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterHelperExtensions.cs). This allows users to add the
-Exporter to the `TracerProvider` as shown in the sample code
-[here](./Program.cs).
+Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
 
 To run the full example code demonstrating the exporter, run the following
 command from this folder.

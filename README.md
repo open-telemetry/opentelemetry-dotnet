@@ -49,6 +49,17 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
 
+## Customization
+
+OpenTelemetry .NET is designed to be customizable and extensible. Here are the
+most common customization and extension scenarios:
+
+* [Building a custom instrumentation
+  library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
+* [Building a custom trace
+  exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
+* [Correlating logs with traces](./docs/logs/correlation/README.md)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
