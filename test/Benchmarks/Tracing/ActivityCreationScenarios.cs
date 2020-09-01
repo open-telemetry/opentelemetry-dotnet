@@ -20,54 +20,49 @@ namespace OpenTelemetry.Trace.Benchmarks
 {
     internal class ActivityCreationScenarios
     {
-        public static Activity CreateActivity(ActivitySource source)
+        public static void CreateActivity(ActivitySource source)
         {
-            var activity = source.StartActivity("name");
+            using var activity = source.StartActivity("name");
             activity?.Stop();
-            return activity;
         }
 
-        public static Activity CreateActivityWithKind(ActivitySource source)
+        public static void CreateActivityWithKind(ActivitySource source)
         {
-            var activity = source.StartActivity("name", ActivityKind.Client);
-            return activity;
-        }
-
-        public static Activity CreateActivityFromParentContext(ActivitySource source, ActivityContext parentCtx)
-        {
-            var activity = source.StartActivity("name", ActivityKind.Internal, parentCtx);
+            using var activity = source.StartActivity("name", ActivityKind.Client);
             activity?.Stop();
-            return activity;
         }
 
-        public static Activity CreateActivityFromParentId(ActivitySource source, string parentId)
+        public static void CreateActivityFromParentContext(ActivitySource source, ActivityContext parentCtx)
         {
-            var activity = source.StartActivity("name", ActivityKind.Internal, parentId);
+            using var activity = source.StartActivity("name", ActivityKind.Internal, parentCtx);
             activity?.Stop();
-            return activity;
         }
 
-        public static Activity CreateActivityWithAttributes(ActivitySource source)
+        public static void CreateActivityFromParentId(ActivitySource source, string parentId)
         {
-            var activity = source.StartActivity("name");
-            activity?.SetTag("tag1", "value1");
-            activity?.SetTag("tag2", "value2");
-            activity?.SetTag("customPropTag1", "somecustomValue");
+            using var activity = source.StartActivity("name", ActivityKind.Internal, parentId);
             activity?.Stop();
-            return activity;
         }
 
-        public static Activity CreateActivityWithAttributesAndCustomProperty(ActivitySource source)
+        public static void CreateActivityWithAttributes(ActivitySource source)
         {
-            var activity = source.StartActivity("name");
-            activity?.SetTag("tag1", "value1");
-            activity?.SetTag("tag2", "value2");
+            using var activity = source.StartActivity("name");
+            activity?.SetTag("tag1", "string");
+            activity?.SetTag("tag2", 1);
+            activity?.SetTag("tag3", true);
+            activity?.Stop();
+        }
+
+        public static void CreateActivityWithAttributesAndCustomProperty(ActivitySource source)
+        {
+            using var activity = source.StartActivity("name");
+            activity?.SetTag("tag1", "string");
+            activity?.SetTag("tag2", 1);
 
             // use custom property instead of tags
             // activity?.SetTag("customPropTag1", "somecustomValue");
             activity?.SetCustomProperty("customPropTag1", "somecustomValue");
             activity?.Stop();
-            return activity;
         }
     }
 }
