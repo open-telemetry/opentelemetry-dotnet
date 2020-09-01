@@ -40,7 +40,7 @@ namespace WebApi
 
             services.AddSingleton<MessageSender>();
 
-            services.AddOpenTelemetryTracerProvider((builder) => builder
+            services.AddOpenTelemetryTracing((builder) => builder
                 .AddAspNetCoreInstrumentation()
                 .AddSource(nameof(MessageSender))
                 .AddZipkinExporter(b =>
