@@ -38,7 +38,7 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddOpenTelemetryTracerProvider((builder) => {
+        services.AddOpenTelemetryTracerProvider(builder => {
             builder
                 .AddAspNetCoreInstrumentation()
                 .AddGrpcClientInstrumentation()
