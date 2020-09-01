@@ -26,12 +26,12 @@ namespace OpenTelemetry.Metrics
     {
         private readonly string meterName;
         private readonly MetricProcessor metricProcessor;
-        private readonly IDictionary<string, Int64CounterMetricSdk> longCounters = new ConcurrentDictionary<string, Int64CounterMetricSdk>();
-        private readonly IDictionary<string, DoubleCounterMetricSdk> doubleCounters = new ConcurrentDictionary<string, DoubleCounterMetricSdk>();
-        private readonly IDictionary<string, Int64MeasureMetricSdk> longMeasures = new ConcurrentDictionary<string, Int64MeasureMetricSdk>();
-        private readonly IDictionary<string, DoubleMeasureMetricSdk> doubleMeasures = new ConcurrentDictionary<string, DoubleMeasureMetricSdk>();
-        private readonly IDictionary<string, Int64ObserverMetricSdk> longObservers = new ConcurrentDictionary<string, Int64ObserverMetricSdk>();
-        private readonly IDictionary<string, DoubleObserverMetricSdk> doubleObservers = new ConcurrentDictionary<string, DoubleObserverMetricSdk>();
+        private readonly ConcurrentDictionary<string, Int64CounterMetricSdk> longCounters = new ConcurrentDictionary<string, Int64CounterMetricSdk>();
+        private readonly ConcurrentDictionary<string, DoubleCounterMetricSdk> doubleCounters = new ConcurrentDictionary<string, DoubleCounterMetricSdk>();
+        private readonly ConcurrentDictionary<string, Int64MeasureMetricSdk> longMeasures = new ConcurrentDictionary<string, Int64MeasureMetricSdk>();
+        private readonly ConcurrentDictionary<string, DoubleMeasureMetricSdk> doubleMeasures = new ConcurrentDictionary<string, DoubleMeasureMetricSdk>();
+        private readonly ConcurrentDictionary<string, Int64ObserverMetricSdk> longObservers = new ConcurrentDictionary<string, Int64ObserverMetricSdk>();
+        private readonly ConcurrentDictionary<string, DoubleObserverMetricSdk> doubleObservers = new ConcurrentDictionary<string, DoubleObserverMetricSdk>();
         private readonly object collectLock = new object();
 
         internal MeterSdk(string meterName, MetricProcessor metricProcessor)
@@ -244,73 +244,34 @@ namespace OpenTelemetry.Metrics
 
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            if (!this.longCounters.TryGetValue(name, out var counter))
-            {
-                counter = new Int64CounterMetricSdk(name);
-
-                this.longCounters.Add(name, counter);
-            }
-
-            return counter;
+            return this.longCounters.GetOrAdd(name, new Int64CounterMetricSdk(name));
         }
 
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            if (!this.doubleCounters.TryGetValue(name, out var counter))
-            {
-                counter = new DoubleCounterMetricSdk(name);
-                this.doubleCounters.Add(name, counter);
-            }
-
-            return counter;
+            return this.doubleCounters.GetOrAdd(name, new DoubleCounterMetricSdk(name));
         }
 
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            if (!this.doubleMeasures.TryGetValue(name, out var measure))
-            {
-                measure = new DoubleMeasureMetricSdk(name);
-
-                this.doubleMeasures.Add(name, measure);
-            }
-
-            return measure;
+            return this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name));
         }
 
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            if (!this.longMeasures.TryGetValue(name, out var measure))
-            {
-                measure = new Int64MeasureMetricSdk(name);
-
-                this.longMeasures.Add(name, measure);
-            }
-
-            return measure;
+            return this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name));
         }
 
         /// <inheritdoc/>
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
-            if (!this.longObservers.TryGetValue(name, out var observer))
-            {
-                observer = new Int64ObserverMetricSdk(name, callback);
-                this.longObservers.Add(name, observer);
-            }
-
-            return observer;
+            return this.longObservers.GetOrAdd(name, new Int64ObserverMetricSdk(name, callback));
         }
 
         /// <inheritdoc/>
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
-            if (!this.doubleObservers.TryGetValue(name, out var observer))
-            {
-                observer = new DoubleObserverMetricSdk(name, callback);
-                this.doubleObservers.Add(name, observer);
-            }
-
-            return observer;
+            return this.doubleObservers.GetOrAdd(name, new DoubleObserverMetricSdk(name, callback));
         }
     }
 }

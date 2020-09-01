@@ -35,8 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
             };
 
             ActivitySource.AddActivityListener(listener);
