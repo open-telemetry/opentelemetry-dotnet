@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.1.20428.3
+
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`
   ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))

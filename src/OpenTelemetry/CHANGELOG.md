@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Fixes [953](https://github.com/open-telemetry/opentelemetry-dotnet/issues/953)
+* Changes arising from DiagnosticSource changes ([#1203](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1203/files))
+
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
 * Changed `ActivityProcessor` to implement `IDisposable`
   ([#975](https://github.com/open-telemetry/opentelemetry-dotnet/pull/975))
 * Samplers now get the actual TraceId of the Activity to be created.
