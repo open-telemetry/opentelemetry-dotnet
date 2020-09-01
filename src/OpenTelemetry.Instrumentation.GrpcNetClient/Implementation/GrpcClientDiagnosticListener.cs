@@ -43,12 +43,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            SuppressInstrumentationScope.Begin(this.options.SuppressInstrumentation);
-
             if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;
+            }
+
+            if (this.options.SuppressInstrumentation)
+            {
+                SuppressInstrumentationScope.Enter();
             }
 
             var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
