@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.1.20428.3
+
 ## 0.5.0-beta.2
 
 Released 2020-08-28
