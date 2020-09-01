@@ -197,7 +197,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData("POST")]
         public async Task TestBasicReceiveAndResponseEventsWithoutSampling(string method)
         {
-            using var eventRecords = new ActivitySourceRecorder(activityDataRequest: ActivityDataRequest.None);
+            using var eventRecords = new ActivitySourceRecorder(activitySamplingResult: ActivitySamplingResult.None);
 
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
@@ -889,14 +889,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             private readonly Action<KeyValuePair<string, Activity>> onEvent;
             private readonly ActivityListener activityListener;
 
-            public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, ActivityDataRequest activityDataRequest = ActivityDataRequest.AllDataAndRecorded)
+            public ActivitySourceRecorder(Action<KeyValuePair<string, Activity>> onEvent = null, ActivitySamplingResult activitySamplingResult = ActivitySamplingResult.AllDataAndRecorded)
             {
                 this.activityListener = new ActivityListener
                 {
                     ShouldListenTo = (activitySource) => activitySource.Name == HttpWebRequestActivitySource.ActivitySourceName,
                     ActivityStarted = this.ActivityStarted,
                     ActivityStopped = this.ActivityStopped,
-                    GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => activityDataRequest,
+                    Sample = (ref ActivityCreationOptions<ActivityContext> options) => activitySamplingResult,
                 };
 
                 ActivitySource.AddActivityListener(this.activityListener);
