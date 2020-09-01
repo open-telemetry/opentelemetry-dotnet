@@ -21,29 +21,29 @@ dotnet add package OpenTelemetry.Instrumentation.GrpcNetClient
 
 ### Step 2: Enable Grpc.Net.Client Instrumentation at application startup
 
-Grpc.Net.Client instrumentation must be enabled in your code. The following
-example demonstrates how to do this for an ASP.NET Core application. The
-example also sets up the OpenTelemetry Console exporter and ASP.NET Core
-instrumentation which require adding additional packages the following
-additional packages:
+Grpc.Net.Client instrumentation must be enabled at application startup. For
+example, if you are using an ASP.NET Core application, then this is typically
+done in the `ConfigureServices` of your `Startup` class.
 
-* [`OpenTelemetry.Instrumentation.AspNetCore`](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNetCore)
-* [`OpenTelemetry.Extensions.Hosting`](https://www.nuget.org/packages/OpenTelemetry.Extensions.Hosting)
-* [`OpenTelemetry.Exporter.Console`](https://www.nuget.org/packages/OpenTelemetry.Exporter.Console)
+The following example demonstrates adding Grpc.Net.Client instrumentation to a
+console application. This example also sets up the OpenTelemetry Console
+exporter, which requires adding the package
+[`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
+to the application.
 
 ```csharp
 using OpenTelemetry.Trace;
 
-public class Startup
+public class Program
 {
-    public void ConfigureServices(IServiceCollection services)
+    public static void Main(string[] args)
     {
-        services.AddOpenTelemetryTracerProvider(builder => {
-            builder
-                .AddAspNetCoreInstrumentation()
-                .AddGrpcClientInstrumentation()
-                .AddConsoleExporter();
-        });
+        using Sdk.CreateTracerProviderBuilder()
+            .AddGrpcClientInstrumentation()
+            .AddConsoleExporter()
+            .Build();
+
+        // Perform gRPC invocations
     }
 }
 ```
