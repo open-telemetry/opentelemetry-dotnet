@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-## 0.5.0-beta.1
+* Renamed all extension methods from AddOpenTelemetryTracerProvider to AddOpenTelemetryTracing
+
+## 0.5.0-beta.2
 
 Released 2020-08-28
 

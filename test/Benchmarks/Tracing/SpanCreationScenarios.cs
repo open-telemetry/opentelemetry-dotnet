@@ -20,50 +20,45 @@ namespace OpenTelemetry.Trace.Benchmarks
 {
     internal class SpanCreationScenarios
     {
-        public static TelemetrySpan CreateSpan(Tracer tracer)
+        public static void CreateSpan(Tracer tracer)
         {
-            var span = tracer.StartSpan("span");
+            using var span = tracer.StartSpan("span");
             span.End();
-            return span;
         }
 
-        public static TelemetrySpan CreateSpan_ParentContext(Tracer tracer)
+        public static void CreateSpan_ParentContext(Tracer tracer)
         {
             var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
-            var span = tracer.StartSpan("span", SpanKind.Client, parentContext);
+            using var span = tracer.StartSpan("span", SpanKind.Client, parentContext);
             span.End();
-            return span;
         }
 
-        public static TelemetrySpan CreateSpan_Attributes(Tracer tracer)
+        public static void CreateSpan_Attributes(Tracer tracer)
         {
-            var span = tracer.StartSpan("span");
-            span.SetAttribute("attribute1", "1");
-            span.SetAttribute("attribute2", "2");
-            span.SetAttribute("attribute3", "3.0");
-            span.SetAttribute("attribute4", "false");
+            using var span = tracer.StartSpan("span");
+            span.SetAttribute("string", "string");
+            span.SetAttribute("int", 1);
+            span.SetAttribute("long", 1L);
+            span.SetAttribute("bool", false);
             span.End();
-            return span;
         }
 
-        public static TelemetrySpan CreateSpan_Propagate(Tracer tracer)
+        public static void CreateSpan_Propagate(Tracer tracer)
         {
-            var span = tracer.StartSpan("span");
+            using var span = tracer.StartSpan("span");
             using (Tracer.WithSpan(span))
             {
             }
 
             span.End();
-            return span;
         }
 
-        public static TelemetrySpan CreateSpan_Active(Tracer tracer)
+        public static void CreateSpan_Active(Tracer tracer)
         {
             using var span = tracer.StartSpan("span");
-            return span;
         }
 
-        public static TelemetrySpan CreateSpan_Active_GetCurrent(Tracer tracer)
+        public static void CreateSpan_Active_GetCurrent(Tracer tracer)
         {
             TelemetrySpan span;
 
@@ -71,8 +66,6 @@ namespace OpenTelemetry.Trace.Benchmarks
             {
                 span = Tracer.CurrentSpan;
             }
-
-            return span;
         }
     }
 }
