@@ -38,7 +38,7 @@ Configuration with ASP.NET (Full .NET Framework) running in IIS or IIS Express
     ```csharp
     public class WebApiApplication : HttpApplication
     {
-        private TracerFactory tracerProvider;
+        private TracerProvider tracerProvider;
         protected void Application_Start()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
