@@ -21,18 +21,57 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Trace;
 
 namespace Examples.GrpcService
 {
     public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            this.Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
+
+            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
+            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+            switch (exporter)
+            {
+                case "jaeger":
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddJaegerExporter(jaegerOptions =>
+                        {
+                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
+                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                        }));
+                    break;
+                case "zipkin":
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddZipkinExporter(zipkinOptions =>
+                        {
+                            zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
+                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                        }));
+                    break;
+                default:
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddConsoleExporter());
+                    break;
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
