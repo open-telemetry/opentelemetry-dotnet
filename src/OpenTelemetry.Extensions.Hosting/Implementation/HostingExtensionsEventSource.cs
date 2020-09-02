@@ -46,13 +46,13 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             }
         }
 
-        [Event(1, Message = "An exception occurred while adding OpenTelemetry Tracing to ServiceCollection. OpenTelemetry tracing will not work. Exception: '{0}'.", Level = EventLevel.Error)]
+        [Event(1, Message = "An exception occurred while initializing OpenTelemetry Tracing. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
         public void FailedInitialize(string exception)
         {
             this.WriteEvent(1, exception);
         }
 
-        [Event(2, Message = "An exception occurred while retrieving OpenTelemetry Tracer from Service Provider. OpenTelemetry tracing will not work. Exception: '{0}'.", Level = EventLevel.Error)]
+        [Event(2, Message = "An exception occurred while retrieving OpenTelemetry Tracer. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
         public void FailedOpenTelemetrySDK(string exception)
         {
             this.WriteEvent(2, exception);
