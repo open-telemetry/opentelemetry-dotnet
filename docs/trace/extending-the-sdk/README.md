@@ -16,13 +16,11 @@ OpenTelemetry .NET SDK has provided the following built-in exporters:
 * [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 Custom exporters can be implemented to send telemetry data to places which are
-not covered by the built-in exporters.
+not covered by the built-in exporters:
 
-Here is the guidance for writing a custom exporter:
-
-* Exporters should derive from `ActivityExporter` (which belongs to the
-  [OpenTelemetry](../../../src/OpenTelemetry/README.md) package) and implement
-  the `Export` method.
+* Exporters should derive from `OpenTelemetry.Trace.ActivityExporter` (which
+  belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
+  and implement the `Export` method.
 * Exporters can optionally implement the `OnShutdown` method.
 * Depending on user's choice and load on the application, `Export` may get
   called with one or more activities.
@@ -32,6 +30,25 @@ Here is the guidance for writing a custom exporter:
   exported again by different exporter).
 * Exporters are responsible for any retry logic needed by the scenario. The SDK
   does not implement any retry logic.
+* Exporters should avoid generating telemetry and causing live-loop, this can be
+  done via `OpenTelemetry.SuppressInstrumentationScope`.
+
+```csharp
+class MyExporter : ActivityExporter
+{
+    public override ExportResult Export(in Batch<Activity> batch)
+    {
+        using var scope = SuppressInstrumentationScope.Begin();
+
+        foreach (var activity in batch)
+        {
+            Console.WriteLine($"{activity.DisplayName}");
+        }
+
+        return ExportResult.Success;
+    }
+}
+```
 
 A demo exporter which simply writes activity name to the console is shown
 [here](./MyExporter.cs).
@@ -55,12 +72,30 @@ OpenTelemetry .NET SDK has provided the following built-in processors:
 
 Custom processors can be implemented to cover more scenarios:
 
-* Processors should inherit from `ActivityProcessor`, and implement the
-  `OnStart` and `OnEnd` methods.
+* Processors should inherit from `OpenTelemetry.Trace.ActivityProcessor` (which
+  belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package),
+  and implement the `OnStart` and `OnEnd` methods.
 * Processors can optionally implement the `OnForceFlush` and `OnShutdown`
   methods. `OnForceFlush` should be thread safe.
+* Processors should not throw exceptions from `OnStart`, `OnEnd`, `OnForceFlush`
+  and `OnShutdown`.
 * `OnStart` and `OnEnd` should be thread safe, and should not block or take long
   time, since they will be called on critical code path.
+
+```csharp
+class MyProcessor : ActivityProcessor
+{
+    public override void OnStart(Activity activity)
+    {
+        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
+    }
+
+    public override void OnEnd(Activity activity)
+    {
+        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
+    }
+}
+```
 
 A demo processor is shown [here](./MyProcessor.cs).
 
@@ -75,8 +110,9 @@ OpenTelemetry .NET SDK has provided the following built-in samplers:
 
 Custom samplers can be implemented to cover more scenarios:
 
-* Samplers should inherit from `Sampler`, and implement the `ShouldSample`
-  method.
+* Samplers should inherit from `OpenTelemetry.Trace.Sampler` (which belongs to
+  the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package), and
+  implement the `ShouldSample` method.
 * `ShouldSample` should be thread safe, and should not block or take long time,
   since it will be called on critical code path.
 
