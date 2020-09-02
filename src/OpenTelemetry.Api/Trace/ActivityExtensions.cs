@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -71,8 +70,8 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            var statusCanonicalCode = activity.Tags.FirstOrDefault(k => k.Key == SpanAttributeConstants.StatusCodeKey).Value;
-            var statusDescription = activity.Tags.FirstOrDefault(d => d.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+            var statusCanonicalCode = activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string;
+            var statusDescription = activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey) as string;
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
 
