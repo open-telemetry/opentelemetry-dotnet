@@ -25,30 +25,39 @@ namespace OpenTelemetry.Trace.Benchmarks
         private readonly ActivitySource benchmarkSource = new ActivitySource("Benchmark");
         private readonly ActivityContext parentCtx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
         private readonly string parentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
+        private TracerProvider tracerProvider;
 
-        public OpenTelemetrySdkBenchmarksActivity()
+        [GlobalSetup]
+        public void GlobalSetup()
         {
-            var openTel = Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("BenchMark")
                 .Build();
         }
 
-        [Benchmark]
-        public Activity CreateActivity_NoopProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
+        [GlobalCleanup]
+        public void GlobalCleanup()
+        {
+            this.tracerProvider.Dispose();
+            this.benchmarkSource.Dispose();
+        }
 
         [Benchmark]
-        public Activity CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
+        public void CreateActivity_NoopProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
 
         [Benchmark]
-        public Activity CreateActivity_WithParentId_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
+        public void CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
+        public void CreateActivity_WithParentId_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
 
         [Benchmark]
-        public Activity CreateActivity_WithAttributesAndCustomProp_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.benchmarkSource);
+        public void CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
 
         [Benchmark]
-        public Activity CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
+        public void CreateActivity_WithAttributesAndCustomProp_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributesAndCustomProperty(this.benchmarkSource);
+
+        [Benchmark]
+        public void CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
     }
 }
