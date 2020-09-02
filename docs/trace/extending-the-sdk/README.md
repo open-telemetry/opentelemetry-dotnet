@@ -42,7 +42,7 @@ class MyExporter : ActivityExporter
 
         foreach (var activity in batch)
         {
-            Console.WriteLine($"{activity.DisplayName}");
+            Console.WriteLine($"Export: {activity.DisplayName}");
         }
 
         return ExportResult.Success;
@@ -87,12 +87,12 @@ class MyProcessor : ActivityProcessor
 {
     public override void OnStart(Activity activity)
     {
-        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
+        Console.WriteLine($"OnStart: {activity.DisplayName}");
     }
 
     public override void OnEnd(Activity activity)
     {
-        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
+        Console.WriteLine($"OnEnd: {activity.DisplayName}");
     }
 }
 ```
