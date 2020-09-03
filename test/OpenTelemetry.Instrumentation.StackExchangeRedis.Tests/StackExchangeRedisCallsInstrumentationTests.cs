@@ -102,6 +102,59 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         }
 
         [Fact]
+        public async Task ProfilerSessionsHandleMultipleSpans()
+        {
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            var connection = ConnectionMultiplexer.Connect(connectionOptions);
+
+            using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
+            var profilerFactory = instrumentation.GetProfilerSessionsFactory();
+
+            // start a root level activity
+            using Activity rootActivity = new Activity("Parent")
+                .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded)
+                .Start();
+
+            Assert.NotNull(rootActivity.Id);
+
+            // get an initial profiler from root activity
+            Activity.Current = rootActivity;
+            ProfilingSession profiler0 = profilerFactory();
+
+            // expect different result from synchronous child activity
+            ProfilingSession profiler1;
+            using (Activity.Current = new Activity("Child-Span-1").SetParentId(rootActivity.Id).Start())
+            {
+                profiler1 = profilerFactory();
+                Assert.NotSame(profiler0, profiler1);
+            }
+
+            Activity.Current = rootActivity;
+
+            // expect different result from asynchronous child activity
+            using (Activity.Current = new Activity("Child-Span-2").SetParentId(rootActivity.Id).Start())
+            {
+                // lose async context on purpose
+                await Task.Delay(100).ConfigureAwait(false);
+
+                ProfilingSession profiler2 = profilerFactory();
+                Assert.NotSame(profiler0, profiler2);
+                Assert.NotSame(profiler1, profiler2);
+            }
+
+            Activity.Current = rootActivity;
+
+            // ensure same result back in root activity
+            ProfilingSession profiles3 = profilerFactory();
+            Assert.Same(profiler0, profiles3);
+        }
+
+        [Fact]
         public void StackExchangeRedis_BadArgs()
         {
             TracerProviderBuilder builder = null;
