@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
-using System.Linq;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
 
@@ -33,15 +32,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
 
         public static string GetGrpcMethodFromActivity(Activity activity)
         {
-            return activity.Tags.FirstOrDefault(tag => tag.Key == GrpcMethodTagName).Value;
+            return activity.GetTagValue(GrpcMethodTagName) as string;
         }
 
         public static Status GetGrpcStatusCodeFromActivity(Activity activity)
         {
             var status = Status.Unknown;
 
-            var grpcStatusCodeTag = activity.Tags.FirstOrDefault(tag => tag.Key == GrpcStatusCodeTagName).Value;
-            if (int.TryParse(grpcStatusCodeTag, out var statusCode))
+            var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
+            if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))
             {
                 status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
             }
