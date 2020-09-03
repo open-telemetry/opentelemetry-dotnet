@@ -55,7 +55,8 @@ public void ConfigureServices(IServiceCollection services)
 
 This instrumentation can be configured to change the default behavior by using
 `AspNetCoreInstrumentationOptions`, which allows configuring `Propagator` and
-`Filter` as explained below.
+[`Filter`](#filter) as explained below.
+
 
 ### Propagator
 
