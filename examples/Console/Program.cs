@@ -40,11 +40,12 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
+                    (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
@@ -88,6 +89,11 @@ namespace Examples.Console
 
         [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo. Run atleast for a min to see metrics flowing.", Required = false)]
         public int DurationInMins { get; set; }
+    }
+
+    [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
+    internal class GrpcNetClientOptions
+    {
     }
 
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
