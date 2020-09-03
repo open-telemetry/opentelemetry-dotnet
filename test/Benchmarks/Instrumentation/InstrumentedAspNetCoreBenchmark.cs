@@ -36,7 +36,6 @@ namespace Benchmarks.Instrumentation
     [MemoryDiagnoser]
     public class InstrumentedAspNetCoreBenchmark
     {
-        private const string ResourceName = "http-service-example";
         private const string SourceName = "http-client-test";
 
         private HttpClient client;
@@ -50,7 +49,6 @@ namespace Benchmarks.Instrumentation
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation()
-                    .SetResource(Resources.CreateServiceResource(ResourceName))
                     .AddSource(SourceName)
                     .Build();
             }
@@ -70,7 +68,7 @@ namespace Benchmarks.Instrumentation
         }
 
         [Benchmark]
-        public async Task SimpleHttpClient()
+        public async Task InstrumentedAspNetCoreGetPage()
         {
             var httpResponse = await this.client.GetAsync("/api/values");
             httpResponse.EnsureSuccessStatusCode();

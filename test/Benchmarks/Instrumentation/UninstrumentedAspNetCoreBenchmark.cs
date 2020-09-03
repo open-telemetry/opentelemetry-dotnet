@@ -58,7 +58,7 @@ namespace Benchmarks.Instrumentation
         }
 
         [Benchmark]
-        public async Task SimpleHttpClient()
+        public async Task SimpleAspNetCoreGetPage()
         {
             var httpResponse = await this.client.GetAsync("/api/values");
             httpResponse.EnsureSuccessStatusCode();
