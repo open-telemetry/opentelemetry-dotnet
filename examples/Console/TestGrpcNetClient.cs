@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using Examples.GrpcService;
+using Grpc.Core;
 using Grpc.Net.Client;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
@@ -37,11 +38,18 @@ namespace Examples.Console
             {
                 using var channel = GrpcChannel.ForAddress("https://localhost:5001");
                 var client = new Greeter.GreeterClient(channel);
-                var reply = client.SayHelloAsync(new HelloRequest { Name = "GreeterClient" }).GetAwaiter().GetResult();
-                System.Console.WriteLine($"Message received: {reply.Message}");
-            }
 
-            System.Console.ReadLine();
+                try
+                {
+                    var reply = client.SayHelloAsync(new HelloRequest { Name = "GreeterClient" }).GetAwaiter().GetResult();
+                    System.Console.WriteLine($"Message received: {reply.Message}");
+                }
+                catch (RpcException)
+                {
+                    System.Console.Error.WriteLine($"To run this Grpc.Net.Client example, first start the Examples.GrpcService project.");
+                    throw;
+                }
+            }
 
             return null;
         }
