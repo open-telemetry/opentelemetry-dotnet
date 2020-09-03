@@ -38,7 +38,7 @@ namespace Examples.GrpcService
         {
             services.AddGrpc();
 
-            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
+            // Switch between Jaeger/Zipkin by setting UseExporter in appsettings.json.
             var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
             switch (exporter)
             {

@@ -30,7 +30,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddGrpcClientInstrumentation()
                 .AddSource("grpc-net-client-test")
-                .AddConsoleExporter(opt => opt.DisplayAsJson = false)
+                .AddConsoleExporter()
                 .Build();
 
             var source = new ActivitySource("grpc-net-client-test");
