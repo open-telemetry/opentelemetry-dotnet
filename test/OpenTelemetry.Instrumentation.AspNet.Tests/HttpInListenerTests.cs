@@ -241,6 +241,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             // Host includes port if it isn't 80 or 443.
+            Assert.Single(span.TagObjects.Where(i => i.Key == SemanticConventions.AttributeHttpHost));
             if (expectedUri.Port == 80 || expectedUri.Port == 443)
             {
                 Assert.Equal(
