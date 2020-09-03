@@ -58,7 +58,7 @@ namespace OpenTelemetry.Internal
         private static readonly ConcurrentDictionary<Type, AllocationFreeForEachDelegate> AllocationFreeForEachDelegates = new ConcurrentDictionary<Type, AllocationFreeForEachDelegate>();
         private static readonly Func<Type, AllocationFreeForEachDelegate> BuildAllocationFreeForEachDelegateRef = BuildAllocationFreeForEachDelegate;
 
-        private delegate void AllocationFreeForEachDelegate(TEnumerable instance, ref TState state, ForEachDelegate itemCallback);
+        public delegate void AllocationFreeForEachDelegate(TEnumerable instance, ref TState state, ForEachDelegate itemCallback);
 
         public delegate bool ForEachDelegate(ref TState state, TItem item);
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Internal
             }
             ...because it takes advantage of the struct Enumerator on the built-in types which give an allocation-free way to enumerate.
         */
-        private static AllocationFreeForEachDelegate BuildAllocationFreeForEachDelegate(Type enumerableType)
+        public static AllocationFreeForEachDelegate BuildAllocationFreeForEachDelegate(Type enumerableType)
         {
             var itemCallbackType = typeof(ForEachDelegate);
 
