@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.TagObjects.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             Assert.Equal("redis", activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
-            Assert.Equal("0", activity.TagObjects.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
+            Assert.Equal(0, activity.TagObjects.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
 
             if (endPoint is IPEndPoint ipEndPoint)
             {
