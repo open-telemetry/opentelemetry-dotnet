@@ -7,11 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Protobuf Include="..\GrpcService\Protos\greet.proto" GrpcServices="Client" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.3.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.13.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.27.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.25.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\OpenTelemetry.Instrumentation.GrpcNetClient.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
