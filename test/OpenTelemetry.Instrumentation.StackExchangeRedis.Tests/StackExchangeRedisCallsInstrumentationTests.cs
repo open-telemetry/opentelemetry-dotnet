@@ -188,12 +188,12 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             if (endPoint is IPEndPoint ipEndPoint)
             {
                 Assert.Equal(ipEndPoint.Address.ToString(), activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(ipEndPoint.Port.ToString(), activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(ipEndPoint.Port, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
             }
             else if (endPoint is DnsEndPoint dnsEndPoint)
             {
                 Assert.Equal(dnsEndPoint.Host, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
-                Assert.Equal(dnsEndPoint.Port.ToString(), activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(dnsEndPoint.Port, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
             }
             else
             {
