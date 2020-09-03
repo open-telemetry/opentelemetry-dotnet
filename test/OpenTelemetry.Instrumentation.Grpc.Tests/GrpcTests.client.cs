@@ -66,22 +66,22 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.NotEqual(default, activity.Context.SpanId);
 
             Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
-            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Equal("grpc", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
+            Assert.Equal("greet.Greeter", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
+            Assert.Equal("SayHello", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(uri.Host, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Null(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
             else
             {
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Null(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                Assert.Equal(uri.Host, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(uri.Port.ToString(), activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(uri.Port.ToString(), activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
             Assert.Equal(Status.Ok, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
         }

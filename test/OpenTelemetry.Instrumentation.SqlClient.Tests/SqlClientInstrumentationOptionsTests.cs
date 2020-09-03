@@ -84,16 +84,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!enableConnectionLevelAttributes)
             {
-                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+                Assert.Equal(expectedServerHostName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
             }
             else
             {
-                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(expectedServerHostName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(expectedServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
-            Assert.Equal(expectedInstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
-            Assert.Equal(expectedPort, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(expectedServerIpAddress, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
+            Assert.Equal(expectedInstanceName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
+            Assert.Equal(expectedPort, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
     }
 }

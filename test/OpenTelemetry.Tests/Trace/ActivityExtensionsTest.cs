@@ -128,7 +128,7 @@ namespace OpenTelemetry.Trace.Tests
         public void GetTagValue()
         {
             Activity activity = new Activity("Test");
-            activity.AddTag("Tag1", "Value1");
+            activity.SetTag("Tag1", "Value1");
 
             Assert.Equal("Value1", activity.GetTagValue("Tag1"));
             Assert.Null(activity.GetTagValue("tag1"));

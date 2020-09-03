@@ -185,11 +185,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
 
             if (!enableConnectionLevelAttributes)
             {
-                Assert.Equal(dataSource, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+                Assert.Equal(dataSource, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
             }
             else
             {
@@ -197,31 +197,31 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
                 if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                 {
-                    Assert.Equal(connectionDetails.ServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
+                    Assert.Equal(connectionDetails.ServerHostName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
                 }
                 else
                 {
-                    Assert.Equal(connectionDetails.ServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
+                    Assert.Equal(connectionDetails.ServerIpAddress, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
-                    Assert.Equal(connectionDetails.InstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
+                    Assert.Equal(connectionDetails.InstanceName, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
                 }
 
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
                 {
-                    Assert.Equal(connectionDetails.Port, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                    Assert.Equal(connectionDetails.Port, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
                 }
             }
 
-            Assert.Equal("master", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbName).Value);
-            Assert.Equal(commandType.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
+            Assert.Equal("master", activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbName).Value);
+            Assert.Equal(commandType.ToString(), activity.TagObjects.FirstOrDefault(t => t.Key == SpanAttributeConstants.DatabaseStatementTypeKey).Value);
             if (commandType == CommandType.StoredProcedure)
             {
                 if (captureText)
                 {
-                    Assert.Equal(commandText, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
+                    Assert.Equal(commandText, activity.TagObjects.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
                 }
                 else
                 {
@@ -231,11 +231,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal("Ok", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Equal("Ok", activity.TagObjects.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             }
             else
             {
-                Assert.Equal("Unknown", activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Equal("Unknown", activity.TagObjects.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
                 Assert.Contains(activity.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey);
             }
         }

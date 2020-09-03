@@ -117,11 +117,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value]);
+                    d[activity.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value as string]);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
-                var desc = activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value;
+                var desc = activity.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value as string;
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 

@@ -242,28 +242,28 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal("Ok", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+                Assert.Equal("Ok", activity.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Null(activity.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
             }
             else
             {
-                Assert.Equal("Unknown", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Equal("Unknown", activity.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
                 Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
             }
 
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbSystem).Value);
-            Assert.Equal("master", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbName).Value);
+            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbSystem).Value);
+            Assert.Equal("master", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbName).Value);
 
             switch (commandType)
             {
                 case CommandType.StoredProcedure:
                     if (captureStoredProcedureCommandName)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
+                        Assert.Equal(commandText, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
+                        Assert.Null(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
 
                     break;
@@ -271,17 +271,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 case CommandType.Text:
                     if (captureTextCommandContent)
                     {
-                        Assert.Equal(commandText, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
+                        Assert.Equal(commandText, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
                     else
                     {
-                        Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
+                        Assert.Null(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeDbStatement).Value);
                     }
 
                     break;
             }
 
-            Assert.Equal(dataSource, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
+            Assert.Equal(dataSource, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributePeerService).Value);
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable
