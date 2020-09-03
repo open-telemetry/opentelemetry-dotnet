@@ -265,7 +265,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
+            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }

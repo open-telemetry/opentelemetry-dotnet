@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp);
             Assert.Equal($"{address}.0.0.0", result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp).Value);
             Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
-            Assert.Equal($"{port}", result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(port, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
 
         [Fact]
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerName);
             Assert.Equal(dnsEndPoint.Host, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerName).Value);
             Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
-            Assert.Equal(dnsEndPoint.Port.ToString(), result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(dnsEndPoint.Port, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
         }
 
 #if !NET461

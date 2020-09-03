@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("greet.Greeter", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
             Assert.Equal("SayHello", activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
             Assert.Contains(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
-            Assert.True(!string.IsNullOrEmpty(activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value as string));
+            Assert.NotEqual(0, activity.TagObjects.First(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
             Assert.Equal(Status.Ok, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.

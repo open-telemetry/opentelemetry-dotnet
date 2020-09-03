@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Assert.Equal(uri.Host, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
             }
 
-            Assert.Equal(uri.Port.ToString(), activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(uri.Port, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
             Assert.Equal(Status.Ok, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
         }

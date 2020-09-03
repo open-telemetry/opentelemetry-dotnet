@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString(CultureInfo.InvariantCulture));
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
             }
         }
 
