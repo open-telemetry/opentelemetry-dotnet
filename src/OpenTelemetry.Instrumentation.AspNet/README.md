@@ -44,7 +44,7 @@ following shows changes required to your `Web.config` when using IIS web server.
 ASP.NET instrumentation must be enabled at application startup. This is
 typically done in the `Global.asax.cs` as shown below. This example also sets up
 the OpenTelemetry Jaeger exporter, which requires adding the package
-[`OpenTelemetry.Exporter.Jaeger`](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
+[`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md)
 to the application.
 
 ```csharp
@@ -114,6 +114,7 @@ ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
 further enrich the Activity as shown below.
 
 The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
+
 The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
 
 ```csharp
