@@ -103,20 +103,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(activity.GetStatus().IsOk);
         }
 
-        [Theory]
-        [InlineData(ActivityKind.Client)]
-        [InlineData(ActivityKind.Consumer)]
-        [InlineData(ActivityKind.Internal)]
-        [InlineData(ActivityKind.Producer)]
-        [InlineData(ActivityKind.Server)]
-        public void SetKindSimpleActivity(ActivityKind inputOutput)
-        {
-            var activity = new Activity("test-activity");
-            activity.SetKind(inputOutput);
-
-            Assert.Equal(inputOutput, activity.Kind);
-        }
-
         [Fact]
         public void CheckRecordException()
         {
@@ -128,6 +114,25 @@ namespace OpenTelemetry.Trace.Tests
             var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
             Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
             Assert.Equal(exception.GetType().Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+        }
+
+        [Fact]
+        public void GetTagValueEmpty()
+        {
+            Activity activity = new Activity("Test");
+
+            Assert.Null(activity.GetTagValue("Tag1"));
+        }
+
+        [Fact]
+        public void GetTagValue()
+        {
+            Activity activity = new Activity("Test");
+            activity.AddTag("Tag1", "Value1");
+
+            Assert.Equal("Value1", activity.GetTagValue("Tag1"));
+            Assert.Null(activity.GetTagValue("tag1"));
+            Assert.Null(activity.GetTagValue("Tag2"));
         }
     }
 }

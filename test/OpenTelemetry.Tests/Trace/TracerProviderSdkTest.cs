@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -101,8 +102,39 @@ namespace OpenTelemetry.Trace.Tests
             }
         }
 
+        [Theory]
+        [InlineData(SamplingDecision.NotRecord)]
+        [InlineData(SamplingDecision.Record)]
+        [InlineData(SamplingDecision.RecordAndSampled)]
+        public void TracerProviderSdkSamplerAttributesAreAppliedToActivity(SamplingDecision sampling)
+        {
+            var testSampler = new TestSampler();
+            testSampler.SamplingAction = (samplingParams) =>
+            {
+                var attributes = new Dictionary<string, object>();
+                attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                return new SamplingResult(sampling, attributes);
+            };
+
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(testSampler)
+                .Build();
+
+            using (var rootActivity = activitySource.StartActivity("root"))
+            {
+                Assert.NotNull(rootActivity);
+                Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                if (sampling != SamplingDecision.NotRecord)
+                {
+                    Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
+                }
+            }
+        }
+
         [Fact]
-        public void TracerSdkSetsActivityDataRequestBasedOnSamplingDecision()
+        public void TracerSdkSetsActivitySamplingResultBasedOnSamplingDecision()
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
@@ -160,7 +192,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerSdkSetsActivityDataRequestToNoneWhenSuppressInstrumentationIsTrue()
+        public void TracerSdkSetsActivitySamplingResultToNoneWhenSuppressInstrumentationIsTrue()
         {
             using var scope = SuppressInstrumentationScope.Begin();
 
@@ -253,7 +285,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity);
+            adapter.Start(activity, ActivityKind.Internal);
             adapter.Stop(activity);
             activity.Stop();
 
@@ -283,7 +315,7 @@ namespace OpenTelemetry.Trace.Tests
             tracerProvider.AddProcessor(testActivityProcessorNew);
             Activity activityNew = new Activity("test");
             activityNew.Start();
-            adapter.Start(activityNew);
+            adapter.Start(activityNew, ActivityKind.Internal);
             adapter.Stop(activityNew);
             activityNew.Stop();
 
@@ -306,7 +338,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity);
+            adapter.Start(activity, ActivityKind.Internal);
             adapter.Stop(activity);
             activity.Stop();
 

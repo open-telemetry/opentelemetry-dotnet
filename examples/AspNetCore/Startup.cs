@@ -57,7 +57,7 @@ namespace Examples.AspNetCore
             switch (exporter)
             {
                 case "jaeger":
-                    services.AddOpenTelemetryTracerProvider((builder) => builder
+                    services.AddOpenTelemetryTracing((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
@@ -68,7 +68,7 @@ namespace Examples.AspNetCore
                         }));
                     break;
                 case "zipkin":
-                    services.AddOpenTelemetryTracerProvider((builder) => builder
+                    services.AddOpenTelemetryTracing((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddZipkinExporter(zipkinOptions =>
@@ -78,7 +78,7 @@ namespace Examples.AspNetCore
                         }));
                     break;
                 default:
-                    services.AddOpenTelemetryTracerProvider((builder) => builder
+                    services.AddOpenTelemetryTracing((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());

@@ -21,57 +21,67 @@ namespace OpenTelemetry.Trace.Benchmarks
     [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarks
     {
-        private readonly Tracer alwaysSampleTracer;
-        private readonly Tracer neverSampleTracer;
-        private readonly Tracer noopTracer;
+        private Tracer alwaysSampleTracer;
+        private Tracer neverSampleTracer;
+        private Tracer noopTracer;
+        private TracerProvider tracerProviderAlwaysOnSample;
+        private TracerProvider tracerProviderAlwaysOffSample;
 
-        public OpenTelemetrySdkBenchmarks()
+        [GlobalSetup]
+        public void GlobalSetup()
         {
-            using var openTelemetryAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
+            this.tracerProviderAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
                 .AddSource("AlwaysOnSample")
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
-            using var openTelemetryAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
+            this.tracerProviderAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
                 .AddSource("AlwaysOffSample")
                 .SetSampler(new AlwaysOffSampler())
                 .Build();
 
-            using var openTelemetryNoop = Sdk.CreateTracerProviderBuilder().Build();
+            using var traceProviderNoop = Sdk.CreateTracerProviderBuilder().Build();
 
             this.alwaysSampleTracer = TracerProvider.Default.GetTracer("AlwaysOnSample");
             this.neverSampleTracer = TracerProvider.Default.GetTracer("AlwaysOffSample");
             this.noopTracer = TracerProvider.Default.GetTracer("Noop");
         }
 
-        [Benchmark]
-        public TelemetrySpan CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
+        [GlobalCleanup]
+        public void GlobalCleanup()
+        {
+            this.tracerProviderAlwaysOffSample.Dispose();
+            this.tracerProviderAlwaysOnSample.Dispose();
+        }
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
+        public void CreateSpan_Sampled() => SpanCreationScenarios.CreateSpan(this.alwaysSampleTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
+        public void CreateSpan_ParentContext() => SpanCreationScenarios.CreateSpan_ParentContext(this.alwaysSampleTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
+        public void CreateSpan_Attributes_Sampled() => SpanCreationScenarios.CreateSpan_Attributes(this.alwaysSampleTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
+        public void CreateSpan_WithSpan() => SpanCreationScenarios.CreateSpan_Propagate(this.alwaysSampleTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
+        public void CreateSpan_Active() => SpanCreationScenarios.CreateSpan_Active(this.alwaysSampleTracer);
+
+        [Benchmark]
+        public void CreateSpan_Active_GetCurrent() => SpanCreationScenarios.CreateSpan_Active_GetCurrent(this.alwaysSampleTracer);
 
         [Benchmark]
         public void CreateSpan_Attributes_NotSampled() => SpanCreationScenarios.CreateSpan_Attributes(this.neverSampleTracer);
 
         [Benchmark(Baseline = true)]
-        public TelemetrySpan CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer);
+        public void CreateSpan_Noop() => SpanCreationScenarios.CreateSpan(this.noopTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer);
+        public void CreateSpan_Attributes_Noop() => SpanCreationScenarios.CreateSpan_Attributes(this.noopTracer);
 
         [Benchmark]
-        public TelemetrySpan CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
+        public void CreateSpan_Propagate_Noop() => SpanCreationScenarios.CreateSpan_Propagate(this.noopTracer);
     }
 }

@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
@@ -135,19 +136,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task CustomTextFormat()
+        public async Task CustomPropagator()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
-                new ActivityContext(
-                expectedTraceId,
-                expectedSpanId,
-                ActivityTraceFlags.Recorded), null));
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
+                new PropagationContext(
+                    new ActivityContext(
+                        expectedTraceId,
+                        expectedSpanId,
+                        ActivityTraceFlags.Recorded),
+                    default));
 
             // Arrange
             using (var testFactory = this.factory
@@ -155,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                            .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
                             .AddProcessor(activityProcessor.Object)
                             .Build();
                     })))
@@ -181,14 +184,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task FilterOutRequest()
+        public async Task RequestNotCollectedWhenFilterIsApplied()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -212,6 +215,59 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             // we should only create one span and never call processor with another
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+        }
+
+        [Fact]
+        public async Task RequestNotCollectedWhenFilterThrowException()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
+                    {
+                        if (ctx.Request.Path == "/api/values/2")
+                        {
+                            throw new Exception("from InstrumentationFilter");
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    })
+                    .AddProcessor(activityProcessor.Object)
+                    .Build();
+            }
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices)))
+            {
+                using var client = testFactory.CreateClient();
+
+                // Act
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
+                {
+                    var response1 = await client.GetAsync("/api/values");
+                    var response2 = await client.GetAsync("/api/values/2");
+
+                    response1.EnsureSuccessStatusCode(); // Status Code 200-299
+                    response2.EnsureSuccessStatusCode(); // Status Code 200-299
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                }
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            // As InstrumentationFilter threw, we continue as if the
+            // InstrumentationFilter did not exist.
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 

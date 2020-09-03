@@ -142,7 +142,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             // ] value [ timestamp ]
             // In the sample syntax:
 
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
 
             foreach (var m in this.values)
             {

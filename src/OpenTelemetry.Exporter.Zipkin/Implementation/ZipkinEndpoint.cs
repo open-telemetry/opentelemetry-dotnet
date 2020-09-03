@@ -53,6 +53,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return new ZipkinEndpoint(serviceName);
         }
 
+#if !NET452
+        public static ZipkinEndpoint Create((string name, int port) serviceNameAndPort)
+        {
+            var serviceName = serviceNameAndPort.port == default
+                ? serviceNameAndPort.name
+                : $"{serviceNameAndPort.name}:{serviceNameAndPort.port}";
+
+            return new ZipkinEndpoint(serviceName);
+        }
+#endif
+
         public ZipkinEndpoint Clone(string serviceName)
         {
             return new ZipkinEndpoint(

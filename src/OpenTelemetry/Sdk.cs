@@ -14,13 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Metrics.MeterProviderSdk;
 
 namespace OpenTelemetry
 {
@@ -29,45 +24,18 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
-        private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
-
         /// <summary>
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
         /// <summary>
-        /// Creates MeterProvider with the configuration provided.
-        /// Configuration involves MetricProcessor, Exporter and push internval.
+        /// Creates MeterProviderBuilder which should be used to build MeterProvider.
         /// </summary>
-        /// <param name="configure">Action to configure MeterBuilder.</param>
-        /// <returns>MeterProvider instance, which must be disposed upon shutdown.</returns>
-        public static MeterProvider CreateMeterProvider(Action<MeterBuilder> configure)
+        /// <returns>MeterProviderBuilder instance, which should be used to build MeterProvider.</returns>
+        public static MeterProviderBuilder CreateMeterProviderBuilder()
         {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            var meterBuilder = new MeterBuilder();
-            configure(meterBuilder);
-
-            var metricProcessor = meterBuilder.MetricProcessor ?? new NoopMetricProcessor();
-            var metricExporter = meterBuilder.MetricExporter ?? new NoopMetricExporter();
-            var cancellationTokenSource = new CancellationTokenSource();
-            var meterRegistry = new Dictionary<MeterRegistryKey, MeterSdk>();
-
-            // We only have PushMetricController now with only configurable thing being the push interval
-            var controller = new PushMetricController(
-                meterRegistry,
-                metricProcessor,
-                metricExporter,
-                meterBuilder.MetricPushInterval == default ? DefaultPushInterval : meterBuilder.MetricPushInterval,
-                cancellationTokenSource);
-
-            var meterProviderSdk = new MeterProviderSdk(metricProcessor, meterRegistry, controller, cancellationTokenSource);
-
-            return meterProviderSdk;
+            return new MeterProviderBuilder();
         }
 
         /// <summary>

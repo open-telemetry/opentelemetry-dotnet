@@ -39,7 +39,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
 
             // null tracer
-            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextFormat()));
+            Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TextMapPropagator()));
 
             // null context format
             var tracerMock = new Mock<Trace.Tracer>();
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void ScopeManager_NotNull()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             // Internals of the ScopeManagerShim tested elsewhere
             Assert.NotNull(shim.ScopeManager as ScopeManagerShim);
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void BuildSpan_NotNull()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             // Internals of the SpanBuilderShim tested elsewhere
             Assert.NotNull(shim.BuildSpan("foo") as SpanBuilderShim);
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Inject_ArgumentValidation()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
             var mockFormat = new Mock<IFormat<ITextMap>>();
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Inject_UnknownFormatIgnored()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_ArgumentValidation()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
             Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_UnknownFormatIgnored()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
@@ -128,11 +128,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Extract_InvalidTraceParent()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new TracerShim(tracer, new TraceContextFormat());
+            var shim = new TracerShim(tracer, new TextMapPropagator());
 
             var mockCarrier = new Mock<ITextMap>();
 
-            // The ProxyTracer uses OpenTelemetry.Context.Propagation.TraceContextFormat, so we need to satisfy the traceparent key at the least
+            // The ProxyTracer uses OpenTelemetry.Context.Propagation.TextMapPropagator, so we need to satisfy the traceparent key at the least
             var carrierMap = new Dictionary<string, string>
             {
                 // This is an invalid traceparent value
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
-            var format = new TraceContextFormat();
+            var format = new TextMapPropagator();
 
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new TracerShim(tracer, format);

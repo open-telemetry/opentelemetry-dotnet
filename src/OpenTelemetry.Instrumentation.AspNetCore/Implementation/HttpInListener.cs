@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -60,17 +61,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            try
             {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                 activity.IsAllDataRequested = false;
                 return;
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.TextFormat is TraceContextFormat))
+            if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
             {
-                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
@@ -86,18 +96,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.ActivityBaggage != null)
+                if (ctx.Baggage != default)
                 {
-                    foreach (var baggageItem in ctx.ActivityBaggage)
-                    {
-                        activity.AddBaggage(baggageItem.Key, baggageItem.Value);
-                    }
+                    Baggage.Current = ctx.Baggage;
                 }
             }
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {

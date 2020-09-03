@@ -2,8 +2,14 @@
 
 ## Unreleased
 
-* ASP.NET Core instrumentation will now add the raw Request, Response, and/or
-  Exception objects to the Activity it creates
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
+* Rename FilterFunc to Filter.
+
+* HttpClient/HttpWebRequest instrumentation will now add the raw Request,
+  Response, and/or Exception objects to the Activity it creates
   ([#1099](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1099))
 * Changed the default propagation to support W3C Baggage
   ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
@@ -16,6 +22,8 @@
   Framework) `TracerProviderBuilderExtensions`. `AddHttpClientInstrumentation`
   will now register `HttpClient` instrumentation on .NET Core and `HttpClient` +
   `HttpWebRequest` instrumentation on .NET Framework.
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.3.0-beta
 

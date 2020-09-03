@@ -25,15 +25,22 @@ namespace OpenTelemetry.Trace.Benchmarks
         private TestInstrumentation testInstrumentation = null;
         private TracerProvider tracerProvider;
 
-        public ActivitySourceAdapterBenchmark()
+        [GlobalSetup]
+        public void GlobalSetup()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddInstrumentation((adapter) =>
-                        {
-                            this.testInstrumentation = new TestInstrumentation(adapter);
-                            return this.testInstrumentation;
-                        })
-                        .Build();
+                .AddInstrumentation((adapter) =>
+                {
+                    this.testInstrumentation = new TestInstrumentation(adapter);
+                    return this.testInstrumentation;
+                })
+                .Build();
+        }
+
+        [GlobalCleanup]
+        public void GlobalCleanup()
+        {
+            this.tracerProvider.Dispose();
         }
 
         [Benchmark]
@@ -56,7 +63,7 @@ namespace OpenTelemetry.Trace.Benchmarks
 
             public void Start(Activity activity)
             {
-                this.adapter.Start(activity);
+                this.adapter.Start(activity, ActivityKind.Internal);
             }
 
             public void Stop(Activity activity)

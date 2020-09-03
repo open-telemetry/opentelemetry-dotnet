@@ -29,15 +29,15 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Adds the given value to the bound counter metric.
         /// </summary>
-        /// <param name="context">the associated span context.</param>
+        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
         /// <param name="value">value by which the bound counter metric should be added.</param>
         public abstract void Add(in SpanContext context, T value);
 
         /// <summary>
         /// Adds the given value to the bound counter metric.
         /// </summary>
-        /// <param name="context">the associated distributed context.</param>
+        /// <param name="context">the associated <see cref="Baggage"/>.</param>
         /// <param name="value">value by which the bound counter metric should be added.</param>
-        public abstract void Add(in CorrelationContext context, T value);
+        public abstract void Add(in Baggage context, T value);
     }
 }

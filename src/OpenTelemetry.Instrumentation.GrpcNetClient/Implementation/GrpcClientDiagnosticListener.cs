@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http;
 using OpenTelemetry.Trace;
 
@@ -48,10 +49,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = grpcMethod?.Trim('/');
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString());
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port.ToString(CultureInfo.InvariantCulture));
             }
         }
 

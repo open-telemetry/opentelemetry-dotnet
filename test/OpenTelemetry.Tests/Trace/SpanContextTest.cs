@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(context1 != context2);
         }
 
-        [Fact(Skip = "Skip until ActivityContext support IsRemote")]
+        [Fact]
         public void Not_Equality_DifferentIsRemote()
         {
             var traceId = ActivityTraceId.CreateRandom();

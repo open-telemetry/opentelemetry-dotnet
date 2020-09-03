@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.1.20428.3
+* Added `GetTagValue` extension method on `Activity` for retrieving tag values
+  efficiently
+  ([#1221](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1221))
+
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
 * `Link` and `TelemetrySpan` are using `SpanAttributes` instead of
   `ActivityTagsCollection` or `Dictionary`
   ([#1120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1120))
@@ -44,6 +53,16 @@
 * Changed `StartSpan` to not set the created span as Active to match the spec
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0-preview.8.20407.11.
+* Removed `CorrelationContext` and added `Baggage`, an implementation of the
+  [`Baggage
+  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
+  spec
+  ([#1106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1106))
+* Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to
+  `BaggagePropagator`, and `B3Format` to `B3Propagator`
+  ([#1175](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1175))
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 
