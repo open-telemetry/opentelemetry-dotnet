@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             var parentContext = samplingParameters.ParentContext;
-            if (parentContext == default)
+            if (parentContext.TraceId == default)
             {
                 // If no parent, use the delegate to determine sampling.
                 return this.delegateSampler.ShouldSample(samplingParameters);
