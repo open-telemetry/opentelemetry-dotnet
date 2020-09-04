@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Xunit;
@@ -133,6 +134,77 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal("Value1", activity.GetTagValue("Tag1"));
             Assert.Null(activity.GetTagValue("tag1"));
             Assert.Null(activity.GetTagValue("Tag2"));
+        }
+
+        [Fact]
+        public void EnumerateTagValuesEmpty()
+        {
+            Activity activity = new Activity("Test");
+
+            Enumerator state = default;
+
+            activity.EnumerateTagValues(ref state);
+
+            Assert.Equal(0, state.Count);
+            Assert.False(state.LastTag.HasValue);
+        }
+
+        [Fact]
+        public void EnumerateTagValuesAll()
+        {
+            Activity activity = new Activity("Test");
+            activity.AddTag("Tag1", "Value1");
+            activity.AddTag("Tag2", "Value2");
+            activity.AddTag("Tag3", "Value3");
+
+            Enumerator state = default;
+
+            activity.EnumerateTagValues(ref state);
+
+            Assert.Equal(3, state.Count);
+            Assert.True(state.LastTag.HasValue);
+            Assert.Equal("Tag3", state.LastTag?.Key);
+            Assert.Equal("Value3", state.LastTag?.Value);
+        }
+
+        [Fact]
+        public void EnumerateTagValuesWithBreak()
+        {
+            Activity activity = new Activity("Test");
+            activity.AddTag("Tag1", "Value1");
+            activity.AddTag("Tag2", "Value2");
+            activity.AddTag("Tag3", "Value3");
+
+            Enumerator state = default;
+            state.BreakOnCount = 1;
+
+            activity.EnumerateTagValues(ref state);
+
+            Assert.Equal(1, state.Count);
+            Assert.True(state.LastTag.HasValue);
+            Assert.Equal("Tag1", state.LastTag?.Key);
+            Assert.Equal("Value1", state.LastTag?.Value);
+        }
+
+        private struct Enumerator : IActivityTagEnumerator
+        {
+            public int BreakOnCount { get; set; }
+
+            public KeyValuePair<string, object>? LastTag { get; private set; }
+
+            public int Count { get; private set; }
+
+            public bool ForEach(KeyValuePair<string, object> item)
+            {
+                this.LastTag = item;
+                this.Count++;
+                if (this.BreakOnCount == this.Count)
+                {
+                    return false;
+                }
+
+                return true;
+            }
         }
     }
 }
