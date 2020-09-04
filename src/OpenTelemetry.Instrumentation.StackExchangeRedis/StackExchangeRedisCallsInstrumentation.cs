@@ -41,7 +41,9 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         private readonly Thread drainThread;
 
         private readonly ProfilingSession defaultSession = new ProfilingSession();
-        private readonly ConcurrentDictionary<ActivityTraceId, Tuple<Activity, ProfilingSession>> cache = new ConcurrentDictionary<ActivityTraceId, Tuple<Activity, ProfilingSession>>();
+
+        private readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> cache
+            = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsInstrumentation"/> class.
@@ -87,14 +89,15 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                     return this.defaultSession;
                 }
 
-                // Try to reuse a session for all activities created under the same TraceId.
-                if (!this.cache.TryGetValue(parent.TraceId, out var session))
+                // Try to reuse a session for all activities created under the same TraceId+SpanId.
+                var cacheKey = (parent.TraceId, parent.SpanId);
+                if (!this.cache.TryGetValue(cacheKey, out var session))
                 {
-                    session = new Tuple<Activity, ProfilingSession>(parent, new ProfilingSession());
-                    this.cache.TryAdd(parent.TraceId, session);
+                    session = (parent, new ProfilingSession());
+                    this.cache.TryAdd(cacheKey, session);
                 }
 
-                return session.Item2;
+                return session.Session;
             };
         }
 
@@ -128,14 +131,15 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
             foreach (var entry in this.cache)
             {
-                var parent = entry.Value.Item1;
+                var parent = entry.Value.Activity;
                 if (parent.Duration == TimeSpan.Zero)
                 {
                     // Activity is still running, don't drain.
                     continue;
                 }
 
-                RedisProfilerEntryToActivityConverter.DrainSession(parent, entry.Value.Item2.FinishProfiling());
+                ProfilingSession session = entry.Value.Session;
+                RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
             }
         }
     }
