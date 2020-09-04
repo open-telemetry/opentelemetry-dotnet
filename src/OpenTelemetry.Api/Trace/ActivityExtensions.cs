@@ -66,9 +66,7 @@ namespace OpenTelemetry.Trace
 
             ActivityStatusTagEnumerator state = default;
 
-            ActivityTagObjectsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(
-                activity.TagObjects,
-                ref state);
+            ActivityTagObjectsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(state.StatusCode);
 
@@ -93,7 +91,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
-            ActivityTagObjectsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity.TagObjects, ref state);
+            ActivityTagObjectsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
 
             return state.Value;
         }
@@ -110,7 +108,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityTagObjectsEnumeratorFactory<T>.Enumerate(activity.TagObjects, ref tagEnumerator);
+            ActivityTagObjectsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
         }
 
         /// <summary>
@@ -196,8 +194,10 @@ namespace OpenTelemetry.Trace
             private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(IEnumerable<KeyValuePair<string, object>> tagObjects, ref TState state)
+            public static void Enumerate(Activity activity, ref TState state)
             {
+                var tagObjects = activity.TagObjects;
+
                 if (ReferenceEquals(tagObjects, EmptyActivityTagObjects))
                 {
                     return;
