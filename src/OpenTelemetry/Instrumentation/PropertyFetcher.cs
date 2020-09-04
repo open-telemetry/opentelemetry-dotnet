@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Linq;
 using System.Reflection;
 
-namespace OpenTelemetry.Instrumentation.AspNet.Implementation
+namespace OpenTelemetry.Instrumentation
 {
-    internal class PropertyFetcher
+    public class PropertyFetcher
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
@@ -86,7 +87,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 public override object Fetch(object obj)
                 {
-                    return this.propertyFetch((TObject)obj);
+                    if (obj is TObject o)
+                    {
+                        return this.propertyFetch(o);
+                    }
+
+                    return null;
                 }
             }
         }
