@@ -11,14 +11,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.3.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.13.0" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.27.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.25.0">
+    <PackageReference Include="CommandLineParser" Version="$(CommandLineParserPkgVer)" />
+    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
+    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
+    <PackageReference Include="StackExchange.Redis" Version="$(StackExchangeRedisPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
