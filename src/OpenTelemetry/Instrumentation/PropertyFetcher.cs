@@ -20,16 +20,28 @@ using System.Reflection;
 
 namespace OpenTelemetry.Instrumentation
 {
+    /// <summary>
+    /// PropertyFetcher fetches a property from an object.
+    /// </summary>
     public class PropertyFetcher
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PropertyFetcher"/> class.
+        /// </summary>
+        /// <param name="propertyName">Property name to fetch.</param>
         public PropertyFetcher(string propertyName)
         {
             this.propertyName = propertyName;
         }
 
+        /// <summary>
+        /// Fetch the property from the object.
+        /// </summary>
+        /// <param name="obj">Object to be fetched.</param>
+        /// <returns>Property fetched.</returns>
         public object Fetch(object obj)
         {
             if (this.innerFetcher == null)
