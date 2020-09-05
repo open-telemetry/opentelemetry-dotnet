@@ -213,20 +213,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
 
-            Assert.Equal(
-                200,
-                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
-
-            Assert.Equal(
-                "Ok",
-                span.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-
-            Assert.Equal(
-                "OK",
-                span.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+            Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+            Assert.Equal("Ok", span.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal("OK", span.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
 
             var expectedUri = new Uri(url);
-            var actualUrl = span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value;
+            var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
 
@@ -241,29 +233,22 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             // Host includes port if it isn't 80 or 443.
-            Assert.Single(span.TagObjects.Where(i => i.Key == SemanticConventions.AttributeHttpHost));
             if (expectedUri.Port == 80 || expectedUri.Port == 443)
             {
                 Assert.Equal(
                     expectedUri.Host,
-                    span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
+                    span.GetTagValue(SemanticConventions.AttributeHttpHost) as string);
             }
             else
             {
                 Assert.Equal(
                     $"{expectedUri.Host}:{expectedUri.Port}",
-                    span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
+                    span.GetTagValue(SemanticConventions.AttributeHttpHost) as string);
             }
 
-            Assert.Equal(
-                HttpContext.Current.Request.HttpMethod,
-                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.Path,
-                span.TagObjects.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.UserAgent,
-                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value as string);
+            Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
+            Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             Assert.Equal(expectedResource, span.GetResource());
             var request = span.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
