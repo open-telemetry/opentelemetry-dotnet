@@ -153,9 +153,9 @@ namespace OpenTelemetry.Trace.Tests
         public void EnumerateTagValuesAll()
         {
             Activity activity = new Activity("Test");
-            activity.AddTag("Tag1", "Value1");
-            activity.AddTag("Tag2", "Value2");
-            activity.AddTag("Tag3", "Value3");
+            activity.SetTag("Tag1", "Value1");
+            activity.SetTag("Tag2", "Value2");
+            activity.SetTag("Tag3", "Value3");
 
             Enumerator state = default;
 
@@ -171,9 +171,9 @@ namespace OpenTelemetry.Trace.Tests
         public void EnumerateTagValuesWithBreak()
         {
             Activity activity = new Activity("Test");
-            activity.AddTag("Tag1", "Value1");
-            activity.AddTag("Tag2", "Value2");
-            activity.AddTag("Tag3", "Value3");
+            activity.SetTag("Tag1", "Value1");
+            activity.SetTag("Tag2", "Value2");
+            activity.SetTag("Tag3", "Value3");
 
             Enumerator state = default;
             state.BreakOnCount = 1;
