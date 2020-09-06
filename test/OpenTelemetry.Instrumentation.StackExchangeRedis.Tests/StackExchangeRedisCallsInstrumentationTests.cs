@@ -173,31 +173,31 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             if (isSet)
             {
                 Assert.Equal("SETEX", activity.DisplayName);
-                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
+                Assert.Equal("SETEX", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
             else
             {
                 Assert.Equal("GET", activity.DisplayName);
-                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
+                Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
-            Assert.Equal("0", activity.Tags.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal("redis", activity.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal(0, activity.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName));
 
             if (endPoint is IPEndPoint ipEndPoint)
             {
-                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(ipEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(ipEndPoint.Address.ToString(), activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(ipEndPoint.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             }
             else if (endPoint is DnsEndPoint dnsEndPoint)
             {
-                Assert.Equal(dnsEndPoint.Host, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
-                Assert.Equal(dnsEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(dnsEndPoint.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+                Assert.Equal(dnsEndPoint.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             }
             else
             {
-                Assert.Equal(endPoint.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+                Assert.Equal(endPoint.ToString(), activity.GetTagValue(SemanticConventions.AttributePeerService));
             }
         }
     }

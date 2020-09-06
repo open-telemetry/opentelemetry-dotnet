@@ -33,9 +33,9 @@ namespace OpenTelemetry.Benchmarks
             EmptyActivity = new Activity("EmptyActivity");
 
             Activity = new Activity("Activity");
-            Activity.AddTag("Tag1", "Value1");
-            Activity.AddTag("Tag2", 2);
-            Activity.AddTag("Tag3", false);
+            Activity.SetTag("Tag1", "Value1");
+            Activity.SetTag("Tag2", 2);
+            Activity.SetTag("Tag3", false);
 
             for (int i = 0; i < 1024; i++)
             {
