@@ -36,10 +36,15 @@ namespace OpenTelemetry.Benchmarks
             Activity.AddTag("Tag1", "Value1");
             Activity.AddTag("Tag2", 2);
             Activity.AddTag("Tag3", false);
+
+            for (int i = 0; i < 1024; i++)
+            {
+                Activity.AddTag($"AutoTag{i}", i);
+            }
         }
 
         [Benchmark]
-        public void EnumerateEmptyTagObjects()
+        public void SearchEnumerateEmptyTagObjects()
         {
             object value;
             foreach (KeyValuePair<string, object> tag in EmptyActivity.TagObjects)
@@ -53,19 +58,19 @@ namespace OpenTelemetry.Benchmarks
         }
 
         [Benchmark]
-        public void LinqEmptyTagObjects()
+        public void SearchLinqEmptyTagObjects()
         {
             EmptyActivity.TagObjects.FirstOrDefault(i => i.Key == "Tag3");
         }
 
         [Benchmark]
-        public void GetTagValueEmptyTagObjects()
+        public void SearchGetTagValueEmptyTagObjects()
         {
             EmptyActivity.GetTagValue("Tag3");
         }
 
         [Benchmark]
-        public void EnumerateNonemptyTagObjects()
+        public void SearchEnumerateNonemptyTagObjects()
         {
             object value;
             foreach (KeyValuePair<string, object> tag in Activity.TagObjects)
@@ -79,15 +84,44 @@ namespace OpenTelemetry.Benchmarks
         }
 
         [Benchmark]
-        public void LinqNonemptyTagObjects()
+        public void SearchLinqNonemptyTagObjects()
         {
             Activity.TagObjects.FirstOrDefault(i => i.Key == "Tag3");
         }
 
         [Benchmark]
-        public void GetTagValueNonemptyTagObjects()
+        public void SearchGetTagValueNonemptyTagObjects()
         {
             Activity.GetTagValue("Tag3");
+        }
+
+        [Benchmark]
+        public void EnumerateNonemptyTagObjects()
+        {
+            int count = 0;
+            foreach (KeyValuePair<string, object> tag in Activity.TagObjects)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateTagValuesNonemptyTagObjects()
+        {
+            Enumerator state = default;
+
+            Activity.EnumerateTagValues(ref state);
+        }
+
+        private struct Enumerator : IActivityTagEnumerator
+        {
+            public int Count { get; private set; }
+
+            public bool ForEach(KeyValuePair<string, object> item)
+            {
+                this.Count++;
+                return true;
+            }
         }
     }
 }
