@@ -23,8 +23,8 @@ namespace OpenTelemetry.Instrumentation
     /// <summary>
     /// PropertyFetcher fetches a property from an object.
     /// </summary>
-    /// <typeparam name="TProperty">The type of the property being fetched.</typeparam>
-    public class PropertyFetcher<TProperty>
+    /// <typeparam name="T">The type of the property being fetched.</typeparam>
+    public class PropertyFetcher<T>
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation
         /// </summary>
         /// <param name="obj">Object to be fetched.</param>
         /// <returns>Property fetched.</returns>
-        public TProperty Fetch(object obj)
+        public T Fetch(object obj)
         {
             if (this.innerFetcher == null)
             {
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Instrumentation
             /// </summary>
             public static PropertyFetch FetcherForProperty(PropertyInfo propertyInfo)
             {
-                if (propertyInfo == null || !typeof(TProperty).IsAssignableFrom(propertyInfo.PropertyType))
+                if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
                 {
                     // returns null on any fetch.
                     return new PropertyFetch();
@@ -77,17 +77,17 @@ namespace OpenTelemetry.Instrumentation
 
                 var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
                 var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
-                    typeof(TProperty), propertyInfo.DeclaringType, propertyInfo.PropertyType);
+                    typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
                 return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
             }
 
-            public virtual TProperty Fetch(object obj)
+            public virtual T Fetch(object obj)
             {
                 return default;
             }
 
             private class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
-                where TDeclaredProperty : TProperty
+                where TDeclaredProperty : T
             {
                 private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
 
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Instrumentation
                     this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
                 }
 
-                public override TProperty Fetch(object obj)
+                public override T Fetch(object obj)
                 {
                     if (obj is TDeclaredObject o)
                     {
