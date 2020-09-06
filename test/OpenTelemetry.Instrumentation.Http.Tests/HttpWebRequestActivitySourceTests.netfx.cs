@@ -561,8 +561,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
             Assert.Equal(webException, exceptionException);
 
-            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.Contains(activity.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         /// <summary>
@@ -602,8 +602,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("Stop", exceptionEvent.Key);
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.DoesNotContain(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Null(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         /// <summary>
@@ -643,8 +643,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("Stop", exceptionEvent.Key);
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         /// <summary>
@@ -687,8 +687,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("Stop", exceptionEvent.Key);
             Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusCodeKey);
-            Assert.Contains(exceptionEvent.Value.Tags, i => i.Key == SpanAttributeConstants.StatusDescriptionKey);
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         [Fact]
@@ -852,20 +852,20 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
         {
-            Assert.NotNull(activity.Tags);
-            Assert.Equal(method, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
+            Assert.NotNull(activity.TagObjects);
+            Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             if (hostNameAndPort != null)
             {
-                Assert.Equal(hostNameAndPort, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
+                Assert.Equal(hostNameAndPort, activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             }
 
-            Assert.Equal(url, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
+            Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
         }
 
         private static void VerifyActivityStopTags(int statusCode, string statusText, Activity activity)
         {
-            Assert.Equal(statusCode, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
-            Assert.Equal(statusText, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+            Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+            Assert.Equal(statusText, activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         private string BuildRequestUrl(bool useHttps = false, string path = "echo", string queryString = null)

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
     {
-        private GrpcFixture<GreeterService> fixture;
+        private readonly GrpcFixture<GreeterService> fixture;
 
         public GrpcTests(GrpcFixture<GreeterService> fixture)
         {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
-            var rs = client.SayHello(new HelloRequest());
+            client.SayHello(new HelloRequest());
 
             WaitForProcessorInvocations(processor, 2);
 
@@ -53,23 +53,23 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
-            Assert.Contains(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value, clientLoopbackAddresses);
-            Assert.True(!string.IsNullOrEmpty(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value));
+            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+            Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
+            Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             Assert.Equal(Status.Ok, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
-            Assert.Equal($"localhost:{this.fixture.Port}", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
-            Assert.Equal("POST", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
-            Assert.Equal("/greet.Greeter/SayHello", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
-            Assert.StartsWith("grpc-dotnet", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value);
+            Assert.Equal($"localhost:{this.fixture.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             // This attribute is added by the gRPC for .NET library. There is a discussion of having the OpenTelemetry instrumentation remove it.
             // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/482#issuecomment-655753756
-            Assert.Equal($"0", activity.Tags.FirstOrDefault(i => i.Key == "grpc.status_code").Value);
+            Assert.Equal($"0", activity.GetTagValue("grpc.status_code"));
         }
 
         private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
