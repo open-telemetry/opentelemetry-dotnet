@@ -89,8 +89,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeDbSystem);
-            Assert.Equal("redis", result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDbSystem).Value);
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal("redis", result.GetTagValue(SemanticConventions.AttributeDbSystem));
         }
 
         [Fact]
@@ -103,8 +103,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeDbStatement);
-            Assert.Equal("SET", result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeDbStatement).Value);
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeDbStatement));
+            Assert.Equal("SET", result.GetTagValue(SemanticConventions.AttributeDbStatement));
         }
 
         [Fact]
@@ -119,8 +119,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName);
-            Assert.Equal("PreferMaster, FireAndForget, NoRedirect", result.TagObjects.FirstOrDefault(kvp => kvp.Key == StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName).Value);
+            Assert.NotNull(result.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName));
+            Assert.Equal("PreferMaster, FireAndForget, NoRedirect", result.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName));
         }
 
         [Fact]
@@ -136,10 +136,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp);
-            Assert.Equal($"{address}.0.0.0", result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerIp).Value);
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
-            Assert.Equal(port, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+            Assert.Equal($"{address}.0.0.0", result.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+            Assert.Equal(port, result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
         [Fact]
@@ -153,10 +153,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerName);
-            Assert.Equal(dnsEndPoint.Host, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerName).Value);
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort);
-            Assert.Equal(dnsEndPoint.Port, result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerName));
+            Assert.Equal(dnsEndPoint.Host, result.GetTagValue(SemanticConventions.AttributeNetPeerName));
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+            Assert.Equal(dnsEndPoint.Port, result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
 #if !NET461
@@ -170,8 +170,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
 
-            Assert.Contains(result.TagObjects, kvp => kvp.Key == SemanticConventions.AttributePeerService);
-            Assert.Equal(unixEndPoint.ToString(), result.TagObjects.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributePeerService).Value);
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributePeerService));
+            Assert.Equal(unixEndPoint.ToString(), result.GetTagValue(SemanticConventions.AttributePeerService));
         }
 #endif
     }
