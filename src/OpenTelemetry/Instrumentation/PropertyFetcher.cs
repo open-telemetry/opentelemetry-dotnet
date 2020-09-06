@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation
         private PropertyFetch innerFetcher;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyFetcher{TProperty}"/> class.
+        /// Initializes a new instance of the <see cref="PropertyFetcher{T}"/> class.
         /// </summary>
         /// <param name="propertyName">Property name to fetch.</param>
         public PropertyFetcher(string propertyName)
