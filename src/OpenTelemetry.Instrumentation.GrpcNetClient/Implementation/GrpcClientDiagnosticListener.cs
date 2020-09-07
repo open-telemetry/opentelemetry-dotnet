@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         public const string RequestCustomPropertyName = "OTel.GrpcHandler.Request";
 
         private readonly ActivitySourceAdapter activitySource;
-        private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource)
             : base("Grpc.Net.Client")
