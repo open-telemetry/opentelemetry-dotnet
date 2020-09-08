@@ -1,30 +1,30 @@
-Release process.
+# Release process
 
 Only for Maintainers.
 
-1. Tag with version to be released eg: git tag -a 0.4.0-beta -m ".4.0.0-beta"
+1. Tag with version to be released e.g.: git tag -a 0.4.0-beta -m "0.4.0-beta"
    git push origin 0.4.0-beta
 
-2. Submit a PR and merge it. (any harmless PR) To trigger CI for master. (no
-   longer required, but confirm)
+2. [Pack and publish to MyGet
+   workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22)
+   Wait for the above CI build pipeline to finish. It's triggered when the above
+   PR is merged. At the end of this, MyGet will have the packages.
 
-3. https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22
-   Wait for the above CI build pipeline to finish. Its triggered when the above
-   PR is merged. At the end of this, myget will have the packages.
+3. Validate using MyGet packages. Basic sanity checks :)
 
-4. Validate using myget packages. Basic sanity checks :)
+4. From the above build, get the artifacts from the drop, which has all the
+   nuget packages and symbols (*.snupkg files).
 
-5. From the above build, get the artifacts from the drop, which has all the
-   nuget packages.
+5. Copy all the nuget files and symbols into a local folder.
 
-6. Copy the nuget into a local folder.
+6. Download latest [nuget.exe](https://www.nuget.org/downloads).
 
-7. Download latest nuget.exe to this folder: https://www.nuget.org/downloads
+7. Obtain the API key from nuget.org (Only maintainers have access)
 
-8. Obtain the API key from nuget.org (Only maintainers have access)
+8. Run the following command from PowerShell from the above folder.
 
-9. run the following command from powershell from the above folder..
-
+```powershell
 .\nuget.exe setApiKey <your_API_key> get-childitem | where {$_.extension -eq
 ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source
 https://api.nuget.org/v3/index.json}
+```
