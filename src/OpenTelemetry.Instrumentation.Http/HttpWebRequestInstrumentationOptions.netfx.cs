@@ -48,13 +48,13 @@ namespace OpenTelemetry.Instrumentation.Http
         /// If Filter returns true, the request is collected.
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-        public Func<HttpWebRequest, bool> InstrumentationFilter { get; set; }
+        public Func<HttpWebRequest, bool> Filter { get; set; }
 
         internal bool EventFilter(HttpWebRequest request)
         {
             try
             {
-                return this.InstrumentationFilter?.Invoke(request) ?? true;
+                return this.Filter?.Invoke(request) ?? true;
             }
             catch (Exception ex)
             {
