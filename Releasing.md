@@ -10,7 +10,9 @@ Only for Maintainers.
    ```
 
 2. Wait for the [Pack and publish to MyGet
-   workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22) to finish. It's triggered when the you create a new tag. At the end of this, MyGet will have the packages.
+   workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22)
+   to finish. It's triggered when the you create a new tag. At the end of this,
+   MyGet will have the packages.
 
 3. Validate using MyGet packages. Basic sanity checks :)
 
