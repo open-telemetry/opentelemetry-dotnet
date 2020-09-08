@@ -41,8 +41,7 @@ namespace OpenTelemetry.Trace
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             var parentContext = samplingParameters.ParentContext;
-            if (/* TODO: TraceId is always provided due to AutoGenerateRootContextTraceId. That is being removed in RC1 and this can be put back.
-                 parentContext.TraceId == default ||*/ parentContext.SpanId == default)
+            if (parentContext.TraceId == default)
             {
                 // If no parent, use the delegate to determine sampling.
                 return this.delegateSampler.ShouldSample(samplingParameters);

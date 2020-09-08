@@ -66,22 +66,22 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.NotEqual(default, activity.Context.SpanId);
 
             Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
-            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
             }
             else
             {
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
             }
 
-            Assert.Equal(uri.Port.ToString(), activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             Assert.Equal(Status.Ok, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
         }
