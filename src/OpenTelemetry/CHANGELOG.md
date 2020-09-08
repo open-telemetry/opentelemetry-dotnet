@@ -3,7 +3,10 @@
 ## Unreleased
 
 * Fixes [953](https://github.com/open-telemetry/opentelemetry-dotnet/issues/953)
-* Changes arising from DiagnosticSource changes ([#1203](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1203/files))
+* Changes arising from `DiagnosticSource` changes
+  ([#1203](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1203))
+* `PropertyFetcher` is now public
+  ([#1232](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1232))
 
 ## 0.5.0-beta.2
 
