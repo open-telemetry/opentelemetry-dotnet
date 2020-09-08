@@ -2,7 +2,7 @@
 
 Only for Maintainers.
 
-1. Tag with version to be released e.g.: 
+1. Tag with version to be released e.g.:
 
    ```sh
    git tag -a 0.4.0-beta -m "0.4.0-beta"
@@ -25,7 +25,7 @@ Only for Maintainers.
 
 7. Obtain the API key from nuget.org (Only maintainers have access)
 
-8. Run the following command from PowerShell from the above folder.
+8. Run the following command from PowerShell from the above folder:
 
    ```powershell
    .\nuget.exe setApiKey <your_API_key> get-childitem | where {$_.extension -eq
