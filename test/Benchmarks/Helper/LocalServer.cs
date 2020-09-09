@@ -29,8 +29,6 @@ namespace Benchmarks.Helper
 {
     public class LocalServer : IDisposable
     {
-        private const string SourceName = "http-client-test";
-
         private readonly IWebHost host;
         private TracerProvider tracerProvider;
 
@@ -42,7 +40,6 @@ namespace Benchmarks.Helper
                 {
                     this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddAspNetCoreInstrumentation()
-                        .AddSource(SourceName)
                         .Build();
                 }
             }
