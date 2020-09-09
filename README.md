@@ -12,7 +12,8 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
 ## Supported .NET Versions
 
-Packages shipped from this repo generally supports all the officially supported
+Packages shipped from this repository generally support all the officially supported
+
 versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
 [.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework). Any
 exceptions to this are noted in the individual `README.md` files.
