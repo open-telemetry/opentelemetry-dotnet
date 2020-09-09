@@ -60,7 +60,59 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
-TODO - describe options
+### SetStoredProcedureCommandName
+
+By default, when CommandType is CommandType.StoredProcedure this
+instrumentation will set the `db.statement` attribute to the stored procedure
+command name. This behavior can be disabled by setting the
+`SetStoredProcedureCommandName` to false.
+
+The following example shows how to use `SetStoredProcedureCommandName`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(
+        options => options.SetStoredProcedureCommandName = false)
+    .AddConsoleExporter()
+    .Build();
+```
+
+### SetTextCommandContent
+
+By default, when CommandType is CommandType.Text, this instrumentation will not
+set the `db.statement` attribute. This behavior can be enabled by setting
+`SetTextCommandContent` to true.
+
+The following example shows how to use `SetTextCommandContent`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(
+        options => options.SetTextCommandContent = true)
+    .AddConsoleExporter()
+    .Build();
+```
+
+### EnableConnectionLevelAttributes
+
+By default, `EnabledConnectionLevelAttributes` is disabled and this
+instrumentation sets the `peer.service` attribute to the
+[`DataSource`](https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.datasource)
+property of the connection. If `EnabledConnectionLevelAttributes` is enabled,
+the `DataSource` will be parsed and the server name will be sent as the
+`net.peer.name` or `net.peer.ip` attribute, the instance name will be sent as
+the `db.mssql.instance_name` attribute, and the port will be sent as the
+`net.peer.port` attribute if it is not 1433 (the default port).
+
+The following example shows how to use `EnableConnectionLevelAttributes`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(
+        options => options.EnableConnectionLevelAttributes = true)
+    .AddConsoleExporter()
+    .Build();
+```
 
 ## References
 
