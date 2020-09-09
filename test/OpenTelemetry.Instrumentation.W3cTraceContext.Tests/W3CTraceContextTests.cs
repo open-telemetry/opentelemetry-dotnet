@@ -28,6 +28,11 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         /*
             To run the tests, invoke docker-compose.yml from the root of the repo:
             opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build
+
+            To run as unit tests for debugging,
+            1. install required softwares in the "Install" section in https://github.com/w3c/trace-context/tree/master/test,
+            2. replaced the "[SkipUnlessEnvVarFoundTheory(W3cTraceContextEnvVarName)]" tag with "[Theory]",
+            3. use Visual Studio to run unit tests or run with command `dotnet test`.
          */
 
         private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
