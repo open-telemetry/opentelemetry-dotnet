@@ -28,11 +28,11 @@ namespace OpenTelemetry.Trace
         /// Enables gRPClient Instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureGrpcClientInstrumentationOptions">GrpcClient configuration options.</param>
+        /// <param name="options">GrpcClient configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddGrpcClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<GrpcClientInstrumentationOptions> configureGrpcClientInstrumentationOptions = null)
+            Action<GrpcClientInstrumentationOptions> options = null)
         {
             if (builder == null)
             {
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
             }
 
             var grpcOptions = new GrpcClientInstrumentationOptions();
-            configureGrpcClientInstrumentationOptions?.Invoke(grpcOptions);
+            options?.Invoke(grpcOptions);
 
             builder.AddInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource, grpcOptions));
             return builder;

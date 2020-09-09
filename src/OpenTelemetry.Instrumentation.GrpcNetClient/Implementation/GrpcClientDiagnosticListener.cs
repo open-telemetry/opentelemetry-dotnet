@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 return;
             }
 
-            if (this.options.SuppressInstrumentation)
+            if (this.options.SuppressDownstreamInstrumentation)
             {
                 SuppressInstrumentationScope.Enter();
             }
