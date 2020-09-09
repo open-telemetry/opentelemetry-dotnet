@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -57,7 +59,87 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 string lastLine = ParseLastLine(result);
                 this.output.WriteLine("result:" + result);
                 Assert.StartsWith("FAILED", lastLine);
+#if NETCOREAPP2_1
+                AssertOutputOfNetCoreApp21(result);
+#else
+                AssertOutputOfNetCoreApp31(result);
+#endif
             }
+        }
+
+        private static void AssertOutputOfNetCoreApp21(string output)
+        {
+            string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
+
+            // TODO: fix and remove current failures except for expected failures. #1219
+            // See expected failed or error cases in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+            string[] currentFailures = new string[]
+            {
+                // Errors:
+                "test_tracestate_duplicated_keys",
+                "test_tracestate_key_illegal_characters",
+                "test_tracestate_key_illegal_vendor_format",
+                "test_tracestate_key_length_limit",
+                "test_tracestate_member_count_limit",
+                "test_tracestate_multiple_headers_different_keys",
+                "test_tracestate_value_illegal_characters",
+
+                // Failures:
+                "test_traceparent_trace_flags_illegal_characters",  // Expected to fail. See issue #404
+                "test_traceparent_version_0x00",
+                "test_traceparent_version_0xff",
+                "test_tracestate_empty_header",
+            };
+
+            // FAILED (failures=4, errors=7)
+            Assert.Equal(currentFailures.Length, unsuccessfulTestcaseNames.Length);
+            for (int i = 0; i < currentFailures.Length; ++i)
+            {
+                Assert.Equal(currentFailures[i], unsuccessfulTestcaseNames[i]);
+            }
+        }
+
+        private static void AssertOutputOfNetCoreApp31(string output)
+        {
+            string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
+
+            // TODO: fix and remove current failures except for expected failures. #1219
+            // See expected failed or error cases in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+            string[] currentFailures = new string[]
+            {
+                // Errors:
+                "test_tracestate_duplicated_keys",
+                "test_tracestate_key_illegal_characters",
+                "test_tracestate_key_illegal_vendor_format",
+                "test_tracestate_key_length_limit",
+                "test_tracestate_member_count_limit",
+                "test_tracestate_multiple_headers_different_keys",
+                "test_tracestate_value_illegal_characters",
+
+                // Failures:
+                "test_traceparent_parent_id_all_zero",  // Expected to fail. See issue #404
+                "test_traceparent_parent_id_illegal_characters",  // Expected to fail. See issue #404
+                "test_traceparent_trace_flags_illegal_characters",  // Expected to fail. See issue #404
+                "test_traceparent_version_0x00",
+                "test_traceparent_version_0xff",
+                "test_tracestate_empty_header",
+            };
+
+            // FAILED (failures=6, errors=7)
+            Assert.Equal(currentFailures.Length, unsuccessfulTestcaseNames.Length);
+            for (int i = 0; i < currentFailures.Length; ++i)
+            {
+                Assert.Equal(currentFailures[i], unsuccessfulTestcaseNames[i]);
+            }
+        }
+
+        private static string[] ExtractUnsuccessfulTestcaseNames(string output)
+        {
+            string[] lines = output.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            Assert.True(lines != null && lines.Length != 0);
+            return lines
+                .Where(line => line.StartsWith("FAIL: ") || line.StartsWith("ERROR: "))
+                .Select(line => line.Split(" ")[1]).ToArray();
         }
 
         private static string RunCommand(string command, string args)
