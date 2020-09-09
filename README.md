@@ -10,6 +10,13 @@ Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
+## Supported .NET Versions
+
+Packages shipped from this repo generally supports all the officially supported
+versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
+[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework). Any
+exceptions to this are noted in the individual `README.md` files.
+
 ## Getting Started
 
 If you are new here, please see [get started in 5
