@@ -39,12 +39,6 @@ namespace OpenTelemetry.Instrumentation
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            /*
-            if (Sdk.SuppressInstrumentation)
-            {
-                return;
-            }*/
-
             if (!this.handler.SupportsNullActivity && Activity.Current == null)
             {
                 InstrumentationEventSource.Log.NullActivity(value.Key);
