@@ -18,17 +18,9 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
+using Benchmarks.Helper;
 using OpenTelemetry;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#else
-using TestApp.AspNetCore._3._1;
-#endif
 
 namespace Benchmarks.Instrumentation
 {
@@ -36,41 +28,29 @@ namespace Benchmarks.Instrumentation
     [MemoryDiagnoser]
     public class InstrumentedAspNetCoreBenchmark
     {
-        private const string SourceName = "http-client-test";
+        private const string LocalhostUrl = "http://localhost:5050";
 
         private HttpClient client;
-        private TracerProvider tracerProvider;
-        private WebApplicationFactory<Startup> factory;
+        private LocalServer localServer;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            void ConfigureTestServices(IServiceCollection services)
-            {
-                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation()
-                    .AddSource(SourceName)
-                    .Build();
-            }
-
-            this.factory = new WebApplicationFactory<Startup>()
-                .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices));
-            this.client = this.factory.CreateClient();
+            this.localServer = new LocalServer(LocalhostUrl, true);
+            this.client = new HttpClient();
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            this.factory.Dispose();
+            this.localServer.Dispose();
             this.client.Dispose();
-            this.tracerProvider.Dispose();
         }
 
         [Benchmark]
         public async Task InstrumentedAspNetCoreGetPage()
         {
-            var httpResponse = await this.client.GetAsync("/api/values");
+            var httpResponse = await this.client.GetAsync(LocalhostUrl);
             httpResponse.EnsureSuccessStatusCode();
         }
     }

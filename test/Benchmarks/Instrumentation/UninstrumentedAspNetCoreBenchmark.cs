@@ -18,14 +18,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#else
-using TestApp.AspNetCore._3._1;
-#endif
+using Benchmarks.Helper;
 
 namespace Benchmarks.Instrumentation
 {
@@ -33,34 +26,29 @@ namespace Benchmarks.Instrumentation
     [MemoryDiagnoser]
     public class UninstrumentedAspNetCoreBenchmark
     {
+        private const string LocalhostUrl = "http://localhost:5050";
+
         private HttpClient client;
-        private WebApplicationFactory<Startup> factory;
+        private LocalServer localServer;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            static void ConfigureTestServices(IServiceCollection services)
-            {
-            }
-
-            this.factory = new WebApplicationFactory<Startup>()
-                .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices));
-
-            this.client = this.factory.CreateClient();
+            this.localServer = new LocalServer(LocalhostUrl);
+            this.client = new HttpClient();
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
             this.client.Dispose();
-            this.factory.Dispose();
+            this.localServer.Dispose();
         }
 
         [Benchmark]
         public async Task SimpleAspNetCoreGetPage()
         {
-            var httpResponse = await this.client.GetAsync("/api/values");
+            var httpResponse = await this.client.GetAsync(LocalhostUrl);
             httpResponse.EnsureSuccessStatusCode();
         }
     }
