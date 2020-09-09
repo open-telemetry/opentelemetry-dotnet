@@ -17,9 +17,6 @@
 #if NETCOREAPP
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -35,7 +32,6 @@ namespace Benchmarks.Helper
         private const string SourceName = "http-client-test";
 
         private readonly IWebHost host;
-        private readonly CancellationTokenSource cts;
         private TracerProvider tracerProvider;
 
         public LocalServer(string url, bool enableTracerProvider = false)
@@ -51,7 +47,6 @@ namespace Benchmarks.Helper
                 }
             }
 
-            this.cts = new CancellationTokenSource();
             this.host = new WebHostBuilder()
                 .UseKestrel()
                 .UseStartup<Startup>()
@@ -64,7 +59,6 @@ namespace Benchmarks.Helper
 
         public void Dispose()
         {
-            this.cts.Cancel(false);
             try
             {
                 this.tracerProvider.Dispose();

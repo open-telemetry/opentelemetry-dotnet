@@ -19,8 +19,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 
 namespace Benchmarks.Instrumentation
 {
