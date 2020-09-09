@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(
-                    c => c.InstrumentationFilter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                    c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
             using var c = new HttpClient();
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(
-                    c => c.InstrumentationFilter = (req) => throw new Exception("From Instrumentation filter"))
+                    c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
                 .Build();
 
             using var c = new HttpClient();

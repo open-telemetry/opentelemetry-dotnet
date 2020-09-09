@@ -24,3 +24,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run sql docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build
+
+  w3c-trace-context-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run W3C Trace Context docker-compose.integration
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build

@@ -74,12 +74,12 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                     if (command.EndPoint is IPEndPoint ipEndPoint)
                     {
                         activity.SetTag(SemanticConventions.AttributeNetPeerIp, ipEndPoint.Address.ToString());
-                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port.ToString(CultureInfo.InvariantCulture));
+                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, ipEndPoint.Port);
                     }
                     else if (command.EndPoint is DnsEndPoint dnsEndPoint)
                     {
                         activity.SetTag(SemanticConventions.AttributeNetPeerName, dnsEndPoint.Host);
-                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, dnsEndPoint.Port.ToString(CultureInfo.InvariantCulture));
+                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, dnsEndPoint.Port);
                     }
                     else
                     {
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                     }
                 }
 
-                activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName, command.Db.ToString(CultureInfo.InvariantCulture));
+                activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName, command.Db);
 
                 // TODO: deal with the re-transmission
                 // command.RetransmissionOf;
