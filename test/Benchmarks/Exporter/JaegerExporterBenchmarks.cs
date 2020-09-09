@@ -143,7 +143,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
+            using var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
 
             var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()));
 
@@ -155,13 +155,25 @@ namespace OpenTelemetry.Exporter.Benchmarks
                     ActivityTraceFlags.Recorded)),
             };
 
-            return activitySource.StartActivity(
+            using var listener = new ActivityListener()
+            {
+                ShouldListenTo = a => a.Name == nameof(this.CreateTestActivity),
+                Sample = (ref ActivityCreationOptions<ActivityContext> a) => ActivitySamplingResult.AllDataAndRecorded,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+
+            Activity activity = activitySource.StartActivity(
                 "Name",
                 ActivityKind.Client,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
                 tags,
                 links,
                 startTime: startTimestamp);
+
+            activity.Stop();
+
+            return activity;
         }
 
         private class BlackHoleTransport : TTransport
