@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -33,6 +32,11 @@ namespace OpenTelemetry.Exporter.Jaeger
         public JaegerExporter(JaegerExporterOptions options)
         {
             this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+        }
+
+        internal JaegerExporter(JaegerUdpBatcher jaegerUdpBatcher)
+        {
+            this.JaegerAgentUdpBatcher = jaegerUdpBatcher;
         }
 
         internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
