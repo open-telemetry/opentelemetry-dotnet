@@ -55,10 +55,13 @@ For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
 
 **`AddHttpClientInstrumentation` vs. `AddHttpWebRequestInstrumentation`**
-For .NET Framework, `AddHttpWebRequestInstrumentation` can be used to only add
-instrumentation for `HttpWebRequest`. Using `AddHttpClientInstrumentation` in a
-.NET Framework application will add instrumentation for both `HttpClient` and
-`HttpWebRequest`.
+
+For .NET Framework, two extensions methods exist:
+`AddHttpClientInstrumentation` and `AddHttpWebRequestInstrumentation`.
+.NET Framework's implementation of HttpClient uses HttpWebRequest internally,
+so using one extension method over the other allows for configuring options
+independently for HttpClient instrumentation vs. HttpWebRequest
+instrumentation.
 
 ## Advanced configuration
 
@@ -92,8 +95,8 @@ using Sdk.CreateTracerProviderBuilder()
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `Filter` function option.
 This can be used to filter out any requests based on some condition. The Filter
-receives the request object - `HttpRequestMessage` for HttpClient or
-`HttpWebRequest` for HttpWebRequest - of the outgoing request and filters out
+receives the request object - `HttpRequestMessage` for .NET Core and
+`HttpWebRequest` for .NET Framework - of the outgoing request and filters out
 the request if the Filter returns false or throws an exception.
 
 The following shows an example of `Filter` being used to filter out all POST
