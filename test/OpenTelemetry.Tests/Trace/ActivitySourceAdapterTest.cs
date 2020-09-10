@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -163,6 +164,30 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(isSampled, startCalled);
             Assert.Equal(isSampled, endCalled);
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.NotRecord)]
+        [InlineData(SamplingDecision.Record)]
+        [InlineData(SamplingDecision.RecordAndSampled)]
+        public void ActivitySourceAdapterPopulatesSamplingAttributesToActivity(SamplingDecision sampling)
+        {
+            this.testSampler.SamplingAction = (samplingParams) =>
+            {
+                var attributes = new Dictionary<string, object>();
+                attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                return new SamplingResult(sampling, attributes);
+            };
+
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
+            if (sampling != SamplingDecision.NotRecord)
+            {
+                Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
+            }
+
+            activity.Stop();
         }
 
         [Fact]
