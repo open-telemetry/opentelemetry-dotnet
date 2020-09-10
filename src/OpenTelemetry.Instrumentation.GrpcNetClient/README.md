@@ -7,6 +7,12 @@ This is an [Instrumentation Library](https://github.com/open-telemetry/opentelem
 which instruments [Grpc.Net.Client](https://www.nuget.org/packages/Grpc.Net.Client)
 and collects telemetry about outgoing gRPC requests.
 
+## Supported .NET Versions
+
+This package targets
+[`NETSTANDARD2.1`](https://docs.microsoft.com/dotnet/standard/net-standard#net-implementation-support)
+and hence can be used in any .NET versions implementing `NETSTANDARD2.1`.
+
 ## Steps to enable OpenTelemetry.Instrumentation.GrpcNetClient
 
 ### Step 1: Install Package
