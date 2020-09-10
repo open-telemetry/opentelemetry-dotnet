@@ -1,4 +1,4 @@
-﻿// <copyright file="MySampler.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="GrpcClientInstrumentationOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Diagnostics;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-
-internal class MySampler : Sampler
+namespace OpenTelemetry.Instrumentation.GrpcNetClient
 {
-    public override SamplingResult ShouldSample(in SamplingParameters param)
+    /// <summary>
+    /// Options for GrpcClient instrumentation.
+    /// </summary>
+    public class GrpcClientInstrumentationOptions
     {
-        Console.WriteLine($"MySampler.ShouldSample({param.Name})");
-        return new SamplingResult(SamplingDecision.RecordAndSampled);
+        /// <summary>
+        /// Gets or sets a value indicating whether down stream instrumentation is suppressed (disabled).
+        /// </summary>
+        public bool SuppressDownstreamInstrumentation { get; set; }
     }
 }

@@ -30,14 +30,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
         /// Initializes a new instance of the <see cref="GrpcClientInstrumentation"/> class.
         /// </summary>
         /// <param name="activitySource">ActivitySource adapter instance.</param>
-        public GrpcClientInstrumentation(ActivitySourceAdapter activitySource)
+        /// <param name="options">Configuration options for Grpc client instrumentation.</param>
+        public GrpcClientInstrumentation(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options = null)
         {
             if (activitySource == null)
             {
                 throw new ArgumentNullException(nameof(activitySource));
             }
 
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(activitySource), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(activitySource, options), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
