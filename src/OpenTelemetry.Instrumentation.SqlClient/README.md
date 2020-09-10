@@ -97,7 +97,7 @@ using Sdk.CreateTracerProviderBuilder()
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
 instrumentation sets the `peer.service` attribute to the
-[`DataSource`](https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.datasource)
+[`DataSource`](https://docs.microsoft.com/dotnet/api/system.data.common.dbconnection.datasource)
 property of the connection. If `EnabledConnectionLevelAttributes` is enabled,
 the `DataSource` will be parsed and the server name will be sent as the
 `net.peer.name` or `net.peer.ip` attribute, the instance name will be sent as
