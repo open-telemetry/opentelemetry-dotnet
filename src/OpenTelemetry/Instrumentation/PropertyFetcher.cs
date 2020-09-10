@@ -13,22 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Linq;
 using System.Reflection;
 
-namespace OpenTelemetry.Instrumentation.AspNet.Implementation
+namespace OpenTelemetry.Instrumentation
 {
-    internal class PropertyFetcher
+    /// <summary>
+    /// PropertyFetcher fetches a property from an object.
+    /// </summary>
+    public class PropertyFetcher
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PropertyFetcher"/> class.
+        /// </summary>
+        /// <param name="propertyName">Property name to fetch.</param>
         public PropertyFetcher(string propertyName)
         {
             this.propertyName = propertyName;
         }
 
+        /// <summary>
+        /// Fetch the property from the object.
+        /// </summary>
+        /// <param name="obj">Object to be fetched.</param>
+        /// <returns>Property fetched.</returns>
         public object Fetch(object obj)
         {
             if (this.innerFetcher == null)
@@ -86,7 +99,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 public override object Fetch(object obj)
                 {
-                    return this.propertyFetch((TObject)obj);
+                    if (obj is TObject o)
+                    {
+                        return this.propertyFetch(o);
+                    }
+
+                    return null;
                 }
             }
         }

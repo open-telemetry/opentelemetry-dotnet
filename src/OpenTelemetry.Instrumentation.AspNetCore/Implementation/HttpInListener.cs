@@ -256,16 +256,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
             // activity.DisplayName = grpcMethod?.Trim('/');
 
-            activity.AddTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+            activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
-                activity.AddTag(SemanticConventions.AttributeRpcService, rpcService);
-                activity.AddTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+                activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
+                activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
             }
 
-            activity.AddTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.AddTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort.ToString());
+            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
     }

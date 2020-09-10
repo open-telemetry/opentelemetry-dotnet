@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
@@ -66,22 +67,22 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.NotEqual(default, activity.Context.SpanId);
 
             Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
-            Assert.Equal("grpc", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcSystem).Value);
-            Assert.Equal("greet.Greeter", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcService).Value);
-            Assert.Equal("SayHello", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeRpcMethod).Value);
+            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
 
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
             {
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
             }
             else
             {
-                Assert.Null(activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(uri.Host, activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
             }
 
-            Assert.Equal(uri.Port.ToString(), activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             Assert.Equal(Status.Ok, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
         }
@@ -117,6 +118,57 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
+        }
+
+        [Fact]
+        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
+        {
+            var uri = new Uri($"http://localhost:{this.fixture.Port}");
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
+            var processor = new Mock<ActivityProcessor>();
+
+            var parent = new Activity("parent")
+                .Start();
+
+            using (Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new AlwaysOnSampler())
+                    .SetResource(expectedResource)
+                    .AddGrpcClientInstrumentation(o => { o.SuppressDownstreamInstrumentation = true; })
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(processor.Object)
+                    .Build())
+            {
+                Parallel.ForEach(
+                new int[4],
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = 4,
+                },
+                (value) =>
+                {
+                    var channel = GrpcChannel.ForAddress(uri);
+                    var client = new Greeter.GreeterClient(channel);
+                    var rs = client.SayHello(new HelloRequest());
+                });
+            }
+
+            Assert.Equal(10, processor.Invocations.Count); // OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
+            var grpcSpan1 = (Activity)processor.Invocations[1].Arguments[0];
+            var grpcSpan2 = (Activity)processor.Invocations[3].Arguments[0];
+            var grpcSpan3 = (Activity)processor.Invocations[5].Arguments[0];
+            var grpcSpan4 = (Activity)processor.Invocations[7].Arguments[0];
+
+            ValidateGrpcActivity(grpcSpan1, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan2, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan2.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan3, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan3.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan4, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
         }
 
         [Fact]

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -84,16 +83,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!enableConnectionLevelAttributes)
             {
-                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributePeerService));
             }
             else
             {
-                Assert.Equal(expectedServerHostName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
             }
 
-            Assert.Equal(expectedServerIpAddress, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
-            Assert.Equal(expectedInstanceName, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbMsSqlInstanceName).Value);
-            Assert.Equal(expectedPort, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+            Assert.Equal(expectedServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+            Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
+            Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
     }
 }

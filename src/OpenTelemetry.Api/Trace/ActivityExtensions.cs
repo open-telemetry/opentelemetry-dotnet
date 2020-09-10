@@ -30,12 +30,6 @@ namespace OpenTelemetry.Trace
     {
         private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
 
-        private static readonly Enumerator<IEnumerable<KeyValuePair<string, object>>, KeyValuePair<string, object>, KeyValuePair<string, object>>.AllocationFreeForEachDelegate
-            ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, KeyValuePair<string, object>>.BuildAllocationFreeForEachDelegate(
-                typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
-
-        private static readonly DictionaryEnumerator<string, object, KeyValuePair<string, object>>.ForEachDelegate GetTagValueCallbackRef = GetTagValueCallback;
-
         /// <summary>
         /// Sets the status of activity execution.
         /// Activity class in .NET does not support 'Status'.
@@ -70,14 +64,15 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            var statusCanonicalCode = activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string;
-            var statusDescription = activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey) as string;
+            ActivityStatusTagEnumerator state = default;
 
-            var status = SpanHelper.ResolveCanonicalCodeToStatus(statusCanonicalCode);
+            ActivityTagObjectsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
-            if (status.IsValid && !string.IsNullOrEmpty(statusDescription))
+            var status = SpanHelper.ResolveCanonicalCodeToStatus(state.StatusCode);
+
+            if (status.IsValid && !string.IsNullOrEmpty(state.StatusDescription))
             {
-                return status.WithDescription(statusDescription);
+                return status.WithDescription(state.StatusDescription);
             }
 
             return status;
@@ -92,20 +87,28 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static object GetTagValue(this Activity activity, string tagName)
         {
-            var tagObjects = activity.TagObjects;
-            if (ReferenceEquals(tagObjects, EmptyActivityTagObjects))
-            {
-                return null;
-            }
+            Debug.Assert(activity != null, "Activity should not be null");
 
-            KeyValuePair<string, object> state = new KeyValuePair<string, object>(tagName, null);
+            ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
-            ActivityTagObjectsEnumerator(
-                tagObjects,
-                ref state,
-                GetTagValueCallbackRef);
+            ActivityTagObjectsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
 
             return state.Value;
+        }
+
+        /// <summary>
+        /// Enumerates all the key/value pairs on an <see cref="Activity"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityTagEnumerator"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="tagEnumerator">Tag enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnumerateTagValues<T>(this Activity activity, ref T tagEnumerator)
+            where T : struct, IActivityTagEnumerator
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+
+            ActivityTagObjectsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
         }
 
         /// <summary>
@@ -135,15 +138,79 @@ namespace OpenTelemetry.Trace
             activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
 
-        private static bool GetTagValueCallback(ref KeyValuePair<string, object> state, KeyValuePair<string, object> item)
+        private struct ActivitySingleTagEnumerator : IActivityTagEnumerator
         {
-            if (item.Key == state.Key)
+            private readonly string tagName;
+
+            public ActivitySingleTagEnumerator(string tagName)
             {
-                state = item;
-                return false;
+                this.tagName = tagName;
+                this.Value = null;
             }
 
-            return true;
+            public object Value { get; private set; }
+
+            public bool ForEach(KeyValuePair<string, object> item)
+            {
+                if (item.Key == this.tagName)
+                {
+                    this.Value = item.Value;
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        private struct ActivityStatusTagEnumerator : IActivityTagEnumerator
+        {
+            public string StatusCode { get; private set; }
+
+            public string StatusDescription { get; private set; }
+
+            public bool ForEach(KeyValuePair<string, object> item)
+            {
+                switch (item.Key)
+                {
+                    case SpanAttributeConstants.StatusCodeKey:
+                        this.StatusCode = item.Value as string;
+                        break;
+                    case SpanAttributeConstants.StatusDescriptionKey:
+                        this.StatusDescription = item.Value as string;
+                        break;
+                }
+
+                return this.StatusCode == null || this.StatusDescription == null;
+            }
+        }
+
+        private static class ActivityTagObjectsEnumeratorFactory<TState>
+            where TState : struct, IActivityTagEnumerator
+        {
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
+                ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
+                    typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
+
+            private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(Activity activity, ref TState state)
+            {
+                var tagObjects = activity.TagObjects;
+
+                if (ReferenceEquals(tagObjects, EmptyActivityTagObjects))
+                {
+                    return;
+                }
+
+                ActivityTagObjectsEnumerator(
+                    tagObjects,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            private static bool ForEachTagValueCallback(ref TState state, KeyValuePair<string, object> item)
+                => state.ForEach(item);
         }
     }
 }

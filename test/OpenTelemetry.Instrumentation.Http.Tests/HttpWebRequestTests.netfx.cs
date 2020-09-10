@@ -120,13 +120,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     return HttpTestData.NormalizeValues(x.Value, host, port);
                 });
 
-            foreach (KeyValuePair<string, string> tag in activity.Tags)
+            foreach (KeyValuePair<string, object> tag in activity.TagObjects)
             {
+                var tagValue = tag.Value.ToString();
+
                 if (!tc.SpanAttributes.TryGetValue(tag.Key, out string value))
                 {
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        Assert.Equal(tc.SpanStatus, d[tag.Value]);
+                        Assert.Equal(tc.SpanStatus, d[tagValue]);
                         continue;
                     }
 
@@ -134,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     {
                         if (tc.SpanStatusHasDescription.HasValue)
                         {
-                            Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tag.Value));
+                            Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tagValue));
                         }
 
                         continue;
@@ -143,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     Assert.True(false, $"Tag {tag.Key} was not found in test data.");
                 }
 
-                Assert.Equal(value, tag.Value);
+                Assert.Equal(value, tagValue);
             }
         }
 
@@ -165,7 +167,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.flavor"": ""2.0"",
-      ""http.status_code"": ""200"",
+      ""http.status_code"": 200,
       ""http.url"": ""http://{host}:{port}/""
     }
   }

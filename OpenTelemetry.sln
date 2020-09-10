@@ -189,6 +189,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "correlation", "docs\logs\correlation\correlation.csproj", "{B26BE278-C9DA-4067-A0EE-6A4227B3DC87}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Instrumentation.W3cTraceContext.Tests", "test\OpenTelemetry.Instrumentation.W3cTraceContext.Tests\OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj", "{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.GrpcService", "examples\GrpcService\Examples.GrpcService.csproj", "{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}"
 EndProject
 Global
@@ -365,6 +367,10 @@ Global
 		{B26BE278-C9DA-4067-A0EE-6A4227B3DC87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B26BE278-C9DA-4067-A0EE-6A4227B3DC87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B26BE278-C9DA-4067-A0EE-6A4227B3DC87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
