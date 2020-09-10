@@ -61,8 +61,25 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `StackExchangeRedisCallsInstrumentationOptions`.
 
-TODO - describe options
+### FlushInterval
+
+StackExchange.Redis has its own internal profiler. OpenTelmetry converts each
+profiled command from the internal profiler to an Activity for collection. By
+default, this conversion process flushes profiled commands on a 10 second
+interval. The `FlushInterval` option can be used to adjust this internval.
+
+The following example shows how to use `FlushInterval`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddRedisInstrumentation(
+        connection,
+        options => options.FlushInterval = TimeSpan.FromSeconds(5))
+    .AddConsoleExporter()
+    .Build();
+```
 
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
+* [StackExchange.Redis Profiling](https://stackexchange.github.io/StackExchange.Redis/Profiling_v1.html)

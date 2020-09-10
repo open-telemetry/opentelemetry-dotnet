@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Trace.Tests
 {
     public class BatchTest
     {
