@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
 using OpenTelemetry.Trace;
 
