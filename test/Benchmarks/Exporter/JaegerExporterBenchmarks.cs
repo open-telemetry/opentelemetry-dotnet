@@ -22,7 +22,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Jaeger;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Internal;
 using Thrift.Transport;
 
@@ -50,14 +49,12 @@ namespace OpenTelemetry.Exporter.Benchmarks
         [Benchmark]
         public void JaegerExporter_Batching()
         {
-            using var jaegerUdpBatcher = new JaegerUdpBatcher(
+            using JaegerExporter exporter = new JaegerExporter(
                 new JaegerExporterOptions(),
                 new BlackHoleTransport())
             {
                 Process = new Jaeger.Process("TestService"),
             };
-
-            using JaegerExporter exporter = new JaegerExporter(jaegerUdpBatcher);
 
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
