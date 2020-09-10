@@ -83,6 +83,12 @@ By default, when CommandType is CommandType.Text, this instrumentation will not
 set the `db.statement` attribute. This behavior can be enabled by setting
 `SetTextCommandContent` to true.
 
+For .NET Framework, `SetTextCommandContent` is unavailable when using
+System.Data.SqlClient. It is only available when using
+[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/).
+`SetTextCommandContent` is fully functional in .NET Core when using either
+System.Data.SqlClient or Microsoft.Data.SqlClient.
+
 The following example shows how to use `SetTextCommandContent`.
 
 ```csharp
