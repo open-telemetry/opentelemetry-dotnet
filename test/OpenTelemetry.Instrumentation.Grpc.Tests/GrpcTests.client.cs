@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
@@ -117,6 +118,57 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
+        }
+
+        [Fact]
+        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
+        {
+            var uri = new Uri($"http://localhost:{this.fixture.Port}");
+            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
+            var processor = new Mock<ActivityProcessor>();
+
+            var parent = new Activity("parent")
+                .Start();
+
+            using (Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new AlwaysOnSampler())
+                    .SetResource(expectedResource)
+                    .AddGrpcClientInstrumentation(o => { o.SuppressDownstreamInstrumentation = true; })
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(processor.Object)
+                    .Build())
+            {
+                Parallel.ForEach(
+                new int[4],
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = 4,
+                },
+                (value) =>
+                {
+                    var channel = GrpcChannel.ForAddress(uri);
+                    var client = new Greeter.GreeterClient(channel);
+                    var rs = client.SayHello(new HelloRequest());
+                });
+            }
+
+            Assert.Equal(10, processor.Invocations.Count); // OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
+            var grpcSpan1 = (Activity)processor.Invocations[1].Arguments[0];
+            var grpcSpan2 = (Activity)processor.Invocations[3].Arguments[0];
+            var grpcSpan3 = (Activity)processor.Invocations[5].Arguments[0];
+            var grpcSpan4 = (Activity)processor.Invocations[7].Arguments[0];
+
+            ValidateGrpcActivity(grpcSpan1, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan2, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan2.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan3, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan3.DisplayName);
+
+            ValidateGrpcActivity(grpcSpan4, expectedResource);
+            Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
         }
 
         [Fact]
