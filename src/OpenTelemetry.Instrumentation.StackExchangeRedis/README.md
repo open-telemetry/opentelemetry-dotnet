@@ -70,7 +70,7 @@ interval. The `FlushInterval` option can be used to adjust this internval.
 
 The following example shows how to use `FlushInterval`.
 
-```
+```csharp
 using Sdk.CreateTracerProviderBuilder()
     .AddRedisInstrumentation(
         connection,
