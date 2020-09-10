@@ -8,7 +8,7 @@ CR = b'\r'
 CRLF = b'\r\n'
 LF = b'\n'
 
-def sanitycheck(pattern, allow_utf8 = False):
+def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
     error_count = 0
 
     for filename in glob.glob(pattern, recursive=True):
@@ -43,6 +43,10 @@ def sanitycheck(pattern, allow_utf8 = False):
                 elif line[-1:] == CR:
                     error.append('  CR found at Ln:{} {}'.format(lineno, line))
                     line = line[:-1]
+                if eol:
+                    if eol not in allow_eol:
+                        error.append('  Line ending {} not allowed at Ln:{}'.format(eol, lineno))
+                        break
                 if line[-1:] == b' ' or line[-1:] == b'\t':
                     error.append('  Trailing space found at Ln:{} {}'.format(lineno, line))
                 lineno += 1
@@ -58,19 +62,19 @@ def sanitycheck(pattern, allow_utf8 = False):
     return error_count
 
 retval = 0
-retval += sanitycheck('**/*.cmd')
-retval += sanitycheck('**/*.config', allow_utf8 = True)
-retval += sanitycheck('**/*.cs', allow_utf8 = True)
-retval += sanitycheck('**/*.cshtml', allow_utf8 = True)
+retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,))
+retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('**/*.cs', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('**/*.cshtml', allow_utf8 = True, allow_eol = (LF,))
 retval += sanitycheck('**/*.csproj', allow_utf8 = True)
-retval += sanitycheck('**/*.htm')
-retval += sanitycheck('**/*.html')
+retval += sanitycheck('**/*.htm', allow_eol = (LF,))
+retval += sanitycheck('**/*.html', allow_eol = (LF,))
 retval += sanitycheck('**/*.md')
-retval += sanitycheck('**/*.proj')
-retval += sanitycheck('**/*.props')
-retval += sanitycheck('**/*.py')
-retval += sanitycheck('**/*.ruleset', allow_utf8 = True)
-retval += sanitycheck('**/*.sln', allow_utf8 = True)
-retval += sanitycheck('**/*.xml')
+retval += sanitycheck('**/*.proj', allow_eol = (LF,))
+retval += sanitycheck('**/*.props', allow_eol = (LF,))
+retval += sanitycheck('**/*.py', allow_eol = (LF,))
+retval += sanitycheck('**/*.ruleset', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('**/*.sln', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('**/*.xml', allow_eol = (LF,))
 
 sys.exit(retval)
