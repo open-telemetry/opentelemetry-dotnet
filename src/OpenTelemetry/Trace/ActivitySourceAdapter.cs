@@ -174,6 +174,14 @@ namespace OpenTelemetry.Trace
                     activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                     break;
             }
+
+            if (samplingResult.Decision != SamplingDecision.NotRecord)
+            {
+                foreach (var att in samplingResult.Attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
+            }
         }
     }
 }
