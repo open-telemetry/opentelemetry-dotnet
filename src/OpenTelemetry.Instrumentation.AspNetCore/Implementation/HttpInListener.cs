@@ -262,11 +262,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
                 activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+
+                // Remove the grpc.method tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
             }
 
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+            // Remove the grpc.method tag added by the gRPC .NET library
+            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
         }
     }
 }
