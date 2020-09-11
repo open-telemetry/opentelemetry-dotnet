@@ -196,7 +196,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.batchByteSize += spanTotalBytesNeeded;
         }
 
-                /// <inheritdoc/>
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (!this.disposedValue)
