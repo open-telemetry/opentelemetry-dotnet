@@ -6,6 +6,13 @@
 The Jaeger exporter communicates to a Jaeger Agent through the compact thrift
 protocol on the Compact Thrift API port.
 
+## Supported .NET Versions
+
+This package supports all the officially supported versions of [.NET
+Core](https://dotnet.microsoft.com/download/dotnet-core).
+
+For .NET Framework, versions 4.6 and above are supported.
+
 ## Prerequisite
 
 * [Get Jaeger](https://www.jaegertracing.io/docs/1.13/getting-started/)
