@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_ApplyLibraryResource_UpdatesServiceName()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
-            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+            var process = jaegerTraceExporter.Process;
 
             process.ServiceName = "TestService";
 
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_ApplyLibraryResource_CreatesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
-            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+            var process = jaegerTraceExporter.Process;
 
             jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
             {
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_ApplyLibraryResource_CombinesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
-            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+            var process = jaegerTraceExporter.Process;
 
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_ApplyLibraryResource_IgnoreLibraryResources()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
-            var process = jaegerTraceExporter.JaegerAgentUdpBatcher.Process;
+            var process = jaegerTraceExporter.Process;
 
             jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
             {
