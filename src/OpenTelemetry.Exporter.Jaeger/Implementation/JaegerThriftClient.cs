@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift;
@@ -34,12 +33,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
         }
 
-        internal Task WriteBatchAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, CancellationToken cancellationToken)
+        internal Task WriteBatchAsync(Batch batch, CancellationToken cancellationToken)
         {
             return EmitBatchArgs.WriteAsync(
                 this.SeqId,
-                processMessage,
-                spanMessages,
+                batch,
                 this.OutputProtocol,
                 cancellationToken);
         }
