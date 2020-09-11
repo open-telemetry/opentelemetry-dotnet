@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -56,7 +55,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                               .AddHttpClientInstrumentation((opt) =>
+                               {
+                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
+                                   opt.Enrich = ActivityEnrichment;
+                               })
                                .AddProcessor(processor.Object)
                                .SetResource(expectedResource)
                                .Build())
@@ -90,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(activity, tc.ResponseExpected);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
             var d = new Dictionary<string, string>()

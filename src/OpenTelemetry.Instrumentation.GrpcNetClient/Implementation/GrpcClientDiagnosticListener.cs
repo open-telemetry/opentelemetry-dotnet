@@ -61,7 +61,8 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+
                 activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))

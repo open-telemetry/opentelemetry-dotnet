@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
@@ -49,6 +50,11 @@ namespace OpenTelemetry.Instrumentation.Http
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
         public Func<HttpRequestMessage, bool> Filter { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action to enrich an Activity.
+        /// </summary>
+        public Action<Activity, string, object> Enrich { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)

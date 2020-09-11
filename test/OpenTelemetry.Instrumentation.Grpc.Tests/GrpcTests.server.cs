@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using Greet;
@@ -43,14 +44,15 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var processor = this.fixture.GrpcServerSpanProcessor;
 
-            var channel = GrpcChannel.ForAddress(uri);
+            using var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
             client.SayHello(new HelloRequest());
 
             WaitForProcessorInvocations(processor, 2);
 
-            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
+            var activity = (Activity)processor.Invocations.FirstOrDefault(invo =>
+                invo.Method.Name == "OnEnd" && (invo.Arguments[0] as Activity).OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn").Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));

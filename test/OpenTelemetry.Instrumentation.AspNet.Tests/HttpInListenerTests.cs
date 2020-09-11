@@ -58,7 +58,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData("http://localhost/api/value", 0, null, "TraceContext", "/api/value")] // Request will be filtered
         [InlineData("http://localhost/api/value", 0, null, "TraceContext", "{ThrowException}")] // Filter user code will throw an exception
         [InlineData("http://localhost/api/value/2", 0, null, "CustomContext", "/api/value")] // Request will not be filtered
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContext", "/api/value", true)] // Request will not be filtered
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
@@ -162,6 +161,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     {
                         options.Propagator = propagator.Object;
                     }
+
+                    options.Enrich = ActivityEnrichment;
                 })
             .SetResource(expectedResource)
             .AddProcessor(activityProcessor.Object).Build())
@@ -251,13 +252,23 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             Assert.Equal(expectedResource, span.GetResource());
-            var request = span.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpRequest);
+        }
 
-            var response = span.GetCustomProperty(HttpInListener.ResponseCustomPropertyName);
-            Assert.NotNull(response);
-            Assert.True(response is HttpResponse);
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
+            {
+                case "OnStartActivity":
+                    Assert.True(obj is HttpRequest);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpResponse);
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         private class FakeAspNetDiagnosticSource : IDisposable

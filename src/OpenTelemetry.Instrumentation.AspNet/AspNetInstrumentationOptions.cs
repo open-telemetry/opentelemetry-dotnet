@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Web;
 using OpenTelemetry.Context.Propagation;
 
@@ -41,5 +42,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
         public Func<HttpContext, bool> Filter { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action to enrich an Activity.
+        /// </summary>
+        public Action<Activity, string, object> Enrich { get; set; }
     }
 }
