@@ -18,10 +18,9 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Tests.Shared;
-using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class ReentrantExportActivityProcessorTest
     {
