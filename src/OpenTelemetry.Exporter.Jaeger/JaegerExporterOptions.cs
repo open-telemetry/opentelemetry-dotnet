@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter.Jaeger
@@ -43,11 +43,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// Gets or sets the maximum packet size in bytes. Default value: 65000.
         /// </summary>
         public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
-
-        /// <summary>
-        /// Gets or sets the maximum time that should elapse between flushing the internal buffer to the configured Jaeger agent. Default value: 00:00:10.
-        /// </summary>
-        public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Gets or sets the tags that should be sent with telemetry.
