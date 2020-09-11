@@ -54,15 +54,6 @@ the `ConfigureServices` of your `Startup` class. Refer to documentation for
 For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
 
-**`AddHttpClientInstrumentation` vs. `AddHttpWebRequestInstrumentation`**
-
-For .NET Framework, two extensions methods exist:
-`AddHttpClientInstrumentation` and `AddHttpWebRequestInstrumentation`.
-.NET Framework's implementation of HttpClient uses HttpWebRequest internally,
-so using one extension method over the other allows for configuring options
-independently for HttpClient instrumentation vs. HttpWebRequest
-instrumentation.
-
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
