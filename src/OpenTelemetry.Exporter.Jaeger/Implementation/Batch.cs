@@ -36,6 +36,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Process Process { get; }
 
+        public int Count => this.spanMessages.Count;
+
         public override string ToString()
         {
             var sb = new StringBuilder("Batch(");

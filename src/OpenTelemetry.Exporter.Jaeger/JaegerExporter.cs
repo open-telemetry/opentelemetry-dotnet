@@ -17,7 +17,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
+#if DEBUG
+using System.Threading.Tasks;
+#endif
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -143,26 +147,8 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.thriftClient.Dispose();
-                    this.clientTransport.Dispose();
-                    this.memoryTransport.Dispose();
-                    this.memoryProtocol.Dispose();
-                }
-
-                this.disposedValue = true;
-            }
-
-            base.Dispose(disposing);
-        }
-
-        private void AppendSpan(JaegerSpan jaegerSpan)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AppendSpan(JaegerSpan jaegerSpan)
         {
             if (this.processCache == null)
             {
@@ -208,6 +194,25 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             spanBatch.Add(spanMessage);
             this.batchByteSize += spanTotalBytesNeeded;
+        }
+
+                /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposedValue)
+            {
+                if (disposing)
+                {
+                    this.thriftClient.Dispose();
+                    this.clientTransport.Dispose();
+                    this.memoryTransport.Dispose();
+                    this.memoryProtocol.Dispose();
+                }
+
+                this.disposedValue = true;
+            }
+
+            base.Dispose(disposing);
         }
 
         private void SendCurrentBatches()
