@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         private readonly GrpcClientInstrumentationOptions options;
 
         private readonly ActivitySourceAdapter activitySource;
-        private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")

@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -31,8 +30,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
-        private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
+        private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
+        private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
