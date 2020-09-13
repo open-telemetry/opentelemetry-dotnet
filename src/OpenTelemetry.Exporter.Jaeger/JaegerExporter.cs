@@ -83,7 +83,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
-                this.SendCurrentBatches();
+                this.SendCurrentBatches(null);
 
                 return ExportResult.Success;
             }
@@ -184,10 +184,9 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
             {
-                this.SendCurrentBatches();
+                this.SendCurrentBatches(spanBatch);
 
                 // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                spanBatch.Clear();
                 spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
                 this.CurrentBatches.Add(spanServiceName, spanBatch);
             }
@@ -215,20 +214,29 @@ namespace OpenTelemetry.Exporter.Jaeger
             base.Dispose(disposing);
         }
 
-        private void SendCurrentBatches()
+        private void SendCurrentBatches(Batch workingBatch)
         {
             try
             {
-                foreach (var batch in this.CurrentBatches)
+                foreach (var batchKvp in this.CurrentBatches)
                 {
-                    var task = this.thriftClient.WriteBatchAsync(batch.Value, CancellationToken.None);
+                    var batch = batchKvp.Value;
+
+                    var task = this.thriftClient.WriteBatchAsync(batch, CancellationToken.None);
 #if DEBUG
                     if (task.Status != TaskStatus.RanToCompletion)
                     {
                         throw new InvalidOperationException();
                     }
 #endif
-                    batch.Value.Return();
+                    if (batch != workingBatch)
+                    {
+                        batch.Return();
+                    }
+                    else
+                    {
+                        batch.Clear();
+                    }
                 }
             }
             finally
