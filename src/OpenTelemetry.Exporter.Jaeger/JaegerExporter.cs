@@ -39,7 +39,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
         private Dictionary<string, Process> processCache;
-        private bool libraryResourceApplied;
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
 
@@ -71,13 +70,9 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 foreach (var activity in activityBatch)
                 {
-                    if (!this.libraryResourceApplied)
+                    if (this.processCache == null)
                     {
-                        var libraryResource = activity.GetResource();
-
-                        this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
-
-                        this.libraryResourceApplied = true;
+                        this.ApplyLibraryResource(activity.GetResource());
                     }
 
                     this.AppendSpan(activity.ToJaegerSpan());
@@ -145,20 +140,17 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 process.ServiceName = JaegerExporterOptions.DefaultServiceName;
             }
+
+            this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
+            this.processCache = new Dictionary<string, Process>
+            {
+                [this.Process.ServiceName] = this.Process,
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            if (this.processCache == null)
-            {
-                this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
-                this.processCache = new Dictionary<string, Process>
-                {
-                    [this.Process.ServiceName] = this.Process,
-                };
-            }
-
             var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
