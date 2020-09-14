@@ -76,9 +76,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         {
             string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
 
-            // TODO: fix and remove current failures except for expected failures. #1219
-            // See expected failed or error cases in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
-            string[] currentFailures = new string[]
+            // TODO: fix and remove from this failure list except for known failures with external dependencies. #1219
+            // See failures with external dependencies in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+            string[] existingFailures = new string[]
             {
                 // Errors:
                 "test_tracestate_duplicated_keys",
@@ -90,17 +90,17 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 "test_tracestate_value_illegal_characters",
 
                 // Failures:
-                "test_traceparent_trace_flags_illegal_characters",  // Expected to fail. See issue #404
+                "test_traceparent_trace_flags_illegal_characters",  // External dependency. See issue #404
                 "test_traceparent_version_0x00",
                 "test_traceparent_version_0xff",
                 "test_tracestate_empty_header",
             };
 
             // FAILED (failures=4, errors=7)
-            Assert.Equal(currentFailures.Length, unsuccessfulTestcaseNames.Length);
-            for (int i = 0; i < currentFailures.Length; ++i)
+            Assert.Equal(existingFailures.Length, unsuccessfulTestcaseNames.Length);
+            for (int i = 0; i < existingFailures.Length; ++i)
             {
-                Assert.Equal(currentFailures[i], unsuccessfulTestcaseNames[i]);
+                Assert.Equal(existingFailures[i], unsuccessfulTestcaseNames[i]);
             }
         }
 
@@ -108,9 +108,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         {
             string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
 
-            // TODO: fix and remove current failures except for expected failures. #1219
-            // See expected failed or error cases in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
-            string[] currentFailures = new string[]
+            // TODO: fix and remove from this failure list except for known failures with external dependencies. #1219
+            // See failures with external dependencies in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+            string[] existingFailures = new string[]
             {
                 // Errors:
                 "test_tracestate_duplicated_keys",
@@ -122,19 +122,19 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 "test_tracestate_value_illegal_characters",
 
                 // Failures:
-                "test_traceparent_parent_id_all_zero",  // Expected to fail. See issue #404
-                "test_traceparent_parent_id_illegal_characters",  // Expected to fail. See issue #404
-                "test_traceparent_trace_flags_illegal_characters",  // Expected to fail. See issue #404
+                "test_traceparent_parent_id_all_zero",  // External dependency. See issue #404
+                "test_traceparent_parent_id_illegal_characters",  // External dependency. See issue #404
+                "test_traceparent_trace_flags_illegal_characters",  // External dependency. See issue #404
                 "test_traceparent_version_0x00",
                 "test_traceparent_version_0xff",
                 "test_tracestate_empty_header",
             };
 
             // FAILED (failures=6, errors=7)
-            Assert.Equal(currentFailures.Length, unsuccessfulTestcaseNames.Length);
-            for (int i = 0; i < currentFailures.Length; ++i)
+            Assert.Equal(existingFailures.Length, unsuccessfulTestcaseNames.Length);
+            for (int i = 0; i < existingFailures.Length; ++i)
             {
-                Assert.Equal(currentFailures[i], unsuccessfulTestcaseNames[i]);
+                Assert.Equal(existingFailures[i], unsuccessfulTestcaseNames[i]);
             }
         }
 
