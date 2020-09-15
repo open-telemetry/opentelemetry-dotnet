@@ -43,13 +43,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 #pragma warning restore SA1202 // Elements should be ordered by access
 
-        private readonly PropertyFetcher commandFetcher = new PropertyFetcher("Command");
-        private readonly PropertyFetcher connectionFetcher = new PropertyFetcher("Connection");
-        private readonly PropertyFetcher dataSourceFetcher = new PropertyFetcher("DataSource");
-        private readonly PropertyFetcher databaseFetcher = new PropertyFetcher("Database");
-        private readonly PropertyFetcher commandTypeFetcher = new PropertyFetcher("CommandType");
-        private readonly PropertyFetcher commandTextFetcher = new PropertyFetcher("CommandText");
-        private readonly PropertyFetcher exceptionFetcher = new PropertyFetcher("Exception");
+        private readonly PropertyFetcher<object> commandFetcher = new PropertyFetcher<object>("Command");
+        private readonly PropertyFetcher<object> connectionFetcher = new PropertyFetcher<object>("Connection");
+        private readonly PropertyFetcher<object> dataSourceFetcher = new PropertyFetcher<object>("DataSource");
+        private readonly PropertyFetcher<object> databaseFetcher = new PropertyFetcher<object>("Database");
+        private readonly PropertyFetcher<CommandType> commandTypeFetcher = new PropertyFetcher<CommandType>("CommandType");
+        private readonly PropertyFetcher<object> commandTextFetcher = new PropertyFetcher<object>("CommandText");
+        private readonly PropertyFetcher<Exception> exceptionFetcher = new PropertyFetcher<Exception>("Exception");
         private readonly SqlClientInstrumentationOptions options;
 
         public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)

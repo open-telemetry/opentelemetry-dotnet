@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
@@ -25,17 +26,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class Batch
     {
-        public Batch(Process process, IEnumerable<JaegerSpan> spans = null)
+        private PooledList<BufferWriterMemory> spanMessages;
+
+        public Batch(Process process)
         {
             this.Process = process ?? throw new ArgumentNullException(nameof(process));
-            this.Spans = spans;
+            this.spanMessages = PooledList<BufferWriterMemory>.Create();
         }
 
         public Process Process { get; }
 
-        public IEnumerable<JaegerSpan> Spans { get; set; }
-
-        internal List<BufferWriterMemory> SpanMessages { get; set; }
+        public int Count => this.spanMessages.Count;
 
         public override string ToString()
         {
@@ -43,12 +44,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             sb.Append(", Process: ");
             sb.Append(this.Process?.ToString() ?? "<null>");
             sb.Append(", Spans: ");
-            sb.Append(this.Spans);
+            sb.Append(this.spanMessages);
             sb.Append(')');
             return sb.ToString();
         }
 
-        internal static async Task WriteAsync(byte[] processMessage, List<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        internal async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
         {
             oprot.IncrementRecursionDepth();
             try
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.Transport.WriteAsync(processMessage, cancellationToken).ConfigureAwait(false);
+                await oprot.Transport.WriteAsync(this.Process.Message, cancellationToken).ConfigureAwait(false);
                 await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 field.Name = "spans";
@@ -74,14 +75,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, spanMessages?.Count ?? 0), cancellationToken).ConfigureAwait(false);
+                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.spanMessages.Count), cancellationToken).ConfigureAwait(false);
 
-                    if (spanMessages != null)
+                    foreach (var s in this.spanMessages)
                     {
-                        foreach (var s in spanMessages)
-                        {
-                            await oprot.Transport.WriteAsync(s.BufferWriter.Buffer, s.Offset, s.Count, cancellationToken).ConfigureAwait(false);
-                        }
+                        await oprot.Transport.WriteAsync(s.BufferWriter.Buffer, s.Offset, s.Count, cancellationToken).ConfigureAwait(false);
                     }
 
                     await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
@@ -95,6 +93,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             {
                 oprot.DecrementRecursionDepth();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Add(BufferWriterMemory spanMessage)
+        {
+            PooledList<BufferWriterMemory>.Add(ref this.spanMessages, spanMessage);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Clear()
+        {
+            PooledList<BufferWriterMemory>.Clear(ref this.spanMessages);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Return()
+        {
+            this.spanMessages.Return();
         }
     }
 }

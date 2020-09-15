@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol;
@@ -23,7 +22,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class EmitBatchArgs
     {
-        public static async Task WriteAsync(int seqId, byte[] processMessage, List<BufferWriterMemory> spanMessages, TProtocol oprot, CancellationToken cancellationToken)
+        public static async Task WriteAsync(int seqId, Batch batch, TProtocol oprot, CancellationToken cancellationToken)
         {
             await oprot.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, seqId), cancellationToken).ConfigureAwait(false);
 
@@ -41,7 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 };
 
                 await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await Batch.WriteAsync(processMessage, spanMessages, oprot, cancellationToken).ConfigureAwait(false);
+                await batch.WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
                 await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
 
                 await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
