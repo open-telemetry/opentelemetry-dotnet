@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Removed `MaxFlushInterval` from `JaegerExporterOptions`. Batching is now
+  handled  by `BatchExportActivityProcessor` exclusively.
+  ([#1254](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1254))
+
 ## 0.5.0-beta.2
 
 Released 2020-08-28

@@ -23,13 +23,14 @@ namespace OpenTelemetry.Instrumentation
     /// <summary>
     /// PropertyFetcher fetches a property from an object.
     /// </summary>
-    public class PropertyFetcher
+    /// <typeparam name="T">The type of the property being fetched.</typeparam>
+    public class PropertyFetcher<T>
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyFetcher"/> class.
+        /// Initializes a new instance of the <see cref="PropertyFetcher{T}"/> class.
         /// </summary>
         /// <param name="propertyName">Property name to fetch.</param>
         public PropertyFetcher(string propertyName)
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Instrumentation
         /// </summary>
         /// <param name="obj">Object to be fetched.</param>
         /// <returns>Property fetched.</returns>
-        public object Fetch(object obj)
+        public T Fetch(object obj)
         {
             if (this.innerFetcher == null)
             {
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Instrumentation
                 this.innerFetcher = PropertyFetch.FetcherForProperty(property);
             }
 
-            return this.innerFetcher?.Fetch(obj);
+            return this.innerFetcher.Fetch(obj);
         }
 
         // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -68,43 +69,41 @@ namespace OpenTelemetry.Instrumentation
             /// </summary>
             public static PropertyFetch FetcherForProperty(PropertyInfo propertyInfo)
             {
-                if (propertyInfo == null)
+                if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
                 {
                     // returns null on any fetch.
                     return new PropertyFetch();
                 }
 
-                var typedPropertyFetcher = typeof(TypedFetchProperty<,>);
-                var instantiatedTypedPropertyFetcher = typedPropertyFetcher.GetTypeInfo().MakeGenericType(
-                    propertyInfo.DeclaringType, propertyInfo.PropertyType);
+                var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
+                var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
+                    typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
                 return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
             }
 
-            /// <summary>
-            /// Given an object, fetch the property that this propertyFetch represents.
-            /// </summary>
-            public virtual object Fetch(object obj)
+            public virtual T Fetch(object obj)
             {
-                return null;
+                return default;
             }
 
-            private class TypedFetchProperty<TObject, TProperty> : PropertyFetch
+            private class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
+                where TDeclaredProperty : T
             {
-                private readonly Func<TObject, TProperty> propertyFetch;
+                private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
 
-                public TypedFetchProperty(PropertyInfo property)
+                public TypedPropertyFetch(PropertyInfo property)
                 {
-                    this.propertyFetch = (Func<TObject, TProperty>)property.GetMethod.CreateDelegate(typeof(Func<TObject, TProperty>));
+                    this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
                 }
 
-                public override object Fetch(object obj)
+                public override T Fetch(object obj)
                 {
-                    if (obj is TObject o)
+                    if (obj is TDeclaredObject o)
                     {
                         return this.propertyFetch(o);
                     }
 
-                    return null;
+                    return default;
                 }
             }
         }
