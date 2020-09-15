@@ -253,21 +253,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
-            // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
-            // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
-            // activity.DisplayName = grpcMethod?.Trim('/');
-
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
                 activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
                 activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+
+                // Remove the grpc.method tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
             }
 
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+            // Remove the grpc.method tag added by the gRPC .NET library
+            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
         }
     }
 }
