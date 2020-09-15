@@ -3,8 +3,9 @@
 Starting from `Microsoft.Extensions.Logging` version `5.0`, logs can be
 correlated with distributed tracing by enriching each log entry with the
 information from the enclosing `Activity`. This can be achieved by enabling the
-`ActivityTrackingOptions`. In a non-host console app, it can be achieved as
-shown below.
+`ActivityTrackingOptions`. In a [non-host console
+app](https://docs.microsoft.com/aspnet/core/fundamentals/logging#non-host-console-app),
+it can be achieved as shown below.
 
 ```csharp
 using var loggerFactory = LoggerFactory.Create(builder =>
