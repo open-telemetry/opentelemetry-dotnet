@@ -2,7 +2,16 @@
 
 ## Unreleased
 
-## 0.5.0-beta.1
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.1.20451.14
+  ([#1265](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1265))
+* Added `GetTagValue` extension method on `Activity` for retrieving tag values
+  efficiently
+  ([#1221](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1221))
+* Added `EnumerateTagValues` extension method on `Activity` for enumerating tag
+  values efficiently
+  ([#1236](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1236))
+
+## 0.5.0-beta.2
 
 Released 2020-08-28
 

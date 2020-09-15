@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracerProvider((builder) => builder.AddAspNetCoreInstrumentation()
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
                         .AddProcessor(processor.Object));
                     }))
                 .CreateClient())
@@ -99,14 +99,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("localhost:", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value);
-            Assert.Equal("GET", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value);
-            Assert.Equal(urlPath, activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
-            Assert.Equal($"http://localhost{urlPath}", activity.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value);
-            Assert.Equal(statusCode, activity.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
+            Assert.Equal("localhost:", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+            Assert.Equal(urlPath, activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+            Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
             Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             this.ValidateTagValue(activity, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
         }
@@ -115,11 +115,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             if (string.IsNullOrEmpty(expectedValue))
             {
-                Assert.True(activity.Tags.All(i => i.Key != attribute));
+                Assert.Null(activity.GetTagValue(attribute));
             }
             else
             {
-                Assert.Equal(expectedValue, activity.Tags.FirstOrDefault(i => i.Key == attribute).Value);
+                Assert.Equal(expectedValue, activity.GetTagValue(attribute));
             }
         }
 

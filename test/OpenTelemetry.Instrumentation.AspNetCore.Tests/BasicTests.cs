@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
-            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.True(activity.Duration != TimeSpan.Zero);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
-            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -219,7 +219,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
         }
 
         [Fact]
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
         }
 
         public void Dispose()
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath, Resources.Resource expectedResource)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
-            Assert.Equal(expectedHttpPath, activityToValidate.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
             var request = activityToValidate.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
             Assert.NotNull(request);

@@ -10,6 +10,15 @@ Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
+## Supported .NET Versions
+
+Packages shipped from this repository generally support all the officially
+supported versions of [.NET
+Core](https://dotnet.microsoft.com/download/dotnet-core), and [.NET
+Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
+`.NET Framework 3.5 SP1`. Any exceptions to this are noted in the individual
+`README.md` files.
+
 ## Getting Started
 
 If you are new here, please see [get started in 5
@@ -48,6 +57,17 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
+
+## Customization
+
+OpenTelemetry .NET is designed to be customizable and extensible. Here are the
+most common customization and extension scenarios:
+
+* [Building a custom instrumentation
+  library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
+* [Building a custom trace
+  exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
+* [Correlating logs with traces](./docs/logs/correlation/README.md)
 
 ## Contributing
 

@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-## 0.5.0-beta.1
+* Removed `MaxFlushInterval` from `JaegerExporterOptions`. Batching is now
+  handled  by `BatchExportActivityProcessor` exclusively.
+  ([#1254](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1254))
+
+## 0.5.0-beta.2
 
 Released 2020-08-28
 
@@ -11,6 +15,9 @@ Released 2020-08-28
 * Span links will now be sent as `FOLLOWS_FROM` reference type. Previously they
   were sent as `CHILD_OF`.
   ([#970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/970))
+* Fixed issue when span has both the `net.peer.name` and `net.peer.port`
+  attributes but did not include `net.peer.port` in the `peer.service` field
+  ([#1195](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1195)).
 
 * Renamed extension method from `UseJaegerExporter` to `AddJaegerExporter`.
 

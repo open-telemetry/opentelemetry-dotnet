@@ -73,7 +73,7 @@ namespace Utils.Messaging
 
                     if (activity != null)
                     {
-                        activity.AddTag("message", message);
+                        activity.SetTag("message", message);
 
                         // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                         RabbitMqHelper.AddMessagingTags(activity);
