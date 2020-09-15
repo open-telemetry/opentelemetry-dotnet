@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.0-beta.1
+
+Released 2020-Sep-15
+
 * Fixes [953](https://github.com/open-telemetry/opentelemetry-dotnet/issues/953)
 * Changes arising from `DiagnosticSource` changes
   ([#1203](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1203))
