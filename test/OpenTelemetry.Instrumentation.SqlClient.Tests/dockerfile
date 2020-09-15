@@ -2,16 +2,22 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.SqlClient.Tests/dockerfile .
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+ARG SDK_VERSION=3.1
+FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
+RUN if [ "$PUBLISH_FRAMEWORK" = "netcoreapp2.1" ] ; then wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
+    && chmod g+rx,o+rx dotnet-install.sh \
+    && ./dotnet-install.sh -c 3.1 --install-dir /usr/share/dotnet \
+    && ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet ; fi
 WORKDIR /repo
 COPY . ./
 RUN ls -la /repo
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.SqlClient.Tests"
 RUN dotnet publish "OpenTelemetry.Instrumentation.SqlClient.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS final
+ARG SDK_VERSION=3.1
+FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS final
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
 RUN chmod +x /wait
 WORKDIR /test
