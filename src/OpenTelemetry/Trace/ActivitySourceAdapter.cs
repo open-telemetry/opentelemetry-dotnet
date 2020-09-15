@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace
         private void RunGetRequestedDataOtherSampler(Activity activity)
         {
             ActivityContext parentContext;
-            if (string.IsNullOrEmpty(activity.ParentId))
+            if (string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString().Equals("0000000000000000"))
             {
                 parentContext = default;
             }
