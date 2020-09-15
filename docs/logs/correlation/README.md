@@ -26,7 +26,7 @@ public static IHostBuilder CreateHostBuilder(string[] args) =>
         .ConfigureLogging(loggingBuilder =>
             loggingBuilder.Configure(options =>
                 options.ActivityTrackingOptions =
-                    ActivityTrackingOptions.TraceId 
+                    ActivityTrackingOptions.TraceId
                     | ActivityTrackingOptions.SpanId))
         .ConfigureWebHostDefaults(webBuilder =>
         {
