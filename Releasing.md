@@ -83,7 +83,7 @@ Only for Maintainers.
 11. Run the following command from PowerShell from local folder used in step 8:
 
    ```powershell
-   .\nuget.exe setApiKey oy2ingrmjjufagx2czxqlb6mulmofuxejgbcm55h5pxsaa 
+   .\nuget.exe setApiKey <actual api key> 
    get-childitem | where {$_.extension -eq
    ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source
    https://api.nuget.org/v3/index.json}
