@@ -16,8 +16,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
@@ -39,7 +42,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                                 long retentionPeriod = 172800,
                                 int writeTimeout = 60)
         {
-            this.path = path;
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            this.path = this.CreateTelemetrySubdirectory(path);
             this.maxSize = maxSize;
             this.maintenancePeriod = maintenancePeriod;
             this.retentionPeriod = retentionPeriod;
@@ -122,7 +130,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return iterator.Current;
         }
 
-        internal void PutFile(string[] data, int leasePeriod = 0)
+        internal void PutBlob(string[] data, int leasePeriod = 0)
         {
             if (!this.CheckStorageSize())
             {
@@ -219,6 +227,49 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             return directorySize;
+        }
+
+        private string CreateTelemetrySubdirectory(string path)
+        {
+            string subdirectoryPath = string.Empty;
+
+            try
+            {
+                string baseDirectory = string.Empty;
+#if !NETSTANDARD
+                baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+#else
+                baseDirectory = AppContext.BaseDirectory;
+#endif
+
+                string appIdentity = Environment.UserName + "@" + Path.Combine(baseDirectory, Process.GetCurrentProcess().ProcessName);
+                string subdirectoryName = this.GetSHA256Hash(appIdentity);
+                subdirectoryPath = Path.Combine(path, subdirectoryName);
+                Directory.CreateDirectory(subdirectoryPath);
+            }
+            catch (Exception)
+            {
+                // TODO: Log Exception
+            }
+
+            return subdirectoryPath;
+        }
+
+        private string GetSHA256Hash(string input)
+        {
+            var hashString = new StringBuilder();
+
+            byte[] inputBits = Encoding.Unicode.GetBytes(input);
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] hashBits = sha256.ComputeHash(inputBits);
+                foreach (byte b in hashBits)
+                {
+                    hashString.Append(b.ToString("x2", CultureInfo.InvariantCulture));
+                }
+            }
+
+            return hashString.ToString();
         }
 
         private void DeleteFile(string path)
