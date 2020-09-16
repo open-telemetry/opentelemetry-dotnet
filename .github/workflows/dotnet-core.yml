@@ -8,10 +8,7 @@ on:
         required: true
         default: 'warning'
   schedule:
-    - cron: '0 0 * * *' # once in a day at 00:00
-  push:
-    tags:
-      - '*' # trigger when we create a tag       
+    - cron: '0 0 * * *' # once in a day at 00:00  
 
 jobs:
   build-pack:
