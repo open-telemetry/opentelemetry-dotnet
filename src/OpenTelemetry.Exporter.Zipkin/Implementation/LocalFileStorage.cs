@@ -142,10 +142,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             blob.Write(data, leasePeriod);
         }
 
-        private static DateTime GetDateTimeFromFileName(string filePath, char seperator)
+        private static DateTime GetDateTimeFromFileName(string filePath, char separator)
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath);
-            var time = fileName.Substring(0, fileName.LastIndexOf(seperator));
+            var time = fileName.Substring(0, fileName.LastIndexOf(separator));
             DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
             return dateTime;
         }
