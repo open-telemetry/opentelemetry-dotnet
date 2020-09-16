@@ -9,7 +9,7 @@ Only for Maintainers.
    git push origin 0.4.0-beta
    ```
 
-2.Do Draft Github release. Run the following powershell from the root of the
+2.Do Draft Github release. Run the following PowerShell from the root of the
    repo.
 
 ```powershell
@@ -44,7 +44,7 @@ Only for Maintainers.
 
    This generates combined changelog to be used in Github release.
 
-3.Run the following powershell script from the root of the repo.
+3.Run the following PowerShell script from the root of the repo.
    This updates all the changelog to have release date for the
    current version being released.
    Replace the date with actual date, version with actual version.
@@ -74,9 +74,9 @@ Only for Maintainers.
 6.Validate using MyGet packages. Basic sanity checks :)
 
 7.From the above build, get the artifacts from the drop, which has all the
-   nuget packages.
+   NuGet packages.
 
-8.Copy all the nuget files and symbols into a local folder.
+8.Copy all the NuGet files and symbols into a local folder.
 
 9.Download latest [nuget.exe](https://www.nuget.org/downloads).
 
