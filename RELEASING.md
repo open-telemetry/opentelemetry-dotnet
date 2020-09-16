@@ -96,4 +96,4 @@ Only for Maintainers.
 
 13.Delete the API key generated in step 10.
 
-14. Mark the Github release from draft to actual publish.
+14.Mark the Github release from draft to actual publish.
