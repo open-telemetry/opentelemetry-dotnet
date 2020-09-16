@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Zipkin;
@@ -31,6 +32,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
 #endif
     public class ZipkinExporterBenchmarks
     {
+        private readonly byte[] buffer = new byte[4096];
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
         private IDisposable server;
@@ -51,6 +53,17 @@ namespace OpenTelemetry.Exporter.Benchmarks
             this.server = TestHttpServer.RunServer(
                 (ctx) =>
                 {
+                    using (Stream receiveStream = ctx.Request.InputStream)
+                    {
+                        while (true)
+                        {
+                            if (receiveStream.Read(this.buffer, 0, this.buffer.Length) == 0)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
                     ctx.Response.StatusCode = 200;
                     ctx.Response.OutputStream.Close();
                 },

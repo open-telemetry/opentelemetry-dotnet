@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -64,14 +63,16 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             try
             {
-                // take a snapshot of the batch
-                var activities = new List<Activity>();
-                foreach (var activity in batch)
-                {
-                    activities.Add(activity);
-                }
+                var requestUri = this.options.Endpoint;
 
-                this.SendBatchActivityAsync(activities, CancellationToken.None).GetAwaiter().GetResult();
+                using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new JsonContent(this, batch),
+                };
+
+                using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+
+                response.EnsureSuccessStatusCode();
 
                 return ExportResult.Success;
             }
@@ -79,7 +80,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             {
                 ZipkinExporterEventSource.Log.FailedExport(ex);
 
-                // TODO distinguish retryable exceptions
                 return ExportResult.Failure;
             }
         }
@@ -140,18 +140,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        private async Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
-        {
-            var requestUri = this.options.Endpoint;
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new JsonContent(this, batchActivity),
-            };
-
-            await this.httpClient.SendAsync(request, cancellationToken);
-        }
-
         private ZipkinEndpoint GetLocalZipkinEndpoint()
         {
             var hostName = ResolveHostName();
@@ -179,7 +167,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             };
 
             private readonly ZipkinExporter exporter;
-            private readonly IEnumerable<Activity> batchActivity;
+            private readonly Batch<Activity> batch;
 
 #if NET452
             private JsonWriter writer;
@@ -187,10 +175,10 @@ namespace OpenTelemetry.Exporter.Zipkin
             private Utf8JsonWriter writer;
 #endif
 
-            public JsonContent(ZipkinExporter exporter, IEnumerable<Activity> batchActivity)
+            public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
             {
                 this.exporter = exporter;
-                this.batchActivity = batchActivity;
+                this.batch = batch;
 
                 this.Headers.ContentType = JsonHeader;
             }
@@ -213,18 +201,30 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.writer.WriteStartArray();
 
-                foreach (var activity in this.batchActivity)
+                foreach (var activity in this.batch)
                 {
                     var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
+#if !NET452
+                    if (this.writer.BytesPending >= this.exporter.options.MaxPacketSize)
+                    {
+                        this.writer.Flush();
+                    }
+#endif
                 }
 
                 this.writer.WriteEndArray();
 
-                return this.writer.FlushAsync();
+                this.writer.Flush();
+
+#if NET452
+                return Task.FromResult(true);
+#else
+                return Task.CompletedTask;
+#endif
             }
 
             protected override bool TryComputeLength(out long length)
