@@ -57,9 +57,10 @@ namespace OpenTelemetry.Tests
             return true;
         }
 
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalled = true;
+            return true;
         }
 
         protected override void Dispose(bool disposing)
