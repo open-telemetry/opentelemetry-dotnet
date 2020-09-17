@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Changed `ActivityProcessor.OnShutdown` and `ActivityProcessor.Shutdown` to
+  return boolean value
+  ([#1282](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1282))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
