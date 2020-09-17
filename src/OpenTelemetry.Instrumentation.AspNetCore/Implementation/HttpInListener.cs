@@ -21,7 +21,6 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -35,11 +34,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher startContextFetcher = new PropertyFetcher("HttpContext");
-        private readonly PropertyFetcher stopContextFetcher = new PropertyFetcher("HttpContext");
-        private readonly PropertyFetcher beforeActionActionDescriptorFetcher = new PropertyFetcher("actionDescriptor");
-        private readonly PropertyFetcher beforeActionAttributeRouteInfoFetcher = new PropertyFetcher("AttributeRouteInfo");
-        private readonly PropertyFetcher beforeActionTemplateFetcher = new PropertyFetcher("Template");
+        private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
+        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
+        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
+        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
+        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
         private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
@@ -55,7 +54,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startContextFetcher.Fetch(payload) is HttpContext context))
+            HttpContext context = this.startContextFetcher.Fetch(payload);
+            if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
                 return;
@@ -138,7 +138,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                if (!(this.stopContextFetcher.Fetch(payload) is HttpContext context))
+                HttpContext context = this.stopContextFetcher.Fetch(payload);
+                if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
                     return;
@@ -193,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Taking reference on MVC will increase size of deployment for non-MVC apps.
                     var actionDescriptor = this.beforeActionActionDescriptorFetcher.Fetch(payload);
                     var attributeRouteInfo = this.beforeActionAttributeRouteInfoFetcher.Fetch(actionDescriptor);
-                    var template = this.beforeActionTemplateFetcher.Fetch(attributeRouteInfo) as string;
+                    var template = this.beforeActionTemplateFetcher.Fetch(attributeRouteInfo);
 
                     if (!string.IsNullOrEmpty(template))
                     {
@@ -252,21 +253,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
-            // TODO: Should the leading slash be trimmed? Spec seems to suggest no leading slash: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
-            // Client instrumentation is trimming the leading slash. Whatever we decide here, should we apply the same to the client side?
-            // activity.DisplayName = grpcMethod?.Trim('/');
-
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
                 activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
                 activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+
+                // Remove the grpc.method tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
             }
 
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+            // Remove the grpc.method tag added by the gRPC .NET library
+            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
         }
     }
 }

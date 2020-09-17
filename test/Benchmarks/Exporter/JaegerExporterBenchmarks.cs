@@ -13,31 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Jaeger;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Internal;
 using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Benchmarks
 {
     [MemoryDiagnoser]
-#if !NET462
-    [ThreadingDiagnoser]
-#endif
     public class JaegerExporterBenchmarks
     {
-        private readonly byte[] buffer = new byte[1024];
-        private UdpClient jaegerServer;
-        private JaegerUdpClient jaegerClient;
-        private Activity testActivity;
+        private Activity activity;
+        private CircularBuffer<Activity> activityBatch;
 
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
@@ -48,61 +42,31 @@ namespace OpenTelemetry.Exporter.Benchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.testActivity = this.CreateTestActivity();
-
-            this.jaegerServer = new UdpClient(new IPEndPoint(IPAddress.Any, 10018));
-            ThreadPool.QueueUserWorkItem(this.ReceivedData);
-
-            this.jaegerClient = new JaegerUdpClient();
-            this.jaegerClient.Connect("localhost", 10018);
-        }
-
-        [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-            this.jaegerServer.Dispose();
-            this.jaegerClient.Dispose();
+            this.activity = this.CreateTestActivity();
+            this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
         }
 
         [Benchmark]
-        public async Task JaegerExporter_Batching()
+        public void JaegerExporter_Batching()
         {
-            using var jaegerUdpBatcher = new JaegerUdpBatcher(
+            using JaegerExporter exporter = new JaegerExporter(
                 new JaegerExporterOptions(),
-                new BlackHoleTransport());
-            jaegerUdpBatcher.Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService");
+                new BlackHoleTransport())
+            {
+                Process = new Jaeger.Process("TestService"),
+            };
 
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
                 for (int c = 0; c < this.NumberOfSpans; c++)
                 {
-                    await jaegerUdpBatcher.AppendAsync(this.testActivity, CancellationToken.None).ConfigureAwait(false);
+                    this.activityBatch.Add(this.activity);
                 }
 
-                await jaegerUdpBatcher.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
             }
-        }
 
-        [Benchmark]
-        public async Task JaegerUdpClient_SendAsync()
-        {
-            for (int i = 0; i < this.NumberOfSpans * this.NumberOfBatches; i++)
-            {
-                await this.jaegerClient.SendAsync(this.buffer).ConfigureAwait(false);
-            }
-        }
-
-        private void ReceivedData(object state)
-        {
-            var buffer = new byte[1024];
-
-            while (true)
-            {
-                if (this.jaegerServer.Client.Receive(buffer) == 0)
-                {
-                    return;
-                }
-            }
+            exporter.Shutdown();
         }
 
         private Activity CreateTestActivity()
@@ -143,7 +107,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
+            using var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
 
             var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()));
 
@@ -155,13 +119,25 @@ namespace OpenTelemetry.Exporter.Benchmarks
                     ActivityTraceFlags.Recorded)),
             };
 
-            return activitySource.StartActivity(
+            using var listener = new ActivityListener()
+            {
+                ShouldListenTo = a => a.Name == nameof(this.CreateTestActivity),
+                Sample = (ref ActivityCreationOptions<ActivityContext> a) => ActivitySamplingResult.AllDataAndRecorded,
+            };
+
+            ActivitySource.AddActivityListener(listener);
+
+            Activity activity = activitySource.StartActivity(
                 "Name",
                 ActivityKind.Client,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),
                 tags,
                 links,
                 startTime: startTimestamp);
+
+            activity.Stop();
+
+            return activity;
         }
 
         private class BlackHoleTransport : TTransport
