@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.config = NuGet.config
 		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
+		RELEASING.md = RELEASING.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
@@ -189,7 +190,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "correlation", "docs\logs\correlation\correlation.csproj", "{B26BE278-C9DA-4067-A0EE-6A4227B3DC87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Instrumentation.W3cTraceContext.Tests", "test\OpenTelemetry.Instrumentation.W3cTraceContext.Tests\OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj", "{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.W3cTraceContext.Tests", "test\OpenTelemetry.Instrumentation.W3cTraceContext.Tests\OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj", "{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.GrpcService", "examples\GrpcService\Examples.GrpcService.csproj", "{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}"
 EndProject
