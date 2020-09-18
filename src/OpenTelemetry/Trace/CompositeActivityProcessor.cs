@@ -129,28 +129,30 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
             var cur = this.head;
-
+            var result = true;
             var sw = Stopwatch.StartNew();
 
             while (cur != null)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    cur.Value.Shutdown(Timeout.Infinite);
+                    result = cur.Value.Shutdown(Timeout.Infinite) && result;
                 }
                 else
                 {
                     var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     // notify all the processors, even if we run overtime
-                    cur.Value.Shutdown((int)Math.Max(timeout, 0));
+                    result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
 
                 cur = cur.Next;
             }
+
+            return result;
         }
 
         protected override void Dispose(bool disposing)
