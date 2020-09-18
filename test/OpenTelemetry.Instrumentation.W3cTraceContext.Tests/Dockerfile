@@ -12,16 +12,11 @@ RUN git clone https://github.com/w3c/trace-context.git
 FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
-RUN if [ "$PUBLISH_FRAMEWORK" = "netcoreapp2.1" ] ; then wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
-    && chmod g+rx,o+rx dotnet-install.sh \
-    && ./dotnet-install.sh -c 3.1 --install-dir /usr/share/dotnet \
-    && ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet ; fi
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
-RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
+RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true -p:TARGET_FRAMEWORK=${PUBLISH_FRAMEWORK}
 
-ARG SDK_VERSION
 FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
@@ -32,4 +27,4 @@ RUN apt-get update \
   && ln -s /usr/bin/python3 python \
   && pip3 install --upgrade pip \
   && pip3 install aiohttp
-ENTRYPOINT ["dotnet", "test", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]
