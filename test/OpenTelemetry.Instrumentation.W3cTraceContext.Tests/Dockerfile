@@ -21,7 +21,7 @@ COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
 RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
 
-ARG SDK_VERSION=3.1
+ARG SDK_VERSION
 FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
