@@ -101,6 +101,9 @@ namespace OpenTelemetry.Trace
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
         /// <exception cref="System.ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
@@ -108,7 +111,7 @@ namespace OpenTelemetry.Trace
         /// This function guarantees thread-safety. Only the first call will
         /// win, subsequent calls will be no-op.
         /// </remarks>
-        public void Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+        public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
@@ -117,16 +120,17 @@ namespace OpenTelemetry.Trace
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {
-                return; // shutdown already called
+                return false; // shutdown already called
             }
 
             try
             {
-                this.OnShutdown(timeoutMilliseconds);
+                return this.OnShutdown(timeoutMilliseconds);
             }
             catch (Exception ex)
             {
                 OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+                return false;
             }
         }
 
@@ -166,13 +170,17 @@ namespace OpenTelemetry.Trace
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
         /// <remarks>
         /// This function is called synchronously on the thread which made the
         /// first call to <c>Shutdown</c>. This function should not throw
         /// exceptions.
         /// </remarks>
-        protected virtual void OnShutdown(int timeoutMilliseconds)
+        protected virtual bool OnShutdown(int timeoutMilliseconds)
         {
+            return true;
         }
 
         /// <summary>

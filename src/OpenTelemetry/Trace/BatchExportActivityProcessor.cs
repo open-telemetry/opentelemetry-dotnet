@@ -174,7 +174,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
@@ -182,20 +182,18 @@ namespace OpenTelemetry.Trace
             if (timeoutMilliseconds == Timeout.Infinite)
             {
                 this.exporterThread.Join();
-                this.exporter.Shutdown();
-                return;
+                return this.exporter.Shutdown();
             }
 
             if (timeoutMilliseconds == 0)
             {
-                this.exporter.Shutdown(0);
-                return;
+                return this.exporter.Shutdown(0);
             }
 
             var sw = Stopwatch.StartNew();
             this.exporterThread.Join(timeoutMilliseconds);
             var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
-            this.exporter.Shutdown((int)Math.Max(timeout, 0));
+            return this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 
         private void ExporterProc()

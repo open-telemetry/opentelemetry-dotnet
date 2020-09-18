@@ -46,9 +46,9 @@ namespace OpenTelemetry.Trace
         public abstract override void OnEnd(Activity activity);
 
         /// <inheritdoc />
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            this.exporter.Shutdown(timeoutMilliseconds);
+            return this.exporter.Shutdown(timeoutMilliseconds);
         }
 
         /// <inheritdoc/>
