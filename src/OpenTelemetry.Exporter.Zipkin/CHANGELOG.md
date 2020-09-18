@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Removed unused `TimeoutSeconds` and added `MaxPayloadSizeInBytes` on
+  `ZipkinExporterOptions`. The default value for `MaxPayloadSizeInBytes` is
+  4096.
+  ([#1247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1274))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
