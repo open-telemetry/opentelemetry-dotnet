@@ -99,7 +99,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("localhost:", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal(urlPath, activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
             Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
