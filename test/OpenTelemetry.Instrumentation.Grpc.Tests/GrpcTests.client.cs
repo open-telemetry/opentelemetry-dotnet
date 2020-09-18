@@ -15,13 +15,13 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -85,6 +85,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             Assert.Equal(Status.Ok, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
+
+            // Tags added by the library then removed from the instrumentation
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
         [Fact]
