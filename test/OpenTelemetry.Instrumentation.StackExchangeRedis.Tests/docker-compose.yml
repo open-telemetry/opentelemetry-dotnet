@@ -1,6 +1,6 @@
 # Start a redis container and then run OpenTelemetry redis integration tests.
 # This should be run from the root of the repo:
-#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=redis_integration_tests --build
+#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 version: '3.7'
 
 services:

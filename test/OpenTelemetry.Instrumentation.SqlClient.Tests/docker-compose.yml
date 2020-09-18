@@ -1,6 +1,6 @@
 # Start a sql container and then run OpenTelemetry sql integration tests.
 # This should be run from the root of the repo:
-#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build
+#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 version: '3.7'
 
 services:
