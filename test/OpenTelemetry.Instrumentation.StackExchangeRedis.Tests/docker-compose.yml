@@ -13,7 +13,7 @@ services:
     build:
       context: .
       dockerfile: ./test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/dockerfile
-    command: --filter CategoryName=RedisIntegrationTests
+    command: --TestCaseFilter:CategoryName=RedisIntegrationTests
     environment:
       - OTEL_REDISENDPOINT=redis:6379
     depends_on:
