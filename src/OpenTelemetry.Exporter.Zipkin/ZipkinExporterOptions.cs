@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         internal const string DefaultServiceName = "OpenTelemetry Exporter";
 
 #if !NET452
-        internal const int DefaultMaxPacketSize = 4096;
+        internal const int DefaultMaxPayloadSizeInBytes = 4096;
 #endif
 
         /// <summary>
@@ -47,9 +47,9 @@ namespace OpenTelemetry.Exporter.Zipkin
 
 #if !NET452
         /// <summary>
-        /// Gets or sets the maximum packet size in bytes. Default value: 4096.
+        /// Gets or sets the maximum payload size in bytes. Default value: 4096.
         /// </summary>
-        public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
+        public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 #endif
     }
 }

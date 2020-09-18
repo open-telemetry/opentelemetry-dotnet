@@ -169,7 +169,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPacketSize = 1500 });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPayloadSizeInBytes = 1500 });
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());

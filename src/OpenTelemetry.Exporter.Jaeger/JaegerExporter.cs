@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 throw new ArgumentNullException(nameof(options));
             }
 
-            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize <= 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
+            this.maxPacketSize = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
             this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));

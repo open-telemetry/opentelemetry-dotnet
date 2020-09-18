@@ -209,7 +209,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                     zipkinSpan.Return();
 #if !NET452
-                    if (this.writer.BytesPending >= this.exporter.options.MaxPacketSize)
+                    if (this.writer.BytesPending >= this.exporter.options.MaxPayloadSizeInBytes)
                     {
                         this.writer.Flush();
                     }
