@@ -39,6 +39,9 @@ namespace OpenTelemetry.Exporter.Zipkin
     public class ZipkinExporter : ActivityExporter
     {
         private readonly ZipkinExporterOptions options;
+#if !NET452
+        private readonly int maxPayloadSizeInBytes;
+#endif
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -46,9 +49,12 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
+        internal ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            this.options = options;
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+#if !NET452
+            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
+#endif
             this.LocalEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
         }
@@ -209,7 +215,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                     zipkinSpan.Return();
 #if !NET452
-                    if (this.writer.BytesPending >= this.exporter.options.MaxPayloadSizeInBytes)
+                    if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
                     {
                         this.writer.Flush();
                     }
