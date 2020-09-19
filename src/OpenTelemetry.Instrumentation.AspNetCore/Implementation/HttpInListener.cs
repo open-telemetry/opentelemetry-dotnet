@@ -119,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
 
-                if (request.Host.Port == 80 || request.Host.Port == 443)
+                if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
