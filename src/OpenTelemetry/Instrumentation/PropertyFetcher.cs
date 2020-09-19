@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 
@@ -27,7 +28,7 @@ namespace OpenTelemetry.Instrumentation
     public class PropertyFetcher<T>
     {
         private readonly string propertyName;
-        private PropertyFetch innerFetcher;
+        private ConcurrentDictionary<Type, PropertyFetch> innerFetcher = new ConcurrentDictionary<Type, PropertyFetch>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyFetcher{T}"/> class.
@@ -45,19 +46,20 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
-            if (this.innerFetcher == null)
+            var type = obj.GetType().GetTypeInfo();
+            var fetcher = this.innerFetcher.GetOrAdd(type, t =>
             {
-                var type = obj.GetType().GetTypeInfo();
                 var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, this.propertyName, StringComparison.InvariantCultureIgnoreCase));
                 if (property == null)
                 {
-                    property = type.GetProperty(this.propertyName);
+                    property = type.GetProperty(this.propertyName, BindingFlags.Public | BindingFlags.NonPublic);
+                    var field = type.GetField(this.propertyName, BindingFlags.Public | BindingFlags.NonPublic);
                 }
 
-                this.innerFetcher = PropertyFetch.FetcherForProperty(property);
-            }
+                return PropertyFetch.FetcherForProperty(property);
+            });
 
-            return this.innerFetcher.Fetch(obj);
+            return fetcher.Fetch(obj);
         }
 
         // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
