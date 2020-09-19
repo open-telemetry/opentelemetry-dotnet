@@ -83,8 +83,7 @@ namespace OpenTelemetry.Trace
 
             try
             {
-                this.OnShutdown(timeoutMilliseconds);
-                return true; // TODO: update exporter.OnShutdown to return boolean
+                return this.OnShutdown(timeoutMilliseconds);
             }
             catch (Exception ex)
             {
@@ -108,13 +107,17 @@ namespace OpenTelemetry.Trace
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
         /// <remarks>
         /// This function is called synchronously on the thread which made the
         /// first call to <c>Shutdown</c>. This function should not throw
         /// exceptions.
         /// </remarks>
-        protected virtual void OnShutdown(int timeoutMilliseconds)
+        protected virtual bool OnShutdown(int timeoutMilliseconds)
         {
+            return true;
         }
 
         /// <summary>

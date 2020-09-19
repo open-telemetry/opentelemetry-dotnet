@@ -50,9 +50,10 @@ internal class MyExporter : ActivityExporter
         return ExportResult.Success;
     }
 
-    protected override void OnShutdown(int timeoutMilliseconds)
+    protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
+        return true;
     }
 
     protected override void Dispose(bool disposing)
