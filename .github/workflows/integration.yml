@@ -13,21 +13,33 @@ on:
 jobs:
   redis-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [netcoreapp2.1,netcoreapp3.1]
     steps:
       - uses: actions/checkout@v2
       - name: Run redis docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=redis_integration_tests --build
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   sql-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [netcoreapp2.1,netcoreapp3.1]
     steps:
       - uses: actions/checkout@v2
       - name: Run sql docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.integration.yml --project-directory=. up --exit-code-from=sql_integration_tests --build
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   w3c-trace-context-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [netcoreapp2.1,netcoreapp3.1]
     steps:
       - uses: actions/checkout@v2
       - name: Run W3C Trace Context docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
