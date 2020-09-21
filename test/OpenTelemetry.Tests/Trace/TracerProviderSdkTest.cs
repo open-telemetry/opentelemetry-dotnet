@@ -104,9 +104,9 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Theory]
-        [InlineData(SamplingDecision.NotRecord)]
-        [InlineData(SamplingDecision.Record)]
-        [InlineData(SamplingDecision.RecordAndSampled)]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
         public void TracerProviderSdkSamplerAttributesAreAppliedToActivity(SamplingDecision sampling)
         {
             var testSampler = new TestSampler();
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Tests
             {
                 Assert.NotNull(rootActivity);
                 Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
-                if (sampling != SamplingDecision.NotRecord)
+                if (sampling != SamplingDecision.Drop)
                 {
                     Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
                 }
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Trace.Tests
 
             testSampler.SamplingAction = (samplingParameters) =>
             {
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             };
 
             using (var activity = activitySource.StartActivity("root"))
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Trace.Tests
 
             testSampler.SamplingAction = (samplingParameters) =>
             {
-                return new SamplingResult(SamplingDecision.Record);
+                return new SamplingResult(SamplingDecision.RecordOnly);
             };
 
             using (var activity = activitySource.StartActivity("root"))
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace.Tests
 
             testSampler.SamplingAction = (samplingParameters) =>
             {
-                return new SamplingResult(SamplingDecision.NotRecord);
+                return new SamplingResult(SamplingDecision.Drop);
             };
 
             using (var activity = activitySource.StartActivity("root"))
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace.Tests
 
             testSampler.SamplingAction = (samplingParameters) =>
             {
-                return new SamplingResult(SamplingDecision.NotRecord);
+                return new SamplingResult(SamplingDecision.Drop);
             };
 
             using ActivitySource source = new ActivitySource("random");

@@ -28,17 +28,17 @@ namespace OpenTelemetry.Trace.Tests
         {
             // No parent, use delegate sampler.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.RecordAndSampled),
+                new SamplingResult(SamplingDecision.RecordAndSample),
                 this.parentBasedOnSampler.ShouldSample(default));
 
             // No parent, use delegate sampler.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.NotRecord),
+                new SamplingResult(SamplingDecision.Drop),
                 this.parentBasedOffSampler.ShouldSample(default));
 
             // Not sampled parent, don't sample.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.NotRecord),
+                new SamplingResult(SamplingDecision.Drop),
                 this.parentBasedOnSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: new ActivityContext(
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // Sampled parent, sample.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.RecordAndSampled),
+                new SamplingResult(SamplingDecision.RecordAndSample),
                 this.parentBasedOffSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: new ActivityContext(
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // Not sampled link, don't sample.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.NotRecord),
+                new SamplingResult(SamplingDecision.Drop),
                 this.parentBasedOnSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: notSampledParent,
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // Sampled link, sample.
             Assert.Equal(
-                new SamplingResult(SamplingDecision.RecordAndSampled),
+                new SamplingResult(SamplingDecision.RecordAndSample),
                 this.parentBasedOffSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: notSampledParent,

@@ -163,19 +163,19 @@ namespace OpenTelemetry.Trace
 
             switch (samplingResult.Decision)
             {
-                case SamplingDecision.NotRecord:
+                case SamplingDecision.Drop:
                     activity.IsAllDataRequested = false;
                     break;
-                case SamplingDecision.Record:
+                case SamplingDecision.RecordOnly:
                     activity.IsAllDataRequested = true;
                     break;
-                case SamplingDecision.RecordAndSampled:
+                case SamplingDecision.RecordAndSample:
                     activity.IsAllDataRequested = true;
                     activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                     break;
             }
 
-            if (samplingResult.Decision != SamplingDecision.NotRecord)
+            if (samplingResult.Decision != SamplingDecision.Drop)
             {
                 foreach (var att in samplingResult.Attributes)
                 {

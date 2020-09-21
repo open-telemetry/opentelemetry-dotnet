@@ -24,6 +24,6 @@ internal class MySampler : Sampler
     public override SamplingResult ShouldSample(in SamplingParameters param)
     {
         Console.WriteLine($"MySampler.ShouldSample({param.Name})");
-        return new SamplingResult(SamplingDecision.RecordAndSampled);
+        return new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }
