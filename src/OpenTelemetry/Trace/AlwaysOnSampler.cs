@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
-            return new SamplingResult(SamplingDecision.RecordAndSampled);
+            return new SamplingResult(SamplingDecision.RecordAndSample);
         }
     }
 }

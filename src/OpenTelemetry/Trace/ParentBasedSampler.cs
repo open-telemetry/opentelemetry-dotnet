@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
             // If the parent is sampled keep the sampling decision.
             if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             }
 
             if (samplingParameters.Links != null)
@@ -60,13 +60,13 @@ namespace OpenTelemetry.Trace
                 {
                     if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                     {
-                        return new SamplingResult(SamplingDecision.RecordAndSampled);
+                        return new SamplingResult(SamplingDecision.RecordAndSample);
                     }
                 }
             }
 
             // If parent was not sampled, do not sample.
-            return new SamplingResult(SamplingDecision.NotRecord);
+            return new SamplingResult(SamplingDecision.Drop);
         }
     }
 }

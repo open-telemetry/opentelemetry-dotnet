@@ -228,8 +228,8 @@ namespace OpenTelemetry.Trace
 
             var activitySamplingResult = shouldSample.Decision switch
             {
-                SamplingDecision.RecordAndSampled => ActivitySamplingResult.AllDataAndRecorded,
-                SamplingDecision.Record => ActivitySamplingResult.AllData,
+                SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+                SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
                 _ => ActivitySamplingResult.PropagationData
             };
 

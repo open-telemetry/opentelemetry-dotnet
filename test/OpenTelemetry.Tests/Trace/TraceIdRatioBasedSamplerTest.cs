@@ -65,7 +65,7 @@ namespace OpenTelemetry.Trace.Tests
                       0,
                     });
             Assert.Equal(
-                SamplingDecision.NotRecord,
+                SamplingDecision.Drop,
                 defaultProbability.ShouldSample(new SamplingParameters(default, notSampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
 
             // This traceId will be sampled by the TraceIdRatioBasedSampler because the first 8 bytes as long
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace.Tests
                       0,
                     });
             Assert.Equal(
-                SamplingDecision.RecordAndSampled,
+                SamplingDecision.RecordAndSample,
                 defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
         }
 

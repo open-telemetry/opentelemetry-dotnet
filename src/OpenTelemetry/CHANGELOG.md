@@ -7,6 +7,9 @@
   boolean value
   ([#1282](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1282))
   ([#1285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1285))
+* Renamed `SamplingDecision` options (`NotRecord` to `Drop`, `Record` to
+  `RecordOnly`, and `RecordAndSampled` to `RecordAndSample`)
+  ([#1297](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1297))
 
 ## 0.6.0-beta.1
 

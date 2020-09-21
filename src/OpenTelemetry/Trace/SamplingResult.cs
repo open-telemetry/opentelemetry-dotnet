@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         /// <param name="isSampled"> True if sampled, false otherwise.</param>
         public SamplingResult(bool isSampled)
         {
-            this.Decision = isSampled ? SamplingDecision.RecordAndSampled : SamplingDecision.NotRecord;
+            this.Decision = isSampled ? SamplingDecision.RecordAndSample : SamplingDecision.Drop;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
         }
 
