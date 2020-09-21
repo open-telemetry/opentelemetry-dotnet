@@ -91,6 +91,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var parentSpanIdString = ByteString.Empty;
             if (activity.ParentSpanId.ToHexString() != EmptyActivitySpanId)
             {
+                // Once .NET fixes this https://github.com/dotnet/runtime/issues/42456
+                // and Otel updates to the version containing the fix,
+                // the above check can be simplified to
+                // if (activity.ParentSpanId != default)
                 Span<byte> parentSpanIdBytes = stackalloc byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
                 parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
