@@ -30,6 +30,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
+        private static readonly string EmptyActivitySpanId = default(ActivitySpanId).ToHexString();
+
         internal static IEnumerable<OtlpTrace.ResourceSpans> ToOtlpResourceSpans(this IEnumerable<Activity> activityBatch)
         {
             var resourceToLibraryAndSpans = GroupByResourceAndLibrary(activityBatch);
@@ -87,7 +89,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activity.SpanId.CopyTo(spanIdBytes);
 
             var parentSpanIdString = ByteString.Empty;
-            if (activity.ParentSpanId != default)
+            if (activity.ParentSpanId.ToHexString() != EmptyActivitySpanId)
             {
                 Span<byte> parentSpanIdBytes = stackalloc byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
