@@ -30,6 +30,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
+        private static readonly string EmptyActivitySpanId = default(ActivitySpanId).ToHexString();
+
         internal static IEnumerable<OtlpTrace.ResourceSpans> ToOtlpResourceSpans(this IEnumerable<Activity> activityBatch)
         {
             var resourceToLibraryAndSpans = GroupByResourceAndLibrary(activityBatch);
@@ -87,8 +89,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activity.SpanId.CopyTo(spanIdBytes);
 
             var parentSpanIdString = ByteString.Empty;
-            if (activity.ParentSpanId != default)
+            if (activity.ParentSpanId.ToHexString() != EmptyActivitySpanId)
             {
+                // TODO: Once .NET fixes this https://github.com/dotnet/runtime/issues/42456
+                // and Otel updates to the version containing the fix,
+                // the above check can be simplified to
+                // if (activity.ParentSpanId != default)
                 Span<byte> parentSpanIdBytes = stackalloc byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
                 parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
