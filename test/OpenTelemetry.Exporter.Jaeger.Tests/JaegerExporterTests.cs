@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporterTests.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPacketSize = 1500 });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPayloadSizeInBytes = 1500 });
             jaegerExporter.ApplyLibraryResource(Resource.Empty);
 
             // Act

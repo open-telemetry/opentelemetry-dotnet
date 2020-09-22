@@ -1,4 +1,4 @@
-﻿// <copyright file="SamplersTest.cs" company="OpenTelemetry Authors">
+// <copyright file="SamplersTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace.Tests
             var link = new ActivityLink(parentContext);
 
             Assert.Equal(
-                SamplingDecision.RecordAndSampled,
+                SamplingDecision.RecordAndSample,
                 new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
         }
 
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Tests
             var link = new ActivityLink(parentContext);
 
             Assert.Equal(
-                SamplingDecision.NotRecord,
+                SamplingDecision.Drop,
                 new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKindServer, null, new List<ActivityLink> { link })).Decision);
         }
 

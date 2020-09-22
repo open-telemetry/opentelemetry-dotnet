@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporter : ActivityExporter
     {
-        private readonly int maxPacketSize;
+        private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
         private readonly TTransport clientTransport;
         private readonly JaegerThriftClient thriftClient;
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 throw new ArgumentNullException(nameof(options));
             }
 
-            this.maxPacketSize = (!options.MaxPacketSize.HasValue || options.MaxPacketSize <= 0) ? JaegerExporterOptions.DefaultMaxPacketSize : options.MaxPacketSize.Value;
+            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
             this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 spanTotalBytesNeeded += spanProcess.Message.Length;
             }
 
-            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPacketSize)
+            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
             {
                 this.SendCurrentBatches(spanBatch);
 
