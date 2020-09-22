@@ -57,8 +57,7 @@ namespace OpenTelemetry.Instrumentation
                 var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, this.propertyName, StringComparison.InvariantCultureIgnoreCase));
                 if (property == null)
                 {
-                    property = type.GetProperty(this.propertyName, BindingFlags.Public | BindingFlags.NonPublic);
-                    var field = type.GetField(this.propertyName, BindingFlags.Public | BindingFlags.NonPublic);
+                    property = type.GetProperty(this.propertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
                 }
 
                 return PropertyFetch.FetcherForProperty(property);
