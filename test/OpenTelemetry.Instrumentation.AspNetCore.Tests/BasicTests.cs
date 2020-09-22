@@ -1,4 +1,4 @@
-﻿// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
+// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -127,6 +127,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
+#if !NETCOREAPP2_1
+            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
+            // must be used.
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+#else
+            // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
+            // is always ignored and new one is created by the Instrumentation
+            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
+#endif
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
             Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
@@ -173,6 +182,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // begin and end was called once each.
             Assert.Equal(2, activityProcessor.Invocations.Count);
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.True(activity.Duration != TimeSpan.Zero);

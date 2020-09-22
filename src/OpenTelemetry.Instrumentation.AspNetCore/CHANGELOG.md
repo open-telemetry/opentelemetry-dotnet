@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.0-beta.1
+
+Released 2020-Sep-15
+
 * For gRPC invocations, the `grpc.method` and `grpc.status_code` attributes
   added by the library are removed from the span. The information from these
   attributes is contained in other attributes that follow the conventions of

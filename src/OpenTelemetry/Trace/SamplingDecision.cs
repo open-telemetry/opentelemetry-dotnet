@@ -1,4 +1,4 @@
-﻿// <copyright file="SamplingDecision.cs" company="OpenTelemetry Authors">
+// <copyright file="SamplingDecision.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,19 +25,19 @@ namespace OpenTelemetry.Trace
         /// The activity object needs to be created. It will have Name, Source, Id and Baggage.
         /// Other properties will be ignored.
         /// </summary>
-        NotRecord,
+        Drop,
 
         /// <summary>
         /// The activity object should be populated with all the propagation info and also all other
         /// properties such as Links, Tags, and Events. Activity.IsAllDataRequested will return true.
         /// </summary>
-        Record,
+        RecordOnly,
 
         /// <summary>
         /// The activity object should be populated with all the propagation info and also all other
         /// properties such as Links, Tags, and Events.
         /// Both Activity.IsAllDataRequested and Activity.IsRecorded will return true.
         /// </summary>
-        RecordAndSampled,
+        RecordAndSample,
     }
 }
