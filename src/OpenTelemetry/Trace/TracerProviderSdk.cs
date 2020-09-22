@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -228,8 +228,8 @@ namespace OpenTelemetry.Trace
 
             var activitySamplingResult = shouldSample.Decision switch
             {
-                SamplingDecision.RecordAndSampled => ActivitySamplingResult.AllDataAndRecorded,
-                SamplingDecision.Record => ActivitySamplingResult.AllData,
+                SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+                SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
                 _ => ActivitySamplingResult.PropagationData
             };
 

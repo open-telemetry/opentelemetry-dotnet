@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation for W3C Trace Context Trace</Description>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +28,9 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.App" Version="[2.1.1,2.2)" >
+      <AllowExplicitVersion>true</AllowExplicitVersion>
+    </PackageReference>
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.2.1\TestApp.AspNetCore.2.1.csproj" />
   </ItemGroup>
 
