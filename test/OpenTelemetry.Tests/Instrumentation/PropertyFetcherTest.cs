@@ -60,5 +60,14 @@ namespace OpenTelemetry.Tests.Instrumentation
 
             Assert.Equal(test.DisplayName, result);
         }
+
+        [Fact]
+        public void FetchPropertyHandlesNullObject()
+        {
+            var fetch = new PropertyFetcher<string>("DisplayName");
+            var result = fetch.Fetch(null);
+
+            Assert.Null(result);
+        }
     }
 }
