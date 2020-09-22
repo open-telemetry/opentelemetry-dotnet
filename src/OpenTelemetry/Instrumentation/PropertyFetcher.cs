@@ -46,6 +46,11 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
+            if (obj == null)
+            {
+                return default(T);
+            }
+
             var type = obj.GetType().GetTypeInfo();
             var fetcher = this.innerFetcher.GetOrAdd(type, t =>
             {
