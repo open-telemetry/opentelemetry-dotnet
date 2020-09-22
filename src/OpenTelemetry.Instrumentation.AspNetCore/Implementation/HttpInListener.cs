@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,9 +80,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var request = context.Request;
             if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
             {
+                var parentContext = new ActivityContext(
+                    activity.Context.TraceId,
+                    activity.ParentSpanId,
+                    activity.Context.TraceFlags,
+                    activity.Context.TraceState,
+                    true);
                 var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
+                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != parentContext)
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
@@ -113,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
 
-                if (request.Host.Port == 80 || request.Host.Port == 443)
+                if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
