@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 
 namespace OpenTelemetry.Exporter.Zipkin
@@ -22,6 +23,17 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// </summary>
     public sealed class ZipkinExporterOptions
     {
+        internal const string DefaultServiceName = "OpenTelemetry Exporter";
+
+#if !NET452
+        internal const int DefaultMaxPayloadSizeInBytes = 4096;
+#endif
+
+        /// <summary>
+        /// Gets or sets the name of the service reporting telemetry.
+        /// </summary>
+        public string ServiceName { get; set; } = DefaultServiceName;
+
         /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
@@ -29,18 +41,15 @@ namespace OpenTelemetry.Exporter.Zipkin
         public Uri Endpoint { get; set; } = new Uri("http://localhost:9411/api/v2/spans");
 
         /// <summary>
-        /// Gets or sets timeout in seconds.
-        /// </summary>
-        public TimeSpan TimeoutSeconds { get; set; } = TimeSpan.FromSeconds(10);
-
-        /// <summary>
-        /// Gets or sets the name of the service reporting telemetry.
-        /// </summary>
-        public string ServiceName { get; set; } = "OpenTelemetry Exporter";
-
-        /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.
         /// </summary>
         public bool UseShortTraceIds { get; set; }
+
+#if !NET452
+        /// <summary>
+        /// Gets or sets the maximum payload size in bytes. Default value: 4096.
+        /// </summary>
+        public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
+#endif
     }
 }

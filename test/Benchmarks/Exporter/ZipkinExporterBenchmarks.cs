@@ -13,14 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Benchmarks
 {
@@ -30,21 +32,38 @@ namespace OpenTelemetry.Exporter.Benchmarks
 #endif
     public class ZipkinExporterBenchmarks
     {
-        private Activity testActivity;
+        private readonly byte[] buffer = new byte[4096];
+        private Activity activity;
+        private CircularBuffer<Activity> activityBatch;
         private IDisposable server;
         private string serverHost;
         private int serverPort;
 
-        [Params(2000, 5000)]
-        public int NumberOfActivities { get; set; }
+        [Params(1, 10, 100)]
+        public int NumberOfBatches { get; set; }
+
+        [Params(10000)]
+        public int NumberOfSpans { get; set; }
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.testActivity = this.CreateTestActivity();
+            this.activity = this.CreateTestActivity();
+            this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
             this.server = TestHttpServer.RunServer(
                 (ctx) =>
                 {
+                    using (Stream receiveStream = ctx.Request.InputStream)
+                    {
+                        while (true)
+                        {
+                            if (receiveStream.Read(this.buffer, 0, this.buffer.Length) == 0)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
                     ctx.Response.StatusCode = 200;
                     ctx.Response.OutputStream.Close();
                 },
@@ -59,19 +78,25 @@ namespace OpenTelemetry.Exporter.Benchmarks
         }
 
         [Benchmark]
-        public void ZipkinExporter_Export()
+        public void ZipkinExporter_Batching()
         {
-            var zipkinExporter = new ZipkinExporter(
+            var exporter = new ZipkinExporter(
                 new ZipkinExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
                 });
-            var processor = new SimpleExportActivityProcessor(zipkinExporter);
 
-            for (int i = 0; i < this.NumberOfActivities; i++)
+            for (int i = 0; i < this.NumberOfBatches; i++)
             {
-                processor.OnEnd(this.testActivity);
+                for (int c = 0; c < this.NumberOfSpans; c++)
+                {
+                    this.activityBatch.Add(this.activity);
+                }
+
+                exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
             }
+
+            exporter.Shutdown();
         }
 
         private Activity CreateTestActivity()
@@ -117,12 +142,20 @@ namespace OpenTelemetry.Exporter.Benchmarks
 
             var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()));
             var links = new[]
-                    {
-                        new ActivityLink(new ActivityContext(
-                            traceId,
-                            linkedSpanId,
-                            ActivityTraceFlags.Recorded)),
-                    };
+            {
+                new ActivityLink(new ActivityContext(
+                    traceId,
+                    linkedSpanId,
+                    ActivityTraceFlags.Recorded)),
+            };
+
+            using var listener = new ActivityListener()
+            {
+                ShouldListenTo = a => a.Name == nameof(this.CreateTestActivity),
+                Sample = (ref ActivityCreationOptions<ActivityContext> a) => ActivitySamplingResult.AllDataAndRecorded,
+            };
+
+            ActivitySource.AddActivityListener(listener);
 
             var activity = activitySource.StartActivity(
                 "Name",
