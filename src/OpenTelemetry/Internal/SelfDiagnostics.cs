@@ -20,7 +20,7 @@ namespace OpenTelemetry.Internal
 {
     /// <summary>
     /// Self diagnostics class captures the EventSource events sent by OpenTelemetry
-    /// modules and writes them to local file for troubleshooting.
+    /// modules and writes them to local file for internal troubleshooting.
     /// </summary>
     internal class SelfDiagnostics : IDisposable
     {
