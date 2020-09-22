@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry StackExchangeRedis instrumentation</Description>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' and $(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

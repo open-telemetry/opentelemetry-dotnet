@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcClientDiagnosticListener.cs" company="OpenTelemetry Authors">
+// <copyright file="GrpcClientDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
 using OpenTelemetry.Trace;
 
@@ -27,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         private readonly GrpcClientInstrumentationOptions options;
 
         private readonly ActivitySourceAdapter activitySource;
-        private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
@@ -69,6 +68,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
                     activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+
+                    // Remove the grpc.method tag added by the gRPC .NET library
+                    activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
                 }
 
                 var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
@@ -90,6 +92,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+                // Remove the grpc.status_code tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
             }
 
             this.activitySource.Stop(activity);

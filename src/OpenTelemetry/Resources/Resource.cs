@@ -1,4 +1,4 @@
-﻿// <copyright file="Resource.cs" company="OpenTelemetry Authors">
+// <copyright file="Resource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Resources
         public const string LibraryNameKey = "name";
         public const string LibraryVersionKey = "version";
 
-        // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-resource.md
+        // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Resource"/> class.

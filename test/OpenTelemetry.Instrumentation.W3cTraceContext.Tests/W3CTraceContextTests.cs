@@ -1,4 +1,4 @@
-﻿// <copyright file="W3CTraceContextTests.cs" company="OpenTelemetry Authors">
+// <copyright file="W3CTraceContextTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
     {
         /*
             To run the tests, invoke docker-compose.yml from the root of the repo:
-            opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=w3c_trace_context_tests --build
+            opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
 
             To run as unit tests for debugging,
             1. install required softwares in the "Install" section in https://github.com/w3c/trace-context/tree/master/test,

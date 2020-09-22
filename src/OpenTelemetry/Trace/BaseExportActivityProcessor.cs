@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseExportActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExportActivityProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,9 +46,9 @@ namespace OpenTelemetry.Trace
         public abstract override void OnEnd(Activity activity);
 
         /// <inheritdoc />
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            this.exporter.Shutdown(timeoutMilliseconds);
+            return this.exporter.Shutdown(timeoutMilliseconds);
         }
 
         /// <inheritdoc/>

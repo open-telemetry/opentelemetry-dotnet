@@ -2,11 +2,26 @@
 
 ## Unreleased
 
+* Changed `ActivityExporter.OnShutdown`, `ActivityExporter.Shutdown`,
+  `ActivityProcessor.OnShutdown` and `ActivityProcessor.Shutdown` to return
+  boolean value
+  ([#1282](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1282))
+  ([#1285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1285))
+* Renamed `SamplingDecision` options (`NotRecord` to `Drop`, `Record` to
+  `RecordOnly`, and `RecordAndSampled` to `RecordAndSample`)
+  ([#1297](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1297))
+
+## 0.6.0-beta.1
+
+Released 2020-Sep-15
+
 * Fixes [953](https://github.com/open-telemetry/opentelemetry-dotnet/issues/953)
 * Changes arising from `DiagnosticSource` changes
   ([#1203](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1203))
 * `PropertyFetcher` is now public
   ([#1232](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1232))
+* `PropertyFetcher` changed to `PropertyFetcher<T>`
+  ([#1238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1238))
 
 ## 0.5.0-beta.2
 
