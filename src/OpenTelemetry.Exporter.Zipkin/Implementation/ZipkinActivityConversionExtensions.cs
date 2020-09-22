@@ -49,7 +49,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
 #endif
 
-        private static readonly DictionaryEnumerator<string, object, AttributeEnumerationState>.ForEachDelegate ProcessTagsRef = ProcessTags;
         private static readonly ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessActivityEventsRef = ProcessActivityEvents;
 
         internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
@@ -67,7 +66,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            DictionaryEnumerator<string, object, AttributeEnumerationState>.AllocationFreeForEach(activity.TagObjects, ref attributeEnumerationState, ProcessTagsRef);
+            activity.EnumerateTagValues(ref attributeEnumerationState);
 
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))
@@ -172,58 +171,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return microseconds - UnixEpochMicroseconds;
         }
 
-        internal static bool ProcessTags(ref AttributeEnumerationState state, KeyValuePair<string, object> attribute)
-        {
-            if (attribute.Value == null)
-            {
-                return true;
-            }
-
-            if (attribute.Value is string strVal)
-            {
-                string key = attribute.Key;
-                if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (state.RemoteEndpointServiceName == null || priority < state.RemoteEndpointServiceNamePriority))
-                {
-                    state.RemoteEndpointServiceName = strVal;
-                    state.RemoteEndpointServiceNamePriority = priority;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerName)
-                {
-                    state.HostName = strVal;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerIp)
-                {
-                    state.IpAddress = strVal;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerPort && int.TryParse(strVal, out var port))
-                {
-                    state.Port = port;
-                }
-                else if (key == Resource.ServiceNameKey)
-                {
-                    state.ServiceName = strVal;
-                }
-                else if (key == Resource.ServiceNamespaceKey)
-                {
-                    state.ServiceNamespace = strVal;
-                }
-
-                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, new KeyValuePair<string, object>(key, strVal));
-            }
-            else
-            {
-                if (attribute.Value is int intVal && attribute.Key == SemanticConventions.AttributeNetPeerPort)
-                {
-                    state.Port = intVal;
-                }
-
-                PooledList<KeyValuePair<string, object>>.Add(ref state.Tags, attribute);
-            }
-
-            return true;
-        }
-
         private static string EncodeTraceId(ActivityTraceId traceId, bool useShortTraceIds)
         {
             var id = traceId.ToHexString();
@@ -254,7 +201,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return true;
         }
 
-        internal struct AttributeEnumerationState
+        internal struct AttributeEnumerationState : IActivityTagEnumerator
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 
@@ -271,6 +218,58 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             public string IpAddress;
 
             public int Port;
+
+            public bool ForEach(KeyValuePair<string, object> activityTag)
+            {
+                if (activityTag.Value == null)
+                {
+                    return true;
+                }
+
+                if (activityTag.Value is string strVal)
+                {
+                    string key = activityTag.Key;
+                    if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
+                        && (this.RemoteEndpointServiceName == null || priority < this.RemoteEndpointServiceNamePriority))
+                    {
+                        this.RemoteEndpointServiceName = strVal;
+                        this.RemoteEndpointServiceNamePriority = priority;
+                    }
+                    else if (key == SemanticConventions.AttributeNetPeerName)
+                    {
+                        this.HostName = strVal;
+                    }
+                    else if (key == SemanticConventions.AttributeNetPeerIp)
+                    {
+                        this.IpAddress = strVal;
+                    }
+                    else if (key == SemanticConventions.AttributeNetPeerPort && int.TryParse(strVal, out var port))
+                    {
+                        this.Port = port;
+                    }
+                    else if (key == Resource.ServiceNameKey)
+                    {
+                        this.ServiceName = strVal;
+                    }
+                    else if (key == Resource.ServiceNamespaceKey)
+                    {
+                        this.ServiceNamespace = strVal;
+                    }
+
+                    PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>(key, strVal));
+                }
+                else
+                {
+                    if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
+                    {
+                        this.Port = intVal;
+                    }
+
+                    PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, activityTag);
+                }
+
+                return true;
+            }
         }
     }
 }

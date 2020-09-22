@@ -34,7 +34,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
-            ProcessTags(ref attributeEnumerationState, new KeyValuePair<string, object>(key, value));
+
+            attributeEnumerationState.ForEach(new KeyValuePair<string, object>(key, value));
 
             Assert.Equal(key, attributeEnumerationState.Tags[0].Key);
             Assert.Equal(value, attributeEnumerationState.Tags[0].Value);
@@ -51,7 +52,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
-            ProcessTags(ref attributeEnumerationState, new KeyValuePair<string, object>(key, value));
+
+            attributeEnumerationState.ForEach(new KeyValuePair<string, object>(key, value));
 
             Assert.Empty(attributeEnumerationState.Tags);
         }
