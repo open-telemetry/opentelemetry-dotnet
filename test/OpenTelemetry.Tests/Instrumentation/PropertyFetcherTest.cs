@@ -45,5 +45,20 @@ namespace OpenTelemetry.Tests.Instrumentation
             Assert.Equal(default, result);
             Assert.Equal(default, resultInt);
         }
+
+        [Fact]
+        public void FetchPropertyFromMultipeTypes()
+        {
+            var activity = new Activity("test");
+            var fetch = new PropertyFetcher<string>("DisplayName");
+            var result = fetch.Fetch(activity);
+
+            Assert.Equal(activity.DisplayName, result);
+
+            var test = new { DisplayName = "Test" };
+            result = fetch.Fetch(test);
+
+            Assert.Equal(test.DisplayName, result);
+        }
     }
 }
