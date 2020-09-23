@@ -19,9 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-#if DEBUG
 using System.Threading.Tasks;
-#endif
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -215,12 +213,9 @@ namespace OpenTelemetry.Exporter.Jaeger
                     var batch = batchKvp.Value;
 
                     var task = this.thriftClient.WriteBatchAsync(batch, CancellationToken.None);
-#if DEBUG
-                    if (task.Status != TaskStatus.RanToCompletion)
-                    {
-                        throw new InvalidOperationException();
-                    }
-#endif
+
+                    Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
                     if (batch != workingBatch)
                     {
                         batch.Return();
@@ -242,12 +237,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         private BufferWriterMemory BuildThriftMessage(Process process)
         {
             var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
-#if DEBUG
-            if (task.Status != TaskStatus.RanToCompletion)
-            {
-                throw new InvalidOperationException();
-            }
-#endif
+
+            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
             return this.memoryTransport.ToBuffer();
         }
 
@@ -255,12 +247,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
         {
             var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
-#if DEBUG
-            if (task.Status != TaskStatus.RanToCompletion)
-            {
-                throw new InvalidOperationException();
-            }
-#endif
+
+            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
             return this.memoryTransport.ToBuffer();
         }
     }
