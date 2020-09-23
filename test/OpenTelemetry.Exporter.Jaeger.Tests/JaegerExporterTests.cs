@@ -121,6 +121,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             // Arrange
             using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
+            jaegerExporter.ApplyLibraryResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
@@ -140,6 +141,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             // Arrange
             using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
+            jaegerExporter.ApplyLibraryResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
@@ -170,6 +172,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             // Arrange
             using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPayloadSizeInBytes = 1500 });
+            jaegerExporter.ApplyLibraryResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
