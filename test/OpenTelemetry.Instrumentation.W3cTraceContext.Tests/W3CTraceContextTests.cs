@@ -164,7 +164,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             };
             proc.Start();
 
-            // TODO: after W3C Trace Context test suite passes, it might go in standard output
+            // TODO: after W3C Trace Context test suite passes, check whether it's still in stderr.
             // var results = proc.StandardOutput.ReadToEnd();
             var results = proc.StandardError.ReadToEnd();
             proc.WaitForExit();
