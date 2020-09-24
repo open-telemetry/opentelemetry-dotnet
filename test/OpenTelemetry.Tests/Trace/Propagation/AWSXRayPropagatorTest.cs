@@ -204,5 +204,20 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             Assert.Equal(default, this.awsXRayPropagator.Extract(default, carrier, Getter));
         }
+
+        [Fact]
+        public void TestExtractTraceHeaderWithAdditionalField()
+        {
+            var carrier = new Dictionary<string, string>()
+            {
+                { AWSXRayTraceHeaderKey, "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1;Foo=Bar" },
+            };
+            var traceId = ActivityTraceId.CreateFromString(TraceId.AsSpan());
+            var parentId = ActivitySpanId.CreateFromString(ParentId.AsSpan());
+            var traceFlags = ActivityTraceFlags.Recorded;
+            var activityContext = new ActivityContext(traceId, parentId, traceFlags, isRemote: true);
+
+            Assert.Equal(new PropagationContext(activityContext, default), this.awsXRayPropagator.Extract(default, carrier, Getter));
+        }
     }
 }
