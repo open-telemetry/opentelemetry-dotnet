@@ -64,20 +64,17 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 string lastLine = ParseLastLine(result);
                 this.output.WriteLine("result:" + result);
                 Assert.StartsWith("FAILED", lastLine);
-#if NETCOREAPP2_1
-                AssertOutputOfNetCoreApp21(result);
-#else
-                AssertOutputOfNetCoreApp31(result);
-#endif
+                AssertOutputOfTestSuite(result);
             }
         }
 
-        private static void AssertOutputOfNetCoreApp21(string output)
+        private static void AssertOutputOfTestSuite(string output)
         {
             string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
 
             // TODO: fix and remove from this failure list except for known failures with external dependencies. #1219
             // See failures with external dependencies in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+#if NETCOREAPP2_1
             string[] existingFailures = new string[]
             {
                 // Errors:
@@ -95,21 +92,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 "test_traceparent_version_0xff",
                 "test_tracestate_empty_header",
             };
-
-            // FAILED (failures=4, errors=7)
-            Assert.Equal(existingFailures.Length, unsuccessfulTestcaseNames.Length);
-            for (int i = 0; i < existingFailures.Length; ++i)
-            {
-                Assert.Equal(existingFailures[i], unsuccessfulTestcaseNames[i]);
-            }
-        }
-
-        private static void AssertOutputOfNetCoreApp31(string output)
-        {
-            string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
-
-            // TODO: fix and remove from this failure list except for known failures with external dependencies. #1219
-            // See failures with external dependencies in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+#elif NETCOREAPP3_1
             string[] existingFailures = new string[]
             {
                 // Errors:
@@ -129,8 +112,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 "test_traceparent_version_0xff",
                 "test_tracestate_empty_header",
             };
-
-            // FAILED (failures=6, errors=7)
+#endif
             Assert.Equal(existingFailures.Length, unsuccessfulTestcaseNames.Length);
             for (int i = 0; i < existingFailures.Length; ++i)
             {
