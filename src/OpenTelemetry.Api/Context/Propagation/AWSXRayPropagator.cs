@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -143,8 +144,8 @@ namespace OpenTelemetry.Context.Propagation
             while (position < rawHeader.Length)
             {
                 int delimiterIndex = rawHeader.IndexOf(TraceHeaderDelimiter, position);
+                
                 string part;
-
                 if (delimiterIndex >= 0)
                 {
                     part = rawHeader.Substring(position, delimiterIndex - position);
