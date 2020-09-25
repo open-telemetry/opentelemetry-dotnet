@@ -50,6 +50,7 @@ namespace OpenTelemetry.Logs
 
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
+            // TODO: set existing loggers
             this.scopeProvider = scopeProvider;
         }
 
