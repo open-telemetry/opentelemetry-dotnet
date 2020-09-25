@@ -144,7 +144,6 @@ namespace OpenTelemetry.Context.Propagation
             while (position < rawHeader.Length)
             {
                 int delimiterIndex = rawHeader.IndexOf(TraceHeaderDelimiter, position);
-                
                 string part;
                 if (delimiterIndex >= 0)
                 {
