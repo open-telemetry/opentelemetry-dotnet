@@ -31,6 +31,8 @@
     <MicrosoftCodeAnalysisFxCopAnalyzersPkgVer>[3.3.0]</MicrosoftCodeAnalysisFxCopAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.7.1]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,5.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingConfigurationPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
     <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <NewtonsoftJsonPkgVer>[12.0.2,13.0)</NewtonsoftJsonPkgVer>
