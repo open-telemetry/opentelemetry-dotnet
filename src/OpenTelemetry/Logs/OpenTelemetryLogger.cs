@@ -25,11 +25,11 @@ namespace OpenTelemetry.Logs
 {
     internal class OpenTelemetryLogger : ILogger
     {
-        private readonly string name;
+        private readonly string categoryName;
 
-        internal OpenTelemetryLogger(string name, OpenTelemetryLoggerOptions options)
+        internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerOptions options)
         {
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
 
             if (options == null)
             {
@@ -57,12 +57,12 @@ namespace OpenTelemetry.Logs
                 {
                     foreach (var entry in dict)
                     {
-                        Console.WriteLine($"{this.name}({logLevel}, Id={eventId}): {entry.Value}");
+                        Console.WriteLine($"{this.categoryName}({logLevel}, Id={eventId}): {entry.Value}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"{this.name}({logLevel}, Id={eventId}):");
+                    Console.WriteLine($"{this.categoryName}({logLevel}, Id={eventId}):");
                     foreach (var entry in dict)
                     {
                         if (string.Equals(entry.Key, "{OriginalFormat}", StringComparison.Ordinal))

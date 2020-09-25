@@ -15,7 +15,8 @@
 // </copyright>
 
 #if NETSTANDARD2_0
-using System.Collections.Concurrent;
+using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -25,13 +26,13 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
     {
         private readonly IOptionsMonitor<OpenTelemetryLoggerOptions> options;
-        private readonly ConcurrentDictionary<string, OpenTelemetryLogger> loggers;
+        private readonly IDictionary<string, ILogger> loggers;
         private IExternalScopeProvider scopeProvider;
 
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
         {
             this.options = options;
-            this.loggers = new ConcurrentDictionary<string, OpenTelemetryLogger>();
+            this.loggers = new Dictionary<string, ILogger>(StringComparer.Ordinal);
         }
 
         internal IExternalScopeProvider ScopeProvider
@@ -52,9 +53,21 @@ namespace OpenTelemetry.Logs
             this.scopeProvider = scopeProvider;
         }
 
-        public ILogger CreateLogger(string name)
+        public ILogger CreateLogger(string categoryName)
         {
-            return this.loggers.GetOrAdd(name, name => new OpenTelemetryLogger(name, this.options.CurrentValue));
+            lock (this.loggers)
+            {
+                ILogger logger;
+
+                if (this.loggers.TryGetValue(categoryName, out logger))
+                {
+                    return logger;
+                }
+
+                logger = new OpenTelemetryLogger(categoryName, this.options.CurrentValue);
+                this.loggers.Add(categoryName, logger);
+                return logger;
+            }
         }
 
         public void Dispose()
