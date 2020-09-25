@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.6.0-beta.1
+
+Released 2020-Sep-15
+
+* For gRPC invocations, the `grpc.method` and `grpc.status_code` attributes
+  added by the library are removed from the span. The information from these
+  attributes is contained in other attributes that follow the conventions of
+  OpenTelemetry.
+  ([#1260](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1260)).
+
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
+* Added Filter public API on AspNetCoreInstrumentationOptions to allow
+  filtering of instrumentation based on HttpContext.
+
 * Asp.Net Core Instrumentation automatically populates HttpRequest,
   HttpResponse in Activity custom property
 
@@ -18,6 +35,8 @@
     calls where one span is created for the gRPC call and a separate span is
     created for the underlying HTTP call in the event both gRPC and HTTP
     instrumentation are enabled.
+* Renamed `ITextPropagator` to `IPropagator`
+  ([#1190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1190))
 
 ## 0.4.0-beta.2
 

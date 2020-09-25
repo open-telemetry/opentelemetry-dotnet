@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpHandlerDiagnosticListener.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpHandlerDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -49,10 +49,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly ActivitySourceAdapter activitySource;
-        private readonly PropertyFetcher startRequestFetcher = new PropertyFetcher("Request");
-        private readonly PropertyFetcher stopResponseFetcher = new PropertyFetcher("Response");
-        private readonly PropertyFetcher stopExceptionFetcher = new PropertyFetcher("Exception");
-        private readonly PropertyFetcher stopRequestStatusFetcher = new PropertyFetcher("RequestTaskStatus");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
+        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
+        private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new PropertyFetcher<TaskStatus>("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C;
         private readonly HttpClientInstrumentationOptions options;
 
@@ -86,17 +86,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (this.options.TextFormat.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
+            if (this.options.Propagator.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
                 return;
             }
 
-            activity.SetKind(ActivityKind.Client);
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -111,9 +110,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.TextFormat is TextMapPropagator))
+            if (!(this.httpClientSupportsW3C && this.options.Propagator is TextMapPropagator))
             {
-                this.options.TextFormat.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
+                this.options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 
@@ -121,21 +120,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload) as TaskStatus?;
+                // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
+                // requestTaskStatus is not null
+                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload);
 
-                if (requestTaskStatus.HasValue)
+                if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
-                    if (requestTaskStatus != TaskStatus.RanToCompletion)
+                    if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        if (requestTaskStatus == TaskStatus.Canceled)
-                        {
-                            activity.SetStatus(Status.Cancelled);
-                        }
-                        else if (requestTaskStatus != TaskStatus.Faulted)
-                        {
-                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                            activity.SetStatus(Status.Unknown);
-                        }
+                        activity.SetStatus(Status.Cancelled);
+                    }
+                    else if (requestTaskStatus != TaskStatus.Faulted)
+                    {
+                        // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                        activity.SetStatus(Status.Unknown);
                     }
                 }
 

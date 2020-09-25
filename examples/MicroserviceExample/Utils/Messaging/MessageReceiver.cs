@@ -1,4 +1,4 @@
-﻿// <copyright file="MessageReceiver.cs" company="OpenTelemetry Authors">
+// <copyright file="MessageReceiver.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ namespace Utils.Messaging
     public class MessageReceiver : IDisposable
     {
         private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageReceiver));
-        private static readonly ITextFormat TextFormat = new TextMapPropagator();
+        private static readonly IPropagator Propagator = new TextMapPropagator();
 
         private readonly ILogger<MessageReceiver> logger;
         private readonly IConnection connection;
@@ -57,7 +57,7 @@ namespace Utils.Messaging
         public void ReceiveMessage(BasicDeliverEventArgs ea)
         {
             // Extract the ActivityContext of the upstream parent from the message headers.
-            var parentContext = TextFormat.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
+            var parentContext = Propagator.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
 
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
@@ -73,7 +73,7 @@ namespace Utils.Messaging
 
                     if (activity != null)
                     {
-                        activity.AddTag("message", message);
+                        activity.SetTag("message", message);
 
                         // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
                         RabbitMqHelper.AddMessagingTags(activity);

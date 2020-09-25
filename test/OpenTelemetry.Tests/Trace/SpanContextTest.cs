@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanContextTest.cs" company="OpenTelemetry Authors">
+// <copyright file="SpanContextTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(context1 != context2);
         }
 
-        [Fact(Skip = "Skip until ActivityContext support IsRemote")]
+        [Fact]
         public void Not_Equality_DifferentIsRemote()
         {
             var traceId = ActivityTraceId.CreateRandom();

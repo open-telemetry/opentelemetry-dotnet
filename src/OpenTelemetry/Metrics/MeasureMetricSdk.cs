@@ -1,4 +1,4 @@
-﻿// <copyright file="MeasureMetricSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="MeasureMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     internal abstract class MeasureMetricSdk<T> : MeasureMetric<T>
         where T : struct
     {
-        private readonly IDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>>();
+        private readonly ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>>();
         private string metricName;
 
         public MeasureMetricSdk(string name)
@@ -32,14 +32,7 @@ namespace OpenTelemetry.Metrics
 
         public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {
-            if (!this.measureBoundInstruments.TryGetValue(labelset, out var boundInstrument))
-            {
-                boundInstrument = this.CreateMetric();
-
-                this.measureBoundInstruments.Add(labelset, boundInstrument);
-            }
-
-            return boundInstrument;
+            return this.measureBoundInstruments.GetOrAdd(labelset, this.CreateMetric());
         }
 
         public override BoundMeasureMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
@@ -47,7 +40,7 @@ namespace OpenTelemetry.Metrics
             return this.Bind(new LabelSetSdk(labels));
         }
 
-        internal IDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> GetAllBoundInstruments()
+        internal ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> GetAllBoundInstruments()
         {
             return this.measureBoundInstruments;
         }

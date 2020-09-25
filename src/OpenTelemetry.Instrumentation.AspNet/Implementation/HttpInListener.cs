@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -31,8 +30,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        private readonly PropertyFetcher routeFetcher = new PropertyFetcher("Route");
-        private readonly PropertyFetcher routeTemplateFetcher = new PropertyFetcher("RouteTemplate");
+        private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
+        private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -53,9 +52,18 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 return;
             }
 
-            if (this.options.RequestFilter?.Invoke(context) == false)
+            try
             {
-                AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
                 activity.IsAllDataRequested = false;
                 return;
             }
@@ -63,9 +71,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var request = context.Request;
             var requestValues = request.Unvalidated;
 
-            if (!(this.options.TextFormat is TextMapPropagator))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
-                var ctx = this.options.TextFormat.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
                 {
@@ -97,9 +105,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            activity.SetKind(ActivityKind.Server);
-
-            this.activitySource.Start(activity);
+            this.activitySource.Start(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {
@@ -125,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            if (!(this.options.TextFormat is TextMapPropagator))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
@@ -190,7 +196,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.TextFormat is TextMapPropagator))
+            if (!(this.options.Propagator is TextMapPropagator))
             {
                 if (activity.OperationName.Equals(ActivityNameByHttpInListener))
                 {

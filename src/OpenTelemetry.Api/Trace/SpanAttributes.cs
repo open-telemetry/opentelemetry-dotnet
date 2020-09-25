@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanAttributes.cs" company="OpenTelemetry Authors">
+// <copyright file="SpanAttributes.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="attributes">Initial attributes to store in the collection.</param>
         public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+            : this()
         {
             if (attributes == null)
             {

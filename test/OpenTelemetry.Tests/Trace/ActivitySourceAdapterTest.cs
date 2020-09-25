@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivitySourceAdapterTest.cs" company="OpenTelemetry Authors">
+// <copyright file="ActivitySourceAdapterTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -61,7 +62,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
@@ -69,9 +70,24 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Theory]
-        [InlineData(SamplingDecision.NotRecord)]
-        [InlineData(SamplingDecision.Record)]
-        [InlineData(SamplingDecision.RecordAndSampled)]
+        [InlineData(ActivityKind.Client)]
+        [InlineData(ActivityKind.Consumer)]
+        [InlineData(ActivityKind.Internal)]
+        [InlineData(ActivityKind.Producer)]
+        [InlineData(ActivityKind.Server)]
+        public void ActivitySourceAdapterSetsKind(ActivityKind kind)
+        {
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity, kind);
+
+            Assert.Equal(kind, activity.Kind);
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
         public void ActivitySourceAdapterCallsStartStopActivityProcessor1(SamplingDecision decision)
         {
             this.testSampler.SamplingAction = (samplingParameters) =>
@@ -88,9 +104,9 @@ namespace OpenTelemetry.Trace.Tests
 
                     // If start is called, that means activity is sampled,
                     // and TraceFlag is set to Recorded.
-                    Assert.Equal(decision == SamplingDecision.Record || decision == SamplingDecision.RecordAndSampled, a.IsAllDataRequested);
-                    Assert.Equal(decision == SamplingDecision.RecordAndSampled ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None, a.ActivityTraceFlags);
-                    Assert.Equal(decision == SamplingDecision.RecordAndSampled, a.Recorded);
+                    Assert.Equal(decision == SamplingDecision.RecordOnly || decision == SamplingDecision.RecordAndSample, a.IsAllDataRequested);
+                    Assert.Equal(decision == SamplingDecision.RecordAndSample ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None, a.ActivityTraceFlags);
+                    Assert.Equal(decision == SamplingDecision.RecordAndSample, a.Recorded);
                 };
 
             this.testProcessor.EndAction =
@@ -101,10 +117,11 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Producer);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
+            Assert.Equal(ActivityKind.Producer, activity.Kind);
             Assert.Equal(activity.IsAllDataRequested, startCalled);
             Assert.Equal(activity.IsAllDataRequested, endCalled);
         }
@@ -141,12 +158,36 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
             Assert.Equal(isSampled, startCalled);
             Assert.Equal(isSampled, endCalled);
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
+        public void ActivitySourceAdapterPopulatesSamplingAttributesToActivity(SamplingDecision sampling)
+        {
+            this.testSampler.SamplingAction = (samplingParams) =>
+            {
+                var attributes = new Dictionary<string, object>();
+                attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                return new SamplingResult(sampling, attributes);
+            };
+
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
+            if (sampling != SamplingDecision.Drop)
+            {
+                Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
+            }
+
+            activity.Stop();
         }
 
         [Fact]
@@ -155,14 +196,14 @@ namespace OpenTelemetry.Trace.Tests
             this.testSampler.SamplingAction = (samplingParameters) =>
             {
                 Assert.Equal(default, samplingParameters.ParentContext);
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             };
 
             // Start activity without setting parent. i.e it'll have null parent
             // and becomes root activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -184,7 +225,7 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
                 Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             };
 
             // Create an activity with remote parent id.
@@ -193,7 +234,7 @@ namespace OpenTelemetry.Trace.Tests
             var activity = new Activity("test").SetParentId(remoteParentId);
             activity.TraceStateString = tracestate;
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -216,7 +257,8 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
                 Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
                 Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                Assert.Equal(ActivityKind.Client, samplingParameters.Kind);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             };
 
             // This activity will have a inproc parent.
@@ -225,7 +267,7 @@ namespace OpenTelemetry.Trace.Tests
             // i.e of the parent Activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity);
+            this.activitySourceAdapter.Start(activity, ActivityKind.Client);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 

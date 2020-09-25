@@ -1,4 +1,4 @@
-﻿// <copyright file="ActivitySourceAdapter.cs" company="OpenTelemetry Authors">
+// <copyright file="ActivitySourceAdapter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Trace
     /// </remarks>
     public class ActivitySourceAdapter
     {
+        private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
         private readonly Sampler sampler;
         private readonly Resource resource;
         private ActivityProcessor activityProcessor;
@@ -80,8 +82,10 @@ namespace OpenTelemetry.Trace
         /// Method that starts an <see cref="Activity"/>.
         /// </summary>
         /// <param name="activity"><see cref="Activity"/> to be started.</param>
-        public void Start(Activity activity)
+        /// <param name="kind">ActivityKind to be set of the activity.</param>
+        public void Start(Activity activity, ActivityKind kind)
         {
+            SetKindProperty(activity, kind);
             this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
             {
@@ -105,6 +109,14 @@ namespace OpenTelemetry.Trace
         internal void UpdateProcessor(ActivityProcessor processor)
         {
             this.activityProcessor = processor;
+        }
+
+        private static Action<Activity, ActivityKind> CreateActivityKindSetter()
+        {
+            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
+            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
+            var body = Expression.Assign(Expression.Property(instance, "Kind"), propertyValue);
+            return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
         }
 
         private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
@@ -151,16 +163,24 @@ namespace OpenTelemetry.Trace
 
             switch (samplingResult.Decision)
             {
-                case SamplingDecision.NotRecord:
+                case SamplingDecision.Drop:
                     activity.IsAllDataRequested = false;
                     break;
-                case SamplingDecision.Record:
+                case SamplingDecision.RecordOnly:
                     activity.IsAllDataRequested = true;
                     break;
-                case SamplingDecision.RecordAndSampled:
+                case SamplingDecision.RecordAndSample:
                     activity.IsAllDataRequested = true;
                     activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
                     break;
+            }
+
+            if (samplingResult.Decision != SamplingDecision.Drop)
+            {
+                foreach (var att in samplingResult.Attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
             }
         }
     }

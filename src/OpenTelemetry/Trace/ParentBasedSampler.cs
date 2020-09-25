@@ -1,4 +1,4 @@
-﻿// <copyright file="ParentBasedSampler.cs" company="OpenTelemetry Authors">
+// <copyright file="ParentBasedSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +41,7 @@ namespace OpenTelemetry.Trace
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             var parentContext = samplingParameters.ParentContext;
-            if (/* TODO: TraceId is always provided due to AutoGenerateRootContextTraceId. That is being removed in RC1 and this can be put back.
-                 parentContext.TraceId == default ||*/ parentContext.SpanId == default)
+            if (parentContext.TraceId == default)
             {
                 // If no parent, use the delegate to determine sampling.
                 return this.delegateSampler.ShouldSample(samplingParameters);
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Trace
             // If the parent is sampled keep the sampling decision.
             if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             }
 
             if (samplingParameters.Links != null)
@@ -61,13 +60,13 @@ namespace OpenTelemetry.Trace
                 {
                     if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                     {
-                        return new SamplingResult(SamplingDecision.RecordAndSampled);
+                        return new SamplingResult(SamplingDecision.RecordAndSample);
                     }
                 }
             }
 
             // If parent was not sampled, do not sample.
-            return new SamplingResult(SamplingDecision.NotRecord);
+            return new SamplingResult(SamplingDecision.Drop);
         }
     }
 }

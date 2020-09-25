@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter.Jaeger
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.Jaeger
     {
         internal const string DefaultServiceName = "OpenTelemetry Exporter";
 
-        internal const int DefaultMaxPacketSize = 65000;
+        internal const int DefaultMaxPayloadSizeInBytes = 4096;
 
         /// <summary>
         /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
@@ -40,14 +40,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         public int AgentPort { get; set; } = 6831;
 
         /// <summary>
-        /// Gets or sets the maximum packet size in bytes. Default value: 65000.
+        /// Gets or sets the maximum payload size in bytes. Default value: 4096.
         /// </summary>
-        public int? MaxPacketSize { get; set; } = DefaultMaxPacketSize;
-
-        /// <summary>
-        /// Gets or sets the maximum time that should elapse between flushing the internal buffer to the configured Jaeger agent. Default value: 00:00:10.
-        /// </summary>
-        public TimeSpan MaxFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
+        public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
         /// Gets or sets the tags that should be sent with telemetry.

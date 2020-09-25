@@ -1,4 +1,4 @@
-﻿// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
+// <copyright file="DiagnosticSourceListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,11 +39,6 @@ namespace OpenTelemetry.Instrumentation
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            if (Sdk.SuppressInstrumentation)
-            {
-                return;
-            }
-
             if (!this.handler.SupportsNullActivity && Activity.Current == null)
             {
                 InstrumentationEventSource.Log.NullActivity(value.Key);
@@ -54,19 +49,31 @@ namespace OpenTelemetry.Instrumentation
             {
                 if (value.Key.EndsWith("Start", StringComparison.Ordinal))
                 {
-                    this.handler.OnStartActivity(Activity.Current, value.Value);
+                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    {
+                        this.handler.OnStartActivity(Activity.Current, value.Value);
+                    }
                 }
                 else if (value.Key.EndsWith("Stop", StringComparison.Ordinal))
                 {
-                    this.handler.OnStopActivity(Activity.Current, value.Value);
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    {
+                        this.handler.OnStopActivity(Activity.Current, value.Value);
+                    }
                 }
                 else if (value.Key.EndsWith("Exception", StringComparison.Ordinal))
                 {
-                    this.handler.OnException(Activity.Current, value.Value);
+                    if (!Sdk.SuppressInstrumentation)
+                    {
+                        this.handler.OnException(Activity.Current, value.Value);
+                    }
                 }
                 else
                 {
-                    this.handler.OnCustom(value.Key, Activity.Current, value.Value);
+                    if (!Sdk.SuppressInstrumentation)
+                    {
+                        this.handler.OnCustom(value.Key, Activity.Current, value.Value);
+                    }
                 }
             }
             catch (Exception ex)

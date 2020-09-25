@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinExporterTests.cs" company="OpenTelemetry Authors">
+// <copyright file="ZipkinExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,8 +48,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var listener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
-                GetRequestedDataUsingParentId = (ref ActivityCreationOptions<string> options) => ActivityDataRequest.AllData,
-                GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) => ActivityDataRequest.AllData,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
             };
 
             ActivitySource.AddActivityListener(listener);
@@ -84,14 +83,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
-        public void ZipkinExporter_BadArgs()
+        public void BadArgs()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddZipkinExporter());
         }
 
         [Fact]
-        public void ZipkinExporter_SuppresssesInstrumentation()
+        public void SuppresssesInstrumentation()
         {
             const string ActivitySourceName = "zipkin.test";
             Guid requestId = Guid.NewGuid();
@@ -135,7 +134,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ZipkinExporterIntegrationTest(bool useShortTraceIds)
+        public void IntegrationTest(bool useShortTraceIds)
         {
             Guid requestId = Guid.NewGuid();
 
@@ -170,7 +169,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""OpenTelemetry Exporter""{ipInformation}}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""boolKey"":""True"",""library.name"":""CreateTestActivity""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""OpenTelemetry Exporter""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""True"",""http.host"":""http://localhost:44312/"",""library.name"":""CreateTestActivity""}}}}]",
                 Responses[requestId]);
         }
 
@@ -196,13 +195,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 { "longKey2", 1 },
                 { "doubleKey", 1D },
                 { "doubleKey2", 1F },
+                { "longArrayKey", new long[] { 1, 2 } },
                 { "boolKey", true },
+                { "http.host", "http://localhost:44312/" }, // simulating instrumentation tag adding http.host
             };
             if (additionalAttributes != null)
             {
                 foreach (var attribute in additionalAttributes)
                 {
-                    attributes.Add(attribute.Key, attribute.Value);
+                    if (!attributes.ContainsKey(attribute.Key))
+                    {
+                        attributes.Add(attribute.Key, attribute.Value);
+                    }
                 }
             }
 
@@ -229,7 +233,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
-                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()))
+                    attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value))
                     : null;
             var links = addLinks ?
                     new[]

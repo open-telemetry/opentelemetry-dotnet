@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientTests.Basic.netcore31.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientTests.Basic.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             // Ensure that the header value func does not throw if the header key can't be found
-            var mockTextFormat = new Mock<ITextFormat>();
+            var mockPropagator = new Mock<IPropagator>();
 
             // var isInjectedHeaderValueGetterThrows = false;
             // mockTextFormat
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             //         });
 
             using (Sdk.CreateTracerProviderBuilder()
-                        .AddHttpClientInstrumentation(o => o.TextFormat = mockTextFormat.Object)
+                        .AddHttpClientInstrumentation(o => o.Propagator = mockPropagator.Object)
                         .AddProcessor(processor.Object)
                         .Build())
             {
@@ -122,8 +122,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                   .AddHttpClientInstrumentation((opt) => opt.Propagator = propagator.Object)
                    .AddProcessor(processor.Object)
                    .Build())
             {
@@ -235,17 +235,38 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async void HttpClientInstrumentationFiltersOutRequests()
+        public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var processor = new Mock<ActivityProcessor>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
-                        (opt) => opt.FilterFunc = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
                                .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
+            }
+
+            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+        }
+
+        [Fact]
+        public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
+        {
+            var processor = new Mock<ActivityProcessor>();
+            using (Sdk.CreateTracerProviderBuilder()
+                               .AddHttpClientInstrumentation(
+                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
+                               .AddProcessor(processor.Object)
+                               .Build())
+            {
+                using var c = new HttpClient();
+                using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+                {
+                    await c.GetAsync(this.url);
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+                }
             }
 
             Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.

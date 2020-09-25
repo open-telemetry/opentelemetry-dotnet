@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.6.0-beta.1
+
+Released 2020-Sep-15
+
+## 0.5.0-beta.2
+
+Released 2020-08-28
+
 * Renamed extension method from `UseZPagesExporter` to `AddZPagesExporter`
   ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))
 * Changed `ZPagesExporter` to use `ZPagesProcessor` by default

@@ -1,4 +1,4 @@
-﻿// <copyright file="HostingExtensionsEventSource.cs" company="OpenTelemetry Authors">
+// <copyright file="HostingExtensionsEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,13 +46,13 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             }
         }
 
-        [Event(1, Message = "Failed to initialize: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
+        [Event(1, Message = "An exception occurred while initializing OpenTelemetry Tracing. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
         public void FailedInitialize(string exception)
         {
             this.WriteEvent(1, exception);
         }
 
-        [Event(2, Message = "Failed to get OpenTelemetrySDK: '{0}'. OpenTelemetry will not work.", Level = EventLevel.Error)]
+        [Event(2, Message = "An exception occurred while retrieving OpenTelemetry Tracer. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
         public void FailedOpenTelemetrySDK(string exception)
         {
             this.WriteEvent(2, exception);

@@ -1,4 +1,4 @@
-﻿// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
+// <copyright file="BasicTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
@@ -126,24 +127,33 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
+#if !NETCOREAPP2_1
+            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
+            // must be used.
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+#else
+            // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
+            // is always ignored and new one is created by the Instrumentation
+            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
+#endif
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
-            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
         }
 
         [Fact]
-        public async Task CustomTextFormat()
+        public async Task CustomPropagator()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
                 new PropagationContext(
                     new ActivityContext(
                         expectedTraceId,
@@ -157,7 +167,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation((opt) => opt.TextFormat = textFormat.Object)
+                            .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
                             .AddProcessor(activityProcessor.Object)
                             .Build();
                     })))
@@ -172,25 +182,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // begin and end was called once each.
             Assert.Equal(2, activityProcessor.Invocations.Count);
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.True(activity.Duration != TimeSpan.Zero);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
-            Assert.Equal("/api/values/2", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
         }
 
         [Fact]
-        public async Task FilterOutRequest()
+        public async Task RequestNotCollectedWhenFilterIsApplied()
         {
             var activityProcessor = new Mock<ActivityProcessor>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.RequestFilter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -218,7 +229,60 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("/api/values", activity.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+        }
+
+        [Fact]
+        public async Task RequestNotCollectedWhenFilterThrowException()
+        {
+            var activityProcessor = new Mock<ActivityProcessor>();
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
+                    {
+                        if (ctx.Request.Path == "/api/values/2")
+                        {
+                            throw new Exception("from InstrumentationFilter");
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    })
+                    .AddProcessor(activityProcessor.Object)
+                    .Build();
+            }
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices)))
+            {
+                using var client = testFactory.CreateClient();
+
+                // Act
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
+                {
+                    var response1 = await client.GetAsync("/api/values");
+                    var response2 = await client.GetAsync("/api/values/2");
+
+                    response1.EnsureSuccessStatusCode(); // Status Code 200-299
+                    response2.EnsureSuccessStatusCode(); // Status Code 200-299
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                }
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            // As InstrumentationFilter threw, we continue as if the
+            // InstrumentationFilter did not exist.
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
         }
 
         public void Dispose()
@@ -243,7 +307,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath, Resources.Resource expectedResource)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
-            Assert.Equal(expectedHttpPath, activityToValidate.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
             var request = activityToValidate.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
             Assert.NotNull(request);

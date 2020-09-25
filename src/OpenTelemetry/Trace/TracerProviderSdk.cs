@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +68,12 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
-                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
+
+                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                     {
                         activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
@@ -78,35 +83,33 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    if (!Sdk.SuppressInstrumentation && activity.IsAllDataRequested)
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
+
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                     {
                         this.processor?.OnEnd(activity);
                     }
                 },
-
-                // Setting this to true means TraceId will be always
-                // available in sampling callbacks and will be the actual
-                // traceid used, if activity ends up getting created.
-                AutoGenerateRootContextTraceId = true,
             };
 
             if (sampler is AlwaysOnSampler)
             {
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ActivityDataRequest.AllDataAndRecorded : ActivityDataRequest.None;
+                listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             }
             else if (sampler is AlwaysOffSampler)
             {
-                /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
-                        once AutoGenerateRootContextTraceId is removed.*/
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.SpanId) : ActivityDataRequest.None;
+                listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
             }
             else
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-                listener.GetRequestedDataUsingContext = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivityDataRequest(options, sampler) : ActivityDataRequest.None;
+                listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
             }
 
             if (sources.Any())
@@ -209,18 +212,13 @@ namespace OpenTelemetry.Trace
             base.Dispose(disposing);
         }
 
-        private static ActivityDataRequest ComputeActivityDataRequest(
+        private static ActivitySamplingResult ComputeActivitySamplingResult(
             in ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
-            // As we set ActivityListener.AutoGenerateRootContextTraceId = true,
-            // Parent.TraceId will always be the TraceId of the to-be-created Activity,
-            // if it get created.
-            ActivityTraceId traceId = options.Parent.TraceId;
-
             var samplingParameters = new SamplingParameters(
                 options.Parent,
-                traceId,
+                options.TraceId,
                 options.Name,
                 options.Kind,
                 options.Tags,
@@ -228,33 +226,36 @@ namespace OpenTelemetry.Trace
 
             var shouldSample = sampler.ShouldSample(samplingParameters);
 
-            var activityDataRequest = shouldSample.Decision switch
+            var activitySamplingResult = shouldSample.Decision switch
             {
-                SamplingDecision.RecordAndSampled => ActivityDataRequest.AllDataAndRecorded,
-                SamplingDecision.Record => ActivityDataRequest.AllData,
-                _ => ActivityDataRequest.PropagationData
+                SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+                SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
+                _ => ActivitySamplingResult.PropagationData
             };
 
-            if (activityDataRequest != ActivityDataRequest.PropagationData)
+            if (activitySamplingResult != ActivitySamplingResult.PropagationData)
             {
-                return activityDataRequest;
+                foreach (var att in shouldSample.Attributes)
+                {
+                    options.SamplingTags.Add(att.Key, att.Value);
+                }
+
+                return activitySamplingResult;
             }
 
-            /*TODO: Change options.Parent.SpanId to options.Parent.TraceId
-                    once AutoGenerateRootContextTraceId is removed.*/
-            return PropagateOrIgnoreData(options.Parent.SpanId);
+            return PropagateOrIgnoreData(options.Parent.TraceId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ActivityDataRequest PropagateOrIgnoreData(ActivitySpanId spanId)
+        private static ActivitySamplingResult PropagateOrIgnoreData(ActivityTraceId traceId)
         {
-            var isRootSpan = spanId == default;
+            var isRootSpan = traceId == default;
 
             // If it is the root span select PropagationData so the trace ID is preserved
             // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
             return isRootSpan
-                ? ActivityDataRequest.PropagationData
-                : ActivityDataRequest.None;
+                ? ActivitySamplingResult.PropagationData
+                : ActivitySamplingResult.None;
         }
     }
 }

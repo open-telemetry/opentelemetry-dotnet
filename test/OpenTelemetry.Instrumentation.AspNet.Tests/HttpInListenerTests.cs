@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpInListenerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpInListenerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -127,8 +128,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var textFormat = new Mock<ITextFormat>();
-            textFormat.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
+            var propagator = new Mock<IPropagator>();
+            propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
                 new ActivityContext(
                     expectedTraceId,
                     expectedSpanId,
@@ -142,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
-                    options.RequestFilter = httpContext =>
+                    options.Filter = httpContext =>
                     {
                         if (string.IsNullOrEmpty(filter))
                         {
@@ -159,16 +160,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                     if (!carrierFormat.Equals("TraceContext"))
                     {
-                        options.TextFormat = textFormat.Object;
+                        options.Propagator = propagator.Object;
                     }
                 })
             .SetResource(expectedResource)
             .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
-                this.fakeAspNetDiagnosticSource.Write(
+
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                {
+                    this.fakeAspNetDiagnosticSource.Write(
                     "Start",
                     null);
+
+                    if (filter == "{ThrowException}")
+                    {
+                        Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
+                    }
+                }
 
                 if (restoreCurrentActivity)
                 {
@@ -187,19 +197,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                if (filter == "{ThrowException}")
-                {
-                    // This behavior is not good. If filter throws, Stop is called without Start.
-                    // Need to do something here, but user can't currently set the filter
-                    // so it wil always noop. When we support user filter,
-                    // treat this as a todo: define exception behavior.
-                    Assert.Equal(3, activityProcessor.Invocations.Count); // OnEnd/OnShutdown/Dispose called.
-                }
-                else
-                {
-                    Assert.Equal(2, activityProcessor.Invocations.Count); // only Shutdown/Dispose are called because request was filtered.
-                }
-
+                // only Shutdown/Dispose are called because request was filtered.
+                Assert.Equal(2, activityProcessor.Invocations.Count);
                 return;
             }
 
@@ -214,31 +213,23 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
 
-            Assert.Equal(
-                200,
-                span.TagObjects.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpStatusCode).Value);
-
-            Assert.Equal(
-                "Ok",
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusCodeKey).Value);
-
-            Assert.Equal(
-                "OK",
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.StatusDescriptionKey).Value);
+            Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+            Assert.Equal("Ok", span.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal("OK", span.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
 
             var expectedUri = new Uri(url);
-            var actualUrl = span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUrl).Value;
+            var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
 
             // Url strips 80 or 443 if the scheme matches.
             if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
             {
-                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl);
+                Assert.DoesNotContain($":{expectedUri.Port}", actualUrl as string);
             }
             else
             {
-                Assert.Contains($":{expectedUri.Port}", actualUrl);
+                Assert.Contains($":{expectedUri.Port}", actualUrl as string);
             }
 
             // Host includes port if it isn't 80 or 443.
@@ -246,24 +237,18 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 Assert.Equal(
                     expectedUri.Host,
-                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
+                    span.GetTagValue(SemanticConventions.AttributeHttpHost) as string);
             }
             else
             {
                 Assert.Equal(
                     $"{expectedUri.Host}:{expectedUri.Port}",
-                    span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpHost).Value as string);
+                    span.GetTagValue(SemanticConventions.AttributeHttpHost) as string);
             }
 
-            Assert.Equal(
-                HttpContext.Current.Request.HttpMethod,
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpMethod).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.Path,
-                span.Tags.FirstOrDefault(i => i.Key == SpanAttributeConstants.HttpPathKey).Value as string);
-            Assert.Equal(
-                HttpContext.Current.Request.UserAgent,
-                span.Tags.FirstOrDefault(i => i.Key == SemanticConventions.AttributeHttpUserAgent).Value as string);
+            Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
+            Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             Assert.Equal(expectedResource, span.GetResource());
             var request = span.GetCustomProperty(HttpInListener.RequestCustomPropertyName);

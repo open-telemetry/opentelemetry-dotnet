@@ -1,4 +1,4 @@
-﻿// <copyright file="Startup.cs" company="OpenTelemetry Authors">
+// <copyright file="Startup.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ namespace WebApi
 
             services.AddSingleton<MessageSender>();
 
-            services.AddOpenTelemetryTracerProvider((builder) => builder
+            services.AddOpenTelemetryTracing((builder) => builder
                 .AddAspNetCoreInstrumentation()
                 .AddSource(nameof(MessageSender))
                 .AddZipkinExporter(b =>

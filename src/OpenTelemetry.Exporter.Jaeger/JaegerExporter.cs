@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,48 +17,75 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Thrift.Protocol;
+using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporter : ActivityExporter
     {
-        private bool libraryResourceApplied;
+        private readonly int maxPayloadSizeInBytes;
+        private readonly TProtocolFactory protocolFactory;
+        private readonly TTransport clientTransport;
+        private readonly JaegerThriftClient thriftClient;
+        private readonly InMemoryTransport memoryTransport;
+        private readonly TProtocol memoryProtocol;
+        private Dictionary<string, Process> processCache;
+        private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
 
-        public JaegerExporter(JaegerExporterOptions options)
+        internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
-            this.JaegerAgentUdpBatcher = new JaegerUdpBatcher(options);
+            if (options is null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
+            this.protocolFactory = new TCompactProtocol.Factory();
+            this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
+            this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
+            this.memoryTransport = new InMemoryTransport(16000);
+            this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+
+            this.Process = new Process(options.ServiceName, options.ProcessTags);
         }
 
-        internal JaegerUdpBatcher JaegerAgentUdpBatcher { get; }
+        public Process Process { get; internal set; }
+
+        internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
-            var activities = new List<Activity>();
-            foreach (var activity in activityBatch)
+            try
             {
-                activities.Add(activity);
-            }
+                foreach (var activity in activityBatch)
+                {
+                    if (this.processCache == null)
+                    {
+                        this.ApplyLibraryResource(activity.GetResource());
+                    }
 
-            if (!this.libraryResourceApplied && activities.Any())
+                    this.AppendSpan(activity.ToJaegerSpan());
+                }
+
+                this.SendCurrentBatches(null);
+
+                return ExportResult.Success;
+            }
+            catch (Exception ex)
             {
-                var libraryResource = activities.First().GetResource();
+                JaegerExporterEventSource.Log.FailedExport(ex);
 
-                this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
-
-                this.libraryResourceApplied = true;
+                return ExportResult.Failure;
             }
-
-            _ = this.JaegerAgentUdpBatcher.AppendBatchAsync(activities, default).GetAwaiter().GetResult();
-
-            // TODO jaeger status to ExportResult
-            return ExportResult.Success;
         }
 
         internal void ApplyLibraryResource(Resource libraryResource)
@@ -68,7 +95,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 throw new ArgumentNullException(nameof(libraryResource));
             }
 
-            var process = this.JaegerAgentUdpBatcher.Process;
+            var process = this.Process;
 
             string serviceName = null;
             string serviceNamespace = null;
@@ -111,12 +138,51 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 process.ServiceName = JaegerExporterOptions.DefaultServiceName;
             }
+
+            this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
+            this.processCache = new Dictionary<string, Process>
+            {
+                [this.Process.ServiceName] = this.Process,
+            };
         }
 
-        /// <inheritdoc/>
-        protected override void OnShutdown(int timeoutMilliseconds)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            _ = this.JaegerAgentUdpBatcher.FlushAsync(default).GetAwaiter().GetResult();
+            var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
+
+            if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
+            {
+                spanProcess = new Process(spanServiceName, this.Process.Tags);
+                spanProcess.Message = this.BuildThriftMessage(spanProcess).ToArray();
+                this.processCache.Add(spanServiceName, spanProcess);
+            }
+
+            var spanMessage = this.BuildThriftMessage(jaegerSpan);
+
+            jaegerSpan.Return();
+
+            var spanTotalBytesNeeded = spanMessage.Count;
+
+            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
+            {
+                spanBatch = new Batch(spanProcess);
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
+
+                spanTotalBytesNeeded += spanProcess.Message.Length;
+            }
+
+            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
+            {
+                this.SendCurrentBatches(spanBatch);
+
+                // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
+                spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
+                this.CurrentBatches.Add(spanServiceName, spanBatch);
+            }
+
+            spanBatch.Add(spanMessage);
+            this.batchByteSize += spanTotalBytesNeeded;
         }
 
         /// <inheritdoc/>
@@ -126,13 +192,65 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 if (disposing)
                 {
-                    this.JaegerAgentUdpBatcher.Dispose();
+                    this.thriftClient.Dispose();
+                    this.clientTransport.Dispose();
+                    this.memoryTransport.Dispose();
+                    this.memoryProtocol.Dispose();
                 }
 
                 this.disposedValue = true;
             }
 
             base.Dispose(disposing);
+        }
+
+        private void SendCurrentBatches(Batch workingBatch)
+        {
+            try
+            {
+                foreach (var batchKvp in this.CurrentBatches)
+                {
+                    var batch = batchKvp.Value;
+
+                    var task = this.thriftClient.WriteBatchAsync(batch, CancellationToken.None);
+
+                    Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
+                    if (batch != workingBatch)
+                    {
+                        batch.Return();
+                    }
+                    else
+                    {
+                        batch.Clear();
+                    }
+                }
+            }
+            finally
+            {
+                this.CurrentBatches.Clear();
+                this.batchByteSize = 0;
+                this.memoryTransport.Reset();
+            }
+        }
+
+        private BufferWriterMemory BuildThriftMessage(Process process)
+        {
+            var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
+            return this.memoryTransport.ToBuffer();
+        }
+
+        // Prevents boxing of JaegerSpan struct.
+        private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
+        {
+            var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
+
+            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+
+            return this.memoryTransport.ToBuffer();
         }
     }
 }

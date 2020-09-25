@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinActivityConversionTest.cs" company="OpenTelemetry Authors">
+// <copyright file="ZipkinActivityConversionTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
 
         [Fact]
-        public void ZipkinActivityConversion_ToZipkinSpan_AllPropertiesSet()
+        public void ToZipkinSpan_AllPropertiesSet()
         {
             // Arrange
             var activity = ZipkinExporterTests.CreateTestActivity();
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             int counter = 0;
             var tagsArray = zipkinSpan.Tags.Value.ToArray();
 
-            foreach (var tags in activity.Tags)
+            foreach (var tags in activity.TagObjects)
             {
                 Assert.Equal(tagsArray[counter].Key, tags.Key);
                 Assert.Equal(tagsArray[counter++].Value, tags.Value);
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         }
 
         [Fact]
-        public void ZipkinActivityConversion_ToZipkinSpan_NoEvents()
+        public void ToZipkinSpan_NoEvents()
         {
             // Arrange
             var activity = ZipkinExporterTests.CreateTestActivity(addEvents: false);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             int counter = 0;
             var tagsArray = zipkinSpan.Tags.Value.ToArray();
 
-            foreach (var tags in activity.Tags)
+            foreach (var tags in activity.TagObjects)
             {
                 Assert.Equal(tagsArray[counter].Key, tags.Key);
                 Assert.Equal(tagsArray[counter++].Value, tags.Value);

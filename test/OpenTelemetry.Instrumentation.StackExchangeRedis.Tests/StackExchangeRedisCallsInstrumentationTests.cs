@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
+// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,6 +102,59 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         }
 
         [Fact]
+        public async Task ProfilerSessionsHandleMultipleSpans()
+        {
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            var connection = ConnectionMultiplexer.Connect(connectionOptions);
+
+            using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
+            var profilerFactory = instrumentation.GetProfilerSessionsFactory();
+
+            // start a root level activity
+            using Activity rootActivity = new Activity("Parent")
+                .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded)
+                .Start();
+
+            Assert.NotNull(rootActivity.Id);
+
+            // get an initial profiler from root activity
+            Activity.Current = rootActivity;
+            ProfilingSession profiler0 = profilerFactory();
+
+            // expect different result from synchronous child activity
+            ProfilingSession profiler1;
+            using (Activity.Current = new Activity("Child-Span-1").SetParentId(rootActivity.Id).Start())
+            {
+                profiler1 = profilerFactory();
+                Assert.NotSame(profiler0, profiler1);
+            }
+
+            Activity.Current = rootActivity;
+
+            // expect different result from asynchronous child activity
+            using (Activity.Current = new Activity("Child-Span-2").SetParentId(rootActivity.Id).Start())
+            {
+                // lose async context on purpose
+                await Task.Delay(100).ConfigureAwait(false);
+
+                ProfilingSession profiler2 = profilerFactory();
+                Assert.NotSame(profiler0, profiler2);
+                Assert.NotSame(profiler1, profiler2);
+            }
+
+            Activity.Current = rootActivity;
+
+            // ensure same result back in root activity
+            ProfilingSession profiles3 = profilerFactory();
+            Assert.Same(profiler0, profiles3);
+        }
+
+        [Fact]
         public void StackExchangeRedis_BadArgs()
         {
             TracerProviderBuilder builder = null;
@@ -120,31 +173,31 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             if (isSet)
             {
                 Assert.Equal("SETEX", activity.DisplayName);
-                Assert.Equal("SETEX", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
+                Assert.Equal("SETEX", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
             else
             {
                 Assert.Equal("GET", activity.DisplayName);
-                Assert.Equal("GET", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbStatement).Value);
+                Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
-            Assert.Equal("redis", activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeDbSystem).Value);
-            Assert.Equal("0", activity.Tags.FirstOrDefault(t => t.Key == StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName).Value);
+            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal("redis", activity.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal(0, activity.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName));
 
             if (endPoint is IPEndPoint ipEndPoint)
             {
-                Assert.Equal(ipEndPoint.Address.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerIp).Value);
-                Assert.Equal(ipEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(ipEndPoint.Address.ToString(), activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(ipEndPoint.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             }
             else if (endPoint is DnsEndPoint dnsEndPoint)
             {
-                Assert.Equal(dnsEndPoint.Host, activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerName).Value);
-                Assert.Equal(dnsEndPoint.Port.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeNetPeerPort).Value);
+                Assert.Equal(dnsEndPoint.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+                Assert.Equal(dnsEndPoint.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             }
             else
             {
-                Assert.Equal(endPoint.ToString(), activity.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributePeerService).Value);
+                Assert.Equal(endPoint.ToString(), activity.GetTagValue(SemanticConventions.AttributePeerService));
             }
         }
     }
