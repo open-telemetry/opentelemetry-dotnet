@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added `ILogger`/`Microsoft.Extensions.Logging` integration
+  ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
