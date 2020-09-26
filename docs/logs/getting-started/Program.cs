@@ -26,7 +26,26 @@ public class Program
         });
         var logger = loggerFactory.CreateLogger<Program>();
 
+        // unstructured log
         logger.LogInformation("Hello, World!");
-        logger.LogInformation("Hello from {name} {price}.", "artichoke", 3.99);
+
+        // unstructured log with string interpolation
+        logger.LogInformation($"Hello from potato {0.99}.");
+
+        // structured log with template
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+
+        // structured log with strong type
+        logger.LogEx(new Food { Name = "artichoke", Price = 3.99 });
+
+        // structured log with anonymous type
+        logger.LogEx(new { Name = "pumpkin", Price = 5.99 });
+    }
+
+    internal struct Food
+    {
+        public string Name { get; set; }
+
+        public double Price { get; set; }
     }
 }
