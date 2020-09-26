@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 public class Program
@@ -40,6 +41,13 @@ public class Program
 
         // structured log with anonymous type
         logger.LogEx(new { Name = "pumpkin", Price = 5.99 });
+
+        // structured log with general type
+        logger.LogEx(new Dictionary<string, object>
+        {
+            ["Name"] = "truffle",
+            ["Price"] = 299.99,
+        });
     }
 
     internal struct Food
