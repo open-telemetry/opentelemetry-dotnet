@@ -257,6 +257,42 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return microseconds - UnixEpochMicroseconds;
         }
 
+        private static void ProcessJaegerTagArray(ref PooledList<JaegerTag> tags, KeyValuePair<string, object> activityTag)
+        {
+            if (activityTag.Value is int[] intArray)
+            {
+                foreach (var item in intArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(item));
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is string[] stringArray)
+            {
+                foreach (var item in stringArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, vStr: item);
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is bool[] boolArray)
+            {
+                foreach (var item in boolArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: item);
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is double[] doubleArray)
+            {
+                foreach (var item in doubleArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: item);
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+        }
+
         private static void ProcessJaegerTag(ref TagState state, string key, JaegerTag jaegerTag)
         {
             if (jaegerTag.VStr != null)
@@ -315,7 +351,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         private static bool ProcessTag(ref PooledListState<JaegerTag> state, KeyValuePair<string, object> attribute)
         {
-            PooledList<JaegerTag>.Add(ref state.List, attribute.ToJaegerTag());
+            if (attribute.Value is Array)
+            {
+                ProcessJaegerTagArray(ref state.List, attribute);
+            }
+            else if (attribute.Value != null)
+            {
+                PooledList<JaegerTag>.Add(ref state.List, attribute.ToJaegerTag());
+            }
+
             return true;
         }
 
@@ -335,43 +379,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
-                JaegerTag jaegerTag;
-                if (activityTag.Value is int[] intArray)
+                if (activityTag.Value is Array)
                 {
-                    foreach (var item in intArray)
-                    {
-                        jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(item));
-                        ProcessJaegerTag(ref this, activityTag.Key, jaegerTag);
-                    }
+                    ProcessJaegerTagArray(ref this.Tags, activityTag);
                 }
-                else if (activityTag.Value is string[] stringArray)
+                else if (activityTag.Value != null)
                 {
-                    foreach (var item in stringArray)
-                    {
-                        jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, vStr: item);
-                        ProcessJaegerTag(ref this, activityTag.Key, jaegerTag);
-                    }
-                }
-                else if (activityTag.Value is bool[] boolArray)
-                {
-                    foreach (var item in boolArray)
-                    {
-                        jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: item);
-                        ProcessJaegerTag(ref this, activityTag.Key, jaegerTag);
-                    }
-                }
-                else if (activityTag.Value is double[] doubleArray)
-                {
-                    foreach (var item in doubleArray)
-                    {
-                        jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: item);
-                        ProcessJaegerTag(ref this, activityTag.Key, jaegerTag);
-                    }
-                }
-                else
-                {
-                    jaegerTag = activityTag.ToJaegerTag();
-                    ProcessJaegerTag(ref this, activityTag.Key, jaegerTag);
+                    ProcessJaegerTag(ref this, activityTag.Key, activityTag.ToJaegerTag());
                 }
 
                 return true;
