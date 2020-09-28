@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.IO;
 
 namespace OpenTelemetry.Internal
 {
@@ -28,6 +27,11 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
+        /// <summary>
+        /// Once the configuration file is valid, an eventListener object will be created.
+        /// </summary>
+        private SelfDiagnosticsEventListener eventListener;
+
         // TODO
         // public bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
         // {

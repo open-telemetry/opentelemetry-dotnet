@@ -27,19 +27,12 @@ namespace OpenTelemetry.Internal
     {
         private const string EventSourceNamePrefix = "OpenTelemetry-";
         private readonly EventLevel logLevel;
-        private readonly SelfDiagnosticsRecorder eventRecorder;
-        private bool disposedValue;
+        private readonly SelfDiagnosticsConfigRefresher configRefresher;
 
-        public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsRecorder eventRecorder)
+        public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
-            this.eventRecorder = eventRecorder;
-        }
-
-        public override void Dispose()
-        {
-            this.Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            this.configRefresher = configRefresher;
         }
 
         protected override void OnEventSourceCreated(EventSource eventSource)
@@ -56,23 +49,15 @@ namespace OpenTelemetry.Internal
             base.OnEventSourceCreated(eventSource);
         }
 
+        /// <summary>
+        /// This method records the events from event sources to a local file, which is provided as a stream object by
+        /// SelfDiagnosticsConfigRefresher class. The file size is bound to a upper limit. Once the write position
+        /// reaches the end, it will be reset to the beginning of the file.
+        /// </summary>
+        /// <param name="eventData">Data of the EventSource event.</param>
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            this.eventRecorder.RecordEvent(eventData);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.eventRecorder.Dispose();
-                    base.Dispose();
-                }
-
-                this.disposedValue = true;
-            }
+            // TODO: retrieve the file stream object from configRefresher and write to it
         }
     }
 }

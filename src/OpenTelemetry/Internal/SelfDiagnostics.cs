@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
 {
@@ -26,10 +25,10 @@ namespace OpenTelemetry.Internal
     internal class SelfDiagnostics : IDisposable
     {
         /// <summary>
-        /// Long-living object that hold relevant resources, including an EventListener.
+        /// Long-living object that hold relevant resources.
         /// </summary>
         private static readonly SelfDiagnostics Instance = new SelfDiagnostics();
-        private readonly SelfDiagnosticsEventListener eventListener;
+        private readonly SelfDiagnosticsConfigRefresher configRefresher;
 
         static SelfDiagnostics()
         {
@@ -41,9 +40,7 @@ namespace OpenTelemetry.Internal
 
         private SelfDiagnostics()
         {
-            this.eventListener = new SelfDiagnosticsEventListener(
-                EventLevel.Error,
-                new SelfDiagnosticsRecorder(new SelfDiagnosticsConfigRefresher()));
+            this.configRefresher = new SelfDiagnosticsConfigRefresher();
         }
 
         /// <summary>
@@ -67,7 +64,7 @@ namespace OpenTelemetry.Internal
         {
             if (disposing)
             {
-                this.eventListener.Dispose();
+                this.configRefresher.Dispose();
             }
         }
     }
