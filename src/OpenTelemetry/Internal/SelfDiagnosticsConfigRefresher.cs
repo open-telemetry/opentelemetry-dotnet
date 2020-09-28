@@ -27,10 +27,9 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        /// <summary>
-        /// Once the configuration file is valid, an eventListener object will be created.
-        /// </summary>
-        private SelfDiagnosticsEventListener eventListener;
+        // Once the configuration file is valid, an eventListener object will be created.
+        // Commented out for now to avoid the "field was never used" compiler error.
+        // private SelfDiagnosticsEventListener eventListener;
 
         // TODO
         // public bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
