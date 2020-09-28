@@ -20,18 +20,13 @@ using Microsoft.Extensions.Logging;
 
 internal static class LoggerExtensions
 {
-    private static readonly Action<ILogger, object, string, string, int, Exception> LogExInformation = LoggerMessage.Define<object, string, string, int>(
+    private static readonly Action<ILogger, object, Exception> LogExAction = LoggerMessage.Define<object>(
         LogLevel.Information,
         new EventId(1, nameof(LogEx)),
-        "LogEx({obj}, {memberName}@{filePath}:{lineNumber}).");
+        "LogEx({obj}).");
 
-    public static void LogEx(
-        this ILogger logger,
-        object obj,
-        [CallerMemberName] string memberName = null,
-        [CallerFilePath] string filePath = null,
-        [CallerLineNumber] int lineNumber = 0)
+    public static void LogEx(this ILogger logger, object obj)
     {
-        LogExInformation(logger, obj, memberName, filePath, lineNumber, null);
+        LogExAction(logger, obj, null);
     }
 }
