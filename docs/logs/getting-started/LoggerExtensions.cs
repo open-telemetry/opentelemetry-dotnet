@@ -20,6 +20,7 @@ using Microsoft.Extensions.Logging;
 
 internal static class LoggerExtensions
 {
+    // https://docs.microsoft.com/aspnet/core/fundamentals/logging/loggermessage
     private static readonly Action<ILogger, object, Exception> LogExAction = LoggerMessage.Define<object>(
         LogLevel.Information,
         new EventId(1, nameof(LogEx)),
