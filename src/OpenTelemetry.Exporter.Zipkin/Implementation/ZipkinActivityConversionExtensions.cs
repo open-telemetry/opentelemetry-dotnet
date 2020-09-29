@@ -201,7 +201,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return true;
         }
 
-        internal struct AttributeEnumerationState : IActivityTagEnumerator
+        internal struct AttributeEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 
