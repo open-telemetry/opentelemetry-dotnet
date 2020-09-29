@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETSTANDARD2_0
 using OpenTelemetry.Logs;
+#endif
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -30,6 +32,7 @@ namespace OpenTelemetry
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
+#if NETSTANDARD2_0
         /// <summary>
         /// Creates LoggerProviderBuilder which should be used to build LoggerProvider.
         /// </summary>
@@ -38,6 +41,7 @@ namespace OpenTelemetry
         {
             return new LoggerProviderBuilder();
         }
+#endif
 
         /// <summary>
         /// Creates MeterProviderBuilder which should be used to build MeterProvider.
