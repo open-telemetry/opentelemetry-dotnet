@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if NETSTANDARD2_0
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
@@ -181,3 +182,4 @@ namespace OpenTelemetry.Logs
         }
     }
 }
+#endif

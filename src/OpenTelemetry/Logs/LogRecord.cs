@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if NETSTANDARD2_0
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -32,3 +33,4 @@ namespace OpenTelemetry.Logs
         public Exception Exception;
     }
 }
+#endif
