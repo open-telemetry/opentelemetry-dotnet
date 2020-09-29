@@ -87,25 +87,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             ValidateHttpWebRequestActivity(activity, expectedResource, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<string, string>()
+            var d = new Dictionary<int, string>()
             {
-                { StatusCanonicalCode.Ok.ToString(), "OK" },
-                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED" },
-                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN" },
-                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT" },
-                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED" },
-                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND" },
-                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS" },
-                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED" },
-                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED" },
-                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION" },
-                { StatusCanonicalCode.Aborted.ToString(), "ABORTED" },
-                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE" },
-                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED" },
-                { StatusCanonicalCode.Internal.ToString(), "INTERNAL" },
-                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE" },
-                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS" },
-                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED" },
+                { (int)StatusCode.Ok, "OK" },
+                { (int)StatusCode.Error, "ERROR" },
+                { (int)StatusCode.Unset, "UNSET" },
             };
 
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
@@ -128,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        Assert.Equal(tc.SpanStatus, d[tagValue]);
+                        Assert.Equal(tc.SpanStatus, d[int.Parse(tagValue)]);
                         continue;
                     }
 
@@ -160,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 200,
     ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""OK"",
+    ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""setHttpFlavor"": true,
     ""spanAttributes"": {

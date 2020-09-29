@@ -92,7 +92,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
 
             Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-            Assert.Equal(Status.Ok, activity.GetStatus());
+            Assert.Equal(Status.Unset, activity.GetStatus());
             Assert.Equal(expectedResource, activity.GetResource());
 
             // Tags added by the library then removed from the instrumentation

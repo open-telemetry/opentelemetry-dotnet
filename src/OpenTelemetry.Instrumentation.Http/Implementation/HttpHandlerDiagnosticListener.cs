@@ -137,12 +137,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        activity.SetStatus(Status.Cancelled);
+                        activity.SetStatus(Status.Error);
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
                         // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                        activity.SetStatus(Status.Unknown);
+                        activity.SetStatus(Status.Error);
                     }
                 }
 
@@ -195,14 +195,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         switch (exception.SocketErrorCode)
                         {
                             case SocketError.HostNotFound:
-                                activity.SetStatus(Status.InvalidArgument.WithDescription(exc.Message));
+                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
                                 return;
                         }
                     }
 
                     if (exc.InnerException != null)
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription(exc.Message));
+                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
                 }
             }

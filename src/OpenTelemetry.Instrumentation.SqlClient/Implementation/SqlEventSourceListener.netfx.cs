@@ -163,11 +163,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
+                        activity.SetStatus(Status.Error.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
                     }
                     else
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription("Unknown Sql failure."));
+                        activity.SetStatus(Status.Error.WithDescription("Unknown Sql failure."));
                     }
                 }
             }

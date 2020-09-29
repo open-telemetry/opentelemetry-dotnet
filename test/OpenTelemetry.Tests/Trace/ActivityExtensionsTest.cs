@@ -51,11 +51,11 @@ namespace OpenTelemetry.Trace.Tests
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
-            activity.SetStatus(Status.NotFound.WithDescription("Not Found"));
+            activity.SetStatus(Status.Error.WithDescription("Not Found"));
             activity?.Stop();
 
             var status = activity.GetStatus();
-            Assert.Equal(StatusCanonicalCode.NotFound, status.CanonicalCode);
+            Assert.Equal(StatusCode.Error, status.StatusCode);
             Assert.Equal("Not Found", status.Description);
         }
 
@@ -68,10 +68,10 @@ namespace OpenTelemetry.Trace.Tests
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
-            activity.SetStatus(Status.Cancelled);
+            activity.SetStatus(Status.Error);
             activity?.Stop();
 
-            Assert.True(activity.GetStatus().CanonicalCode.Equals(Status.Cancelled.CanonicalCode));
+            Assert.True(activity.GetStatus().StatusCode.Equals(Status.Error.StatusCode));
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Tests
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(ActivityName);
-            activity.SetStatus(Status.Cancelled);
+            activity.SetStatus(Status.Error);
             activity.SetStatus(Status.Ok);
             activity?.Stop();
 

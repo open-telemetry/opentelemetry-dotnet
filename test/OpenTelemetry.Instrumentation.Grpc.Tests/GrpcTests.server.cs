@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
             Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
             Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-            Assert.Equal(Status.Ok, activity.GetStatus());
+            Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
             Assert.Equal($"localhost:{this.fixture.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));

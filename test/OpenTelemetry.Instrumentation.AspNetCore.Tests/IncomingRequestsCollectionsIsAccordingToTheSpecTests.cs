@@ -105,7 +105,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
             Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode), activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal((int)status.StatusCode, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             this.ValidateTagValue(activity, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
         }
