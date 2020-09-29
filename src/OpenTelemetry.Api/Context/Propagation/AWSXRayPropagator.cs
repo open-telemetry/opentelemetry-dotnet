@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation
@@ -119,13 +120,20 @@ namespace OpenTelemetry.Context.Propagation
                 return;
             }
 
-            var traceId = ToXRayTraceIdFormat(context.ActivityContext.TraceId.ToHexString());
-            var spanId = context.ActivityContext.SpanId.ToHexString();
-            var sampleDecision = (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? SampledValue : NotSampledValue;
+            var sb = new StringBuilder();
+            sb.Append(RootKey);
+            sb.Append(KeyValueDelimiter);
+            sb.Append(ToXRayTraceIdFormat(context.ActivityContext.TraceId.ToHexString()));
+            sb.Append(TraceHeaderDelimiter);
+            sb.Append(ParentKey);
+            sb.Append(KeyValueDelimiter);
+            sb.Append(context.ActivityContext.SpanId.ToHexString());
+            sb.Append(TraceHeaderDelimiter);
+            sb.Append(SampledKey);
+            sb.Append(KeyValueDelimiter);
+            sb.Append((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? SampledValue : NotSampledValue);
 
-            var newTraceHeader = string.Concat(RootKey, KeyValueDelimiter, traceId, TraceHeaderDelimiter, ParentKey, KeyValueDelimiter, spanId, TraceHeaderDelimiter, SampledKey, KeyValueDelimiter, sampleDecision);
-
-            setter(carrier, AWSXRayTraceHeaderKey, newTraceHeader);
+            setter(carrier, AWSXRayTraceHeaderKey, sb.ToString());
         }
 
         internal static bool TryParseXRayTraceHeader(string rawHeader, out ActivityContext activityContext)
@@ -291,12 +299,14 @@ namespace OpenTelemetry.Context.Propagation
 
         internal static string ToXRayTraceIdFormat(string traceId)
         {
-            var timestamp = traceId.Substring(0, EpochHexDigits);
-            var randomNumber = traceId.Substring(EpochHexDigits);
+            var sb = new StringBuilder();
+            sb.Append(Version);
+            sb.Append(TraceIdDelimiter);
+            sb.Append(traceId.Substring(0, EpochHexDigits));
+            sb.Append(TraceIdDelimiter);
+            sb.Append(traceId.Substring(EpochHexDigits));
 
-            var newTraceId = string.Concat(Version, TraceIdDelimiter, timestamp, TraceIdDelimiter, randomNumber);
-
-            return newTraceId;
+            return sb.ToString();
         }
     }
 }
