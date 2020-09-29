@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -28,6 +29,15 @@ namespace OpenTelemetry
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+        /// <summary>
+        /// Creates LoggerProviderBuilder which should be used to build LoggerProvider.
+        /// </summary>
+        /// <returns>LoggerProviderBuilder instance, which should be used to build LoggerProvider.</returns>
+        public static LoggerProviderBuilder CreateLoggerProviderBuilder()
+        {
+            return new LoggerProviderBuilder();
+        }
 
         /// <summary>
         /// Creates MeterProviderBuilder which should be used to build MeterProvider.

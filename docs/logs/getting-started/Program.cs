@@ -15,17 +15,40 @@
 // </copyright>
 
 using System.Collections.Generic;
+#if NETCOREAPP2_1
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 
 public class Program
 {
     public static void Main()
     {
+        /*
+        The OpenTelemetry style:
+
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddProcessor(new MyProcessor())
+            .Build();
+        var logger = loggerProvider.CreateLogger("MyLogger");
+        */
+
+#if NETCOREAPP2_1
+        var serviceCollection = new ServiceCollection().AddLogging(builder =>
+#else
         using var loggerFactory = LoggerFactory.Create(builder =>
+#endif
         {
-            builder.AddOpenTelemetry();
+            builder.AddOpenTelemetry(options => options.AddProcessor(new MyProcessor()));
         });
+
+#if NETCOREAPP2_1
+        using var serviceProvider = serviceCollection.BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+#else
         var logger = loggerFactory.CreateLogger<Program>();
+#endif
 
         // unstructured log
         logger.LogInformation("Hello, World!");

@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryLoggerOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="LoggerProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +14,37 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
-    public class OpenTelemetryLoggerOptions
+    /// <summary>
+    /// Build OpenTelemetryLoggerProvider with Processors.
+    /// </summary>
+    public class LoggerProviderBuilder
     {
-        public readonly List<LogProcessor> Processors = new List<LogProcessor>();
+        private OpenTelemetryLoggerOptions options;
+
+        internal LoggerProviderBuilder()
+        {
+            this.options = new OpenTelemetryLoggerOptions();
+        }
 
         /// <summary>
         /// Adds processor to the provider.
         /// </summary>
         /// <param name="processor">Log processor to add.</param>
         /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions AddProcessor(LogProcessor processor)
+        public LoggerProviderBuilder AddProcessor(LogProcessor processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
-
-            this.Processors.Add(processor);
-
+            this.options.AddProcessor(processor);
             return this;
+        }
+
+        public OpenTelemetryLoggerProvider Build()
+        {
+            return new OpenTelemetryLoggerProvider(this.options);
         }
     }
 }
-#endif
