@@ -206,21 +206,26 @@ namespace OpenTelemetry.Trace.Tests
                 .AddSource(ActivitySourceName)
                 .Build();
 
-            var link = new ActivityLink(default);
+            var links = new[]
+            {
+                new ActivityLink(default),
+                new ActivityLink(default),
+                new ActivityLink(default),
+            };
 
             using var source = new ActivitySource(ActivitySourceName);
             using var activity = source.StartActivity(
                 ActivityName,
                 ActivityKind.Internal,
                 parentContext: default,
-                links: new[] { link });
+                links: links);
 
             LinkEnumerator state = default;
 
             activity.EnumerateLinks(ref state);
 
-            Assert.Equal(1, state.Count);
-            Assert.Equal(link, state.LastLink);
+            Assert.Equal(3, state.Count);
+            Assert.Equal(links.Last(), state.LastLink);
         }
 
         private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
