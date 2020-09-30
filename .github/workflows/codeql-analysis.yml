@@ -13,7 +13,11 @@ on:
         required: true
         default: 'warning'
   schedule:
-    - cron: '0 0 * * *' # once in a day at 00:00  
+    - cron: '0 0 * * *' # once in a day at 00:00
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+    - '**.md'
 
 jobs:
   analyze:
