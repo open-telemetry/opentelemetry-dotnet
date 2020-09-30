@@ -42,15 +42,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var record = new LogRecord
-            {
-                Timestamp = DateTime.UtcNow,
-                CategoryName = this.categoryName,
-                LogLevel = logLevel,
-                EventId = eventId,
-                State = state,
-                Exception = exception,
-            };
+            var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
 
             this.provider.Processor?.OnLog(record);
         }
