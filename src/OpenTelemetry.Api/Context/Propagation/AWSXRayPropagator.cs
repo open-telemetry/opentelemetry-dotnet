@@ -139,8 +139,8 @@ namespace OpenTelemetry.Context.Propagation
         internal static bool TryParseXRayTraceHeader(string rawHeader, out ActivityContext activityContext)
         {
             activityContext = default;
-            string traceId = null;
-            string parentId = null;
+            ReadOnlySpan<char> traceId = default;
+            ReadOnlySpan<char> parentId = default;
             char traceOptions = default;
 
             if (string.IsNullOrEmpty(rawHeader))
@@ -148,32 +148,31 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            int position = 0;
-            while (position < rawHeader.Length)
+            ReadOnlySpan<char> header = rawHeader.AsSpan();
+            while (header.Length > 0)
             {
-                int delimiterIndex = rawHeader.IndexOf(TraceHeaderDelimiter, position);
-                string part;
+                int delimiterIndex = header.IndexOf(TraceHeaderDelimiter);
+                ReadOnlySpan<char> part;
                 if (delimiterIndex >= 0)
                 {
-                    part = rawHeader.Substring(position, delimiterIndex - position);
-                    position = delimiterIndex + 1;
+                    part = header.Slice(0, delimiterIndex);
+                    header = header.Slice(delimiterIndex + 1);
                 }
                 else
                 {
-                    part = rawHeader.Substring(position);
-                    position = rawHeader.Length;
+                    part = header.Slice(0);
+                    header = header.Slice(header.Length);
                 }
 
-                string trimmedPart = part.Trim();
+                ReadOnlySpan<char> trimmedPart = part.Trim();
                 int equalsIndex = trimmedPart.IndexOf(KeyValueDelimiter);
                 if (equalsIndex < 0)
                 {
                     return false;
                 }
 
-                string value = trimmedPart.Substring(equalsIndex + 1);
-
-                if (trimmedPart.StartsWith(RootKey))
+                ReadOnlySpan<char> value = trimmedPart.Slice(equalsIndex + 1);
+                if (trimmedPart.StartsWith(RootKey.AsSpan()))
                 {
                     if (!TryParseOTFormatTraceId(value, out var otFormatTraceId))
                     {
@@ -182,7 +181,7 @@ namespace OpenTelemetry.Context.Propagation
 
                     traceId = otFormatTraceId;
                 }
-                else if (trimmedPart.StartsWith(ParentKey))
+                else if (trimmedPart.StartsWith(ParentKey.AsSpan()))
                 {
                     if (!IsParentIdValid(value))
                     {
@@ -191,7 +190,7 @@ namespace OpenTelemetry.Context.Propagation
 
                     parentId = value;
                 }
-                else if (trimmedPart.StartsWith(SampledKey))
+                else if (trimmedPart.StartsWith(SampledKey.AsSpan()))
                 {
                     if (!TryParseSampleDecision(value, out var sampleDecision))
                     {
@@ -202,13 +201,13 @@ namespace OpenTelemetry.Context.Propagation
                 }
             }
 
-            if (traceId == null || parentId == null || traceOptions == default)
+            if (traceId == default || parentId == default || traceOptions == default)
             {
                 return false;
             }
 
-            var activityTraceId = ActivityTraceId.CreateFromString(traceId.AsSpan());
-            var activityParentId = ActivitySpanId.CreateFromString(parentId.AsSpan());
+            var activityTraceId = ActivityTraceId.CreateFromString(traceId);
+            var activityParentId = ActivitySpanId.CreateFromString(parentId);
             var activityTraceOptions = traceOptions == SampledValue ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None;
 
             activityContext = new ActivityContext(activityTraceId, activityParentId, activityTraceOptions, isRemote: true);
@@ -216,11 +215,11 @@ namespace OpenTelemetry.Context.Propagation
             return true;
         }
 
-        internal static bool TryParseOTFormatTraceId(string traceId, out string otFormatTraceId)
+        internal static bool TryParseOTFormatTraceId(ReadOnlySpan<char> traceId, out ReadOnlySpan<char> otFormatTraceId)
         {
-            otFormatTraceId = null;
+            otFormatTraceId = default;
 
-            if (string.IsNullOrWhiteSpace(traceId))
+            if (traceId.IsEmpty || traceId.IsWhiteSpace())
             {
                 return false;
             }
@@ -230,7 +229,7 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            if (!traceId.StartsWith(Version))
+            if (!traceId.StartsWith(Version.AsSpan()))
             {
                 return false;
             }
@@ -240,49 +239,50 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            var timestamp = traceId.Substring(TraceIdDelimiterFirstIndex + 1, EpochHexDigits);
-            var randomNumber = traceId.Substring(TraceIdDelimiterSecondIndex + 1);
-
+            var timestamp = traceId.Slice(TraceIdDelimiterFirstIndex + 1, EpochHexDigits);
+            var randomNumber = traceId.Slice(TraceIdDelimiterSecondIndex + 1);
             if (timestamp.Length != EpochHexDigits || randomNumber.Length != RandomNumberHexDigits)
             {
                 return false;
             }
 
-            if (!int.TryParse(timestamp, NumberStyles.HexNumber, null, out _))
+            var timestampString = timestamp.ToString();
+            var randomNumberString = randomNumber.ToString();
+            if (!int.TryParse(timestampString, NumberStyles.HexNumber, null, out _))
             {
                 return false;
             }
 
-            if (!BigInteger.TryParse(randomNumber, NumberStyles.HexNumber, null, out _))
+            if (!BigInteger.TryParse(randomNumberString, NumberStyles.HexNumber, null, out _))
             {
                 return false;
             }
 
-            otFormatTraceId = string.Concat(timestamp, randomNumber);
+            otFormatTraceId = (timestampString + randomNumberString).AsSpan();
 
             return true;
         }
 
-        internal static bool IsParentIdValid(string parentId)
+        internal static bool IsParentIdValid(ReadOnlySpan<char> parentId)
         {
-            if (string.IsNullOrWhiteSpace(parentId))
+            if (parentId.IsEmpty || parentId.IsWhiteSpace())
             {
                 return false;
             }
 
-            return parentId.Length == ParentIdHexDigits && long.TryParse(parentId, NumberStyles.HexNumber, null, out _);
+            return parentId.Length == ParentIdHexDigits && long.TryParse(parentId.ToString(), NumberStyles.HexNumber, null, out _);
         }
 
-        internal static bool TryParseSampleDecision(string sampleDecision, out char result)
+        internal static bool TryParseSampleDecision(ReadOnlySpan<char> sampleDecision, out char result)
         {
             result = default;
 
-            if (string.IsNullOrWhiteSpace(sampleDecision))
+            if (sampleDecision.IsEmpty || sampleDecision.IsWhiteSpace())
             {
                 return false;
             }
 
-            if (!char.TryParse(sampleDecision, out var tempChar))
+            if (!char.TryParse(sampleDecision.ToString(), out var tempChar))
             {
                 return false;
             }
