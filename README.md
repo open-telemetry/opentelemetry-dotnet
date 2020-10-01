@@ -131,3 +131,6 @@ See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
 for details on upcoming releases. The dates and features described in issues
 and milestones are estimates, and subject to change.
+
+Daily builds from this repo are published to MyGet, and can be installed from
+[this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
