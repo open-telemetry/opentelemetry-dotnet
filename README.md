@@ -92,7 +92,6 @@ Approvers
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
-* [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
