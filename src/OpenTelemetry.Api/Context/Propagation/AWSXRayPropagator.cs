@@ -138,6 +138,9 @@ namespace OpenTelemetry.Context.Propagation
 
         internal static bool TryParseXRayTraceHeader(string rawHeader, out ActivityContext activityContext)
         {
+            // from https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html#xray-concepts-tracingheader
+            // rawHeader format: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1
+
             activityContext = default;
             ReadOnlySpan<char> traceId = default;
             ReadOnlySpan<char> parentId = default;
