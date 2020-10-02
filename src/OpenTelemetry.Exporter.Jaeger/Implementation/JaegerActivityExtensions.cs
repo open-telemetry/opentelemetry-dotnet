@@ -50,7 +50,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             [SemanticConventions.AttributeDbInstance] = 2, // peer.service for Redis.
         };
 
-        private static readonly ListEnumerator<ActivityLink, PooledListState<JaegerSpanRef>>.ForEachDelegate ProcessActivityLinkRef = ProcessActivityLink;
         private static readonly ListEnumerator<ActivityEvent, PooledListState<JaegerLog>>.ForEachDelegate ProcessActivityEventRef = ProcessActivityEvent;
         private static readonly DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
 
@@ -155,24 +154,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 flags: (activity.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(activity.StartTimeUtc),
                 duration: (long)activity.Duration.TotalMilliseconds * 1000,
-                references: activity.Links.ToJaegerSpanRefs(),
+                references: activity.ToJaegerSpanRefs(),
                 tags: jaegerTags.Tags,
                 logs: activity.Events.ToJaegerLogs());
         }
 
-        public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this IEnumerable<ActivityLink> links)
+        public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this Activity activity)
         {
-            PooledListState<JaegerSpanRef> references = default;
+            LinkState references = default;
 
-            if (links == null)
-            {
-                return references.List;
-            }
-
-            ListEnumerator<ActivityLink, PooledListState<JaegerSpanRef>>.AllocationFreeForEach(
-                links,
-                ref references,
-                ProcessActivityLinkRef);
+            activity.EnumerateLinks(ref references);
 
             return references.List;
         }
@@ -324,19 +315,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
         }
 
-        private static bool ProcessActivityLink(ref PooledListState<JaegerSpanRef> state, ActivityLink link)
-        {
-            if (!state.Created)
-            {
-                state.List = PooledList<JaegerSpanRef>.Create();
-                state.Created = true;
-            }
-
-            PooledList<JaegerSpanRef>.Add(ref state.List, link.ToJaegerSpanRef());
-
-            return true;
-        }
-
         private static bool ProcessActivityEvent(ref PooledListState<JaegerLog> state, ActivityEvent e)
         {
             if (!state.Created)
@@ -363,7 +341,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return true;
         }
 
-        private struct TagState : IActivityTagEnumerator
+        private struct TagState : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public PooledList<JaegerTag> Tags;
 
@@ -387,6 +365,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 {
                     ProcessJaegerTag(ref this, activityTag.Key, activityTag.ToJaegerTag());
                 }
+
+                return true;
+            }
+        }
+
+        private struct LinkState : IActivityEnumerator<ActivityLink>
+        {
+            public bool Created;
+
+            public PooledList<JaegerSpanRef> List;
+
+            public bool ForEach(ActivityLink activityLink)
+            {
+                if (!this.Created)
+                {
+                    this.List = PooledList<JaegerSpanRef>.Create();
+                    this.Created = true;
+                }
+
+                PooledList<JaegerSpanRef>.Add(ref this.List, activityLink.ToJaegerSpanRef());
 
                 return true;
             }
