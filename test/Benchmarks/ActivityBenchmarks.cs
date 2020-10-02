@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Trace;
 
@@ -30,9 +31,30 @@ namespace OpenTelemetry.Benchmarks
 
         static ActivityBenchmarks()
         {
+            using ActivitySource activitySource = new ActivitySource("Benchmarks");
+
+            ActivitySource.AddActivityListener(
+                new ActivityListener
+                {
+                    ShouldListenTo = (source) => true,
+                    Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                });
+
             EmptyActivity = new Activity("EmptyActivity");
 
-            Activity = new Activity("Activity");
+            var activityLinks = new[]
+            {
+                new ActivityLink(default),
+                new ActivityLink(default),
+                new ActivityLink(default),
+            };
+
+            Activity = activitySource.StartActivity(
+                "Activity",
+                ActivityKind.Internal,
+                parentContext: default,
+                links: activityLinks);
+
             Activity.SetTag("Tag1", "Value1");
             Activity.SetTag("Tag2", 2);
             Activity.SetTag("Tag3", false);
@@ -41,6 +63,8 @@ namespace OpenTelemetry.Benchmarks
             {
                 Activity.AddTag($"AutoTag{i}", i);
             }
+
+            Activity.Stop();
         }
 
         [Benchmark]
@@ -108,16 +132,45 @@ namespace OpenTelemetry.Benchmarks
         [Benchmark]
         public void EnumerateTagValuesNonemptyTagObjects()
         {
-            Enumerator state = default;
+            TagEnumerator state = default;
 
             Activity.EnumerateTagValues(ref state);
         }
 
-        private struct Enumerator : IActivityTagEnumerator
+        [Benchmark]
+        public void EnumerateNonemptyActivityLinks()
+        {
+            int count = 0;
+            foreach (ActivityLink activityLink in Activity.Links)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateLinksNonemptyActivityLinks()
+        {
+            LinkEnumerator state = default;
+
+            Activity.EnumerateLinks(ref state);
+        }
+
+        private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public int Count { get; private set; }
 
             public bool ForEach(KeyValuePair<string, object> item)
+            {
+                this.Count++;
+                return true;
+            }
+        }
+
+        private struct LinkEnumerator : IActivityEnumerator<ActivityLink>
+        {
+            public int Count { get; private set; }
+
+            public bool ForEach(ActivityLink item)
             {
                 this.Count++;
                 return true;

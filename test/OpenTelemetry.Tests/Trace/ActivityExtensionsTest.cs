@@ -141,7 +141,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             Activity activity = new Activity("Test");
 
-            Enumerator state = default;
+            TagEnumerator state = default;
 
             activity.EnumerateTagValues(ref state);
 
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.SetTag("Tag2", "Value2");
             activity.SetTag("Tag3", "Value3");
 
-            Enumerator state = default;
+            TagEnumerator state = default;
 
             activity.EnumerateTagValues(ref state);
 
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.SetTag("Tag2", "Value2");
             activity.SetTag("Tag3", "Value3");
 
-            Enumerator state = default;
+            TagEnumerator state = default;
             state.BreakOnCount = 1;
 
             activity.EnumerateTagValues(ref state);
@@ -186,7 +186,49 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal("Value1", state.LastTag?.Value);
         }
 
-        private struct Enumerator : IActivityTagEnumerator
+        [Fact]
+        public void EnumerateLinksEmpty()
+        {
+            Activity activity = new Activity("Test");
+
+            LinkEnumerator state = default;
+
+            activity.EnumerateLinks(ref state);
+
+            Assert.Equal(0, state.Count);
+            Assert.False(state.LastLink.HasValue);
+        }
+
+        [Fact]
+        public void EnumerateLinksNonempty()
+        {
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .Build();
+
+            var links = new[]
+            {
+                new ActivityLink(default),
+                new ActivityLink(default),
+                new ActivityLink(default),
+            };
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(
+                ActivityName,
+                ActivityKind.Internal,
+                parentContext: default,
+                links: links);
+
+            LinkEnumerator state = default;
+
+            activity.EnumerateLinks(ref state);
+
+            Assert.Equal(3, state.Count);
+            Assert.Equal(links.Last(), state.LastLink);
+        }
+
+        private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public int BreakOnCount { get; set; }
 
@@ -202,6 +244,22 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     return false;
                 }
+
+                return true;
+            }
+        }
+
+        private struct LinkEnumerator : IActivityEnumerator<ActivityLink>
+        {
+            public ActivityLink? LastLink { get; private set; }
+
+            public int Count { get; private set; }
+
+            public bool ForEach(ActivityLink item)
+            {
+                this.LastLink = item;
+
+                this.Count++;
 
                 return true;
             }
