@@ -92,7 +92,6 @@ Approvers
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
-* [Liudmila Molkova](https://github.com/lmolkova), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
@@ -132,3 +131,6 @@ See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
 for details on upcoming releases. The dates and features described in issues
 and milestones are estimates, and subject to change.
+
+Daily builds from this repo are published to MyGet, and can be installed from
+[this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
