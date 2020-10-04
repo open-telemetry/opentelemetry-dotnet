@@ -50,8 +50,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             [SemanticConventions.AttributeDbInstance] = 2, // peer.service for Redis.
         };
 
-        private static readonly DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.ForEachDelegate ProcessTagRef = ProcessTag;
-
         public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
             var jaegerTags = new TagEnumerationState
@@ -59,7 +57,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 Tags = PooledList<JaegerTag>.Create(),
             };
 
-            activity.EnumerateTagValues(ref jaegerTags);
+            activity.EnumerateTags(ref jaegerTags);
 
             string peerServiceName = null;
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
@@ -178,24 +176,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerLog ToJaegerLog(this ActivityEvent timedEvent)
         {
-            var tags = new PooledListState<JaegerTag>
+            var jaegerTags = new EventTagsEnumerationState
             {
-                Created = true,
-                List = PooledList<JaegerTag>.Create(),
+                Tags = PooledList<JaegerTag>.Create(),
             };
 
-            DictionaryEnumerator<string, object, PooledListState<JaegerTag>>.AllocationFreeForEach(
-                timedEvent.Tags,
-                ref tags,
-                ProcessTagRef);
+            timedEvent.EnumerateTags(ref jaegerTags);
 
             // Matches what OpenTracing and OpenTelemetry defines as the event name.
             // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
             // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
-            PooledList<JaegerTag>.Add(ref tags.List, new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name));
+            PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name));
 
             // TODO: Use the same function as JaegerConversionExtensions or check that the perf here is acceptable.
-            return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), tags.List);
+            return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), jaegerTags.Tags);
         }
 
         public static JaegerSpanRef ToJaegerSpanRef(this in ActivityLink link)
@@ -306,20 +300,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
         }
 
-        private static bool ProcessTag(ref PooledListState<JaegerTag> state, KeyValuePair<string, object> attribute)
-        {
-            if (attribute.Value is Array)
-            {
-                ProcessJaegerTagArray(ref state.List, attribute);
-            }
-            else if (attribute.Value != null)
-            {
-                PooledList<JaegerTag>.Add(ref state.List, attribute.ToJaegerTag());
-            }
-
-            return true;
-        }
-
         private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public PooledList<JaegerTag> Tags;
@@ -389,11 +369,23 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        private struct PooledListState<T>
+        private struct EventTagsEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
         {
-            public bool Created;
+            public PooledList<JaegerTag> Tags;
 
-            public PooledList<T> List;
+            public bool ForEach(KeyValuePair<string, object> tag)
+            {
+                if (tag.Value is Array)
+                {
+                    ProcessJaegerTagArray(ref this.Tags, tag);
+                }
+                else if (tag.Value != null)
+                {
+                    PooledList<JaegerTag>.Add(ref this.Tags, tag.ToJaegerTag());
+                }
+
+                return true;
+            }
         }
     }
 }

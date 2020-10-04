@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            activity.EnumerateTagValues(ref tagState);
+            activity.EnumerateTags(ref tagState);
 
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))

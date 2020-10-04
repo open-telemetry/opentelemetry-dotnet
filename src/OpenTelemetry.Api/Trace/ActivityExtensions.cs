@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="tagEnumerator">Tag enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnumerateTagValues<T>(this Activity activity, ref T tagEnumerator)
+        public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
             Debug.Assert(activity != null, "Activity should not be null");
@@ -125,6 +125,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Enumerates all the key/value pairs on an <see cref="ActivityLink"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activityLink">ActivityLink instance.</param>
+        /// <param name="tagEnumerator">Tag enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator)
+            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            ActivityTagsCollectionEnumeratorFactory<T>.Enumerate(activityLink.Tags, ref tagEnumerator);
+        }
+
+        /// <summary>
         /// Enumerates all the <see cref="ActivityEvent"/>s on an <see cref="Activity"/> without performing an allocation.
         /// </summary>
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
@@ -137,6 +150,19 @@ namespace OpenTelemetry.Trace
             Debug.Assert(activity != null, "Activity should not be null");
 
             ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator);
+        }
+
+        /// <summary>
+        /// Enumerates all the key/value pairs on an <see cref="ActivityEvent"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activityEvent">ActivityEvent instance.</param>
+        /// <param name="tagEnumerator">Tag enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator)
+            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            ActivityTagsCollectionEnumeratorFactory<T>.Enumerate(activityEvent.Tags, ref tagEnumerator);
         }
 
         /// <summary>
@@ -302,6 +328,37 @@ namespace OpenTelemetry.Trace
             }
 
             private static bool ForEachEventCallback(ref TState state, ActivityEvent item)
+                => state.ForEach(item);
+        }
+
+        private static class ActivityTagsCollectionEnumeratorFactory<TState>
+            where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            private static readonly object EmptyActivityEventTags = typeof(ActivityEvent).GetField("s_emptyTags", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
+               ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
+
+            private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(IEnumerable<KeyValuePair<string, object>> tags, ref TState state)
+            {
+                if (ReferenceEquals(tags, EmptyActivityEventTags) || tags is null)
+                {
+                    // Notes:
+                    //  * ActivityEvents.Tags returns s_emptyTags when no ActivityTagsCollection is provided.
+                    //  * ActivityLinks.Tags returns null when no ActivityTagsCollection is provided.
+                    return;
+                }
+
+                ActivityTagsCollectionEnumerator(
+                    tags,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            private static bool ForEachTagValueCallback(ref TState state, KeyValuePair<string, object> item)
                 => state.ForEach(item);
         }
     }
