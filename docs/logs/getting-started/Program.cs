@@ -25,15 +25,6 @@ public class Program
 {
     public static void Main()
     {
-        /*
-        The OpenTelemetry style:
-
-        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-            .AddProcessor(new MyProcessor())
-            .Build();
-        var logger = loggerProvider.CreateLogger("MyLogger");
-        */
-
 #if NETCOREAPP2_1
         var serviceCollection = new ServiceCollection().AddLogging(builder =>
 #else

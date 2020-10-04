@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs
 {
     public class OpenTelemetryLoggerOptions
     {
-        public readonly List<LogProcessor> Processors = new List<LogProcessor>();
+        internal readonly List<LogProcessor> Processors = new List<LogProcessor>();
 
         /// <summary>
         /// Adds processor to the provider.
