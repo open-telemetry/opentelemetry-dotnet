@@ -28,9 +28,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class ActivityExtensions
     {
-        private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-        private static readonly object EmptyActivityLinks = typeof(Activity).GetField("s_emptyLinks", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
         /// <summary>
         /// Sets the status of activity execution.
         /// Activity class in .NET does not support 'Status'.
@@ -117,7 +114,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activity">Activity instance.</param>
-        /// <param name="linkEnumerator">Tag enumerator.</param>
+        /// <param name="linkEnumerator">Link enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator)
             where T : struct, IActivityEnumerator<ActivityLink>
@@ -125,6 +122,21 @@ namespace OpenTelemetry.Trace
             Debug.Assert(activity != null, "Activity should not be null");
 
             ActivityLinksEnumeratorFactory<T>.Enumerate(activity, ref linkEnumerator);
+        }
+
+        /// <summary>
+        /// Enumerates all the <see cref="ActivityEvent"/>s on an <see cref="Activity"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="eventEnumerator">Event enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator)
+            where T : struct, IActivityEnumerator<ActivityEvent>
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+
+            ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator);
         }
 
         /// <summary>
@@ -203,6 +215,8 @@ namespace OpenTelemetry.Trace
         private static class ActivityTagObjectsEnumeratorFactory<TState>
             where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
+            private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
             private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
                 ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
                     typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
@@ -232,6 +246,8 @@ namespace OpenTelemetry.Trace
         private static class ActivityLinksEnumeratorFactory<TState>
             where TState : struct, IActivityEnumerator<ActivityLink>
         {
+            private static readonly object EmptyActivityLinks = typeof(Activity).GetField("s_emptyLinks", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
             private static readonly ListEnumerator<ActivityLink, TState>.AllocationFreeForEachDelegate
                 ActivityLinksEnumerator = ListEnumerator<ActivityLink, TState>.BuildAllocationFreeForEachDelegate(
                     typeof(Activity).GetField("_links", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
@@ -255,6 +271,37 @@ namespace OpenTelemetry.Trace
             }
 
             private static bool ForEachLinkCallback(ref TState state, ActivityLink item)
+                => state.ForEach(item);
+        }
+
+        private static class ActivityEventsEnumeratorFactory<TState>
+            where TState : struct, IActivityEnumerator<ActivityEvent>
+        {
+            private static readonly object EmptyActivityEvents = typeof(Activity).GetField("s_emptyEvents", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
+            private static readonly ListEnumerator<ActivityEvent, TState>.AllocationFreeForEachDelegate
+                ActivityEventsEnumerator = ListEnumerator<ActivityEvent, TState>.BuildAllocationFreeForEachDelegate(
+                    typeof(Activity).GetField("_events", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
+
+            private static readonly ListEnumerator<ActivityEvent, TState>.ForEachDelegate ForEachEventCallbackRef = ForEachEventCallback;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(Activity activity, ref TState state)
+            {
+                var activityEvents = activity.Events;
+
+                if (ReferenceEquals(activityEvents, EmptyActivityEvents))
+                {
+                    return;
+                }
+
+                ActivityEventsEnumerator(
+                    activityEvents,
+                    ref state,
+                    ForEachEventCallbackRef);
+            }
+
+            private static bool ForEachEventCallback(ref TState state, ActivityEvent item)
                 => state.ForEach(item);
         }
     }
