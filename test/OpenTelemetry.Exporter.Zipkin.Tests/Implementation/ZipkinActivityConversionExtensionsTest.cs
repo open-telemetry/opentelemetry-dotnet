@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         [InlineData("double", 1.0)]
         public void CheckProcessTag(string key, object value)
         {
-            var attributeEnumerationState = new AttributeEnumerationState
+            var attributeEnumerationState = new TagEnumerationState
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         [InlineData("double", null)]
         public void CheckNullValueProcessTag(string key, object value)
         {
-            var attributeEnumerationState = new AttributeEnumerationState
+            var attributeEnumerationState = new TagEnumerationState
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
