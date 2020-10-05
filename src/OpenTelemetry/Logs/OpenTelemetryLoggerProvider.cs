@@ -25,14 +25,26 @@ namespace OpenTelemetry.Logs
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
     {
-        private readonly IOptionsMonitor<OpenTelemetryLoggerOptions> options;
+        internal LogProcessor Processor;
+        private readonly OpenTelemetryLoggerOptions options;
         private readonly IDictionary<string, ILogger> loggers;
+        private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
+            : this(options.CurrentValue)
         {
-            this.options = options;
+        }
+
+        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
+        {
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.loggers = new Dictionary<string, ILogger>(StringComparer.Ordinal);
+
+            foreach (var processor in options.Processors)
+            {
+                this.AddProcessor(processor);
+            }
         }
 
         internal IExternalScopeProvider ScopeProvider
@@ -65,14 +77,61 @@ namespace OpenTelemetry.Logs
                     return logger;
                 }
 
-                logger = new OpenTelemetryLogger(categoryName, this.options.CurrentValue);
+                logger = new OpenTelemetryLogger(categoryName, this);
                 this.loggers.Add(categoryName, logger);
                 return logger;
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        internal OpenTelemetryLoggerProvider AddProcessor(LogProcessor processor)
+        {
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
+            if (this.Processor == null)
+            {
+                this.Processor = processor;
+            }
+            else if (this.Processor is CompositeLogProcessor compositeProcessor)
+            {
+                compositeProcessor.AddProcessor(processor);
+            }
+            else
+            {
+                this.Processor = new CompositeLogProcessor(new[]
+                {
+                    this.Processor,
+                    processor,
+                });
+            }
+
+            return this;
+        }
+
+        protected void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                // Wait for up to 5 seconds grace period
+                this.Processor?.Shutdown(5000);
+                this.Processor?.Dispose();
+            }
+
+            this.disposed = true;
         }
     }
 }
