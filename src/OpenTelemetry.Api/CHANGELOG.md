@@ -8,6 +8,9 @@
   `EnumerateLinks` extension method on `Activity` for retrieving links
   efficiently
   ([#1314](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1314))
+* Added `EnumerateEvents` extension method on `Activity` for retrieving events
+  efficiently
+  ([#1319](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1319))
 
 ## 0.6.0-beta.1
 
