@@ -15,12 +15,32 @@
 // </copyright>
 
 #if NETSTANDARD2_0
+using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
     public class OpenTelemetryLoggerOptions
     {
+        internal readonly List<LogProcessor> Processors = new List<LogProcessor>();
+
+        /// <summary>
+        /// Adds processor to the options.
+        /// </summary>
+        /// <param name="processor">Log processor to add.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddProcessor(LogProcessor processor)
+        {
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
+            this.Processors.Add(processor);
+
+            return this;
+        }
     }
 }
 #endif
