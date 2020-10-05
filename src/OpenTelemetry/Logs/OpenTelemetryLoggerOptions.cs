@@ -26,10 +26,10 @@ namespace OpenTelemetry.Logs
         internal readonly List<LogProcessor> Processors = new List<LogProcessor>();
 
         /// <summary>
-        /// Adds processor to the provider.
+        /// Adds processor to the options.
         /// </summary>
         /// <param name="processor">Log processor to add.</param>
-        /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor(LogProcessor processor)
         {
             if (processor == null)
