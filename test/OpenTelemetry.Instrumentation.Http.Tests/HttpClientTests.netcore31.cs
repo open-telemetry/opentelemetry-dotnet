@@ -33,6 +33,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public partial class HttpClientTests
     {
+        public static int Counter;
+
         public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
         [Theory]
@@ -167,6 +169,35 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
+        }
+
+        [Fact]
+        public async Task CheckEnrichmentWhenSampling()
+        {
+            await CheckEnrichment(new AlwaysOffSampler(), 0).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), 2).ConfigureAwait(false);
+        }
+
+        private static async Task CheckEnrichment(Sampler sampler, int expect)
+        {
+            Counter = 0;
+            var processor = new Mock<ActivityProcessor>();
+            using (Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sampler)
+                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var c = new HttpClient();
+                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+            }
+
+            Assert.Equal(expect, Counter);
+        }
+
+        private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
+        {
+            Counter++;
         }
     }
 }
