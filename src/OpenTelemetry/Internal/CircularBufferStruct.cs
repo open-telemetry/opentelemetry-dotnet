@@ -174,8 +174,8 @@ namespace OpenTelemetry.Internal
 
                 // TODO: we are doing an extra copy from the buffer, this can be optimized if Read() could take a callback
                 var value = this.trait[index].Value;
-                this.trait[index].Value = default(T);
                 this.trait[index].IsReady = false;
+                this.trait[index].Value = default(T);
                 this.tail++;
                 return value;
             }
