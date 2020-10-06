@@ -1,4 +1,4 @@
-// <copyright file="ActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="LogProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-
-namespace OpenTelemetry.Trace
+#if NETSTANDARD2_0
+namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// Activity processor base class.
+    /// Log processor base class.
     /// </summary>
-    public abstract class ActivityProcessor : BaseProcessor<Activity>
+    public abstract class LogProcessor : BaseProcessor<LogRecord>
     {
+        /// <inheritdoc />
+        public sealed override void OnStart(LogRecord record)
+        {
+        }
     }
 }
+#endif
