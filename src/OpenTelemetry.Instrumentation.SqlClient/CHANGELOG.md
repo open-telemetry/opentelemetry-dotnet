@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Instrumntation no longer store raw objects like HttpRequest in
+* Instrumntation no longer store raw objects like `object` in
   Activity.CustomProperty. To enrich activity, use the Enrich action on the
   instrumentation.
   ([#1261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1261))
