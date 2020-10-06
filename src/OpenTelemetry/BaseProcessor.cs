@@ -18,7 +18,7 @@ using System;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Common
+namespace OpenTelemetry
 {
     /// <summary>
     /// Base processor base class.

@@ -15,8 +15,6 @@
 // </copyright>
 
 #if NETSTANDARD2_0
-using OpenTelemetry.Common;
-
 namespace OpenTelemetry.Logs
 {
     /// <summary>
