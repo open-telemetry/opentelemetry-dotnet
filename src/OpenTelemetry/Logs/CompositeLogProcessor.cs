@@ -70,13 +70,13 @@ namespace OpenTelemetry.Logs
         }
 
         /// <inheritdoc/>
-        public override void OnLog(in LogRecord record)
+        public override void OnEnd(LogRecord record)
         {
             var cur = this.head;
 
             while (cur != null)
             {
-                cur.Value.OnLog(record);
+                cur.Value.OnEnd(record);
                 cur = cur.Next;
             }
         }

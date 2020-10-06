@@ -29,7 +29,7 @@ internal class MyProcessor : LogProcessor
         this.name = name;
     }
 
-    public override void OnLog(in LogRecord record)
+    public override void OnEnd(LogRecord record)
     {
         var state = record.State;
 
