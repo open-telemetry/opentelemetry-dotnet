@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -34,6 +33,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public partial class HttpClientTests
     {
+        public static int Counter;
+
         public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
         [Theory]
@@ -56,7 +57,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                               .AddHttpClientInstrumentation((opt) =>
+                               {
+                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
+                                   opt.Enrich = ActivityEnrichment;
+                               })
                                .AddProcessor(processor.Object)
                                .SetResource(expectedResource)
                                .Build())
@@ -90,7 +95,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(activity, tc.ResponseExpected);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
             var d = new Dictionary<string, string>()
@@ -164,6 +169,35 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
+        }
+
+        [Fact]
+        public async Task CheckEnrichmentWhenSampling()
+        {
+            await CheckEnrichment(new AlwaysOffSampler(), 0).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), 2).ConfigureAwait(false);
+        }
+
+        private static async Task CheckEnrichment(Sampler sampler, int expect)
+        {
+            Counter = 0;
+            var processor = new Mock<ActivityProcessor>();
+            using (Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sampler)
+                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var c = new HttpClient();
+                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+            }
+
+            Assert.Equal(expect, Counter);
+        }
+
+        private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
+        {
+            Counter++;
         }
     }
 }

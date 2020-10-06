@@ -32,9 +32,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
     {
         [Theory]
         [InlineData("http://localhost")]
+        [InlineData("http://localhost", false)]
         [InlineData("http://127.0.0.1")]
+        [InlineData("http://127.0.0.1", false)]
         [InlineData("http://[::1]")]
-        public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress)
+        [InlineData("http://[::1]", false)]
+        public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress, bool shouldEnrich = true)
         {
             var uri = new Uri($"{baseAddress}:{this.fixture.Port}");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
@@ -47,7 +50,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
-                    .AddGrpcClientInstrumentation()
+                    .AddGrpcClientInstrumentation(options =>
+                    {
+                        if (shouldEnrich)
+                        {
+                            options.Enrich = ActivityEnrichment;
+                        }
+                    })
                     .SetResource(expectedResource)
                     .AddProcessor(processor.Object)
                     .Build())
@@ -91,8 +100,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
-        [Fact]
-        public void GrpcAndHttpClientInstrumentationIsInvoked()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GrpcAndHttpClientInstrumentationIsInvoked(bool shouldEnrich)
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
@@ -104,12 +115,18 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .SetResource(expectedResource)
-                    .AddGrpcClientInstrumentation()
+                    .AddGrpcClientInstrumentation(options =>
+                    {
+                        if (shouldEnrich)
+                        {
+                            options.Enrich = ActivityEnrichment;
+                        }
+                    })
                     .AddHttpClientInstrumentation()
                     .AddProcessor(processor.Object)
                     .Build())
             {
-                var channel = GrpcChannel.ForAddress(uri);
+                using var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -124,8 +141,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
         }
 
-        [Fact]
-        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation(bool shouldEnrich)
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
@@ -137,7 +156,14 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .SetResource(expectedResource)
-                    .AddGrpcClientInstrumentation(o => { o.SuppressDownstreamInstrumentation = true; })
+                    .AddGrpcClientInstrumentation(o =>
+                    {
+                        o.SuppressDownstreamInstrumentation = true;
+                        if (shouldEnrich)
+                        {
+                            o.Enrich = ActivityEnrichment;
+                        }
+                    })
                     .AddHttpClientInstrumentation()
                     .AddProcessor(processor.Object)
                     .Build())
@@ -186,13 +212,23 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
-            var request = activityToValidate.GetCustomProperty(GrpcClientDiagnosticListener.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpRequestMessage);
+        }
 
-            var response = activityToValidate.GetCustomProperty(GrpcClientDiagnosticListener.RequestCustomPropertyName);
-            Assert.NotNull(response);
-            Assert.True(response is HttpRequestMessage);
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
+            {
+                case "OnStartActivity":
+                    Assert.True(obj is HttpRequestMessage);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpResponseMessage);
+                    break;
+
+                default:
+                    break;
+            }
         }
     }
 }

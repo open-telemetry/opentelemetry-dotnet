@@ -109,7 +109,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Url.Host);
@@ -159,7 +167,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                activityToEnrich.SetCustomProperty(ResponseCustomPropertyName, response);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 activityToEnrich.SetStatus(
