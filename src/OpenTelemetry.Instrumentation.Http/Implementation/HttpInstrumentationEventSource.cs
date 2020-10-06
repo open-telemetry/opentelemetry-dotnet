@@ -78,5 +78,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             this.WriteEvent(4, exception);
         }
+
+        [NonEvent]
+        public void EnrichmentException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EnrichmentException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(5, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void EnrichmentException(string exception)
+        {
+            this.WriteEvent(5, exception);
+        }
     }
 }

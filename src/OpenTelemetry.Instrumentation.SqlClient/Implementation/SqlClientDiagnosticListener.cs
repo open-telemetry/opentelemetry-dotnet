@@ -89,7 +89,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             var database = this.databaseFetcher.Fetch(connection);
 
                             activity.DisplayName = (string)database;
-                            activity.SetCustomProperty(CommandCustomPropertyName, command);
+                            try
+                            {
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
+                            }
+
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
