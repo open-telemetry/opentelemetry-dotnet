@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 
 public class Program
 {

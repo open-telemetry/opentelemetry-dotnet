@@ -16,8 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 internal class MyProcessor : LogProcessor
