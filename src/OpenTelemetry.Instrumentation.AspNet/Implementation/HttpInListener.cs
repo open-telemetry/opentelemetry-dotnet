@@ -109,7 +109,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
@@ -160,7 +167,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 

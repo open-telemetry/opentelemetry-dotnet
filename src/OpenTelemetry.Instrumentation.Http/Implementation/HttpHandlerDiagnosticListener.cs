@@ -99,7 +99,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
@@ -140,7 +147,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    try
+                    {
+                        this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    }
+                    catch (Exception ex)
+                    {
+                        HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
 
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
@@ -164,7 +178,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     return;
                 }
 
-                this.options.Enrich?.Invoke(activity, "OnException", exc);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 if (exc is HttpRequestException)
                 {

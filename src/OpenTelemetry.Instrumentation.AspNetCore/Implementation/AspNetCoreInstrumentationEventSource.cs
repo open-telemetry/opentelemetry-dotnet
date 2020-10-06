@@ -54,5 +54,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             this.WriteEvent(3, exception);
         }
+
+        [NonEvent]
+        public void EnrichmentException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EnrichmentException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(4, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void EnrichmentException(string exception)
+        {
+            this.WriteEvent(4, exception);
+        }
     }
 }
