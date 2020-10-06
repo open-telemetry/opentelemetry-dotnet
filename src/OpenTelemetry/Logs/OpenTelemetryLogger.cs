@@ -44,7 +44,7 @@ namespace OpenTelemetry.Logs
 
             var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
 
-            this.provider.Processor?.OnLog(record);
+            this.provider.Processor?.OnEnd(record);
         }
 
         public bool IsEnabled(LogLevel logLevel)
