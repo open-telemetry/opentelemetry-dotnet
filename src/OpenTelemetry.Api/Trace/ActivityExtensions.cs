@@ -83,6 +83,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tagName">Case-sensitive tag name to retrieve.</param>
         /// <returns>Tag value or null if a match was not found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static object GetTagValue(this Activity activity, string tagName)
         {
             Debug.Assert(activity != null, "Activity should not be null");
@@ -101,6 +102,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="tagEnumerator">Tag enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void EnumerateTagValues<T>(this Activity activity, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
@@ -116,6 +118,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="linkEnumerator">Link enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator)
             where T : struct, IActivityEnumerator<ActivityLink>
         {
@@ -131,6 +134,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="eventEnumerator">Event enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator)
             where T : struct, IActivityEnumerator<ActivityEvent>
         {

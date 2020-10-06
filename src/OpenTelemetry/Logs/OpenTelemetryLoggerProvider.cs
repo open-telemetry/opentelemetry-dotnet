@@ -32,7 +32,7 @@ namespace OpenTelemetry.Logs
         private IExternalScopeProvider scopeProvider;
 
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-            : this(options.CurrentValue)
+            : this(options?.CurrentValue)
         {
         }
 
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
-        protected void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (this.disposed)
             {
