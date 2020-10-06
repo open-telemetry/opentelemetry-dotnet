@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if NETCOREAPP3_1
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,6 @@ namespace OpenTelemetry.Logs.Benchmarks
     [MemoryDiagnoser]
     public class LogBenchmarks
     {
-#if !NETCOREAPP2_1
         private readonly ILogger loggerWithNoListener;
         private readonly ILogger loggerWithOneProcessor;
         private readonly ILogger loggerWithTwoProcessors;
@@ -81,10 +81,10 @@ namespace OpenTelemetry.Logs.Benchmarks
         {
             this.loggerWithThreeProcessors.LogInformation("Hello, World!");
         }
-#endif
 
         internal class DummyLogProcessor : LogProcessor
         {
         }
     }
 }
+#endif
