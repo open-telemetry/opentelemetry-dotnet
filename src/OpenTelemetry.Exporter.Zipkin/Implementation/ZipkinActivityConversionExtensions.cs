@@ -49,8 +49,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
 #endif
 
-        private static readonly ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.ForEachDelegate ProcessActivityEventsRef = ProcessActivityEvents;
-
         internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
         {
             var context = activity.Context;
@@ -61,33 +59,33 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 parentId = null;
             }
 
-            var attributeEnumerationState = new AttributeEnumerationState
+            var tagState = new TagEnumerationState
             {
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            activity.EnumerateTagValues(ref attributeEnumerationState);
+            activity.EnumerateTagValues(ref tagState);
 
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))
             {
-                PooledList<KeyValuePair<string, object>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, object>("library.name", activitySource.Name));
+                PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("library.name", activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<KeyValuePair<string, object>>.Add(ref attributeEnumerationState.Tags, new KeyValuePair<string, object>("library.version", activitySource.Version));
+                    PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("library.version", activitySource.Version));
                 }
             }
 
             var localEndpoint = defaultLocalEndpoint;
 
-            var serviceName = attributeEnumerationState.ServiceName;
+            var serviceName = tagState.ServiceName;
 
             // override default service name
             if (!string.IsNullOrWhiteSpace(serviceName))
             {
-                if (!string.IsNullOrWhiteSpace(attributeEnumerationState.ServiceNamespace))
+                if (!string.IsNullOrWhiteSpace(tagState.ServiceNamespace))
                 {
-                    serviceName = attributeEnumerationState.ServiceNamespace + "." + serviceName;
+                    serviceName = tagState.ServiceNamespace + "." + serviceName;
                 }
 
                 if (!LocalEndpointCache.TryGetValue(serviceName, out localEndpoint))
@@ -100,34 +98,34 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             ZipkinEndpoint remoteEndpoint = null;
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
-                var hostNameOrIpAddress = attributeEnumerationState.HostName ?? attributeEnumerationState.IpAddress;
+                var hostNameOrIpAddress = tagState.HostName ?? tagState.IpAddress;
 
-                if ((attributeEnumerationState.RemoteEndpointServiceName == null || attributeEnumerationState.RemoteEndpointServiceNamePriority > 0)
+                if ((tagState.RemoteEndpointServiceName == null || tagState.RemoteEndpointServiceNamePriority > 0)
                     && hostNameOrIpAddress != null)
                 {
 #if !NET452
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((hostNameOrIpAddress, attributeEnumerationState.Port), ZipkinEndpoint.Create);
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((hostNameOrIpAddress, tagState.Port), ZipkinEndpoint.Create);
 #else
-                    var remoteEndpointStr = attributeEnumerationState.Port != default
-                        ? $"{hostNameOrIpAddress}:{attributeEnumerationState.Port}"
+                    var remoteEndpointStr = tagState.Port != default
+                        ? $"{hostNameOrIpAddress}:{tagState.Port}"
                         : hostNameOrIpAddress;
 
                     remoteEndpoint = RemoteEndpointCache.GetOrAdd(remoteEndpointStr, ZipkinEndpoint.Create);
 #endif
                 }
 
-                if (remoteEndpoint == null && attributeEnumerationState.RemoteEndpointServiceName != null)
+                if (remoteEndpoint == null && tagState.RemoteEndpointServiceName != null)
                 {
 #if !NET452
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((attributeEnumerationState.RemoteEndpointServiceName, default), ZipkinEndpoint.Create);
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((tagState.RemoteEndpointServiceName, default), ZipkinEndpoint.Create);
 #else
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(attributeEnumerationState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(tagState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
 #endif
                 }
             }
 
-            var annotations = PooledList<ZipkinAnnotation>.Create();
-            ListEnumerator<ActivityEvent, PooledList<ZipkinAnnotation>>.AllocationFreeForEach(activity.Events, ref annotations, ProcessActivityEventsRef);
+            EventEnumerationState eventState = default;
+            activity.EnumerateEvents(ref eventState);
 
             return new ZipkinSpan(
                 EncodeTraceId(context.TraceId, useShortTraceIds),
@@ -139,8 +137,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 duration: activity.Duration.ToEpochMicroseconds(),
                 localEndpoint,
                 remoteEndpoint,
-                annotations,
-                attributeEnumerationState.Tags,
+                eventState.Annotations,
+                tagState.Tags,
                 null,
                 null);
         }
@@ -195,13 +193,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             };
         }
 
-        private static bool ProcessActivityEvents(ref PooledList<ZipkinAnnotation> annotations, ActivityEvent @event)
-        {
-            PooledList<ZipkinAnnotation>.Add(ref annotations, new ZipkinAnnotation(@event.Timestamp.ToEpochMicroseconds(), @event.Name));
-            return true;
-        }
-
-        internal struct AttributeEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
+        internal struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 
@@ -267,6 +259,26 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                     PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, activityTag);
                 }
+
+                return true;
+            }
+        }
+
+        private struct EventEnumerationState : IActivityEnumerator<ActivityEvent>
+        {
+            public bool Created;
+
+            public PooledList<ZipkinAnnotation> Annotations;
+
+            public bool ForEach(ActivityEvent activityEvent)
+            {
+                if (!this.Created)
+                {
+                    this.Annotations = PooledList<ZipkinAnnotation>.Create();
+                    this.Created = true;
+                }
+
+                PooledList<ZipkinAnnotation>.Add(ref this.Annotations, new ZipkinAnnotation(activityEvent.Timestamp.ToEpochMicroseconds(), activityEvent.Name));
 
                 return true;
             }

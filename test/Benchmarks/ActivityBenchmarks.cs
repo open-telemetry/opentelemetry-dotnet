@@ -17,7 +17,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Trace;
 
@@ -26,7 +25,7 @@ namespace OpenTelemetry.Benchmarks
     [MemoryDiagnoser]
     public class ActivityBenchmarks
     {
-        private static readonly Activity EmptyActivity;
+        private static readonly Activity EmptyActivity = new Activity("EmptyActivity");
         private static readonly Activity Activity;
 
         static ActivityBenchmarks()
@@ -39,8 +38,6 @@ namespace OpenTelemetry.Benchmarks
                     ShouldListenTo = (source) => true,
                     Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
                 });
-
-            EmptyActivity = new Activity("EmptyActivity");
 
             var activityLinks = new[]
             {
@@ -63,6 +60,10 @@ namespace OpenTelemetry.Benchmarks
             {
                 Activity.AddTag($"AutoTag{i}", i);
             }
+
+            Activity.AddEvent(new ActivityEvent("event1"));
+            Activity.AddEvent(new ActivityEvent("event2"));
+            Activity.AddEvent(new ActivityEvent("event3"));
 
             Activity.Stop();
         }
@@ -155,6 +156,24 @@ namespace OpenTelemetry.Benchmarks
             Activity.EnumerateLinks(ref state);
         }
 
+        [Benchmark]
+        public void EnumerateNonemptyActivityEvents()
+        {
+            int count = 0;
+            foreach (ActivityEvent activityEvent in Activity.Events)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateEventsNonemptyActivityEvents()
+        {
+            EventEnumerator state = default;
+
+            Activity.EnumerateEvents(ref state);
+        }
+
         private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public int Count { get; private set; }
@@ -171,6 +190,17 @@ namespace OpenTelemetry.Benchmarks
             public int Count { get; private set; }
 
             public bool ForEach(ActivityLink item)
+            {
+                this.Count++;
+                return true;
+            }
+        }
+
+        private struct EventEnumerator : IActivityEnumerator<ActivityEvent>
+        {
+            public int Count { get; private set; }
+
+            public bool ForEach(ActivityEvent item)
             {
                 this.Count++;
                 return true;
