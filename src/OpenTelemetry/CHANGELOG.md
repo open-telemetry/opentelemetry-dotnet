@@ -13,6 +13,14 @@
 * Added `ILogger`/`Microsoft.Extensions.Logging` integration
   ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308))
   ([#1315](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1315))
+* Changed exporter and processor to generic types
+  ([#1328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1328)):
+  * `ActivityExporter` changed to `BaseExporter<Activity>`
+  * `ActivityProcessor` changed to `BaseProcessor<Activity>`
+  * `BatchExportActivityProcessor` changed to `BatchExportProcessor<Activity>`
+  * `ReentrantExportActivityProcessor` changed to
+    `ReentrantExportProcessor<Activity>`
+  * `SimpleExportActivityProcessor` changed to `SimpleExportProcessor<Activity>`
 
 ## 0.6.0-beta.1
 
