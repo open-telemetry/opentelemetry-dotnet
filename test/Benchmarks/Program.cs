@@ -22,6 +22,11 @@ namespace OpenTelemetry.Benchmarks
         public static void Main(string[] args)
         {
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+
+            /*
+            CircularBufferStress.EntryPoint();
+            CircularBufferStructStress.EntryPoint();
+            */
         }
     }
 }
