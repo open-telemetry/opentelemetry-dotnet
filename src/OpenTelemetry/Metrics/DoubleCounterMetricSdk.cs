@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics

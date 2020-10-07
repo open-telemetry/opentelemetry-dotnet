@@ -29,6 +29,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public const string RequestCustomPropertyName = "OTel.AspNet.Request";
         public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        private const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn.Start";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
         private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
@@ -146,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 // this instrumentation created in Start.
                 // This is because Asp.Net, under certain circumstances, restores Activity.Current
                 // to its own activity.
-                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                if (activity.OperationName.Equals(ActivityOperationName, StringComparison.Ordinal))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
@@ -214,7 +215,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (!(this.options.Propagator is TextMapPropagator))
             {
-                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
                 {
                     // If instrumentation started a new Activity, it must
                     // be stopped here.

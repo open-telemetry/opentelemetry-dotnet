@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Context;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 

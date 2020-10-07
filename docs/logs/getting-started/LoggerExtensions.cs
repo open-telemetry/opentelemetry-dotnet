@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 internal static class LoggerExtensions

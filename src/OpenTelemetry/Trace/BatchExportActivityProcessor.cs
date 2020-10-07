@@ -151,7 +151,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     if (timeout <= 0)
                     {
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Trace
 
             var sw = Stopwatch.StartNew();
             this.exporterThread.Join(timeoutMilliseconds);
-            var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
             return this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 

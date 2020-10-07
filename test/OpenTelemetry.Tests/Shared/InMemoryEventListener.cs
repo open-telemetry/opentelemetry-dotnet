@@ -16,7 +16,6 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests
 {

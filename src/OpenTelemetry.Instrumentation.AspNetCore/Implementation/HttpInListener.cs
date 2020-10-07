@@ -182,7 +182,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.

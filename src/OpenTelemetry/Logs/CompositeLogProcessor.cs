@@ -96,7 +96,7 @@ namespace OpenTelemetry.Logs
                 }
                 else
                 {
-                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     if (timeout <= 0)
                     {
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Logs
                 }
                 else
                 {
-                    var timeout = (long)timeoutMilliseconds - sw.ElapsedMilliseconds;
+                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                     // notify all the processors, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
