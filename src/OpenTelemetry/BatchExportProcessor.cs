@@ -1,4 +1,4 @@
-// <copyright file="BatchExportActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BatchExportProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,16 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Implements processor that batches activities before calling exporter.
+    /// Implements processor that batches telemetry objects before calling exporter.
     /// </summary>
-    public class BatchExportActivityProcessor : BaseExportActivityProcessor
+    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
+    public class BatchExportProcessor<T> : BaseExportProcessor<T>
+        where T : class
     {
-        private readonly CircularBuffer<Activity> circularBuffer;
+        private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
         private readonly int maxExportBatchSize;
@@ -38,15 +40,15 @@ namespace OpenTelemetry.Trace
         private long droppedCount;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BatchExportActivityProcessor"/> class.
+        /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
         /// <param name="maxQueueSize">The maximum queue size. After the size is reached data are dropped. The default value is 2048.</param>
         /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
         /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
-        public BatchExportActivityProcessor(
-            ActivityExporter exporter,
+        public BatchExportProcessor(
+            BaseExporter<T> exporter,
             int maxQueueSize = 2048,
             int scheduledDelayMilliseconds = 5000,
             int exporterTimeoutMilliseconds = 30000,
@@ -73,37 +75,37 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
             }
 
-            this.circularBuffer = new CircularBuffer<Activity>(maxQueueSize);
+            this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.maxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
                 IsBackground = true,
-                Name = $"OpenTelemetry-{nameof(BatchExportActivityProcessor)}-{exporter.GetType().Name}",
+                Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
             };
             this.exporterThread.Start();
         }
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> objects dropped by the processor.
+        /// Gets the number of telemetry objects dropped by the processor.
         /// </summary>
         internal long DroppedCount => this.droppedCount;
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> objects received by the processor.
+        /// Gets the number of telemetry objects received by the processor.
         /// </summary>
         internal long ReceivedCount => this.circularBuffer.AddedCount + this.DroppedCount;
 
         /// <summary>
-        /// Gets the number of <see cref="Activity"/> objects processed by the underlying exporter.
+        /// Gets the number of telemetry objects processed by the underlying exporter.
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
         /// <inheritdoc/>
-        public override void OnEnd(Activity activity)
+        public override void OnEnd(T data)
         {
-            if (this.circularBuffer.TryAdd(activity, maxSpinCount: 50000))
+            if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
@@ -210,7 +212,7 @@ namespace OpenTelemetry.Trace
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    this.exporter.Export(new Batch<Activity>(this.circularBuffer, this.maxExportBatchSize));
+                    this.exporter.Export(new Batch<T>(this.circularBuffer, this.maxExportBatchSize));
 
                     this.dataExportedNotification.Set();
                     this.dataExportedNotification.Reset();

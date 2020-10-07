@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 
 namespace OpenTelemetry.Trace
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Trace
             var otlpExporter = new OtlpExporter(exporterOptions);
 
             // TODO: Pick Simple vs Batching based on OtlpExporterOptions
-            return builder.AddProcessor(new BatchExportActivityProcessor(otlpExporter));
+            return builder.AddProcessor(new BatchExportProcessor<Activity>(otlpExporter));
         }
     }
 }

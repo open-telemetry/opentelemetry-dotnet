@@ -16,6 +16,8 @@
 
 using System;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 
 internal static class LoggerExtensions
 {
@@ -28,5 +30,15 @@ internal static class LoggerExtensions
     public static void LogEx(this ILogger logger, object obj)
     {
         LogExAction(logger, obj, null);
+    }
+
+    public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
+    {
+        if (options == null)
+        {
+            throw new ArgumentNullException(nameof(options));
+        }
+
+        return options.AddProcessor(new BatchExportProcessor<LogRecord>(new MyExporter()));
     }
 }

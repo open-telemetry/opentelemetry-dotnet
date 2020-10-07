@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Log record base class.
     /// </summary>
-    public readonly struct LogRecord
+    public sealed class LogRecord
     {
         internal LogRecord(DateTime timestamp, string categoryName, LogLevel logLevel, EventId eventId, object state, Exception exception)
         {

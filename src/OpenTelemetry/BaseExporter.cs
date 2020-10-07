@@ -1,4 +1,4 @@
-// <copyright file="ActivityExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
     /// Enumeration used to define the result of an export operation.
@@ -38,18 +38,20 @@ namespace OpenTelemetry.Trace
     }
 
     /// <summary>
-    /// Activity exporter base class.
+    /// Exporter base class.
     /// </summary>
-    public abstract class ActivityExporter : IDisposable
+    /// <typeparam name="T">The type of object to be exported.</typeparam>
+    public abstract class BaseExporter<T> : IDisposable
+        where T : class
     {
         private int shutdownCount;
 
         /// <summary>
-        /// Exports a batch of <see cref="Activity"/> objects.
+        /// Exports a batch of telemetry objects.
         /// </summary>
-        /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
+        /// <param name="batch">Batch of telemetry objects to export.</param>
         /// <returns>Result of the export operation.</returns>
-        public abstract ExportResult Export(in Batch<Activity> batch);
+        public abstract ExportResult Export(in Batch<T> batch);
 
         /// <summary>
         /// Attempts to shutdown the exporter, blocks the current thread until

@@ -1,4 +1,4 @@
-// <copyright file="CompositeActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="CompositeProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,15 +20,15 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
-    public class CompositeActivityProcessor : ActivityProcessor
+    public class CompositeProcessor<T> : BaseProcessor<T>
     {
-        private DoublyLinkedListNode<ActivityProcessor> head;
-        private DoublyLinkedListNode<ActivityProcessor> tail;
+        private DoublyLinkedListNode head;
+        private DoublyLinkedListNode tail;
         private bool disposed;
 
-        public CompositeActivityProcessor(IEnumerable<ActivityProcessor> processors)
+        public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
             if (processors == null)
             {
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException($"{nameof(processors)} collection is empty");
             }
 
-            this.head = new DoublyLinkedListNode<ActivityProcessor>(iter.Current);
+            this.head = new DoublyLinkedListNode(iter.Current);
             this.tail = this.head;
 
             while (iter.MoveNext())
@@ -51,14 +51,14 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public CompositeActivityProcessor AddProcessor(ActivityProcessor processor)
+        public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
             if (processor == null)
             {
                 throw new ArgumentNullException(nameof(processor));
             }
 
-            var node = new DoublyLinkedListNode<ActivityProcessor>(processor)
+            var node = new DoublyLinkedListNode(processor)
             {
                 Previous = this.tail,
             };
@@ -69,25 +69,25 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc/>
-        public override void OnEnd(Activity activity)
+        public override void OnEnd(T data)
         {
             var cur = this.head;
 
             while (cur != null)
             {
-                cur.Value.OnEnd(activity);
+                cur.Value.OnEnd(data);
                 cur = cur.Next;
             }
         }
 
         /// <inheritdoc/>
-        public override void OnStart(Activity activity)
+        public override void OnStart(T data)
         {
             var cur = this.head;
 
             while (cur != null)
             {
-                cur.Value.OnStart(activity);
+                cur.Value.OnStart(data);
                 cur = cur.Next;
             }
         }
@@ -184,18 +184,18 @@ namespace OpenTelemetry.Trace
             this.disposed = true;
         }
 
-        private class DoublyLinkedListNode<T>
+        private class DoublyLinkedListNode
         {
-            public readonly T Value;
+            public readonly BaseProcessor<T> Value;
 
-            public DoublyLinkedListNode(T value)
+            public DoublyLinkedListNode(BaseProcessor<T> value)
             {
                 this.Value = value;
             }
 
-            public DoublyLinkedListNode<T> Previous { get; set; }
+            public DoublyLinkedListNode Previous { get; set; }
 
-            public DoublyLinkedListNode<T> Next { get; set; }
+            public DoublyLinkedListNode Next { get; set; }
         }
     }
 }

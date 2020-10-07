@@ -98,7 +98,7 @@ namespace Examples.Console
             return null;
         }
 
-        internal class MyProcessor : ActivityProcessor
+        internal class MyProcessor : BaseProcessor<Activity>
         {
             public override void OnStart(Activity activity)
             {

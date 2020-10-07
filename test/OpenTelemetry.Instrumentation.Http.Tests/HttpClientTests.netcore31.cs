@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         private static async Task CheckEnrichment(Sampler sampler, int expect)
         {
             Counter = 0;
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .SetSampler(sampler)
                 .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
