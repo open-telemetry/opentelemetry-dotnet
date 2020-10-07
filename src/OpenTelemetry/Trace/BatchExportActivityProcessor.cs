@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements processor that batches activities before calling exporter.
     /// </summary>
-    public class BatchExportActivityProcessor : BaseExportActivityProcessor
+    public class BatchExportActivityProcessor : BaseExportProcessor<Activity>
     {
         private readonly CircularBuffer<Activity> circularBuffer;
         private readonly int scheduledDelayMilliseconds;

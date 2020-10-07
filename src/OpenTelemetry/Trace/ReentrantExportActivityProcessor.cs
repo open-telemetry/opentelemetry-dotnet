@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Implements activity processor that exports <see cref="Activity"/> at each OnEnd call without synchronization.
     /// </summary>
-    public class ReentrantExportActivityProcessor : BaseExportActivityProcessor
+    public class ReentrantExportActivityProcessor : BaseExportProcessor<Activity>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ReentrantExportActivityProcessor"/> class.
