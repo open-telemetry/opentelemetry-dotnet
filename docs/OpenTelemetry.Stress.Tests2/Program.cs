@@ -109,7 +109,7 @@ public class Program
             Console.WriteLine($"Reader finished.");
         });
 
-        Console.WriteLine("Succedded!");
+        Console.WriteLine("Succeeded!");
         return 0;
     }
 
