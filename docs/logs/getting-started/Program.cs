@@ -64,8 +64,6 @@ public class Program
             ["Name"] = "truffle",
             ["Price"] = 299.99,
         });
-
-        var p = new FoodProcessor(new PotatoExporter());
     }
 
     internal struct Food
@@ -73,32 +71,5 @@ public class Program
         public string Name { get; set; }
 
         public double Price { get; set; }
-    }
-
-    internal class Exporter<T>
-    {
-    }
-
-    internal class FoodExporter : Exporter<Food>
-    {
-    }
-
-    internal class PotatoExporter : FoodExporter
-    {
-    }
-
-    internal class Processor<T>
-    {
-        public Processor(Exporter<T> exporter)
-        {
-        }
-    }
-
-    internal class FoodProcessor : Processor<Food>
-    {
-        public FoodProcessor(Exporter<Food> exporter)
-            : base(exporter)
-        {
-        }
     }
 }
