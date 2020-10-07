@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Log record base class.
     /// </summary>
-    public class LogRecord
+    public sealed class LogRecord
     {
         internal LogRecord(DateTime timestamp, string categoryName, LogLevel logLevel, EventId eventId, object state, Exception exception)
         {
@@ -35,17 +35,17 @@ namespace OpenTelemetry.Logs
             this.Exception = exception;
         }
 
-        public DateTime Timestamp { get; protected set; }
+        public DateTime Timestamp { get; }
 
-        public string CategoryName { get; protected set; }
+        public string CategoryName { get; }
 
-        public LogLevel LogLevel { get; protected set; }
+        public LogLevel LogLevel { get; }
 
-        public EventId EventId { get; protected set; }
+        public EventId EventId { get; }
 
-        public object State { get; protected set; }
+        public object State { get; }
 
-        public Exception Exception { get; protected set; }
+        public Exception Exception { get; }
     }
 }
 #endif
