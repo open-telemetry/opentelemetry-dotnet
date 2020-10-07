@@ -43,7 +43,7 @@ internal class MyExporter : BaseExporter<LogRecord>
                 sb.Append(", ");
             }
 
-            sb.Append(record.Timestamp.ToString());
+            sb.Append($"{record}");
         }
 
         Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
