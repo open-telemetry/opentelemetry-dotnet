@@ -1,4 +1,4 @@
-// <copyright file="MySampler.cs" company="OpenTelemetry Authors">
+// <copyright file="LogProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using OpenTelemetry.Trace;
-
-internal class MySampler : Sampler
+#if NETSTANDARD2_0
+namespace OpenTelemetry.Logs
 {
-    public override SamplingResult ShouldSample(in SamplingParameters param)
+    /// <summary>
+    /// Log processor base class.
+    /// </summary>
+    public abstract class LogProcessor : BaseProcessor<LogRecord>
     {
-        Console.WriteLine($"MySampler.ShouldSample({param.Name})");
-        return new SamplingResult(SamplingDecision.RecordAndSample);
+        /// <inheritdoc />
+        public sealed override void OnStart(LogRecord record)
+        {
+        }
     }
 }
+#endif

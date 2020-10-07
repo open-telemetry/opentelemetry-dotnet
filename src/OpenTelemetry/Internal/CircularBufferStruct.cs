@@ -1,4 +1,4 @@
-// <copyright file="CircularBuffer.cs" company="OpenTelemetry Authors">
+// <copyright file="CircularBufferStruct.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,18 +24,18 @@ namespace OpenTelemetry.Internal
     /// Lock-free implementation of single-reader multi-writer circular buffer.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    internal class CircularBuffer<T>
-        where T : class
+    internal class CircularBufferStruct<T>
+        where T : struct
     {
-        private readonly T[] trait;
+        private readonly Trait[] trait;
         private long head;
         private long tail;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
+        /// Initializes a new instance of the <see cref="CircularBufferStruct{T}"/> class.
         /// </summary>
         /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
-        public CircularBuffer(int capacity)
+        public CircularBufferStruct(int capacity)
         {
             if (capacity <= 0)
             {
@@ -43,16 +43,16 @@ namespace OpenTelemetry.Internal
             }
 
             this.Capacity = capacity;
-            this.trait = new T[capacity];
+            this.trait = new Trait[capacity];
         }
 
         /// <summary>
-        /// Gets the capacity of the <see cref="CircularBuffer{T}"/>.
+        /// Gets the capacity of the <see cref="CircularBufferStruct{T}"/>.
         /// </summary>
         public int Capacity { get; }
 
         /// <summary>
-        /// Gets the number of items contained in the <see cref="CircularBuffer{T}"/>.
+        /// Gets the number of items contained in the <see cref="CircularBufferStruct{T}"/>.
         /// </summary>
         public int Count
         {
@@ -64,12 +64,12 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
+        /// Gets the number of items added to the <see cref="CircularBufferStruct{T}"/>.
         /// </summary>
         public long AddedCount => this.head;
 
         /// <summary>
-        /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
+        /// Gets the number of items removed from the <see cref="CircularBufferStruct{T}"/>.
         /// </summary>
         public long RemovedCount => this.tail;
 
@@ -83,11 +83,6 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool Add(T value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             while (true)
             {
                 var tailSnapshot = this.tail;
@@ -105,7 +100,8 @@ namespace OpenTelemetry.Internal
                 }
 
                 var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                this.trait[index].Value = value;
+                this.trait[index].IsReady = true;
                 return true;
             }
         }
@@ -124,11 +120,6 @@ namespace OpenTelemetry.Internal
             if (maxSpinCount <= 0)
             {
                 return this.Add(value);
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
             }
 
             var spinCountDown = maxSpinCount;
@@ -155,13 +146,14 @@ namespace OpenTelemetry.Internal
                 }
 
                 var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                this.trait[index].Value = value;
+                this.trait[index].IsReady = true;
                 return true;
             }
         }
 
         /// <summary>
-        /// Reads an item from the <see cref="CircularBuffer{T}"/>.
+        /// Reads an item from the <see cref="CircularBufferStruct{T}"/>.
         /// </summary>
         /// <remarks>
         /// This function is not reentrant-safe, only one reader is allowed at any given time.
@@ -174,17 +166,25 @@ namespace OpenTelemetry.Internal
             var index = (int)(this.tail % this.Capacity);
             while (true)
             {
-                var value = this.trait[index];
-                if (value == null)
+                if (!this.trait[index].IsReady)
                 {
                     // If we got here it means a writer isn't done.
                     continue;
                 }
 
-                this.trait[index] = null;
+                // TODO: we are doing an extra copy from the buffer, this can be optimized if Read() could take a callback
+                var value = this.trait[index].Value;
+                this.trait[index].IsReady = false;
+                this.trait[index].Value = default(T);
                 this.tail++;
                 return value;
             }
+        }
+
+        private struct Trait
+        {
+            internal bool IsReady;
+            internal T Value;
         }
     }
 }

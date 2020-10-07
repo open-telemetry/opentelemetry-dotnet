@@ -15,7 +15,6 @@
 // </copyright>
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
