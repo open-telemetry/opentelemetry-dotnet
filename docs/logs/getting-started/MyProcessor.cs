@@ -35,7 +35,7 @@ internal class MyProcessor : BaseProcessor<LogRecord>
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.OnForceFlush()");
+        Console.WriteLine($"{this.name}.OnForceFlush({timeoutMilliseconds})");
         return true;
     }
 
