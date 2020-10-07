@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests
 {
-    internal class TestActivityProcessor : ActivityProcessor
+    internal class TestActivityProcessor : BaseProcessor<Activity>
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;

@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
-        private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
+        private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so

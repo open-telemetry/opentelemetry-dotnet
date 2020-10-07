@@ -82,7 +82,7 @@ namespace OpenTelemetry.Logs.Benchmarks
             this.loggerWithThreeProcessors.LogInformation("Hello, World!");
         }
 
-        internal class DummyLogProcessor : LogProcessor
+        internal class DummyLogProcessor : BaseProcessor<LogRecord>
         {
         }
     }

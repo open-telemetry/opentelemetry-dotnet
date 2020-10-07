@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             int statusCode,
             string reasonPhrase)
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             // Arrange
             using (var client = this.factory

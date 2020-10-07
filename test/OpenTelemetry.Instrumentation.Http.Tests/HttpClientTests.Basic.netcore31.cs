@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var request = new HttpRequestMessage
             {
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var request = new HttpRequestMessage
             {
@@ -255,7 +255,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
@@ -293,7 +293,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationCorrelationAndBaggage()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             using var parent = new Activity("w3c activity");
             parent.SetIdFormat(ActivityIdFormat.W3C);

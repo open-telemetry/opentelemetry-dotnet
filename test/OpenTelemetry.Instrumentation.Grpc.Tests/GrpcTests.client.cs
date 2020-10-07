@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
                 .Start();
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
                 .Start();
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
                 .Start();
