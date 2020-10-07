@@ -1,4 +1,4 @@
-// <copyright file="IActivityTagEnumerator.cs" company="OpenTelemetry Authors">
+// <copyright file="IActivityEnumerator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// An interface used to perform zero-allocation enumeration of <see cref="Activity"/> tags. Implementation must be a struct.
+    /// An interface used to perform zero-allocation enumeration of <see cref="Activity"/> elements. Implementation must be a struct.
     /// </summary>
-    public interface IActivityTagEnumerator
+    /// <typeparam name="T">Enumerated item type.</typeparam>
+    public interface IActivityEnumerator<T>
     {
         /// <summary>
-        /// Called for each <see cref="Activity"/> tag while the enumeration is executing.
+        /// Called for each <see cref="Activity"/> item while the enumeration is executing.
         /// </summary>
-        /// <param name="item">Tag key/value pair.</param>
+        /// <param name="item">Enumeration item.</param>
         /// <returns><see langword="true"/> to continue the enumeration of records or <see langword="false"/> to stop (break) the enumeration.</returns>
-        bool ForEach(KeyValuePair<string, object> item);
+        bool ForEach(T item);
     }
 }

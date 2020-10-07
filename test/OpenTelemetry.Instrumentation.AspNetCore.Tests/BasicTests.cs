@@ -58,15 +58,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
-        [Fact]
-        public async Task SuccessfulTemplateControllerCallGeneratesASpan()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation()
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        if (shouldEnrich)
+                        {
+                            options.Enrich = ActivityEnrichment;
+                        }
+                    })
                     .SetResource(expectedResource)
                     .AddProcessor(activityProcessor.Object)
                     .Build();
@@ -96,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
@@ -147,7 +155,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task CustomPropagator()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
@@ -196,7 +204,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestNotCollectedWhenFilterIsApplied()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -235,7 +243,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestNotCollectedWhenFilterThrowException()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -290,7 +298,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.openTelemetrySdk?.Dispose();
         }
 
-        private static void WaitForProcessorInvocations(Mock<ActivityProcessor> activityProcessor, int invocationCount)
+        private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> activityProcessor, int invocationCount)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
@@ -309,13 +317,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
-            var request = activityToValidate.GetCustomProperty(HttpInListener.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpRequest);
+        }
 
-            var response = activityToValidate.GetCustomProperty(HttpInListener.ResponseCustomPropertyName);
-            Assert.NotNull(response);
-            Assert.True(response is HttpResponse);
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
+            {
+                case "OnStartActivity":
+                    Assert.True(obj is HttpRequest);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpResponse);
+                    break;
+
+                default:
+                    break;
+            }
         }
     }
 }

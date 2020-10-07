@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using Greet;
@@ -43,14 +44,15 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"http://localhost:{this.fixture.Port}");
             var processor = this.fixture.GrpcServerSpanProcessor;
 
-            var channel = GrpcChannel.ForAddress(uri);
+            using var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
             client.SayHello(new HelloRequest());
 
             WaitForProcessorInvocations(processor, 2);
 
-            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
+            var activity = (Activity)processor.Invocations.FirstOrDefault(invo =>
+                invo.Method.Name == "OnEnd" && (invo.Arguments[0] as Activity).OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn").Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
@@ -72,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
-        private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
+        private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so

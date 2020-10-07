@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -28,7 +29,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporter
+    public class JaegerExporter : BaseExporter<Activity>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;

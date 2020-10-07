@@ -174,7 +174,7 @@ namespace OpenTelemetry.Internal
             var index = (int)(this.tail % this.Capacity);
             while (true)
             {
-                T value = this.trait[index];
+                var value = this.trait[index];
                 if (value == null)
                 {
                     // If we got here it means a writer isn't done.

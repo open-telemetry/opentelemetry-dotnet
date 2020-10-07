@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
@@ -30,6 +32,21 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         public void NullPayload(string handlerName, string eventName)
         {
             this.WriteEvent(1, handlerName, eventName);
+        }
+
+        [NonEvent]
+        public void EnrichmentException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EnrichmentException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(2, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void EnrichmentException(string exception)
+        {
+            this.WriteEvent(2, exception);
         }
     }
 }

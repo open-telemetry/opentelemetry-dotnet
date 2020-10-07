@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
         public int Port { get; }
 
-        public Mock<ActivityProcessor> GrpcServerSpanProcessor { get; } = new Mock<ActivityProcessor>();
+        public Mock<BaseProcessor<Activity>> GrpcServerSpanProcessor { get; } = new Mock<BaseProcessor<Activity>>();
 
         public void Dispose()
         {

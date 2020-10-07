@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
         public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             using FakeBehavingSqlEventSource fakeSqlEventSource = new FakeBehavingSqlEventSource();
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation()
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             using FakeMisbehavingSqlEventSource fakeSqlEventSource = new FakeMisbehavingSqlEventSource();
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation()

@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -53,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             int statusCode,
             string reasonPhrase)
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             // Arrange
             using (var client = this.factory

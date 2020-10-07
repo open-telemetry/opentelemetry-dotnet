@@ -16,11 +16,12 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Shared
 {
-    internal class TestActivityExporter : ActivityExporter
+    internal class TestActivityExporter : BaseExporter<Activity>
     {
         internal readonly BlockingCollection<Activity> Exported = new BlockingCollection<Activity>();
         private bool disposed;

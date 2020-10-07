@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Moq;
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddRedisInstrumentation(connection)
@@ -160,7 +159,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRedisInstrumentation(null));
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Assert.Throws<ArgumentNullException>(() =>
             Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)

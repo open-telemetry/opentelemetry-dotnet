@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -25,7 +26,7 @@ namespace OpenTelemetry.Trace
     public class TracerProviderBuilder
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<ActivityProcessor> processors = new List<ActivityProcessor>();
+        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private Resource resource = Resource.Empty;
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
@@ -98,7 +99,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="processor">Activity processor to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddProcessor(ActivityProcessor processor)
+        public TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {

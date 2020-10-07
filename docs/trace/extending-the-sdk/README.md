@@ -18,7 +18,7 @@ OpenTelemetry .NET SDK has provided the following built-in exporters:
 Custom exporters can be implemented to send telemetry data to places which are
 not covered by the built-in exporters:
 
-* Exporters should derive from `OpenTelemetry.Trace.ActivityExporter` (which
+* Exporters should derive from `OpenTelemetry.BaseExporter<Activity>` (which
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
   and implement the `Export` method.
 * Exporters can optionally implement the `OnShutdown` method.
@@ -34,7 +34,7 @@ not covered by the built-in exporters:
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 
 ```csharp
-class MyExporter : ActivityExporter
+class MyExporter : BaseExporter<Activity>
 {
     public override ExportResult Export(in Batch<Activity> batch)
     {
@@ -65,14 +65,14 @@ TBD
 
 OpenTelemetry .NET SDK has provided the following built-in processors:
 
-* [BatchExportActivityProcessor](../../../src/OpenTelemetry/Trace/BatchExportActivityProcessor.cs)
-* [CompositeActivityProcessor](../../../src/OpenTelemetry/Trace/CompositeActivityProcessor.cs)
-* [ReentrantExportActivityProcessor](../../../src/OpenTelemetry/Trace/ReentrantExportActivityProcessor.cs)
-* [SimpleExportActivityProcessor](../../../src/OpenTelemetry/Trace/SimpleExportActivityProcessor.cs)
+* [BatchExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/BatchExportProcessor.cs)
+* [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
+* [ReentrantExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/ReentrantExportProcessor.cs)
+* [SimpleExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/SimpleExportProcessor.cs)
 
 Custom processors can be implemented to cover more scenarios:
 
-* Processors should inherit from `OpenTelemetry.Trace.ActivityProcessor` (which
+* Processors should inherit from `OpenTelemetry.BaseProcessor<Activity>` (which
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package),
   and implement the `OnStart` and `OnEnd` methods.
 * Processors can optionally implement the `OnForceFlush` and `OnShutdown`
@@ -83,7 +83,7 @@ Custom processors can be implemented to cover more scenarios:
   time, since they will be called on critical code path.
 
 ```csharp
-class MyProcessor : ActivityProcessor
+class MyProcessor : BaseProcessor<Activity>
 {
     public override void OnStart(Activity activity)
     {

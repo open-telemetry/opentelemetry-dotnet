@@ -25,14 +25,33 @@ namespace OpenTelemetry.Benchmarks
     [MemoryDiagnoser]
     public class ActivityBenchmarks
     {
-        private static readonly Activity EmptyActivity;
+        private static readonly Activity EmptyActivity = new Activity("EmptyActivity");
         private static readonly Activity Activity;
 
         static ActivityBenchmarks()
         {
-            EmptyActivity = new Activity("EmptyActivity");
+            using ActivitySource activitySource = new ActivitySource("Benchmarks");
 
-            Activity = new Activity("Activity");
+            ActivitySource.AddActivityListener(
+                new ActivityListener
+                {
+                    ShouldListenTo = (source) => true,
+                    Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                });
+
+            var activityLinks = new[]
+            {
+                new ActivityLink(default),
+                new ActivityLink(default),
+                new ActivityLink(default),
+            };
+
+            Activity = activitySource.StartActivity(
+                "Activity",
+                ActivityKind.Internal,
+                parentContext: default,
+                links: activityLinks);
+
             Activity.SetTag("Tag1", "Value1");
             Activity.SetTag("Tag2", 2);
             Activity.SetTag("Tag3", false);
@@ -41,6 +60,12 @@ namespace OpenTelemetry.Benchmarks
             {
                 Activity.AddTag($"AutoTag{i}", i);
             }
+
+            Activity.AddEvent(new ActivityEvent("event1"));
+            Activity.AddEvent(new ActivityEvent("event2"));
+            Activity.AddEvent(new ActivityEvent("event3"));
+
+            Activity.Stop();
         }
 
         [Benchmark]
@@ -108,16 +133,74 @@ namespace OpenTelemetry.Benchmarks
         [Benchmark]
         public void EnumerateTagValuesNonemptyTagObjects()
         {
-            Enumerator state = default;
+            TagEnumerator state = default;
 
             Activity.EnumerateTagValues(ref state);
         }
 
-        private struct Enumerator : IActivityTagEnumerator
+        [Benchmark]
+        public void EnumerateNonemptyActivityLinks()
+        {
+            int count = 0;
+            foreach (ActivityLink activityLink in Activity.Links)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateLinksNonemptyActivityLinks()
+        {
+            LinkEnumerator state = default;
+
+            Activity.EnumerateLinks(ref state);
+        }
+
+        [Benchmark]
+        public void EnumerateNonemptyActivityEvents()
+        {
+            int count = 0;
+            foreach (ActivityEvent activityEvent in Activity.Events)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateEventsNonemptyActivityEvents()
+        {
+            EventEnumerator state = default;
+
+            Activity.EnumerateEvents(ref state);
+        }
+
+        private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
             public int Count { get; private set; }
 
             public bool ForEach(KeyValuePair<string, object> item)
+            {
+                this.Count++;
+                return true;
+            }
+        }
+
+        private struct LinkEnumerator : IActivityEnumerator<ActivityLink>
+        {
+            public int Count { get; private set; }
+
+            public bool ForEach(ActivityLink item)
+            {
+                this.Count++;
+                return true;
+            }
+        }
+
+        private struct EventEnumerator : IActivityEnumerator<ActivityEvent>
+        {
+            public int Count { get; private set; }
+
+            public bool ForEach(ActivityEvent item)
             {
                 this.Count++;
                 return true;

@@ -1,4 +1,4 @@
-// <copyright file="BaseExportActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExportProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,32 +18,34 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Implements processor that exports <see cref="Activity"/> objects.
+    /// Implements processor that exports telemetry objects.
     /// </summary>
-    public abstract class BaseExportActivityProcessor : ActivityProcessor
+    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
+    public abstract class BaseExportProcessor<T> : BaseProcessor<T>
+        where T : class
     {
-        protected readonly ActivityExporter exporter;
+        protected readonly BaseExporter<T> exporter;
         private bool disposed;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BaseExportActivityProcessor"/> class.
+        /// Initializes a new instance of the <see cref="BaseExportProcessor{T}"/> class.
         /// </summary>
-        /// <param name="exporter">Activity exporter instance.</param>
-        public BaseExportActivityProcessor(ActivityExporter exporter)
+        /// <param name="exporter">Exporter instance.</param>
+        public BaseExportProcessor(BaseExporter<T> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
         /// <inheritdoc />
-        public sealed override void OnStart(Activity activity)
+        public sealed override void OnStart(T data)
         {
         }
 
         /// <inheritdoc />
-        public abstract override void OnEnd(Activity activity);
+        public abstract override void OnEnd(T data);
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)

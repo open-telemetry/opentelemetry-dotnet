@@ -1,4 +1,4 @@
-// <copyright file="ActivityExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,44 +15,86 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Enumeration used to define the result of an export operation.
+    /// Base processor base class.
     /// </summary>
-    public enum ExportResult
-    {
-        /// <summary>
-        /// Export succeeded.
-        /// </summary>
-        Success = 0,
-
-        /// <summary>
-        /// Export failed.
-        /// </summary>
-        Failure = 1,
-    }
-
-    /// <summary>
-    /// Activity exporter base class.
-    /// </summary>
-    public abstract class ActivityExporter : IDisposable
+    /// <typeparam name="T">The type of object to be processed.</typeparam>
+    public abstract class BaseProcessor<T> : IDisposable
     {
         private int shutdownCount;
 
         /// <summary>
-        /// Exports a batch of <see cref="Activity"/> objects.
+        /// Called synchronously when a telemetry object is started.
         /// </summary>
-        /// <param name="batch">Batch of <see cref="Activity"/> objects to export.</param>
-        /// <returns>Result of the export operation.</returns>
-        public abstract ExportResult Export(in Batch<Activity> batch);
+        /// <param name="data">
+        /// The started telemetry object.
+        /// </param>
+        /// <remarks>
+        /// This function is called synchronously on the thread which started
+        /// the telemetry object. This function should be thread-safe, and
+        /// should not block indefinitely or throw exceptions.
+        /// </remarks>
+        public virtual void OnStart(T data)
+        {
+        }
 
         /// <summary>
-        /// Attempts to shutdown the exporter, blocks the current thread until
+        /// Called synchronously when a telemetry object is ended.
+        /// </summary>
+        /// <param name="data">
+        /// The ended telemetry object.
+        /// </param>
+        /// <remarks>
+        /// This function is called synchronously on the thread which ended
+        /// the telemetry object. This function should be thread-safe, and
+        /// should not block indefinitely or throw exceptions.
+        /// </remarks>
+        public virtual void OnEnd(T data)
+        {
+        }
+
+        /// <summary>
+        /// Flushes the processor, blocks the current thread until flush
+        /// completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
+            }
+
+            try
+            {
+                return this.OnForceFlush(timeoutMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ForceFlush), ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to shutdown the processor, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
@@ -97,6 +139,27 @@ namespace OpenTelemetry.Trace
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Called by <c>ForceFlush</c>. This function should block the current
+        /// thread until flush completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which called
+        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// not throw exceptions.
+        /// </remarks>
+        protected virtual bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return true;
         }
 
         /// <summary>

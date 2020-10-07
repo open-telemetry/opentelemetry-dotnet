@@ -15,12 +15,13 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
     public static class TracerProviderExtensions
     {
-        public static TracerProvider AddProcessor(this TracerProvider provider, ActivityProcessor processor)
+        public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
         {
             if (provider == null)
             {

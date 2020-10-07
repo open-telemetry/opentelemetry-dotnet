@@ -140,7 +140,7 @@ namespace OpenTelemetry.Trace.Benchmarks
             }
         }
 
-        internal class DummyActivityProcessor : ActivityProcessor
+        internal class DummyActivityProcessor : BaseProcessor<Activity>
         {
         }
     }

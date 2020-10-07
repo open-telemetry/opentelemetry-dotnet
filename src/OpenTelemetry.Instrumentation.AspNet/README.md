@@ -110,7 +110,7 @@ and the `Filter` option does the filtering *before* the Sampler is invoked.
 ### Special topic - Enriching automatically collected telemetry
 
 ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
-`Activity`. These can be accessed in ActivityProcessors, and can be used to
+`Activity`. These can be accessed in `BaseProcessor<Activity>`, and can be used to
 further enrich the Activity as shown below.
 
 The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
@@ -118,7 +118,7 @@ The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Req
 The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
 
 ```csharp
-internal class MyAspNetEnrichingProcessor : ActivityProcessor
+internal class MyAspNetEnrichingProcessor : BaseProcessor<Activity>
 {
     public override void OnStart(Activity activity)
     {

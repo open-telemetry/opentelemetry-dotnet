@@ -27,14 +27,14 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckNullExporter()
         {
-            Assert.Throws<ArgumentNullException>(() => new ReentrantExportActivityProcessor(null));
+            Assert.Throws<ArgumentNullException>(() => new ReentrantExportProcessor<Activity>(null));
         }
 
         [Fact]
         public void CheckExportedOnEnd()
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new ReentrantExportActivityProcessor(exporter);
+            using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
             Assert.Single(exporter.Exported);
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckForceFlushExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new ReentrantExportActivityProcessor(exporter);
+            using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
             processor.OnEnd(new Activity("start2"));
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckShutdownExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new ReentrantExportActivityProcessor(exporter);
+            using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start"));
 
