@@ -23,7 +23,7 @@ namespace OpenTelemetry
     /// <summary>
     /// Implements processor that exports telemetry objects.
     /// </summary>
-    /// <typeparam name="T">The type of object to be exported.</typeparam>
+    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
     public abstract class BaseExportProcessor<T> : BaseProcessor<T>
         where T : class
     {

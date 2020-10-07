@@ -41,10 +41,10 @@ namespace OpenTelemetry.Trace
         private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
         private readonly Sampler sampler;
         private readonly Resource resource;
-        private ActivityProcessor activityProcessor;
+        private BaseProcessor<Activity> activityProcessor;
         private Action<Activity> getRequestedDataAction;
 
-        internal ActivitySourceAdapter(Sampler sampler, ActivityProcessor activityProcessor, Resource resource)
+        internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor, Resource resource)
         {
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             this.resource = resource ?? throw new ArgumentNullException(nameof(resource));
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        internal void UpdateProcessor(ActivityProcessor processor)
+        internal void UpdateProcessor(BaseProcessor<Activity> processor)
         {
             this.activityProcessor = processor;
         }

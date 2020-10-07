@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         private readonly ActivityListener listener;
         private readonly Resource resource;
         private readonly Sampler sampler;
-        private ActivityProcessor processor;
+        private BaseProcessor<Activity> processor;
         private ActivitySourceAdapter adapter;
 
         static TracerProviderSdk()
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
             IEnumerable<string> sources,
             IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
-            List<ActivityProcessor> processors)
+            List<BaseProcessor<Activity>> processors)
         {
             this.resource = resource;
             this.sampler = sampler;
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace
             this.listener = listener;
         }
 
-        internal TracerProviderSdk AddProcessor(ActivityProcessor processor)
+        internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
@@ -168,13 +168,13 @@ namespace OpenTelemetry.Trace
             {
                 this.processor = processor;
             }
-            else if (this.processor is CompositeActivityProcessor compositeProcessor)
+            else if (this.processor is CompositeProcessor<Activity> compositeProcessor)
             {
                 compositeProcessor.AddProcessor(processor);
             }
             else
             {
-                this.processor = new CompositeActivityProcessor(new[]
+                this.processor = new CompositeProcessor<Activity>(new[]
                 {
                     this.processor,
                     processor,

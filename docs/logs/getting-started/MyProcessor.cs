@@ -16,9 +16,10 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyProcessor : LogProcessor
+internal class MyProcessor : BaseProcessor<LogRecord>
 {
     private readonly string name;
 
@@ -29,44 +30,12 @@ internal class MyProcessor : LogProcessor
 
     public override void OnEnd(LogRecord record)
     {
-        var state = record.State;
-
-        if (state is IReadOnlyCollection<KeyValuePair<string, object>> dict)
-        {
-            var isUnstructuredLog = dict.Count == 1;
-
-            if (isUnstructuredLog)
-            {
-                foreach (var entry in dict)
-                {
-                    Console.WriteLine($"{record.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ} {record.CategoryName}({record.LogLevel}, Id={record.EventId}): {entry.Value}");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"{record.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ} {record.CategoryName}({record.LogLevel}, Id={record.EventId}):");
-                foreach (var entry in dict)
-                {
-                    if (string.Equals(entry.Key, "{OriginalFormat}", StringComparison.Ordinal))
-                    {
-                        Console.WriteLine($"    $format: {entry.Value}");
-                        continue;
-                    }
-
-                    Console.WriteLine($"    {entry.Key}: {entry.Value}");
-                }
-            }
-
-            if (record.Exception != null)
-            {
-                Console.WriteLine($"    $exception: {record.Exception}");
-            }
-        }
+        Console.WriteLine($"{this.name}.OnEnd({record})");
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.OnForceFlush({timeoutMilliseconds})");
+        Console.WriteLine($"{this.name}.OnForceFlush()");
         return true;
     }
 

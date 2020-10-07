@@ -1,4 +1,4 @@
-// <copyright file="MyProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="MyExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,36 +16,43 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 
-internal class MyProcessor : BaseProcessor<Activity>
+internal class MyExporter : BaseExporter<LogRecord>
 {
     private readonly string name;
 
-    public MyProcessor(string name = "MyProcessor")
+    public MyExporter(string name = "MyExporter")
     {
         this.name = name;
     }
 
-    public override void OnStart(Activity activity)
+    public override ExportResult Export(in Batch<LogRecord> batch)
     {
-        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
-    }
+        // SuppressInstrumentationScope should be used to prevent exporter
+        // code from generating telemetry and causing live-loop.
+        using var scope = SuppressInstrumentationScope.Begin();
 
-    public override void OnEnd(Activity activity)
-    {
-        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
-    }
+        var sb = new StringBuilder();
+        foreach (var record in batch)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append(", ");
+            }
 
-    protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnForceFlush({timeoutMilliseconds})");
-        return true;
+            sb.Append(record.Timestamp.ToString());
+        }
+
+        Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
+        return ExportResult.Success;
     }
 
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.OnShutdown({timeoutMilliseconds})");
+        Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
         return true;
     }
 

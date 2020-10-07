@@ -25,7 +25,7 @@ namespace OpenTelemetry.Logs
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
     {
-        internal LogProcessor Processor;
+        internal BaseProcessor<LogRecord> Processor;
         private readonly OpenTelemetryLoggerOptions options;
         private readonly IDictionary<string, ILogger> loggers;
         private bool disposed;
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Logs
             GC.SuppressFinalize(this);
         }
 
-        internal OpenTelemetryLoggerProvider AddProcessor(LogProcessor processor)
+        internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             if (processor == null)
             {
@@ -101,13 +101,13 @@ namespace OpenTelemetry.Logs
             {
                 this.Processor = processor;
             }
-            else if (this.Processor is CompositeLogProcessor compositeProcessor)
+            else if (this.Processor is CompositeProcessor<LogRecord> compositeProcessor)
             {
                 compositeProcessor.AddProcessor(processor);
             }
             else
             {
-                this.Processor = new CompositeLogProcessor(new[]
+                this.Processor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
                     processor,
