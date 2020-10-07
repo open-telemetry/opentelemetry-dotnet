@@ -24,8 +24,8 @@ namespace OpenTelemetry
 {
     public class CompositeProcessor<T> : BaseProcessor<T>
     {
-        private DoublyLinkedListNode<BaseProcessor<T>> head;
-        private DoublyLinkedListNode<BaseProcessor<T>> tail;
+        private DoublyLinkedListNode head;
+        private DoublyLinkedListNode tail;
         private bool disposed;
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
@@ -42,7 +42,7 @@ namespace OpenTelemetry
                 throw new ArgumentException($"{nameof(processors)} collection is empty");
             }
 
-            this.head = new DoublyLinkedListNode<BaseProcessor<T>>(iter.Current);
+            this.head = new DoublyLinkedListNode(iter.Current);
             this.tail = this.head;
 
             while (iter.MoveNext())
@@ -58,7 +58,7 @@ namespace OpenTelemetry
                 throw new ArgumentNullException(nameof(processor));
             }
 
-            var node = new DoublyLinkedListNode<BaseProcessor<T>>(processor)
+            var node = new DoublyLinkedListNode(processor)
             {
                 Previous = this.tail,
             };
@@ -184,18 +184,18 @@ namespace OpenTelemetry
             this.disposed = true;
         }
 
-        private class DoublyLinkedListNode<T2>
+        private class DoublyLinkedListNode
         {
-            public readonly T2 Value;
+            public readonly BaseProcessor<T> Value;
 
-            public DoublyLinkedListNode(T2 value)
+            public DoublyLinkedListNode(BaseProcessor<T> value)
             {
                 this.Value = value;
             }
 
-            public DoublyLinkedListNode<T2> Previous { get; set; }
+            public DoublyLinkedListNode Previous { get; set; }
 
-            public DoublyLinkedListNode<T2> Next { get; set; }
+            public DoublyLinkedListNode Next { get; set; }
         }
     }
 }
