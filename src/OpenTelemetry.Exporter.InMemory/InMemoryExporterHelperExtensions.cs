@@ -42,7 +42,7 @@ namespace OpenTelemetry
 
             var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
-            return builder.AddProcessor(new ReentrantExportProcessor<Activity>(new InMemoryExporter<Activity>(options)));
+            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new InMemoryExporter<Activity>(options)));
         }
 
 #if NETSTANDARD2_0
@@ -56,7 +56,7 @@ namespace OpenTelemetry
             var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
 
-            return loggerOptions.AddProcessor(new ReentrantExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(options)));
+            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(options)));
         }
 #endif
     }

@@ -17,7 +17,7 @@ dotnet add package OpenTelemetry.Exporter.InMemory
 ## Configuration
 
 ```csharp
-var list = new IList<object>();
+var list = new List<Activity>();
 
 using Sdk.CreateTracerProviderBuilder()
     .AddInMemoryExporter(options => options.Trait = list)
