@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using OpenTelemetry;
 
 namespace OpenTelemetry.Exporter
@@ -22,14 +23,23 @@ namespace OpenTelemetry.Exporter
     public class InMemoryExporter<T> : BaseExporter<T>
         where T : class
     {
+        private readonly IList<T> trait;
+
         public InMemoryExporter(InMemoryExporterOptions options)
         {
+            if (options.Trait == null)
+            {
+                throw new ArgumentNullException("nameof(options.Trait)");
+            }
+
+            this.trait = (IList<T>)options.Trait;
         }
 
         public override ExportResult Export(in Batch<T> batch)
         {
-            foreach (var activity in batch)
+            foreach (var data in batch)
             {
+                this.trait.Add(data);
             }
 
             return ExportResult.Success;

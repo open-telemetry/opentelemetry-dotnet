@@ -14,6 +14,16 @@ recommended for any production environment.
 dotnet add package OpenTelemetry.Exporter.InMemory
 ```
 
+## Configuration
+
+```csharp
+var list = new IList<object>();
+
+using Sdk.CreateTracerProviderBuilder()
+    .AddInMemoryExporter(options => options.Trait = list)
+    .Build();
+```
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)

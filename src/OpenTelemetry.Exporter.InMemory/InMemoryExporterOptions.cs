@@ -14,9 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Exporter
 {
     public class InMemoryExporterOptions
     {
+        public IList<object> Trait;
     }
 }
