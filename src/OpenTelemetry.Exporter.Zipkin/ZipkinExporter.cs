@@ -28,6 +28,7 @@ using System.Text.Json;
 #endif
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Trace;
 
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinExporter : ActivityExporter
+    public class ZipkinExporter : BaseExporter<Activity>
     {
         private readonly ZipkinExporterOptions options;
 #if !NET452

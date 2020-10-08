@@ -27,24 +27,24 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckNullExporter()
         {
-            Assert.Throws<ArgumentNullException>(() => new BatchExportActivityProcessor(null));
+            Assert.Throws<ArgumentNullException>(() => new BatchExportProcessor<Activity>(null));
         }
 
         [Fact]
         public void CheckConstructorWithInvalidValues()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxQueueSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), maxQueueSize: 1, maxExportBatchSize: 2049));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportActivityProcessor(new TestActivityExporter(), exporterTimeoutMilliseconds: -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxQueueSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxExportBatchSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxQueueSize: 1, maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), scheduledDelayMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new BatchExportActivityProcessor(
+            using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
                 maxExportBatchSize: 1,
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckForceFlushWithInvalidTimeout()
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new BatchExportActivityProcessor(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
+            using var processor = new BatchExportProcessor<Activity>(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckForceFlushExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new BatchExportActivityProcessor(
+            using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckShutdownExport(int timeout)
         {
             using var exporter = new TestActivityExporter();
-            using var processor = new BatchExportActivityProcessor(
+            using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,

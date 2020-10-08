@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using OpenTelemetry.Metrics.Export;
@@ -70,18 +71,7 @@ namespace OpenTelemetry.Metrics
             base.Dispose(disposing);
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> CreateLibraryResourceLabels(string name, string version)
-        {
-            var labels = new Dictionary<string, string> { { "name", name } };
-            if (!string.IsNullOrEmpty(version))
-            {
-                labels.Add("version", version);
-            }
-
-            return labels;
-        }
-
-        internal readonly struct MeterRegistryKey
+        internal readonly struct MeterRegistryKey : IEquatable<MeterRegistryKey>
         {
             private readonly string name;
             private readonly string version;
@@ -90,6 +80,24 @@ namespace OpenTelemetry.Metrics
             {
                 this.name = name;
                 this.version = version;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is MeterRegistryKey meterRegistryKey && this.Equals(meterRegistryKey);
+            }
+
+            public bool Equals(MeterRegistryKey other)
+            {
+                return this.name == other.name && this.version == other.version;
+            }
+
+            public override int GetHashCode()
+            {
+                var result = 1;
+                result = (31 * result) + (this.name?.GetHashCode() ?? 0);
+                result = (31 * result) + (this.version?.GetHashCode() ?? 0);
+                return result;
             }
         }
     }

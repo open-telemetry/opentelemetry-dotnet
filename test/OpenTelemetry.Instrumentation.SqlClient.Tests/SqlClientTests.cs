@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool isFailure = false,
             bool shouldEnrich = true)
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
@@ -209,7 +209,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {

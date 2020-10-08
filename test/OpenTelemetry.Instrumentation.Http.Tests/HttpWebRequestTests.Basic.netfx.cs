@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation()
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation()
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task RequestNotCollectedWhenInstrumentationFilterApplied()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(

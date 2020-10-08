@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Exporter.Zipkin;
 
 namespace OpenTelemetry.Trace
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Trace
             var zipkinExporter = new ZipkinExporter(exporterOptions);
 
             // TODO: Pick Simple vs Batching based on ZipkinExporterOptions
-            return builder.AddProcessor(new BatchExportActivityProcessor(zipkinExporter));
+            return builder.AddProcessor(new BatchExportProcessor<Activity>(zipkinExporter));
         }
     }
 }

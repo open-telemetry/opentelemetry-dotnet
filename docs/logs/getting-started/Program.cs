@@ -30,7 +30,10 @@ public class Program
         using var loggerFactory = LoggerFactory.Create(builder =>
 #endif
         {
-            builder.AddOpenTelemetry(options => options.AddProcessor(new MyProcessor()));
+            builder.AddOpenTelemetry(options => options
+                .AddProcessor(new MyProcessor("A"))
+                .AddProcessor(new MyProcessor("B"))
+                .AddMyExporter());
         });
 
 #if NETCOREAPP2_1

@@ -27,11 +27,11 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CompositeActivityProcessor_BadArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => new CompositeActivityProcessor(null));
-            Assert.Throws<ArgumentException>(() => new CompositeActivityProcessor(new ActivityProcessor[0]));
+            Assert.Throws<ArgumentNullException>(() => new CompositeProcessor<Activity>(null));
+            Assert.Throws<ArgumentException>(() => new CompositeProcessor<Activity>(new BaseProcessor<Activity>[0]));
 
             using var p1 = new TestActivityProcessor(null, null);
-            using var processor = new CompositeActivityProcessor(new[] { p1 });
+            using var processor = new CompositeProcessor<Activity>(new[] { p1 });
             Assert.Throws<ArgumentNullException>(() => processor.AddProcessor(null));
         }
 
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
 
-            using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
+            using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
             {
                 processor.OnStart(activity);
                 processor.OnEnd(activity);
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
 
-            using (var processor = new CompositeActivityProcessor(new[] { p1 }))
+            using (var processor = new CompositeProcessor<Activity>(new[] { p1 }))
             {
                 Assert.Throws<Exception>(() => { processor.OnStart(activity); });
                 Assert.Throws<Exception>(() => { processor.OnEnd(activity); });
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace.Tests
             using var p1 = new TestActivityProcessor(null, null);
             using var p2 = new TestActivityProcessor(null, null);
 
-            using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
+            using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
             {
                 processor.Shutdown();
                 Assert.True(p1.ShutdownCalled);
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Trace.Tests
             using var p1 = new TestActivityProcessor(null, null);
             using var p2 = new TestActivityProcessor(null, null);
 
-            using (var processor = new CompositeActivityProcessor(new[] { p1, p2 }))
+            using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
             {
                 processor.ForceFlush(timeout);
 

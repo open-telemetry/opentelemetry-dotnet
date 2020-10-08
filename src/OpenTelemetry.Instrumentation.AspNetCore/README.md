@@ -95,8 +95,8 @@ and the `Filter` option does the filtering *before* the Sampler is invoked.
 ### Special topic - Enriching automatically collected telemetry
 
 This instrumentation library stores the raw `HttpRequest`, `HttpResponse`
-objects in the activity. This can be accessed in ActivityProcessors, and can be
-used to further enrich the Activity with additional tags as shown below.
+objects in the activity. This can be accessed in `BaseProcessor<Activity>`, and
+can be used to further enrich the Activity with additional tags as shown below.
 
 The key name for HttpRequest custom property inside Activity is
 "OTel.AspNetCore.Request".
@@ -105,7 +105,7 @@ The key name for HttpResponse custom property inside
 Activity is "OTel.AspNetCore.Response".
 
 ```csharp
-internal class MyAspNetCoreEnrichingProcessor : ActivityProcessor
+internal class MyAspNetCoreEnrichingProcessor : BaseProcessor<Activity>
 {
     public override void OnStart(Activity activity)
     {

@@ -20,7 +20,7 @@ using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-internal class MyExporter : ActivityExporter
+internal class MyExporter : BaseExporter<Activity>
 {
     private readonly string name;
 
