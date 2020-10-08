@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
 
             ActivityStatusTagEnumerator state = default;
 
-            ActivityTagObjectsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(state.StatusCode);
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
-            ActivityTagObjectsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
 
             return state.Value;
         }
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityTagObjectsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Trace
         public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
-            ActivityTagsCollectionEnumeratorFactory<T>.Enumerate(activityLink.Tags, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityLink, ref tagEnumerator);
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Trace
         public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
-            ActivityTagsCollectionEnumeratorFactory<T>.Enumerate(activityEvent.Tags, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityEvent, ref tagEnumerator);
         }
 
         /// <summary>
@@ -244,14 +244,19 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private static class ActivityTagObjectsEnumeratorFactory<TState>
+        private static class ActivityTagsEnumeratorFactory<TState>
             where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
             private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
 
+            private static readonly object EmptyActivityEventTags = typeof(ActivityEvent).GetField("s_emptyTags", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
             private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
                 ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
                     typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
+
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
+                ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
 
             private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
 
@@ -267,6 +272,38 @@ namespace OpenTelemetry.Trace
 
                 ActivityTagObjectsEnumerator(
                     tagObjects,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(ActivityLink activityLink, ref TState state)
+            {
+                var tags = activityLink.Tags;
+
+                if (tags is null)
+                {
+                    return;
+                }
+
+                ActivityTagsCollectionEnumerator(
+                    tags,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(ActivityEvent activityEvent, ref TState state)
+            {
+                var tags = activityEvent.Tags;
+
+                if (ReferenceEquals(tags, EmptyActivityEventTags))
+                {
+                    return;
+                }
+
+                ActivityTagsCollectionEnumerator(
+                    tags,
                     ref state,
                     ForEachTagValueCallbackRef);
             }
@@ -334,37 +371,6 @@ namespace OpenTelemetry.Trace
             }
 
             private static bool ForEachEventCallback(ref TState state, ActivityEvent item)
-                => state.ForEach(item);
-        }
-
-        private static class ActivityTagsCollectionEnumeratorFactory<TState>
-            where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            private static readonly object EmptyActivityEventTags = typeof(ActivityEvent).GetField("s_emptyTags", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
-            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
-               ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
-
-            private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(IEnumerable<KeyValuePair<string, object>> tags, ref TState state)
-            {
-                if (ReferenceEquals(tags, EmptyActivityEventTags) || tags is null)
-                {
-                    // Notes:
-                    //  * ActivityEvents.Tags returns s_emptyTags when no ActivityTagsCollection is provided.
-                    //  * ActivityLinks.Tags returns null when no ActivityTagsCollection is provided.
-                    return;
-                }
-
-                ActivityTagsCollectionEnumerator(
-                    tags,
-                    ref state,
-                    ForEachTagValueCallbackRef);
-            }
-
-            private static bool ForEachTagValueCallback(ref TState state, KeyValuePair<string, object> item)
                 => state.ForEach(item);
         }
     }
