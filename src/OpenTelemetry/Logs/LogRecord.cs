@@ -16,6 +16,7 @@
 
 #if NETSTANDARD2_0
 using System;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -33,9 +34,26 @@ namespace OpenTelemetry.Logs
             this.EventId = eventId;
             this.State = state;
             this.Exception = exception;
+
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                this.TraceId = activity.TraceId;
+                this.SpanId = activity.SpanId;
+                this.TraceState = activity.TraceStateString;
+                this.TraceFlags = activity.ActivityTraceFlags;
+            }
         }
 
         public DateTime Timestamp { get; }
+
+        public ActivityTraceId TraceId { get; }
+
+        public ActivitySpanId SpanId { get; }
+
+        public ActivityTraceFlags TraceFlags { get; }
+
+        public string TraceState { get; }
 
         public string CategoryName { get; }
 
