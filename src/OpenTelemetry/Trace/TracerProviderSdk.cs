@@ -30,8 +30,8 @@ namespace OpenTelemetry.Trace
         private readonly ActivityListener listener;
         private readonly Resource resource;
         private readonly Sampler sampler;
+        private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
-        private ActivitySourceAdapter adapter;
 
         static TracerProviderSdk()
         {
