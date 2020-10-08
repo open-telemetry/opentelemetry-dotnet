@@ -29,11 +29,6 @@ namespace OpenTelemetry.Logs
         internal LogRecord(DateTime timestamp, string categoryName, LogLevel logLevel, EventId eventId, object state, Exception exception)
         {
             this.Timestamp = timestamp;
-            this.CategoryName = categoryName;
-            this.LogLevel = logLevel;
-            this.EventId = eventId;
-            this.State = state;
-            this.Exception = exception;
 
             var activity = Activity.Current;
             if (activity != null)
@@ -43,6 +38,12 @@ namespace OpenTelemetry.Logs
                 this.TraceState = activity.TraceStateString;
                 this.TraceFlags = activity.ActivityTraceFlags;
             }
+
+            this.CategoryName = categoryName;
+            this.LogLevel = logLevel;
+            this.EventId = eventId;
+            this.State = state;
+            this.Exception = exception;
         }
 
         public DateTime Timestamp { get; }
