@@ -27,6 +27,8 @@ namespace OpenTelemetry.Benchmarks
     {
         private static readonly Activity EmptyActivity = new Activity("EmptyActivity");
         private static readonly Activity Activity;
+        private static readonly ActivityLink ActivityLink;
+        private static readonly ActivityEvent ActivityEvent;
 
         static ActivityBenchmarks()
         {
@@ -39,11 +41,20 @@ namespace OpenTelemetry.Benchmarks
                     Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
                 });
 
+            var activityTagCollection = new ActivityTagsCollection(new Dictionary<string, object>
+            {
+                ["tag1"] = "value1",
+                ["tag2"] = "value2",
+                ["tag3"] = "value3",
+            });
+
+            ActivityLink = new ActivityLink(default, activityTagCollection);
+
             var activityLinks = new[]
             {
-                new ActivityLink(default),
-                new ActivityLink(default),
-                new ActivityLink(default),
+                ActivityLink,
+                new ActivityLink(default, activityTagCollection),
+                new ActivityLink(default, activityTagCollection),
             };
 
             Activity = activitySource.StartActivity(
@@ -61,9 +72,11 @@ namespace OpenTelemetry.Benchmarks
                 Activity.AddTag($"AutoTag{i}", i);
             }
 
-            Activity.AddEvent(new ActivityEvent("event1"));
-            Activity.AddEvent(new ActivityEvent("event2"));
-            Activity.AddEvent(new ActivityEvent("event3"));
+            ActivityEvent = new ActivityEvent("event1", tags: activityTagCollection);
+
+            Activity.AddEvent(ActivityEvent);
+            Activity.AddEvent(new ActivityEvent("event2", tags: activityTagCollection));
+            Activity.AddEvent(new ActivityEvent("event3", tags: activityTagCollection));
 
             Activity.Stop();
         }
@@ -135,7 +148,7 @@ namespace OpenTelemetry.Benchmarks
         {
             TagEnumerator state = default;
 
-            Activity.EnumerateTagValues(ref state);
+            Activity.EnumerateTags(ref state);
         }
 
         [Benchmark]
@@ -157,6 +170,24 @@ namespace OpenTelemetry.Benchmarks
         }
 
         [Benchmark]
+        public void EnumerateNonemptyActivityLinkTags()
+        {
+            int count = 0;
+            foreach (var tag in ActivityLink.Tags)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateLinksNonemptyActivityLinkTags()
+        {
+            TagEnumerator state = default;
+
+            ActivityLink.EnumerateTags(ref state);
+        }
+
+        [Benchmark]
         public void EnumerateNonemptyActivityEvents()
         {
             int count = 0;
@@ -172,6 +203,24 @@ namespace OpenTelemetry.Benchmarks
             EventEnumerator state = default;
 
             Activity.EnumerateEvents(ref state);
+        }
+
+        [Benchmark]
+        public void EnumerateNonemptyActivityEventTags()
+        {
+            int count = 0;
+            foreach (var tag in ActivityEvent.Tags)
+            {
+                count++;
+            }
+        }
+
+        [Benchmark]
+        public void EnumerateLinksNonemptyActivityEventTags()
+        {
+            TagEnumerator state = default;
+
+            ActivityEvent.EnumerateTags(ref state);
         }
 
         private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>

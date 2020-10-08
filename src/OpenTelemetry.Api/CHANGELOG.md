@@ -9,6 +9,10 @@
 * Added `EnumerateEvents` extension method on `Activity` for retrieving events
   efficiently
   ([#1319](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1319))
+* Added `EnumerateTags` extension methods on `ActivityLink` & `ActivityEvent`
+  for retrieving tags efficiently. Renamed `Activity.EnumerateTagValues` ->
+  `Activity.EnumerateTags`.
+  ([#1320](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1320))
 
 ## 0.6.0-beta.1
 
