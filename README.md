@@ -49,6 +49,7 @@ Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
 
 * [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+* [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
