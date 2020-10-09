@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace.Tests
 
             TagEnumerator state = default;
 
-            activity.EnumerateTagValues(ref state);
+            activity.EnumerateTags(ref state);
 
             Assert.Equal(0, state.Count);
             Assert.False(state.LastTag.HasValue);
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Trace.Tests
 
             TagEnumerator state = default;
 
-            activity.EnumerateTagValues(ref state);
+            activity.EnumerateTags(ref state);
 
             Assert.Equal(3, state.Count);
             Assert.True(state.LastTag.HasValue);
@@ -178,7 +178,7 @@ namespace OpenTelemetry.Trace.Tests
             TagEnumerator state = default;
             state.BreakOnCount = 1;
 
-            activity.EnumerateTagValues(ref state);
+            activity.EnumerateTags(ref state);
 
             Assert.Equal(1, state.Count);
             Assert.True(state.LastTag.HasValue);
@@ -229,6 +229,40 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void EnumerateLinkTagsEmpty()
+        {
+            ActivityLink activityLink = new ActivityLink(default);
+
+            TagEnumerator state = default;
+
+            activityLink.EnumerateTags(ref state);
+
+            Assert.Equal(0, state.Count);
+            Assert.False(state.LastTag.HasValue);
+        }
+
+        [Fact]
+        public void EnumerateLinkTagsNonempty()
+        {
+            ActivityLink activityLink = new ActivityLink(
+                default,
+                new ActivityTagsCollection(new Dictionary<string, object>
+                {
+                    ["tag1"] = "value1",
+                    ["tag2"] = "value2",
+                    ["tag3"] = "value3",
+                }));
+
+            TagEnumerator state = default;
+
+            activityLink.EnumerateTags(ref state);
+
+            Assert.True(state.LastTag.HasValue);
+            Assert.Equal("tag3", state.LastTag?.Key);
+            Assert.Equal("value3", state.LastTag?.Value);
+        }
+
+        [Fact]
         public void EnumerateEventsEmpty()
         {
             Activity activity = new Activity("Test");
@@ -256,6 +290,40 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(3, state.Count);
             Assert.Equal("event3", state.LastEvent.Value.Name);
+        }
+
+        [Fact]
+        public void EnumerateEventTagsEmpty()
+        {
+            ActivityEvent activityEvent = new ActivityEvent(default);
+
+            TagEnumerator state = default;
+
+            activityEvent.EnumerateTags(ref state);
+
+            Assert.Equal(0, state.Count);
+            Assert.False(state.LastTag.HasValue);
+        }
+
+        [Fact]
+        public void EnumerateEventTagsNonempty()
+        {
+            ActivityEvent activityEvent = new ActivityEvent(
+                "event",
+                tags: new ActivityTagsCollection(new Dictionary<string, object>
+                {
+                    ["tag1"] = "value1",
+                    ["tag2"] = "value2",
+                    ["tag3"] = "value3",
+                }));
+
+            TagEnumerator state = default;
+
+            activityEvent.EnumerateTags(ref state);
+
+            Assert.True(state.LastTag.HasValue);
+            Assert.Equal("tag3", state.LastTag?.Key);
+            Assert.Equal("value3", state.LastTag?.Value);
         }
 
         private struct TagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
