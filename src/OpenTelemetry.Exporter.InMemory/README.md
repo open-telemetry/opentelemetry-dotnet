@@ -3,10 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.InMemory.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.InMemory)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.InMemory.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.InMemory)
 
-The in-memory exporter stores data in a memory buffer.
-
-**Note:** this exporter is intended to be used for testing purpose. It is not
-recommended for any production environment.
+The in-memory exporter stores data in a user provided memory buffer.
 
 ## Installation
 
