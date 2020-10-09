@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
 
             ActivityStatusTagEnumerator state = default;
 
-            ActivityTagObjectsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
             var status = SpanHelper.ResolveCanonicalCodeToStatus(state.StatusCode);
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
-            ActivityTagObjectsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
 
             return state.Value;
         }
@@ -103,12 +103,12 @@ namespace OpenTelemetry.Trace
         /// <param name="tagEnumerator">Tag enumerator.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTagValues<T>(this Activity activity, ref T tagEnumerator)
+        public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityTagObjectsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
         }
 
         /// <summary>
@@ -128,6 +128,20 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Enumerates all the key/value pairs on an <see cref="ActivityLink"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activityLink">ActivityLink instance.</param>
+        /// <param name="tagEnumerator">Tag enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
+        public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator)
+            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityLink, ref tagEnumerator);
+        }
+
+        /// <summary>
         /// Enumerates all the <see cref="ActivityEvent"/>s on an <see cref="Activity"/> without performing an allocation.
         /// </summary>
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
@@ -141,6 +155,20 @@ namespace OpenTelemetry.Trace
             Debug.Assert(activity != null, "Activity should not be null");
 
             ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator);
+        }
+
+        /// <summary>
+        /// Enumerates all the key/value pairs on an <see cref="ActivityEvent"/> without performing an allocation.
+        /// </summary>
+        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
+        /// <param name="activityEvent">ActivityEvent instance.</param>
+        /// <param name="tagEnumerator">Tag enumerator.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
+        public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator)
+            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityEvent, ref tagEnumerator);
         }
 
         /// <summary>
@@ -216,14 +244,19 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        private static class ActivityTagObjectsEnumeratorFactory<TState>
+        private static class ActivityTagsEnumeratorFactory<TState>
             where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
             private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
 
+            private static readonly object EmptyActivityEventTags = typeof(ActivityEvent).GetField("s_emptyTags", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
             private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
                 ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
                     typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
+
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
+                ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
 
             private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
 
@@ -239,6 +272,38 @@ namespace OpenTelemetry.Trace
 
                 ActivityTagObjectsEnumerator(
                     tagObjects,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(ActivityLink activityLink, ref TState state)
+            {
+                var tags = activityLink.Tags;
+
+                if (tags is null)
+                {
+                    return;
+                }
+
+                ActivityTagsCollectionEnumerator(
+                    tags,
+                    ref state,
+                    ForEachTagValueCallbackRef);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Enumerate(ActivityEvent activityEvent, ref TState state)
+            {
+                var tags = activityEvent.Tags;
+
+                if (ReferenceEquals(tags, EmptyActivityEventTags))
+                {
+                    return;
+                }
+
+                ActivityTagsCollectionEnumerator(
+                    tags,
                     ref state,
                     ForEachTagValueCallbackRef);
             }

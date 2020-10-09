@@ -42,6 +42,11 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
 
             this.provider.Processor?.OnEnd(record);

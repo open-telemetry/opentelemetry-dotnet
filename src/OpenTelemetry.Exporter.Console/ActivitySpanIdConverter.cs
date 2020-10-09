@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     internal class ActivitySpanIdConverter : JsonConverter<ActivitySpanId>
     {
