@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using Grpc.Core;
+using OpenTelemetry.Benchmarks;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Internal;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.activity = JaegerExporterBenchmarks.CreateTestActivity();
+            this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
             this.client = new NoopTraceServiceClient();
         }
