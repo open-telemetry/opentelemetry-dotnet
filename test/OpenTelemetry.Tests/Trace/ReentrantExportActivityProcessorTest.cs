@@ -15,9 +15,10 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using OpenTelemetry.Tests.Shared;
+using OpenTelemetry.Exporter;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -33,14 +34,15 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckExportedOnEnd()
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
-            Assert.Single(exporter.Exported);
+            Assert.Single(exportedItems);
 
             processor.OnEnd(new Activity("start2"));
-            Assert.Equal(2, exporter.Exported.Count);
+            Assert.Equal(2, exportedItems.Count);
         }
 
         [Theory]
@@ -49,18 +51,19 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckForceFlushExport(int timeout)
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
             processor.OnEnd(new Activity("start2"));
 
             // checking before force flush
-            Assert.Equal(2, exporter.Exported.Count);
+            Assert.Equal(2, exportedItems.Count);
 
             // forcing flush
             processor.ForceFlush(timeout);
-            Assert.Equal(2, exporter.Exported.Count);
+            Assert.Equal(2, exportedItems.Count);
         }
 
         [Theory]
@@ -69,16 +72,17 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckShutdownExport(int timeout)
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start"));
 
             // checking before shutdown
-            Assert.Single(exporter.Exported);
+            Assert.Single(exportedItems);
 
             processor.Shutdown(timeout);
-            Assert.Single(exporter.Exported);
+            Assert.Single(exportedItems);
         }
     }
 }
