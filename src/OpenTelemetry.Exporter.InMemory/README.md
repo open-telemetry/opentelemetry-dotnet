@@ -16,9 +16,9 @@ dotnet add package OpenTelemetry.Exporter.InMemory
 ```csharp
 var list = new List<object>();
 var activityExporter = new InMemoryExporter<Activity>(
-    new InMemoryExporterOptions { ExportedItems = list });
+    new InMemoryExporterOptions<object> { ExportedItems = list });
 var logExporter = new InMemoryExporter<LogRecord>(
-    new InMemoryExporterOptions { ExportedItems = list });
+    new InMemoryExporterOptions<object> { ExportedItems = list });
 ```
 
 ## References

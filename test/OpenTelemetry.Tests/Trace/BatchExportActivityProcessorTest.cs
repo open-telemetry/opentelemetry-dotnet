@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckForceFlushExport(int timeout)
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckShutdownExport(int timeout)
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,

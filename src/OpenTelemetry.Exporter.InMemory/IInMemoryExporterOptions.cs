@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="IInMemoryExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
 {
-    public class InMemoryExporterOptions<T> : IInMemoryExporterOptions<T>
+    internal interface IInMemoryExporterOptions<out T>
     {
-        public ICollection<object> ExportedItems { get; set; }
+        ICollection<object> ExportedItems { get; set; }
     }
 }

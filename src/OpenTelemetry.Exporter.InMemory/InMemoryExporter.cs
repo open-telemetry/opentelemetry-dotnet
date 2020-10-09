@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ICollection<object> exportedItems;
 
-        public InMemoryExporter(InMemoryExporterOptions options = null)
+        public InMemoryExporter(InMemoryExporterOptions<object> options = null)
         {
             this.exportedItems = options?.ExportedItems;
         }
