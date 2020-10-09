@@ -32,9 +32,14 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<T> batch)
         {
+            if (this.exportedItems == null)
+            {
+                return ExportResult.Failure;
+            }
+
             foreach (var data in batch)
             {
-                this.exportedItems?.Add(data);
+                this.exportedItems.Add(data);
             }
 
             return ExportResult.Success;
