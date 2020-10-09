@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.activity = this.CreateTestActivity();
+            this.activity = CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
         }
 
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
             exporter.Shutdown();
         }
 
-        private Activity CreateTestActivity()
+        internal static Activity CreateTestActivity()
         {
             var startTimestamp = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            using var activitySource = new ActivitySource(nameof(this.CreateTestActivity));
+            using var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value.ToString()));
 
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
 
             using var listener = new ActivityListener()
             {
-                ShouldListenTo = a => a.Name == nameof(this.CreateTestActivity),
+                ShouldListenTo = a => a.Name == nameof(CreateTestActivity),
                 Sample = (ref ActivityCreationOptions<ActivityContext> a) => ActivitySamplingResult.AllDataAndRecorded,
             };
 
