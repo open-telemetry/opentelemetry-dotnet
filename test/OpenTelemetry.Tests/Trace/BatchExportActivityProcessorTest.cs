@@ -44,8 +44,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            var exported = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { Collection = exported });
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
@@ -54,12 +54,12 @@ namespace OpenTelemetry.Trace.Tests
 
             processor.OnEnd(new Activity("start"));
 
-            for (int i = 0; i < 10 && exported.Count == 0; i++)
+            for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
             {
                 Thread.Sleep(500);
             }
 
-            Assert.Single(exported);
+            Assert.Single(exportedItems);
 
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);
@@ -80,8 +80,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckForceFlushExport(int timeout)
         {
-            var exported = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { Collection = exported });
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // waiting to see if time is triggering the exporter
             Thread.Sleep(1_000);
-            Assert.Empty(exported);
+            Assert.Empty(exportedItems);
 
             // forcing flush
             processor.ForceFlush(timeout);
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Trace.Tests
                 Thread.Sleep(1_000);
             }
 
-            Assert.Equal(2, exported.Count);
+            Assert.Equal(2, exportedItems.Count);
 
             Assert.Equal(2, processor.ProcessedCount);
             Assert.Equal(2, processor.ReceivedCount);
@@ -119,8 +119,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckShutdownExport(int timeout)
         {
-            var exported = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { Collection = exported });
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace.Tests
                 Thread.Sleep(1_000);
             }
 
-            Assert.Single(exported);
+            Assert.Single(exportedItems);
 
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);

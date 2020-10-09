@@ -23,18 +23,18 @@ namespace OpenTelemetry.Exporter
     public class InMemoryExporter<T> : BaseExporter<T>
         where T : class
     {
-        private readonly ICollection<object> trait;
+        private readonly ICollection<object> exportedItems;
 
         public InMemoryExporter(InMemoryExporterOptions options = null)
         {
-            this.trait = options?.Collection;
+            this.exportedItems = options?.ExportedItems;
         }
 
         public override ExportResult Export(in Batch<T> batch)
         {
             foreach (var data in batch)
             {
-                this.trait?.Add(data);
+                this.exportedItems?.Add(data);
             }
 
             return ExportResult.Success;

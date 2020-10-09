@@ -20,6 +20,6 @@ namespace OpenTelemetry.Exporter
 {
     public class InMemoryExporterOptions
     {
-        public ICollection<object> Collection { get; set; }
+        public ICollection<object> ExportedItems { get; set; }
     }
 }
