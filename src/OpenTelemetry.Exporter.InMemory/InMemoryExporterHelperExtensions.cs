@@ -33,27 +33,27 @@ namespace OpenTelemetry
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static TracerProviderBuilder AddInMemoryExporter(this TracerProviderBuilder builder, Action<InMemoryExporterOptions<object>> configure = null)
+        public static TracerProviderBuilder AddInMemoryExporter(this TracerProviderBuilder builder, Action<InMemoryExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var options = new InMemoryExporterOptions<object>();
+            var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
             return builder.AddProcessor(new SimpleExportProcessor<Activity>(new InMemoryExporter<Activity>(options)));
         }
 
 #if NETSTANDARD2_0
-        public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<InMemoryExporterOptions<object>> configure = null)
+        public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<InMemoryExporterOptions> configure = null)
         {
             if (loggerOptions == null)
             {
                 throw new ArgumentNullException(nameof(loggerOptions));
             }
 
-            var options = new InMemoryExporterOptions<object>();
+            var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
 
             return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(options)));

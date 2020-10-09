@@ -18,7 +18,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
 {
-    public class InMemoryExporterOptions<T> : IInMemoryExporterOptions<T>
+    public class InMemoryExporterOptions
     {
         public ICollection<object> ExportedItems { get; set; }
     }

@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckExportedOnEnd()
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckForceFlushExport(int timeout)
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start1"));
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckShutdownExport(int timeout)
         {
             var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions<object> { ExportedItems = exportedItems });
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new ReentrantExportProcessor<Activity>(exporter);
 
             processor.OnEnd(new Activity("start"));
