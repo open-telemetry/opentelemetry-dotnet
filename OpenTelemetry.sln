@@ -198,6 +198,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.GrpcService", "exa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\logs\getting-started\getting-started.csproj", "{B3F03725-23A0-4582-9526-F6A7E38F35CC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.InMemory", "src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj", "{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -384,6 +386,10 @@ Global
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
