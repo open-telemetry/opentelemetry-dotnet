@@ -1,4 +1,4 @@
-// <copyright file="ZipkinExporterBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExporterBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,27 +16,22 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
+using Grpc.Core;
 using OpenTelemetry.Benchmarks;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Tests;
+using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.Benchmarks
 {
     [MemoryDiagnoser]
-#if !NET462
-    [ThreadingDiagnoser]
-#endif
-    public class ZipkinExporterBenchmarks
+    public class OtlpExporterBenchmarks
     {
-        private readonly byte[] buffer = new byte[4096];
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
-        private IDisposable server;
-        private string serverHost;
-        private int serverPort;
+        private NoopTraceServiceClient client;
 
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
@@ -49,41 +44,17 @@ namespace OpenTelemetry.Exporter.Benchmarks
         {
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
-            this.server = TestHttpServer.RunServer(
-                (ctx) =>
-                {
-                    using (Stream receiveStream = ctx.Request.InputStream)
-                    {
-                        while (true)
-                        {
-                            if (receiveStream.Read(this.buffer, 0, this.buffer.Length) == 0)
-                            {
-                                break;
-                            }
-                        }
-                    }
-
-                    ctx.Response.StatusCode = 200;
-                    ctx.Response.OutputStream.Close();
-                },
-                out this.serverHost,
-                out this.serverPort);
-        }
-
-        [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-            this.server.Dispose();
+            this.client = new NoopTraceServiceClient();
         }
 
         [Benchmark]
-        public void ZipkinExporter_Batching()
+        public void OtlpExporter_Batching()
         {
-            var exporter = new ZipkinExporter(
-                new ZipkinExporterOptions
-                {
-                    Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
-                });
+            using OtlpExporter exporter = new OtlpExporter(
+                new OtlpExporterOptions(),
+                this.client)
+            {
+            };
 
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
@@ -96,6 +67,14 @@ namespace OpenTelemetry.Exporter.Benchmarks
             }
 
             exporter.Shutdown();
+        }
+
+        private class NoopTraceServiceClient : OtlpCollector.TraceService.TraceServiceClient
+        {
+            public override OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            {
+                return null;
+            }
         }
     }
 }

@@ -18,9 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Grpc.Core;
-using OpenTelemetry;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -39,11 +37,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpExporter(OtlpExporterOptions options)
+        /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
+        internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
         {
             this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
             this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
-            this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
+            this.traceClient = traceServiceClient ?? new OtlpCollector.TraceService.TraceServiceClient(this.channel);
         }
 
         /// <inheritdoc/>
