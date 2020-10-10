@@ -200,6 +200,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\log
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.InMemory", "src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj", "{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\logs\extending-the-sdk\extending-the-sdk.csproj", "{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -390,6 +392,10 @@ Global
 		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -419,6 +425,7 @@ Global
 		{B26BE278-C9DA-4067-A0EE-6A4227B3DC87} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

@@ -17,9 +17,6 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-#if NETSTANDARD2_0
-using OpenTelemetry.Logs;
-#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -44,20 +41,5 @@ namespace OpenTelemetry
             configure?.Invoke(options);
             return builder.AddProcessor(new SimpleExportProcessor<Activity>(new InMemoryExporter<Activity>(options)));
         }
-
-#if NETSTANDARD2_0
-        public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<InMemoryExporterOptions> configure = null)
-        {
-            if (loggerOptions == null)
-            {
-                throw new ArgumentNullException(nameof(loggerOptions));
-            }
-
-            var options = new InMemoryExporterOptions();
-            configure?.Invoke(options);
-
-            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(options)));
-        }
-#endif
     }
 }
