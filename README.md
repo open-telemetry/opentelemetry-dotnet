@@ -67,7 +67,7 @@ most common customization and extension scenarios:
 * [Building a custom instrumentation
   library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
 * [Building a custom log
-  exporter/processor/sampler](./docs/log/extending-the-sdk/README.md)
+  exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
 * [Building a custom trace
   exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
 * [Correlating logs with traces](./docs/logs/correlation/README.md)
