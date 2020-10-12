@@ -159,7 +159,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     int compositeState = (int)eventData.Payload[1];
                     if ((compositeState & 0b001) == 0b001)
                     {
-                        activity.SetStatus(Status.Ok);
+                        activity.SetStatus(Status.Unset);
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
