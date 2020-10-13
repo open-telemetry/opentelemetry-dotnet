@@ -21,17 +21,6 @@ using OpenTelemetry.Logs;
 
 internal static class LoggerExtensions
 {
-    // https://docs.microsoft.com/aspnet/core/fundamentals/logging/loggermessage
-    private static readonly Action<ILogger, object, Exception> LogExAction = LoggerMessage.Define<object>(
-        LogLevel.Information,
-        new EventId(1, nameof(LogEx)),
-        "LogEx({obj}).");
-
-    public static void LogEx(this ILogger logger, object obj)
-    {
-        LogExAction(logger, obj, null);
-    }
-
     public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
     {
         if (options == null)
