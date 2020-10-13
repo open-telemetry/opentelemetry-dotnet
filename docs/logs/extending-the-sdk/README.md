@@ -19,11 +19,11 @@ not covered by the built-in exporters:
   and implement the `Export` method.
 * Exporters can optionally implement the `OnShutdown` method.
 * Depending on user's choice and load on the application, `Export` may get
-  called with one or more activities.
-* Exporters will only receive sampled-in and ended activities.
+  called with one or more log records.
+* Exporters will only receive sampled-in log records.
 * Exporters should not throw exceptions from `Export` and `OnShutdown`.
-* Exporters should not modify activities they receive (the same activity may be
-  exported again by different exporter).
+* Exporters should not modify log records they receive (the same log records may
+  be exported again by different exporter).
 * Exporters are responsible for any retry logic needed by the scenario. The SDK
   does not implement any retry logic.
 * Exporters should avoid generating telemetry and causing live-loop, this can be
@@ -46,7 +46,7 @@ class MyExporter : BaseExporter<LogRecord>
 }
 ```
 
-A demo exporter which simply writes activity name to the console is shown
+A demo exporter which simply writes log records to the console is shown
 [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
