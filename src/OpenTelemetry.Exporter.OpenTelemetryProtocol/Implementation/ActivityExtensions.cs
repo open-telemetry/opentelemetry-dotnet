@@ -218,9 +218,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
         {
-            var status = SpanHelper.ResolveCanonicalCodeToStatus(otlpTags.StatusCode);
-
-            if (!status.IsValid)
+            if (!otlpTags.StatusCode.HasValue)
             {
                 return null;
             }
@@ -228,7 +226,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpStatus = new OtlpTrace.Status
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)status.StatusCode,
+                Code = (OtlpTrace.Status.Types.StatusCode)otlpTags.StatusCode,
             };
 
             if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
@@ -448,7 +446,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             public PooledList<OtlpCommon.KeyValue> Tags;
 
-            public string StatusCode;
+            public int? StatusCode;
 
             public string StatusDescription;
 
@@ -462,7 +460,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 switch (activityTag.Key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = activityTag.Value as string;
+                        this.StatusCode = activityTag.Value as int?;
                         return true;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = activityTag.Value as string;
