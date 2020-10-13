@@ -7,7 +7,7 @@
 
 ## Exporter
 
-OpenTelemetry .NET SDK has provided the following built-in exporters:
+OpenTelemetry .NET SDK has provided the following built-in log exporters:
 
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 
