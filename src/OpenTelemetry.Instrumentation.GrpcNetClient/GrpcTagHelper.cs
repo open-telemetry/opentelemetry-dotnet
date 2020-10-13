@@ -37,7 +37,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
 
         public static Status GetGrpcStatusCodeFromActivity(Activity activity)
         {
-            var status = Status.Unknown;
+            var status = Status.Unset;
 
             var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
             if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))

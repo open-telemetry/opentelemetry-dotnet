@@ -275,12 +275,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal("Ok", activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+                Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
                 Assert.Null(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
             }
             else
             {
-                Assert.Equal("Unknown", activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+                Assert.Equal((int)StatusCode.Error, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
                 Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
             }
 

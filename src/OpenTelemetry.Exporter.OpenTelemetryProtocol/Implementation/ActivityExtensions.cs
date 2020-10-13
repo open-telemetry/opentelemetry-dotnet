@@ -228,7 +228,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpStatus = new OtlpTrace.Status
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)status.CanonicalCode,
+                Code = (OtlpTrace.Status.Types.StatusCode)status.StatusCode,
             };
 
             if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
