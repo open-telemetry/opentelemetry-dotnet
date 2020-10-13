@@ -60,34 +60,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             var labels = new Dictionary<string, string>();
 
-            labels["http.method"] = context.Request.Method;
+            labels[SemanticConventions.AttributeHttpMethod] = context.Request.Method;
 
-            labels["http.scheme"] = context.Request.Scheme;
+            labels[SemanticConventions.AttributeHttpScheme] = context.Request.Scheme;
 
             if (context.Request.Host.HasValue)
             {
-                labels["http.host"] = context.Request.Host.Value;
-                labels["net.host.name"] = context.Request.Host.Host;
+                labels[SemanticConventions.AttributeHttpHost] = context.Request.Host.Value;
+                labels[SemanticConventions.AttributeNetHostName] = context.Request.Host.Host;
 
                 if (context.Request.Host.Port.HasValue)
                 {
-                    labels["net.host.port"] = context.Request.Host.Port.ToString();
+                    labels[SemanticConventions.AttributeNetHostPort] = context.Request.Host.Port.ToString();
                 }
             }
 
-            labels["http.status_code"] = context.Response.StatusCode.ToString();
-            labels["http.flavor"] = context.Request.Protocol;
+            labels[SemanticConventions.AttributeHttpStatusCode] = context.Response.StatusCode.ToString();
+            labels[SemanticConventions.AttributeHttpFlavor] = context.Request.Protocol;
 
             // TODO: Decide if/how to handle http.server_name. Spec seems to suggest
             // preference for net.host.name.
-            labels["http.server_name"] = string.Empty;
+            labels[SemanticConventions.AttributeHttpServerName] = string.Empty;
 
             // TODO: Decide if we want http.url. It seems awful from a cardinality perspective.
             // Retrieving the route data and setting http.target probably makes more sense.
-            labels["http.url"] = string.Empty;
+            labels[SemanticConventions.AttributeHttpUrl] = string.Empty;
 
             // TODO: Retrieve the route.
-            labels["http.target"] = string.Empty;
+            labels[SemanticConventions.AttributeHttpTarget] = string.Empty;
 
             Measure.Record(new SpanContext(activity.Context), activity.Duration.TotalMilliseconds, labels);
         }
