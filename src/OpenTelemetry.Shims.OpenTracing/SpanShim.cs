@@ -206,7 +206,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
             {
-                this.Span.SetStatus(value ? Trace.Status.Unknown : Trace.Status.Ok);
+                this.Span.SetStatus(value ? Trace.Status.Error : Trace.Status.Ok);
             }
             else
             {

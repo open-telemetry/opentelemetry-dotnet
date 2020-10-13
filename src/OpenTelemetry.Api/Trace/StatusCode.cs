@@ -1,4 +1,4 @@
-// <copyright file="CanonicalCodeExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="StatusCode.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Utils
+namespace OpenTelemetry.Trace
 {
-    internal static class CanonicalCodeExtensions
+    /// <summary>
+    /// Canonical result code of span execution.
+    /// </summary>
+    public enum StatusCode
     {
-        public static Status ToStatus(this StatusCanonicalCode code)
-        {
-            return new Status(code);
-        }
+        /// <summary>
+        /// The default status.
+        /// </summary>
+        Unset = 0,
+
+        /// <summary>
+        /// The operation contains an error.
+        /// </summary>
+        Error = 1,
+
+        /// <summary>
+        /// The operation completed successfully.
+        /// </summary>
+        Ok = 2,
     }
 }

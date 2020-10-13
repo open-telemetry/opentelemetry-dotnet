@@ -231,7 +231,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
+            Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
             Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
@@ -282,7 +282,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
             // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Unknown, shim.Span.Activity.GetStatus());
+            Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
             shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
             Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());

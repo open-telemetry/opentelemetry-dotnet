@@ -215,7 +215,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-            Assert.Equal("Ok", span.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal((int)StatusCode.Unset, span.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.Equal("OK", span.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
 
             var expectedUri = new Uri(url);
