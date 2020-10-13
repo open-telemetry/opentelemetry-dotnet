@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
-            // Below is just a temporary way of achieving this supression for metrics (we should consider suppressing traces too).
+            // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
             // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
             if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("metrics"))
             {
