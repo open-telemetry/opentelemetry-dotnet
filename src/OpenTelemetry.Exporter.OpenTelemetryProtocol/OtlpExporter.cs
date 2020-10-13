@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -29,8 +28,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporter : BaseExporter<Activity>
     {
-        private readonly Channel channel;
-        private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
+        // private readonly Channel channel;
+        // private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
         private readonly Metadata headers;
 
         /// <summary>
@@ -41,32 +40,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
         {
             this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
-            this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
-            this.traceClient = traceServiceClient ?? new OtlpCollector.TraceService.TraceServiceClient(this.channel);
+            /*this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+            this.traceClient = traceServiceClient ?? new OtlpCollector.TraceService.TraceServiceClient(this.channel);*/
         }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
-            var exporterRequest = new OtlpCollector.ExportTraceServiceRequest();
+            OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
-            var activities = new List<Activity>();
-            foreach (var activity in activityBatch)
-            {
-                activities.Add(activity);
-            }
-
-            exporterRequest.ResourceSpans.AddRange(activities.ToOtlpResourceSpans());
+            request.AddBatch(activityBatch);
 
             try
             {
-                this.traceClient.Export(exporterRequest, headers: this.headers);
+                // this.traceClient.Export(request, headers: this.headers);
             }
             catch (RpcException ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
                 return ExportResult.Failure;
+            }
+            finally
+            {
+                request.Return();
             }
 
             return ExportResult.Success;

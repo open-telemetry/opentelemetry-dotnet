@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -156,6 +157,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 logs: activity.ToJaegerLogs());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this Activity activity)
         {
             LinkEnumerationState references = default;
@@ -165,6 +167,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return references.SpanRefs;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledList<JaegerLog> ToJaegerLogs(this Activity activity)
         {
             EventEnumerationState logs = default;
@@ -174,6 +177,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return logs.Logs;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JaegerLog ToJaegerLog(this ActivityEvent timedEvent)
         {
             var jaegerTags = new EventTagsEnumerationState
@@ -192,6 +196,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), jaegerTags.Tags);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JaegerSpanRef ToJaegerSpanRef(this in ActivityLink link)
         {
             var traceId = new Int128(link.Context.TraceId);
