@@ -28,6 +28,7 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderBuilder
     {
         private static readonly TimeSpan DefaultPushInterval = TimeSpan.FromSeconds(60);
+        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private MetricProcessor metricProcessor;
         private MetricExporter metricExporter;
         private TimeSpan metricPushInterval;
@@ -72,6 +73,24 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        public MeterProviderBuilder AddInstrumentation<TInstrumentation>(
+            Func<TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            this.instrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
+
+            return this;
+        }
+
         public MeterProvider Build()
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -84,7 +103,26 @@ namespace OpenTelemetry.Metrics
                 this.metricPushInterval,
                 cancellationTokenSource);
 
-            return new MeterProviderSdk(this.metricProcessor, meterRegistry, controller, cancellationTokenSource);
+            return new MeterProviderSdk(this.metricProcessor, this.instrumentationFactories, meterRegistry, controller, cancellationTokenSource);
+        }
+
+        // TODO: This class was forklifted from the TracerProviderBuilder.
+        // Currently, it does not serve a purpose other than running the factory method, so in the short-term maybe remove it.
+        // The spec indicates that Name/Version should be passed in when obtaining a Meter
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/9e6a3de19cb3db983b2e4d56b37ec6313fd4ffc6/specification/metrics/api.md#meter-interface
+        // So, this class is probably not appropriate per the spec and instead it should be up to the instrumentation to pass this in.
+        internal readonly struct InstrumentationFactory
+        {
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Func<object> Factory;
+
+            internal InstrumentationFactory(string name, string version, Func<object> factory)
+            {
+                this.Name = name;
+                this.Version = version;
+                this.Factory = factory;
+            }
         }
     }
 }

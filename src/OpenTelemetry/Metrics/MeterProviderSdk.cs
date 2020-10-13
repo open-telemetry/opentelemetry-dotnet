@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
@@ -28,10 +29,16 @@ namespace OpenTelemetry.Metrics
         public CancellationTokenSource CancellationTokenSource;
         public Dictionary<MeterRegistryKey, MeterSdk> MeterRegistry;
 
+        private readonly List<object> instrumentations = new List<object>();
         private readonly object syncObject = new object();
         private MeterSdk defaultMeter;
 
-        internal MeterProviderSdk(MetricProcessor metricProcessor, Dictionary<MeterRegistryKey, MeterSdk> registry, PushMetricController controller, CancellationTokenSource cts)
+        internal MeterProviderSdk(
+            MetricProcessor metricProcessor,
+            IEnumerable<MeterProviderBuilder.InstrumentationFactory> instrumentationFactories,
+            Dictionary<MeterRegistryKey, MeterSdk> registry,
+            PushMetricController controller,
+            CancellationTokenSource cts)
         {
             this.MetricProcessor = metricProcessor;
             this.PushMetricController = controller;
@@ -39,6 +46,14 @@ namespace OpenTelemetry.Metrics
             this.defaultMeter = new MeterSdk(string.Empty, this.MetricProcessor);
             this.MeterRegistry = registry;
             this.MeterRegistry.Add(new MeterRegistryKey(string.Empty, null), this.defaultMeter);
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
+                }
+            }
         }
 
         public override Meter GetMeter(string name, string version = null)
