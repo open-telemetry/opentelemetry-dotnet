@@ -15,9 +15,10 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using OpenTelemetry.Tests.Shared;
+using OpenTelemetry.Exporter;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -33,17 +34,18 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckConstructorWithInvalidValues()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxQueueSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), maxQueueSize: 1, maxExportBatchSize: 2049));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new TestActivityExporter(), exporterTimeoutMilliseconds: -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxExportBatchSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 1, maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), scheduledDelayMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
@@ -52,12 +54,12 @@ namespace OpenTelemetry.Trace.Tests
 
             processor.OnEnd(new Activity("start"));
 
-            for (int i = 0; i < 10 && exporter.Exported.Count == 0; i++)
+            for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
             {
                 Thread.Sleep(500);
             }
 
-            Assert.Single(exporter.Exported);
+            Assert.Single(exportedItems);
 
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);
@@ -67,7 +69,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckForceFlushWithInvalidTimeout()
         {
-            using var exporter = new TestActivityExporter();
+            using var exporter = new InMemoryExporter<Activity>();
             using var processor = new BatchExportProcessor<Activity>(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
@@ -78,7 +80,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckForceFlushExport(int timeout)
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -92,7 +95,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // waiting to see if time is triggering the exporter
             Thread.Sleep(1_000);
-            Assert.Empty(exporter.Exported);
+            Assert.Empty(exportedItems);
 
             // forcing flush
             processor.ForceFlush(timeout);
@@ -103,7 +106,7 @@ namespace OpenTelemetry.Trace.Tests
                 Thread.Sleep(1_000);
             }
 
-            Assert.Equal(2, exporter.Exported.Count);
+            Assert.Equal(2, exportedItems.Count);
 
             Assert.Equal(2, processor.ProcessedCount);
             Assert.Equal(2, processor.ReceivedCount);
@@ -116,7 +119,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckShutdownExport(int timeout)
         {
-            using var exporter = new TestActivityExporter();
+            var exportedItems = new List<object>();
+            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -132,7 +136,7 @@ namespace OpenTelemetry.Trace.Tests
                 Thread.Sleep(1_000);
             }
 
-            Assert.Single(exporter.Exported);
+            Assert.Single(exportedItems);
 
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);
