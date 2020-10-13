@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
         {
             this.exporter = new OtlpExporter(
                 new OtlpExporterOptions(),
-                null);
+                new NoopTraceServiceClient());
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
         }
@@ -70,9 +70,9 @@ namespace OpenTelemetry.Exporter.Benchmarks
             }
         }
 
-        private class NoopTraceServiceClient : OtlpCollector.TraceService.TraceServiceClient
+        private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
         {
-            public override OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            public OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
             {
                 return null;
             }
