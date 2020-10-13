@@ -21,7 +21,6 @@ using System.Linq;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
-using Opentelemetry.Proto.Common.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -116,8 +115,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var otlpSpans = instrumentationLibrarySpans.Spans;
                 Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
 
-                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new AnyValue { StringValue = "v0" } };
-                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new AnyValue { StringValue = "v1" } };
+                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new OtlpCommon.AnyValue { StringValue = "v0" } };
+                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new OtlpCommon.AnyValue { StringValue = "v1" } };
 
                 var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
                     ? kv0
