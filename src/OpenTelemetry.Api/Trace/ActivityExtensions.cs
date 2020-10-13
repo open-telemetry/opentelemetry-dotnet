@@ -229,6 +229,11 @@ namespace OpenTelemetry.Trace
 
         private struct ActivityStatusTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
+            private static readonly HashSet<StatusCode> Hashes = new HashSet<StatusCode>
+            {
+                StatusCode.Ok, StatusCode.Error, StatusCode.Unset,
+            };
+
             public bool IsValid { get; private set; }
 
             public StatusCode StatusCode { get; private set; }
@@ -241,7 +246,7 @@ namespace OpenTelemetry.Trace
                 {
                     case SpanAttributeConstants.StatusCodeKey:
                         this.StatusCode = (StatusCode)item.Value;
-                        this.IsValid = Enum.IsDefined(typeof(StatusCode), item.Value);
+                        this.IsValid = Hashes.Contains(this.StatusCode);
                         break;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = item.Value as string;
