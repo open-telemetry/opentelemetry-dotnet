@@ -25,9 +25,10 @@ namespace OpenTelemetry.Internal
     internal class SelfDiagnostics : IDisposable
     {
         /// <summary>
-        /// Long-living object that hold relevant resources, including an EventListener.
+        /// Long-living object that hold relevant resources.
         /// </summary>
         private static readonly SelfDiagnostics Instance = new SelfDiagnostics();
+        private readonly SelfDiagnosticsConfigRefresher configRefresher;
 
         static SelfDiagnostics()
         {
@@ -39,6 +40,7 @@ namespace OpenTelemetry.Internal
 
         private SelfDiagnostics()
         {
+            this.configRefresher = new SelfDiagnosticsConfigRefresher();
         }
 
         /// <summary>
@@ -62,7 +64,7 @@ namespace OpenTelemetry.Internal
         {
             if (disposing)
             {
-                // TODO: Dispose disposable class members, including EventListener.
+                this.configRefresher.Dispose();
             }
         }
     }
