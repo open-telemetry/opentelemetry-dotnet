@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
