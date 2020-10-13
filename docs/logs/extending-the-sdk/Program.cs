@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 #if NETCOREAPP2_1
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 
 public class Program
 {
@@ -30,7 +33,10 @@ public class Program
 #endif
         {
             builder.AddOpenTelemetry(options => options
-                .AddInMemoryExporter()); // TODO: change to console output
+                .AddProcessor(new MyProcessor("ProcessorA"))
+                .AddProcessor(new MyProcessor("ProcessorB"))
+                .AddProcessor(new SimpleExportProcessor<LogRecord>(new MyExporter("ExporterX")))
+                .AddMyExporter());
         });
 
 #if NETCOREAPP2_1
@@ -40,6 +46,33 @@ public class Program
         var logger = loggerFactory.CreateLogger<Program>();
 #endif
 
+        // unstructured log
+        logger.LogInformation("Hello, World!");
+
+        // unstructured log with string interpolation
+        logger.LogInformation($"Hello from potato {0.99}.");
+
+        // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+
+        // structured log with strong type
+        logger.LogInformation("{food}", new Food { Name = "artichoke", Price = 3.99 });
+
+        // structured log with anonymous type
+        logger.LogInformation("{food}", new { Name = "pumpkin", Price = 5.99 });
+
+        // structured log with general type
+        logger.LogInformation("{food}", new Dictionary<string, object>
+        {
+            ["Name"] = "truffle",
+            ["Price"] = 299.99,
+        });
+    }
+
+    internal struct Food
+    {
+        public string Name { get; set; }
+
+        public double Price { get; set; }
     }
 }
