@@ -112,7 +112,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
@@ -152,7 +159,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.SetCustomProperty(ResponseCustomPropertyName, response);
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 if (TryGetGrpcMethod(activity, out var grpcMethod))
@@ -166,7 +182,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
@@ -273,9 +289,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
-
-            // Remove the grpc.method tag added by the gRPC .NET library
-            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
         }
     }
 }

@@ -16,7 +16,6 @@
 
 #if NETSTANDARD2_0
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -26,15 +25,12 @@ namespace OpenTelemetry.Logs
     internal class OpenTelemetryLogger : ILogger
     {
         private readonly string categoryName;
+        private readonly OpenTelemetryLoggerProvider provider;
 
-        internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerOptions options)
+        internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
             this.categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
-
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
@@ -46,40 +42,14 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var timestamp = DateTime.UtcNow;
-
-            if (state is IReadOnlyCollection<KeyValuePair<string, object>> dict)
+            if (Sdk.SuppressInstrumentation)
             {
-                var isUnstructuredLog = dict.Count == 1;
-
-                // TODO: remove the console output after finished the plumbing work to log processors/exporters
-                if (isUnstructuredLog)
-                {
-                    foreach (var entry in dict)
-                    {
-                        Console.WriteLine($"{this.categoryName}({logLevel}, Id={eventId}): {entry.Value}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"{this.categoryName}({logLevel}, Id={eventId}):");
-                    foreach (var entry in dict)
-                    {
-                        if (string.Equals(entry.Key, "{OriginalFormat}", StringComparison.Ordinal))
-                        {
-                            Console.WriteLine($"    $format: {entry.Value}");
-                            continue;
-                        }
-
-                        Console.WriteLine($"    {entry.Key}: {entry.Value}");
-                    }
-                }
-
-                if (exception != null)
-                {
-                    Console.WriteLine($"    $exception: {exception}");
-                }
+                return;
             }
+
+            var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
+
+            this.provider.Processor?.OnEnd(record);
         }
 
         public bool IsEnabled(LogLevel logLevel)

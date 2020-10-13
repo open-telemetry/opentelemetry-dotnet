@@ -4,7 +4,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -18,7 +18,7 @@
     "method": "POST",
     "url": "http://{host}:{port}/",
     "spanName": "HTTP POST",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "POST",
@@ -33,7 +33,7 @@
     "url": "http://{host}:{port}/path/to/resource/",
     "responseCode": 200,
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -47,7 +47,7 @@
     "method": "GET",
     "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
     "spanName": "HTTP GET",
-    "spanStatus": "INVALID_ARGUMENT",
+    "spanStatus": "ERROR",
     "spanStatusHasDescription": true,
     "responseExpected" : false,
     "spanAttributes": {
@@ -62,7 +62,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 200,
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -77,7 +77,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 200,
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -92,7 +92,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 399,
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -107,7 +107,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 400,
     "spanName": "HTTP GET",
-    "spanStatus": "INVALID_ARGUMENT",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -122,7 +122,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 401,
     "spanName": "HTTP GET",
-    "spanStatus": "UNAUTHENTICATED",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -137,7 +137,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 403,
     "spanName": "HTTP GET",
-    "spanStatus": "PERMISSION_DENIED",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -152,7 +152,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 404,
     "spanName": "HTTP GET",
-    "spanStatus": "NOT_FOUND",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -167,7 +167,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 429,
     "spanName": "HTTP GET",
-    "spanStatus": "RESOURCE_EXHAUSTED",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -182,7 +182,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 501,
     "spanName": "HTTP GET",
-    "spanStatus": "UNIMPLEMENTED",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -197,7 +197,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 503,
     "spanName": "HTTP GET",
-    "spanStatus": "UNAVAILABLE",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -212,7 +212,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 504,
     "spanName": "HTTP GET",
-    "spanStatus": "DEADLINE_EXCEEDED",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -227,7 +227,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 600,
     "spanName": "HTTP GET",
-    "spanStatus": "UNKNOWN",
+    "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
       "http.method": "GET",
@@ -242,7 +242,7 @@
     "url": "http://{host}:{port}/",
     "responseCode": 200,
     "spanName": "HTTP GET",
-    "spanStatus": "OK",
+    "spanStatus": "UNSET",
     "responseExpected": true,
     "setHttpFlavor": true,
     "spanAttributes": {

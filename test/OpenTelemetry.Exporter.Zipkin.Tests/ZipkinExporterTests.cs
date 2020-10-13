@@ -22,7 +22,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -108,7 +107,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             exporterOptions.ServiceName = "test-zipkin";
             exporterOptions.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
             var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter);
+            var exportActivityProcessor = new BatchExportProcessor<Activity>(zipkinExporter);
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -146,7 +145,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 });
 
             var activity = CreateTestActivity();
-            var processor = new SimpleExportActivityProcessor(exporter);
+            var processor = new SimpleExportProcessor<Activity>(exporter);
 
             processor.OnEnd(activity);
 

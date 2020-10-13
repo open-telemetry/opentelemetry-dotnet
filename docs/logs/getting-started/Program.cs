@@ -14,46 +14,32 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+#if NETCOREAPP2_1
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using Microsoft.Extensions.Logging;
 
 public class Program
 {
     public static void Main()
     {
+#if NETCOREAPP2_1
+        var serviceCollection = new ServiceCollection().AddLogging(builder =>
+#else
         using var loggerFactory = LoggerFactory.Create(builder =>
+#endif
         {
-            builder.AddOpenTelemetry();
+            builder.AddOpenTelemetry(options => options
+                .AddInMemoryExporter()); // TODO: change to console output
         });
+
+#if NETCOREAPP2_1
+        using var serviceProvider = serviceCollection.BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+#else
         var logger = loggerFactory.CreateLogger<Program>();
+#endif
 
-        // unstructured log
-        logger.LogInformation("Hello, World!");
-
-        // unstructured log with string interpolation
-        logger.LogInformation($"Hello from potato {0.99}.");
-
-        // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-
-        // structured log with strong type
-        logger.LogEx(new Food { Name = "artichoke", Price = 3.99 });
-
-        // structured log with anonymous type
-        logger.LogEx(new { Name = "pumpkin", Price = 5.99 });
-
-        // structured log with general type
-        logger.LogEx(new Dictionary<string, object>
-        {
-            ["Name"] = "truffle",
-            ["Price"] = 299.99,
-        });
-    }
-
-    internal struct Food
-    {
-        public string Name { get; set; }
-
-        public double Price { get; set; }
     }
 }

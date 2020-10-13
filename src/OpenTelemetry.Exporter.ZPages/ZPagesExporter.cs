@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Timers;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
 using Timer = System.Timers.Timer;
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements ZPages exporter.
     /// </summary>
-    public class ZPagesExporter : ActivityExporter
+    public class ZPagesExporter : BaseExporter<Activity>
     {
         internal readonly ZPagesExporterOptions Options;
         private readonly Timer minuteTimer;

@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var statusCode = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
 
-            Assert.Equal(StatusCanonicalCode.Ok, statusCode.CanonicalCode);
+            Assert.Equal(StatusCode.Unset, statusCode.StatusCode);
         }
     }
 }

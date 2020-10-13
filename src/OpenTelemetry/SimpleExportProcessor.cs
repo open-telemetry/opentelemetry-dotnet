@@ -1,4 +1,4 @@
-// <copyright file="SimpleExportActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="SimpleExportProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,35 +15,36 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Implements activity processor that exports <see cref="Activity"/> at each OnEnd call.
+    /// Implements processor that exports telemetry data at each OnEnd call.
     /// </summary>
-    public class SimpleExportActivityProcessor : BaseExportActivityProcessor
+    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
+    public class SimpleExportProcessor<T> : BaseExportProcessor<T>
+        where T : class
     {
         private readonly object syncObject = new object();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleExportActivityProcessor"/> class.
+        /// Initializes a new instance of the <see cref="SimpleExportProcessor{T}"/> class.
         /// </summary>
-        /// <param name="exporter">Activity exporter instance.</param>
-        public SimpleExportActivityProcessor(ActivityExporter exporter)
+        /// <param name="exporter">Exporter instance.</param>
+        public SimpleExportProcessor(BaseExporter<T> exporter)
             : base(exporter)
         {
         }
 
         /// <inheritdoc />
-        public override void OnEnd(Activity activity)
+        public override void OnEnd(T data)
         {
             lock (this.syncObject)
             {
                 try
                 {
-                    this.exporter.Export(new Batch<Activity>(activity));
+                    this.exporter.Export(new Batch<T>(data));
                 }
                 catch (Exception ex)
                 {

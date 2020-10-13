@@ -44,7 +44,11 @@ namespace OpenTelemetry.Metrics.Export
             this.metricExporter = metricExporter;
             this.pushInterval = pushInterval;
             this.worker = Task.Factory.StartNew(
-                s => this.Worker((CancellationToken)s), cts.Token);
+                s => this.Worker((CancellationToken)s),
+                cts.Token,
+                default,
+                TaskCreationOptions.None,
+                TaskScheduler.Default);
         }
 
         internal IEnumerable<Metric> Collect(Stopwatch sw)

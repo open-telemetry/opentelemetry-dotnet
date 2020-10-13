@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
     {

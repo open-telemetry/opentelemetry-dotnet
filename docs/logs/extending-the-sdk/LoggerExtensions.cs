@@ -15,19 +15,19 @@
 // </copyright>
 
 using System;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 
 internal static class LoggerExtensions
 {
-    // https://docs.microsoft.com/aspnet/core/fundamentals/logging/loggermessage
-    private static readonly Action<ILogger, object, Exception> LogExAction = LoggerMessage.Define<object>(
-        LogLevel.Information,
-        new EventId(1, nameof(LogEx)),
-        "LogEx({obj}).");
-
-    public static void LogEx(this ILogger logger, object obj)
+    public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
     {
-        LogExAction(logger, obj, null);
+        if (options == null)
+        {
+            throw new ArgumentNullException(nameof(options));
+        }
+
+        return options.AddProcessor(new BatchExportProcessor<LogRecord>(new MyExporter()));
     }
 }

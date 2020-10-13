@@ -89,7 +89,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             var database = this.databaseFetcher.Fetch(connection);
 
                             activity.DisplayName = (string)database;
-                            activity.SetCustomProperty(CommandCustomPropertyName, command);
+                            try
+                            {
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
+                            }
+
                             var dataSource = this.dataSourceFetcher.Fetch(connection);
                             var commandText = this.commandTextFetcher.Fetch(command);
 
@@ -147,7 +155,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         {
                             if (activity.IsAllDataRequested)
                             {
-                                activity.SetStatus(Status.Ok);
+                                activity.SetStatus(Status.Unset);
                             }
                         }
                         finally
@@ -177,7 +185,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             {
                                 if (this.exceptionFetcher.Fetch(payload) is Exception exception)
                                 {
-                                    activity.SetStatus(Status.Unknown.WithDescription(exception.Message));
+                                    activity.SetStatus(Status.Error.WithDescription(exception.Message));
                                 }
                                 else
                                 {

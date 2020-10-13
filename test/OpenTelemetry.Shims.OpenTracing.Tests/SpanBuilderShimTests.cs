@@ -247,7 +247,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
+            Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
@@ -293,7 +293,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var spanShim = (SpanShim)shim.Start();
 
             // Span status should be set
-            Assert.Equal(Status.Unknown, spanShim.Span.Activity.GetStatus());
+            Assert.Equal(Status.Error, spanShim.Span.Activity.GetStatus());
         }
 
         [Fact]
