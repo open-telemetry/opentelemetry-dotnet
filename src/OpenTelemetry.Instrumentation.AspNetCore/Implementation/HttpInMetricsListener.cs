@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // in the metric name. For now, using a name that make testing with Promethus easy. Prometheus exporter should
             // deal with normalizing the names for its purpose.
             this.httpServerDuration = meter.CreateDoubleMeasure("http_server_duration");
-    }
+        }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
