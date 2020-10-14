@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
+            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
                 // requestTaskStatus is not null
-                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload);
+                _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     }
                 }
 
-                if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
+                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
                     try
                     {
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
+                if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
