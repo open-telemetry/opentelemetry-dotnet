@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
             // Do we need separate options for metrics, or will the same options used for traces make sense for metrics?
             var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddInstrumentation(() => new AspNetCoreMetrics(aspnetCoreOptions));
+            builder.AddInstrumentation((meter) => new AspNetCoreMetrics(meter, aspnetCoreOptions));
 
             return builder;
         }

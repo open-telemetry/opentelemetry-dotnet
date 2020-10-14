@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
         }
 
         public MeterProviderBuilder AddInstrumentation<TInstrumentation>(
-            Func<TInstrumentation> instrumentationFactory)
+            Func<Meter, TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
             if (instrumentationFactory == null)
@@ -115,9 +115,9 @@ namespace OpenTelemetry.Metrics
         {
             public readonly string Name;
             public readonly string Version;
-            public readonly Func<object> Factory;
+            public readonly Func<Meter, object> Factory;
 
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
+            internal InstrumentationFactory(string name, string version, Func<Meter, object> factory)
             {
                 this.Name = name;
                 this.Version = version;

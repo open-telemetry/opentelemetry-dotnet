@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
@@ -29,10 +30,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreMetrics"/> class.
         /// </summary>
+        /// <param name="meter">The meter for obtaining metric instruments.</param>
         /// <param name="options">Configuration options for ASP.NET Core instrumentation.</param>
-        public AspNetCoreMetrics(AspNetCoreInstrumentationOptions options)
+        public AspNetCoreMetrics(Meter meter, AspNetCoreInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", options), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", options, meter), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

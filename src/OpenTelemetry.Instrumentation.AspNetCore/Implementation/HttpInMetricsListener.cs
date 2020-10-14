@@ -25,21 +25,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInMetricsListener : ListenerHandler
     {
-        private static readonly Meter Meter = MeterProvider.Default.GetMeter("AspNetCore");
-
-        // TODO: The spec says this metric should be http.server.duration. Though, Promethus does not support dots
-        // in the metric name. For now, using a name that make testing with Promethus easy. Prometheus exporter should
-        // deal with normalizing the names for its purpose.
-        private static readonly MeasureMetric<double> Measure = Meter.CreateDoubleMeasure("http_server_duration");
-
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly MeasureMetric<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, AspNetCoreInstrumentationOptions options)
+        public HttpInMetricsListener(string name, AspNetCoreInstrumentationOptions options, Meter meter)
             : base(name)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-        }
+
+            // TODO: The spec says this metric should be http.server.duration. Though, Promethus does not support dots
+            // in the metric name. For now, using a name that make testing with Promethus easy. Prometheus exporter should
+            // deal with normalizing the names for its purpose.
+            this.httpServerDuration = meter.CreateDoubleMeasure("http_server_duration");
+    }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
@@ -89,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // TODO: Retrieve the route.
             labels[SemanticConventions.AttributeHttpTarget] = string.Empty;
 
-            Measure.Record(new SpanContext(activity.Context), activity.Duration.TotalMilliseconds, labels);
+            this.httpServerDuration.Record(new SpanContext(activity.Context), activity.Duration.TotalMilliseconds, labels);
         }
     }
 }

@@ -51,7 +51,8 @@ namespace OpenTelemetry.Metrics
             {
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
+                    var meter = Default.GetMeter(instrumentationFactory.Name, instrumentationFactory.Version);
+                    this.instrumentations.Add(instrumentationFactory.Factory(meter));
                 }
             }
         }
