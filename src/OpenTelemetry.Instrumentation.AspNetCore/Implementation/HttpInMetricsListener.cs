@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            var labels = new Dictionary<string, string>();
+            var labels = new Dictionary<string, string>(StringComparer.Ordinal);
 
             labels[SemanticConventions.AttributeHttpMethod] = context.Request.Method;
 
