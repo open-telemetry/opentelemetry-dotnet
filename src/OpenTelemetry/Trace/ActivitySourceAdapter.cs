@@ -136,7 +136,7 @@ namespace OpenTelemetry.Trace
         private void RunGetRequestedDataOtherSampler(Activity activity)
         {
             ActivityContext parentContext;
-            if (string.IsNullOrEmpty(activity.ParentId))
+            if (string.IsNullOrEmpty(activity.ParentId) || this.IsParentSpanIdEmpty(activity))
             {
                 parentContext = default;
             }
@@ -185,6 +185,11 @@ namespace OpenTelemetry.Trace
                     activity.SetTag(att.Key, att.Value);
                 }
             }
+        }
+
+        private bool IsParentSpanIdEmpty(Activity activity)
+        {
+            return activity.ParentSpanId.ToHexString() == "0000000000000000";
         }
     }
 }
