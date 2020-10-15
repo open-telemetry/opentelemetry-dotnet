@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal
 {
