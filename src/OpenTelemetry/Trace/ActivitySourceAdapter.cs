@@ -189,6 +189,8 @@ namespace OpenTelemetry.Trace
 
         private bool IsParentSpanIdEmpty(Activity activity)
         {
+            // Below can be simplified as activity.ParentSpanId == default
+            // once issue https://github.com/dotnet/runtime/issues/42456 is fixed.
             return activity.ParentSpanId.ToHexString() == "0000000000000000";
         }
     }
