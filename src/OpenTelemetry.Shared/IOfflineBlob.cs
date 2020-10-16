@@ -35,10 +35,10 @@ namespace OpenTelemetry.Shared
         public void Write(byte[] buffer, int leasePeriod = 0);
 
         /// <summary>
-        /// Create and manage a lock on a file for write and delete operations.
+        /// Create and manage a lease on a blob for write and delete operations.
         /// </summary>
-        /// <param name="seconds">Lease period in seconds.</param>
-        public void Lease(int seconds);
+        /// <param name="milliSeconds">Lease period in seconds.</param>
+        public void Lease(int milliSeconds);
 
         /// <summary>
         /// Delete a blob from storage.
