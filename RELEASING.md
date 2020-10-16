@@ -87,7 +87,7 @@ Released 2020-Oct-16" | Set-Content -Path $changelog.FullName
 
    ```powershell
    .\nuget.exe setApiKey <actual api key>
-   get-childitem | where {$_.extension -eq
+   get-childitem -Recurse | where {$_.extension -eq
    ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source
    https://api.nuget.org/v3/index.json}
    ```
