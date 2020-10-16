@@ -19,7 +19,7 @@ namespace OpenTelemetry.Shared
     /// <summary>
     /// API to Read, Write and Delete blob.
     /// </summary>
-    public interface IOfflineBlob
+    public interface IPersistentBlob
     {
         /// <summary>
         /// Read content of a blob from storage.
@@ -31,13 +31,13 @@ namespace OpenTelemetry.Shared
         /// Write blob content to storage.
         /// </summary>
         /// <param name="buffer">Telemetry buffer to write to storage.</param>
-        /// <param name="leasePeriod">Lease period in seconds.</param>
+        /// <param name="leasePeriod">Lease period in milliseconds.</param>
         public void Write(byte[] buffer, int leasePeriod = 0);
 
         /// <summary>
         /// Create and manage a lease on a blob for write and delete operations.
         /// </summary>
-        /// <param name="milliSeconds">Lease period in seconds.</param>
+        /// <param name="milliSeconds">Lease period in milliseconds.</param>
         public void Lease(int milliSeconds);
 
         /// <summary>

@@ -21,25 +21,25 @@ namespace OpenTelemetry.Shared
     /// <summary>
     /// Persistent storage API.
     /// </summary>
-    public interface IOfflineStorage
+    public interface IPersistentStorage
     {
         /// <summary>
         /// Reads all blobs from the storage.
         /// </summary>
         /// <returns>All blobs from storage.</returns>
-        public IEnumerable<IOfflineBlob> GetBlobs();
+        public IEnumerable<IPersistentBlob> GetBlobs();
 
         /// <summary>
         /// Reads the latest stored blob from the storage.
         /// </summary>
         /// <returns>Blob content.</returns>
-        public IOfflineBlob GetBlob();
+        public IPersistentBlob GetBlob();
 
         /// <summary>
-        /// Writes a telemetry buffer to storage.
+        /// Writes a buffer to storage.
         /// </summary>
-        /// <param name="buffer">Telemetry buffer.</param>
-        /// <param name="leasePeriod">Lease period in seconds.</param>
+        /// <param name="buffer">Buffer.</param>
+        /// <param name="leasePeriod">Lease period in milliseconds.</param>
         public void PutBlob(byte[] buffer, int leasePeriod = 0);
     }
 }
