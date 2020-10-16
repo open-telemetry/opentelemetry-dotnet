@@ -15,6 +15,8 @@
   ([#1320](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1320))
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.2.20475.5
   ([#1346](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1346))
+* Updated Span Status as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
 
 ## 0.6.0-beta.1
 
