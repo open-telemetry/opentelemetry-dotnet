@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 * Span Status is populated as per new spec
   ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
 
