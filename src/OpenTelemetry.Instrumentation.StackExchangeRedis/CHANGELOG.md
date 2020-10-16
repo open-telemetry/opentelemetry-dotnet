@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Span Status is populated as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15

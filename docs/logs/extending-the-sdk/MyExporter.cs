@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;

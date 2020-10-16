@@ -22,7 +22,6 @@ using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 
