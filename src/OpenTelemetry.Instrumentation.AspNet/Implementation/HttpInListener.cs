@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         private const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn.Start";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
-        private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
+        private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -195,8 +195,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     {
                         var subRouteData = attributeRouting.GetValue(0);
 
-                        var route = this.routeFetcher.Fetch(subRouteData);
-                        template = this.routeTemplateFetcher.Fetch(route) as string;
+                        _ = this.routeFetcher.TryFetch(subRouteData, out var route);
+                        _ = this.routeTemplateFetcher.TryFetch(route, out template);
                     }
                 }
                 else if (routeData.Route is Route route)
