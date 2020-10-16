@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
 * Instrumentation no longer store raw objects like `HttpRequest` in
   Activity.CustomProperty. To enrich activity, use the Enrich action on the
   instrumentation.

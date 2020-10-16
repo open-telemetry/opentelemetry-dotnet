@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
 * `IActivityTagEnumerator` is now `IActivityEnumerator<T>`. Added
   `EnumerateLinks` extension method on `Activity` for retrieving links
   efficiently

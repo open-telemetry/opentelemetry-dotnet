@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
 * Changed `ActivityExporter.OnShutdown`, `ActivityExporter.Shutdown`,
   `ActivityProcessor.OnShutdown` and `ActivityProcessor.Shutdown` to return
   boolean value
