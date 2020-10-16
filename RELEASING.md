@@ -9,7 +9,8 @@ Only for Maintainers.
    git push origin 0.4.0-beta
    ```
 
-2.Do Draft Github release. Run the following PowerShell from the root of the
+2.Do Draft Github release (select the tag created above).
+  Then run the following PowerShell from the root of the
    repo.
 
 ```powershell
@@ -57,9 +58,9 @@ Only for Maintainers.
     {
      (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
 
-    ## 0.6.0-beta.1
+## 0.7.0-beta.1
 
-    Released 2020-Sep-15" | Set-Content -Path $changelog.FullName
+Released 2020-Oct-16" | Set-Content -Path $changelog.FullName
     }
 ```
 

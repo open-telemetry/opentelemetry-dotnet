@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
 * Removed unused `TimeoutSeconds` and added `MaxPayloadSizeInBytes` on
   `ZipkinExporterOptions`. The default value for `MaxPayloadSizeInBytes` is
   4096.
