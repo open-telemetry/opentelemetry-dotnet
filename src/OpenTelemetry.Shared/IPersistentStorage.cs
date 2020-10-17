@@ -24,22 +24,22 @@ namespace OpenTelemetry.Shared
     public interface IPersistentStorage
     {
         /// <summary>
-        /// Reads all blobs from the storage.
+        /// List all blobs from storage.
         /// </summary>
-        /// <returns>All blobs from storage.</returns>
-        public IEnumerable<IPersistentBlob> GetBlobs();
+        /// <returns>List of blobs from storage.</returns>
+        public IEnumerable<IPersistentBlob> ListBlobs();
 
         /// <summary>
-        /// Reads the latest stored blob from the storage.
+        /// Read a blob from storage.
         /// </summary>
-        /// <returns>Blob content.</returns>
-        public IPersistentBlob GetBlob();
+        /// <returns>Blob.</returns>
+        IPersistentBlob GetBlob();
 
         /// <summary>
-        /// Writes a buffer to storage.
+        /// Write a blob to storage.
         /// </summary>
-        /// <param name="buffer">Buffer.</param>
-        /// <param name="leasePeriod">Lease period in milliseconds.</param>
-        public void PutBlob(byte[] buffer, int leasePeriod = 0);
+        /// <param name="persistentBlob">Blob.</param>
+        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
+        public void PutBlob(IPersistentBlob persistentBlob, int leasePeriodMilliseconds = 0);
     }
 }

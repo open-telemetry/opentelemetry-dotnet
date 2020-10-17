@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Shared
 {
     /// <summary>
-    /// API to Read, Write and Delete blob.
+    /// API to Read, Write and Delete a blob.
     /// </summary>
     public interface IPersistentBlob
     {
@@ -28,17 +28,17 @@ namespace OpenTelemetry.Shared
         public byte[] Read();
 
         /// <summary>
-        /// Write blob content to storage.
+        /// Write a blob content to storage.
         /// </summary>
-        /// <param name="buffer">Telemetry buffer to write to storage.</param>
-        /// <param name="leasePeriod">Lease period in milliseconds.</param>
-        public void Write(byte[] buffer, int leasePeriod = 0);
+        /// <param name="buffer">Buffer to write to storage.</param>
+        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
+        public void Write(byte[] buffer, int leasePeriodMilliseconds = 0);
 
         /// <summary>
         /// Create and manage a lease on a blob for write and delete operations.
         /// </summary>
-        /// <param name="milliSeconds">Lease period in milliseconds.</param>
-        public void Lease(int milliSeconds);
+        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
+        public void Lease(int leasePeriodMilliseconds);
 
         /// <summary>
         /// Delete a blob from storage.
