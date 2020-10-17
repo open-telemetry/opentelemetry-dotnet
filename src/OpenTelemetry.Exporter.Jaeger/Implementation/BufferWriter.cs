@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             if (initialCapacity < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, $"Initial capacity should not be below 0, but was: {initialCapacity}");
+                throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, $"Initial capacity should not be below 0.");
             }
 
             this.Buffer = new byte[initialCapacity];

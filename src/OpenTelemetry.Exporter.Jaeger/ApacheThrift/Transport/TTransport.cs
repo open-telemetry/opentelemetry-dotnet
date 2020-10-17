@@ -91,17 +91,17 @@ namespace Thrift.Transport
 #if DEBUG // let it fail with OutOfRange in RELEASE mode
             if (offset < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(offset), offset, $"Buffer offset must be >= 0, but was: {offset}");
+                throw new ArgumentOutOfRangeException(nameof(offset), offset, $"Buffer offset must be >= 0.");
             }
 
             if (length < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), length, $"Buffer length must be >= 0, but was: {length}");
+                throw new ArgumentOutOfRangeException(nameof(length), length, $"Buffer length must be >= 0.");
             }
 
             if (offset + length > buffer.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(buffer), buffer,$"Not enough data, buffer length was: {buffer.Length}");
+                throw new ArgumentOutOfRangeException(nameof(buffer), buffer,$"Not enough data.");
             }
 #endif
         }

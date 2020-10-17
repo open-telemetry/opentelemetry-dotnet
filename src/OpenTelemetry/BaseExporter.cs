@@ -74,7 +74,7 @@ namespace OpenTelemetry
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, $"timeout milliseconds should not be below -1, but was: {timeoutMilliseconds}");
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, $"timeout milliseconds should not be below -1.");
             }
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
