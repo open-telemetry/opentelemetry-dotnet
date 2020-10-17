@@ -62,7 +62,7 @@ namespace OpenTelemetry
 
             if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, $"Max export batch size should be above 0 or below max queue size. Max queue size was: {maxQueueSize} and Max export batch size was: {maxExportBatchSize}");
+                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, $"maxExportBatchSize should be above 0 and below maxQueueSize. maxQueueSize was: {maxQueueSize} and Max maxExportBatchSize was: {maxExportBatchSize}");
             }
 
             if (scheduledDelayMilliseconds <= 0)
