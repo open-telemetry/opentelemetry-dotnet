@@ -57,22 +57,22 @@ namespace OpenTelemetry
         {
             if (maxQueueSize <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxQueueSize));
+                throw new ArgumentOutOfRangeException(nameof(maxQueueSize), maxQueueSize, $"Max queue size should be greater than 0, but was: {maxQueueSize}");
             }
 
             if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
+                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, $"Max export batch size should be above 0 or below max queue size. Max queue size was: {maxQueueSize} and Max export batch size was: {maxExportBatchSize}");
             }
 
             if (scheduledDelayMilliseconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds), scheduledDelayMilliseconds, $"Scheduled delay milliseconds should be above 0, but was: {scheduledDelayMilliseconds}");
             }
 
             if (exporterTimeoutMilliseconds < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds), exporterTimeoutMilliseconds, $"Exporter timeout milliseconds must not be below 0, but was {exporterTimeoutMilliseconds}");
             }
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
