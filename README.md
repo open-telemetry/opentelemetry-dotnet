@@ -1,3 +1,5 @@
+Simple test.
+
 # OpenTelemetry .NET
 
 [![Gitter
