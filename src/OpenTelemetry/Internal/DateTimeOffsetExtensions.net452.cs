@@ -55,10 +55,7 @@ namespace OpenTelemetry.Internal
 
             if (milliseconds < MinMilliseconds || milliseconds > MaxMilliseconds)
             {
-                throw new ArgumentOutOfRangeException(
-                    nameof(milliseconds),
-                    milliseconds,
-                    string.Format(CultureInfo.InvariantCulture, "milliseconds must be between {0} and {1}", MinMilliseconds, MaxMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(milliseconds), milliseconds, $"milliseconds must be between {MinMilliseconds} and {MaxMilliseconds}");
             }
 
             long ticks = (milliseconds * TimeSpan.TicksPerMillisecond) + UnixEpochTicks;
