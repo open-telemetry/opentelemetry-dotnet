@@ -39,7 +39,7 @@ namespace OpenTelemetry.Internal
         {
             if (capacity <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, $"The capacity of the circular buffer, must be a positive integer, but was: {capacity}");
+                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, $"The capacity of the circular buffer, must be a positive integer.");
             }
 
             this.Capacity = capacity;
