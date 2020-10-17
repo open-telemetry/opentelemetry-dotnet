@@ -24,10 +24,10 @@ namespace OpenTelemetry.Shared
     public interface IPersistentStorage
     {
         /// <summary>
-        /// List all blobs from storage.
+        /// Read a sequence of blobs from storage.
         /// </summary>
-        /// <returns>List of blobs from storage.</returns>
-        public IEnumerable<IPersistentBlob> ListBlobs();
+        /// <returns>Sequence of blobs from storage.</returns>
+        public IEnumerable<IPersistentBlob> GetBlobs();
 
         /// <summary>
         /// Read a blob from storage.
