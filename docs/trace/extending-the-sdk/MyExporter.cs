@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
 
 internal class MyExporter : BaseExporter<Activity>
 {

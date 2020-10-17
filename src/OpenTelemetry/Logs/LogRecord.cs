@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD2_0
+#if NET461 || NETSTANDARD2_0
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;

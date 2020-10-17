@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
-            HttpContext context = this.startContextFetcher.Fetch(payload);
+            _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                HttpContext context = this.stopContextFetcher.Fetch(payload);
+                _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
@@ -214,9 +214,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // The reason to use reflection is to avoid a reference on MVC package.
                     // This package can be used with non-MVC apps and this logic simply wouldn't run.
                     // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    var actionDescriptor = this.beforeActionActionDescriptorFetcher.Fetch(payload);
-                    var attributeRouteInfo = this.beforeActionAttributeRouteInfoFetcher.Fetch(actionDescriptor);
-                    var template = this.beforeActionTemplateFetcher.Fetch(attributeRouteInfo);
+                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
+                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
+                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
 
                     if (!string.IsNullOrEmpty(template))
                     {
