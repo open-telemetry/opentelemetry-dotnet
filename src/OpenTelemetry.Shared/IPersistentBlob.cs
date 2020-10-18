@@ -24,24 +24,38 @@ namespace OpenTelemetry.Shared
         /// <summary>
         /// Read content of a blob from storage.
         /// </summary>
-        /// <returns>Blob content.</returns>
+        /// <returns>
+        /// Blob content.
+        /// </returns>
         public byte[] Read();
 
         /// <summary>
         /// Write a blob content to storage.
         /// </summary>
-        /// <param name="buffer">Buffer to write to storage.</param>
-        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
-        public void Write(byte[] buffer, int leasePeriodMilliseconds = 0);
+        /// <param name="buffer">
+        /// Buffer to write to storage.
+        /// </param>
+        /// <param name="leasePeriodMilliseconds">
+        /// Lease period in milliseconds.
+        /// </param>
+        /// <returns>
+        /// A blob if there is an available one, or null if there is no blob available.
+        /// </returns>
+        public IPersistentBlob Write(byte[] buffer, int leasePeriodMilliseconds = 0);
 
         /// <summary>
         /// Create and manage a lease on the blob.
         /// </summary>
-        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
+        /// <param name="leasePeriodMilliseconds">
+        /// Lease period in milliseconds.
+        /// </param>
+        /// <returns>
+        /// A blob if there is an available one, or null if there is no blob available.
+        /// </returns>
         public IPersistentBlob Lease(int leasePeriodMilliseconds);
 
         /// <summary>
-        /// Delete a blob from storage.
+        /// Attempt to delete the blob.
         /// </summary>
         public void Delete();
     }

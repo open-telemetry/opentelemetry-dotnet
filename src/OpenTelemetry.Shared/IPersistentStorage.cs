@@ -26,20 +26,32 @@ namespace OpenTelemetry.Shared
         /// <summary>
         /// Read a sequence of blobs from storage.
         /// </summary>
-        /// <returns>Sequence of blobs from storage.</returns>
+        /// <returns>
+        /// Sequence of blobs from storage.
+        /// </returns>
         public IEnumerable<IPersistentBlob> GetBlobs();
 
         /// <summary>
-        /// Read a blob from storage.
+        /// Attempt to get a blob from storage.
+        /// This function never throws.
         /// </summary>
-        /// <returns>Blob.</returns>
+        /// <returns>
+        /// A blob if there is an available one, or null if there is no blob available.
+        /// </returns>
         IPersistentBlob GetBlob();
 
         /// <summary>
-        /// Create a new blob and update content of the created blob.
+        /// Create a new blob with the provided data.
         /// </summary>
-        /// <param name="buffer">Blob Content.</param>
-        /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
-        public void PutBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
+        /// <param name="buffer">
+        /// Blob content.
+        /// </param>
+        /// <param name="leasePeriodMilliseconds">
+        /// Lease period in milliseconds.
+        /// </param>
+        /// <returns>
+        /// A blob if there is an available one, or null if there is no blob available.
+        /// </returns>
+        public IPersistentBlob CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
     }
 }
