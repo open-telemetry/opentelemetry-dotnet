@@ -96,13 +96,13 @@ documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version
-   5.0.0-preview.7.20364.11 or above to your application or library.
+   `5.0.0-rc.2.20475.5` or above to your application or library.
 
     ```xml
     <ItemGroup>
       <PackageReference
         Include="System.Diagnostics.DiagnosticSource"
-        Version="5.0.0-preview.7.20364.11"
+        Version="5.0.0-rc.2.20475.5"
       />
     </ItemGroup>
     ```
