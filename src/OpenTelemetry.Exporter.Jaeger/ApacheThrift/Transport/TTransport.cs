@@ -101,7 +101,7 @@ namespace Thrift.Transport
 
             if (offset + length > buffer.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(buffer), buffer,$"Not enough data.");
+                throw new ArgumentOutOfRangeException(nameof(buffer), buffer, $"Not enough data.");
             }
 #endif
         }

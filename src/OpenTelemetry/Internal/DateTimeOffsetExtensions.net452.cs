@@ -55,7 +55,7 @@ namespace OpenTelemetry.Internal
 
             if (milliseconds < MinMilliseconds || milliseconds > MaxMilliseconds)
             {
-                throw new ArgumentOutOfRangeException(nameof(milliseconds), milliseconds, $"milliseconds must be between MinMilliseconds and MaxMilliseconds");
+                throw new ArgumentOutOfRangeException(nameof(milliseconds), milliseconds, $"milliseconds must be between MinMilliseconds and MaxMilliseconds.");
             }
 
             long ticks = (milliseconds * TimeSpan.TicksPerMillisecond) + UnixEpochTicks;
