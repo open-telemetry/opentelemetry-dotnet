@@ -38,7 +38,7 @@ namespace OpenTelemetry.Shared
         /// Create and manage a lease on the blob.
         /// </summary>
         /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
-        public void Lease(int leasePeriodMilliseconds);
+        public IPersistentBlob Lease(int leasePeriodMilliseconds);
 
         /// <summary>
         /// Delete a blob from storage.
