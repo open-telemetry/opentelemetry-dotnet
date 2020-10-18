@@ -35,7 +35,7 @@ namespace OpenTelemetry.Shared
         public void Write(byte[] buffer, int leasePeriodMilliseconds = 0);
 
         /// <summary>
-        /// Create and manage a lease on a blob for write and delete operations.
+        /// Create and manage a lease on the blob.
         /// </summary>
         /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
         public void Lease(int leasePeriodMilliseconds);
