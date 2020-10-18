@@ -36,10 +36,10 @@ namespace OpenTelemetry.Shared
         IPersistentBlob GetBlob();
 
         /// <summary>
-        /// Write a blob to storage.
+        /// Create a new blob and update content of the created blob.
         /// </summary>
-        /// <param name="persistentBlob">Blob.</param>
+        /// <param name="buffer">Blob Content.</param>
         /// <param name="leasePeriodMilliseconds">Lease period in milliseconds.</param>
-        public void PutBlob(IPersistentBlob persistentBlob, int leasePeriodMilliseconds = 0);
+        public void PutBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
     }
 }
