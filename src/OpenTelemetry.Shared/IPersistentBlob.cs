@@ -17,46 +17,58 @@
 namespace OpenTelemetry.Shared
 {
     /// <summary>
-    /// API to Read, Write and Delete a blob.
+    /// Represents a persistent blob.
     /// </summary>
     public interface IPersistentBlob
     {
         /// <summary>
-        /// Read content of a blob from storage.
+        /// Reads the content from the blob.
         /// </summary>
         /// <returns>
-        /// Blob content.
+        /// The content of the blob if the operation succeeded, otherwise null.
         /// </returns>
-        public byte[] Read();
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        byte[] Read();
 
         /// <summary>
-        /// Write a blob content to storage.
+        /// Writes the given content to the blob.
         /// </summary>
         /// <param name="buffer">
-        /// Buffer to write to storage.
+        /// The content to be written.
         /// </param>
         /// <param name="leasePeriodMilliseconds">
-        /// Lease period in milliseconds.
+        /// The number of milliseconds to lease after the write operation finished.
         /// </param>
         /// <returns>
-        /// A blob if there is an available one, or null if there is no blob available.
+        /// The same blob if the operation succeeded, otherwise null.
         /// </returns>
-        public IPersistentBlob Write(byte[] buffer, int leasePeriodMilliseconds = 0);
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        IPersistentBlob Write(byte[] buffer, int leasePeriodMilliseconds = 0);
 
         /// <summary>
-        /// Create and manage a lease on the blob.
+        /// Creates a lease on the blob.
         /// </summary>
         /// <param name="leasePeriodMilliseconds">
-        /// Lease period in milliseconds.
+        /// The number of milliseconds to lease.
         /// </param>
         /// <returns>
-        /// A blob if there is an available one, or null if there is no blob available.
+        /// The same blob if the lease operation succeeded, otherwise null.
         /// </returns>
-        public IPersistentBlob Lease(int leasePeriodMilliseconds);
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        IPersistentBlob Lease(int leasePeriodMilliseconds);
 
         /// <summary>
-        /// Attempt to delete the blob.
+        /// Attempts to delete the blob.
         /// </summary>
-        public void Delete();
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        void Delete();
     }
 }
