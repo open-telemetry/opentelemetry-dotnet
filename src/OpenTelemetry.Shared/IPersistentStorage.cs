@@ -24,34 +24,42 @@ namespace OpenTelemetry.Shared
     public interface IPersistentStorage
     {
         /// <summary>
-        /// Read a sequence of blobs from storage.
+        /// Reads a sequence of blobs from storage.
         /// </summary>
         /// <returns>
         /// Sequence of blobs from storage.
         /// </returns>
-        public IEnumerable<IPersistentBlob> GetBlobs();
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        IEnumerable<IPersistentBlob> GetBlobs();
 
         /// <summary>
-        /// Attempt to get a blob from storage.
-        /// This function never throws.
+        /// Attempts to get a blob from storage.
         /// </summary>
         /// <returns>
         /// A blob if there is an available one, or null if there is no blob available.
         /// </returns>
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
         IPersistentBlob GetBlob();
 
         /// <summary>
-        /// Create a new blob with the provided data.
+        /// Creates a new blob with the provided data.
         /// </summary>
         /// <param name="buffer">
-        /// Blob content.
+        /// The content to be written.
         /// </param>
         /// <param name="leasePeriodMilliseconds">
-        /// Lease period in milliseconds.
+        /// The number of milliseconds to lease after the blob is created.
         /// </param>
         /// <returns>
-        /// A blob if there is an available one, or null if there is no blob available.
+        /// The created blob.
         /// </returns>
-        public IPersistentBlob CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        IPersistentBlob CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
     }
 }
