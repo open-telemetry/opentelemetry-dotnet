@@ -80,6 +80,16 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
+            if (this.instrumentations != null)
+            {
+                foreach (var item in this.instrumentations)
+                {
+                    (item as IDisposable)?.Dispose();
+                }
+
+                this.instrumentations.Clear();
+            }
+
             this.CancellationTokenSource.Dispose();
 
             // TODO: Actually flush the metric processor/exporer/controllers.
