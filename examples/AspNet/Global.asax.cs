@@ -20,6 +20,7 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
 using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNet
@@ -33,8 +34,10 @@ namespace Examples.AspNet
         protected void Application_Start()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                 .AddHttpClientInstrumentation()
-                 .AddAspNetInstrumentation()
+                 .AddAspNetInstrumentation(options => options.Propagator = new B3Propagator())
+                 .AddHttpClientInstrumentation(
+                        httpClientOptions => httpClientOptions.Propagator = new B3Propagator(),
+                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator())
                  .AddJaegerExporter(jaegerOptions =>
                  {
                      jaegerOptions.AgentHost = "localhost";

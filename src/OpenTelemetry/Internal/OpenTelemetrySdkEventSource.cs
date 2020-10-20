@@ -15,6 +15,11 @@
 // </copyright>
 
 using System;
+#if DEBUG
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+#endif
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
@@ -26,6 +31,9 @@ namespace OpenTelemetry.Internal
     internal class OpenTelemetrySdkEventSource : EventSource
     {
         public static OpenTelemetrySdkEventSource Log = new OpenTelemetrySdkEventSource();
+#if DEBUG
+        public static OpenTelemetryEventListener Listener = new OpenTelemetryEventListener();
+#endif
 
         [NonEvent]
         public void SpanProcessorException(string evnt, Exception ex)
@@ -212,5 +220,63 @@ namespace OpenTelemetry.Internal
         {
             this.WriteEvent(23, spansAttempted);
         }
+
+        [Event(24, Message = "Activity started. OperationName = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+        public void ActivityStarted(string operationName, string id)
+        {
+            this.WriteEvent(24, operationName, id);
+        }
+
+        [Event(25, Message = "Activity stopped. OperationName = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+        public void ActivityStopped(string operationName, string id)
+        {
+            this.WriteEvent(25, operationName, id);
+        }
+
+#if DEBUG
+        public class OpenTelemetryEventListener : EventListener
+        {
+            private readonly List<EventSource> eventSources = new List<EventSource>();
+
+            public override void Dispose()
+            {
+                foreach (EventSource eventSource in this.eventSources)
+                {
+                    this.DisableEvents(eventSource);
+                }
+
+                base.Dispose();
+            }
+
+            protected override void OnEventSourceCreated(EventSource eventSource)
+            {
+                if (eventSource?.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    this.eventSources.Add(eventSource);
+                    this.EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)(-1));
+                }
+
+                base.OnEventSourceCreated(eventSource);
+            }
+
+            protected override void OnEventWritten(EventWrittenEventArgs e)
+            {
+                string message;
+                if ((e.Payload?.Count ?? 0) > 0)
+                {
+                    message = string.Format(e.Message, e.Payload.ToArray());
+                }
+                else
+                {
+                    message = e.Message;
+                }
+#if NET452
+                Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], Message: [{message}]");
+#else
+                Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+#endif
+            }
+        }
+#endif
     }
 }
