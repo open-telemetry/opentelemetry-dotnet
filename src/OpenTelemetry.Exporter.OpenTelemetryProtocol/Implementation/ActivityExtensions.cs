@@ -89,12 +89,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activity.SpanId.CopyTo(spanIdBytes);
 
             var parentSpanIdString = ByteString.Empty;
-            if (activity.ParentSpanId.ToHexString() != EmptyActivitySpanId)
+            if (activity.ParentSpanId != default)
             {
-                // TODO: Once .NET fixes this https://github.com/dotnet/runtime/issues/42456
-                // and Otel updates to the version containing the fix,
-                // the above check can be simplified to
-                // if (activity.ParentSpanId != default)
                 Span<byte> parentSpanIdBytes = stackalloc byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
                 parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
@@ -145,7 +141,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpStatus = new Opentelemetry.Proto.Trace.V1.Status
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)status.CanonicalCode,
+                Code = (OtlpTrace.Status.Types.StatusCode)status.StatusCode,
             };
 
             if (!string.IsNullOrEmpty(status.Description))

@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
             Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
             Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-            Assert.Equal(Status.Ok, activity.GetStatus());
+            Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
             Assert.Equal($"localhost:{this.fixture.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)

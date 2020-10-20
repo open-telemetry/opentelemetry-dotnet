@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(status.CanonicalCode));
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, (int)status.StatusCode);
             if (!string.IsNullOrEmpty(status.Description))
             {
                 activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
@@ -66,9 +66,14 @@ namespace OpenTelemetry.Trace
 
             ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
-            var status = SpanHelper.ResolveCanonicalCodeToStatus(state.StatusCode);
+            if (!state.IsValid)
+            {
+                return default;
+            }
 
-            if (status.IsValid && !string.IsNullOrEmpty(state.StatusDescription))
+            var status = new Status(state.StatusCode);
+
+            if (!string.IsNullOrEmpty(state.StatusDescription))
             {
                 return status.WithDescription(state.StatusDescription);
             }
@@ -224,7 +229,9 @@ namespace OpenTelemetry.Trace
 
         private struct ActivityStatusTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
-            public string StatusCode { get; private set; }
+            public bool IsValid { get; private set; }
+
+            public StatusCode StatusCode { get; private set; }
 
             public string StatusDescription { get; private set; }
 
@@ -233,14 +240,15 @@ namespace OpenTelemetry.Trace
                 switch (item.Key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = item.Value as string;
+                        this.StatusCode = (StatusCode)item.Value;
+                        this.IsValid = this.StatusCode == StatusCode.Error || this.StatusCode == StatusCode.Ok || this.StatusCode == StatusCode.Unset;
                         break;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = item.Value as string;
                         break;
                 }
 
-                return this.StatusCode == null || this.StatusDescription == null;
+                return this.IsValid || this.StatusDescription == null;
             }
         }
 

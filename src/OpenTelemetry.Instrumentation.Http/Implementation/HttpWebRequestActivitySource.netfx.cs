@@ -154,35 +154,26 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     switch (wexc.Status)
                     {
                         case WebExceptionStatus.Timeout:
-                            status = Status.DeadlineExceeded;
-                            break;
-                        case WebExceptionStatus.NameResolutionFailure:
-                            status = Status.InvalidArgument.WithDescription(exception.Message);
+                        case WebExceptionStatus.RequestCanceled:
+                            status = Status.Error;
                             break;
                         case WebExceptionStatus.SendFailure:
                         case WebExceptionStatus.ConnectFailure:
                         case WebExceptionStatus.SecureChannelFailure:
                         case WebExceptionStatus.TrustFailure:
-                            status = Status.FailedPrecondition.WithDescription(exception.Message);
-                            break;
                         case WebExceptionStatus.ServerProtocolViolation:
-                            status = Status.Unimplemented.WithDescription(exception.Message);
-                            break;
-                        case WebExceptionStatus.RequestCanceled:
-                            status = Status.Cancelled;
-                            break;
                         case WebExceptionStatus.MessageLengthLimitExceeded:
-                            status = Status.ResourceExhausted.WithDescription(exception.Message);
+                            status = Status.Error.WithDescription(exception.Message);
                             break;
                         default:
-                            status = Status.Unknown.WithDescription(exception.Message);
+                            status = Status.Error.WithDescription(exception.Message);
                             break;
                     }
                 }
             }
             else
             {
-                status = Status.Unknown.WithDescription(exception.Message);
+                status = Status.Error.WithDescription(exception.Message);
             }
 
             activity.SetStatus(status);

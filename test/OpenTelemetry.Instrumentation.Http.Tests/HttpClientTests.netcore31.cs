@@ -98,31 +98,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<string, string>()
+            var d = new Dictionary<int, string>()
             {
-                { "Ok", "OK" },
-                { "Cancelled", "CANCELLED" },
-                { "Unknown", "UNKNOWN" },
-                { "InvalidArgument", "INVALID_ARGUMENT" },
-                { "DeadlineExceeded", "DEADLINE_EXCEEDED" },
-                { "NotFound", "NOT_FOUND" },
-                { "AlreadyExists", "ALREADY_EXISTS" },
-                { "PermissionDenied", "PERMISSION_DENIED" },
-                { "ResourceExhausted", "RESOURCE_EXHAUSTED" },
-                { "FailedPrecondition", "FAILED_PRECONDITION" },
-                { "Aborted", "ABORTED" },
-                { "OutOfRange", "OUT_OF_RANGE" },
-                { "Unimplemented", "UNIMPLEMENTED" },
-                { "Internal", "INTERNAL" },
-                { "Unavailable", "UNAVAILABLE" },
-                { "DataLoss", "DATA_LOSS" },
-                { "Unauthenticated", "UNAUTHENTICATED" },
+                { (int)StatusCode.Ok, "OK" },
+                { (int)StatusCode.Error, "ERROR" },
+                { (int)StatusCode.Unset, "UNSET" },
             };
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string]);
+                    d[(int)activity.GetTagValue(SpanAttributeConstants.StatusCodeKey)]);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
@@ -155,7 +141,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 399,
     ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""OK"",
+    ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
       ""http.method"": ""GET"",

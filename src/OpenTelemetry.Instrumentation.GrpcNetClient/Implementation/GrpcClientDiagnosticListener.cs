@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
+            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;
@@ -100,9 +100,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
-
-                // Remove the grpc.status_code tag added by the gRPC .NET library
-                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
             }
 
             this.activitySource.Stop(activity);

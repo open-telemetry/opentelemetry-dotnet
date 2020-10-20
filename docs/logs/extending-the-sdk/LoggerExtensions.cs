@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 

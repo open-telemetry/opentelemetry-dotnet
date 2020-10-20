@@ -3,7 +3,10 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <!-- https://dotnet.microsoft.com/download/dotnet-core -->
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
+    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461;net462;net47;net471;net472;net48</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Label="Package versions used in this folder">
@@ -11,7 +14,7 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
-    <MicrosoftExtensionsLoggingPkgVer>[5.0.0-rc.1.20451.14,6.0)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[5.0.0-rc.2.20475.5,6.0)</MicrosoftExtensionsLoggingPkgVer>
     <OpenTelemetryExporterConsolePkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryExporterConsolePkgVer>
     <OpenTelemetryPkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryPkgVer>
   </PropertyGroup>

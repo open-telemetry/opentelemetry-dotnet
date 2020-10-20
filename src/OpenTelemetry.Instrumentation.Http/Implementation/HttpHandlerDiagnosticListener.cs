@@ -81,7 +81,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
+            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
@@ -131,22 +131,22 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
                 // requestTaskStatus is not null
-                var requestTaskStatus = this.stopRequestStatusFetcher.Fetch(payload);
+                _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        activity.SetStatus(Status.Cancelled);
+                        activity.SetStatus(Status.Error);
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
                         // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                        activity.SetStatus(Status.Unknown);
+                        activity.SetStatus(Status.Error);
                     }
                 }
 
-                if (this.stopResponseFetcher.Fetch(payload) is HttpResponseMessage response)
+                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
                     try
                     {
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                if (!(this.stopExceptionFetcher.Fetch(payload) is Exception exc))
+                if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
@@ -195,14 +195,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         switch (exception.SocketErrorCode)
                         {
                             case SocketError.HostNotFound:
-                                activity.SetStatus(Status.InvalidArgument.WithDescription(exc.Message));
+                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
                                 return;
                         }
                     }
 
                     if (exc.InnerException != null)
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription(exc.Message));
+                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
                 }
             }

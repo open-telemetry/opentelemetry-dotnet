@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which never samples any activity.
+    /// Sampler implementation which always returns <c>SamplingDecision.Drop</c>.
     /// </summary>
     public sealed class AlwaysOffSampler : Sampler
     {

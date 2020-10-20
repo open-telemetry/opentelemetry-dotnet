@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
