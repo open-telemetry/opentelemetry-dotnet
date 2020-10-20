@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Metrics.Aggregators
@@ -25,6 +27,32 @@ namespace OpenTelemetry.Metrics.Aggregators
     public abstract class Aggregator<T>
         where T : struct
     {
+        private long startTime;
+        private long checkpointStartTime;
+
+        protected Aggregator()
+        {
+            this.startTime = DateTime.UtcNow.ToBinary();
+        }
+
+        /// <summary>
+        /// Determines the last end timestamp before the current interval's <see cref="StartTime"/>
+        /// </summary>
+        /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
+        protected DateTime GetLastEndTimestamp()
+        {
+            return DateTime.FromBinary(this.startTime).Subtract(TimeSpan.FromMilliseconds(1));
+        }
+
+        /// <summary>
+        /// Determines the last start timestamp before the current interval's <see cref="StartTime"/>
+        /// </summary>
+        /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
+        protected DateTime GetLastStartTimestamp()
+        {
+            return DateTime.FromBinary(this.checkpointStartTime);
+        }
+
         /// <summary>
         /// Adds value to the running total in a thread safe manner.
         /// </summary>
@@ -34,7 +62,11 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <summary>
         /// Checkpoints the current aggregate data, and resets the state.
         /// </summary>
-        public abstract void Checkpoint();
+        public virtual void Checkpoint()
+        {
+            // checkpoints the start time for the current aggregation, and sets the new start time.
+            this.checkpointStartTime = Interlocked.Exchange(ref this.startTime, DateTime.UtcNow.ToBinary());
+        }
 
         /// <summary>
         /// Convert Aggregator data to MetricData.
