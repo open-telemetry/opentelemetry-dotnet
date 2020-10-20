@@ -28,7 +28,4 @@ Changes:
 * Added [PR#2093](https://github.com/apache/thrift/pull/2093).
 * Added [PR#2057](https://github.com/apache/thrift/pull/2057).
 
-Other than those changes, files included are in their entirety. Meaning, if we
-used anything out of a .cs file in the Thrift repo, the whole file was
-included. For example, in `TCompactProtocol` there are a bunch of "Read"
-operations. We don't use those, but they were left in.
+The included files were made synchronous and anything unused was removed. [See PR #1374](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1374).
