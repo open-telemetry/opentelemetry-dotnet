@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Threading;
-using System.Threading.Tasks;
+
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
@@ -22,15 +21,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class EmitBatchArgs
     {
-        public static async Task WriteAsync(int seqId, Batch batch, TProtocol oprot, CancellationToken cancellationToken)
+        public static void Send(int seqId, Batch batch, TProtocol oprot)
         {
-            await oprot.WriteMessageBeginAsync(new TMessage("emitBatch", TMessageType.Oneway, seqId), cancellationToken).ConfigureAwait(false);
+            oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, seqId));
 
             oprot.IncrementRecursionDepth();
             try
             {
                 var struc = new TStruct("emitBatch_args");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
+                oprot.WriteStructBegin(struc);
 
                 var field = new TField
                 {
@@ -39,20 +38,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await batch.WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                batch.Write(oprot);
+                oprot.WriteFieldEnd();
 
-                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
             }
             finally
             {
                 oprot.DecrementRecursionDepth();
             }
 
-            await oprot.WriteMessageEndAsync(cancellationToken).ConfigureAwait(false);
-            await oprot.Transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+            oprot.WriteMessageEnd();
+            oprot.Transport.Flush();
         }
     }
 }
