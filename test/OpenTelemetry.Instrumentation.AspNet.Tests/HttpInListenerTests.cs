@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
     public class HttpInListenerTests : IDisposable
     {
-        private static readonly string ActivityNameAspNet = "Microsoft.AspNet.HttpReqIn.Start";
+        private static readonly string ActivityNameAspNet = "Microsoft.AspNet.HttpReqIn";
         private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
 
         public HttpInListenerTests()

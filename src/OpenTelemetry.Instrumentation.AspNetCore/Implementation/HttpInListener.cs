@@ -80,15 +80,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var request = context.Request;
             if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
             {
-                var parentContext = new ActivityContext(
-                    activity.Context.TraceId,
-                    activity.ParentSpanId,
-                    activity.Context.TraceFlags,
-                    activity.Context.TraceState,
-                    true);
                 var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != parentContext)
+                if (ctx.ActivityContext.IsValid()
+                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
