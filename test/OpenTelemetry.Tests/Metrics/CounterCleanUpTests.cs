@@ -55,7 +55,7 @@ namespace OpenTelemetry.Metrics.Tests
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
             var ls3 = meter.GetLabelSet(labels3);
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
 
             // We have ls1, ls2, ls3
             // ls1 and ls3 are not bound so they should removed when no usage for a Collect cycle.
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Metrics.Tests
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
             var ls3 = meter.GetLabelSet(labels3);
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
 
             // We have ls1, ls2, ls3
             // ls1 and ls3 are not bound so they should removed when no usage for a Collect cycle.
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Metrics.Tests
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             var ls1 = meter.GetLabelSet(labels1);
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
 
             // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
             testCounter.Add(context, 100, ls1);
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Metrics.Tests
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             var ls1 = meter.GetLabelSet(labels1);
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
 
             // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
             testCounter.Add(context, 100.0, ls1);

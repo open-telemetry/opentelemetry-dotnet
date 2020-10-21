@@ -162,7 +162,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void AsChildOf_WithNullSpanContext()
+        public void AsChildOf_WithNullSpanReference()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
@@ -178,13 +178,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void AsChildOfWithSpanContext()
+        public void AsChildOfWithSpanReference()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent
-            var spanContext = SpanContextShimTests.GetSpanContextShim();
+            var spanContext = SpanReferenceShimTests.GetSpanReferenceShim();
             var test = shim.AsChildOf(spanContext);
 
             // build
@@ -194,14 +194,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void AsChildOf_MultipleCallsWithSpanContext()
+        public void AsChildOf_MultipleCallsWithSpanReference()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
-            var spanContext1 = SpanContextShimTests.GetSpanContextShim();
-            var spanContext2 = SpanContextShimTests.GetSpanContextShim();
+            var spanContext1 = SpanReferenceShimTests.GetSpanReferenceShim();
+            var spanContext2 = SpanReferenceShimTests.GetSpanReferenceShim();
 
             // Add parent context
             shim.AsChildOf(spanContext1);

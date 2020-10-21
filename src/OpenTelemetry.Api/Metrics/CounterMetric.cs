@@ -29,18 +29,18 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Adds or Increments the counter.
         /// </summary>
-        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
+        /// <param name="context">the associated <see cref="SpanReference"/>.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public abstract void Add(in SpanContext context, T value, LabelSet labelset);
+        public abstract void Add(in SpanReference context, T value, LabelSet labelset);
 
         /// <summary>
         /// Adds or Increments the counter.
         /// </summary>
-        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
+        /// <param name="context">the associated <see cref="SpanReference"/>.</param>
         /// <param name="value">value by which the counter should be incremented.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public abstract void Add(in SpanContext context, T value, IEnumerable<KeyValuePair<string, string>> labels);
+        public abstract void Add(in SpanReference context, T value, IEnumerable<KeyValuePair<string, string>> labels);
 
         /// <summary>
         /// Adds or Increments the counter.

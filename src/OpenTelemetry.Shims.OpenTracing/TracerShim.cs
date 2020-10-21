@@ -84,27 +84,27 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             // TODO:
-            //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanContext is turned into a live Span.
+            //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanReference is turned into a live Span.
             //  But that code doesn't seem to exist.
             // Baggage.Current = propagationContext.Baggage;
 
-            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
+            return !propagationContext.ActivityContext.IsValid() ? null : new SpanReferenceShim(new Trace.SpanReference(propagationContext.ActivityContext));
         }
 
         /// <inheritdoc/>
         public void Inject<TCarrier>(
-            global::OpenTracing.ISpanContext spanContext,
+            global::OpenTracing.ISpanContext context,
             global::OpenTracing.Propagation.IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            if (spanContext is null)
+            if (context is null)
             {
-                throw new ArgumentNullException(nameof(spanContext));
+                throw new ArgumentNullException(nameof(context));
             }
 
-            if (!(spanContext is SpanContextShim shim))
+            if (!(context is SpanReferenceShim shim))
             {
-                throw new ArgumentException("context is not a valid SpanContextShim object");
+                throw new ArgumentException("context is not a valid SpanReferenceShim object");
             }
 
             if (format is null)
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
                 this.propagator.Inject(
-                    new PropagationContext(shim.SpanContext, Baggage.Current),
+                    new PropagationContext(shim.SpanReference, Baggage.Current),
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }

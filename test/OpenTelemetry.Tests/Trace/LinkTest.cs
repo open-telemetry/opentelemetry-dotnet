@@ -24,12 +24,12 @@ namespace OpenTelemetry.Trace.Tests
     public class LinkTest : IDisposable
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
-        private readonly SpanContext spanContext;
+        private readonly SpanReference spanContext;
         private readonly SpanAttributes tags;
 
         public LinkTest()
         {
-            this.spanContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            this.spanContext = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             this.attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
             this.attributesMap.Add("MyAttributeKey1", 10L);
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void FromSpanContext()
+        public void FromSpanReference()
         {
             var link = new Link(this.spanContext);
             Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void FromSpanContext_WithAttributes()
+        public void FromSpanReference_WithAttributes()
         {
             var link = new Link(this.spanContext, this.tags);
             Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
@@ -98,8 +98,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void NotEquality()
         {
-            var link1 = new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
-            var link2 = new Link(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var link1 = new Link(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var link2 = new Link(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             Assert.NotEqual(link1, link2);
             Assert.True(link1 != link2);

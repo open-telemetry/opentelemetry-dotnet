@@ -41,7 +41,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             typeof(double),
         };
 
-        private readonly SpanContextShim spanContextShim;
+        private readonly SpanReferenceShim spanContextShim;
 
         public SpanShim(TelemetrySpan span)
         {
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.spanContextShim = new SpanContextShim(this.Span.Context);
+            this.spanContextShim = new SpanReferenceShim(this.Span.Context);
         }
 
         public ISpanContext Context => this.spanContextShim;

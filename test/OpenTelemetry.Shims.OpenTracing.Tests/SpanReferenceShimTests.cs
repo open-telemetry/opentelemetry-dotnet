@@ -1,4 +1,4 @@
-// <copyright file="SpanContextShimTests.cs" company="OpenTelemetry Authors">
+// <copyright file="SpanReferenceShimTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,19 +21,19 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    public class SpanContextShimTests
+    public class SpanReferenceShimTests
     {
         [Fact]
         public void CtorArgumentValidation()
         {
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
+            Assert.Throws<ArgumentException>(() => new SpanReferenceShim(default));
+            Assert.Throws<ArgumentException>(() => new SpanReferenceShim(new SpanReference(default, default, ActivityTraceFlags.None)));
         }
 
         [Fact]
         public void GetTraceId()
         {
-            var shim = GetSpanContextShim();
+            var shim = GetSpanReferenceShim();
 
             Assert.Equal(shim.TraceId.ToString(), shim.TraceId);
         }
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void GetSpanId()
         {
-            var shim = GetSpanContextShim();
+            var shim = GetSpanReferenceShim();
 
             Assert.Equal(shim.SpanId.ToString(), shim.SpanId);
         }
@@ -49,14 +49,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         [Fact]
         public void GetBaggage()
         {
-            var shim = GetSpanContextShim();
+            var shim = GetSpanReferenceShim();
             var baggage = shim.GetBaggageItems();
             Assert.Empty(baggage);
         }
 
-        internal static SpanContextShim GetSpanContextShim()
+        internal static SpanReferenceShim GetSpanReferenceShim()
         {
-            return new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            return new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         }
     }
 }

@@ -50,12 +50,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         }
 
         [Fact]
-        public void SpanContextIsNotNull()
+        public void SpanReferenceIsNotNull()
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            // ISpanContext validation handled in a separate test class
+            // ISpanReference validation handled in a separate test class
             Assert.NotNull(shim.Context);
         }
 

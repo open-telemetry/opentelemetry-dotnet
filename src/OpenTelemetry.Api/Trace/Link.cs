@@ -29,30 +29,30 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="Link"/> struct.
         /// </summary>
-        /// <param name="spanContext">Span context of a linked span.</param>
-        public Link(in SpanContext spanContext)
+        /// <param name="context">Span reference of a linked span.</param>
+        public Link(in SpanReference context)
         {
-            this.ActivityLink = new ActivityLink(spanContext.ActivityContext);
+            this.ActivityLink = new ActivityLink(context.ActivityContext);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Link"/> struct.
         /// </summary>
-        /// <param name="spanContext">Span context of a linked span.</param>
+        /// <param name="context">Span reference of a linked span.</param>
         /// <param name="attributes">Link attributes.</param>
-        public Link(in SpanContext spanContext, SpanAttributes attributes)
+        public Link(in SpanReference context, SpanAttributes attributes)
         {
-            this.ActivityLink = new ActivityLink(spanContext.ActivityContext, attributes?.Attributes);
+            this.ActivityLink = new ActivityLink(context.ActivityContext, attributes?.Attributes);
         }
 
         /// <summary>
-        /// Gets the span context of a linked span.
+        /// Gets the span reference of a linked span.
         /// </summary>
-        public SpanContext Context
+        public SpanReference Context
         {
             get
             {
-                return new SpanContext(this.ActivityLink.Context);
+                return new SpanReference(this.ActivityLink.Context);
             }
         }
 

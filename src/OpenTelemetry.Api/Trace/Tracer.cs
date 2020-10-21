@@ -107,7 +107,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpanHelper(false, name, kind, parentContext, initialAttributes, links, startTime);
         }
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
         }
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Trace
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.ActivitySource.HasListeners())
             {

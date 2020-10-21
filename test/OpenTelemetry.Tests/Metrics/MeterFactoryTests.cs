@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Record some metrics using default meter
             var testCounter = defaultMeter.CreateInt64Counter("testCounter");
-            var context = default(SpanContext);
+            var context = default(SpanReference);
             var labels = LabelSet.BlankLabelSet;
             testCounter.Add(context, 100, labels);
             testCounter.Add(context, 10, labels);

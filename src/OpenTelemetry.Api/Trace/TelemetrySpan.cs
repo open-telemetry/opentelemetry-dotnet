@@ -37,9 +37,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the span context.
+        /// Gets the span reference.
         /// </summary>
-        public SpanContext Context
+        public SpanReference Context
         {
             get
             {
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    return new SpanContext(this.Activity.Context);
+                    return new SpanReference(this.Activity.Context);
                 }
             }
         }

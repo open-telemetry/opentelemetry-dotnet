@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Int64MeasureMinMaxSumCountAggregator measureAggregator = new Int64MeasureMinMaxSumCountAggregator();
 
-        public override void Record(in SpanContext context, long value)
+        public override void Record(in SpanReference context, long value)
         {
             this.measureAggregator.Update(value);
         }

@@ -139,7 +139,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
-        public void ParseEightBytesTraceId_NotSampledSpanContext()
+        public void ParseEightBytesTraceId_NotSampledSpanReference()
         {
             var headersEightBytes = new Dictionary<string, string>
             {
@@ -294,7 +294,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
-        public void ParseEightBytesTraceId_NotSampledSpanContext_SingleHeader()
+        public void ParseEightBytesTraceId_NotSampledSpanReference_SingleHeader()
         {
             var headersEightBytes = new Dictionary<string, string>
             {

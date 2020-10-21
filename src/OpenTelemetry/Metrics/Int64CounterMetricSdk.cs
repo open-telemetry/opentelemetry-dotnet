@@ -26,13 +26,13 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public override void Add(in SpanContext context, long value, LabelSet labelset)
+        public override void Add(in SpanReference context, long value, LabelSet labelset)
         {
             // user not using bound instrument. Hence create a  short-lived bound instrument.
             this.Bind(labelset, isShortLived: true).Add(context, value);
         }
 
-        public override void Add(in SpanContext context, long value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Add(in SpanReference context, long value, IEnumerable<KeyValuePair<string, string>> labels)
         {
             // user not using bound instrument. Hence create a short-lived bound instrument.
             this.Bind(new LabelSetSdk(labels), isShortLived: true).Add(context, value);

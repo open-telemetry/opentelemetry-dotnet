@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics.Tests
             var labels3 = new List<KeyValuePair<string, string>>();
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
             testCounter.Add(context, 100, meter.GetLabelSet(labels1));
             testCounter.Add(context, 10, meter.GetLabelSet(labels1));
 
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Metrics.Tests
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var context = default(SpanContext);
+            var context = default(SpanReference);
             testMeasure.Record(context, 100, meter.GetLabelSet(labels1));
             testMeasure.Record(context, 10, meter.GetLabelSet(labels1));
             testMeasure.Record(context, 1, meter.GetLabelSet(labels1));

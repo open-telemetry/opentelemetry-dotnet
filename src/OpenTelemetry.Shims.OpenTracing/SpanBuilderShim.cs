@@ -63,9 +63,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         private TelemetrySpan parentSpan;
 
         /// <summary>
-        /// The parent as an SpanContext, if any.
+        /// The parent as an SpanReference, if any.
         /// </summary>
-        private Trace.SpanContext parentSpanContext;
+        private Trace.SpanReference parentSpanReference;
 
         /// <summary>
         /// The explicit start time, if any.
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private global::OpenTracing.IScopeManager ScopeManager { get; }
 
-        private bool ParentSet => this.parentSpan != null || this.parentSpanContext.IsValid;
+        private bool ParentSet => this.parentSpan != null || this.parentSpanReference.IsValid;
 
         /// <inheritdoc/>
         public ISpanBuilder AsChildOf(ISpanContext parent)
@@ -132,10 +132,10 @@ namespace OpenTelemetry.Shims.OpenTracing
             }
 
             // TODO There is no relation between OpenTracing.References (referenceType) and OpenTelemetry Link
-            var actualContext = GetOpenTelemetrySpanContext(referencedContext);
+            var actualContext = GetOpenTelemetrySpanReference(referencedContext);
             if (!this.ParentSet)
             {
-                this.parentSpanContext = actualContext;
+                this.parentSpanReference = actualContext;
                 return this;
             }
             else
@@ -167,11 +167,11 @@ namespace OpenTelemetry.Shims.OpenTracing
             {
                 span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpan, default, this.links, this.explicitStartTime ?? default);
             }
-            else if (this.parentSpanContext.IsValid)
+            else if (this.parentSpanReference.IsValid)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, default, this.links, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanReference, default, this.links, this.explicitStartTime ?? default);
             }
-            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
+            else if (this.parentSpan == null && !this.parentSpanReference.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
             {
                 if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(Activity.Current.OperationName))
                 {
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (span == null)
             {
-                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanContext), default, null, this.explicitStartTime ?? default);
+                span = this.tracer.StartSpan(this.spanName, this.spanKind, default(SpanReference), default, null, this.explicitStartTime ?? default);
             }
 
             foreach (var kvp in this.attributes)
@@ -341,19 +341,19 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <summary>
-        /// Gets the OpenTelemetry SpanContext.
+        /// Gets the OpenTelemetry SpanReference.
         /// </summary>
-        /// <param name="spanContext">The span context.</param>
-        /// <returns>the OpenTelemetry SpanContext.</returns>
-        /// <exception cref="ArgumentException">context is not a valid SpanContextShim object.</exception>
-        private static Trace.SpanContext GetOpenTelemetrySpanContext(ISpanContext spanContext)
+        /// <param name="context">The span reference.</param>
+        /// <returns>the OpenTelemetry SpanReference.</returns>
+        /// <exception cref="ArgumentException">context is not a valid SpanReferenceShim object.</exception>
+        private static Trace.SpanReference GetOpenTelemetrySpanReference(ISpanContext context)
         {
-            if (!(spanContext is SpanContextShim shim))
+            if (!(context is SpanReferenceShim shim))
             {
-                throw new ArgumentException("context is not a valid SpanContextShim object");
+                throw new ArgumentException("context is not a valid SpanReferenceShim object");
             }
 
-            return shim.SpanContext;
+            return shim.SpanReference;
         }
     }
 }

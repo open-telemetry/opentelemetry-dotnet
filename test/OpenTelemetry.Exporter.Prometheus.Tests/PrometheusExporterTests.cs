@@ -133,7 +133,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, string>("dim1", "value2"), new KeyValuePair<string, string>("dim2", "value2"),
             };
 
-            var defaultContext = default(SpanContext);
+            var defaultContext = default(SpanReference);
 
             for (int i = 0; i < 10; i++)
             {

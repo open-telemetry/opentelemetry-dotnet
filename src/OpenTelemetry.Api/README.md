@@ -192,7 +192,7 @@ OpenTelemetry samplers chose not to sample this activity.
 2. Parent using `ActivityContext`
 
     `ActivityContext` represents the OpenTelemetry
-    [SpanContext](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#spancontext).
+    [SpanReference](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#spancontext).
     While starting a new `Activity`, the currently active `Activity` is
     automatically taken as the parent of the new activity being created.
     `StartActivity` allows passing explicit `ActivityContext` to override this

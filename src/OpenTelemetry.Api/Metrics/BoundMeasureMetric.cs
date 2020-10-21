@@ -28,9 +28,9 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Record the given value to the bound measure metric.
         /// </summary>
-        /// <param name="context">the associated <see cref="SpanContext"/>.</param>
+        /// <param name="context">the associated <see cref="SpanReference"/>.</param>
         /// <param name="value">the measurement to be recorded.</param>
-        public abstract void Record(in SpanContext context, T value);
+        public abstract void Record(in SpanReference context, T value);
 
         /// <summary>
         /// Record the given value to the bound measure metric.

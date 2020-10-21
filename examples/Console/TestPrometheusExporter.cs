@@ -80,7 +80,7 @@ namespace Examples.Console
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-            var defaultContext = default(SpanContext);
+            var defaultContext = default(SpanReference);
 
             Stopwatch sw = Stopwatch.StartNew();
             while (sw.Elapsed.TotalMinutes < totalDurationInMins)
