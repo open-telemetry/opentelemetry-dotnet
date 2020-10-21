@@ -33,7 +33,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
     public class HttpInListenerTests : IDisposable
     {
-        private static readonly string ActivityNameAspNet = "Microsoft.AspNet.HttpReqIn";
         private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
 
         public HttpInListenerTests()
@@ -57,7 +56,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
         [InlineData("http://localhost/api/value", 0, null, "TraceContext", "/api/value")] // Request will be filtered
         [InlineData("http://localhost/api/value", 0, null, "TraceContext", "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContext", "/api/value")] // Request will not be filtered
+        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
+        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
+        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", null, true)]
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
@@ -67,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             bool restoreCurrentActivity = false)
         {
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var s = carrierFormat;
+
             IDisposable openTelemetry = null;
             RouteData routeData;
             switch (routeType)
@@ -132,11 +133,16 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 new ActivityContext(
                     expectedTraceId,
                     expectedSpanId,
-                    ActivityTraceFlags.Recorded),
+                    ActivityTraceFlags.Recorded,
+                    isRemote: true),
                 default));
 
-            var activity = new Activity(ActivityNameAspNet).AddBaggage("Stuff", "123");
-            activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
+            var activity = new Activity(HttpInListener.ActivityOperationName).AddBaggage("Stuff", "123");
+            if (carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent")
+            {
+                activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
+            }
+
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(
@@ -171,9 +177,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                 using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
                 {
-                    this.fakeAspNetDiagnosticSource.Write(
-                    "Start",
-                    null);
+                    this.fakeAspNetDiagnosticSource.Write("Start", null);
 
                     if (filter == "{ThrowException}")
                     {
@@ -186,13 +190,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     Activity.Current = activity;
                 }
 
-                this.fakeAspNetDiagnosticSource.Write(
-                    "Stop",
-                    null);
+                this.fakeAspNetDiagnosticSource.Write("Stop", null);
 
                 // The above line fires DS event which is listened by Instrumentation.
                 // Validate that Current activity is still the one created by Asp.Net
-                Assert.Equal(ActivityNameAspNet, Activity.Current.OperationName);
+                Assert.Equal(HttpInListener.ActivityOperationName, Activity.Current.OperationName);
                 activity.Stop();
             }
 
@@ -209,6 +211,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Activity span;
             Assert.Equal(4, activityProcessor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(
+                carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent"
+                    ? HttpInListener.ActivityOperationName
+                    : HttpInListener.ActivityNameByHttpInListener,
+                span.OperationName);
+            Assert.NotEqual(TimeSpan.Zero, span.Duration);
+            Assert.Equal(expectedTraceId, span.TraceId);
+            Assert.Equal(expectedSpanId, span.ParentSpanId);
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
