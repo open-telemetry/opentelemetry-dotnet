@@ -13,16 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETSTANDARD2_1
+
 using System;
-#else
-using System;
-using System.Diagnostics;
-#endif
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -44,19 +38,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect(string host, int port) => this.client.Connect(host, port);
 
-        public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)
+        public int Send(byte[] buffer)
         {
-            return this.SendAsync(buffer, 0, buffer?.Length ?? 0, cancellationToken);
+            return this.Send(buffer, 0, buffer?.Length ?? 0);
         }
 
-        public ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
+        public int Send(byte[] buffer, int offset, int count)
         {
-#if NETSTANDARD2_1
-            return this.client.Client.SendAsync(new ReadOnlyMemory<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
-#else
-            Debug.Assert(offset == 0, "Offset isn't supported in .NET Standard 2.0.");
-            return new ValueTask<int>(this.client.SendAsync(buffer, count));
-#endif
+            return this.client.Client.Send(buffer, offset, count, SocketFlags.None);
         }
 
         /// <inheritdoc/>

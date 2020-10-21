@@ -18,8 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -212,9 +210,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     var batch = batchKvp.Value;
 
-                    var task = this.thriftClient.WriteBatchAsync(batch, CancellationToken.None);
-
-                    Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+                    this.thriftClient.SendBatch(batch);
 
                     if (batch != workingBatch)
                     {
@@ -234,21 +230,18 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BufferWriterMemory BuildThriftMessage(Process process)
         {
-            var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
-
-            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+            process.Write(this.memoryProtocol);
 
             return this.memoryTransport.ToBuffer();
         }
 
-        // Prevents boxing of JaegerSpan struct.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
         {
-            var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
-
-            Debug.Assert(task.Status == TaskStatus.RanToCompletion, "Thrift udp write is expected to run synchronously so it is not awaited.");
+            jaegerSpan.Write(this.memoryProtocol);
 
             return this.memoryTransport.ToBuffer();
         }

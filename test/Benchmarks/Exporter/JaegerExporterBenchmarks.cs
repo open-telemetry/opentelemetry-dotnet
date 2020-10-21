@@ -72,38 +72,18 @@ namespace OpenTelemetry.Exporter.Benchmarks
         {
             public override bool IsOpen => true;
 
-            public override async Task OpenAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-                }
-            }
-
             public override void Close()
             {
                 // do nothing
             }
 
-            public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            public override void Write(byte[] buffer, int offset, int length)
             {
-                throw new NotImplementedException();
             }
 
-            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            public override int Flush()
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            public override async Task FlushAsync(CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-                }
+                return 0;
             }
 
             protected override void Dispose(bool disposing)

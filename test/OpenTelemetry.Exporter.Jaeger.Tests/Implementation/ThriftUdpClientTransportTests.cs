@@ -58,19 +58,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public async Task ReadAsync_ShouldResultInNotImplementedException()
-        {
-            var host = "host, yo";
-            var port = 4528;
-
-            var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
-            var newBuffer = new byte[8];
-
-            await Assert.ThrowsAsync<NotImplementedException>(async () => await transport.ReadAsync(newBuffer, 0, 7, CancellationToken.None));
-        }
-
-        [Fact]
-        public async Task WriteAsync_ShouldWriteToMemoryStream()
+        public async Task Write_ShouldWriteToMemoryStream()
         {
             var host = "host, yo";
             var port = 4528;
@@ -79,7 +67,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
 
-            await transport.WriteAsync(writeBuffer, CancellationToken.None);
+            transport.Write(writeBuffer);
             this.testingMemoryStream.Seek(0, SeekOrigin.Begin);
             var size = await this.testingMemoryStream.ReadAsync(readBuffer, 0, 8, CancellationToken.None);
 
@@ -88,20 +76,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Fact]
-        public void FlushAsync_ShouldReturnWhenNothingIsInTheStream()
+        public void Flush_ShouldReturnWhenNothingIsInTheStream()
         {
             var host = "host, yo";
             var port = 4528;
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
-            var tInfo = transport.FlushAsync();
+            var tInfo = transport.Flush();
 
-            Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), CancellationToken.None), Times.Never);
+            this.mockClient.Verify(t => t.Send(It.IsAny<byte[]>()), Times.Never);
         }
 
         [Fact]
-        public void FlushAsync_ShouldSendStreamBytes()
+        public void Flush_ShouldSendStreamBytes()
         {
             var host = "host, yo";
             var port = 4528;
@@ -109,25 +96,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             this.testingMemoryStream = new MemoryStream(streamBytes);
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
-            var tInfo = transport.FlushAsync();
+            var tInfo = transport.Flush();
 
-            Assert.True(tInfo.IsCompleted);
-            this.mockClient.Verify(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None), Times.Once);
+            this.mockClient.Verify(t => t.Send(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
         }
 
         [Fact]
-        public async Task FlushAsync_ShouldThrowWhenClientDoes()
+        public void Flush_ShouldThrowWhenClientDoes()
         {
             var host = "host, yo";
             var port = 4528;
             var streamBytes = new byte[] { 0x20, 0x10, 0x40, 0x30, 0x18, 0x14, 0x10, 0x28 };
             this.testingMemoryStream = new MemoryStream(streamBytes);
 
-            this.mockClient.Setup(t => t.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), CancellationToken.None)).Throws(new Exception("message, yo"));
+            this.mockClient.Setup(t => t.Send(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>())).Throws(new Exception("message, yo"));
 
             var transport = new JaegerThriftClientTransport(host, port, this.testingMemoryStream, this.mockClient.Object);
 
-            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync());
+            var ex = Assert.Throws<TTransportException>(() => transport.Flush());
 
             Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);
         }
