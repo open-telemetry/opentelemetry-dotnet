@@ -80,17 +80,17 @@ namespace Examples.Console
 
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
-            var defaultContext = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             Stopwatch sw = Stopwatch.StartNew();
             while (sw.Elapsed.TotalMinutes < totalDurationInMins)
             {
-                testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
+                testCounter.Add(spanReference, 100, meter.GetLabelSet(labels1));
 
-                testMeasure.Record(defaultContext, 100, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 500, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 750, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 100, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 500, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 5, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 750, meter.GetLabelSet(labels1));
 
                 // Obviously there is no testObserver.Oberve() here, as Observer instruments
                 // have callbacks that are called by the Meter automatically at each collection interval.

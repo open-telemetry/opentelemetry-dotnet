@@ -32,12 +32,12 @@ namespace OpenTelemetry.Metrics
         public static readonly NoopCounterMetric<T> Instance = new NoopCounterMetric<T>();
 
         /// <inheritdoc/>
-        public override void Add(in SpanReference context, T value, LabelSet labelset)
+        public override void Add(in SpanReference spanReference, T value, LabelSet labelset)
         {
         }
 
         /// <inheritdoc/>
-        public override void Add(in SpanReference context, T value, IEnumerable<KeyValuePair<string, string>> labels)
+        public override void Add(in SpanReference spanReference, T value, IEnumerable<KeyValuePair<string, string>> labels)
         {
         }
 

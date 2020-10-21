@@ -124,22 +124,22 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Converts a <see cref="SpanReference"/> into an <see cref="ActivityContext"/>.
         /// </summary>
-        /// <param name="context"><see cref="SpanReference"/> source.</param>
-        public static implicit operator ActivityContext(SpanReference context) => context.ActivityContext;
+        /// <param name="spanReference"><see cref="SpanReference"/> source.</param>
+        public static implicit operator ActivityContext(SpanReference spanReference) => spanReference.ActivityContext;
 
         /// <summary>
         /// Compare two <see cref="SpanReference"/> for equality.
         /// </summary>
-        /// <param name="context1">First SpanReference to compare.</param>
-        /// <param name="context2">Second SpanReference to compare.</param>
-        public static bool operator ==(SpanReference context1, SpanReference context2) => context1.Equals(context2);
+        /// <param name="spanReference1">First SpanReference to compare.</param>
+        /// <param name="spanReference2">Second SpanReference to compare.</param>
+        public static bool operator ==(SpanReference spanReference1, SpanReference spanReference2) => spanReference1.Equals(spanReference2);
 
         /// <summary>
         /// Compare two <see cref="SpanReference"/> for not equality.
         /// </summary>
-        /// <param name="context1">First SpanReference to compare.</param>
-        /// <param name="context2">Second SpanReference to compare.</param>
-        public static bool operator !=(SpanReference context1, SpanReference context2) => !context1.Equals(context2);
+        /// <param name="spanReference1">First SpanReference to compare.</param>
+        /// <param name="spanReference2">Second SpanReference to compare.</param>
+        public static bool operator !=(SpanReference spanReference1, SpanReference spanReference2) => !spanReference1.Equals(spanReference2);
 
         /// <inheritdoc/>
         public override int GetHashCode()

@@ -29,18 +29,18 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated <see cref="SpanReference"/>.</param>
+        /// <param name="spanReference">the associated <see cref="SpanReference"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labelset">The labelset associated with this value.</param>
-        public void Record(in SpanReference context, T value, LabelSet labelset) => this.Bind(labelset).Record(context, value);
+        public void Record(in SpanReference spanReference, T value, LabelSet labelset) => this.Bind(labelset).Record(spanReference, value);
 
         /// <summary>
         /// Records a measure.
         /// </summary>
-        /// <param name="context">the associated <see cref="SpanReference"/>.</param>
+        /// <param name="spanReference">the associated <see cref="SpanReference"/>.</param>
         /// <param name="value">value to record.</param>
         /// <param name="labels">The labels or dimensions associated with this value.</param>
-        public void Record(in SpanReference context, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(context, value);
+        public void Record(in SpanReference spanReference, T value, IEnumerable<KeyValuePair<string, string>> labels) => this.Bind(labels).Record(spanReference, value);
 
         /// <summary>
         /// Records a measure.

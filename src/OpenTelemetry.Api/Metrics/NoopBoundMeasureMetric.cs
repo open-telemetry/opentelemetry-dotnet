@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics
         public static readonly NoopBoundMeasureMetric<T> Instance = new NoopBoundMeasureMetric<T>();
 
         /// <inheritdoc/>
-        public override void Record(in SpanReference context, T value)
+        public override void Record(in SpanReference spanReference, T value)
         {
         }
 
