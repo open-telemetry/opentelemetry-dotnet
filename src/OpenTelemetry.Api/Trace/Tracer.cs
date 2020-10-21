@@ -101,15 +101,15 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
-        /// <param name="parentContext">Parent Context for new span.</param>
+        /// <param name="parentSpanReference">Parent <see cref="SpanReference"/> for new span.</param>
         /// <param name="initialAttributes">Initial attributes for the span.</param>
         /// <param name="links"> <see cref="Link"/> for the span.</param>
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentSpanReference = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartSpanHelper(false, name, kind, parentContext, initialAttributes, links, startTime);
+            return this.StartSpanHelper(false, name, kind, parentSpanReference, initialAttributes, links, startTime);
         }
 
         /// <summary>
@@ -133,15 +133,15 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="name">Span name.</param>
         /// <param name="kind">Kind.</param>
-        /// <param name="parentContext">Parent Context for new span.</param>
+        /// <param name="parentSpanReference">Parent <see cref="SpanReference"/> for new span.</param>
         /// <param name="initialAttributes">Initial attributes for the span.</param>
         /// <param name="links"> <see cref="Link"/> for the span.</param>
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanReference parentSpanReference = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
+            return this.StartSpanHelper(true, name, kind, parentSpanReference, initialAttributes, links, startTime);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Trace
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanReference parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+        private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanReference parentSpanReference = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             if (!this.ActivitySource.HasListeners())
             {
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Trace
                 previousActivity = Activity.Current;
             }
 
-            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
+            var activity = this.ActivitySource.StartActivity(name, activityKind, parentSpanReference.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
             if (activity == null)
             {
                 return TelemetrySpan.NoopInstance;

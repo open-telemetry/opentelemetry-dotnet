@@ -55,25 +55,25 @@ namespace OpenTelemetry.Metrics.Tests
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
             var ls3 = meter.GetLabelSet(labels3);
 
-            var context = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             // We have ls1, ls2, ls3
             // ls1 and ls3 are not bound so they should removed when no usage for a Collect cycle.
             // ls2 is bound by user.
-            testCounter.Add(context, 100, ls1);
-            testCounter.Add(context, 10, ls1);
+            testCounter.Add(spanReference, 100, ls1);
+            testCounter.Add(spanReference, 10, ls1);
 
             // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
-            boundCounterLabel2.Add(context, 200);
+            boundCounterLabel2.Add(spanReference, 200);
 
             // initial/forever status for user bound instruments are Bound.
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
-            testCounter.Add(context, 200, ls3);
-            testCounter.Add(context, 10, ls3);
+            testCounter.Add(spanReference, 200, ls3);
+            testCounter.Add(spanReference, 10, ls3);
 
             // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             // Use ls1 again, so that it'll be promoted to UpdatePending
-            testCounter.Add(context, 100, ls1);
+            testCounter.Add(spanReference, 100, ls1);
 
             // This collect should mark ls1 as NoPendingUpdate, leave ls2 untouched.
             // And ls3 as CandidateForRemoval, as it was not used since last Collect
@@ -130,25 +130,25 @@ namespace OpenTelemetry.Metrics.Tests
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
             var ls3 = meter.GetLabelSet(labels3);
 
-            var context = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             // We have ls1, ls2, ls3
             // ls1 and ls3 are not bound so they should removed when no usage for a Collect cycle.
             // ls2 is bound by user.
-            testCounter.Add(context, 100.0, ls1);
-            testCounter.Add(context, 10.0, ls1);
+            testCounter.Add(spanReference, 100.0, ls1);
+            testCounter.Add(spanReference, 10.0, ls1);
 
             // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls1].Status);
 
             var boundCounterLabel2 = testCounter.Bind(ls2);
-            boundCounterLabel2.Add(context, 200.0);
+            boundCounterLabel2.Add(spanReference, 200.0);
 
             // initial/forever status for user bound instruments are Bound.
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
-            testCounter.Add(context, 200.0, ls3);
-            testCounter.Add(context, 10.0, ls3);
+            testCounter.Add(spanReference, 200.0, ls3);
+            testCounter.Add(spanReference, 10.0, ls3);
 
             // initial status for temp bound instruments are UpdatePending.
             Assert.Equal(RecordStatus.UpdatePending, testCounter.GetAllBoundInstruments()[ls3].Status);
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(RecordStatus.Bound, testCounter.GetAllBoundInstruments()[ls2].Status);
 
             // Use ls1 again, so that it'll be promoted to UpdatePending
-            testCounter.Add(context, 100.0, ls1);
+            testCounter.Add(spanReference, 100.0, ls1);
 
             // This collect should mark ls1 as NoPendingUpdate, leave ls2 untouched.
             // And ls3 as CandidateForRemoval, as it was not used since last Collect
@@ -198,11 +198,11 @@ namespace OpenTelemetry.Metrics.Tests
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             var ls1 = meter.GetLabelSet(labels1);
 
-            var context = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
-            testCounter.Add(context, 100, ls1);
-            testCounter.Add(context, 10, ls1);
+            testCounter.Add(spanReference, 100, ls1);
+            testCounter.Add(spanReference, 10, ls1);
 
             // This collect should mark ls1 NoPendingUpdate
             meter.Collect();
@@ -223,7 +223,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var argsForCounterAdd = new ArgsToThread();
             argsForCounterAdd.MreToBlockStartOfThread = mre;
-            argsForCounterAdd.Callback = () => testCounter.Add(context, 100, ls1);
+            argsForCounterAdd.Callback = () => testCounter.Add(spanReference, 100, ls1);
 
             var collectThread = new Thread(ThreadMethod);
             var updateThread = new Thread(ThreadMethod);
@@ -270,11 +270,11 @@ namespace OpenTelemetry.Metrics.Tests
             labels1.Add(new KeyValuePair<string, string>("dim1", "value1"));
             var ls1 = meter.GetLabelSet(labels1);
 
-            var context = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             // Call metric update with ls1 so that ls1 wont be brand new labelset when doing multi-thread test.
-            testCounter.Add(context, 100.0, ls1);
-            testCounter.Add(context, 10.0, ls1);
+            testCounter.Add(spanReference, 100.0, ls1);
+            testCounter.Add(spanReference, 10.0, ls1);
 
             // This collect should mark ls1 NoPendingUpdate
             meter.Collect();
@@ -295,7 +295,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var argsForCounterAdd = new ArgsToThread();
             argsForCounterAdd.MreToBlockStartOfThread = mre;
-            argsForCounterAdd.Callback = () => testCounter.Add(context, 100.0, ls1);
+            argsForCounterAdd.Callback = () => testCounter.Add(spanReference, 100.0, ls1);
 
             var collectThread = new Thread(ThreadMethod);
             var updateThread = new Thread(ThreadMethod);

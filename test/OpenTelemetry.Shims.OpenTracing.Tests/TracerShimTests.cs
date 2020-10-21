@@ -72,14 +72,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TextMapPropagator());
 
-            var spanContextShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanReferenceShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
             var mockFormat = new Mock<IFormat<ITextMap>>();
             var mockCarrier = new Mock<ITextMap>();
 
             Assert.Throws<ArgumentNullException>(() => shim.Inject(null, mockFormat.Object, mockCarrier.Object));
             Assert.Throws<ArgumentException>(() => shim.Inject(new Mock<ISpanContext>().Object, mockFormat.Object, mockCarrier.Object));
-            Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, mockCarrier.Object));
-            Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, mockFormat.Object, null));
+            Assert.Throws<ArgumentNullException>(() => shim.Inject(spanReferenceShim, null, mockCarrier.Object));
+            Assert.Throws<ArgumentNullException>(() => shim.Inject(spanReferenceShim, mockFormat.Object, null));
         }
 
         [Fact]
@@ -88,11 +88,11 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TextMapPropagator());
 
-            var spanContextShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
+            var spanReferenceShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
-            shim.Inject(spanContextShim, new Mock<IFormat<ITextMap>>().Object, mockCarrier.Object);
+            shim.Inject(spanReferenceShim, new Mock<IFormat<ITextMap>>().Object, mockCarrier.Object);
 
             // Verify that the carrier mock was never called.
             mockCarrier.Verify(x => x.Set(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new TracerShim(tracer, new TextMapPropagator());
 
-            var spanContextShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanReferenceShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             // Only two specific types of ITextMap are supported, and neither is a Mock.
             var mockCarrier = new Mock<ITextMap>();
@@ -140,12 +140,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             };
 
             mockCarrier.Setup(x => x.GetEnumerator()).Returns(carrierMap.GetEnumerator());
-            var spanContextShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as SpanReferenceShim;
+            var spanReferenceShim = shim.Extract(BuiltinFormats.TextMap, mockCarrier.Object) as SpanReferenceShim;
 
             // Verify that the carrier was called
             mockCarrier.Verify(x => x.GetEnumerator(), Times.Once);
 
-            Assert.Null(spanContextShim);
+            Assert.Null(spanReferenceShim);
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var carrier = new TextMapCarrier();
 
-            var spanContextShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+            var spanReferenceShim = new SpanReferenceShim(new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
             var format = new TextMapPropagator();
 
@@ -161,12 +161,12 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new TracerShim(tracer, format);
 
             // first inject
-            shim.Inject(spanContextShim, BuiltinFormats.TextMap, carrier);
+            shim.Inject(spanReferenceShim, BuiltinFormats.TextMap, carrier);
 
             // then extract
             var extractedSpanReference = shim.Extract(BuiltinFormats.TextMap, carrier);
 
-            AssertOpenTracerSpanReferenceEqual(spanContextShim, extractedSpanReference);
+            AssertOpenTracerSpanReferenceEqual(spanReferenceShim, extractedSpanReference);
         }
 
         private static void AssertOpenTracerSpanReferenceEqual(ISpanContext source, ISpanContext target)

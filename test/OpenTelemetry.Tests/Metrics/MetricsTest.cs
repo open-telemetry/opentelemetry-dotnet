@@ -44,15 +44,15 @@ namespace OpenTelemetry.Metrics.Tests
             var labels3 = new List<KeyValuePair<string, string>>();
             labels3.Add(new KeyValuePair<string, string>("dim1", "value3"));
 
-            var context = default(SpanReference);
-            testCounter.Add(context, 100, meter.GetLabelSet(labels1));
-            testCounter.Add(context, 10, meter.GetLabelSet(labels1));
+            var spanReference = default(SpanReference);
+            testCounter.Add(spanReference, 100, meter.GetLabelSet(labels1));
+            testCounter.Add(spanReference, 10, meter.GetLabelSet(labels1));
 
             var boundCounterLabel2 = testCounter.Bind(labels2);
-            boundCounterLabel2.Add(context, 200);
+            boundCounterLabel2.Add(spanReference, 200);
 
-            testCounter.Add(context, 200, meter.GetLabelSet(labels3));
-            testCounter.Add(context, 10, meter.GetLabelSet(labels3));
+            testCounter.Add(spanReference, 200, meter.GetLabelSet(labels3));
+            testCounter.Add(spanReference, 10, meter.GetLabelSet(labels3));
 
             meter.Collect();
 
@@ -93,12 +93,12 @@ namespace OpenTelemetry.Metrics.Tests
             var labels2 = new List<KeyValuePair<string, string>>();
             labels2.Add(new KeyValuePair<string, string>("dim1", "value2"));
 
-            var context = default(SpanReference);
-            testMeasure.Record(context, 100, meter.GetLabelSet(labels1));
-            testMeasure.Record(context, 10, meter.GetLabelSet(labels1));
-            testMeasure.Record(context, 1, meter.GetLabelSet(labels1));
-            testMeasure.Record(context, 200, meter.GetLabelSet(labels2));
-            testMeasure.Record(context, 20, meter.GetLabelSet(labels2));
+            var spanReference = default(SpanReference);
+            testMeasure.Record(spanReference, 100, meter.GetLabelSet(labels1));
+            testMeasure.Record(spanReference, 10, meter.GetLabelSet(labels1));
+            testMeasure.Record(spanReference, 1, meter.GetLabelSet(labels1));
+            testMeasure.Record(spanReference, 200, meter.GetLabelSet(labels2));
+            testMeasure.Record(spanReference, 20, meter.GetLabelSet(labels2));
 
             meter.Collect();
 

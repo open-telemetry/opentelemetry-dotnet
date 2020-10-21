@@ -184,8 +184,8 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Add a parent
-            var spanContext = SpanReferenceShimTests.GetSpanReferenceShim();
-            var test = shim.AsChildOf(spanContext);
+            var spanReference = SpanReferenceShimTests.GetSpanReferenceShim();
+            var test = shim.AsChildOf(spanReference);
 
             // build
             var spanShim = (SpanShim)shim.Start();
@@ -200,22 +200,22 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new SpanBuilderShim(tracer, "foo");
 
             // Multiple calls
-            var spanContext1 = SpanReferenceShimTests.GetSpanReferenceShim();
-            var spanContext2 = SpanReferenceShimTests.GetSpanReferenceShim();
+            var spanReference1 = SpanReferenceShimTests.GetSpanReferenceShim();
+            var spanReference2 = SpanReferenceShimTests.GetSpanReferenceShim();
 
             // Add parent context
-            shim.AsChildOf(spanContext1);
+            shim.AsChildOf(spanReference1);
 
             // Adds as link as parent context already exists
-            shim.AsChildOf(spanContext2);
+            shim.AsChildOf(spanReference2);
 
             // build
             var spanShim = (SpanShim)shim.Start();
             var linkContext = spanShim.Span.Activity.Links.First().Context;
 
             Assert.Equal("foo", spanShim.Span.Activity.OperationName);
-            Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);
-            Assert.Equal(spanContext2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
+            Assert.Contains(spanReference1.TraceId, spanShim.Span.Activity.ParentId);
+            Assert.Equal(spanReference2.SpanId, spanShim.Span.Activity.Links.First().Context.SpanId.ToHexString());
         }
 
         [Fact]

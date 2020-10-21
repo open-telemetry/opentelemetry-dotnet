@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class SpanShim : global::OpenTracing.ISpan
+    public sealed class SpanShim : ISpan
     {
         /// <summary>
         /// The default event name if not specified.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             typeof(double),
         };
 
-        private readonly SpanReferenceShim spanContextShim;
+        private readonly SpanReferenceShim spanReferenceShim;
 
         public SpanShim(TelemetrySpan span)
         {
@@ -52,10 +52,10 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException(nameof(this.Span.Context));
             }
 
-            this.spanContextShim = new SpanReferenceShim(this.Span.Context);
+            this.spanReferenceShim = new SpanReferenceShim(this.Span.Context);
         }
 
-        public ISpanContext Context => this.spanContextShim;
+        public ISpanContext Context => this.spanReferenceShim;
 
         public TelemetrySpan Span { get; private set; }
 

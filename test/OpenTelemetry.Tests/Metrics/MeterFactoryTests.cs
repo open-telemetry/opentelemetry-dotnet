@@ -37,10 +37,10 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Record some metrics using default meter
             var testCounter = defaultMeter.CreateInt64Counter("testCounter");
-            var context = default(SpanReference);
+            var spanReference = default(SpanReference);
             var labels = LabelSet.BlankLabelSet;
-            testCounter.Add(context, 100, labels);
-            testCounter.Add(context, 10, labels);
+            testCounter.Add(spanReference, 100, labels);
+            testCounter.Add(spanReference, 10, labels);
 
             // Collect using PushMetricController
             var sw = Stopwatch.StartNew();

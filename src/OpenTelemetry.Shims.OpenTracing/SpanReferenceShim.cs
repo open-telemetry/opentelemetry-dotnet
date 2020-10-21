@@ -22,14 +22,14 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     public sealed class SpanReferenceShim : ISpanContext
     {
-        public SpanReferenceShim(in Trace.SpanReference spanContext)
+        public SpanReferenceShim(in Trace.SpanReference spanReference)
         {
-            if (!spanContext.IsValid)
+            if (!spanReference.IsValid)
             {
-                throw new ArgumentException(nameof(spanContext));
+                throw new ArgumentException(nameof(spanReference));
             }
 
-            this.SpanReference = spanContext;
+            this.SpanReference = spanReference;
         }
 
         public Trace.SpanReference SpanReference { get; private set; }

@@ -28,8 +28,8 @@ namespace OpenTelemetry.Trace.Benchmarks
 
         public static void CreateSpan_ParentContext(Tracer tracer)
         {
-            var parentContext = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
-            using var span = tracer.StartSpan("span", SpanKind.Client, parentContext);
+            var parentSpanReference = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
+            using var span = tracer.StartSpan("span", SpanKind.Client, parentSpanReference);
             span.End();
         }
 

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,12 +25,12 @@ namespace OpenTelemetry.Trace.Tests
     public class LinkTest : IDisposable
     {
         private readonly IDictionary<string, object> attributesMap = new Dictionary<string, object>();
-        private readonly SpanReference spanContext;
+        private readonly SpanReference spanReference;
         private readonly SpanAttributes tags;
 
         public LinkTest()
         {
-            this.spanContext = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+            this.spanReference = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
 
             this.attributesMap.Add("MyAttributeKey0", "MyStringAttribute");
             this.attributesMap.Add("MyAttributeKey1", 10L);
@@ -53,17 +54,17 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void FromSpanReference()
         {
-            var link = new Link(this.spanContext);
-            Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
-            Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
+            var link = new Link(this.spanReference);
+            Assert.Equal(this.spanReference.TraceId, link.Context.TraceId);
+            Assert.Equal(this.spanReference.SpanId, link.Context.SpanId);
         }
 
         [Fact]
         public void FromSpanReference_WithAttributes()
         {
-            var link = new Link(this.spanContext, this.tags);
-            Assert.Equal(this.spanContext.TraceId, link.Context.TraceId);
-            Assert.Equal(this.spanContext.SpanId, link.Context.SpanId);
+            var link = new Link(this.spanReference, this.tags);
+            Assert.Equal(this.spanReference.TraceId, link.Context.TraceId);
+            Assert.Equal(this.spanReference.SpanId, link.Context.SpanId);
 
             foreach (var attributemap in this.attributesMap)
             {
@@ -74,9 +75,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void Equality()
         {
-            var link1 = new Link(this.spanContext);
-            var link2 = new Link(this.spanContext);
-            object link3 = new Link(this.spanContext);
+            var link1 = new Link(this.spanReference);
+            var link2 = new Link(this.spanReference);
+            object link3 = new Link(this.spanReference);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
@@ -86,9 +87,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void Equality_WithAttributes()
         {
-            var link1 = new Link(this.spanContext, this.tags);
-            var link2 = new Link(this.spanContext, this.tags);
-            object link3 = new Link(this.spanContext, this.tags);
+            var link1 = new Link(this.spanReference, this.tags);
+            var link2 = new Link(this.spanReference, this.tags);
+            object link3 = new Link(this.spanReference, this.tags);
 
             Assert.Equal(link1, link2);
             Assert.True(link1 == link2);
@@ -110,8 +111,8 @@ namespace OpenTelemetry.Trace.Tests
         {
             var tag1 = new SpanAttributes();
             var tag2 = this.tags;
-            var link1 = new Link(this.spanContext, tag1);
-            var link2 = new Link(this.spanContext, tag2);
+            var link1 = new Link(this.spanReference, tag1);
+            var link2 = new Link(this.spanReference, tag2);
 
             Assert.NotEqual(link1, link2);
             Assert.True(link1 != link2);
@@ -120,7 +121,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TestGetHashCode()
         {
-            var link1 = new Link(this.spanContext, this.tags);
+            var link1 = new Link(this.spanReference, this.tags);
             Assert.NotEqual(0, link1.GetHashCode());
         }
 

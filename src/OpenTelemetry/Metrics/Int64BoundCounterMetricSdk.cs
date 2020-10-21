@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public override void Add(in SpanReference context, long value)
+        public override void Add(in SpanReference spanReference, long value)
         {
             this.sumAggregator.Update(value);
         }

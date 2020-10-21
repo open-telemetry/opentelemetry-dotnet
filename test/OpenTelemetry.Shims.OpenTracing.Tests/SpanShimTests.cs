@@ -55,7 +55,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            // ISpanReference validation handled in a separate test class
+            // ISpanContext validation handled in a separate test class
             Assert.NotNull(shim.Context);
         }
 

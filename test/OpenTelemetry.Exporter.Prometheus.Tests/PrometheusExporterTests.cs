@@ -133,19 +133,19 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, string>("dim1", "value2"), new KeyValuePair<string, string>("dim2", "value2"),
             };
 
-            var defaultContext = default(SpanReference);
+            var spanReference = default(SpanReference);
 
             for (int i = 0; i < 10; i++)
             {
-                testCounter.Add(defaultContext, 100, meter.GetLabelSet(labels1));
-                testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels1));
-                testCounter.Add(defaultContext, 200, meter.GetLabelSet(labels2));
-                testCounter.Add(defaultContext, 10, meter.GetLabelSet(labels2));
+                testCounter.Add(spanReference, 100, meter.GetLabelSet(labels1));
+                testCounter.Add(spanReference, 10, meter.GetLabelSet(labels1));
+                testCounter.Add(spanReference, 200, meter.GetLabelSet(labels2));
+                testCounter.Add(spanReference, 10, meter.GetLabelSet(labels2));
 
-                testMeasure.Record(defaultContext, 10, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 100, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 5, meter.GetLabelSet(labels1));
-                testMeasure.Record(defaultContext, 500, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 10, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 100, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 5, meter.GetLabelSet(labels1));
+                testMeasure.Record(spanReference, 500, meter.GetLabelSet(labels1));
             }
         }
 

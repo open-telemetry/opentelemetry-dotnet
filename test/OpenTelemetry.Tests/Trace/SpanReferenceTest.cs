@@ -89,11 +89,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded);
 
-            Assert.Equal(context1, context2);
-            Assert.True(context1 == context2);
+            Assert.Equal(spanReference1, spanReference2);
+            Assert.True(spanReference1 == spanReference2);
         }
 
         [Fact]
@@ -101,11 +101,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, true);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, true);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, true);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, true);
 
-            Assert.Equal(context1, context2);
-            Assert.True(context1 == context2);
+            Assert.Equal(spanReference1, spanReference2);
+            Assert.True(spanReference1 == spanReference2);
         }
 
         [Fact]
@@ -114,11 +114,11 @@ namespace OpenTelemetry.Trace.Tests
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
-            Assert.Equal(context1, context2);
-            Assert.True(context1 == context2);
+            Assert.Equal(spanReference1, spanReference2);
+            Assert.True(spanReference1 == spanReference2);
         }
 
         [Fact]
@@ -127,33 +127,33 @@ namespace OpenTelemetry.Trace.Tests
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
-            object context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            object spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
-            Assert.Equal(context1, context2);
-            Assert.True(context1.Equals(context2));
+            Assert.Equal(spanReference1, spanReference2);
+            Assert.True(spanReference1.Equals(spanReference2));
         }
 
         [Fact]
         public void Not_Equality_DifferentTraceId()
         {
             var spanId = ActivitySpanId.CreateRandom();
-            var context1 = new SpanReference(ActivityTraceId.CreateRandom(), spanId, ActivityTraceFlags.Recorded);
-            var context2 = new SpanReference(ActivityTraceId.CreateRandom(), spanId, ActivityTraceFlags.Recorded);
+            var spanReference1 = new SpanReference(ActivityTraceId.CreateRandom(), spanId, ActivityTraceFlags.Recorded);
+            var spanReference2 = new SpanReference(ActivityTraceId.CreateRandom(), spanId, ActivityTraceFlags.Recorded);
 
-            Assert.NotEqual(context1, context2);
-            Assert.True(context1 != context2);
+            Assert.NotEqual(spanReference1, spanReference2);
+            Assert.True(spanReference1 != spanReference2);
         }
 
         [Fact]
         public void Not_Equality_DifferentSpanId()
         {
             var traceId = ActivityTraceId.CreateRandom();
-            var context1 = new SpanReference(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, true);
-            var context2 = new SpanReference(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, true);
+            var spanReference1 = new SpanReference(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, true);
+            var spanReference2 = new SpanReference(traceId, ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, true);
 
-            Assert.NotEqual(context1, context2);
-            Assert.True(context1 != context2);
+            Assert.NotEqual(spanReference1, spanReference2);
+            Assert.True(spanReference1 != spanReference2);
         }
 
         [Fact]
@@ -162,11 +162,11 @@ namespace OpenTelemetry.Trace.Tests
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.None, false, tracestate);
 
-            Assert.NotEqual(context1, context2);
-            Assert.True(context1 != context2);
+            Assert.NotEqual(spanReference1, spanReference2);
+            Assert.True(spanReference1 != spanReference2);
         }
 
         [Fact]
@@ -175,11 +175,11 @@ namespace OpenTelemetry.Trace.Tests
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, false, tracestate);
 
-            Assert.NotEqual(context1, context2);
-            Assert.True(context1 != context2);
+            Assert.NotEqual(spanReference1, spanReference2);
+            Assert.True(spanReference1 != spanReference2);
         }
 
         [Fact]
@@ -189,11 +189,11 @@ namespace OpenTelemetry.Trace.Tests
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate1 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v1") };
             IEnumerable<KeyValuePair<string, string>> tracestate2 = new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("k", "v2") };
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate1);
-            var context2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate2);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate1);
+            var spanReference2 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate2);
 
-            Assert.NotEqual(context1, context2);
-            Assert.True(context1 != context2);
+            Assert.NotEqual(spanReference1, spanReference2);
+            Assert.True(spanReference1 != spanReference2);
         }
 
         [Fact]
@@ -202,9 +202,9 @@ namespace OpenTelemetry.Trace.Tests
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
             IEnumerable<KeyValuePair<string, string>> tracestate = new List<KeyValuePair<string, string>>();
-            var context1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
+            var spanReference1 = new SpanReference(traceId, spanId, ActivityTraceFlags.Recorded, true, tracestate);
 
-            Assert.NotEqual(0, context1.GetHashCode());
+            Assert.NotEqual(0, spanReference1.GetHashCode());
         }
     }
 }

@@ -129,12 +129,12 @@ namespace OpenTelemetry.Trace.Tests
                 .AddSource("tracername")
                 .Build();
 
-            var blankContext = default(SpanReference);
+            var spanReference = default(SpanReference);
 
-            var span1 = this.tracer.StartSpan(null, SpanKind.Client, blankContext);
+            var span1 = this.tracer.StartSpan(null, SpanKind.Client, spanReference);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartSpan(null, SpanKind.Client, blankContext, default);
+            var span2 = this.tracer.StartSpan(null, SpanKind.Client, spanReference, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
@@ -159,12 +159,12 @@ namespace OpenTelemetry.Trace.Tests
                 .AddSource("tracername")
                 .Build();
 
-            var blankContext = default(SpanReference);
+            var spanReference = default(SpanReference);
 
-            var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext);
+            var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, spanReference);
             Assert.Null(span1.Activity.DisplayName);
 
-            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, blankContext, default);
+            var span2 = this.tracer.StartActiveSpan(null, SpanKind.Client, spanReference, default);
             Assert.Null(span2.Activity.DisplayName);
         }
 
