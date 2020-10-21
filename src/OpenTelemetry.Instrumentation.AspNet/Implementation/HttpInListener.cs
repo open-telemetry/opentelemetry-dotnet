@@ -28,8 +28,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     {
         public const string RequestCustomPropertyName = "OTel.AspNet.Request";
         public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
-        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
-        private const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
+        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
         private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
