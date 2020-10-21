@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
-using System.Threading.Tasks;
 using Thrift;
 using Thrift.Protocol;
 
@@ -23,23 +21,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class JaegerThriftClient : TBaseClient
     {
-        public JaegerThriftClient(TProtocol protocol)
-            : this(protocol, protocol)
+        public JaegerThriftClient(TProtocol outputProtocol)
+            : base(outputProtocol)
         {
         }
 
-        public JaegerThriftClient(TProtocol inputProtocol, TProtocol outputProtocol)
-            : base(inputProtocol, outputProtocol)
+        internal void SendBatch(Batch batch)
         {
-        }
-
-        internal Task WriteBatchAsync(Batch batch, CancellationToken cancellationToken)
-        {
-            return EmitBatchArgs.WriteAsync(
+            EmitBatchArgs.Send(
                 this.SeqId,
                 batch,
-                this.OutputProtocol,
-                cancellationToken);
+                this.OutputProtocol);
         }
     }
 }

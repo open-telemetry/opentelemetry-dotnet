@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
@@ -67,14 +66,14 @@ namespace OpenTelemetry.Exporter.Jaeger
             return sb.ToString();
         }
 
-        internal async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        internal void Write(TProtocol oprot)
         {
             oprot.IncrementRecursionDepth();
 
             try
             {
                 var struc = new TStruct("Process");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
+                oprot.WriteStructBegin(struc);
 
                 var field = new TField
                 {
@@ -83,9 +82,9 @@ namespace OpenTelemetry.Exporter.Jaeger
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStringAsync(this.ServiceName, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteString(this.ServiceName);
+                oprot.WriteFieldEnd();
 
                 if (this.Tags != null)
                 {
@@ -93,23 +92,23 @@ namespace OpenTelemetry.Exporter.Jaeger
                     field.Type = TType.List;
                     field.ID = 2;
 
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
                     {
-                        await oprot.WriteListBeginAsync(new TList(TType.Struct, this.Tags.Count), cancellationToken).ConfigureAwait(false);
+                        oprot.WriteListBegin(new TList(TType.Struct, this.Tags.Count));
 
                         foreach (var jt in this.Tags)
                         {
-                            await jt.Value.WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
+                            jt.Value.Write(oprot);
                         }
 
-                        await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
+                        oprot.WriteListEnd();
                     }
 
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldEnd();
                 }
 
-                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
             }
             finally
             {
