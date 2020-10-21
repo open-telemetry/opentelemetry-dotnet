@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -41,8 +42,8 @@ namespace OpenTelemetry.Trace
         private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
         private readonly Sampler sampler;
         private readonly Resource resource;
+        private readonly Action<Activity> getRequestedDataAction;
         private BaseProcessor<Activity> activityProcessor;
-        private Action<Activity> getRequestedDataAction;
 
         internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor, Resource resource)
         {
@@ -76,6 +77,8 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public void Start(Activity activity, ActivityKind kind)
         {
+            OpenTelemetrySdkEventSource.Log.ActivityStarted(activity.OperationName, activity.Id);
+
             SetKindProperty(activity, kind);
             this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
@@ -91,6 +94,8 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
+            OpenTelemetrySdkEventSource.Log.ActivityStopped(activity.OperationName, activity.Id);
+
             if (activity?.IsAllDataRequested ?? false)
             {
                 this.activityProcessor?.OnEnd(activity);

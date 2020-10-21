@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -68,6 +69,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity.OperationName, activity.Id);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
@@ -83,6 +86,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity.OperationName, activity.Id);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
