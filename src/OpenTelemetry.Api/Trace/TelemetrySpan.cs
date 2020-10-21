@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the span reference.
         /// </summary>
-        public SpanReference Context
+        public SpanReference SpanReference
         {
             get
             {

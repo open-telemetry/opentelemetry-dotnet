@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
+            return this.StartSpan(name, kind, parentSpan?.SpanReference ?? default, initialAttributes, links, startTime);
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TelemetrySpan StartActiveSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
-            return this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
+            return this.StartActiveSpan(name, kind, parentSpan?.SpanReference ?? default, initialAttributes, links, startTime);
         }
 
         /// <summary>

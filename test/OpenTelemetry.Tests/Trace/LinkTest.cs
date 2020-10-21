@@ -55,16 +55,16 @@ namespace OpenTelemetry.Trace.Tests
         public void FromSpanReference()
         {
             var link = new Link(this.spanReference);
-            Assert.Equal(this.spanReference.TraceId, link.Context.TraceId);
-            Assert.Equal(this.spanReference.SpanId, link.Context.SpanId);
+            Assert.Equal(this.spanReference.TraceId, link.SpanReference.TraceId);
+            Assert.Equal(this.spanReference.SpanId, link.SpanReference.SpanId);
         }
 
         [Fact]
         public void FromSpanReference_WithAttributes()
         {
             var link = new Link(this.spanReference, this.tags);
-            Assert.Equal(this.spanReference.TraceId, link.Context.TraceId);
-            Assert.Equal(this.spanReference.SpanId, link.Context.SpanId);
+            Assert.Equal(this.spanReference.TraceId, link.SpanReference.TraceId);
+            Assert.Equal(this.spanReference.SpanId, link.SpanReference.SpanId);
 
             foreach (var attributemap in this.attributesMap)
             {

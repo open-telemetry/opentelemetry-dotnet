@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var current = Tracer.CurrentSpan;
             Assert.True(IsNoopSpan(current));
-            Assert.False(current.Context.IsValid);
+            Assert.False(current.SpanReference.IsValid);
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var span = this.tracer.StartSpan("name");
             Assert.True(IsNoopSpan(span));
-            Assert.False(span.Context.IsValid);
+            Assert.False(span.SpanReference.IsValid);
             Assert.False(span.IsRecording);
         }
 
@@ -176,20 +176,20 @@ namespace OpenTelemetry.Trace.Tests
                 .Build();
 
             var span1 = this.tracer.StartActiveSpan("Test");
-            Assert.Equal(span1.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span1.Activity.SpanId, Tracer.CurrentSpan.SpanReference.SpanId);
 
             var span2 = this.tracer.StartActiveSpan("Test", SpanKind.Client);
-            Assert.Equal(span2.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span2.Activity.SpanId, Tracer.CurrentSpan.SpanReference.SpanId);
 
             var span = this.tracer.StartSpan("foo");
             Tracer.WithSpan(span);
 
             var span3 = this.tracer.StartActiveSpan("Test", SpanKind.Client, span);
-            Assert.Equal(span3.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span3.Activity.SpanId, Tracer.CurrentSpan.SpanReference.SpanId);
 
             var spanContext = new SpanReference(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
             var span4 = this.tracer.StartActiveSpan("Test", SpanKind.Client, spanContext);
-            Assert.Equal(span4.Activity.SpanId, Tracer.CurrentSpan.Context.SpanId);
+            Assert.Equal(span4.Activity.SpanId, Tracer.CurrentSpan.SpanReference.SpanId);
         }
 
         [Fact]
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Trace.Tests
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddSource("tracername")
                 .Build();
-            Assert.False(Tracer.CurrentSpan.Context.IsValid);
+            Assert.False(Tracer.CurrentSpan.SpanReference.IsValid);
         }
 
         [Fact]
@@ -221,8 +221,8 @@ namespace OpenTelemetry.Trace.Tests
             var span = this.tracer.StartSpan("foo");
             Tracer.WithSpan(span);
 
-            Assert.Equal(span.Context.SpanId, Tracer.CurrentSpan.Context.SpanId);
-            Assert.True(Tracer.CurrentSpan.Context.IsValid);
+            Assert.Equal(span.SpanReference.SpanId, Tracer.CurrentSpan.SpanReference.SpanId);
+            Assert.True(Tracer.CurrentSpan.SpanReference.IsValid);
         }
 
         [Fact]
