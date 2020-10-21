@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
@@ -56,13 +55,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public byte[] VBinary { get; }
 
-        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public void Write(TProtocol oprot)
         {
             oprot.IncrementRecursionDepth();
             try
             {
                 var struc = new TStruct("Tag");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
+                oprot.WriteStructBegin(struc);
 
                 var field = new TField
                 {
@@ -71,26 +70,26 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStringAsync(this.Key, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteString(this.Key);
+                oprot.WriteFieldEnd();
 
                 field.Name = "vType";
                 field.Type = TType.I32;
                 field.ID = 2;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteI32Async((int)this.VType, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI32((int)this.VType);
+                oprot.WriteFieldEnd();
 
                 if (this.VStr != null)
                 {
                     field.Name = "vStr";
                     field.Type = TType.String;
                     field.ID = 3;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteStringAsync(this.VStr, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
+                    oprot.WriteString(this.VStr);
+                    oprot.WriteFieldEnd();
                 }
 
                 if (this.VDouble.HasValue)
@@ -98,9 +97,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Name = "vDouble";
                     field.Type = TType.Double;
                     field.ID = 4;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteDoubleAsync(this.VDouble.Value, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
+                    oprot.WriteDouble(this.VDouble.Value);
+                    oprot.WriteFieldEnd();
                 }
 
                 if (this.VBool.HasValue)
@@ -108,9 +107,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Name = "vBool";
                     field.Type = TType.Bool;
                     field.ID = 5;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteBoolAsync(this.VBool.Value, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
+                    oprot.WriteBool(this.VBool.Value);
+                    oprot.WriteFieldEnd();
                 }
 
                 if (this.VLong.HasValue)
@@ -118,9 +117,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Name = "vLong";
                     field.Type = TType.I64;
                     field.ID = 6;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteI64Async(this.VLong.Value, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
+                    oprot.WriteI64(this.VLong.Value);
+                    oprot.WriteFieldEnd();
                 }
 
                 if (this.VBinary != null)
@@ -128,13 +127,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     field.Name = "vBinary";
                     field.Type = TType.String;
                     field.ID = 7;
-                    await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteBinaryAsync(this.VBinary, cancellationToken).ConfigureAwait(false);
-                    await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteFieldBegin(field);
+                    oprot.WriteBinary(this.VBinary, 0, this.VBinary.Length);
+                    oprot.WriteFieldEnd();
                 }
 
-                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
             }
             finally
             {
