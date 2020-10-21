@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Renaming `SpanContext` to `SpanReference`
+  ([#1378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1378))
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16
@@ -80,7 +83,8 @@ Released 2020-08-28
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 * Changed `StartSpan` to not set the created span as Active to match the spec
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
-* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-preview.8.20407.11.
+* Updated System.Diagnostics.DiagnosticSource to version
+  5.0.0-preview.8.20407.11.
 * Removed `CorrelationContext` and added `Baggage`, an implementation of the
   [`Baggage
   API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
