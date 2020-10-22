@@ -158,12 +158,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activity.SpanId.CopyTo(spanIdBytes);
 
             var parentSpanIdString = ByteString.Empty;
-            if (activity.ParentSpanId.ToHexString() != EmptyActivitySpanId)
+            if (activity.ParentSpanId != default)
             {
-                // TODO: Once .NET fixes this https://github.com/dotnet/runtime/issues/42456
-                // and Otel updates to the version containing the fix,
-                // the above check can be simplified to
-                // if (activity.ParentSpanId != default)
                 byte[] parentSpanIdBytes = new byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
                 parentSpanIdString = ByteStringCtorFunc(parentSpanIdBytes);

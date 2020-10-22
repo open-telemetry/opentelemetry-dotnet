@@ -28,11 +28,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     {
         public const string RequestCustomPropertyName = "OTel.AspNet.Request";
         public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
-        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
-        private const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn.Start";
+        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
-        private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
+        private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -76,7 +76,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             {
                 var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
+                if (ctx.ActivityContext.IsValid()
+                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
@@ -140,7 +141,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            if (!(this.options.Propagator is TextMapPropagator))
+            bool isCustomPropagator = !(this.options.Propagator is TextMapPropagator);
+
+            if (isCustomPropagator)
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
@@ -195,8 +198,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     {
                         var subRouteData = attributeRouting.GetValue(0);
 
-                        var route = this.routeFetcher.Fetch(subRouteData);
-                        template = this.routeTemplateFetcher.Fetch(route) as string;
+                        _ = this.routeFetcher.TryFetch(subRouteData, out var route);
+                        _ = this.routeTemplateFetcher.TryFetch(route, out template);
                     }
                 }
                 else if (routeData.Route is Route route)
@@ -213,7 +216,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.Propagator is TextMapPropagator))
+            if (isCustomPropagator)
             {
                 if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
                 {

@@ -18,13 +18,14 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
+using Benchmarks.Helper;
 using Grpc.Core;
-using OpenTelemetry.Benchmarks;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Internal;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Exporter.Benchmarks
+namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
     public class OtlpExporterBenchmarks

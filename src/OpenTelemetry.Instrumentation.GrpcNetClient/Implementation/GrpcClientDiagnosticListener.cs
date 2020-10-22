@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
+            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;

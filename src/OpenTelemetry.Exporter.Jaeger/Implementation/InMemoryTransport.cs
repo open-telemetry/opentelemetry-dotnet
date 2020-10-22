@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -32,25 +31,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public override bool IsOpen => true;
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-            }
-        }
-
         public override void Close()
         {
             // do nothing
         }
 
-        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override void Write(byte[] buffer, int offset, int length)
         {
             var memory = this.bufferWriter.GetMemory(length);
 
@@ -66,16 +52,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 // Resize if we already had a window into the current buffer.
                 this.buffer = this.buffer.Value.Expand(memory.Count);
             }
-
-            return Task.CompletedTask;
         }
 
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+        public override int Flush()
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-            }
+            return 0;
         }
 
         public byte[] ToArray()
