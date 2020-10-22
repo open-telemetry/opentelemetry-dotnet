@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                     process.Tags = new Dictionary<string, JaegerTag>();
                 }
 
-                process.Tags[label.Key] = label.ToJaegerTag();
+                process.Tags[key] = label.ToJaegerTag();
             }
 
             if (serviceName != null)
