@@ -14,17 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using OpenTelemetry.Benchmarks;
+using Benchmarks.Helper;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Jaeger;
 using OpenTelemetry.Internal;
 using Thrift.Transport;
 
-namespace OpenTelemetry.Exporter.Benchmarks
+namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
     public class JaegerExporterBenchmarks
@@ -52,7 +50,7 @@ namespace OpenTelemetry.Exporter.Benchmarks
                 new JaegerExporterOptions(),
                 new BlackHoleTransport())
             {
-                Process = new Jaeger.Process("TestService"),
+                Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService"),
             };
 
             for (int i = 0; i < this.NumberOfBatches; i++)
