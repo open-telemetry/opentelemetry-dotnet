@@ -20,13 +20,11 @@ using System.Diagnostics;
 using System.Linq;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using Opentelemetry.Proto.Common.V1;
-#if NET452
 using OpenTelemetry.Internal;
-#endif
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
 
@@ -79,8 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .SetResource(resource)
                 .Build();
 
-            var activities = new List<Activity>();
-            Activity activity = null;
+            var activities = new CircularBuffer<Activity>(512);
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -90,20 +87,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
                 var activityTags = isEven ? evenTags : oddTags;
 
-                activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
+                using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
                 activities.Add(activity);
             }
 
-            activities.Reverse();
+            var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            var otlpResourceSpans = activities.ToOtlpResourceSpans();
+            request.AddBatch(new Batch<Activity>(activities, numOfSpans));
 
-            Assert.Single(otlpResourceSpans);
-            var oltpResource = otlpResourceSpans.First().Resource;
+            Assert.Single(request.ResourceSpans);
+            var oltpResource = request.ResourceSpans.First().Resource;
             Assert.Equal(resource.Attributes.First().Key, oltpResource.Attributes.First().Key);
             Assert.Equal(resource.Attributes.First().Value, oltpResource.Attributes.First().Value.StringValue);
 
-            foreach (var instrumentationLibrarySpans in otlpResourceSpans.First().InstrumentationLibrarySpans)
+            foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
             {
                 Assert.Equal(numOfSpans / 2, instrumentationLibrarySpans.Spans.Count);
                 Assert.NotNull(instrumentationLibrarySpans.InstrumentationLibrary);
@@ -118,8 +115,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var otlpSpans = instrumentationLibrarySpans.Spans;
                 Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
 
-                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new AnyValue { StringValue = "v0" } };
-                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new AnyValue { StringValue = "v1" } };
+                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new OtlpCommon.AnyValue { StringValue = "v0" } };
+                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new OtlpCommon.AnyValue { StringValue = "v1" } };
 
                 var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
                     ? kv0

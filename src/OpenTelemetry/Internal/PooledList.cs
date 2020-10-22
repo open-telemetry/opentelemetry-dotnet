@@ -89,7 +89,10 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        void ICollection.CopyTo(Array array, int index) => throw new NotSupportedException();
+        void ICollection.CopyTo(Array array, int index)
+        {
+            Array.Copy(this.buffer, 0, array, index, this.Count);
+        }
 
         public Enumerator GetEnumerator()
         {
