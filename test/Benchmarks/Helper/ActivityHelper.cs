@@ -19,9 +19,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace OpenTelemetry.Benchmarks
+namespace Benchmarks.Helper
 {
-    public static class ActivityHelper
+    internal static class ActivityHelper
     {
         public static Activity CreateTestActivity()
         {
