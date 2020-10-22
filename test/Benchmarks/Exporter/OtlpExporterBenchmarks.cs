@@ -30,9 +30,9 @@ namespace Benchmarks.Exporter
     [MemoryDiagnoser]
     public class OtlpExporterBenchmarks
     {
+        private OtlpExporter exporter;
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
-        private NoopTraceServiceClient client;
 
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
@@ -43,20 +43,23 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
+            this.exporter = new OtlpExporter(
+                new OtlpExporterOptions(),
+                new NoopTraceServiceClient());
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
-            this.client = new NoopTraceServiceClient();
+        }
+
+        [GlobalCleanup]
+        public void GlobalCleanup()
+        {
+            this.exporter.Shutdown();
+            this.exporter.Dispose();
         }
 
         [Benchmark]
         public void OtlpExporter_Batching()
         {
-            using OtlpExporter exporter = new OtlpExporter(
-                new OtlpExporterOptions(),
-                this.client)
-            {
-            };
-
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
                 for (int c = 0; c < this.NumberOfSpans; c++)
@@ -64,15 +67,13 @@ namespace Benchmarks.Exporter
                     this.activityBatch.Add(this.activity);
                 }
 
-                exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+                this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
             }
-
-            exporter.Shutdown();
         }
 
-        private class NoopTraceServiceClient : OtlpCollector.TraceService.TraceServiceClient
+        private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
         {
-            public override OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            public OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
             {
                 return null;
             }

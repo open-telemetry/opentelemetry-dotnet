@@ -205,6 +205,8 @@ namespace OpenTelemetry.Trace
 
         private struct ActivitySingleTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
+            public object Value;
+
             private readonly string tagName;
 
             public ActivitySingleTagEnumerator(string tagName)
@@ -212,8 +214,6 @@ namespace OpenTelemetry.Trace
                 this.tagName = tagName;
                 this.Value = null;
             }
-
-            public object Value { get; private set; }
 
             public bool ForEach(KeyValuePair<string, object> item)
             {
@@ -229,11 +229,11 @@ namespace OpenTelemetry.Trace
 
         private struct ActivityStatusTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
-            public bool IsValid { get; private set; }
+            public bool IsValid;
 
-            public StatusCode StatusCode { get; private set; }
+            public StatusCode StatusCode;
 
-            public string StatusDescription { get; private set; }
+            public string StatusDescription;
 
             public bool ForEach(KeyValuePair<string, object> item)
             {

@@ -17,9 +17,9 @@
 using System;
 #if DEBUG
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 #endif
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
@@ -86,6 +86,24 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
                 this.MetricControllerException(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void ActivityStarted(Activity activity)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            {
+                this.ActivityStarted(activity.OperationName, activity.Id);
+            }
+        }
+
+        [NonEvent]
+        public void ActivityStopped(Activity activity)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            {
+                this.ActivityStopped(activity.OperationName, activity.Id);
             }
         }
 
