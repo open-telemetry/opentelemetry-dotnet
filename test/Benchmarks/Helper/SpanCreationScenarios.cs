@@ -15,10 +15,11 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Trace.Benchmarks
+namespace Benchmarks.Helper
 {
-    internal class SpanCreationScenarios
+    internal static class SpanCreationScenarios
     {
         public static void CreateSpan(Tracer tracer)
         {
