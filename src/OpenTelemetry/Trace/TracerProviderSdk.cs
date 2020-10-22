@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
-                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity.OperationName, activity.Id);
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
                     if (!activity.IsAllDataRequested)
                     {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
-                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity.OperationName, activity.Id);
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
                     if (!activity.IsAllDataRequested)
                     {
