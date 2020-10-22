@@ -36,7 +36,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
-        private static readonly string EmptyActivitySpanId = default(ActivitySpanId).ToHexString();
         private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans>();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
         private static readonly Func<byte[], ByteString> ByteStringCtorFunc = CreateByteStringCtorFunc();
