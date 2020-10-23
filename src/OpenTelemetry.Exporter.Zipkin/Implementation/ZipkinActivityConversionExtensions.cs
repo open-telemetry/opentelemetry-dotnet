@@ -19,7 +19,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
@@ -41,15 +40,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
 
-        private static readonly ConcurrentDictionary<string, ZipkinEndpoint> LocalEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
-
 #if !NET452
         private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<(string, int), ZipkinEndpoint>();
 #else
         private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
 #endif
 
-        internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint defaultLocalEndpoint, bool useShortTraceIds = false)
+        internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
         {
             var context = activity.Context;
 
@@ -73,25 +70,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
                     PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("library.version", activitySource.Version));
-                }
-            }
-
-            var localEndpoint = defaultLocalEndpoint;
-
-            var serviceName = tagState.ServiceName;
-
-            // override default service name
-            if (!string.IsNullOrWhiteSpace(serviceName))
-            {
-                if (!string.IsNullOrWhiteSpace(tagState.ServiceNamespace))
-                {
-                    serviceName = tagState.ServiceNamespace + "." + serviceName;
-                }
-
-                if (!LocalEndpointCache.TryGetValue(serviceName, out localEndpoint))
-                {
-                    localEndpoint = defaultLocalEndpoint.Clone(serviceName);
-                    LocalEndpointCache.TryAdd(serviceName, localEndpoint);
                 }
             }
 
@@ -201,10 +179,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             public int RemoteEndpointServiceNamePriority;
 
-            public string ServiceName;
-
-            public string ServiceNamespace;
-
             public string HostName;
 
             public string IpAddress;
@@ -238,14 +212,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     else if (key == SemanticConventions.AttributeNetPeerPort && int.TryParse(strVal, out var port))
                     {
                         this.Port = port;
-                    }
-                    else if (key == Resource.ServiceNameKey)
-                    {
-                        this.ServiceName = strVal;
-                    }
-                    else if (key == Resource.ServiceNamespaceKey)
-                    {
-                        this.ServiceNamespace = strVal;
                     }
 
                     PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>(key, strVal));

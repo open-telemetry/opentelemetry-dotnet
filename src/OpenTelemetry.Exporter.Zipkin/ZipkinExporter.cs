@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -26,9 +27,12 @@ using Newtonsoft.Json;
 #else
 using System.Text.Json;
 #endif
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
@@ -54,11 +58,10 @@ namespace OpenTelemetry.Exporter.Zipkin
 #if !NET452
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
 #endif
-            this.LocalEndpoint = this.GetLocalZipkinEndpoint();
             this.httpClient = client ?? new HttpClient();
         }
 
-        internal ZipkinEndpoint LocalEndpoint { get; }
+        internal ZipkinEndpoint LocalEndpoint { get; private set; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
@@ -87,6 +90,71 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 return ExportResult.Failure;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ZipkinEndpoint EnsureLocalEndpoint(Activity activity)
+        {
+            if (this.LocalEndpoint != null)
+            {
+                return this.LocalEndpoint;
+            }
+
+            var hostName = ResolveHostName();
+
+            string ipv4 = null;
+            string ipv6 = null;
+            if (!string.IsNullOrEmpty(hostName))
+            {
+                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
+                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
+            }
+
+            string serviceName = null;
+            string serviceNamespace = null;
+            Dictionary<string, object> tags = null;
+            foreach (var label in activity.GetResource().Attributes)
+            {
+                string key = label.Key;
+
+                switch (key)
+                {
+                    case Resource.ServiceNameKey:
+                        serviceName = label.Value as string;
+                        continue;
+                    case Resource.ServiceNamespaceKey:
+                        serviceNamespace = label.Value as string;
+                        continue;
+                    case Resource.LibraryNameKey:
+                    case Resource.LibraryVersionKey:
+                        continue;
+                }
+
+                if (tags == null)
+                {
+                    tags = new Dictionary<string, object>();
+                }
+
+                tags[key] = label.Value;
+            }
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                serviceName = serviceNamespace != null
+                    ? serviceNamespace + "." + serviceName
+                    : serviceName;
+            }
+            else
+            {
+                serviceName = this.options.ServiceName;
+            }
+
+            return this.LocalEndpoint = new ZipkinEndpoint(
+                serviceName,
+                ipv4,
+                ipv6,
+                port: null,
+                tags);
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)
@@ -145,25 +213,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        private ZipkinEndpoint GetLocalZipkinEndpoint()
-        {
-            var hostName = ResolveHostName();
-
-            string ipv4 = null;
-            string ipv6 = null;
-            if (!string.IsNullOrEmpty(hostName))
-            {
-                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
-                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
-            }
-
-            return new ZipkinEndpoint(
-                this.options.ServiceName,
-                ipv4,
-                ipv6,
-                null);
-        }
-
         private class JsonContent : HttpContent
         {
             private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
@@ -208,7 +257,9 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 foreach (var activity in this.batch)
                 {
-                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+                    var localEndpoint = this.exporter.EnsureLocalEndpoint(activity);
+
+                    var zipkinSpan = activity.ToZipkinSpan(localEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 
