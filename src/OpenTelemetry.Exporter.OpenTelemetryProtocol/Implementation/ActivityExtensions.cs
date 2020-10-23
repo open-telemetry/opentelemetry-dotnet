@@ -24,7 +24,6 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
-using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;

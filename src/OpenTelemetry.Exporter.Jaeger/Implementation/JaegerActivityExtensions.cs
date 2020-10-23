@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 

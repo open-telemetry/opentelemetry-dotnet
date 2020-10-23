@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Exporter
 {
     internal static class PeerServiceResolver
     {
