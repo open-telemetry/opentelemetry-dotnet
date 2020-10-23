@@ -36,24 +36,6 @@ namespace OpenTelemetry.Metrics.Aggregators
         }
 
         /// <summary>
-        /// Determines the last end timestamp before the current interval's <see cref="StartTime"/>
-        /// </summary>
-        /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
-        protected DateTime GetLastEndTimestamp()
-        {
-            return DateTime.FromBinary(this.startTime).Subtract(TimeSpan.FromMilliseconds(1));
-        }
-
-        /// <summary>
-        /// Determines the last start timestamp before the current interval's <see cref="StartTime"/>
-        /// </summary>
-        /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
-        protected DateTime GetLastStartTimestamp()
-        {
-            return DateTime.FromBinary(this.checkpointStartTime);
-        }
-
-        /// <summary>
         /// Adds value to the running total in a thread safe manner.
         /// </summary>
         /// <param name="value">Value to be aggregated.</param>
@@ -79,5 +61,23 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// </summary>
         /// <returns><see cref="AggregationType"/>.</returns>
         public abstract AggregationType GetAggregationType();
+
+        /// <summary>
+        /// Determines the last end timestamp before the current interval's <see cref="startTime"/>.
+        /// </summary>
+        /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
+        protected DateTime GetLastEndTimestamp()
+        {
+            return DateTime.FromBinary(this.startTime).Subtract(TimeSpan.FromMilliseconds(1));
+        }
+
+        /// <summary>
+        /// Determines the last start timestamp before the current interval's <see cref="startTime"/>.
+        /// </summary>
+        /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
+        protected DateTime GetLastStartTimestamp()
+        {
+            return DateTime.FromBinary(this.checkpointStartTime);
+        }
     }
 }
