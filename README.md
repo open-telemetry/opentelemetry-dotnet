@@ -93,7 +93,6 @@ Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
-* [Christoph Neumueller](https://github.com/discostu105), Dynatrace
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft

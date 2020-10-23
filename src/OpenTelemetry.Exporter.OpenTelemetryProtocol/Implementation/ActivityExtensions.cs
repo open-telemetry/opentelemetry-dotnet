@@ -15,13 +15,19 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -30,48 +36,111 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
-        private static readonly string EmptyActivitySpanId = default(ActivitySpanId).ToHexString();
+        private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans>();
+        private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
+        private static readonly Func<byte[], ByteString> ByteStringCtorFunc = CreateByteStringCtorFunc();
+        private static OtlpResource.Resource processResource;
 
-        internal static IEnumerable<OtlpTrace.ResourceSpans> ToOtlpResourceSpans(this IEnumerable<Activity> activityBatch)
+        internal static void AddBatch(
+            this OtlpCollector.ExportTraceServiceRequest request,
+            in Batch<Activity> activityBatch)
         {
-            var resourceToLibraryAndSpans = GroupByResourceAndLibrary(activityBatch);
-            var resourceSpansList = new List<OtlpTrace.ResourceSpans>(resourceToLibraryAndSpans.Count);
+            Dictionary<string, OtlpTrace.InstrumentationLibrarySpans> spansByLibrary = new Dictionary<string, OtlpTrace.InstrumentationLibrarySpans>();
+            OtlpTrace.ResourceSpans resourceSpans = null;
 
-            foreach (var resource in resourceToLibraryAndSpans)
+            foreach (var activity in activityBatch)
             {
-                var libraryList = new List<OtlpTrace.InstrumentationLibrarySpans>(resource.Value.Count);
-                foreach (var activitySourceEntry in resource.Value)
+                if (resourceSpans == null)
                 {
-                    var activitySource = activitySourceEntry.Key;
-                    var otlpLibrarySpans = new OtlpTrace.InstrumentationLibrarySpans
-                    {
-                        InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
-                        {
-                            Name = activitySource.Name, // Name is enforced to not be null, but it can be empty.
-                            Version = activitySource.Version ?? string.Empty, // NRE throw by proto
-                        },
-                    };
+                    resourceSpans = new OtlpTrace.ResourceSpans();
 
-                    otlpLibrarySpans.Spans.AddRange(activitySourceEntry.Value);
-                    libraryList.Add(otlpLibrarySpans);
+                    if (processResource == null)
+                    {
+                        BuildProcessResource(activity.GetResource());
+                    }
+
+                    resourceSpans.Resource = processResource;
+                    request.ResourceSpans.Add(resourceSpans);
                 }
 
-                var otlpResources = new OtlpResource.Resource();
-                otlpResources.Attributes.AddRange(
-                    resource.Key.Attributes.Select(ToOtlpAttribute).Where(a => a != null));
-
-                var otlpResourceSpans = new OtlpTrace.ResourceSpans
+                OtlpTrace.Span span = activity.ToOtlpSpan();
+                if (span == null)
                 {
-                    Resource = otlpResources,
-                };
-                otlpResourceSpans.InstrumentationLibrarySpans.AddRange(libraryList);
+                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
+                        nameof(ActivityExtensions),
+                        nameof(AddBatch));
+                    continue;
+                }
 
-                resourceSpansList.Add(otlpResourceSpans);
+                var activitySourceName = activity.Source.Name;
+                if (!spansByLibrary.TryGetValue(activitySourceName, out var spans))
+                {
+                    spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
+
+                    spansByLibrary.Add(activitySourceName, spans);
+                    resourceSpans.InstrumentationLibrarySpans.Add(spans);
+                }
+
+                spans.Spans.Add(span);
             }
-
-            return resourceSpansList;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void Return(this OtlpCollector.ExportTraceServiceRequest request)
+        {
+            var resourceSpans = request.ResourceSpans.FirstOrDefault();
+            if (resourceSpans == null)
+            {
+                return;
+            }
+
+            foreach (var librarySpans in resourceSpans.InstrumentationLibrarySpans)
+            {
+                RepeatedFieldOfSpanSetCountAction(librarySpans.Spans, 0);
+                SpanListPool.Add(librarySpans);
+            }
+        }
+
+        internal static void BuildProcessResource(Resource resource)
+        {
+            OtlpResource.Resource processResource = new OtlpResource.Resource();
+
+            foreach (KeyValuePair<string, object> attribute in resource.Attributes)
+            {
+                var oltpAttribute = ToOtlpAttribute(attribute);
+                if (oltpAttribute != null)
+                {
+                    processResource.Attributes.Add(oltpAttribute);
+                }
+            }
+
+            ActivityExtensions.processResource = processResource;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static OtlpTrace.InstrumentationLibrarySpans GetSpanListFromPool(string name, string version)
+        {
+            if (!SpanListPool.TryTake(out var spans))
+            {
+                spans = new OtlpTrace.InstrumentationLibrarySpans
+                {
+                    InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
+                    {
+                        Name = name, // Name is enforced to not be null, but it can be empty.
+                        Version = version ?? string.Empty, // NRE throw by proto
+                    },
+                };
+            }
+            else
+            {
+                spans.InstrumentationLibrary.Name = name;
+                spans.InstrumentationLibrary.Version = version ?? string.Empty;
+            }
+
+            return spans;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static OtlpTrace.Span ToOtlpSpan(this Activity activity)
         {
             if (activity.IdFormat != ActivityIdFormat.W3C)
@@ -81,9 +150,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
-            Span<byte> traceIdBytes = stackalloc byte[16];
-            Span<byte> spanIdBytes = stackalloc byte[8];
+            byte[] traceIdBytes = new byte[16];
+            byte[] spanIdBytes = new byte[8];
 
             activity.TraceId.CopyTo(traceIdBytes);
             activity.SpanId.CopyTo(spanIdBytes);
@@ -91,9 +159,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var parentSpanIdString = ByteString.Empty;
             if (activity.ParentSpanId != default)
             {
-                Span<byte> parentSpanIdBytes = stackalloc byte[8];
+                byte[] parentSpanIdBytes = new byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
-                parentSpanIdString = ByteString.CopyFrom(parentSpanIdBytes.ToArray());
+                parentSpanIdString = ByteStringCtorFunc(parentSpanIdBytes);
             }
 
             var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
@@ -103,120 +171,94 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1), // TODO: there is an offset of 1 on the enum.
 
-                TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
-                SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
+                TraceId = ByteStringCtorFunc(traceIdBytes),
+                SpanId = ByteStringCtorFunc(spanIdBytes),
                 ParentSpanId = parentSpanIdString,
-
-                Status = ToOtlpStatus(activity.GetStatus()),
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
             };
 
-            foreach (var kvp in activity.TagObjects)
+            TagEnumerationState otlpTags = default;
+            activity.EnumerateTags(ref otlpTags);
+            if (otlpTags.Created)
             {
-                var attributes = ToOtlpAttributes(kvp);
-                if (attributes != null
-                    && attributes.All(a => a.Key != SpanAttributeConstants.StatusCodeKey && a.Key != SpanAttributeConstants.StatusDescriptionKey))
-                {
-                    otlpSpan.Attributes.AddRange(attributes);
-                }
+                otlpSpan.Attributes.AddRange(otlpTags.Tags);
+                otlpTags.Tags.Return();
             }
 
-            otlpSpan.Events.AddRange(activity.Events.Select(ToOtlpEvent));
-            otlpSpan.Links.AddRange(activity.Links.Select(ToOtlpLink));
+            otlpSpan.Status = ToOtlpStatus(ref otlpTags);
+
+            EventEnumerationState otlpEvents = default;
+            activity.EnumerateEvents(ref otlpEvents);
+            if (otlpEvents.Created)
+            {
+                otlpSpan.Events.AddRange(otlpEvents.Events);
+                otlpEvents.Events.Return();
+            }
+
+            LinkEnumerationState otlpLinks = default;
+            activity.EnumerateLinks(ref otlpLinks);
+            if (otlpLinks.Created)
+            {
+                otlpSpan.Links.AddRange(otlpLinks.Links);
+                otlpLinks.Links.Return();
+            }
 
             // Activity does not limit number of attributes, events, links, etc so drop counts are always zero.
 
             return otlpSpan;
         }
 
-        private static OtlpTrace.Status ToOtlpStatus(Status status)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
         {
-            if (!status.IsValid)
+            if (!otlpTags.StatusCode.HasValue)
             {
                 return null;
             }
 
-            var otlpStatus = new Opentelemetry.Proto.Trace.V1.Status
+            var otlpStatus = new OtlpTrace.Status
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)status.StatusCode,
+                Code = (OtlpTrace.Status.Types.StatusCode)otlpTags.StatusCode,
             };
 
-            if (!string.IsNullOrEmpty(status.Description))
+            if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
             {
-                otlpStatus.Message = status.Description;
+                otlpStatus.Message = otlpTags.StatusDescription;
             }
 
             return otlpStatus;
         }
 
-        private static Dictionary<Resource, Dictionary<ActivitySource, List<OtlpTrace.Span>>> GroupByResourceAndLibrary(
-            IEnumerable<Activity> activityBatch)
-        {
-            var result = new Dictionary<Resource, Dictionary<ActivitySource, List<OtlpTrace.Span>>>();
-            foreach (var activity in activityBatch)
-            {
-                var protoSpan = activity.ToOtlpSpan();
-                if (protoSpan == null)
-                {
-                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
-                        nameof(ActivityExtensions),
-                        nameof(GroupByResourceAndLibrary));
-                    continue;
-                }
-
-                var resource = activity.GetResource();
-                if (!result.TryGetValue(resource, out var libraryToSpans))
-                {
-                    libraryToSpans = new Dictionary<ActivitySource, List<OtlpTrace.Span>>();
-                    result[resource] = libraryToSpans;
-                }
-
-                // The ActivitySource is the equivalent of OpenTelemetry LibraryResource.
-                var activitySource = activity.Source;
-                if (!libraryToSpans.TryGetValue(activitySource, out var spans))
-                {
-                    spans = new List<OtlpTrace.Span>();
-                    libraryToSpans[activitySource] = spans;
-                }
-
-                spans.Add(protoSpan);
-            }
-
-            return result;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Span.Types.Link ToOtlpLink(ActivityLink activityLink)
         {
-            // protobuf doesn't understand Span<T> yet: https://github.com/protocolbuffers/protobuf/issues/3431
-            Span<byte> traceIdBytes = stackalloc byte[16];
-            Span<byte> spanIdBytes = stackalloc byte[8];
+            byte[] traceIdBytes = new byte[16];
+            byte[] spanIdBytes = new byte[8];
 
             activityLink.Context.TraceId.CopyTo(traceIdBytes);
             activityLink.Context.SpanId.CopyTo(spanIdBytes);
 
             var otlpLink = new OtlpTrace.Span.Types.Link
             {
-                TraceId = ByteString.CopyFrom(traceIdBytes.ToArray()),
-                SpanId = ByteString.CopyFrom(spanIdBytes.ToArray()),
+                TraceId = ByteStringCtorFunc(traceIdBytes),
+                SpanId = ByteStringCtorFunc(spanIdBytes),
             };
 
-            if (activityLink.Tags != null)
+            TagEnumerationState otlpTags = default;
+            activityLink.EnumerateTags(ref otlpTags);
+            if (otlpTags.Created)
             {
-                foreach (var attribute in from tag in activityLink.Tags
-                                          let attribute = ToOtlpAttributes(tag)
-                                          where attribute != null && attribute.Any()
-                                          select attribute)
-                {
-                    otlpLink.Attributes.AddRange(attribute);
-                }
+                otlpLink.Attributes.AddRange(otlpTags.Tags);
+                otlpTags.Tags.Return();
             }
 
             return otlpLink;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Span.Types.Event ToOtlpEvent(ActivityEvent activityEvent)
         {
             var otlpEvent = new OtlpTrace.Span.Types.Event
@@ -225,12 +267,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            foreach (var attribute in from tag in activityEvent.Tags
-                                      let attribute = ToOtlpAttributes(tag)
-                                      where attribute != null && attribute.Any()
-                                      select attribute)
+            TagEnumerationState otlpTags = default;
+            activityEvent.EnumerateTags(ref otlpTags);
+            if (otlpTags.Created)
             {
-                otlpEvent.Attributes.AddRange(attribute);
+                otlpEvent.Attributes.AddRange(otlpTags.Tags);
+                otlpTags.Tags.Return();
             }
 
             return otlpEvent;
@@ -344,6 +386,180 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             return attributes;
+        }
+
+        private static Action<RepeatedField<OtlpTrace.Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
+        {
+            FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<OtlpTrace.Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            DynamicMethod dynamicMethod = new DynamicMethod(
+                "CreateSetCountAction",
+                null,
+                new[] { typeof(RepeatedField<OtlpTrace.Span>), typeof(int) },
+                typeof(ActivityExtensions).Module,
+                skipVisibility: true);
+
+            var generator = dynamicMethod.GetILGenerator();
+
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Stfld, repeatedFieldOfSpanCountField);
+            generator.Emit(OpCodes.Ret);
+
+            return (Action<RepeatedField<OtlpTrace.Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpTrace.Span>, int>));
+        }
+
+        private static Func<byte[], ByteString> CreateByteStringCtorFunc()
+        {
+            ConstructorInfo byteStringCtor = typeof(ByteString).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(byte[]) }, null);
+
+            DynamicMethod dynamicMethod = new DynamicMethod(
+                "ByteStringCtor",
+                typeof(ByteString),
+                new[] { typeof(byte[]) },
+                typeof(ActivityExtensions).Module,
+                skipVisibility: true);
+
+            var generator = dynamicMethod.GetILGenerator();
+
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Newobj, byteStringCtor);
+            generator.Emit(OpCodes.Ret);
+
+            return (Func<byte[], ByteString>)dynamicMethod.CreateDelegate(typeof(Func<byte[], ByteString>));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static OtlpCommon.KeyValue CreateOtlpKeyValue(string key, OtlpCommon.AnyValue value)
+        {
+            return new OtlpCommon.KeyValue { Key = key, Value = value };
+        }
+
+        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            public bool Created;
+
+            public PooledList<OtlpCommon.KeyValue> Tags;
+
+            public int? StatusCode;
+
+            public string StatusDescription;
+
+            public bool ForEach(KeyValuePair<string, object> activityTag)
+            {
+                if (activityTag.Value == null)
+                {
+                    return true;
+                }
+
+                switch (activityTag.Key)
+                {
+                    case SpanAttributeConstants.StatusCodeKey:
+                        this.StatusCode = activityTag.Value as int?;
+                        return true;
+                    case SpanAttributeConstants.StatusDescriptionKey:
+                        this.StatusDescription = activityTag.Value as string;
+                        return true;
+                }
+
+                if (!this.Created)
+                {
+                    this.Tags = PooledList<OtlpCommon.KeyValue>.Create();
+                    this.Created = true;
+                }
+
+                switch (activityTag.Value)
+                {
+                    case string s:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = s }));
+                        break;
+                    case bool b:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { BoolValue = b }));
+                        break;
+                    case int i:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = i }));
+                        break;
+                    case long l:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = l }));
+                        break;
+                    case double d:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { DoubleValue = d }));
+                        break;
+                    case int[] intArray:
+                        foreach (var item in intArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = item }));
+                        }
+
+                        break;
+                    case double[] doubleArray:
+                        foreach (var item in doubleArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { DoubleValue = item }));
+                        }
+
+                        break;
+                    case bool[] boolArray:
+                        foreach (var item in boolArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { BoolValue = item }));
+                        }
+
+                        break;
+                    case string[] stringArray:
+                        foreach (var item in stringArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = item }));
+                        }
+
+                        break;
+                    default:
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));
+                        break;
+                }
+
+                return true;
+            }
+        }
+
+        private struct EventEnumerationState : IActivityEnumerator<ActivityEvent>
+        {
+            public bool Created;
+
+            public PooledList<OtlpTrace.Span.Types.Event> Events;
+
+            public bool ForEach(ActivityEvent activityEvent)
+            {
+                if (!this.Created)
+                {
+                    this.Events = PooledList<OtlpTrace.Span.Types.Event>.Create();
+                    this.Created = true;
+                }
+
+                PooledList<OtlpTrace.Span.Types.Event>.Add(ref this.Events, ToOtlpEvent(activityEvent));
+
+                return true;
+            }
+        }
+
+        private struct LinkEnumerationState : IActivityEnumerator<ActivityLink>
+        {
+            public bool Created;
+
+            public PooledList<OtlpTrace.Span.Types.Link> Links;
+
+            public bool ForEach(ActivityLink activityLink)
+            {
+                if (!this.Created)
+                {
+                    this.Links = PooledList<OtlpTrace.Span.Types.Link>.Create();
+                    this.Created = true;
+                }
+
+                PooledList<OtlpTrace.Span.Types.Link>.Add(ref this.Links, ToOtlpLink(activityLink));
+
+                return true;
+            }
         }
     }
 }
