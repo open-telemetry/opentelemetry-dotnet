@@ -16,15 +16,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Api.Context.Propagation;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// A class that represents a span context. A span context contains the state that must propagate to
-    /// child <see cref="TelemetrySpan"/> and across process boundaries. It contains the identifiers <see cref="ActivityTraceId"/>
-    /// and <see cref="ActivitySpanId"/> associated with the <see cref="TelemetrySpan"/> and a set of <see cref="TraceFlags"/>.
+    /// A class that represents a span context. A span context contains the portion of a span
+    /// that must propagate to child <see cref="TelemetrySpan"/> and across process boundaries.
+    /// It contains the identifiers <see cref="ActivityTraceId"/>and <see cref="ActivitySpanId"/>
+    /// associated with the <see cref="TelemetrySpan"/> along with a set of
+    /// common <see cref="TraceFlags"/> and system-specific <see cref="TraceState"/> values>.
     /// </summary>
+    /// <remarks>SpanContext is a wrapper around <see cref="ActivityContext"/>.</remarks>
     public readonly struct SpanContext : System.IEquatable<SpanContext>
     {
         internal readonly ActivityContext ActivityContext;
