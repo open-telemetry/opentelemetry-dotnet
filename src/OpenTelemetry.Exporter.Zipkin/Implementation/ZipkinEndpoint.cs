@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
 #if NET452
 using Newtonsoft.Json;
 #else
@@ -24,7 +25,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     internal class ZipkinEndpoint
     {
         public ZipkinEndpoint(string serviceName)
-            : this(serviceName, null, null, null)
+            : this(serviceName, null, null, null, null)
         {
         }
 
@@ -32,12 +33,14 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             string serviceName,
             string ipv4,
             string ipv6,
-            int? port)
+            int? port,
+            Dictionary<string, object> tags)
         {
             this.ServiceName = serviceName;
             this.Ipv4 = ipv4;
             this.Ipv6 = ipv6;
             this.Port = port;
+            this.Tags = tags;
         }
 
         public string ServiceName { get; }
@@ -47,6 +50,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public string Ipv6 { get; }
 
         public int? Port { get; }
+
+        public Dictionary<string, object> Tags { get; }
 
         public static ZipkinEndpoint Create(string serviceName)
         {
@@ -70,7 +75,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 serviceName,
                 this.Ipv4,
                 this.Ipv6,
-                this.Port);
+                this.Port,
+                this.Tags);
         }
 
 #if NET452

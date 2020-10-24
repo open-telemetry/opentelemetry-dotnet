@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
         }
 
-        internal Process(string serviceName, IDictionary<string, JaegerTag> processTags)
+        internal Process(string serviceName, Dictionary<string, JaegerTag> processTags)
             : this(serviceName)
         {
             if (processTags != null)
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
         public string ServiceName { get; internal set; }
 
-        internal IDictionary<string, JaegerTag> Tags { get; set; }
+        internal Dictionary<string, JaegerTag> Tags { get; set; }
 
         internal byte[] Message { get; set; }
 
