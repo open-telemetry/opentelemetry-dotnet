@@ -20,7 +20,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to Tracers.
+    /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Tracer"/>.
     /// </summary>
     public class TracerProvider : IDisposable
     {

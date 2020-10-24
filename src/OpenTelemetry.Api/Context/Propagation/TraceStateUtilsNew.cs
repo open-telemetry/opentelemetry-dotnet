@@ -21,11 +21,7 @@ using System.Linq;
 using System.Text;
 using OpenTelemetry.Internal;
 
-#if API
-namespace OpenTelemetry.Api.Context.Propagation
-#else
 namespace OpenTelemetry.Context.Propagation
-#endif
 {
     /// <summary>
     /// Extension methods to extract TraceState from string.
