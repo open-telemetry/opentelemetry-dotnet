@@ -19,8 +19,17 @@ using System.IO;
 
 namespace OpenTelemetry.Shared
 {
+    /// <summary>
+    /// The <see cref="LocalFileBlob"/> allows to save a blob
+    /// in file storage.
+    /// </summary>
     public class LocalFileBlob : IPersistentBlob
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalFileBlob"/>
+        /// class.
+        /// </summary>
+        /// <param name="fullPath">Absolute file path of the blob.</param>
         public LocalFileBlob(string fullPath)
         {
             this.FullPath = fullPath;
@@ -28,6 +37,7 @@ namespace OpenTelemetry.Shared
 
         public string FullPath { get; private set; }
 
+        /// <inheritdoc/>
         public byte[] Read()
         {
             try
@@ -42,6 +52,7 @@ namespace OpenTelemetry.Shared
             return null;
         }
 
+        /// <inheritdoc/>
         public IPersistentBlob Write(byte[] buffer, int leasePeriodMilliseconds = 0)
         {
             string path = this.FullPath + ".tmp";
@@ -66,6 +77,7 @@ namespace OpenTelemetry.Shared
             return this;
         }
 
+        /// <inheritdoc/>
         public IPersistentBlob Lease(int leasePeriodMilliseconds)
         {
             var path = this.FullPath;
@@ -90,6 +102,7 @@ namespace OpenTelemetry.Shared
             return this;
         }
 
+        /// <inheritdoc/>
         public void Delete()
         {
             try

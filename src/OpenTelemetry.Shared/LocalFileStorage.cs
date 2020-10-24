@@ -22,6 +22,10 @@ using System.Timers;
 
 namespace OpenTelemetry.Shared
 {
+    /// <summary>
+    /// Persistent file storage <see cref="LocalFileStorage"/> allows to save data
+    /// as blobs in file storage.
+    /// </summary>
     public class LocalFileStorage : IPersistentStorage, IDisposable
     {
         private readonly string directoryPath;
@@ -29,13 +33,38 @@ namespace OpenTelemetry.Shared
         private readonly long retentionPeriodInMilliseconds;
         private readonly int writeTimeoutInMilliseconds;
         private readonly Timer maintenanceTimer;
+        private bool disposedValue;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalFileStorage"/>
+        /// class.
+        /// </summary>
+        /// <param name="path">
+        /// Sets file storage folder location where blobs are stored.
+        /// </param>
+        /// <param name="maxSizeInBytes">
+        /// Maximum allowed storage folder size.
+        /// Default is 50 MB.
+        /// </param>
+        /// <param name="maintenancePeriodInMilliseconds">
+        /// Maintenance event runs at specified interval.
+        /// Removes expired leases and blobs that exceed retention period.
+        /// Default is 2 minute.
+        /// </param>
+        /// <param name="retentionPeriodInMilliseconds">
+        /// Retention period in milliseconds for the blob.
+        /// Default is 2 days.
+        /// </param>
+        /// <param name="writeTimeoutInMilliseconds">
+        /// Controls the timeout when writing a buffer to blob.
+        /// Default is 1 minute.
+        /// </param>
         public LocalFileStorage(
                                 string path,
-                                long maxSizeInBytes = 52428800,              // 50 MB
-                                int maintenancePeriodInMilliseconds = 6000,  // 1 Minute
-                                long retentionPeriodInMilliseconds = 172800, // 2 Days
-                                int writeTimeoutInMilliseconds = 6000) // 1 Minute
+                                long maxSizeInBytes = 52428800,
+                                int maintenancePeriodInMilliseconds = 6000,
+                                long retentionPeriodInMilliseconds = 172800,
+                                int writeTimeoutInMilliseconds = 6000)
         {
             if (path == null)
             {
@@ -55,10 +84,24 @@ namespace OpenTelemetry.Shared
 
         public void Dispose()
         {
-            this.maintenanceTimer.Dispose();
+            this.Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
 
+        public void Dispose(bool disposing)
+        {
+            if (!this.disposedValue)
+            {
+                if (disposing)
+                {
+                    this.maintenanceTimer.Dispose();
+                }
+
+                this.disposedValue = true;
+            }
+        }
+
+        /// <inheritdoc/>
         public IEnumerable<IPersistentBlob> GetBlobs()
         {
             var retentionDeadline = DateTime.Now.ToUniversalTime() - TimeSpan.FromMilliseconds(this.retentionPeriodInMilliseconds);
@@ -76,6 +119,7 @@ namespace OpenTelemetry.Shared
             }
         }
 
+        /// <inheritdoc/>
         public IPersistentBlob GetBlob()
         {
             var iterator = this.GetBlobs().GetEnumerator();
@@ -83,6 +127,7 @@ namespace OpenTelemetry.Shared
             return iterator.Current;
         }
 
+        /// <inheritdoc/>
         public IPersistentBlob CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0)
         {
             if (!this.CheckStorageSize())
