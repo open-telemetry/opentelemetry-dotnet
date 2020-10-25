@@ -104,17 +104,14 @@ namespace OpenTelemetry.Shared
         /// <inheritdoc/>
         public IEnumerable<IPersistentBlob> GetBlobs()
         {
-            var retentionDeadline = DateTime.Now.ToUniversalTime() - TimeSpan.FromMilliseconds(this.retentionPeriodInMilliseconds);
+            var retentionDeadline = DateTime.UtcNow - TimeSpan.FromMilliseconds(this.retentionPeriodInMilliseconds);
 
-            foreach (var file in Directory.GetFiles(this.directoryPath).OrderByDescending(f => f))
+            foreach (var file in Directory.EnumerateFiles(this.directoryPath, "*.blob", SearchOption.TopDirectoryOnly).OrderByDescending(f => f))
             {
-                if (file.EndsWith(".blob", StringComparison.OrdinalIgnoreCase))
+                DateTime fileDateTime = PersistentStorageHelper.GetDateTimeFromBlobName(file);
+                if (fileDateTime > retentionDeadline)
                 {
-                    DateTime fileDateTime = PersistentStorageHelper.GetDateTimeFromBlobName(file);
-                    if (fileDateTime > retentionDeadline)
-                    {
-                        yield return new LocalFileBlob(file);
-                    }
+                    yield return new LocalFileBlob(file);
                 }
             }
         }

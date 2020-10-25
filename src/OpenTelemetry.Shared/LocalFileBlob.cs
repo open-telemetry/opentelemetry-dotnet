@@ -63,8 +63,8 @@ namespace OpenTelemetry.Shared
 
                 if (leasePeriodMilliseconds > 0)
                 {
-                    var timestamp = DateTime.Now.ToUniversalTime() + TimeSpan.FromMilliseconds(leasePeriodMilliseconds);
-                    this.FullPath += $"@{timestamp:yyy-MM-ddTHHmmss.ffffff}.lock";
+                    var timestamp = DateTime.UtcNow + TimeSpan.FromMilliseconds(leasePeriodMilliseconds);
+                    this.FullPath += $"@{timestamp:yyyy-MM-ddTHHmmss.fffffffZ}.lock";
                 }
 
                 File.Move(path, this.FullPath);
@@ -81,13 +81,13 @@ namespace OpenTelemetry.Shared
         public IPersistentBlob Lease(int leasePeriodMilliseconds)
         {
             var path = this.FullPath;
-            var leaseTimestamp = DateTime.Now.ToUniversalTime() + TimeSpan.FromMilliseconds(leasePeriodMilliseconds);
+            var leaseTimestamp = DateTime.UtcNow + TimeSpan.FromMilliseconds(leasePeriodMilliseconds);
             if (path.EndsWith(".lock", StringComparison.OrdinalIgnoreCase))
             {
                 path = path.Substring(0, path.LastIndexOf('@'));
             }
 
-            path += $"@{leaseTimestamp:yyy-MM-ddTHHmmss.ffffff}.lock";
+            path += $"@{leaseTimestamp:yyyy-MM-ddTHHmmss.fffffffZ}.lock";
 
             try
             {

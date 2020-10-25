@@ -33,8 +33,15 @@ namespace OpenTelemetry.Shared
                 DateTime fileDateTime = GetDateTimeFromBlobName(filePath);
                 if (fileDateTime < retentionDeadline)
                 {
-                    DeleteFile(filePath);
-                    SharedEventSource.Log.Warning("File write exceeded retention. Dropping telemetry");
+                    try
+                    {
+                        File.Delete(filePath);
+                        SharedEventSource.Log.Warning("File write exceeded retention. Dropping telemetry");
+                    }
+                    catch (Exception ex)
+                    {
+                        SharedEventSource.Log.Warning($"Deletion of file {filePath} has failed.", ex);
+                    }
                 }
             }
         }
@@ -73,9 +80,16 @@ namespace OpenTelemetry.Shared
                 DateTime fileDateTime = GetDateTimeFromBlobName(filePath);
                 if (fileDateTime < timeoutDeadline)
                 {
-                    DeleteFile(filePath);
-                    success = true;
-                    SharedEventSource.Log.Warning("File write exceeded timeout. Dropping telemetry");
+                    try
+                    {
+                        File.Delete(filePath);
+                        success = true;
+                        SharedEventSource.Log.Warning("File write exceeded timeout. Dropping telemetry");
+                    }
+                    catch (Exception ex)
+                    {
+                        SharedEventSource.Log.Warning($"Deletion of file {filePath} has failed.", ex);
+                    }
                 }
             }
 
@@ -84,13 +98,13 @@ namespace OpenTelemetry.Shared
 
         internal static void RemoveExpiredBlobs(string directoryPath, long retentionPeriodInMilliseconds, long writeTimeoutInMilliseconds)
         {
-            var currentUtcDateTime = DateTime.Now.ToUniversalTime();
+            var currentUtcDateTime = DateTime.UtcNow;
 
             var leaseDeadline = currentUtcDateTime;
             var retentionDeadline = currentUtcDateTime - TimeSpan.FromMilliseconds(retentionPeriodInMilliseconds);
             var timeoutDeadline = currentUtcDateTime - TimeSpan.FromMilliseconds(writeTimeoutInMilliseconds);
 
-            foreach (var file in Directory.GetFiles(directoryPath).OrderByDescending(f => f))
+            foreach (var file in Directory.EnumerateFiles(directoryPath).OrderByDescending(f => f))
             {
                 var success = RemoveTimedOutTmpFiles(timeoutDeadline, file);
 
@@ -110,7 +124,7 @@ namespace OpenTelemetry.Shared
 
         internal static string GetUniqueFileName(string extension)
         {
-            return string.Format(CultureInfo.InvariantCulture, $"{DateTime.Now.ToUniversalTime():yyy-MM-ddTHHmmss.ffffff}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}{extension}");
+            return string.Format(CultureInfo.InvariantCulture, $"{DateTime.UtcNow:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}{extension}");
         }
 
         internal static string CreateSubdirectory(string path)
@@ -139,21 +153,6 @@ namespace OpenTelemetry.Shared
             return subdirectoryPath;
         }
 
-        internal static void DeleteFile(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
-            catch (Exception ex)
-            {
-                SharedEventSource.Log.Warning($"Deletion of file {path} has failed.", ex);
-            }
-        }
-
         internal static float CalculateFolderSize(string path)
         {
             if (!Directory.Exists(path))
@@ -164,7 +163,7 @@ namespace OpenTelemetry.Shared
             float directorySize = 0.0f;
             try
             {
-                foreach (string file in Directory.GetFiles(path))
+                foreach (string file in Directory.EnumerateFiles(path))
                 {
                     if (File.Exists(file))
                     {
@@ -190,8 +189,8 @@ namespace OpenTelemetry.Shared
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var time = fileName.Substring(0, fileName.LastIndexOf('-'));
-            DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
-            return dateTime;
+            DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
+            return dateTime.ToUniversalTime();
         }
 
         internal static DateTime GetDateTimeFromLeaseName(string filePath)
@@ -199,8 +198,8 @@ namespace OpenTelemetry.Shared
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var startIndex = fileName.LastIndexOf('@') + 1;
             var time = fileName.Substring(startIndex, fileName.Length - startIndex);
-            DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
-            return dateTime;
+            DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
+            return dateTime.ToUniversalTime();
         }
 
         internal static string GetSHA256Hash(string input)
