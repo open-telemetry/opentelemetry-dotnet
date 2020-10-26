@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* `peer.service` tag is now added to outgoing spans (went not already specified)
+  following the [Zipkin remote endpoint
+  rules](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
+  ([#1392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1392))
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16
