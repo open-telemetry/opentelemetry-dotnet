@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -30,24 +31,21 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <returns>The resource.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Resource GetResource(this Activity activity)
         {
-            if (activity?.GetCustomProperty(ResourcePropertyName) is Resource res)
-            {
-                return res;
-            }
-            else
-            {
-                return Resource.Empty;
-            }
+            return activity?.GetCustomProperty(ResourcePropertyName) is Resource res
+                ? res
+                : Resource.Empty;
         }
 
         /// <summary>
-        /// Sets the Resource associated with the Activity..
+        /// Sets the Resource associated with the Activity.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="resource">Resource to set to.</param>
-        internal static void SetResource(this Activity activity, Resource resource)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SetResource(this Activity activity, Resource resource)
         {
             activity.SetCustomProperty(ResourcePropertyName, resource);
         }

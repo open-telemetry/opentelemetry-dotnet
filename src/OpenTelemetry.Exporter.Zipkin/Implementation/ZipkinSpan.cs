@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 #if NET452
@@ -188,7 +189,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WriteEndArray();
             }
 
-            if (this.Tags.HasValue)
+            if (this.Tags.HasValue || this.LocalEndpoint.Tags != null)
             {
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
@@ -199,7 +200,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 try
                 {
-                    foreach (var tag in this.Tags.Value)
+                    foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
+                    {
+                        writer.WritePropertyName(tag.Key);
+                        writer.WriteValue(this.ConvertObjectToString(tag.Value));
+                    }
+
+                    foreach (var tag in this.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
                         writer.WritePropertyName(tag.Key);
                         writer.WriteValue(this.ConvertObjectToString(tag.Value));
@@ -290,7 +297,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 writer.WriteEndArray();
             }
 
-            if (this.Tags.HasValue)
+            if (this.Tags.HasValue || this.LocalEndpoint.Tags != null)
             {
                 writer.WritePropertyName("tags");
                 writer.WriteStartObject();
@@ -301,7 +308,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 try
                 {
-                    foreach (var tag in this.Tags.Value)
+                    foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
+                    {
+                        writer.WriteString(tag.Key, this.ConvertObjectToString(tag.Value));
+                    }
+
+                    foreach (var tag in this.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
                         writer.WriteString(tag.Key, this.ConvertObjectToString(tag.Value));
                     }

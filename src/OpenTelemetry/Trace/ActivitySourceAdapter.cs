@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public void Start(Activity activity, ActivityKind kind)
         {
-            OpenTelemetrySdkEventSource.Log.ActivityStarted(activity.OperationName, activity.Id);
+            OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
             SetKindProperty(activity, kind);
             this.getRequestedDataAction(activity);
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Trace
         /// <param name="activity"><see cref="Activity"/> to be stopped.</param>
         public void Stop(Activity activity)
         {
-            OpenTelemetrySdkEventSource.Log.ActivityStopped(activity.OperationName, activity.Id);
+            OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
             if (activity?.IsAllDataRequested ?? false)
             {
