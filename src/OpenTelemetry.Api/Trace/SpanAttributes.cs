@@ -23,6 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A class that represents the span attributes. Read more here https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attributes.
     /// </summary>
+    /// <remarks>SpanAttributes is a wrapper around <see cref="ActivityTagsCollection"/> class.</remarks>
     public class SpanAttributes
     {
         /// <summary>
