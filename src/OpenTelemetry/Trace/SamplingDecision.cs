@@ -22,20 +22,20 @@ namespace OpenTelemetry.Trace
     public enum SamplingDecision
     {
         /// <summary>
-        /// The activity will created but not recorded.
+        /// The activity will be created but not recorded.
         /// Activity.IsAllDataRequested will return false.
         /// </summary>
         Drop,
 
         /// <summary>
-        /// The activity will created and recorded, but Sampling flag will not be set.
+        /// The activity will be created and recorded, but Sampling flag will not be set.
         /// Activity.IsAllDataRequested will return true.
         /// Activity.IsRecorded will return false.
         /// </summary>
         RecordOnly,
 
         /// <summary>
-        /// The activity will created, recorded, and Sampling flag will be set.
+        /// The activity will be created, recorded, and Sampling flag will be set.
         /// Activity.IsAllDataRequested will return true.
         /// Activity.IsRecorded will return true.
         /// </summary>
