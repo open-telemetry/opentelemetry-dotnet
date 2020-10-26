@@ -48,7 +48,7 @@ namespace Benchmarks.Instrumentation
                     this.UseIsEnabledFilter ? this.isEnabledFilter : null);
 
                 this.subscribers.Add(subscriber);
-                DiagnosticListener.AllListeners.Subscribe(subscriber);
+                subscriber.Subscribe();
             }
         }
 
