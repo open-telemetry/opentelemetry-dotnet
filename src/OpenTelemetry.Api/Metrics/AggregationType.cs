@@ -13,31 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 using System;
 
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Metrics
 {
     [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public enum AggregationType
     {
         /// <summary>
-        /// Sum of type Double which is reported with <see cref="DoubleSumData"/>
+        /// Sum of type Double which is reported with OpenTelemetry.Metrics.Export.DoubleSumData />
         /// </summary>
         DoubleSum,
 
         /// <summary>
-        /// Sum of type Long which is reported with <see cref="Int64SumData"/>
+        /// Sum of type Long which is reported with OpenTelemetry.Metrics.Export.Int64SumData/>
         /// </summary>
         LongSum,
 
         /// <summary>
-        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="DoubleSummaryData"/>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with OpenTelemetry.Metrics.Export.DoubleSummaryData/>
         /// </summary>
         DoubleSummary,
 
         /// <summary>
-        /// Summary of measurements (Min, Max, Sum, Count), which is reported with <see cref="Int64SummaryData"/>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with OpenTelemetry.Metrics.Export.Int64SummaryData/>
         /// </summary>
         Int64Summary,
     }
