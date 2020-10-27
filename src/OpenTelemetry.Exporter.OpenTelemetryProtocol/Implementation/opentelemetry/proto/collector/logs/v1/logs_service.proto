@@ -1,4 +1,4 @@
-// Copyright 2019, OpenTelemetry Authors
+// Copyright 2020, OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,32 +14,35 @@
 
 syntax = "proto3";
 
-package opentelemetry.proto.collector.trace.v1;
+// NOTE: This proto is experimental and is subject to change at this point.
+// Please do not use it at the moment.
 
-import "opentelemetry/proto/trace/v1/trace.proto";
+package opentelemetry.proto.collector.logs.v1;
+
+import "opentelemetry/proto/logs/v1/logs.proto";
 
 option java_multiple_files = true;
-option java_package = "io.opentelemetry.proto.collector.trace.v1";
-option java_outer_classname = "TraceServiceProto";
-option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/trace/v1";
+option java_package = "io.opentelemetry.proto.collector.logs.v1";
+option java_outer_classname = "LogsServiceProto";
+option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/logs/v1";
 
-// Service that can be used to push spans between one Application instrumented with
+// Service that can be used to push logs between one Application instrumented with
 // OpenTelemetry and an collector, or between an collector and a central collector (in this
-// case spans are sent/received to/from multiple Applications).
-service TraceService {
+// case logs are sent/received to/from multiple Applications).
+service LogsService {
   // For performance reasons, it is recommended to keep this RPC
   // alive for the entire life of the application.
-  rpc Export(ExportTraceServiceRequest) returns (ExportTraceServiceResponse) {}
+  rpc Export(ExportLogsServiceRequest) returns (ExportLogsServiceResponse) {}
 }
 
-message ExportTraceServiceRequest {
-  // An array of ResourceSpans.
+message ExportLogsServiceRequest {
+  // An array of ResourceLogs.
   // For data coming from a single resource this array will typically contain one
   // element. Intermediary nodes (such as OpenTelemetry Collector) that receive
   // data from multiple origins typically batch the data before forwarding further and
   // in that case this array will contain multiple elements.
-  repeated opentelemetry.proto.trace.v1.ResourceSpans resource_spans = 1;
+  repeated opentelemetry.proto.logs.v1.ResourceLogs resource_logs = 1;
 }
 
-message ExportTraceServiceResponse {
+message ExportLogsServiceResponse {
 }
