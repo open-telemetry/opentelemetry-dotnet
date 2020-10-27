@@ -53,5 +53,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// The type of this object depends on the event, which is given by the above parameter.</para>
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the exception will be recorded or not.
+        /// </summary>
+        public bool RecordException { get; set; }
     }
 }
