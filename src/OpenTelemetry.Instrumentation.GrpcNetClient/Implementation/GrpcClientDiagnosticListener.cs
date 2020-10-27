@@ -22,7 +22,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.GrpcHandler.Request";
         private readonly GrpcClientInstrumentationOptions options;
 
         private readonly ActivitySourceAdapter activitySource;

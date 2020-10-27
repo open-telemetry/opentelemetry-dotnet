@@ -26,8 +26,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.AspNet.Request";
-        public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
         internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
@@ -43,7 +41,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.activitySource = activitySource;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Activity is retrieved from Activity.Current later and disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
             var context = HttpContext.Current;
@@ -182,10 +180,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                activityToEnrich.SetStatus(
-                    SpanHelper
-                        .ResolveSpanStatusForHttpStatusCode(response.StatusCode)
-                        .WithDescription(response.StatusDescription));
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                activityToEnrich.SetStatus(status);
 
                 var routeData = context.Request.RequestContext.RouteData;
 

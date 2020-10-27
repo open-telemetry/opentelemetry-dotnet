@@ -20,7 +20,8 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of dependency instrumentation.
+    /// Extension methods to simplify registering of gRPClient
+    /// instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {

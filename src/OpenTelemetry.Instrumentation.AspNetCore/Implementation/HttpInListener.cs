@@ -29,8 +29,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.AspNetCore.Request";
-        public const string ResponseCustomPropertyName = "OTel.AspNetCore.Response";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -173,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 else
                 {
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                    activity.SetStatus(status);
                 }
             }
 
