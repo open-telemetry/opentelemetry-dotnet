@@ -30,6 +30,8 @@ namespace OpenTelemetry.Metrics
             this.metricName = name;
         }
 
+        public AggregationType MetricAggregationType { get; internal set; }
+
         public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {
             return this.measureBoundInstruments.GetOrAdd(labelset, this.CreateMetric());

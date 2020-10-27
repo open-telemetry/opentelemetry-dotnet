@@ -152,7 +152,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = longMeasure.Key;
                     var measureInstrument = longMeasure.Value;
-                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.Int64Summary);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, measureInstrument.MetricAggregationType);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleMeasure.Key;
                     var measureInstrument = doubleMeasure.Value;
-                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSummary);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, measureInstrument.MetricAggregationType);
                     foreach (var handle in measureInstrument.GetAllBoundInstruments())
                     {
                         var labelSet = handle.Key;
@@ -252,14 +252,28 @@ namespace OpenTelemetry.Metrics
             return this.doubleCounters.GetOrAdd(name, new DoubleCounterMetricSdk(name));
         }
 
+        /// <inheritdoc/>
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
             return this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name));
         }
 
+        /// <inheritdoc/>
+        public override MeasureMetric<double> CreateDoubleMeasure(string name, AggregationType aggregationType, bool absolute = true)
+        {
+            return this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name, aggregationType));
+        }
+
+        /// <inheritdoc/>
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
             return this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name));
+        }
+
+        /// <inheritdoc/>
+        public override MeasureMetric<long> CreateInt64Measure(string name, AggregationType aggregationType, bool absolute = true)
+        {
+            return this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name, aggregationType));
         }
 
         /// <inheritdoc/>
