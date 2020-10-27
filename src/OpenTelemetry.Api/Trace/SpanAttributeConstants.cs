@@ -25,6 +25,8 @@ namespace OpenTelemetry.Trace
         public const string StatusCodeKey = "otel.status_code";
         public const string StatusDescriptionKey = "otel.status_description";
 
+        public const string GrpcStatusCodeKey = "grpc.status_code";
+
         public const string HttpPathKey = "http.path";
 
         public const string DatabaseStatementTypeKey = "db.statement_type";

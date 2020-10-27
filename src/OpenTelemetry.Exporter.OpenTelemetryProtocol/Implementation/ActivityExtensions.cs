@@ -224,6 +224,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Code = (OtlpTrace.Status.Types.StatusCode)otlpTags.StatusCode,
             };
 
+            if (otlpStatus.Code != OtlpTrace.Status.Types.StatusCode.Error)
+            {
+                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.Ok;
+            }
+            else
+            {
+                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.UnknownError;
+            }
+
             if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
             {
                 otlpStatus.Message = otlpTags.StatusDescription;
@@ -443,6 +452,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             public int? StatusCode;
 
+            public int? GrpcStatusCode;
+
             public string StatusDescription;
 
             public bool ForEach(KeyValuePair<string, object> activityTag)
@@ -459,6 +470,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         return true;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = activityTag.Value as string;
+                        return true;
+                    case SpanAttributeConstants.GrpcStatusCodeKey:
+                        this.GrpcStatusCode = activityTag.Value as int?;
                         return true;
                 }
 
