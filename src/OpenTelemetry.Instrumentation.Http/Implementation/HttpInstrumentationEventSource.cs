@@ -73,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.WriteEvent(3, handlerName, eventName);
         }
 
-        [Event(4, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
+        [Event(4, Message = "Filter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
         public void RequestFilterException(string exception)
         {
             this.WriteEvent(4, exception);
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        [Event(5, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        [Event(5, Message = "Enrich threw exception. Exception {0}.", Level = EventLevel.Error)]
         public void EnrichmentException(string exception)
         {
             this.WriteEvent(5, exception);

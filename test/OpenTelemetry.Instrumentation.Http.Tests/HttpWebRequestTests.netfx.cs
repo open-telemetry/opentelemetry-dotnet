@@ -35,7 +35,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         [Theory]
         [MemberData(nameof(TestData))]
-        public void HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
+        public void HttpOutCallsAreCollectedSuccessfully(HttpTestData.HttpOutTestCase tc)
         {
             using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
@@ -51,7 +51,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .SetResource(expectedResource)
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options => options.SetHttpFlavor = tc.SetHttpFlavor)
+                .AddHttpWebRequestInstrumentation(options =>
+                {
+                    options.SetHttpFlavor = tc.SetHttpFlavor;
+                    options.Enrich = ActivityEnrichment;
+                })
                 .Build();
 
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
@@ -136,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public void DebugIndividualTestAsync()
+        public void DebugIndividualTest()
         {
             var serializer = new JsonSerializer();
             var input = serializer.Deserialize<HttpTestData.HttpOutTestCase>(new JsonTextReader(new StringReader(@"
@@ -158,22 +162,33 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     }
   }
 ")));
-            this.HttpOutCallsAreCollectedSuccessfullyAsync(input);
+            this.HttpOutCallsAreCollectedSuccessfully(input);
         }
 
         private static void ValidateHttpWebRequestActivity(Activity activityToValidate, Resources.Resource expectedResource, bool responseExpected)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
-            var request = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpWebRequest);
+        }
 
-            if (responseExpected)
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
             {
-                var response = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-                Assert.NotNull(response);
-                Assert.True(response is HttpWebResponse);
+                case "OnStartActivity":
+                    Assert.True(obj is HttpWebRequest);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpWebResponse);
+                    break;
+
+                case "OnException":
+                    Assert.True(obj is Exception);
+                    break;
+
+                default:
+                    break;
             }
         }
     }
