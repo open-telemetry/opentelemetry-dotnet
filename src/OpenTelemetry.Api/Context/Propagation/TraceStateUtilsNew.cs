@@ -82,7 +82,7 @@ namespace OpenTelemetry.Context.Propagation
 
                     if (tracestate.Count > MaxKeyValuePairsCount)
                     {
-                        LogTooManyItemsInTracestate();
+                        OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
                         isValid = false;
                         break;
                     }
@@ -106,11 +106,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception ex)
             {
-#if API
                 OpenTelemetryApiEventSource.Log.TracestateExtractException(ex);
-#else
-                OpenTelemetrySdkEventSource.Log.TracestateExtractException(ex);
-#endif
             }
 
             return false;
@@ -128,7 +124,7 @@ namespace OpenTelemetry.Context.Propagation
             var pairsCount = traceState.Count();
             if (pairsCount > MaxKeyValuePairsCount)
             {
-                LogTooManyItemsInTracestate();
+                OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
             }
 
             var sb = new StringBuilder();
@@ -169,14 +165,14 @@ namespace OpenTelemetry.Context.Propagation
             key = pair.Slice(0, keyEndIdx).TrimStart();
             if (!ValidateKey(key))
             {
-                LogKeyIsInvalid(key);
+                OpenTelemetryApiEventSource.Log.TracestateKeyIsInvalid(key);
                 return false;
             }
 
             value = pair.Slice(valueStartIdx, pair.Length - valueStartIdx).Trim();
             if (!ValidateValue(value))
             {
-                LogValueIsInvalid(value);
+                OpenTelemetryApiEventSource.Log.TracestateValueIsInvalid(value);
                 return false;
             }
 
@@ -272,33 +268,6 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             return true;
-        }
-
-        private static void LogTooManyItemsInTracestate()
-        {
-#if API
-            OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
-#else
-            OpenTelemetrySdkEventSource.Log.TooManyItemsInTracestate();
-#endif
-        }
-
-        private static void LogKeyIsInvalid(ReadOnlySpan<char> key)
-        {
-#if API
-            OpenTelemetryApiEventSource.Log.TracestateKeyIsInvalid(key);
-#else
-            OpenTelemetrySdkEventSource.Log.TracestateKeyIsInvalid(key);
-#endif
-        }
-
-        private static void LogValueIsInvalid(ReadOnlySpan<char> value)
-        {
-#if API
-            OpenTelemetryApiEventSource.Log.TracestateValueIsInvalid(value);
-#else
-            OpenTelemetrySdkEventSource.Log.TracestateValueIsInvalid(value);
-#endif
         }
     }
 }
