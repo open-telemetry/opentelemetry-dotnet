@@ -99,7 +99,7 @@ This option allows one to enrich the activity with additional information
 from the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is
 called only when `activity.IsAllDataRequested` is `true`. It contains the
 activity itself (which can be enriched), the name of the event, and the
-actual raw object. 
+actual raw object.
 For event name "OnStartActivity", the actual object will be `HttpRequest`.
 For event name "OnStopActivity", the actual object will be `HttpResponse`
 
@@ -110,7 +110,8 @@ tags to activity.
 services.AddOpenTelemetryTracing((builder) =>
 {
     builder
-    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (activity, eventName, rawObject) =>
+    .AddAspNetCoreInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))
         {
