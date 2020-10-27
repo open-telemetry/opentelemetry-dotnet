@@ -238,7 +238,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnException", payload);
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
                 }
                 catch (Exception ex)
                 {
