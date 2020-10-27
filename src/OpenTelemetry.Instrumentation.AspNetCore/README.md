@@ -71,7 +71,7 @@ based on some condition. The Filter receives the `HttpContext` of the incoming
 request, and filters out the request if the Filter returns false or throws
 exception.
 
-The following shows an example of `Filter` being used to filter out all POST
+The following code snippet shows how to use `Filter` to filter out all POST
 requests.
 
 ```csharp
@@ -103,8 +103,7 @@ actual raw object.
 For event name "OnStartActivity", the actual object will be `HttpRequest`.
 For event name "OnStopActivity", the actual object will be `HttpResponse`
 
-The following shows an example of `Enrich` being used to add additional
-tags to activity.
+The following code snippet shows how to add additional tags using `Enrich`.
 
 ```csharp
 services.AddOpenTelemetryTracing((builder) =>
@@ -131,7 +130,7 @@ services.AddOpenTelemetryTracing((builder) =>
 });
 ```
 
-[Processor](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/docs/trace/extending-the-sdk#processor),
+[Processor](../../docs/trace/extending-the-sdk#processor),
 is the general extensibility point to add additional properties to any activity.
 The `Enrich` option is specific to this instrumentation, and is provided to
 get access to `HttpRequest` and `HttpResponse`.
