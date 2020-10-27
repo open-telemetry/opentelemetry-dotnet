@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Initializes a new instance of the <see cref="ParentBasedSampler"/> class.
         /// </summary>
-        /// <param name="rootSampler">The <see cref="Sampler"/> to be called to decide whether or not to sample a root trace.</param>
+        /// <param name="rootSampler">The <see cref="Sampler"/> to be called for root span/activity.</param>
         public ParentBasedSampler(Sampler rootSampler)
         {
             this.rootSampler = rootSampler ?? throw new ArgumentNullException(nameof(rootSampler));

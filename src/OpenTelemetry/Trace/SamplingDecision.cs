@@ -28,14 +28,14 @@ namespace OpenTelemetry.Trace
         Drop,
 
         /// <summary>
-        /// The activity will be created and recorded, but Sampling flag will not be set.
+        /// The activity will be created and recorded, but sampling flag will not be set.
         /// Activity.IsAllDataRequested will return true.
         /// Activity.IsRecorded will return false.
         /// </summary>
         RecordOnly,
 
         /// <summary>
-        /// The activity will be created, recorded, and Sampling flag will be set.
+        /// The activity will be created, recorded, and sampling flag will be set.
         /// Activity.IsAllDataRequested will return true.
         /// Activity.IsRecorded will return true.
         /// </summary>
