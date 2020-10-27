@@ -31,10 +31,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.HttpHandler.Request";
-        public const string ResponseCustomPropertyName = "OTel.HttpHandler.Response";
-        public const string ExceptionCustomPropertyName = "OTel.HttpHandler.Exception";
-
         private static readonly Func<HttpRequestMessage, string, IEnumerable<string>> HttpRequestMessageHeaderValuesGetter = (request, name) =>
         {
             if (request.Headers.TryGetValues(name, out var values))
