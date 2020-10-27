@@ -358,6 +358,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
+            Assert.True(activity.IsAllDataRequested);
             switch (method)
             {
                 case "OnStartActivity":
