@@ -40,9 +40,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new Int64SumData
             {
-                StartTimestamp = this.GetLastStartTimestamp(),
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkpoint,
-                Timestamp = this.GetLastEndTimestamp(),
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

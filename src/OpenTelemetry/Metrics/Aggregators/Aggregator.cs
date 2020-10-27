@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Metrics.Export;
 
@@ -27,12 +28,12 @@ namespace OpenTelemetry.Metrics.Aggregators
     public abstract class Aggregator<T>
         where T : struct
     {
-        private long startTime;
-        private long checkpointStartTime;
+        private long startTimeTicks;
+        private long checkpointStartTimeTicks;
 
         protected Aggregator()
         {
-            this.startTime = DateTime.UtcNow.ToBinary();
+            this.startTimeTicks = DateTimeOffset.UtcNow.Ticks;
         }
 
         /// <summary>
@@ -47,7 +48,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         public virtual void Checkpoint()
         {
             // checkpoints the start time for the current aggregation, and sets the new start time.
-            this.checkpointStartTime = Interlocked.Exchange(ref this.startTime, DateTime.UtcNow.ToBinary());
+            this.checkpointStartTimeTicks = Interlocked.Exchange(ref this.startTimeTicks, DateTimeOffset.UtcNow.Ticks);
         }
 
         /// <summary>
@@ -63,21 +64,22 @@ namespace OpenTelemetry.Metrics.Aggregators
         public abstract AggregationType GetAggregationType();
 
         /// <summary>
-        /// Determines the last end timestamp before the current interval's <see cref="startTime"/>.
+        /// Get the last interval end time before <see cref="Checkpoint"/> was called.
         /// </summary>
         /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
-        protected DateTime GetLastEndTimestamp()
+        protected DateTimeOffset GetLastEndTimestamp()
         {
-            return DateTime.FromBinary(this.startTime).Subtract(TimeSpan.FromMilliseconds(1));
+            Stopwatch.GetTimestamp();
+            return new DateTimeOffset(this.startTimeTicks, TimeSpan.Zero).Subtract(TimeSpan.FromMilliseconds(1));
         }
 
         /// <summary>
-        /// Determines the last start timestamp before the current interval's <see cref="startTime"/>.
+        /// Get the last interval start time before <see cref="Checkpoint"/> was called.
         /// </summary>
         /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
-        protected DateTime GetLastStartTimestamp()
+        protected DateTimeOffset GetLastStartTimestamp()
         {
-            return DateTime.FromBinary(this.checkpointStartTime);
+            return new DateTimeOffset(this.checkpointStartTimeTicks, TimeSpan.Zero);
         }
     }
 }

@@ -41,9 +41,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new DoubleSumData
             {
-                StartTimestamp = this.GetLastStartTimestamp(),
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkPoint,
-                Timestamp = this.GetLastEndTimestamp(),
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 
