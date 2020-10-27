@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Exporter.Prometheus
