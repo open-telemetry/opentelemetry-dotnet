@@ -245,6 +245,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
 
+                activity.RecordException(exc);
                 activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }

@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
+                activity.RecordException(exc);
                 if (exc is HttpRequestException)
                 {
                     if (exc.InnerException is SocketException exception)
