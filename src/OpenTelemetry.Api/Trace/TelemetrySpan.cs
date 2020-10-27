@@ -22,10 +22,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// <para>Span represents the execution of the certain span of code or span of time between two events which is part of
-    /// a distributed trace and has result of execution, context of execution and other properties.</para>
+    /// Span represents a single operation within a trace.
     /// </summary>
-    /// <remarks>Represents OpenTelemetry Span https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span.</remarks>
+    /// <remarks>TelemetrySpan is a wrapper around <see cref="Activity"/> class.</remarks>
     public class TelemetrySpan : IDisposable
     {
         internal static readonly TelemetrySpan NoopInstance = new TelemetrySpan(null);

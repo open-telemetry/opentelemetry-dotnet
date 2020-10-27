@@ -58,6 +58,43 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
+        [Fact]
+        public async Task StatusIsUnsetOn200Response()
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .AddProcessor(activityProcessor.Object)
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                // Act
+                var response = await client.GetAsync("/api/values");
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+
+            var status = activity.GetStatus();
+            Assert.Equal(status, Status.Unset);
+            Assert.False(status.IsOk);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

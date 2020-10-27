@@ -20,8 +20,8 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// Text format wire context propagator. Helps to extract and inject context from textual
-    /// representation (typically http headers or metadata collection).
+    /// Defines an interface for Propagator, which is used to read and write
+    /// context data from and to message exchanges by the applications.
     /// </summary>
     public interface IPropagator
     {
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Context.Propagation
         ISet<string> Fields { get; }
 
         /// <summary>
-        /// Injects textual representation of activity context to transmit over the wire.
+        /// Injects the context into a carrier.
         /// </summary>
         /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
         /// <param name="context">The default context to transmit over the wire.</param>
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Context.Propagation
         void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter);
 
         /// <summary>
-        /// Extracts activity context from textual representation.
+        /// Extracts the context from a carrier.
         /// </summary>
         /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
         /// <param name="context">The default context to be used if Extract fails.</param>
