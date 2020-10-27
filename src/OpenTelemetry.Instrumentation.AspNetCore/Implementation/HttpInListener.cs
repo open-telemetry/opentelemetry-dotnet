@@ -228,7 +228,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            if (activity.IsAllDataRequested && this.options.RecordException)
+            if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
@@ -245,7 +245,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
 
-                activity.RecordException(exc);
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
                 activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
