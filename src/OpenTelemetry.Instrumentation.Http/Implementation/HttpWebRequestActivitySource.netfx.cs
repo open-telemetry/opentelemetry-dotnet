@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 try
                 {
-                    Options.Enrich?.Invoke(activity, "AddRequestTagsAndInstrumentRequest", request);
+                    Options.Enrich?.Invoke(activity, "OnStartActivity", request);
                 }
                 catch (Exception ex)
                 {
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 try
                 {
-                    Options.Enrich?.Invoke(activity, "AddResponseTags", response);
+                    Options.Enrich?.Invoke(activity, "OnStopActivity", response);
                 }
                 catch (Exception ex)
                 {
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             try
             {
-                Options.Enrich?.Invoke(activity, "AddExceptionTags", exception);
+                Options.Enrich?.Invoke(activity, "OnException", exception);
             }
             catch (Exception ex)
             {

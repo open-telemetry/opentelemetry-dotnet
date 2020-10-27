@@ -790,7 +790,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             switch (method)
             {
-                case "AddRequestTagsAndInstrumentRequest":
+                case "OnStartActivity":
                     Assert.True(obj is HttpWebRequest);
                     VerifyHeaders(obj as HttpWebRequest);
 
@@ -801,11 +801,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                     break;
 
-                case "AddResponseTags":
+                case "OnStopActivity":
                     Assert.True(obj is HttpWebResponse);
                     break;
 
-                case "AddExceptionTags":
+                case "OnException":
                     Assert.True(obj is Exception);
                     break;
 
