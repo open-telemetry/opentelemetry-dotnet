@@ -137,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     isRemote: true),
                 default));
 
-            var activity = new Activity(HttpInListener.ActivityOperationName).AddBaggage("Stuff", "123");
+            var activity = new Activity(HttpInListener.ActivityOperationName);
             if (carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent")
             {
                 activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
@@ -226,8 +226,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-            Assert.Equal((int)StatusCode.Unset, span.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.Equal("OK", span.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+            Assert.Equal(Status.Unset, span.GetStatus());
+
+            // Instrumentation is not expected to set status description
+            // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+            Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
 
             var expectedUri = new Uri(url);
             var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);

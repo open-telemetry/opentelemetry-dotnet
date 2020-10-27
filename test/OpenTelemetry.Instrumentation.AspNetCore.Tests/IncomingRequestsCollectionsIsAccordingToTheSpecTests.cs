@@ -104,9 +104,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
-            Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            Assert.Equal((int)status.StatusCode, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            this.ValidateTagValue(activity, SpanAttributeConstants.StatusDescriptionKey, reasonPhrase);
+            if (statusCode == 503)
+            {
+                Assert.Equal(Status.Error, activity.GetStatus());
+            }
+            else
+            {
+                Assert.Equal(Status.Unset, activity.GetStatus());
+            }
+
+            // Instrumentation is not expected to set status description
+            // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+            Assert.True(string.IsNullOrEmpty(activity.GetStatus().Description));
+
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
         }
 
