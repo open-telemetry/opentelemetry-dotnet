@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
@@ -21,7 +22,22 @@ namespace OpenTelemetry.Metrics
 {
     internal class Int64BoundMeasureMetricSdk : BoundMeasureMetricSdkBase<long>
     {
-        private readonly Int64MeasureMinMaxSumCountAggregator measureAggregator = new Int64MeasureMinMaxSumCountAggregator();
+        private readonly Aggregator<long> measureAggregator;
+
+        internal Int64BoundMeasureMetricSdk(AggregationType aggregationType)
+        {
+            switch (aggregationType)
+            {
+                case AggregationType.Int64Summary:
+                    this.measureAggregator = new Int64MeasureMinMaxSumCountAggregator();
+                    break;
+                case AggregationType.Int64Distribution:
+                    this.measureAggregator = new Int64MeasureDistributionAggregator();
+                    break;
+                default:
+                    throw new NotSupportedException("Unrecognized AggregationType");
+            }
+        }
 
         public override void Record(in SpanContext context, long value)
         {

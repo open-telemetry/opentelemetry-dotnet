@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Metrics.Aggregators;
 using OpenTelemetry.Trace;
 
@@ -21,7 +22,22 @@ namespace OpenTelemetry.Metrics
 {
     internal class DoubleBoundMeasureMetricSdk : BoundMeasureMetricSdkBase<double>
     {
-        private readonly DoubleMeasureMinMaxSumCountAggregator measureAggregator = new DoubleMeasureMinMaxSumCountAggregator();
+        private readonly Aggregator<double> measureAggregator;
+
+        internal DoubleBoundMeasureMetricSdk(AggregationType aggregationType)
+        {
+            switch (aggregationType)
+            {
+                case AggregationType.DoubleSummary:
+                    this.measureAggregator = new DoubleMeasureMinMaxSumCountAggregator();
+                    break;
+                case AggregationType.DoubleDistribution:
+                    this.measureAggregator = new DoubleMeasureDistributionAggregator();
+                    break;
+                default:
+                    throw new NotSupportedException("Unrecognized AggregationType");
+            }
+        }
 
         public override void Record(in SpanContext context, double value)
         {

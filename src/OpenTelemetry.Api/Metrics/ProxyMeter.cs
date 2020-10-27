@@ -40,6 +40,16 @@ namespace OpenTelemetry.Metrics
             return this.realMeter != null ? this.realMeter.CreateDoubleMeasure(name, absolute) : NoopMeasureMetric<double>.Instance;
         }
 
+        public override MeasureMetric<double> CreateDoubleMeasure(
+            string name,
+            AggregationType aggregationType,
+            bool absolute = true)
+        {
+            return this.realMeter != null
+                ? this.realMeter.CreateDoubleMeasure(name, aggregationType, absolute)
+                : NoopMeasureMetric<double>.Instance;
+        }
+
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
             return this.realMeter != null ? this.realMeter.CreateDoubleObserver(name, callback, absolute) : NoopDoubleObserverMetric.Instance;
@@ -53,6 +63,16 @@ namespace OpenTelemetry.Metrics
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
             return this.realMeter != null ? this.realMeter.CreateInt64Measure(name, absolute) : NoopMeasureMetric<long>.Instance;
+        }
+
+        public override MeasureMetric<long> CreateInt64Measure(
+            string name,
+            AggregationType aggregationType,
+            bool absolute = true)
+        {
+            return this.realMeter != null
+                ? this.realMeter.CreateInt64Measure(name, aggregationType, absolute)
+                : NoopMeasureMetric<long>.Instance;
         }
 
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)

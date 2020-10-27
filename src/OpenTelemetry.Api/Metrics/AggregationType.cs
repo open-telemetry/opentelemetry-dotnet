@@ -37,5 +37,15 @@ namespace OpenTelemetry.Metrics
         /// Summary of measurements (Min, Max, Sum, Count), which is reported with OpenTelemetry.Metrics.Export.Int64SummaryData/>
         /// </summary>
         Int64Summary,
+
+        /// <summary>
+        /// Distribution of measurements, which is reported with OpenTelemetry.Metrics.Export.DoubleDistributionData/>
+        /// </summary>
+        DoubleDistribution,
+
+        /// <summary>
+        /// Summary of measurements (Min, Max, Sum, Count), which is reported with OpenTelemetry.Metrics.Export.Int64DistributionData/>
+        /// </summary>
+        Int64Distribution,
     }
 }

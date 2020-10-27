@@ -21,11 +21,18 @@ namespace OpenTelemetry.Metrics
         public DoubleMeasureMetricSdk(string name)
             : base(name)
         {
+            this.MetricAggregationType = AggregationType.DoubleSummary;
+        }
+
+        public DoubleMeasureMetricSdk(string name, AggregationType aggregationType)
+            : base(name)
+        {
+            this.MetricAggregationType = aggregationType;
         }
 
         protected override BoundMeasureMetricSdkBase<double> CreateMetric()
         {
-            return new DoubleBoundMeasureMetricSdk();
+            return new DoubleBoundMeasureMetricSdk(this.MetricAggregationType);
         }
     }
 }

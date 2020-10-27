@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
         public abstract CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true);
 
         /// <summary>
-        /// Creates Int64 Measure with given name.
+        /// Creates Int64 Measure with given name defaulting to Int64SummaryData aggregation.
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
@@ -49,12 +49,36 @@ namespace OpenTelemetry.Metrics
         public abstract MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true);
 
         /// <summary>
-        /// Creates double Measure with given name.
+        /// Creates Int64 Measure with given name and aggregation type.
+        /// </summary>
+        /// <param name="name">The name of the measure.</param>
+        /// <param name="aggregationType">The type of aggregation.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The measure instance.</returns>
+        public abstract MeasureMetric<long> CreateInt64Measure(
+            string name,
+            AggregationType aggregationType,
+            bool absolute = true);
+
+        /// <summary>
+        /// Creates double Measure with given name defaulting to DoubleSummaryData aggregation.
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
         /// <returns>The measure instance.</returns>
         public abstract MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true);
+
+        /// <summary>
+        /// Creates double Measure with given name and aggregation type.
+        /// </summary>
+        /// <param name="name">The name of the measure.</param>
+        /// <param name="aggregationType">The type of aggregation.</param>
+        /// <param name="absolute">indicates if only positive values are expected.</param>
+        /// <returns>The measure instance.</returns>
+        public abstract MeasureMetric<double> CreateDoubleMeasure(
+            string name,
+            AggregationType aggregationType,
+            bool absolute = true);
 
         /// <summary>
         /// Creates Int64 Observer with given name.
