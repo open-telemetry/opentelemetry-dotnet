@@ -231,10 +231,10 @@ OpenTelemetry samplers chose not to sample this activity.
    creation, as shown below.
 
     ```csharp
-    var initialTags = new List<KeyValuePair<string, string>>();
-
-    initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
-    initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
+    var initialTags = new ActivityTagsCollection();
+    
+    initialTags.Add("tag1", "tagValue1");
+    initialTags.Add("tag2", "tagValue2");
 
     var activity = activitySource.StartActivity(
         "ActivityName",
