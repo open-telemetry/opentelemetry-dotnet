@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* `B3Propagator` now supports the value `true` to be passed in for the header
+ `X-B3-Sampled`.
+ ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16
