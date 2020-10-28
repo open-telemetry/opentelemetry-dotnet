@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context.Propagation
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
-        private static readonly HashSet<string> SampledValues = new HashSet<string>() { SampledValue, LegacySampledValue };
+        private static readonly HashSet<string> SampledValues = new HashSet<string>(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
 
         private readonly bool singleHeader;
 
