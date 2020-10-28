@@ -5,7 +5,7 @@
 * Instrumentation for `HttpWebRequest` no longer store raw objects like
   `HttpWebRequest` in Activity.CustomProperty. To enrich activity, use the
   Enrich action on the instrumentation.
-  ([#1261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1407))
+  ([#1407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1407))
 
 ## 0.7.0-beta.1
 
