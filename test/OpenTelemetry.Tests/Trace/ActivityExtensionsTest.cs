@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.SetStatus(Status.Ok);
             activity?.Stop();
 
-            Assert.True(activity.GetStatus().IsOk);
+            Assert.Equal(Status.Ok, activity.GetStatus());
         }
 
         [Fact]
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.SetStatus(Status.Ok);
             activity?.Stop();
 
-            Assert.True(activity.GetStatus().IsOk);
+            Assert.Equal(Status.Ok, activity.GetStatus());
         }
 
         [Fact]

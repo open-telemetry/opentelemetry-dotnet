@@ -29,15 +29,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
-        private static readonly Dictionary<string, int> RemoteEndpointServiceNameKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-        {
-            [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
-            ["peer.hostname"] = 1,
-            ["peer.address"] = 1,
-            [SemanticConventions.AttributeHttpHost] = 2, // RemoteEndpoint.ServiceName for Http.
-            [SemanticConventions.AttributeDbInstance] = 2, // RemoteEndpoint.ServiceName for Redis.
-        };
-
         private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
 
 #if !NET452
@@ -76,29 +67,19 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             ZipkinEndpoint remoteEndpoint = null;
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
-                var hostNameOrIpAddress = tagState.HostName ?? tagState.IpAddress;
+                PeerServiceResolver.Resolve(ref tagState, out string peerServiceName, out bool addAsTag);
 
-                if ((tagState.RemoteEndpointServiceName == null || tagState.RemoteEndpointServiceNamePriority > 0)
-                    && hostNameOrIpAddress != null)
+                if (peerServiceName != null)
                 {
 #if !NET452
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((hostNameOrIpAddress, tagState.Port), ZipkinEndpoint.Create);
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((peerServiceName, default), ZipkinEndpoint.Create);
 #else
-                    var remoteEndpointStr = tagState.Port != default
-                        ? $"{hostNameOrIpAddress}:{tagState.Port}"
-                        : hostNameOrIpAddress;
-
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(remoteEndpointStr, ZipkinEndpoint.Create);
+                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(peerServiceName, ZipkinEndpoint.Create);
 #endif
-                }
-
-                if (remoteEndpoint == null && tagState.RemoteEndpointServiceName != null)
-                {
-#if !NET452
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd((tagState.RemoteEndpointServiceName, default), ZipkinEndpoint.Create);
-#else
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(tagState.RemoteEndpointServiceName, ZipkinEndpoint.Create);
-#endif
+                    if (addAsTag)
+                    {
+                        PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>(SemanticConventions.AttributePeerService, peerServiceName));
+                    }
                 }
             }
 
@@ -171,19 +152,19 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             };
         }
 
-        internal struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
+        internal struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 
-            public string RemoteEndpointServiceName;
+            public string PeerService { get; set; }
 
-            public int RemoteEndpointServiceNamePriority;
+            public int? PeerServicePriority { get; set; }
 
-            public string HostName;
+            public string HostName { get; set; }
 
-            public string IpAddress;
+            public string IpAddress { get; set; }
 
-            public int Port;
+            public long Port { get; set; }
 
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
@@ -192,39 +173,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     return true;
                 }
 
+                string key = activityTag.Key;
+
                 if (activityTag.Value is string strVal)
                 {
-                    string key = activityTag.Key;
-                    if (RemoteEndpointServiceNameKeyResolutionDictionary.TryGetValue(key, out int priority)
-                        && (this.RemoteEndpointServiceName == null || priority < this.RemoteEndpointServiceNamePriority))
-                    {
-                        this.RemoteEndpointServiceName = strVal;
-                        this.RemoteEndpointServiceNamePriority = priority;
-                    }
-                    else if (key == SemanticConventions.AttributeNetPeerName)
-                    {
-                        this.HostName = strVal;
-                    }
-                    else if (key == SemanticConventions.AttributeNetPeerIp)
-                    {
-                        this.IpAddress = strVal;
-                    }
-                    else if (key == SemanticConventions.AttributeNetPeerPort && int.TryParse(strVal, out var port))
-                    {
-                        this.Port = port;
-                    }
-
-                    PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>(key, strVal));
+                    PeerServiceResolver.InspectTag(ref this, key, strVal);
                 }
-                else
+                else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
                 {
-                    if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
-                    {
-                        this.Port = intVal;
-                    }
-
-                    PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, activityTag);
+                    PeerServiceResolver.InspectTag(ref this, key, intVal);
                 }
+
+                PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, activityTag);
 
                 return true;
             }

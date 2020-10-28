@@ -60,11 +60,6 @@ namespace OpenTelemetry.Trace
         public string Description { get; }
 
         /// <summary>
-        /// Gets a value indicating whether span completed successfully.
-        /// </summary>
-        public bool IsOk => this.StatusCode == StatusCode.Ok;
-
-        /// <summary>
         /// Compare two <see cref="Status"/> for equality.
         /// </summary>
         /// <param name="status1">First Status to compare.</param>
