@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Removed `IsValid` property from `Status`
+  ([#1415](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1415))
 * Removed `IsOk` property from `Status` and fixed `StatusCode` enum values
   ([#1414](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1414))
 
