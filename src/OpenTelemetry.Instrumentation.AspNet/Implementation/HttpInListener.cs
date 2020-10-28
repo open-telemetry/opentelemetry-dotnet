@@ -171,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
                 }
                 catch (Exception ex)
                 {
