@@ -75,20 +75,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void GetStatusWithNoStatusInActivity()
-        {
-            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
-                .Build();
-
-            using var source = new ActivitySource(ActivitySourceName);
-            using var activity = source.StartActivity(ActivityName);
-            activity?.Stop();
-
-            Assert.False(activity.GetStatus().IsValid);
-        }
-
-        [Fact]
         public void LastSetStatusWins()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
