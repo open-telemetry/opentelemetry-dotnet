@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Record `Exception` in AspNetCore instrumentation based on `RecordException` in
+  `AspNetCoreInstrumentationOptions`
+  ([#1408](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1408))
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16

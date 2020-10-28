@@ -29,13 +29,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.AspNetCore.Request";
-        public const string ResponseCustomPropertyName = "OTel.AspNetCore.Response";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
@@ -173,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 else
                 {
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                    activity.SetStatus(status);
                 }
             }
 
@@ -224,6 +223,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // private readonly PropertyFetcher beforActionRouteDataFetcher = new PropertyFetcher("routeData");
                     // var routeData = this.beforActionRouteDataFetcher.Fetch(payload) as RouteData;
                 }
+            }
+        }
+
+        public override void OnException(Activity activity, object payload)
+        {
+            if (activity.IsAllDataRequested)
+            {
+                if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
+                    return;
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 
