@@ -181,6 +181,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             TagEnumerationState otlpTags = default;
             activity.EnumerateTags(ref otlpTags);
+
+            if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
+            {
+                PeerServiceResolver.Resolve(ref otlpTags, out string peerServiceName, out bool addAsTag);
+
+                if (peerServiceName != null && addAsTag)
+                {
+                    PooledList<OtlpCommon.KeyValue>.Add(
+                        ref otlpTags.Tags,
+                        new OtlpCommon.KeyValue
+                        {
+                            Key = SemanticConventions.AttributePeerService,
+                            Value = new OtlpCommon.AnyValue { StringValue = peerServiceName },
+                        });
+                }
+            }
+
             if (otlpTags.Created)
             {
                 otlpSpan.Attributes.AddRange(otlpTags.Tags);
@@ -435,7 +452,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return new OtlpCommon.KeyValue { Key = key, Value = value };
         }
 
-        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
+        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
         {
             public bool Created;
 
@@ -445,6 +462,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             public string StatusDescription;
 
+            public string PeerService { get; set; }
+
+            public int? PeerServicePriority { get; set; }
+
+            public string HostName { get; set; }
+
+            public string IpAddress { get; set; }
+
+            public long Port { get; set; }
+
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
                 if (activityTag.Value == null)
@@ -452,7 +479,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     return true;
                 }
 
-                switch (activityTag.Key)
+                var key = activityTag.Key;
+
+                switch (key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
                         this.StatusCode = activityTag.Value as int?;
@@ -471,50 +500,52 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 switch (activityTag.Value)
                 {
                     case string s:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = s }));
+                        PeerServiceResolver.InspectTag(ref this, key, s);
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = s }));
                         break;
                     case bool b:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { BoolValue = b }));
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { BoolValue = b }));
                         break;
                     case int i:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = i }));
+                        PeerServiceResolver.InspectTag(ref this, key, i);
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = i }));
                         break;
                     case long l:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = l }));
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = l }));
                         break;
                     case double d:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { DoubleValue = d }));
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = d }));
                         break;
                     case int[] intArray:
                         foreach (var item in intArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { IntValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
                         }
 
                         break;
                     case double[] doubleArray:
                         foreach (var item in doubleArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { DoubleValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = item }));
                         }
 
                         break;
                     case bool[] boolArray:
                         foreach (var item in boolArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { BoolValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { BoolValue = item }));
                         }
 
                         break;
                     case string[] stringArray:
                         foreach (var item in stringArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = item }));
                         }
 
                         break;
                     default:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(activityTag.Key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));
                         break;
                 }
 
