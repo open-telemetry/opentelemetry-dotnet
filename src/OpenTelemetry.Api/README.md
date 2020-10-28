@@ -233,8 +233,8 @@ OpenTelemetry samplers chose not to sample this activity.
     ```csharp
     var initialTags = new ActivityTagsCollection();
 
-    initialTags.Add("tag1", "tagValue1");
-    initialTags.Add("tag2", "tagValue2");
+    initialTags["tag1"] = "tagValue1";
+    initialTags["tag2"] = "tagValue2";
 
     var activity = activitySource.StartActivity(
         "ActivityName",
