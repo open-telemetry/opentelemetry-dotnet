@@ -45,12 +45,13 @@ namespace OpenTelemetry.Context.Propagation
 
         // Some old zipkin implementations may send true/false for the sampled header. Only use this for checking incoming values.
         internal const string LegacySampledValue = "true";
-        private static readonly HashSet<string> SampledValues = new HashSet<string>() { SampledValue, LegacySampledValue };
 
         // "Debug" sampled value.
         internal const string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
+
+        private static readonly HashSet<string> SampledValues = new HashSet<string>() { SampledValue, LegacySampledValue };
 
         private readonly bool singleHeader;
 
