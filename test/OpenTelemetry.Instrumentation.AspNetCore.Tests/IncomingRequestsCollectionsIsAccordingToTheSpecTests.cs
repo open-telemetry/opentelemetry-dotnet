@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -47,11 +48,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [InlineData("/api/values", "user-agent", 503, "503")]
         [InlineData("/api/values", null, 503, null)]
         [InlineData("/api/exception", null, 503, null)]
+        [InlineData("/api/exception", null, 503, null, true)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(
             string urlPath,
             string userAgent,
             int statusCode,
-            string reasonPhrase)
+            string reasonPhrase,
+            bool recordException = false)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -61,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
                         .AddProcessor(processor.Object));
                     }))
                 .CreateClient())
@@ -125,7 +128,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Equal("exception description", activity.GetStatus().Description);
             }
 
+            if (recordException)
+            {
+                Assert.Single(activity.Events);
+                Assert.Equal("exception", activity.Events.First().Name);
+            }
+
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+
+            activity.Dispose();
+            processor.Object.Dispose();
         }
 
         private void ValidateTagValue(Activity activity, string attribute, string expectedValue)
