@@ -104,6 +104,28 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
+        public void ParseTrueSampled()
+        {
+            var headersSampled = new Dictionary<string, string>
+            {
+                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "true" },
+            };
+            var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true);
+            Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersSampled, Getter));
+        }
+
+        [Fact]
+        public void ParseFalseSampled()
+        {
+            var headersNotSampled = new Dictionary<string, string>
+            {
+                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "false" },
+            };
+            var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
+            Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersNotSampled, Getter));
+        }
+
+        [Fact]
         public void ParseFlag()
         {
             var headersFlagSampled = new Dictionary<string, string>
