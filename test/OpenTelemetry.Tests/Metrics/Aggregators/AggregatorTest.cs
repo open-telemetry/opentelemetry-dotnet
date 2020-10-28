@@ -28,11 +28,11 @@ namespace OpenTelemetry.Metrics.Tests
             // create an aggregator
             var aggregator = new Int64CounterSumAggregator();
             aggregator.Update(1);
-            Thread.Sleep(TimeSpan.FromMilliseconds(2));
+            Thread.Sleep(TimeSpan.FromMilliseconds(1));
             aggregator.Checkpoint();
             var metricData = aggregator.ToMetricData();
             aggregator.Update(2);
-            Thread.Sleep(TimeSpan.FromMilliseconds(2));
+            Thread.Sleep(TimeSpan.FromMilliseconds(1));
             aggregator.Checkpoint();
             var otherMetricData = aggregator.ToMetricData();
 
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(DateTime.Compare(metricData.Timestamp, otherMetricData.StartTimestamp) < 0);
             Assert.True(
                 DateTime.Compare(
-                    metricData.Timestamp.Add(TimeSpan.FromMilliseconds(1)),
+                    metricData.Timestamp.Add(TimeSpan.FromTicks(1)),
                     otherMetricData.StartTimestamp) == 0);
             Assert.True(DateTime.Compare(otherMetricData.StartTimestamp, otherMetricData.Timestamp) < 0);
         }
