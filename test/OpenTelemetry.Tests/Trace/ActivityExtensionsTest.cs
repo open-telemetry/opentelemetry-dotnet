@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activity = source.StartActivity(ActivityName);
             activity?.Stop();
 
-            Assert.False(activity.GetStatus().IsValid);
+            Assert.Equal(Status.Unset, activity.GetStatus());
         }
 
         [Fact]

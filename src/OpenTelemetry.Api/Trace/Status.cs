@@ -40,14 +40,7 @@ namespace OpenTelemetry.Trace
         {
             this.StatusCode = statusCode;
             this.Description = description;
-            this.IsValid = true;
         }
-
-        /// <summary>
-        /// Gets a value indicating whether this is a valid-to-use status.
-        /// Only status instances created with a CanonicalCode (optional Description) are considered valid.
-        /// </summary>
-        public bool IsValid { get; }
 
         /// <summary>
         /// Gets the canonical code from this status.
@@ -97,7 +90,7 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (Status)obj;
-            return this.IsValid == that.IsValid && this.StatusCode == that.StatusCode && this.Description == that.Description;
+            return this.StatusCode == that.StatusCode && this.Description == that.Description;
         }
 
         /// <inheritdoc/>
@@ -122,7 +115,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public bool Equals(Status other)
         {
-            return this.IsValid == other.IsValid && this.StatusCode == other.StatusCode && this.Description == other.Description;
+            return this.StatusCode == other.StatusCode && this.Description == other.Description;
         }
     }
 }
