@@ -165,15 +165,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
+#if NETSTANDARD2_1
                 if (TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
                 else
                 {
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activity.SetStatus(status);
+                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
                 }
+#else
+                SetStatusFromHttpStatusCode(activity, response.StatusCode);
+#endif
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
@@ -289,6 +292,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
+        private static void SetStatusFromHttpStatusCode(Activity activity, int statusCode)
+        {
+            var status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
+            activity.SetStatus(status);
+        }
+
+#if NETSTANDARD2_1
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
             grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
@@ -312,5 +322,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
+#endif
     }
 }
