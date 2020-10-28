@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -28,21 +29,27 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests : IDisposable
     {
-        private readonly GrpcFixture<GreeterService> fixture;
+        private readonly GrpcServer<GreeterService> server;
 
-        public GrpcTests(GrpcFixture<GreeterService> fixture)
+        public GrpcTests()
         {
-            this.fixture = fixture;
+            this.server = new GrpcServer<GreeterService>();
         }
 
         [Fact]
         public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes()
         {
+            var processor = new Mock<BaseProcessor<Activity>>();
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build();
+
             var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
-            var uri = new Uri($"http://localhost:{this.fixture.Port}");
-            var processor = this.fixture.GrpcServerSpanProcessor;
+            var uri = new Uri($"http://localhost:{this.server.Port}");
 
             using var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
@@ -63,15 +70,20 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
-            Assert.Equal($"localhost:{this.fixture.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
-            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
             Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+        }
+
+        public void Dispose()
+        {
+            this.server.Dispose();
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
