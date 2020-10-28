@@ -226,15 +226,17 @@ OpenTelemetry samplers chose not to sample this activity.
 
    `Tags` in `Activity` represents the OpenTelemetry [Span
    Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes).
-   Earlier sample showed the usage of `SetTag` method of `Activity` to add
-   tags. It is also possible to provide an initial set of tags during activity
-   creation, as shown below.
+   Earlier sample showed the usage of `SetTag` method of `Activity` to add tags.
+   Refer to the
+   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attribute-and-label-naming)
+   for best practices on naming tags. It is also possible to provide an initial
+   set of tags during activity creation, as shown below.
 
     ```csharp
-    var initialTags = new List<KeyValuePair<string, string>>();
+    var initialTags = new ActivityTagsCollection();
 
-    initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
-    initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
+    initialTags["com.mycompany.product.mytag1"] = "tagValue1";
+    initialTags["com.mycompany.product.mytag2"] = "tagValue2";
 
     var activity = activitySource.StartActivity(
         "ActivityName",
