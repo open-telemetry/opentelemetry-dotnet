@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -292,6 +293,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetStatusFromHttpStatusCode(Activity activity, int statusCode)
         {
             var status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
@@ -299,12 +301,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         }
 
 #if NETSTANDARD2_1
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
             grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
             return !string.IsNullOrEmpty(grpcMethod);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
