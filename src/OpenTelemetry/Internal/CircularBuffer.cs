@@ -94,6 +94,7 @@ namespace OpenTelemetry.Internal
                 var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
                 if (head != headSnapshot)
                 {
+                    Thread.Yield();
                     continue;
                 }
 
@@ -141,6 +142,7 @@ namespace OpenTelemetry.Internal
                         return false; // exceeded maximum spin count
                     }
 
+                    Thread.Yield();
                     continue;
                 }
 
