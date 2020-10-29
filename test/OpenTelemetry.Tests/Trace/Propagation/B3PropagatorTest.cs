@@ -81,23 +81,28 @@ namespace OpenTelemetry.Context.Propagation.Tests
             Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headersNotSampled, Getter));
         }
 
-        [Fact]
-        public void ParseSampled()
+        [Theory]
+        [InlineData("1")]
+        [InlineData("true")]
+        public void ParseSampled(string sampledValue)
         {
             var headersSampled = new Dictionary<string, string>
             {
-                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "1" },
+                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, sampledValue },
             };
             var activityContext = new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersSampled, Getter));
         }
 
-        [Fact]
-        public void ParseZeroSampled()
+        [Theory]
+        [InlineData("0")]
+        [InlineData("false")]
+        [InlineData("something_else")]
+        public void ParseNotSampled(string sampledValue)
         {
             var headersNotSampled = new Dictionary<string, string>
             {
-                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, "0" },
+                { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 }, { B3Propagator.XB3Sampled, sampledValue },
             };
             var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
             Assert.Equal(new PropagationContext(activityContext, default), this.b3propagator.Extract(default, headersNotSampled, Getter));

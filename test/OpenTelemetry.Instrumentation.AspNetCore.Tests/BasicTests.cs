@@ -92,7 +92,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var status = activity.GetStatus();
             Assert.Equal(status, Status.Unset);
-            Assert.False(status.IsOk);
         }
 
         [Theory]

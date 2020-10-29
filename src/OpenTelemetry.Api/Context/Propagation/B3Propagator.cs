@@ -40,13 +40,18 @@ namespace OpenTelemetry.Context.Propagation
         // ActivityTraceId.SIZE hex characters (8-bytes traceId) in the past.
         internal const string UpperTraceId = "0000000000000000";
 
-        // Sampled value via the X_B3_SAMPLED header.
+        // Sampled values via the X_B3_SAMPLED header.
         internal const string SampledValue = "1";
+
+        // Some old zipkin implementations may send true/false for the sampled header. Only use this for checking incoming values.
+        internal const string LegacySampledValue = "true";
 
         // "Debug" sampled value.
         internal const string FlagsValue = "1";
 
         private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
+
+        private static readonly HashSet<string> SampledValues = new HashSet<string>(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
 
         private readonly bool singleHeader;
 
@@ -180,7 +185,7 @@ namespace OpenTelemetry.Context.Propagation
                 }
 
                 var traceOptions = ActivityTraceFlags.None;
-                if (SampledValue.Equals(getter(carrier, XB3Sampled)?.FirstOrDefault(), StringComparison.Ordinal)
+                if (SampledValues.Contains(getter(carrier, XB3Sampled)?.FirstOrDefault())
                     || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
                 {
                     traceOptions |= ActivityTraceFlags.Recorded;
@@ -239,7 +244,7 @@ namespace OpenTelemetry.Context.Propagation
                 if (parts.Length > 2)
                 {
                     var traceFlagsStr = parts[2];
-                    if (SampledValue.Equals(traceFlagsStr, StringComparison.Ordinal)
+                    if (SampledValues.Contains(traceFlagsStr)
                         || FlagsValue.Equals(traceFlagsStr, StringComparison.Ordinal))
                     {
                         traceOptions |= ActivityTraceFlags.Recorded;

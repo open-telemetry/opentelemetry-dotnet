@@ -27,13 +27,13 @@ namespace OpenTelemetry.Trace
         Unset = 0,
 
         /// <summary>
-        /// The operation contains an error.
-        /// </summary>
-        Error = 1,
-
-        /// <summary>
         /// The operation completed successfully.
         /// </summary>
-        Ok = 2,
+        Ok = 1,
+
+        /// <summary>
+        /// The operation contains an error.
+        /// </summary>
+        Error = 2,
     }
 }

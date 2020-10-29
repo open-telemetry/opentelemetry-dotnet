@@ -29,7 +29,7 @@ message TraceConfig {
   oneof sampler {
     ConstantSampler constant_sampler = 1;
 
-    ProbabilitySampler probability_sampler = 2;
+    TraceIdRatioBased trace_id_ratio_based = 2;
 
     RateLimitingSampler rate_limiting_sampler = 3;
   }
@@ -64,11 +64,11 @@ message ConstantSampler {
   ConstantDecision decision = 1;
 }
 
-// Sampler that tries to uniformly sample traces with a given probability.
-// The probability of sampling a trace is equal to that of the specified probability.
-message ProbabilitySampler {
-  // The desired probability of sampling. Must be within [0.0, 1.0].
-  double samplingProbability = 1;
+// Sampler that tries to uniformly sample traces with a given ratio.
+// The ratio of sampling a trace is equal to that of the specified ratio.
+message TraceIdRatioBased {
+  // The desired ratio of sampling. Must be within [0.0, 1.0].
+  double samplingRatio = 1;
 }
 
 // Sampler that tries to sample with a rate per time window.
