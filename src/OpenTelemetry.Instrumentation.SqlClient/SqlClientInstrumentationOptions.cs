@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Concurrent;
 using System.Data;
@@ -55,6 +56,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action to enrich an Activity.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="Activity"/>: the activity being enriched.</para>
+        /// <para>string: the name of the event.</para>
+        /// <para>object: the raw object from which additional information can be extracted to enrich the activity.
+        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// </remarks>
+        public Action<Activity, string, object> Enrich { get; set; }
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {

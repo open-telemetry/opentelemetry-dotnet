@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* Instrumentation no longer store raw objects like `HttpRequest` in
+  Activity.CustomProperty. To enrich activity, use the Enrich action on the
+  instrumentation.
+  ([#1261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1261))
+* Span Status is populated as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
@@ -10,8 +21,8 @@ Released 2020-Sep-15
 
 Released 2020-08-28
 
-* Added Filter public API on AspNetInstrumentationOptions to allow
-  filtering of instrumentation based on HttpContext.
+* Added Filter public API on AspNetInstrumentationOptions to allow filtering of
+  instrumentation based on HttpContext.
 
 * Asp.Net Instrumentation automatically populates HttpRequest, HttpResponse in
   Activity custom property

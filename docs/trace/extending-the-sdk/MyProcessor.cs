@@ -17,9 +17,8 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
 
-internal class MyProcessor : ActivityProcessor
+internal class MyProcessor : BaseProcessor<Activity>
 {
     private readonly string name;
 

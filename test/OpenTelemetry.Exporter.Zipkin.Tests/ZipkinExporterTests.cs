@@ -22,7 +22,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -104,11 +103,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     endCalledCount++;
                 };
 
-            var exporterOptions = new ZipkinExporterOptions();
-            exporterOptions.ServiceName = "test-zipkin";
-            exporterOptions.Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}");
+            var exporterOptions = new ZipkinExporterOptions
+            {
+                ServiceName = "test-zipkin",
+                Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
+            };
             var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchExportActivityProcessor(zipkinExporter);
+            var exportActivityProcessor = new BatchExportProcessor<Activity>(zipkinExporter);
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -132,9 +133,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void IntegrationTest(bool useShortTraceIds)
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public void IntegrationTest(bool useShortTraceIds, bool useTestResource)
         {
             Guid requestId = Guid.NewGuid();
 
@@ -145,8 +147,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     UseShortTraceIds = useShortTraceIds,
                 });
 
+            var serviceName = ZipkinExporterOptions.DefaultServiceName;
+            var resoureTags = string.Empty;
             var activity = CreateTestActivity();
-            var processor = new SimpleExportActivityProcessor(exporter);
+            if (useTestResource)
+            {
+                serviceName = "MyService";
+
+                activity.SetResource(new Resource(new Dictionary<string, object>
+                {
+                    [Resource.ServiceNameKey] = serviceName,
+                    ["service.tag"] = "hello world",
+                }));
+
+                resoureTags = "\"service.tag\":\"hello world\",";
+            }
+
+            var processor = new SimpleExportProcessor<Activity>(exporter);
 
             processor.OnEnd(activity);
 
@@ -169,7 +186,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""OpenTelemetry Exporter""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""True"",""http.host"":""http://localhost:44312/"",""library.name"":""CreateTestActivity""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",""parentId"":""{ZipkinActivityConversionExtensions.EncodeSpanId(activity.ParentSpanId)}"",""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""True"",""http.host"":""http://localhost:44312/"",""library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""}}}}]",
                 Responses[requestId]);
         }
 

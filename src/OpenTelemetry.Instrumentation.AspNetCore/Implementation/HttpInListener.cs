@@ -29,13 +29,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.AspNetCore.Request";
-        public const string ResponseCustomPropertyName = "OTel.AspNetCore.Response";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
-            HttpContext context = this.startContextFetcher.Fetch(payload);
+            _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -80,15 +79,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var request = context.Request;
             if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
             {
-                var parentContext = new ActivityContext(
-                    activity.Context.TraceId,
-                    activity.ParentSpanId,
-                    activity.Context.TraceFlags,
-                    activity.Context.TraceState,
-                    true);
                 var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != parentContext)
+                if (ctx.ActivityContext.IsValid()
+                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
@@ -112,7 +106,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
@@ -144,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                HttpContext context = this.stopContextFetcher.Fetch(payload);
+                _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
@@ -152,7 +153,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
-                activity.SetCustomProperty(ResponseCustomPropertyName, response);
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 if (TryGetGrpcMethod(activity, out var grpcMethod))
@@ -162,11 +172,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 else
                 {
                     Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activity.SetStatus(status.WithDescription(response.HttpContext.Features.Get<IHttpResponseFeature>()?.ReasonPhrase));
+                    activity.SetStatus(status);
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
@@ -198,9 +208,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // The reason to use reflection is to avoid a reference on MVC package.
                     // This package can be used with non-MVC apps and this logic simply wouldn't run.
                     // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    var actionDescriptor = this.beforeActionActionDescriptorFetcher.Fetch(payload);
-                    var attributeRouteInfo = this.beforeActionAttributeRouteInfoFetcher.Fetch(actionDescriptor);
-                    var template = this.beforeActionTemplateFetcher.Fetch(attributeRouteInfo);
+                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
+                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
+                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
 
                     if (!string.IsNullOrEmpty(template))
                     {
@@ -213,6 +223,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // private readonly PropertyFetcher beforActionRouteDataFetcher = new PropertyFetcher("routeData");
                     // var routeData = this.beforActionRouteDataFetcher.Fetch(payload) as RouteData;
                 }
+            }
+        }
+
+        public override void OnException(Activity activity, object payload)
+        {
+            if (activity.IsAllDataRequested)
+            {
+                if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
+                    return;
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 
@@ -273,9 +311,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
-
-            // Remove the grpc.method tag added by the gRPC .NET library
-            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
         }
     }
 }

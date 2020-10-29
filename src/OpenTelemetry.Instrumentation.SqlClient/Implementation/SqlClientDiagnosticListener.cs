@@ -75,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        var command = this.commandFetcher.Fetch(payload);
+                        _ = this.commandFetcher.TryFetch(payload, out var command);
                         if (command == null)
                         {
                             SqlClientInstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
@@ -85,20 +85,28 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                         if (activity.IsAllDataRequested)
                         {
-                            var connection = this.connectionFetcher.Fetch(command);
-                            var database = this.databaseFetcher.Fetch(connection);
+                            _ = this.connectionFetcher.TryFetch(command, out var connection);
+                            _ = this.databaseFetcher.TryFetch(connection, out var database);
 
                             activity.DisplayName = (string)database;
-                            activity.SetCustomProperty(CommandCustomPropertyName, command);
-                            var dataSource = this.dataSourceFetcher.Fetch(connection);
-                            var commandText = this.commandTextFetcher.Fetch(command);
+                            try
+                            {
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
+                            }
+
+                            _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
+                            _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
                             activity.SetTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
 
-                            if (this.commandTypeFetcher.Fetch(command) is CommandType commandType)
+                            if (this.commandTypeFetcher.TryFetch(command, out CommandType commandType))
                             {
                                 switch (commandType)
                                 {
@@ -147,7 +155,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         {
                             if (activity.IsAllDataRequested)
                             {
-                                activity.SetStatus(Status.Ok);
+                                activity.SetStatus(Status.Unset);
                             }
                         }
                         finally
@@ -175,9 +183,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         {
                             if (activity.IsAllDataRequested)
                             {
-                                if (this.exceptionFetcher.Fetch(payload) is Exception exception)
+                                if (this.exceptionFetcher.TryFetch(payload, out Exception exception) && exception != null)
                                 {
-                                    activity.SetStatus(Status.Unknown.WithDescription(exception.Message));
+                                    activity.SetStatus(Status.Error.WithDescription(exception.Message));
                                 }
                                 else
                                 {

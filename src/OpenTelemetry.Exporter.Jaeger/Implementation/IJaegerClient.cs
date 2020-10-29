@@ -15,8 +15,6 @@
 // </copyright>
 using System;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -30,8 +28,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         void Close();
 
-        ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default);
+        int Send(byte[] buffer);
 
-        ValueTask<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default);
+        int Send(byte[] buffer, int offset, int count);
     }
 }

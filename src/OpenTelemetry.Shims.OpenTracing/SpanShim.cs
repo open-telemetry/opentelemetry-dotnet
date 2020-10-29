@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using global::OpenTracing;
-using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -207,7 +206,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
             {
-                this.Span.SetStatus(value ? Trace.Status.Unknown : Trace.Status.Ok);
+                this.Span.SetStatus(value ? Trace.Status.Error : Trace.Status.Ok);
             }
             else
             {

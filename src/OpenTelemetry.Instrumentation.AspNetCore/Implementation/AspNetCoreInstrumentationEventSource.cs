@@ -49,10 +49,25 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.WriteEvent(2, eventName);
         }
 
-        [Event(3, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
+        [Event(3, Message = "Filter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
         public void RequestFilterException(string exception)
         {
             this.WriteEvent(3, exception);
+        }
+
+        [NonEvent]
+        public void EnrichmentException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EnrichmentException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(4, Message = "Enrich threw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void EnrichmentException(string exception)
+        {
+            this.WriteEvent(4, exception);
         }
     }
 }

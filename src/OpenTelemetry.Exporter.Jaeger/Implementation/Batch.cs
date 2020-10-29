@@ -13,11 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
@@ -49,14 +48,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        internal void Write(TProtocol oprot)
         {
             oprot.IncrementRecursionDepth();
             try
             {
                 var struc = new TStruct("Batch");
 
-                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
+                oprot.WriteStructBegin(struc);
 
                 var field = new TField
                 {
@@ -65,29 +64,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.Transport.WriteAsync(this.Process.Message, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.Transport.Write(this.Process.Message);
+                oprot.WriteFieldEnd();
 
                 field.Name = "spans";
                 field.Type = TType.List;
                 field.ID = 2;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
                 {
-                    await oprot.WriteListBeginAsync(new TList(TType.Struct, this.spanMessages.Count), cancellationToken).ConfigureAwait(false);
+                    oprot.WriteListBegin(new TList(TType.Struct, this.spanMessages.Count));
 
                     foreach (var s in this.spanMessages)
                     {
-                        await oprot.Transport.WriteAsync(s.BufferWriter.Buffer, s.Offset, s.Count, cancellationToken).ConfigureAwait(false);
+                        oprot.Transport.Write(s.BufferWriter.Buffer, s.Offset, s.Count);
                     }
 
-                    await oprot.WriteListEndAsync(cancellationToken).ConfigureAwait(false);
+                    oprot.WriteListEnd();
                 }
 
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldEnd();
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
             }
             finally
             {

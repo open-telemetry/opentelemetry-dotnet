@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.client.Close();
         }
 
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+        public override int Flush()
         {
             // GetBuffer returns the underlying storage, which saves an allocation over ToArray.
             if (!this.byteStream.TryGetBuffer(out var buffer))
@@ -57,12 +57,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (buffer.Count == 0)
             {
-                return;
+                return 0;
             }
 
             try
             {
-                await this.client.SendAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken).ConfigureAwait(false);
+                return this.client.Send(buffer.Array, buffer.Offset, buffer.Count);
             }
             catch (SocketException se)
             {
@@ -78,26 +78,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
+        public override void Write(byte[] buffer, int offset, int length)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
-        {
-#if NETSTANDARD2_1
-            await this.byteStream.WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
-#else
-            await this.byteStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
-#endif
+            this.byteStream.Write(buffer, offset, length);
         }
 
         public override string ToString()

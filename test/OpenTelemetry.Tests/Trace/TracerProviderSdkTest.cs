@@ -42,10 +42,7 @@ namespace OpenTelemetry.Trace.Tests
             using (var rootActivity = activitySource.StartActivity("root"))
             {
                 Assert.NotNull(rootActivity);
-
-                // Known issue: https://github.com/dotnet/runtime/issues/42456
-                // hence rootActivity.ParentSpanId == default, may not be true.
-                Assert.True(rootActivity.ParentSpanId == default || rootActivity.ParentSpanId.ToHexString() == default(ActivitySpanId).ToHexString());
+                Assert.True(rootActivity.ParentSpanId == default);
 
                 // Validate that the TraceId seen by Sampler is same as the
                 // Activity when it got created.

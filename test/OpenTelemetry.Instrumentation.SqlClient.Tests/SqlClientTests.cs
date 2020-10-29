@@ -71,6 +71,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.Text, "select 1/1", false, true)]
 #endif
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
+        [InlineData(CommandType.Text, "select 1/0", false, false, true, false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
         public void SuccessfulCommandTest(
@@ -78,15 +79,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             string commandText,
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent = false,
-            bool isFailure = false)
+            bool isFailure = false,
+            bool shouldEnrich = true)
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
+                    if (shouldEnrich)
+                    {
+                        options.Enrich = ActivityEnrichment;
+                    }
                 })
                 .Build();
 
@@ -120,27 +126,36 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         [Theory]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false, false)]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.Text, "select * from sys.databases", true, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.Text, "select * from sys.databases", true, false, false)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", false, true)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", false, true, false)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true, false)]
         public void SqlClientCallsAreCollectedSuccessfully(
             string beforeCommand,
             string afterCommand,
             CommandType commandType,
             string commandText,
             bool captureStoredProcedureCommandName,
-            bool captureTextCommandContent)
+            bool captureTextCommandContent,
+            bool shouldEnrich = true)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
                         {
                             opt.SetTextCommandContent = captureTextCommandContent;
                             opt.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
+                            if (shouldEnrich)
+                            {
+                                opt.Enrich = ActivityEnrichment;
+                            }
                         })
                     .AddProcessor(processor.Object)
                     .Build())
@@ -174,20 +189,35 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
 
-            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, captureStoredProcedureCommandName, captureTextCommandContent, false, sqlConnection.DataSource, (Activity)processor.Invocations[1].Arguments[0]);
+            VerifyActivityData(
+                sqlCommand.CommandType,
+                sqlCommand.CommandText,
+                captureStoredProcedureCommandName,
+                captureTextCommandContent,
+                false,
+                sqlConnection.DataSource,
+                (Activity)processor.Invocations[1].Arguments[0]);
         }
 
         [Theory]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataWriteCommandError)]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataWriteCommandError, false)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError)]
-        public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand)
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError, false)]
+        public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand, bool shouldEnrich = true)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
-                .AddSqlClientInstrumentation()
+                .AddSqlClientInstrumentation(options =>
+                {
+                    if (shouldEnrich)
+                    {
+                        options.Enrich = ActivityEnrichment;
+                    }
+                })
                 .AddProcessor(processor.Object)
                 .Build())
             {
@@ -221,7 +251,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
 
-            VerifyActivityData(sqlCommand.CommandType, sqlCommand.CommandText, true, false, true, sqlConnection.DataSource, (Activity)processor.Invocations[1].Arguments[0]);
+            VerifyActivityData(
+                sqlCommand.CommandType,
+                sqlCommand.CommandText,
+                true,
+                false,
+                true,
+                sqlConnection.DataSource,
+                (Activity)processor.Invocations[1].Arguments[0]);
         }
 
         private static void VerifyActivityData(
@@ -235,18 +272,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            var command = activity.GetCustomProperty(SqlClientDiagnosticListener.CommandCustomPropertyName);
-            Assert.NotNull(command);
-            Assert.True(command is SqlCommand);
 
             if (!isFailure)
             {
-                Assert.Equal("Ok", activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+                Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
                 Assert.Null(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
             }
             else
             {
-                Assert.Equal("Unknown", activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+                Assert.Equal((int)StatusCode.Error, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
                 Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
             }
 
@@ -281,6 +315,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             }
 
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
+        }
+
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
+            {
+                case "OnCustom":
+                    Assert.True(obj is SqlCommand);
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         private class FakeSqlClientDiagnosticSource : IDisposable

@@ -191,7 +191,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (this.error)
             {
-                span.SetStatus(Trace.Status.Unknown);
+                span.SetStatus(Trace.Status.Error);
             }
 
             return new SpanShim(span);

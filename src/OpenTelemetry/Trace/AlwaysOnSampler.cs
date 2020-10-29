@@ -17,8 +17,7 @@
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which samples every activity.
-    /// This sampler will be used as the default Sampler, if no other Sampler is configured.
+    /// Sampler implementation which always returns <c>SamplingDecision.RecordAndSample</c>.
     /// </summary>
     public sealed class AlwaysOnSampler : Sampler
     {

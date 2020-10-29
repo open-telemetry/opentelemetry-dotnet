@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -61,6 +62,24 @@ namespace OpenTelemetry.Trace.Tests
             spanAttribute.Add("key", "value1");
             spanAttribute.Add("key", "value2");
             Assert.Equal("value2", spanAttribute.Attributes["key"]);
+        }
+
+        [Fact]
+        public void ValidateConstructorWithList()
+        {
+            var spanAttributes = new SpanAttributes(
+               new List<KeyValuePair<string, object>>()
+               {
+                    new KeyValuePair<string, object>("Span attribute int", 1),
+                    new KeyValuePair<string, object>("Span attribute string", "str"),
+               });
+            Assert.Equal(2, spanAttributes.Attributes.Count);
+        }
+
+        [Fact]
+        public void ValidateConstructorWithNullList()
+        {
+            Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
         }
     }
 }

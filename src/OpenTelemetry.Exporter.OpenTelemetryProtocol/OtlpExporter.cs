@@ -15,11 +15,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -28,39 +27,41 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpExporter : ActivityExporter
+    public class OtlpExporter : BaseExporter<Activity>
     {
         private readonly Channel channel;
-        private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
+        private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpExporter(OtlpExporterOptions options)
+        /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
+        internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
             this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
-            this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
-            this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
+            if (traceServiceClient != null)
+            {
+                this.traceClient = traceServiceClient;
+            }
+            else
+            {
+                this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+                this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
+            }
         }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
-            var exporterRequest = new OtlpCollector.ExportTraceServiceRequest();
+            OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
-            var activities = new List<Activity>();
-            foreach (var activity in activityBatch)
-            {
-                activities.Add(activity);
-            }
-
-            exporterRequest.ResourceSpans.AddRange(activities.ToOtlpResourceSpans());
+            request.AddBatch(activityBatch);
 
             try
             {
-                this.traceClient.Export(exporterRequest, headers: this.headers);
+                this.traceClient.Export(request, headers: this.headers);
             }
             catch (RpcException ex)
             {
@@ -68,8 +69,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
                 return ExportResult.Failure;
             }
+            finally
+            {
+                request.Return();
+            }
 
             return ExportResult.Success;
+        }
+
+        /// <inheritdoc/>
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            if (this.channel == null)
+            {
+                return true;
+            }
+
+            return Task.WaitAny(new Task[] { this.channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
         }
     }
 }

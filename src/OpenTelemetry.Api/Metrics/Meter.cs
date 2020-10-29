@@ -35,8 +35,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Creates double counter with given name.
         /// </summary>
-        /// <param name="name">indicates if only positive values are expected.</param>
-        /// <param name="monotonic">The name of the counter.</param>
+        /// <param name="name">The name of the counter.</param>
+        /// <param name="monotonic">indicates if only positive values are expected.</param>
         /// <returns>The counter instance.</returns>
         public abstract CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true);
 

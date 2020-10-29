@@ -18,10 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
-#if DEBUG
-using System.Threading.Tasks;
-#endif
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -30,7 +26,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : ActivityExporter
+    public class JaegerExporter : BaseExporter<Activity>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
@@ -39,7 +35,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
         private Dictionary<string, Process> processCache;
-        private bool libraryResourceApplied;
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
 
@@ -71,19 +66,15 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 foreach (var activity in activityBatch)
                 {
-                    if (!this.libraryResourceApplied)
+                    if (this.processCache == null)
                     {
-                        var libraryResource = activity.GetResource();
-
-                        this.ApplyLibraryResource(libraryResource ?? Resource.Empty);
-
-                        this.libraryResourceApplied = true;
+                        this.ApplyLibraryResource(activity.GetResource());
                     }
 
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
-                this.SendCurrentBatches();
+                this.SendCurrentBatches(null);
 
                 return ExportResult.Success;
             }
@@ -131,7 +122,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                     process.Tags = new Dictionary<string, JaegerTag>();
                 }
 
-                process.Tags[label.Key] = label.ToJaegerTag();
+                process.Tags[key] = label.ToJaegerTag();
             }
 
             if (serviceName != null)
@@ -145,20 +136,17 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 process.ServiceName = JaegerExporterOptions.DefaultServiceName;
             }
+
+            this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
+            this.processCache = new Dictionary<string, Process>
+            {
+                [this.Process.ServiceName] = this.Process,
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            if (this.processCache == null)
-            {
-                this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
-                this.processCache = new Dictionary<string, Process>
-                {
-                    [this.Process.ServiceName] = this.Process,
-                };
-            }
-
             var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
@@ -184,10 +172,9 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
             {
-                this.SendCurrentBatches();
+                this.SendCurrentBatches(spanBatch);
 
                 // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                spanBatch.Clear();
                 spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
                 this.CurrentBatches.Add(spanServiceName, spanBatch);
             }
@@ -215,20 +202,24 @@ namespace OpenTelemetry.Exporter.Jaeger
             base.Dispose(disposing);
         }
 
-        private void SendCurrentBatches()
+        private void SendCurrentBatches(Batch workingBatch)
         {
             try
             {
-                foreach (var batch in this.CurrentBatches)
+                foreach (var batchKvp in this.CurrentBatches)
                 {
-                    var task = this.thriftClient.WriteBatchAsync(batch.Value, CancellationToken.None);
-#if DEBUG
-                    if (task.Status != TaskStatus.RanToCompletion)
+                    var batch = batchKvp.Value;
+
+                    this.thriftClient.SendBatch(batch);
+
+                    if (batch != workingBatch)
                     {
-                        throw new InvalidOperationException();
+                        batch.Return();
                     }
-#endif
-                    batch.Value.Return();
+                    else
+                    {
+                        batch.Clear();
+                    }
                 }
             }
             finally
@@ -239,28 +230,19 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BufferWriterMemory BuildThriftMessage(Process process)
         {
-            var task = process.WriteAsync(this.memoryProtocol, CancellationToken.None);
-#if DEBUG
-            if (task.Status != TaskStatus.RanToCompletion)
-            {
-                throw new InvalidOperationException();
-            }
-#endif
+            process.Write(this.memoryProtocol);
+
             return this.memoryTransport.ToBuffer();
         }
 
-        // Prevents boxing of JaegerSpan struct.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
         {
-            var task = jaegerSpan.WriteAsync(this.memoryProtocol, CancellationToken.None);
-#if DEBUG
-            if (task.Status != TaskStatus.RanToCompletion)
-            {
-                throw new InvalidOperationException();
-            }
-#endif
+            jaegerSpan.Write(this.memoryProtocol);
+
             return this.memoryTransport.ToBuffer();
         }
     }

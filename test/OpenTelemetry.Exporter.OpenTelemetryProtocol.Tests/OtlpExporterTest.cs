@@ -20,13 +20,11 @@ using System.Diagnostics;
 using System.Linq;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using Opentelemetry.Proto.Common.V1;
-#if NET452
 using OpenTelemetry.Internal;
-#endif
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
 
@@ -79,8 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .SetResource(resource)
                 .Build();
 
-            var activities = new List<Activity>();
-            Activity activity = null;
+            var processor = new BatchExportProcessor<Activity>(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -90,45 +87,50 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
                 var activityTags = isEven ? evenTags : oddTags;
 
-                activity = source.StartActivity($"span-{i}", activityKind, activity?.Context ?? default, activityTags);
-                activities.Add(activity);
+                using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+                processor.OnEnd(activity);
             }
 
-            activities.Reverse();
+            processor.Shutdown();
 
-            var otlpResourceSpans = activities.ToOtlpResourceSpans();
-
-            Assert.Single(otlpResourceSpans);
-            var oltpResource = otlpResourceSpans.First().Resource;
-            Assert.Equal(resource.Attributes.First().Key, oltpResource.Attributes.First().Key);
-            Assert.Equal(resource.Attributes.First().Value, oltpResource.Attributes.First().Value.StringValue);
-
-            foreach (var instrumentationLibrarySpans in otlpResourceSpans.First().InstrumentationLibrarySpans)
+            void RunTest(Batch<Activity> batch)
             {
-                Assert.Equal(numOfSpans / 2, instrumentationLibrarySpans.Spans.Count);
-                Assert.NotNull(instrumentationLibrarySpans.InstrumentationLibrary);
+                var request = new OtlpCollector.ExportTraceServiceRequest();
 
-                var expectedSpanNames = new List<string>();
-                var start = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even" ? 0 : 1;
-                for (var i = start; i < numOfSpans; i += 2)
+                request.AddBatch(batch);
+
+                Assert.Single(request.ResourceSpans);
+                var oltpResource = request.ResourceSpans.First().Resource;
+                Assert.Equal(resource.Attributes.First().Key, oltpResource.Attributes.First().Key);
+                Assert.Equal(resource.Attributes.First().Value, oltpResource.Attributes.First().Value.StringValue);
+
+                foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
                 {
-                    expectedSpanNames.Add($"span-{i}");
-                }
+                    Assert.Equal(numOfSpans / 2, instrumentationLibrarySpans.Spans.Count);
+                    Assert.NotNull(instrumentationLibrarySpans.InstrumentationLibrary);
 
-                var otlpSpans = instrumentationLibrarySpans.Spans;
-                Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
+                    var expectedSpanNames = new List<string>();
+                    var start = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even" ? 0 : 1;
+                    for (var i = start; i < numOfSpans; i += 2)
+                    {
+                        expectedSpanNames.Add($"span-{i}");
+                    }
 
-                var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new AnyValue { StringValue = "v0" } };
-                var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new AnyValue { StringValue = "v1" } };
+                    var otlpSpans = instrumentationLibrarySpans.Spans;
+                    Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
 
-                var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
-                    ? kv0
-                    : kv1;
+                    var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new OtlpCommon.AnyValue { StringValue = "v0" } };
+                    var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new OtlpCommon.AnyValue { StringValue = "v1" } };
 
-                foreach (var otlpSpan in otlpSpans)
-                {
-                    Assert.Contains(otlpSpan.Name, expectedSpanNames);
-                    Assert.Contains(expectedTag, otlpSpan.Attributes);
+                    var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
+                        ? kv0
+                        : kv1;
+
+                    foreach (var otlpSpan in otlpSpans)
+                    {
+                        Assert.Contains(otlpSpan.Name, expectedSpanNames);
+                        Assert.Contains(expectedTag, otlpSpan.Attributes);
+                    }
                 }
             }
         }
@@ -136,7 +138,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void ToOtlpSpanTest()
         {
-            var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
             using var rootActivity = activitySource.StartActivity("root", ActivityKind.Producer);
 
@@ -202,7 +204,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 rootActivity.Context,
                 links: childLinks);
 
-            childActivity.SetStatus(Status.NotFound);
+            childActivity.SetStatus(Status.Error);
 
             var childEvents = new List<ActivityEvent> { new ActivityEvent("e0"), new ActivityEvent("e1", default, new ActivityTagsCollection(attributes)) };
             childActivity.AddEvent(childEvents[0]);
@@ -219,8 +221,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(OtlpTrace.Span.Types.SpanKind.Client, otlpSpan.Kind);
             Assert.Equal(traceId, otlpSpan.TraceId);
             Assert.Equal(parentId, otlpSpan.ParentSpanId);
-            Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
-            Assert.Equal(Status.NotFound.Description ?? string.Empty, otlpSpan.Status.Message);
+
+            // Assert.Equal(OtlpTrace.Status.Types.StatusCode.NotFound, otlpSpan.Status.Code);
+
+            Assert.Equal(Status.Error.Description ?? string.Empty, otlpSpan.Status.Message);
             Assert.Empty(otlpSpan.Attributes);
 
             Assert.Equal(childEvents.Count, otlpSpan.Events.Count);
@@ -236,6 +240,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
             }
+        }
+
+        [Fact]
+        public void ToOtlpSpanPeerServiceTest()
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+
+            using var rootActivity = activitySource.StartActivity("root", ActivityKind.Client);
+
+            rootActivity.SetTag(SemanticConventions.AttributeHttpHost, "opentelemetry.io");
+
+            var otlpSpan = rootActivity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan);
+
+            var peerService = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == SemanticConventions.AttributePeerService);
+
+            Assert.NotNull(peerService);
+            Assert.Equal("opentelemetry.io", peerService.Value.StringValue);
         }
 
         [Fact]
@@ -265,7 +288,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                             .AddOtlpExporter()
                             .Build();
 
-            var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(ActivitySourceName);
             var activity = source.StartActivity("Test Otlp Activity");
             activity?.Stop();
 

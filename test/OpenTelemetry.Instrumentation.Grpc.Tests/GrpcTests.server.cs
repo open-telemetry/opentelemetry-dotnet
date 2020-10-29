@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using Greet;
@@ -27,30 +29,37 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests : IDisposable
     {
-        private readonly GrpcFixture<GreeterService> fixture;
+        private readonly GrpcServer<GreeterService> server;
 
-        public GrpcTests(GrpcFixture<GreeterService> fixture)
+        public GrpcTests()
         {
-            this.fixture = fixture;
+            this.server = new GrpcServer<GreeterService>();
         }
 
         [Fact]
         public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes()
         {
-            var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
-            var uri = new Uri($"http://localhost:{this.fixture.Port}");
-            var processor = this.fixture.GrpcServerSpanProcessor;
+            var processor = new Mock<BaseProcessor<Activity>>();
 
-            var channel = GrpcChannel.ForAddress(uri);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build();
+
+            var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+
+            using var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
             client.SayHello(new HelloRequest());
 
             WaitForProcessorInvocations(processor, 2);
 
-            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
+            var activity = (Activity)processor.Invocations.FirstOrDefault(invo =>
+                invo.Method.Name == "OnEnd" && (invo.Arguments[0] as Activity).OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn").Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
@@ -58,21 +67,26 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
             Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
             Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-            Assert.Equal(Status.Ok, activity.GetStatus());
+            Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
-            Assert.Equal($"localhost:{this.fixture.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
-            Assert.Equal($"http://localhost:{this.fixture.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
-        private static void WaitForProcessorInvocations(Mock<ActivityProcessor> spanProcessor, int invocationCount)
+        public void Dispose()
+        {
+            this.server.Dispose();
+        }
+
+        private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so

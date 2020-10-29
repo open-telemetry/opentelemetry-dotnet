@@ -28,8 +28,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var id = ActivityTraceId.CreateFromBytes(new byte[] { 0x1a, 0x0f, 0x54, 0x63, 0x25, 0xa8, 0x56, 0x43, 0x1a, 0x4c, 0x24, 0xea, 0xa8, 0x60, 0xb0, 0xe8 });
             var int128 = new Int128(id);
 
-            Assert.Equal<long>(unchecked((long)0x1a0f546325a85643), int128.High);
-            Assert.Equal<long>(unchecked((long)0x1a4c24eaa860b0e8), int128.Low);
+            Assert.Equal<long>(unchecked(0x1a0f546325a85643), int128.High);
+            Assert.Equal<long>(unchecked(0x1a4c24eaa860b0e8), int128.Low);
         }
     }
 }

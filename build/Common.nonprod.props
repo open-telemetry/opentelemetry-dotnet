@@ -30,9 +30,9 @@
     <GrpcNetClientPkgVer>[2.27.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftExtensionsHostingPkgVer>[3.1.6,5.0)</MicrosoftExtensionsHostingPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[5.0.0-preview.8.20407.11]</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[5.0.0-preview.8.20407.11]</MicrosoftExtensionsLoggingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingConsolePkgVer>[5.0.0-preview.8.20407.11]</MicrosoftExtensionsLoggingConsolePkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingAbstractionsPkgVer>
+    <MicrosoftExtensionsLoggingConsolePkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingConsolePkgVer>
     <MicrosoftNETTestSdkPkgVer>[16.7.1,17.0)</MicrosoftNETTestSdkPkgVer>
     <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
     <RabbitMQClientPkgVer>[6.1.0,7.0)</RabbitMQClientPkgVer>

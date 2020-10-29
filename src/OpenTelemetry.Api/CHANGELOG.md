@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+* Removed `IsValid` property from `Status`
+  ([#1415](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1415))
+* Removed `IsOk` property from `Status` and fixed `StatusCode` enum values
+  ([#1414](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1414))
+
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* `IActivityTagEnumerator` is now `IActivityEnumerator<T>`. Added
+  `EnumerateLinks` extension method on `Activity` for retrieving links
+  efficiently
+  ([#1314](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1314))
+* Added `EnumerateEvents` extension method on `Activity` for retrieving events
+  efficiently
+  ([#1319](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1319))
+* Added `EnumerateTags` extension methods on `ActivityLink` & `ActivityEvent`
+  for retrieving tags efficiently. Renamed `Activity.EnumerateTagValues` ->
+  `Activity.EnumerateTags`.
+  ([#1320](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1320))
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.2.20475.5
+  ([#1346](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1346))
+* Updated Span Status as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
