@@ -43,7 +43,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
-            in Batch<Activity> activityBatch)
+            in Batch<Activity> activityBatch,
+            OtlpExporterOptions options)
         {
             Dictionary<string, OtlpTrace.InstrumentationLibrarySpans> spansByLibrary = new Dictionary<string, OtlpTrace.InstrumentationLibrarySpans>();
             OtlpTrace.ResourceSpans resourceSpans = null;
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                     if (processResource == null)
                     {
-                        BuildProcessResource(activity.GetResource());
+                        BuildProcessResource(activity.GetResource(), options);
                     }
 
                     resourceSpans.Resource = processResource;
@@ -101,7 +102,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        internal static void BuildProcessResource(Resource resource)
+        internal static void BuildProcessResource(Resource resource, OtlpExporterOptions options)
         {
             OtlpResource.Resource processResource = new OtlpResource.Resource();
 
@@ -112,6 +113,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     processResource.Attributes.Add(oltpAttribute);
                 }
+            }
+
+            if (!processResource.Attributes.Any(kvp => kvp.Key == Resource.ServiceNameKey))
+            {
+                string serviceName = options.ServiceName;
+                if (string.IsNullOrEmpty(serviceName))
+                {
+                    serviceName = OtlpExporterOptions.DefaultServiceName;
+                }
+
+                processResource.Attributes.Add(new OtlpCommon.KeyValue
+                {
+                    Key = Resource.ServiceNameKey,
+                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
+                });
             }
 
             ActivityExtensions.processResource = processResource;

@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporter : BaseExporter<Activity>
     {
+        private readonly OtlpExporterOptions options;
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
@@ -40,7 +41,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
         internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
-            this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.headers = options.Headers ?? throw new ArgumentException("Headers were not provided on options.", nameof(options));
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
@@ -57,7 +59,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(activityBatch);
+            request.AddBatch(activityBatch, options);
 
             try
             {
