@@ -53,7 +53,7 @@ namespace OpenTelemetry.Internal
         /// in order to prioritize speed over space.
         /// </summary>
         /// <param name="str">The string to be encoded.</param>
-        /// <param name="isParameter">Wheter the string is a parameter. If true, "{}" will be wrapped around the string.</param>
+        /// <param name="isParameter">Whether the string is a parameter. If true, "{}" will be wrapped around the string.</param>
         /// <param name="buffer">The byte array to contain the resulting sequence of bytes.</param>
         /// <param name="position">The position at which to start writing the resulting sequence of bytes.</param>
         /// <returns>The position of the buffer after the last byte of the resulting sequence.</returns>
