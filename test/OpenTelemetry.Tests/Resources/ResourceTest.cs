@@ -328,6 +328,38 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
         }
 
+        [Fact]
+        public void DefaultResource_NoEnvVar()
+        {
+            // Arrange
+            var resource = Resource.Default;
+            var attributes = resource.Attributes;
+
+            // Assert
+            Assert.Equal(2, attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+        }
+
+        [Fact]
+        public void DefaultResource_withEnvVar()
+        {
+            // Arrange
+            string envVarKey = "OTEL_RESOURCE_ATTRIBUTES";
+            string envVarValue = "service.name=MyServiceName,service.instance.id=123";
+            Environment.SetEnvironmentVariable(envVarKey, envVarValue);
+
+            var resource = Resource.Default;
+            var attributes = resource.Attributes;
+
+            // Assert
+            Assert.Equal(4, attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("service.name", "MyServiceName"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("service.instance.id", "123"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+        }
+
         private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)
         {
             for (var i = startIndex; i < attributeCount + startIndex; ++i)

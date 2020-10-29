@@ -58,6 +58,11 @@ namespace OpenTelemetry.Resources
         public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, object>>());
 
         /// <summary>
+        /// Gets the dafault Resource.
+        /// </summary>
+        public static Resource Default { get; } = Resources.OTelEnvVarResource.Merge(Resources.TelemetrySdkResource);
+
+        /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
