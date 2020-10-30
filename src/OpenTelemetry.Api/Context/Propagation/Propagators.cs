@@ -21,14 +21,16 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public static class Propagators
     {
+        private static TextMapPropagator noop = new NoOpTextMapPropagator();
+
         /// <summary>
         /// Gets or sets the Default TextMapPropagator to be used.
         /// </summary>
-        public static TextMapPropagator DefaultTextMapPropagator { get; set; } = new NoOpTextMapPropagator();
+        public static TextMapPropagator DefaultTextMapPropagator { get; set; } = noop;
 
         internal static void Reset()
         {
-            DefaultTextMapPropagator = new NoOpTextMapPropagator();
+            DefaultTextMapPropagator = noop;
         }
     }
 }
