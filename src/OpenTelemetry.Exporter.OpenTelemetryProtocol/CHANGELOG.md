@@ -6,6 +6,8 @@
   following the [Zipkin remote endpoint
   rules](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
   ([#1392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1392))
+* Added `ServiceName` to options available on the `AddOtlpExporter` extension
+  ([#1420](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1420))
 
 ## 0.7.0-beta.1
 
