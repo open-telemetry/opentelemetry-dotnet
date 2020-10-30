@@ -37,10 +37,10 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public ISet<string> Fields => EmptyFields;
+        public override ISet<string> Fields => EmptyFields;
 
         /// <inheritdoc/>
-        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             foreach (var propagator in this.propagators)
             {
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             foreach (var propagator in this.propagators)
             {

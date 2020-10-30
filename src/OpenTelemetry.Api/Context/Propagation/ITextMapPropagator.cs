@@ -24,14 +24,14 @@ namespace OpenTelemetry.Context.Propagation
     /// which uses string key/value pairs to inject and extract
     /// propagation data.
     /// </summary>
-    public interface ITextMapPropagator
+    public abstract class ITextMapPropagator
     {
         /// <summary>
         /// Gets the list of headers used by propagator. The use cases of this are:
         ///   * allow pre-allocation of fields, especially in systems like gRPC Metadata
         ///   * allow a single-pass over an iterator (ex OpenTracing has no getter in TextMap).
         /// </summary>
-        ISet<string> Fields { get; }
+        public abstract ISet<string> Fields { get; }
 
         /// <summary>
         /// Injects the context into a carrier.
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="context">The default context to transmit over the wire.</param>
         /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
         /// <param name="setter">Action that will set name and value pair on the object.</param>
-        void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter);
+        public abstract void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter);
 
         /// <summary>
         /// Extracts the context from a carrier.
@@ -50,6 +50,6 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="carrier">Object to extract context from. Instance of this object will be passed to the getter.</param>
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Context from it's text representation.</returns>
-        PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
+        public abstract PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
     }
 }

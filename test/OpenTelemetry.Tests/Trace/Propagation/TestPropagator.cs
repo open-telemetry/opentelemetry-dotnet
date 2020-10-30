@@ -34,9 +34,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             this.defaultContext = defaultContext;
         }
 
-        public ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
+        public override ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
-        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (this.defaultContext)
             {
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 context.Baggage);
         }
 
-        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 
