@@ -1,4 +1,4 @@
-// <copyright file="CompositePropagator.cs" company="OpenTelemetry Authors">
+// <copyright file="CompositeTextMapPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,18 +20,19 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// CompositePropagator provides a mechanism for combining multiple propagators into a single one.
+    /// CompositeTextMapPropagator provides a mechanism for combining multiple
+    /// textmap propagators into a single one.
     /// </summary>
-    public class CompositePropagator : TextMapPropagator
+    public class CompositeTextMapPropagator : TextMapPropagator
     {
         private static readonly ISet<string> EmptyFields = new HashSet<string>();
         private readonly List<TextMapPropagator> propagators;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CompositePropagator"/> class.
+        /// Initializes a new instance of the <see cref="CompositeTextMapPropagator"/> class.
         /// </summary>
         /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
-        public CompositePropagator(IEnumerable<TextMapPropagator> propagators)
+        public CompositeTextMapPropagator(IEnumerable<TextMapPropagator> propagators)
         {
             this.propagators = new List<TextMapPropagator>(propagators ?? throw new ArgumentNullException(nameof(propagators)));
         }
