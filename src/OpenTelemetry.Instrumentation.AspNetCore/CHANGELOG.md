@@ -10,6 +10,8 @@
   [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore/).
   This option is enabled by default.
   ([#1423](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1423))
+* Renamed IPropagator to ITextMapPropagator, TextMapPropagator to TraceContextPropagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 
 ## 0.7.0-beta.1
 
