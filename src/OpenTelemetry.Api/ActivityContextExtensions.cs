@@ -16,7 +16,7 @@
 
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
     /// Extension methods on ActivityContext.
