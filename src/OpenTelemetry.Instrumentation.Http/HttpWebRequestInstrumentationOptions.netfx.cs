@@ -35,11 +35,11 @@ namespace OpenTelemetry.Instrumentation.Http
         public bool SetHttpFlavor { get; set; }
 
         /// <summary>
-        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
+        /// Gets or sets <see cref="ITextMapPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
+        public ITextMapPropagator Propagator { get; set; } = new CompositePropagator(new ITextMapPropagator[]
         {
-            new TextMapPropagator(),
+            new TraceContextPropagator(),
             new BaggagePropagator(),
         });
 

@@ -24,9 +24,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// W3C baggage: https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md.
+    /// A text map propagator for W3C Baggage. See https://w3c.github.io/baggage/
     /// </summary>
-    public class BaggagePropagator : IPropagator
+    public class BaggagePropagator : ITextMapPropagator
     {
         internal const string BaggageHeaderName = "Baggage";
 

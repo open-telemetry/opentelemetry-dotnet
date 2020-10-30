@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
-    public class TestPropagator : IPropagator
+    public class TestPropagator : ITextMapPropagator
     {
         private readonly string idHeaderName;
         private readonly string stateHeaderName;
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return context;
             }
 
-            var traceparentParsed = TextMapPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
+            var traceparentParsed = TraceContextPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
             if (!traceparentParsed)
             {
                 return context;
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             IEnumerable<string> tracestateCollection = getter(carrier, this.stateHeaderName);
             if (tracestateCollection?.Any() ?? false)
             {
-                TextMapPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
             return new PropagationContext(

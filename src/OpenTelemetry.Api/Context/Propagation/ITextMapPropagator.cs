@@ -1,4 +1,4 @@
-// <copyright file="IPropagator.cs" company="OpenTelemetry Authors">
+// <copyright file="ITextMapPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,11 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// Defines an interface for Propagator, which is used to read and write
-    /// context data from and to message exchanges by the applications.
+    /// Defines an interface for a Propagator of TextMap type,
+    /// which uses string key/value pairs to inject and extract
+    /// propagation data.
     /// </summary>
-    public interface IPropagator
+    public interface ITextMapPropagator
     {
         /// <summary>
         /// Gets the list of headers used by propagator. The use cases of this are:

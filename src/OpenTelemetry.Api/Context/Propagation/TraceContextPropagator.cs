@@ -1,4 +1,4 @@
-// <copyright file="TextMapPropagator.cs" company="OpenTelemetry Authors">
+// <copyright file="TraceContextPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// W3C trace context text wire protocol formatter. See https://github.com/w3c/distributed-tracing/.
+    /// A text map propagator for W3C trace context. See https://w3c.github.io/trace-context/.
     /// </summary>
-    public class TextMapPropagator : IPropagator
+    public class TraceContextPropagator : ITextMapPropagator
     {
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
@@ -53,13 +53,13 @@ namespace OpenTelemetry.Context.Propagation
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TextMapPropagator), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextPropagator), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TextMapPropagator), "null getter");
+                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextPropagator), "null getter");
                 return context;
             }
 
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Context.Propagation
             }
             catch (Exception ex)
             {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(TextMapPropagator), ex);
+                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(TraceContextPropagator), ex);
             }
 
             // in case of exception indicate to upstream that there is no parseable context from the top
@@ -106,19 +106,19 @@ namespace OpenTelemetry.Context.Propagation
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TextMapPropagator), "Invalid context");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextPropagator), "Invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TextMapPropagator), "null carrier");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextPropagator), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TextMapPropagator), "null setter");
+                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextPropagator), "null setter");
                 return;
             }
 
