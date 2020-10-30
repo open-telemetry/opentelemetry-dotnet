@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Instrumentation.GrpcNetClient
 {
     /// <summary>
     /// Canonical result code of span execution.
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// This follows the standard GRPC codes.
     /// https://github.com/grpc/grpc/blob/master/doc/statuscodes.md.
     /// </remarks>
-    public enum StatusCanonicalCode
+    internal enum StatusCanonicalCode
     {
         /// <summary>
         /// The operation completed successfully.
