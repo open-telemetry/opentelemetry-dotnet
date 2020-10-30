@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests
