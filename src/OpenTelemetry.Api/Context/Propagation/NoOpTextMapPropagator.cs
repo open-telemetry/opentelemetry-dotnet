@@ -1,4 +1,4 @@
-// <copyright file="NoOpTextMapPropagator.cs" company="OpenTelemetry Authors">
+// <copyright file="NoopTextMapPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +19,15 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    internal class NoOpTextMapPropagator : TextMapPropagator
+    internal class NoopTextMapPropagator : TextMapPropagator
     {
-        private static PropagationContext defaultPropagationContext = default;
+        private static readonly PropagationContext DefaultPropagationContext = default;
 
         public override ISet<string> Fields => null;
 
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            return defaultPropagationContext;
+            return DefaultPropagationContext;
         }
 
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
