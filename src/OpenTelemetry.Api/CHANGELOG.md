@@ -9,6 +9,10 @@
 * `B3Propagator` now supports the value `true` to be passed in for the header
  `X-B3-Sampled`.
  ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 
 ## 0.7.0-beta.1
 

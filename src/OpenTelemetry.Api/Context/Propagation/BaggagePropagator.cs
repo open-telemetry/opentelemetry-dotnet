@@ -24,9 +24,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// W3C baggage: https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md.
+    /// A text map propagator for W3C Baggage. See https://w3c.github.io/baggage/.
     /// </summary>
-    public class BaggagePropagator : IPropagator
+    public class BaggagePropagator : TextMapPropagator
     {
         internal const string BaggageHeaderName = "Baggage";
 
@@ -34,10 +34,10 @@ namespace OpenTelemetry.Context.Propagation
         private const int MaxBaggageItems = 180;
 
         /// <inheritdoc/>
-        public ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
+        public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
         /// <inheritdoc/>
-        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (context.Baggage != default)
             {
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (carrier == null)
             {

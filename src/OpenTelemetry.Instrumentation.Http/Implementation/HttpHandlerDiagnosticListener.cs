@@ -115,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.Propagator is TextMapPropagator))
+            if (!(this.httpClientSupportsW3C && this.options.Propagator is TraceContextPropagator))
             {
                 this.options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }

@@ -75,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
             // Ensure that the header value func does not throw if the header key can't be found
-            var mockPropagator = new Mock<IPropagator>();
+            var mockPropagator = new Mock<TextMapPropagator>();
 
             // var isInjectedHeaderValueGetterThrows = false;
             // mockTextFormat
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
