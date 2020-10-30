@@ -31,7 +31,7 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public static void DefaultTextMapPropagatorIsNoop()
         {
-            Assert.IsType<NoopTextMapPropagator>(Propagators.DefaultTextMapPropagator);
+            Assert.IsType<NoopPropagator>(Propagators.DefaultTextMapPropagator);
             Assert.Same(Propagators.DefaultTextMapPropagator, Propagators.DefaultTextMapPropagator);
         }
 

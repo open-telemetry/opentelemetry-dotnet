@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Context.Propagation
 {
-    internal class NoopTextMapPropagator : TextMapPropagator
+    internal class NoopPropagator : TextMapPropagator
     {
         private static readonly PropagationContext DefaultPropagationContext = default;
 
