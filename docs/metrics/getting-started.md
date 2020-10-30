@@ -8,5 +8,7 @@ significant changes.
 
 ## Sample usage
 
-Check [TestPrometheusExporter.cs](../../examples/Console/TestPrometheusExporter.cs) for an example
-usage of currently implemented Metrics API/SDK along with Prometheus exporter.
+Check
+[TestPrometheusExporter.cs](../../examples/Console/TestPrometheusExporter.cs)
+for an example usage of currently implemented Metrics API/SDK along with
+Prometheus exporter.
