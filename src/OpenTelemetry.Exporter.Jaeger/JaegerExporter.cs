@@ -23,6 +23,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Thrift.Protocol;
 using Thrift.Transport;
+using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
@@ -55,7 +56,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.Process = new Process(options.ServiceName, options.ProcessTags);
         }
 
-        public Process Process { get; internal set; }
+        internal Process Process { get; set; }
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
