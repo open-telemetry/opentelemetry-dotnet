@@ -23,6 +23,11 @@ namespace OpenTelemetry.Context.Tests
 {
     public class PropagatorsTest : IDisposable
     {
+        public PropagatorsTest()
+        {
+            Propagators.Reset();
+        }
+
         [Fact]
         public static void DefaultTextMapPropagatorIsNoop()
         {
