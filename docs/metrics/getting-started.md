@@ -7,5 +7,6 @@ any production use. Both the API, and SDK implementation is subject to
 significant changes.
 
 ## Sample usage
-Check [Program.cs](.\examples\Console\TestPrometheusExporter.cs) for an example
+
+Check [Program.cs](..\..\examples\Console\TestPrometheusExporter.cs) for an example
 usage of currently implemented Metrics API/SDK along with Prometheus exporter.
