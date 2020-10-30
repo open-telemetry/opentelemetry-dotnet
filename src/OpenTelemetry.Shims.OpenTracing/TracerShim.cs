@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
