@@ -18,12 +18,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+#if NET452
 using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using GrpcCore = Grpc.Core;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
@@ -53,8 +57,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddOtlpExporter());
         }
 
-        [Fact]
-        public void ToOtlpResourceSpansTest()
+        [Theory]
+        [InlineData(true, null)]
+        [InlineData(false, "test-service")]
+        public void ToOtlpResourceSpansTest(bool addResource, string optionsServiceName)
         {
             var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
             var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
@@ -64,18 +70,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-            var resource = new Resources.Resource(
-                new List<KeyValuePair<string, object>>
-                {
-                    new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
-                });
-
-            // This following is done just to set Resource to Activity.
-            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            var builder = Sdk.CreateTracerProviderBuilder()
                 .AddSource(sources[0].Name)
-                .AddSource(sources[1].Name)
-                .SetResource(resource)
-                .Build();
+                .AddSource(sources[1].Name);
+
+            Resources.Resource resource = null;
+            if (addResource)
+            {
+                resource = new Resources.Resource(
+                    new List<KeyValuePair<string, object>>
+                    {
+                        new KeyValuePair<string, object>(Resources.Resource.ServiceNameKey, "service-name"),
+                        new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
+                    });
+
+                builder.SetResource(resource);
+            }
+
+            using var openTelemetrySdk = builder.Build();
 
             var processor = new BatchExportProcessor<Activity>(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
@@ -97,12 +109,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
 
-                request.AddBatch(batch);
+                request.AddBatch(
+                    new OtlpExporter(
+                        new OtlpExporterOptions
+                        {
+                            ServiceName = optionsServiceName,
+                        },
+                        new NoopTraceServiceClient()),
+                    batch);
 
                 Assert.Single(request.ResourceSpans);
                 var oltpResource = request.ResourceSpans.First().Resource;
-                Assert.Equal(resource.Attributes.First().Key, oltpResource.Attributes.First().Key);
-                Assert.Equal(resource.Attributes.First().Value, oltpResource.Attributes.First().Value.StringValue);
+                if (addResource)
+                {
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == "service-name");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNamespaceKey && kvp.Value.StringValue == "ns1");
+                }
+                else
+                {
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == optionsServiceName);
+                }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
                 {
@@ -385,6 +411,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 default:
                     Assert.Equal(originalValue.ToString(), akv.Value.StringValue);
                     break;
+            }
+        }
+
+        private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
+        {
+            public OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, GrpcCore.Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            {
+                return null;
             }
         }
     }
