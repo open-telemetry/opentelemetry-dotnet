@@ -24,7 +24,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// A text map propagator for W3C Baggage. See https://w3c.github.io/baggage/
+    /// A text map propagator for W3C Baggage. See https://w3c.github.io/baggage/.
     /// </summary>
     public class BaggagePropagator : ITextMapPropagator
     {

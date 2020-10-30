@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 * Renamed IPropagator to ITextMapPropagator, TextMapPropagator to TraceContextPropagator
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 
