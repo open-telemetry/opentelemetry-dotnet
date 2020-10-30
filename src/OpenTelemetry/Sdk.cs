@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -24,6 +25,15 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
+        static Sdk()
+        {
+            Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            });
+        }
+
         /// <summary>
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
