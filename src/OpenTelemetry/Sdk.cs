@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -32,6 +33,9 @@ namespace OpenTelemetry
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
             });
+
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
         }
 
         /// <summary>

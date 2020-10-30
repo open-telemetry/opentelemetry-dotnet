@@ -34,7 +34,7 @@ namespace OpenTelemetry.Logs
         static OpenTelemetryLoggerProvider()
         {
             // Accessing Sdk class is just to trigger its static ctor,
-            // which sets default Propagators.
+            // which sets default Propagators and default Activity Id format
             _ = Sdk.SuppressInstrumentation;
         }
 
