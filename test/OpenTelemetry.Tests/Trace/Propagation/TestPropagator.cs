@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
-    public class TestPropagator : ITextMapPropagator
+    public class TestPropagator : TextMapPropagator
     {
         private readonly string idHeaderName;
         private readonly string stateHeaderName;

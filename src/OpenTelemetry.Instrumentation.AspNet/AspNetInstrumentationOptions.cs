@@ -27,9 +27,9 @@ namespace OpenTelemetry.Instrumentation.AspNet
     public class AspNetInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="ITextMapPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
+        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public ITextMapPropagator Propagator { get; set; } = new CompositePropagator(new ITextMapPropagator[]
+        public TextMapPropagator Propagator { get; set; } = new CompositePropagator(new TextMapPropagator[]
         {
             new TraceContextPropagator(),
             new BaggagePropagator(),

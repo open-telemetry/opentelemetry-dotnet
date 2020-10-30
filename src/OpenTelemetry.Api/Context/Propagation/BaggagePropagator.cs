@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// A text map propagator for W3C Baggage. See https://w3c.github.io/baggage/.
     /// </summary>
-    public class BaggagePropagator : ITextMapPropagator
+    public class BaggagePropagator : TextMapPropagator
     {
         internal const string BaggageHeaderName = "Baggage";
 

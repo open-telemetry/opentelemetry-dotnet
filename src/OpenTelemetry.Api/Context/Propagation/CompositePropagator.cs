@@ -22,18 +22,18 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// CompositePropagator provides a mechanism for combining multiple propagators into a single one.
     /// </summary>
-    public class CompositePropagator : ITextMapPropagator
+    public class CompositePropagator : TextMapPropagator
     {
         private static readonly ISet<string> EmptyFields = new HashSet<string>();
-        private readonly List<ITextMapPropagator> propagators;
+        private readonly List<TextMapPropagator> propagators;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompositePropagator"/> class.
         /// </summary>
-        /// <param name="propagators">List of <see cref="ITextMapPropagator"/> wire context propagator.</param>
-        public CompositePropagator(IEnumerable<ITextMapPropagator> propagators)
+        /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
+        public CompositePropagator(IEnumerable<TextMapPropagator> propagators)
         {
-            this.propagators = new List<ITextMapPropagator>(propagators ?? throw new ArgumentNullException(nameof(propagators)));
+            this.propagators = new List<TextMapPropagator>(propagators ?? throw new ArgumentNullException(nameof(propagators)));
         }
 
         /// <inheritdoc/>

@@ -1,4 +1,4 @@
-// <copyright file="ITextMapPropagator.cs" company="OpenTelemetry Authors">
+// <copyright file="TextMapPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ namespace OpenTelemetry.Context.Propagation
     /// which uses string key/value pairs to inject and extract
     /// propagation data.
     /// </summary>
-    public abstract class ITextMapPropagator
+    public abstract class TextMapPropagator
     {
         /// <summary>
         /// Gets the list of headers used by propagator. The use cases of this are:

@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// A text map propagator for W3C trace context. See https://w3c.github.io/trace-context/.
     /// </summary>
-    public class TraceContextPropagator : ITextMapPropagator
+    public class TraceContextPropagator : TextMapPropagator
     {
         private const string TraceParent = "traceparent";
         private const string TraceState = "tracestate";
