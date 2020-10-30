@@ -9,7 +9,7 @@ WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
 RUN git clone https://github.com/w3c/trace-context.git
 
-FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
 WORKDIR /repo
