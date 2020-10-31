@@ -147,7 +147,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             foreach (var m in this.values)
             {
                 // metric_name and label_name carry the usual Prometheus expression language restrictions.
-                writer.Write(m.Name ?? this.name);
+                writer.Write(m.Name != null ? GetSafeMetricName(m.Name) : this.name);
 
                 // label_value can be any sequence of UTF-8 characters, but the backslash
                 // (\, double-quote ("}, and line feed (\n) characters have to be escaped
