@@ -59,15 +59,21 @@ namespace Utils.Messaging
                 {
                     var props = this.channel.CreateBasicProperties();
 
+                    ActivityContext contextToInject = default;
                     if (activity != null)
                     {
-                        // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                        Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
-
-                        // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                        RabbitMqHelper.AddMessagingTags(activity);
+                        contextToInject = activity.Context;
+                    }
+                    else if (Activity.Current != null)
+                    {
+                        contextToInject = Activity.Current.Context;
                     }
 
+                    // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
+                    Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
+
+                    // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
+                    RabbitMqHelper.AddMessagingTags(activity);
                     var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 
                     this.channel.BasicPublish(
