@@ -15,10 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Instrumentation;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Instrumentation
+namespace OpenTelemetry.Instrumentation.Tests
 {
     public class PropertyFetcherTest
     {
