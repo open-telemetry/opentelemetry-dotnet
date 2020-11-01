@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
@@ -32,6 +33,15 @@ namespace OpenTelemetry.Resources
         public const string ServiceVersionKey = "service.version";
         public const string LibraryNameKey = "name";
         public const string LibraryVersionKey = "version";
+        public const string TelemetrySdkNameKey = "telemetry.sdk.name";
+        public const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
+        public const string TelemetrySdkVersionKey = "telemetry.sdk.version";
+
+        private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
+        private const char AttributeListSplitter = ',';
+        private const char AttributeKeyValueSplitter = '=';
+
+        private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
 
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
@@ -58,14 +68,29 @@ namespace OpenTelemetry.Resources
         public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, object>>());
 
         /// <summary>
-        /// Gets the dafault Resource.
+        /// Gets the dafault Resource with telemetry sdk attributes set.
         /// </summary>
-        public static Resource Default { get; } = Resources.OTelEnvVarResource.Merge(Resources.TelemetrySdkResource);
+        public static Resource Default { get; } = new Resource(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(TelemetrySdkNameKey, "opentelemetry"),
+                new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
+                new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
+            });
 
         /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+        /// <summary>
+        /// Creates a new <see cref="Resource"/> with user provided attributes, telemetry sdk attributes, and attributes from OTEL_RESOURCE_ATTRIBUTES environment variable.
+        /// </summary>
+        /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
+        /// <returns><see cref="Resource"/>.</returns>
+        public static Resource Create(IEnumerable<KeyValuePair<string, object>> attributes)
+        {
+            return new Resource(attributes).Merge(Default).Merge(GetOTelEnvVarResource());
+        }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -135,6 +160,44 @@ namespace OpenTelemetry.Resources
             }
 
             return false;
+        }
+
+        private static Resource GetOTelEnvVarResource()
+        {
+            var resource = Resource.Empty;
+
+            string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
+            if (envResourceAttributeValue != null)
+            {
+                var attributes = ParseResourceAttributes(envResourceAttributeValue);
+                return new Resource(attributes);
+            }
+
+            return resource;
+        }
+
+        private static IEnumerable<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
+        {
+            var attributes = new List<KeyValuePair<string, object>>();
+
+            if (string.IsNullOrEmpty(resourceAttributes))
+            {
+                return Enumerable.Empty<KeyValuePair<string, object>>();
+            }
+
+            string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
+            foreach (string rawKeyValuePair in rawAttributes)
+            {
+                string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
+                if (keyValuePair.Length != 2)
+                {
+                    continue;
+                }
+
+                attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), keyValuePair[1].Trim()));
+            }
+
+            return attributes;
         }
     }
 }

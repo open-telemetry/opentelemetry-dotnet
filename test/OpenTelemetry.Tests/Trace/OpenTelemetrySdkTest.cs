@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Tests
         public void DefaultResourceGetsAssociatedWithActivityIfNoneConfigured()
         {
             using var activitySource = new ActivitySource(nameof(this.ResourceGetsAssociatedWithActivity));
-            var expectedResource = Resource.Empty;
+            var expectedResource = Resource.Default;
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddSource(nameof(this.ResourceGetsAssociatedWithActivity))

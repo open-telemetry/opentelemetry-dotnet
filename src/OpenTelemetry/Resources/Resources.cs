@@ -16,22 +16,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Resources
 {
     public static class Resources
     {
-        private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-        private const char AttributeListSplitter = ',';
-        private const char AttributeKeyValueSplitter = '=';
-
-        public static Resource TelemetrySdkResource { get; } = GetTelemetrySdkResource();
-
-        public static Resource OTelEnvVarResource { get; } = GetOTelEnvVarResource();
-
         /// <summary>
         /// Creates a new <see cref="Resource"/> from service information following standard convention
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md#service.
@@ -46,7 +36,7 @@ namespace OpenTelemetry.Resources
             if (serviceName == null)
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create service resource", "serviceName", "is null");
-                return Resource.Empty;
+                return Resource.Default;
             }
 
             var attributes = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(Resource.ServiceNameKey, serviceName), };
@@ -68,56 +58,7 @@ namespace OpenTelemetry.Resources
                 attributes.Add(new KeyValuePair<string, object>(Resource.ServiceVersionKey, serviceVersion));
             }
 
-            return new Resource(attributes);
-        }
-
-        private static Resource GetTelemetrySdkResource()
-        {
-            var attributes = new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(SemanticConventions.AttributeTelemetrySdkName, "opentelemetry"),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeTelemetrySdkLanguage, "dotnet"),
-            };
-
-            return new Resource(attributes);
-        }
-
-        private static Resource GetOTelEnvVarResource()
-        {
-            var resource = Resource.Empty;
-
-            string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
-            if (envResourceAttributeValue != null)
-            {
-                var attributes = ParseResourceAttributes(envResourceAttributeValue);
-                return new Resource(attributes);
-            }
-
-            return resource;
-        }
-
-        private static IEnumerable<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
-        {
-            var attributes = new List<KeyValuePair<string, object>>();
-
-            if (string.IsNullOrEmpty(resourceAttributes))
-            {
-                return Enumerable.Empty<KeyValuePair<string, object>>();
-            }
-
-            string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
-            foreach (string rawKeyValuePair in rawAttributes)
-            {
-                string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
-                if (keyValuePair.Length != 2)
-                {
-                    continue;
-                }
-
-                attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), keyValuePair[1].Trim()));
-            }
-
-            return attributes;
+            return Resource.Create(attributes);
         }
     }
 }
