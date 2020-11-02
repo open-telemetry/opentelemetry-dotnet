@@ -14,11 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Resources;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -45,8 +43,6 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void DefaultResourceGetsAssociatedWithActivityIfNoneConfigured()
         {
-            Environment.SetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES", "Key1=Val1");
-
             using var activitySource = new ActivitySource(nameof(this.ResourceGetsAssociatedWithActivity));
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
@@ -56,15 +52,12 @@ namespace OpenTelemetry.Trace.Tests
             using (var root = activitySource.StartActivity("root"))
             {
                 var resourceAttributes = root.GetResource().Attributes;
-                Assert.Equal(4, resourceAttributes.Count());
-                Assert.Contains(new KeyValuePair<string, object>("Key1", "Val1"), resourceAttributes);
+                Assert.Equal(3, resourceAttributes.Count());
                 Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), resourceAttributes);
                 Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), resourceAttributes);
                 var versionAttribute = resourceAttributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
                 Assert.Single(versionAttribute);
             }
-
-            Environment.SetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES", null);
         }
     }
 }
