@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private Resource resource = Resource.Default;
+        private Resource resource = Resource.Create();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilder()

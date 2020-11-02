@@ -87,7 +87,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
         /// <returns><see cref="Resource"/>.</returns>
-        public static Resource Create(IEnumerable<KeyValuePair<string, object>> attributes)
+        public static Resource Create(IEnumerable<KeyValuePair<string, object>> attributes = null)
         {
             return new Resource(attributes).Merge(Default).Merge(GetOTelEnvVarResource());
         }
