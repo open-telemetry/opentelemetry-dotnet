@@ -25,12 +25,12 @@ namespace OpenTelemetry.Metrics
         private readonly ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>>();
         private string metricName;
 
-        public MeasureMetricSdk(string name)
+        public MeasureMetricSdk(string name, AggregationType aggregationType)
         {
             this.metricName = name;
         }
 
-        public AggregationType MetricAggregationType { get; internal set; }
+        public AggregationType MetricAggregationType { get; }
 
         public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {

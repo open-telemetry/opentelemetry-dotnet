@@ -19,15 +19,13 @@ namespace OpenTelemetry.Metrics
     internal class DoubleMeasureMetricSdk : MeasureMetricSdk<double>
     {
         public DoubleMeasureMetricSdk(string name)
-            : base(name)
+            : base(name, AggregationType.DoubleSummary)
         {
-            this.MetricAggregationType = AggregationType.DoubleSummary;
         }
 
         public DoubleMeasureMetricSdk(string name, AggregationType aggregationType)
-            : base(name)
+            : base(name, aggregationType)
         {
-            this.MetricAggregationType = aggregationType;
         }
 
         protected override BoundMeasureMetricSdkBase<double> CreateMetric()
