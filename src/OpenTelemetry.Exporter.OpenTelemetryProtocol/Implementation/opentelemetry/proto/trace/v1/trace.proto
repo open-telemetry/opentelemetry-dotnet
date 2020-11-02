@@ -107,25 +107,25 @@ message Span {
 
     // Indicates that the span represents an internal operation within an application,
     // as opposed to an operations happening at the boundaries. Default value.
-    INTERNAL = 1;
+    SPAN_KIND_INTERNAL = 1;
 
     // Indicates that the span covers server-side handling of an RPC or other
     // remote network request.
-    SERVER = 2;
+    SPAN_KIND_SERVER = 2;
 
     // Indicates that the span describes a request to some remote service.
-    CLIENT = 3;
+    SPAN_KIND_CLIENT = 3;
 
     // Indicates that the span describes a producer sending a message to a broker.
     // Unlike CLIENT and SERVER, there is often no direct critical path latency relationship
     // between producer and consumer spans. A PRODUCER span ends when the message was accepted
     // by the broker while the logical processing of the message might span a much longer time.
-    PRODUCER = 4;
+    SPAN_KIND_PRODUCER = 4;
 
     // Indicates that the span describes consumer receiving a message from a broker.
     // Like the PRODUCER kind, there is often no direct critical path latency relationship
     // between producer and consumer spans.
-    CONSUMER = 5;
+    SPAN_KIND_CONSUMER = 5;
   }
 
   // Distinguishes between spans generated in a particular context. For example,
@@ -220,42 +220,96 @@ message Span {
   // enforced. If this value is 0, then no links were dropped.
   uint32 dropped_links_count = 14;
 
-  // An optional final status for this span. Semantically when Status
-  // wasn't set it is means span ended without errors and assume
-  // Status.Ok (code = 0).
+  // An optional final status for this span. Semantically when Status isn't set, it means
+  // span's status code is unset, i.e. assume STATUS_CODE_UNSET (code = 0).
   Status status = 15;
 }
 
 // The Status type defines a logical error model that is suitable for different
 // programming environments, including REST APIs and RPC APIs.
 message Status {
+  // IMPORTANT: Backward compatibility notes:
+  //
+  // To ensure any pair of senders and receivers continues to correctly signal and
+  // interpret erroneous situations, the senders and receivers MUST follow these rules:
+  //
+  // 1. Old senders and receivers that are not aware of `code` field will continue using
+  // the `deprecated_code` field to signal and interpret erroneous situation.
+  //
+  // 2. New senders, which are aware of the `code` field MUST set both the
+  // `deprecated_code` and `code` fields according to the following rules:
+  //
+  //   if code==STATUS_CODE_UNSET then `deprecated_code` MUST be
+  //   set to DEPRECATED_STATUS_CODE_OK.
+  //
+  //   if code==STATUS_CODE_OK then `deprecated_code` MUST be
+  //   set to DEPRECATED_STATUS_CODE_OK.
+  //
+  //   if code==STATUS_CODE_ERROR then `deprecated_code` MUST be
+  //   set to DEPRECATED_STATUS_CODE_UNKNOWN_ERROR.
+  //
+  // These rules allow old receivers to correctly interpret data received from new senders.
+  //
+  // 3. New receivers MUST look at both the `code` and `deprecated_code` fields in order
+  // to interpret the overall status:
+  //
+  //   If code==STATUS_CODE_UNSET then the value of `deprecated_code` is the
+  //   carrier of the overall status according to these rules:
+  //
+  //     if deprecated_code==DEPRECATED_STATUS_CODE_OK then the receiver MUST interpret
+  //     the overall status to be STATUS_CODE_UNSET.
+  //
+  //     if deprecated_code!=DEPRECATED_STATUS_CODE_OK then the receiver MUST interpret
+  //     the overall status to be STATUS_CODE_ERROR.
+  //
+  //   If code!=STATUS_CODE_UNSET then the value of `deprecated_code` MUST be
+  //   ignored, the `code` field is the sole carrier of the status.
+  //
+  // These rules allow new receivers to correctly interpret data received from old senders.
 
-  // StatusCode mirrors the codes defined at
-  // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/api-tracing.md#statuscanonicalcode
-  enum StatusCode {
-    Ok                 = 0;
-    Cancelled          = 1;
-    UnknownError       = 2;
-    InvalidArgument    = 3;
-    DeadlineExceeded   = 4;
-    NotFound           = 5;
-    AlreadyExists      = 6;
-    PermissionDenied   = 7;
-    ResourceExhausted  = 8;
-    FailedPrecondition = 9;
-    Aborted            = 10;
-    OutOfRange         = 11;
-    Unimplemented      = 12;
-    InternalError      = 13;
-    Unavailable        = 14;
-    DataLoss           = 15;
-    Unauthenticated    = 16;
+  enum DeprecatedStatusCode {
+    DEPRECATED_STATUS_CODE_OK                  = 0;
+    DEPRECATED_STATUS_CODE_CANCELLED           = 1;
+    DEPRECATED_STATUS_CODE_UNKNOWN_ERROR       = 2;
+    DEPRECATED_STATUS_CODE_INVALID_ARGUMENT    = 3;
+    DEPRECATED_STATUS_CODE_DEADLINE_EXCEEDED   = 4;
+    DEPRECATED_STATUS_CODE_NOT_FOUND           = 5;
+    DEPRECATED_STATUS_CODE_ALREADY_EXISTS      = 6;
+    DEPRECATED_STATUS_CODE_PERMISSION_DENIED   = 7;
+    DEPRECATED_STATUS_CODE_RESOURCE_EXHAUSTED  = 8;
+    DEPRECATED_STATUS_CODE_FAILED_PRECONDITION = 9;
+    DEPRECATED_STATUS_CODE_ABORTED             = 10;
+    DEPRECATED_STATUS_CODE_OUT_OF_RANGE        = 11;
+    DEPRECATED_STATUS_CODE_UNIMPLEMENTED       = 12;
+    DEPRECATED_STATUS_CODE_INTERNAL_ERROR      = 13;
+    DEPRECATED_STATUS_CODE_UNAVAILABLE         = 14;
+    DEPRECATED_STATUS_CODE_DATA_LOSS           = 15;
+    DEPRECATED_STATUS_CODE_UNAUTHENTICATED     = 16;
   };
 
-  // The status code. This is optional field. It is safe to assume 0 (OK)
-  // when not set.
-  StatusCode code = 1;
+  // The deprecated status code. This is an optional field.
+  //
+  // This field is deprecated and is replaced by the `code` field below. See backward
+  // compatibility notes below. According to our stability guarantees this field
+  // will be removed in 12 months, on Oct 22, 2021. All usage of old senders and
+  // receivers that do not understand the `code` field MUST be phased out by then.
+  DeprecatedStatusCode deprecated_code = 1 [deprecated=true];
 
   // A developer-facing human readable error message.
   string message = 2;
+
+  // For the semantics of status codes see
+  // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status
+  enum StatusCode {
+    // The default status.
+    STATUS_CODE_UNSET               = 0;
+    // The Span has been validated by an Application developers or Operator to have
+    // completed successfully.
+    STATUS_CODE_OK                  = 1;
+    // The Span contains an error.
+    STATUS_CODE_ERROR               = 2;
+  };
+
+  // The status code.
+  StatusCode code = 3;
 }

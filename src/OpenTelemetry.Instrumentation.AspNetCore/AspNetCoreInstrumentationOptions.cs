@@ -27,11 +27,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     public class AspNetCoreInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
+        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation. Default value: <see cref="CompositeTextMapPropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
+        public TextMapPropagator Propagator { get; set; } = new CompositeTextMapPropagator(new TextMapPropagator[]
         {
-            new TextMapPropagator(),
+            new TraceContextPropagator(),
             new BaggagePropagator(),
         });
 
@@ -61,5 +61,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md.
+        /// </remarks>
+        public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
+#endif
     }
 }

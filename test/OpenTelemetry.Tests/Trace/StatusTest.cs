@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -24,7 +25,12 @@ namespace OpenTelemetry.Trace.Tests
         {
             Assert.Equal(StatusCode.Ok, Status.Ok.StatusCode);
             Assert.Null(Status.Ok.Description);
-            Assert.True(Status.Ok.IsOk);
+        }
+
+        [Fact]
+        public void CheckingDefaultStatus()
+        {
+            Assert.Equal(default, Status.Unset);
         }
 
         [Fact]
@@ -33,7 +39,6 @@ namespace OpenTelemetry.Trace.Tests
             var status = Status.Error.WithDescription("This is an error.");
             Assert.Equal(StatusCode.Error, status.StatusCode);
             Assert.Equal("This is an error.", status.Description);
-            Assert.False(status.IsOk);
         }
 
         [Fact]

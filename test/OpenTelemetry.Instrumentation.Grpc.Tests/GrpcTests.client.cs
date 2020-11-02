@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Diagnostics;
 using System.Net.Http;
@@ -20,14 +21,13 @@ using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
 using Moq;
-using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    public partial class GrpcTests : IClassFixture<GrpcFixture<GreeterService>>
+    public partial class GrpcTests
     {
         [Theory]
         [InlineData("http://localhost")]
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress, bool shouldEnrich = true)
         {
-            var uri = new Uri($"{baseAddress}:{this.fixture.Port}");
+            var uri = new Uri($"{baseAddress}:{this.server.Port}");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData(false)]
         public void GrpcAndHttpClientInstrumentationIsInvoked(bool shouldEnrich)
         {
-            var uri = new Uri($"http://localhost:{this.fixture.Port}");
+            var uri = new Uri($"http://localhost:{this.server.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData(false)]
         public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation(bool shouldEnrich)
         {
-            var uri = new Uri($"http://localhost:{this.fixture.Port}");
+            var uri = new Uri($"http://localhost:{this.server.Port}");
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
 
