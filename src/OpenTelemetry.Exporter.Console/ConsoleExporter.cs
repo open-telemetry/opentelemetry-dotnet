@@ -124,6 +124,11 @@ namespace OpenTelemetry.Exporter
                     Console.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
                     Console.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
                     Console.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                    if (logRecord.Exception is { })
+                    {
+                        Console.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                    }
+
                     Console.WriteLine();
                 }
             }
