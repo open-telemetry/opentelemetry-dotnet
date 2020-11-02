@@ -24,9 +24,12 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly TextMapPropagator Noop = new NoopTextMapPropagator();
 
         /// <summary>
-        /// Gets or sets the Default TextMapPropagator to be used.
+        /// Gets the Default TextMapPropagator to be used.
         /// </summary>
-        public static TextMapPropagator DefaultTextMapPropagator { get; set; } = Noop;
+        /// <remarks>
+        /// Setting this can be done only from Sdk.
+        /// </remarks>
+        public static TextMapPropagator DefaultTextMapPropagator { get; internal set; } = Noop;
 
         internal static void Reset()
         {
