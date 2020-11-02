@@ -59,6 +59,11 @@ namespace Utils.Messaging
                 {
                     var props = this.channel.CreateBasicProperties();
 
+                    // Depending on Sampling (and whether a listener is registered or not), the
+                    // activity above may not be created.
+                    // If it is created, then propagate its context.
+                    // If it is not created, the propagate the Current context,
+                    // if any.
                     ActivityContext contextToInject = default;
                     if (activity != null)
                     {
