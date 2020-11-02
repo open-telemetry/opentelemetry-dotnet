@@ -111,7 +111,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 // TODO: The check above should be enforced by the usage of the exporter. Perhaps enforce at higher-level.
                 traceId = new Int128(activity.TraceId);
                 spanId = new Int128(activity.SpanId);
-                parentSpanId = new Int128(activity.ParentSpanId);
+                if (activity.ParentSpanId != default)
+                {
+                    parentSpanId = new Int128(activity.ParentSpanId);
+                }
             }
 
             return new JaegerSpan(

@@ -41,10 +41,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             ActivitySource.AddActivityListener(listener);
         }
 
-        [Fact]
-        public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_AllPropertiesSet()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_AllPropertiesSet(bool isRootSpan)
         {
-            var activity = CreateTestActivity();
+            var activity = CreateTestActivity(isRootSpan: isRootSpan);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
             var linkTraceIdAsInt = new Int128(activity.Links.Single().Context.TraceId);
@@ -438,14 +440,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             bool addEvents = true,
             bool addLinks = true,
             Resource resource = null,
-            ActivityKind kind = ActivityKind.Client)
+            ActivityKind kind = ActivityKind.Client,
+            bool isRootSpan = false)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
             var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
-            var parentSpanId = ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
+            var parentSpanId = isRootSpan ? default : ActivitySpanId.CreateFromBytes(new byte[] { 12, 23, 34, 45, 56, 67, 78, 89 });
 
             var attributes = new Dictionary<string, object>
             {
