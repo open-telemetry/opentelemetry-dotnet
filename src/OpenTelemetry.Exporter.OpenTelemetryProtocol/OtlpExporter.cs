@@ -15,11 +15,18 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using OtlpCommon = Opentelemetry.Proto.Common.V1;
+using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
@@ -29,9 +36,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporter : BaseExporter<Activity>
     {
+        private readonly OtlpExporterOptions options;
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
+        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
@@ -40,7 +49,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
         internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
-            this.headers = options?.Headers ?? throw new ArgumentNullException(nameof(options));
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            this.headers = options.Headers ?? throw new ArgumentException("Headers were not provided on options.", nameof(options));
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
@@ -57,7 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(activityBatch);
+            request.AddBatch(this, activityBatch);
 
             try
             {
@@ -75,6 +85,43 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
 
             return ExportResult.Success;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal OtlpResource.Resource EnsureProcessResource(Activity activity)
+        {
+            if (this.processResource != null)
+            {
+                return this.processResource;
+            }
+
+            OtlpResource.Resource processResource = new OtlpResource.Resource();
+
+            foreach (KeyValuePair<string, object> attribute in activity.GetResource().Attributes)
+            {
+                var oltpAttribute = attribute.ToOtlpAttribute();
+                if (oltpAttribute != null)
+                {
+                    processResource.Attributes.Add(oltpAttribute);
+                }
+            }
+
+            if (!processResource.Attributes.Any(kvp => kvp.Key == Resource.ServiceNameKey))
+            {
+                string serviceName = this.options.ServiceName;
+                if (string.IsNullOrEmpty(serviceName))
+                {
+                    serviceName = OtlpExporterOptions.DefaultServiceName;
+                }
+
+                processResource.Attributes.Add(new OtlpCommon.KeyValue
+                {
+                    Key = Resource.ServiceNameKey,
+                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
+                });
+            }
+
+            return this.processResource = processResource;
         }
 
         /// <inheritdoc/>

@@ -15,6 +15,10 @@
 // </copyright>
 
 using System;
+using System.Configuration;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
@@ -33,17 +37,34 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            var builder = Sdk.CreateTracerProviderBuilder()
                  .AddAspNetInstrumentation(options => options.Propagator = new B3Propagator())
                  .AddHttpClientInstrumentation(
                         httpClientOptions => httpClientOptions.Propagator = new B3Propagator(),
-                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator())
-                 .AddJaegerExporter(jaegerOptions =>
-                 {
-                     jaegerOptions.AgentHost = "localhost";
-                     jaegerOptions.AgentPort = 6831;
-                 })
-                 .Build();
+                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator());
+
+            switch (ConfigurationManager.AppSettings["UseExporter"].ToLowerInvariant())
+            {
+                case "jaeger":
+                    builder.AddJaegerExporter(jaegerOptions =>
+                     {
+                         jaegerOptions.AgentHost = ConfigurationManager.AppSettings["JaegerHost"];
+                         jaegerOptions.AgentPort = int.Parse(ConfigurationManager.AppSettings["JaegerPort"]);
+                     });
+                    break;
+                case "zipkin":
+                    builder.AddZipkinExporter(zipkinOptions =>
+                    {
+                        zipkinOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["ZipkinEndpoint"]);
+                    });
+                    break;
+                default:
+                    Console.SetOut(new DebugStreamWriter());
+                    builder.AddConsoleExporter();
+                    break;
+            }
+
+            this.tracerProvider = builder.Build();
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
 
@@ -54,6 +75,45 @@ namespace Examples.AspNet
         protected void Application_End()
         {
             this.tracerProvider?.Dispose();
+        }
+
+        private class DebugStreamWriter : StreamWriter
+        {
+            public DebugStreamWriter()
+                : base(new DebugStream(), Encoding.Unicode, 1024)
+            {
+                this.AutoFlush = true;
+            }
+
+            private sealed class DebugStream : Stream
+            {
+                public override bool CanRead => false;
+
+                public override bool CanSeek => false;
+
+                public override bool CanWrite => true;
+
+                public override long Length => throw new NotSupportedException();
+
+                public override long Position
+                {
+                    get => throw new NotSupportedException();
+                    set => throw new NotSupportedException();
+                }
+
+                public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+                public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+                public override void SetLength(long value) => throw new NotSupportedException();
+
+                public override void Write(byte[] buffer, int offset, int count)
+                {
+                    Debug.Write(Encoding.Unicode.GetString(buffer, offset, count));
+                }
+
+                public override void Flush() => Debug.Flush();
+            }
         }
     }
 }
