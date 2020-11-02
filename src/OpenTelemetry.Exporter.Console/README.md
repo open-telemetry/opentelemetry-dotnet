@@ -15,15 +15,9 @@ environment.
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-## Configuration
-
-You can configure the `ConsoleExporter` by following the directions below:
-
-* `DisplayAsJson`: Boolean to show data as JSON.
-
 See the
-[`TestConsoleExporter.cs`](../../examples/Console/TestConsoleExporter.cs)
-for an example of how to use the exporter.
+[`TestConsoleExporter.cs`](../../examples/Console/TestConsoleExporter.cs) for an
+example of how to use the exporter.
 
 ## References
 
