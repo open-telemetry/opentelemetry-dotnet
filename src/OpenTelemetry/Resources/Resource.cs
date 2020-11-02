@@ -167,7 +167,7 @@ namespace OpenTelemetry.Resources
             var resource = Resource.Empty;
 
             string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
-            if (envResourceAttributeValue != null)
+            if (!string.IsNullOrEmpty(envResourceAttributeValue))
             {
                 var attributes = ParseResourceAttributes(envResourceAttributeValue);
                 return new Resource(attributes);
@@ -179,11 +179,6 @@ namespace OpenTelemetry.Resources
         private static IEnumerable<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
         {
             var attributes = new List<KeyValuePair<string, object>>();
-
-            if (string.IsNullOrEmpty(resourceAttributes))
-            {
-                return Enumerable.Empty<KeyValuePair<string, object>>();
-            }
 
             string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
             foreach (string rawKeyValuePair in rawAttributes)

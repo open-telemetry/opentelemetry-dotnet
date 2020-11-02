@@ -347,6 +347,21 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void CreateResource_NoParamEmptyEnvVar()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, string.Empty);
+
+            // Act
+            var resource = Resource.Create(null);
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(3, attributes.Count());
+            ValidateTelemetrySdkAttributes(attributes);
+        }
+
+        [Fact]
         public void CreateResource_WithParamsNoEnvVar()
         {
             // Arrange
