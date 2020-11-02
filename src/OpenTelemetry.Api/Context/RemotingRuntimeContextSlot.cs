@@ -61,7 +61,13 @@ namespace OpenTelemetry.Context
                 return default(T);
             }
 
-            return (T)WrapperField.GetValue(wrapper);
+            var value = WrapperField.GetValue(wrapper);
+            if (value is T)
+            {
+                return (T)value;
+            }
+
+            return default(T);
         }
 
         /// <inheritdoc/>
