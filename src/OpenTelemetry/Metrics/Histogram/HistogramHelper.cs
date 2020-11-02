@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64DistributionData.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="HistogramHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics.Export
-{
-    public class Int64DistributionData : DistributionData
-    {
-        public long Min { get; set; }
+using System;
 
-        public long Max { get; set; }
+namespace OpenTelemetry.Metrics.Histogram
+{
+    public static class HistogramHelper
+    {
+        public static double GetSumOfSquaredDeviation(double mean, double[] values)
+        {
+            var result = 0.0;
+
+            foreach (var value in values)
+            {
+                result += Math.Pow(mean - value, 2);
+            }
+
+            return result;
+        }
     }
 }

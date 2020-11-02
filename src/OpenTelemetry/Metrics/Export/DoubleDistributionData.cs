@@ -16,7 +16,10 @@
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class DoubleDistributionData : MetricData
+    public class DoubleDistributionData : DistributionData
     {
+        public double Min { get; set; }
+
+        public double Max { get; set; }
     }
 }

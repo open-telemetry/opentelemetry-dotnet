@@ -1,4 +1,4 @@
-﻿// <copyright file="Int64DistributionData.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="DistributionData.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,16 @@
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class Int64DistributionData : DistributionData
+    public class DistributionData : MetricData
     {
-        public long Min { get; set; }
+        public AggregationOptions AggregationOptions { get; set; }
 
-        public long Max { get; set; }
+        public long Count { get; set; }
+
+        public double Mean { get; set; }
+
+        public double SumOfSquaredDeviation { get; set; }
+
+        public long[] BucketCounts { get; set; }
     }
 }
