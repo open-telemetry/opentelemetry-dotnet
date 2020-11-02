@@ -44,6 +44,15 @@ namespace OpenTelemetry
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
         /// <summary>
+        /// Sets the Default TextMapPropagator.
+        /// </summary>
+        /// <param name="textMapPropagator">TextMapPropagator to be set as default.</param>
+        public static void SetDefaultTextMapPropagator(TextMapPropagator textMapPropagator)
+        {
+            Propagators.DefaultTextMapPropagator = textMapPropagator;
+        }
+
+        /// <summary>
         /// Creates MeterProviderBuilder which should be used to build MeterProvider.
         /// </summary>
         /// <returns>MeterProviderBuilder instance, which should be used to build MeterProvider.</returns>
