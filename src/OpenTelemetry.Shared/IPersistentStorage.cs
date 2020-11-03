@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     /// <summary>
     /// Persistent storage API.

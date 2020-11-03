@@ -22,7 +22,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     internal static class PersistentStorageHelper
     {

@@ -18,7 +18,7 @@ using System.IO;
 using System.Text;
 using Xunit;
 
-namespace OpenTelemetry.Shared.Tests
+namespace OpenTelemetry.Extensions.Storage.Tests
 {
     public class LocalFileBlobTests
     {

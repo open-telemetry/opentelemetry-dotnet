@@ -20,7 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Timers;
 
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     /// <summary>
     /// Persistent file storage <see cref="LocalFileStorage"/> allows to save data

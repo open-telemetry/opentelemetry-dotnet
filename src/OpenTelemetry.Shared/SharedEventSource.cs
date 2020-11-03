@@ -19,7 +19,7 @@ using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     [EventSource(Name = EventSourceName)]
     internal sealed class SharedEventSource : EventSource

@@ -17,7 +17,7 @@
 using System;
 using System.IO;
 
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     /// <summary>
     /// The <see cref="LocalFileBlob"/> allows to save a blob

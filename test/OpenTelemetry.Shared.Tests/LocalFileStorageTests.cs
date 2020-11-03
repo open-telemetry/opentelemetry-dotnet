@@ -21,7 +21,7 @@ using System.Text;
 using System.Threading;
 using Xunit;
 
-namespace OpenTelemetry.Shared.Tests
+namespace OpenTelemetry.Extensions.Storage.Tests
 {
     public class LocalFileStorageTests
     {
