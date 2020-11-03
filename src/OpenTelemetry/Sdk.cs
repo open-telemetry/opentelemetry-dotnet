@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -24,10 +26,31 @@ namespace OpenTelemetry
     /// </summary>
     public static class Sdk
     {
+        static Sdk()
+        {
+            Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            });
+
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+        }
+
         /// <summary>
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+        /// <summary>
+        /// Sets the Default TextMapPropagator.
+        /// </summary>
+        /// <param name="textMapPropagator">TextMapPropagator to be set as default.</param>
+        public static void SetDefaultTextMapPropagator(TextMapPropagator textMapPropagator)
+        {
+            Propagators.DefaultTextMapPropagator = textMapPropagator;
+        }
 
         /// <summary>
         /// Creates MeterProviderBuilder which should be used to build MeterProvider.
