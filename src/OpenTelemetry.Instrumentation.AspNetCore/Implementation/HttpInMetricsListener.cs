@@ -27,13 +27,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly MeasureMetric<double> httpServerDuration;
+        private readonly Meter meter;
+
+        private MeasureMetric<double> httpServerDuration;
 
         public HttpInMetricsListener(string name, AspNetCoreInstrumentationOptions options, Meter meter)
             : base(name)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.httpServerDuration = meter.CreateDoubleMeasure(SemanticConventions.MetricHttpServerDuration);
+            this.meter = meter;
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -83,6 +85,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             // TODO: Retrieve the route.
             labels[SemanticConventions.AttributeHttpTarget] = string.Empty;
+
+            // TODO: Ideally we could do this in the constructor. However, the instrumentation is usually instantiated
+            // prior to invoking MeterProvider.SetDefault. Setting the default meter provider is required before metrics
+            // can be created.
+            // This should be safe in the meantime since CreateDoubleMeasure uses a ConcurrentDictionary behind the scenes.
+            if (this.httpServerDuration == null)
+            {
+                this.httpServerDuration = this.meter.CreateDoubleMeasure(SemanticConventions.MetricHttpServerDuration);
+            }
 
             this.httpServerDuration.Record(new SpanContext(activity.Context), activity.Duration.TotalMilliseconds, labels);
         }
