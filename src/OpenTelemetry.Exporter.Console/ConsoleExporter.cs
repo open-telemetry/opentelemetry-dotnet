@@ -17,42 +17,28 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+#if NET461 || NETSTANDARD2_0
+using OpenTelemetry.Logs;
+#endif
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleExporter : BaseExporter<Activity>
+    public class ConsoleExporter<T> : BaseExporter<T>
+        where T : class
     {
-        private readonly JsonSerializerOptions serializerOptions;
-        private readonly bool displayAsJson;
-
         public ConsoleExporter(ConsoleExporterOptions options)
         {
-            this.serializerOptions = new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            };
-
-            this.displayAsJson = options?.DisplayAsJson ?? false;
-
-            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
-            this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
-            this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
         }
 
-        public override ExportResult Export(in Batch<Activity> batch)
+        public override ExportResult Export(in Batch<T> batch)
         {
-            foreach (var activity in batch)
+            if (typeof(T) == typeof(Activity))
             {
-                if (this.displayAsJson)
+                foreach (var item in batch)
                 {
-                    Console.WriteLine(JsonSerializer.Serialize(activity, this.serializerOptions));
-                }
-                else
-                {
+                    var activity = item as Activity;
                     Console.WriteLine($"Activity.Id:          {activity.Id}");
                     if (!string.IsNullOrEmpty(activity.ParentId))
                     {
@@ -123,6 +109,30 @@ namespace OpenTelemetry.Exporter
                     Console.WriteLine();
                 }
             }
+#if NET461 || NETSTANDARD2_0
+            else if (typeof(T) == typeof(LogRecord))
+            {
+                var rightPaddingLength = 30;
+                foreach (var item in batch)
+                {
+                    var logRecord = item as LogRecord;
+                    Console.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
+                    Console.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
+                    Console.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    Console.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
+                    Console.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
+                    Console.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
+                    Console.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
+                    Console.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                    if (logRecord.Exception is { })
+                    {
+                        Console.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                    }
+
+                    Console.WriteLine();
+                }
+            }
+#endif
 
             return ExportResult.Success;
         }
