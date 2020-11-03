@@ -96,6 +96,43 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
+        public async Task HttpWebRequestInstrumentationInjectsHeadersAsyncWhenActivityIsNotRecorded()
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation()
+                .Build();
+
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            using var response = await request.GetResponseAsync();
+
+            Assert.Empty(activityProcessor.Invocations);
+            var activity = Activity.Current;
+
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+            string traceparent = request.Headers.Get("traceparent");
+            string tracestate = request.Headers.Get("tracestate");
+
+            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-00", traceparent);
+            Assert.Equal("k1=v1,k2=v2", tracestate);
+
+            parent.Stop();
+        }
+
+        [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var propagator = new Mock<TextMapPropagator>();
