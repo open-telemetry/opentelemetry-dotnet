@@ -37,11 +37,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Gets or sets <see cref="TextMapPropagator"/> for context propagation. Default value: <see cref="CompositeTextMapPropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
         /// </summary>
-        public TextMapPropagator Propagator { get; set; } = new CompositeTextMapPropagator(new TextMapPropagator[]
-        {
-            new TraceContextPropagator(),
-            new BaggagePropagator(),
-        });
+        public TextMapPropagator Propagator { get; set; }
 
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.

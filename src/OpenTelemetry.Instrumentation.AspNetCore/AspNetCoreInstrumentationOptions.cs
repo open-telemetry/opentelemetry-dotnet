@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// Gets or sets <see cref="TextMapPropagator"/> for context propagation.
         /// By default, <see cref="Propagators.DefaultTextMapPropagator" /> will be used.
         /// </summary>
-        public TextMapPropagator Propagator { get; set; } = Propagators.DefaultTextMapPropagator;
+        public TextMapPropagator Propagator { get; set; }
 
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.

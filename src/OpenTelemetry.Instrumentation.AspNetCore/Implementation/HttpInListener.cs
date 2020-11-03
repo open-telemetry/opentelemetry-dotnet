@@ -77,10 +77,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
+            var textMapPropagator = this.options.Propagator ?? Propagators.DefaultTextMapPropagator;
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.Propagator is TraceContextPropagator))
+            if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
             {
-                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid()
                     && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
