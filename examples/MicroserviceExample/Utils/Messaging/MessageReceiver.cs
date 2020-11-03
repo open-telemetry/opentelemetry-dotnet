@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -30,7 +31,7 @@ namespace Utils.Messaging
     public class MessageReceiver : IDisposable
     {
         private static readonly ActivitySource ActivitySource = new ActivitySource(nameof(MessageReceiver));
-        private static readonly IPropagator Propagator = new TextMapPropagator();
+        private static readonly TextMapPropagator Propagator = new TraceContextPropagator();
 
         private readonly ILogger<MessageReceiver> logger;
         private readonly IConnection connection;
@@ -56,8 +57,9 @@ namespace Utils.Messaging
 
         public void ReceiveMessage(BasicDeliverEventArgs ea)
         {
-            // Extract the ActivityContext of the upstream parent from the message headers.
+            // Extract the PropagationContext of the upstream parent from the message headers.
             var parentContext = Propagator.Extract(default, ea.BasicProperties, this.ExtractTraceContextFromBasicProperties);
+            Baggage.Current = parentContext.Baggage;
 
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
@@ -71,13 +73,10 @@ namespace Utils.Messaging
 
                     this.logger.LogInformation($"Message received: [{message}]");
 
-                    if (activity != null)
-                    {
-                        activity.SetTag("message", message);
+                    activity?.SetTag("message", message);
 
-                        // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                        RabbitMqHelper.AddMessagingTags(activity);
-                    }
+                    // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
+                    RabbitMqHelper.AddMessagingTags(activity);
 
                     // Simulate some work
                     Thread.Sleep(1000);

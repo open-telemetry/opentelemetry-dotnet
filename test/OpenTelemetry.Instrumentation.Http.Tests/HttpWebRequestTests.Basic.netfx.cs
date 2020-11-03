@@ -98,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
                 .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {

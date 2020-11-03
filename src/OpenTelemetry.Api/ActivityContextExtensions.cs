@@ -1,4 +1,4 @@
-// <copyright file="ActivityTraceIdConverter.cs" company="OpenTelemetry Authors">
+// <copyright file="ActivityContextExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry
 {
-    internal class ActivityTraceIdConverter : JsonConverter<ActivityTraceId>
+    /// <summary>
+    /// Extension methods on ActivityContext.
+    /// </summary>
+    public static class ActivityContextExtensions
     {
-        public override ActivityTraceId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        /// <summary>
+        /// Returns a bool indicating if a ActivityContext is valid or not.
+        /// </summary>
+        /// <param name="ctx">ActivityContext.</param>
+        /// <returns>whether the context is a valid one or not.</returns>
+        public static bool IsValid(this ActivityContext ctx)
         {
-            throw new NotImplementedException();
-        }
-
-        public override void Write(Utf8JsonWriter writer, ActivityTraceId value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value.ToString());
+            return ctx != default;
         }
     }
 }

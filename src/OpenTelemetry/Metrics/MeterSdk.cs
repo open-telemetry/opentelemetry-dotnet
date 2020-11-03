@@ -216,7 +216,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleObserver.Key;
                     var observerInstrument = doubleObserver.Value;
-                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542

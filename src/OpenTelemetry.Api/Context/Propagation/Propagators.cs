@@ -1,4 +1,4 @@
-// <copyright file="ActivityContextExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="Propagators.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// Extension methods on ActivityContext.
+    /// Propagators allow setting the global default Propagators.
     /// </summary>
-    public static class ActivityContextExtensions
+    public static class Propagators
     {
+        private static readonly TextMapPropagator Noop = new NoopTextMapPropagator();
+
         /// <summary>
-        /// Returns a bool indicating if a ActivityContext is valid or not.
+        /// Gets the Default TextMapPropagator to be used.
         /// </summary>
-        /// <param name="ctx">ActivityContext.</param>
-        /// <returns>whether the context is a valid one or not.</returns>
-        public static bool IsValid(this ActivityContext ctx)
+        /// <remarks>
+        /// Setting this can be done only from Sdk.
+        /// </remarks>
+        public static TextMapPropagator DefaultTextMapPropagator { get; internal set; } = Noop;
+
+        internal static void Reset()
         {
-            return ctx != default;
+            DefaultTextMapPropagator = Noop;
         }
     }
 }

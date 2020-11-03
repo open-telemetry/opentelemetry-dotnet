@@ -50,7 +50,7 @@ namespace Benchmarks.Exporter
                 new JaegerExporterOptions(),
                 new BlackHoleTransport())
             {
-                Process = new OpenTelemetry.Exporter.Jaeger.Process("TestService"),
+                Process = new OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService"),
             };
 
             for (int i = 0; i < this.NumberOfBatches; i++)

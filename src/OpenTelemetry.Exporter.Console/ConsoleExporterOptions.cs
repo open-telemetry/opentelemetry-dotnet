@@ -18,6 +18,5 @@ namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
     {
-        public bool DisplayAsJson { get; set; }
     }
 }

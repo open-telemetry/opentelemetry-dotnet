@@ -27,13 +27,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
     public class AspNetInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
+        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation.
+        /// By default, <see cref="Propagators.DefaultTextMapPropagator" /> will be used.
         /// </summary>
-        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
-        {
-            new TextMapPropagator(),
-            new BaggagePropagator(),
-        });
+        public TextMapPropagator Propagator { get; set; }
 
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.

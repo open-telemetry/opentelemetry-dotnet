@@ -17,13 +17,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    public class Process
+    internal class Process
     {
         public Process(string serviceName)
         {
