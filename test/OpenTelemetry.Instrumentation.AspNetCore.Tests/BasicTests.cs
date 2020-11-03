@@ -49,6 +49,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public BasicTests(WebApplicationFactory<Startup> factory)
         {
             this.factory = factory;
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
@@ -221,6 +226,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+
                         // This is expected to override the global default
                             .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
                             .AddProcessor(activityProcessor.Object)
