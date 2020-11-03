@@ -38,13 +38,29 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             this.server = new GrpcServer<GreeterService>();
         }
 
-        [Fact]
-        public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes()
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes(bool? enableGrpcAspNetCoreSupport)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation()
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+
+            if (enableGrpcAspNetCoreSupport.HasValue)
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.EnableGrpcAspNetCoreSupport = enableGrpcAspNetCoreSupport.Value;
+                });
+            }
+            else
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation();
+            }
+
+            using var tracerProvider = tracerProviderBuilder
                 .AddProcessor(processor.Object)
                 .Build();
 
@@ -62,11 +78,30 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 invo.Method.Name == "OnEnd" && (invo.Arguments[0] as Activity).OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn").Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
-            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
-            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
-            Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
-            Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+
+            if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+            {
+                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+                Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
+                Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+
+                // Tags added by the library then removed from the instrumentation
+                // TODO: The grpc.status_code attribute added by the library is not currently
+                // removed because the tracing spec for span status is no longer based on
+                // gRPC status codes. Ultimately, the grpc.status_code tag should be replaced
+                // by whatever semantic convention is settled on in the RPC spec.
+                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/1345
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            }
+            else
+            {
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            }
+
             Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
@@ -75,10 +110,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
             Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
-
-            // Tags added by the library then removed from the instrumentation
-            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
         }
 
         public void Dispose()

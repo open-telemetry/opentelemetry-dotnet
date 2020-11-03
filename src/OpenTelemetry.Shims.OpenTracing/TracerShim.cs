@@ -24,9 +24,9 @@ namespace OpenTelemetry.Shims.OpenTracing
     public class TracerShim : global::OpenTracing.ITracer
     {
         private readonly Trace.Tracer tracer;
-        private readonly IPropagator propagator;
+        private readonly TextMapPropagator propagator;
 
-        public TracerShim(Trace.Tracer tracer, IPropagator textFormat)
+        public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat));

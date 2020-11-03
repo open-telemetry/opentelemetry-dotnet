@@ -24,6 +24,13 @@ jobs:
         # https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#overriding-automatic-language-detection
 
     steps:
+    - name: configure Pagefile
+      uses: al-cheb/configure-pagefile-action@v1.2
+      with:
+        minimum-size: 8GB
+        maximum-size: 32GB
+        disk-root: "D:"
+
     - name: Checkout repository
       uses: actions/checkout@v2
 

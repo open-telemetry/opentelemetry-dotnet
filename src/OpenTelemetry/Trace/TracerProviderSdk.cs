@@ -34,12 +34,6 @@ namespace OpenTelemetry.Trace
         private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
 
-        static TracerProviderSdk()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-        }
-
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,

@@ -5,6 +5,17 @@
 * Record `Exception` in AspNetCore instrumentation based on `RecordException` in
   `AspNetCoreInstrumentationOptions`
   ([#1408](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1408))
+* Added configuration option `EnableGrpcAspNetCoreSupport` to enable or disable
+  support for adding OpenTelemetry RPC attributes when using
+  [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore/).
+  This option is enabled by default.
+  ([#1423](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1423))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Propagators.DefaultTextMapPropagator will be used as the default Propagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
 
 ## 0.7.0-beta.1
 

@@ -31,7 +31,7 @@ namespace Examples.Console
                 .AddHttpClientInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddSource("http-client-test")
-                .AddConsoleExporter(opt => opt.DisplayAsJson = false)
+                .AddConsoleExporter()
                 .Build();
 
             var source = new ActivitySource("http-client-test");

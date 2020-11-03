@@ -59,6 +59,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
+        public void DefaultPropagatorIsFromPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            Assert.Same(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
+        public void PropagatorSetDoesNotAffectGlobalPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            options.Propagator = new TraceContextPropagator();
+            Assert.NotSame(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
         public async Task StatusIsUnsetOn200Response()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
@@ -196,7 +211,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
                 new PropagationContext(
                     new ActivityContext(

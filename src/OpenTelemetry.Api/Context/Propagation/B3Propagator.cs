@@ -24,9 +24,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>
-    /// B3 text propagator. See https://github.com/openzipkin/b3-propagation for the specification.
+    /// A text map propagator for B3. See https://github.com/openzipkin/b3-propagation.
     /// </summary>
-    public sealed class B3Propagator : IPropagator
+    public sealed class B3Propagator : TextMapPropagator
     {
         internal const string XB3TraceId = "X-B3-TraceId";
         internal const string XB3SpanId = "X-B3-SpanId";
@@ -73,10 +73,10 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public ISet<string> Fields => AllFields;
+        public override ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (context.ActivityContext.IsValid())
             {
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
