@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
@@ -41,14 +40,12 @@ namespace OpenTelemetry.Trace
     {
         private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
         private readonly Sampler sampler;
-        private readonly Resource resource;
         private readonly Action<Activity> getRequestedDataAction;
         private BaseProcessor<Activity> activityProcessor;
 
-        internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor, Resource resource)
+        internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor)
         {
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
-            this.resource = resource ?? throw new ArgumentNullException(nameof(resource));
             if (this.sampler is AlwaysOnSampler)
             {
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
@@ -83,7 +80,6 @@ namespace OpenTelemetry.Trace
             this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
             {
-                activity.SetResource(this.resource);
                 this.activityProcessor?.OnStart(activity);
             }
         }

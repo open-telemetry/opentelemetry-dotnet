@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry
 {
@@ -23,7 +24,7 @@ namespace OpenTelemetry
     /// Implements processor that exports telemetry objects.
     /// </summary>
     /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
-    public abstract class BaseExportProcessor<T> : BaseProcessor<T>
+    public abstract class BaseExportProcessor<T> : BaseProcessor<T>, IResourceContainer
         where T : class
     {
         protected readonly BaseExporter<T> exporter;
@@ -45,6 +46,15 @@ namespace OpenTelemetry
 
         /// <inheritdoc />
         public abstract override void OnEnd(T data);
+
+        /// <inheritdoc />
+        public void SetResource(Resource resource)
+        {
+            if (this.exporter is IResourceContainer resourceContainer)
+            {
+                resourceContainer.SetResource(resource);
+            }
+        }
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
