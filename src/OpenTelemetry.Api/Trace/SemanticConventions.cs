@@ -153,6 +153,8 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionType = "exception.type";
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
+
+        public const string MetricHttpServerDuration = "http.server.duration";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
