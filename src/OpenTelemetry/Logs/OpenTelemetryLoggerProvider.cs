@@ -31,6 +31,13 @@ namespace OpenTelemetry.Logs
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
+        static OpenTelemetryLoggerProvider()
+        {
+            // Accessing Sdk class is just to trigger its static ctor,
+            // which sets default Propagators and default Activity Id format
+            _ = Sdk.SuppressInstrumentation;
+        }
+
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
             : this(options?.CurrentValue)
         {
