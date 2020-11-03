@@ -59,13 +59,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public void DefaultPropagatorIsFromPropagators()
-        {
-            var options = new AspNetCoreInstrumentationOptions();
-            Assert.Same(Propagators.DefaultTextMapPropagator, options.Propagator);
-        }
-
-        [Fact]
         public void PropagatorSetDoesNotAffectGlobalPropagators()
         {
             var options = new AspNetCoreInstrumentationOptions();
@@ -204,7 +197,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task CustomPropagator()
+        public async Task CustomPropagatorOnInstrumentation()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
@@ -220,13 +213,67 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         ActivityTraceFlags.Recorded),
                     default));
 
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                        // This is expected to override the global default
                             .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
+                            .AddProcessor(activityProcessor.Object)
+                            .Build();
+                    })))
+            {
+                using var client = testFactory.CreateClient();
+                var response = await client.GetAsync("/api/values/2");
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            // begin and end was called once each.
+            Assert.Equal(2, activityProcessor.Invocations.Count);
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+            Assert.True(activity.Duration != TimeSpan.Zero);
+            Assert.Equal("api/Values/{id}", activity.DisplayName);
+            Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+
+            Assert.Equal(expectedTraceId, activity.Context.TraceId);
+            Assert.Equal(expectedSpanId, activity.ParentSpanId);
+        }
+
+        [Fact]
+        public async Task CustomPropagatorFromGlobalDefault()
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
+
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
+                new PropagationContext(
+                    new ActivityContext(
+                        expectedTraceId,
+                        expectedSpanId,
+                        ActivityTraceFlags.Recorded),
+                    default));
+
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(services =>
+                    {
+                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            .AddAspNetCoreInstrumentation()
                             .AddProcessor(activityProcessor.Object)
                             .Build();
                     })))
