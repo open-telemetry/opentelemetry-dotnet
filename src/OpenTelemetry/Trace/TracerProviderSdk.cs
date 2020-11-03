@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -32,12 +33,6 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
-
-        static TracerProviderSdk()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-        }
 
         internal TracerProviderSdk(
             Resource resource,
@@ -68,6 +63,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
@@ -83,6 +80,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;

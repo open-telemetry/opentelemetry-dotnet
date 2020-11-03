@@ -24,7 +24,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Context;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -34,6 +33,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public class HttpWebRequestActivitySourceTests : IDisposable
     {
+        private static bool validateBaggage;
         private readonly IDisposable testServer;
         private readonly string testServerHost;
         private readonly int testServerPort;
@@ -41,6 +41,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         static HttpWebRequestActivitySourceTests()
         {
+            HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions
+            {
+                Enrich = ActivityEnrichment,
+            };
+
+            HttpWebRequestActivitySource.Options = options;
+
             // Need to touch something in HttpWebRequestActivitySource to do the static injection.
             GC.KeepAlive(HttpWebRequestActivitySource.Options);
         }
@@ -179,15 +186,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(startRequest);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-            Assert.NotNull(response);
 
             VerifyActivityStopTags(200, "OK", activity);
         }
@@ -362,15 +366,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(startRequest);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebResponse response = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-            Assert.NotNull(response);
 
             VerifyActivityStopTags(200, "OK", activity);
         }
@@ -400,16 +401,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(2, eventRecords.Records.Count());
 
                 // Check to make sure: The first record must be a request, the next record must be a response.
-                (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-
-                var traceparent = startRequest.Headers["traceparent"];
-                var tracestate = startRequest.Headers["tracestate"];
-                var baggage = startRequest.Headers["baggage"];
-                Assert.NotNull(traceparent);
-                Assert.Equal("some=state", tracestate);
-                Assert.Equal("k=v", baggage);
-                Assert.StartsWith($"00-{parent.TraceId.ToHexString()}-", traceparent);
-                Assert.Matches("^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", traceparent);
+                _ = AssertFirstEventWasStart(eventRecords);
             }
             finally
             {
@@ -480,17 +472,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be a response.
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyHeaders(startRequest);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
-            HttpWebRequest stopRequest = (HttpWebRequest)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            Assert.Equal(startRequest, stopRequest);
-            HttpWebResponse stopResponse = (HttpWebResponse)stopEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-            Assert.NotNull(stopResponse);
 
             VerifyActivityStopTags(204, "No Content", activity);
         }
@@ -550,16 +537,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: The first record must be a request, the next record must be an exception.
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(startRequest);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            HttpWebRequest exceptionRequest = (HttpWebRequest)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            Assert.Equal(startRequest, exceptionRequest);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
-            Assert.Equal(webException, exceptionException);
 
             Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
@@ -594,13 +576,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(startRequest);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.Null(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
@@ -635,13 +615,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(startRequest);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
@@ -679,13 +657,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            (Activity activity, HttpWebRequest startRequest) = AssertFirstEventWasStart(eventRecords);
-            VerifyHeaders(startRequest);
+            Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
-            Exception exceptionException = (Exception)exceptionEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.ExceptionCustomPropertyName);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
@@ -694,6 +670,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task TestInvalidBaggage()
         {
+            validateBaggage = true;
             Baggage
                 .SetBaggage("key", "value")
                 .SetBaggage("bad/key", "value")
@@ -710,13 +687,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            WebRequest thisRequest = (WebRequest)eventRecords.Records.First().Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            string[] baggage = thisRequest.Headers["Baggage"].Split(',');
-
-            Assert.Equal(3, baggage.Length);
-            Assert.Contains("key=value", baggage);
-            Assert.Contains("bad%2Fkey=value", baggage);
-            Assert.Contains("goodkey=bad%2Fvalue", baggage);
+            validateBaggage = false;
         }
 
         /// <summary>
@@ -774,80 +745,27 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     pair.Key == "Start" ||
                     pair.Key == "Stop",
                     "An unexpected event of name " + pair.Key + "was received");
-
-                WebRequest request = (WebRequest)activity.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-                Assert.Equal("HttpWebRequest", request.GetType().Name);
-
-                if (pair.Key == "Start")
-                {
-                    // Make sure this is an URL that we recognize. If not, just skip
-                    if (!requestData.TryGetValue(request.RequestUri, out var tuple))
-                    {
-                        continue;
-                    }
-
-                    // all requests have traceparent with proper parent Id
-                    var traceparent = request.Headers["traceparent"];
-                    Assert.StartsWith($"00-{parentActivity.TraceId.ToHexString()}-", traceparent);
-
-                    Assert.Null(requestData[request.RequestUri]);
-                    requestData[request.RequestUri] =
-                        new Tuple<WebRequest, WebResponse>(request, null);
-                }
-                else
-                {
-                    // This must be the response.
-                    WebResponse response = (WebResponse)activity.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-                    Assert.Equal("HttpWebResponse", response.GetType().Name);
-
-                    // By the time we see the response, the request object may already have been redirected with a different
-                    // url. Hence, it's not reliable to just look up requestData by the URL/hostname. Instead, we have to look
-                    // through each one and match by object reference on the request object.
-                    Tuple<WebRequest, WebResponse> tuple = null;
-                    foreach (Tuple<WebRequest, WebResponse> currentTuple in requestData.Values)
-                    {
-                        if (currentTuple != null && currentTuple.Item1 == request)
-                        {
-                            // Found it!
-                            tuple = currentTuple;
-                            break;
-                        }
-                    }
-
-                    // Update the tuple with the response object
-                    Assert.NotNull(tuple);
-                    requestData[request.RequestUri] =
-                        new Tuple<WebRequest, WebResponse>(request, response);
-                }
-            }
-
-            // Finally, make sure we have request and response objects for every successful request
-            foreach (KeyValuePair<Uri, Tuple<WebRequest, WebResponse>> pair in requestData)
-            {
-                if (successfulTasks.Any(t => t.Key == pair.Key))
-                {
-                    Assert.NotNull(pair.Value);
-                    Assert.NotNull(pair.Value.Item1);
-                    Assert.NotNull(pair.Value.Item2);
-                }
             }
         }
 
-        private static (Activity, HttpWebRequest) AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
+        private static Activity AssertFirstEventWasStart(ActivitySourceRecorder eventRecords)
         {
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> startEvent));
             Assert.Equal("Start", startEvent.Key);
-            HttpWebRequest startRequest = (HttpWebRequest)startEvent.Value.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            Assert.NotNull(startRequest);
-            return (startEvent.Value, startRequest);
+            return startEvent.Value;
         }
 
         private static void VerifyHeaders(HttpWebRequest startRequest)
         {
+            var tracestate = startRequest.Headers["tracestate"];
+            Assert.Equal("some=state", tracestate);
+
+            var baggage = startRequest.Headers["baggage"];
+            Assert.Equal("k=v", baggage);
+
             var traceparent = startRequest.Headers["traceparent"];
             Assert.NotNull(traceparent);
-            Assert.Matches("^[0-9a-f][0-9a-f]-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f][0-9a-f]$", traceparent);
-            Assert.Null(startRequest.Headers["tracestate"]);
+            Assert.Matches("^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", traceparent);
         }
 
         private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
@@ -866,6 +784,44 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
             Assert.Equal(statusText, activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+        }
+
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
+            {
+                case "OnStartActivity":
+                    Assert.True(obj is HttpWebRequest);
+                    VerifyHeaders(obj as HttpWebRequest);
+
+                    if (validateBaggage)
+                    {
+                        ValidateBaggage(obj as HttpWebRequest);
+                    }
+
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpWebResponse);
+                    break;
+
+                case "OnException":
+                    Assert.True(obj is Exception);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private static void ValidateBaggage(HttpWebRequest request)
+        {
+            string[] baggage = request.Headers["Baggage"].Split(',');
+
+            Assert.Equal(3, baggage.Length);
+            Assert.Contains("key=value", baggage);
+            Assert.Contains("bad%2Fkey=value", baggage);
+            Assert.Contains("goodkey=bad%2Fvalue", baggage);
         }
 
         private string BuildRequestUrl(bool useHttps = false, string path = "echo", string queryString = null)

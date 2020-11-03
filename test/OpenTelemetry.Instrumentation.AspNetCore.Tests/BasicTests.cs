@@ -58,6 +58,57 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
+        [Fact]
+        public void DefaultPropagatorIsFromPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            Assert.Same(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
+        public void PropagatorSetDoesNotAffectGlobalPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            options.Propagator = new TraceContextPropagator();
+            Assert.NotSame(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
+        public async Task StatusIsUnsetOn200Response()
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .AddProcessor(activityProcessor.Object)
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                // Act
+                var response = await client.GetAsync("/api/values");
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(activityProcessor, 2);
+            }
+
+            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+
+            Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+
+            var status = activity.GetStatus();
+            Assert.Equal(status, Status.Unset);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -160,7 +211,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
                 new PropagationContext(
                     new ActivityContext(
@@ -321,6 +372,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
+            Assert.True(activity.IsAllDataRequested);
             switch (method)
             {
                 case "OnStartActivity":

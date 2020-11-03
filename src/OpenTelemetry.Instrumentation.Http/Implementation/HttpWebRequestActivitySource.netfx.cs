@@ -22,8 +22,6 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -40,10 +38,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
-
-        public const string RequestCustomPropertyName = "OTel.HttpWebRequest.Request";
-        public const string ResponseCustomPropertyName = "OTel.HttpWebRequest.Response";
-        public const string ExceptionCustomPropertyName = "OTel.HttpWebRequest.Exception";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
@@ -104,7 +98,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    Options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
@@ -120,7 +122,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(ResponseCustomPropertyName, response);
+                try
+                {
+                    Options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                 activity.SetStatus(
@@ -138,7 +148,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            activity.SetCustomProperty(ExceptionCustomPropertyName, exception);
+            try
+            {
+                Options.Enrich?.Invoke(activity, "OnException", exception);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
 
             Status status;
             if (exception is WebException wexc)

@@ -27,13 +27,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     public class AspNetCoreInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
+        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation.
+        /// By default, <see cref="Propagators.DefaultTextMapPropagator" /> will be used.
         /// </summary>
-        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
-        {
-            new TextMapPropagator(),
-            new BaggagePropagator(),
-        });
+        public TextMapPropagator Propagator { get; set; } = Propagators.DefaultTextMapPropagator;
 
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
@@ -53,5 +50,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// The type of this object depends on the event, which is given by the above parameter.</para>
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
+        /// </remarks>
+        public bool RecordException { get; set; }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md.
+        /// </remarks>
+        public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
+#endif
     }
 }

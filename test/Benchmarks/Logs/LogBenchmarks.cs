@@ -17,8 +17,10 @@
 #if NETCOREAPP3_1
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Logs.Benchmarks
+namespace Benchmarks.Logs
 {
     [MemoryDiagnoser]
     public class LogBenchmarks

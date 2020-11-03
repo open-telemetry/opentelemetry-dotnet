@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
@@ -39,13 +38,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public long SpanId { get; }
 
-        public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)
+        public void Write(TProtocol oprot)
         {
             oprot.IncrementRecursionDepth();
             try
             {
                 var struc = new TStruct("SpanRef");
-                await oprot.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
+                oprot.WriteStructBegin(struc);
 
                 var field = new TField
                 {
@@ -54,35 +53,35 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     ID = 1,
                 };
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteI32Async((int)this.RefType, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI32((int)this.RefType);
+                oprot.WriteFieldEnd();
 
                 field.Name = "traceIdLow";
                 field.Type = TType.I64;
                 field.ID = 2;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteI64Async(this.TraceIdLow, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdLow);
+                oprot.WriteFieldEnd();
 
                 field.Name = "traceIdHigh";
                 field.Type = TType.I64;
                 field.ID = 3;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteI64Async(this.TraceIdHigh, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.TraceIdHigh);
+                oprot.WriteFieldEnd();
 
                 field.Name = "spanId";
                 field.Type = TType.I64;
                 field.ID = 4;
 
-                await oprot.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteI64Async(this.SpanId, cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
-                await oprot.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
+                oprot.WriteFieldBegin(field);
+                oprot.WriteI64(this.SpanId);
+                oprot.WriteFieldEnd();
+                oprot.WriteFieldStop();
+                oprot.WriteStructEnd();
             }
             finally
             {

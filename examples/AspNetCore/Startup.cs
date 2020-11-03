@@ -77,6 +77,16 @@ namespace Examples.AspNetCore
                             zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                         }));
                     break;
+                case "otlp":
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.ServiceName = this.Configuration.GetValue<string>("Otlp:ServiceName");
+                            otlpOptions.Endpoint = this.Configuration.GetValue<string>("Otlp:Endpoint");
+                        }));
+                    break;
                 default:
                     services.AddOpenTelemetryTracing((builder) => builder
                         .AddAspNetCoreInstrumentation()

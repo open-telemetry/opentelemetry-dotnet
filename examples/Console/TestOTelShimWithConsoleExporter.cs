@@ -29,7 +29,7 @@ namespace Examples.Console
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                    .AddConsoleExporter()
                     .Build();
 
             // The above line is required only in applications

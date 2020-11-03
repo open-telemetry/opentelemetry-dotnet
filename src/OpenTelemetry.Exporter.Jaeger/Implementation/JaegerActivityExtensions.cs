@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -41,15 +43,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-        {
-            [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
-            ["peer.hostname"] = 1,
-            ["peer.address"] = 1,
-            [SemanticConventions.AttributeHttpHost] = 2, // peer.service for Http.
-            [SemanticConventions.AttributeDbInstance] = 2, // peer.service for Redis.
-        };
-
         public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
             var jaegerTags = new TagEnumerationState
@@ -62,29 +55,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             string peerServiceName = null;
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
-                // If priority = 0 that means peer.service may have already been included in tags
-                var addPeerServiceTag = jaegerTags.PeerServicePriority > 0;
+                PeerServiceResolver.Resolve(ref jaegerTags, out peerServiceName, out bool addAsTag);
 
-                var hostNameOrIpAddress = jaegerTags.HostName ?? jaegerTags.IpAddress;
-
-                // peer.service has not already been included, but net.peer.name/ip and optionally net.peer.port are present
-                if ((jaegerTags.PeerService == null || addPeerServiceTag)
-                    && hostNameOrIpAddress != null)
-                {
-                    peerServiceName = jaegerTags.Port == default
-                        ? hostNameOrIpAddress
-                        : $"{hostNameOrIpAddress}:{jaegerTags.Port}";
-
-                    // Add the peer.service tag
-                    addPeerServiceTag = true;
-                }
-
-                if (peerServiceName == null && jaegerTags.PeerService != null)
-                {
-                    peerServiceName = jaegerTags.PeerService;
-                }
-
-                if (peerServiceName != null && addPeerServiceTag)
+                if (peerServiceName != null && addAsTag)
                 {
                     PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag(SemanticConventions.AttributePeerService, JaegerTagType.STRING, vStr: peerServiceName));
                 }
@@ -138,7 +111,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 // TODO: The check above should be enforced by the usage of the exporter. Perhaps enforce at higher-level.
                 traceId = new Int128(activity.TraceId);
                 spanId = new Int128(activity.SpanId);
-                parentSpanId = new Int128(activity.ParentSpanId);
+                if (activity.ParentSpanId != default)
+                {
+                    parentSpanId = new Int128(activity.ParentSpanId);
+                }
             }
 
             return new JaegerSpan(
@@ -156,6 +132,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 logs: activity.ToJaegerLogs());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledList<JaegerSpanRef> ToJaegerSpanRefs(this Activity activity)
         {
             LinkEnumerationState references = default;
@@ -165,6 +142,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return references.SpanRefs;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledList<JaegerLog> ToJaegerLogs(this Activity activity)
         {
             EventEnumerationState logs = default;
@@ -174,6 +152,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return logs.Logs;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JaegerLog ToJaegerLog(this ActivityEvent timedEvent)
         {
             var jaegerTags = new EventTagsEnumerationState
@@ -192,6 +171,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), jaegerTags.Tags);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JaegerSpanRef ToJaegerSpanRef(this in ActivityLink link)
         {
             var traceId = new Int128(link.Context.TraceId);
@@ -269,50 +249,34 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ProcessJaegerTag(ref TagEnumerationState state, string key, JaegerTag jaegerTag)
         {
             if (jaegerTag.VStr != null)
             {
-                if (PeerServiceKeyResolutionDictionary.TryGetValue(key, out int priority)
-                    && (state.PeerService == null || priority < state.PeerServicePriority))
-                {
-                    state.PeerService = jaegerTag.VStr;
-                    state.PeerServicePriority = priority;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerName)
-                {
-                    state.HostName = jaegerTag.VStr;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerIp)
-                {
-                    state.IpAddress = jaegerTag.VStr;
-                }
-                else if (key == SemanticConventions.AttributeNetPeerPort && long.TryParse(jaegerTag.VStr, out var port))
-                {
-                    state.Port = port;
-                }
+                PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VStr);
             }
-            else if (jaegerTag.VLong.HasValue && key == SemanticConventions.AttributeNetPeerPort)
+            else if (jaegerTag.VLong.HasValue)
             {
-                state.Port = jaegerTag.VLong.Value;
+                PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VLong.Value);
             }
 
             PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
         }
 
-        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
+        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
         {
             public PooledList<JaegerTag> Tags;
 
-            public string PeerService;
+            public string PeerService { get; set; }
 
-            public int PeerServicePriority;
+            public int? PeerServicePriority { get; set; }
 
-            public string HostName;
+            public string HostName { get; set; }
 
-            public string IpAddress;
+            public string IpAddress { get; set; }
 
-            public long Port;
+            public long Port { get; set; }
 
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
