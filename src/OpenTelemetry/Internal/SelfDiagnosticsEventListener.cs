@@ -109,7 +109,7 @@ namespace OpenTelemetry.Internal
                     this.writeBuffer.Value = buffer;
                 }
 
-                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture);
+                var timestamp = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
                 var pos = Encoding.UTF8.GetBytes(timestamp, 0, timestamp.Length, buffer, 0);
                 buffer[pos++] = (byte)':';
                 pos = EncodeInBuffer(eventMessage, false, buffer, pos);
@@ -122,6 +122,10 @@ namespace OpenTelemetry.Internal
                         if (obj != null)
                         {
                             pos = EncodeInBuffer(obj.ToString(), true, buffer, pos);
+                        }
+                        else
+                        {
+                            pos = EncodeInBuffer("null", true, buffer, pos);
                         }
                     }
                 }
