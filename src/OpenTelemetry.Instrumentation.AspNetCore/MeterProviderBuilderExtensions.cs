@@ -16,9 +16,8 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
-using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Extension methods to simplify registering of ASP.NET Core request instrumentation.
