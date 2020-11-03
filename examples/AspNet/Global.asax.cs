@@ -16,15 +16,13 @@
 
 using System;
 using System.Configuration;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNet
@@ -59,8 +57,7 @@ namespace Examples.AspNet
                     });
                     break;
                 default:
-                    Console.SetOut(new DebugStreamWriter());
-                    builder.AddConsoleExporter();
+                    builder.AddConsoleExporter(options => options.Targets = ConsoleExporterOutputTargets.Debug);
                     break;
             }
 
@@ -75,45 +72,6 @@ namespace Examples.AspNet
         protected void Application_End()
         {
             this.tracerProvider?.Dispose();
-        }
-
-        private class DebugStreamWriter : StreamWriter
-        {
-            public DebugStreamWriter()
-                : base(new DebugStream(), Encoding.Unicode, 1024)
-            {
-                this.AutoFlush = true;
-            }
-
-            private sealed class DebugStream : Stream
-            {
-                public override bool CanRead => false;
-
-                public override bool CanSeek => false;
-
-                public override bool CanWrite => true;
-
-                public override long Length => throw new NotSupportedException();
-
-                public override long Position
-                {
-                    get => throw new NotSupportedException();
-                    set => throw new NotSupportedException();
-                }
-
-                public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-
-                public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-
-                public override void SetLength(long value) => throw new NotSupportedException();
-
-                public override void Write(byte[] buffer, int offset, int count)
-                {
-                    Debug.Write(Encoding.Unicode.GetString(buffer, offset, count));
-                }
-
-                public override void Flush() => Debug.Flush();
-            }
         }
     }
 }
