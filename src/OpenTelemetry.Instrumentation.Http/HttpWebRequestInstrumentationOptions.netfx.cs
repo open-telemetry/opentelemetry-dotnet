@@ -18,7 +18,6 @@
 using System;
 using System.Diagnostics;
 using System.Net;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Trace;
 
@@ -33,15 +32,6 @@ namespace OpenTelemetry.Instrumentation.Http
         /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHttpFlavor"/> tag. Default value: False.
         /// </summary>
         public bool SetHttpFlavor { get; set; }
-
-        /// <summary>
-        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation. Default value: <see cref="CompositeTextMapPropagator"/> with <see cref="TraceContextPropagator"/> &amp; <see cref="BaggagePropagator"/>.
-        /// </summary>
-        public TextMapPropagator Propagator { get; set; } = new CompositeTextMapPropagator(new TextMapPropagator[]
-        {
-            new TraceContextPropagator(),
-            new BaggagePropagator(),
-        });
 
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.

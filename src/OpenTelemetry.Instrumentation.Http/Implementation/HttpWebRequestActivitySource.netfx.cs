@@ -198,11 +198,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
+            => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.Propagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {

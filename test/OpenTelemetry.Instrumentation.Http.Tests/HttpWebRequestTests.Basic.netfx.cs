@@ -107,9 +107,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
+                .AddHttpWebRequestInstrumentation()
                 .Build();
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
@@ -140,6 +141,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("k1=v1,k2=v2", tracestate);
 
             parent.Stop();
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
