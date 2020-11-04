@@ -98,10 +98,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsyncWhenActivityIsNotRecorded()
         {
+            ActivityContext contentFromPropagator = default;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+                {
+                    contentFromPropagator = context.ActivityContext;
+                });
+
+            // Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation()
+                .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
                 .Build();
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
@@ -117,17 +126,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var response = await request.GetResponseAsync();
 
             Assert.Empty(activityProcessor.Invocations);
-            var activity = Activity.Current;
 
-            Assert.Equal(parent.TraceId, activity.Context.TraceId);
-            Assert.Equal(parent.SpanId, activity.Context.SpanId);
-            Assert.NotEqual(default, activity.Context.SpanId);
-
-            string traceparent = request.Headers.Get("traceparent");
-            string tracestate = request.Headers.Get("tracestate");
-
-            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-00", traceparent);
-            Assert.Equal("k1=v1,k2=v2", tracestate);
+            Assert.Equal(parent.TraceId, contentFromPropagator.TraceId);
+            Assert.Equal(parent.SpanId, contentFromPropagator.SpanId);
+            Assert.NotEqual(default, contentFromPropagator.SpanId);
 
             parent.Stop();
         }
