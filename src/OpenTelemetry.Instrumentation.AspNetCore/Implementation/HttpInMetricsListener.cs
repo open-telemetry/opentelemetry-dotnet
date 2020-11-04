@@ -26,15 +26,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInMetricsListener : ListenerHandler
     {
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly AspNetCoreInstrumentationOptions options;
         private readonly Meter meter;
 
         private MeasureMetric<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, AspNetCoreInstrumentationOptions options, Meter meter)
+        public HttpInMetricsListener(string name, Meter meter)
             : base(name)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.meter = meter;
         }
 

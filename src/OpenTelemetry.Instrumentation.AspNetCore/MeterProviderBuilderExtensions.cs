@@ -28,22 +28,16 @@ namespace OpenTelemetry.Metrics
         /// Enables the incoming requests automatic data collection for ASP.NET Core.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
-        /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddAspNetCoreInstrumentation(
-            this MeterProviderBuilder builder,
-            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
+            this MeterProviderBuilder builder)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            // TODO: Currently these options are unused for metrics.
-            // Do we need separate options for metrics, or will the same options used for traces make sense for metrics?
-            var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
-            configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddInstrumentation((meter) => new AspNetCoreMetrics(meter, aspnetCoreOptions));
+            builder.AddInstrumentation((meter) => new AspNetCoreMetrics(meter));
 
             return builder;
         }
