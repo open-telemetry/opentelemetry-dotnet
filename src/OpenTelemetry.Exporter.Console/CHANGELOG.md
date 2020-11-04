@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Generalized `ConsoleExporter` to add support for logs
+  ([#1438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1438))
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16
