@@ -50,7 +50,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var host,
                 out var port);
 
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
@@ -63,7 +62,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                    opt.Enrich = ActivityEnrichment;
                                })
                                .AddProcessor(processor.Object)
-                               .SetResource(expectedResource)
                                .Build())
             {
                 try
@@ -125,8 +123,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
-
-            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]

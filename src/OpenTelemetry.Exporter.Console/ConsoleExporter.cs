@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ConsoleExporterOptions options;
+        private TracerProvider tracerProvider;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
@@ -99,7 +100,7 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
-                    var resource = activity.GetResource();
+                    var resource = this.tracerProvider?.GetResource() ?? Resource.Empty;
                     if (resource != Resource.Empty)
                     {
                         this.WriteLine("Resource associated with Activity:");
@@ -138,6 +139,11 @@ namespace OpenTelemetry.Exporter
 #endif
 
             return ExportResult.Success;
+        }
+
+        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
+        {
+            this.tracerProvider = tracerProvider;
         }
 
         private void WriteLine(string message)

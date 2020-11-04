@@ -99,7 +99,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [InlineData(false)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -111,7 +110,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             options.Enrich = ActivityEnrichment;
                         }
                     })
-                    .SetResource(expectedResource)
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -134,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            ValidateAspNetCoreActivity(activity, "/api/values", expectedResource);
+            ValidateAspNetCoreActivity(activity, "/api/values");
         }
 
         [Fact]
@@ -354,11 +352,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 TimeSpan.FromSeconds(1)));
         }
 
-        private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath, Resources.Resource expectedResource)
+        private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
-            Assert.Equal(expectedResource, activityToValidate.GetResource());
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

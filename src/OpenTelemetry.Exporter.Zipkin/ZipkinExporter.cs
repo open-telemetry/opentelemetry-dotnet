@@ -27,7 +27,6 @@ using Newtonsoft.Json;
 #else
 using System.Text.Json;
 #endif
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
@@ -92,14 +91,8 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ZipkinEndpoint EnsureLocalEndpoint(Activity activity)
+        internal void SetResource(Resource resource)
         {
-            if (this.LocalEndpoint != null)
-            {
-                return this.LocalEndpoint;
-            }
-
             var hostName = ResolveHostName();
 
             string ipv4 = null;
@@ -113,7 +106,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             string serviceName = null;
             string serviceNamespace = null;
             Dictionary<string, object> tags = null;
-            foreach (var label in activity.GetResource().Attributes)
+            foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
 
@@ -149,12 +142,18 @@ namespace OpenTelemetry.Exporter.Zipkin
                 serviceName = this.options.ServiceName;
             }
 
-            return this.LocalEndpoint = new ZipkinEndpoint(
+            this.LocalEndpoint = new ZipkinEndpoint(
                 serviceName,
                 ipv4,
                 ipv6,
                 port: null,
                 tags);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
+        {
+            this.SetResource(tracerProvider.GetResource());
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)
@@ -257,9 +256,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 foreach (var activity in this.batch)
                 {
-                    var localEndpoint = this.exporter.EnsureLocalEndpoint(activity);
-
-                    var zipkinSpan = activity.ToZipkinSpan(localEndpoint, this.exporter.options.UseShortTraceIds);
+                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 

@@ -67,8 +67,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             string filter = null,
             bool restoreCurrentActivity = false)
         {
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-
             IDisposable openTelemetry = null;
             RouteData routeData;
             switch (routeType)
@@ -166,7 +164,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                     options.Enrich = ActivityEnrichment;
                 })
-            .SetResource(expectedResource)
             .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
@@ -260,8 +257,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
             Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
-
-            Assert.Equal(expectedResource, span.GetResource());
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
