@@ -106,11 +106,6 @@ namespace OpenTelemetry.Metrics
             return new MeterProviderSdk(this.metricProcessor, this.instrumentationFactories, meterRegistry, controller, cancellationTokenSource);
         }
 
-        // TODO: This class was forklifted from the TracerProviderBuilder.
-        // Currently, it does not serve a purpose other than running the factory method, so in the short-term maybe remove it.
-        // The spec indicates that Name/Version should be passed in when obtaining a Meter
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/9e6a3de19cb3db983b2e4d56b37ec6313fd4ffc6/specification/metrics/api.md#meter-interface
-        // So, this class is probably not appropriate per the spec and instead it should be up to the instrumentation to pass this in.
         internal readonly struct InstrumentationFactory
         {
             public readonly string Name;
