@@ -74,9 +74,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            // Ensure that the header value func does not throw if the header key can't be found
-            var mockPropagator = new Mock<TextMapPropagator>();
-
             // var isInjectedHeaderValueGetterThrows = false;
             // mockTextFormat
             //     .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
@@ -97,7 +94,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation(o =>
                         {
-                            o.Propagator = mockPropagator.Object;
                             if (shouldEnrich)
                             {
                                 o.Enrich = ActivityEnrichment;
@@ -155,10 +151,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation((opt) =>
                    {
-                       opt.Propagator = propagator.Object;
                        if (shouldEnrich)
                        {
                            opt.Enrich = ActivityEnrichment;
@@ -187,6 +184,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]

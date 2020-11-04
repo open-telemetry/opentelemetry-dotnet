@@ -36,10 +36,8 @@ namespace Examples.AspNet
         protected void Application_Start()
         {
             var builder = Sdk.CreateTracerProviderBuilder()
-                 .AddAspNetInstrumentation(options => options.Propagator = new B3Propagator())
-                 .AddHttpClientInstrumentation(
-                        httpClientOptions => httpClientOptions.Propagator = new B3Propagator(),
-                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator());
+                 .AddAspNetInstrumentation()
+                 .AddHttpClientInstrumentation();
 
             switch (ConfigurationManager.AppSettings["UseExporter"].ToLowerInvariant())
             {
