@@ -27,7 +27,7 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : BaseExporter<Activity>, IProviderContainer<TracerProvider>
+    public class JaegerExporter : BaseExporter<Activity>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
@@ -80,11 +80,6 @@ namespace OpenTelemetry.Exporter.Jaeger
 
                 return ExportResult.Failure;
             }
-        }
-
-        void IProviderContainer<TracerProvider>.SetProvider(TracerProvider tracerProvider)
-        {
-            this.SetResource(tracerProvider.GetResource());
         }
 
         internal void SetResource(Resource resource)
@@ -201,6 +196,12 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
 
             base.Dispose(disposing);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
+        {
+            this.SetResource(tracerProvider.GetResource());
         }
 
         private void SendCurrentBatches(Batch workingBatch)

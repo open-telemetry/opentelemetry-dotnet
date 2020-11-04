@@ -50,6 +50,8 @@ namespace OpenTelemetry.Logs
 
             foreach (var processor in options.Processors)
             {
+                processor.SetLogProvider(this);
+
                 this.AddProcessor(processor);
             }
         }
