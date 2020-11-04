@@ -15,12 +15,14 @@
 // </copyright>
 
 using System;
+using System.Configuration;
 using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNet
@@ -33,17 +35,33 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            var builder = Sdk.CreateTracerProviderBuilder()
                  .AddAspNetInstrumentation(options => options.Propagator = new B3Propagator())
                  .AddHttpClientInstrumentation(
                         httpClientOptions => httpClientOptions.Propagator = new B3Propagator(),
-                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator())
-                 .AddJaegerExporter(jaegerOptions =>
-                 {
-                     jaegerOptions.AgentHost = "localhost";
-                     jaegerOptions.AgentPort = 6831;
-                 })
-                 .Build();
+                        httpWebRequestOptions => httpWebRequestOptions.Propagator = new B3Propagator());
+
+            switch (ConfigurationManager.AppSettings["UseExporter"].ToLowerInvariant())
+            {
+                case "jaeger":
+                    builder.AddJaegerExporter(jaegerOptions =>
+                     {
+                         jaegerOptions.AgentHost = ConfigurationManager.AppSettings["JaegerHost"];
+                         jaegerOptions.AgentPort = int.Parse(ConfigurationManager.AppSettings["JaegerPort"]);
+                     });
+                    break;
+                case "zipkin":
+                    builder.AddZipkinExporter(zipkinOptions =>
+                    {
+                        zipkinOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["ZipkinEndpoint"]);
+                    });
+                    break;
+                default:
+                    builder.AddConsoleExporter(options => options.Targets = ConsoleExporterOutputTargets.Debug);
+                    break;
+            }
+
+            this.tracerProvider = builder.Build();
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
 

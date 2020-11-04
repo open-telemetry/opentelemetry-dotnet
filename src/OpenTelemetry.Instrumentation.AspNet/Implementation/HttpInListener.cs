@@ -69,10 +69,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             var request = context.Request;
             var requestValues = request.Unvalidated;
+            var textMapPropagator = this.options.Propagator ?? Propagators.DefaultTextMapPropagator;
 
-            if (!(this.options.Propagator is TraceContextPropagator))
+            if (!(textMapPropagator is TraceContextPropagator))
             {
-                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid()
                     && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
@@ -139,7 +140,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            bool isCustomPropagator = !(this.options.Propagator is TraceContextPropagator);
+            var textMapPropagator = this.options.Propagator ?? Propagators.DefaultTextMapPropagator;
+            bool isCustomPropagator = !(textMapPropagator is TraceContextPropagator);
 
             if (isCustomPropagator)
             {

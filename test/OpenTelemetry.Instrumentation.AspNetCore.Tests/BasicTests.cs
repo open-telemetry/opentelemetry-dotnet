@@ -59,6 +59,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
+        public void DefaultPropagatorIsFromPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            Assert.Same(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
+        public void PropagatorSetDoesNotAffectGlobalPropagators()
+        {
+            var options = new AspNetCoreInstrumentationOptions();
+            options.Propagator = new TraceContextPropagator();
+            Assert.NotSame(Propagators.DefaultTextMapPropagator, options.Propagator);
+        }
+
+        [Fact]
         public async Task StatusIsUnsetOn200Response()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
