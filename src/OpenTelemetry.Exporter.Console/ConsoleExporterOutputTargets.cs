@@ -1,4 +1,4 @@
-// <copyright file="MetricData.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterOutputTargets.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,20 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
-namespace OpenTelemetry.Metrics.Export
+namespace OpenTelemetry.Exporter
 {
-    /// <summary>
-    /// MetricData base class.
-    /// </summary>
-    public abstract class MetricData
+    [Flags]
+    public enum ConsoleExporterOutputTargets
     {
-        public DateTime StartTimestamp { get; set; }
+        /// <summary>
+        /// Output to the Console (stdout).
+        /// </summary>
+        Console = 0b1,
 
-        public DateTime Timestamp { get; set; }
-
-        public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }
+        /// <summary>
+        /// Output to the Debug trace.
+        /// </summary>
+        Debug = 0b10,
     }
 }
