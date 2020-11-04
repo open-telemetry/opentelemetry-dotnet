@@ -17,6 +17,8 @@
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 * Added GlobalPropagators API via Propagators.DefaultTextMapPropagator.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Changed SpanAttributeConstants from public to internal
+  ([#1457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1457))
 
 ## 0.7.0-beta.1
 
