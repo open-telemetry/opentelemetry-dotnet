@@ -96,6 +96,48 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
+        public async Task HttpWebRequestInstrumentationInjectsHeadersAsyncWhenActivityIsNotRecorded()
+        {
+            ActivityContext contentFromPropagator = default;
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+                {
+                    contentFromPropagator = context.ActivityContext;
+                });
+
+            // Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
+                .Build();
+
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            using var response = await request.GetResponseAsync();
+
+            // By default parentbasedsampler is used.
+            // In this case, the parent is the manually created parentactivity, which will have TraceFlags as None.
+            // This causes child to be not created.
+            Assert.Empty(activityProcessor.Invocations);
+
+            Assert.Equal(parent.TraceId, contentFromPropagator.TraceId);
+            Assert.Equal(parent.SpanId, contentFromPropagator.SpanId);
+            Assert.NotEqual(default, contentFromPropagator.SpanId);
+
+            parent.Stop();
+        }
+
+        [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
             var propagator = new Mock<TextMapPropagator>();

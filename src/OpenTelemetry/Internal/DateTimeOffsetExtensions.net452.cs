@@ -57,6 +57,7 @@ namespace OpenTelemetry.Internal
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(milliseconds),
+                    milliseconds,
                     string.Format(CultureInfo.InvariantCulture, "milliseconds must be between {0} and {1}", MinMilliseconds, MaxMilliseconds));
             }
 
