@@ -77,14 +77,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             // TODO: Decide if/how to handle http.server_name. Spec seems to suggest
             // preference for net.host.name.
-            labels[SemanticConventions.AttributeHttpServerName] = string.Empty;
+            // labels[SemanticConventions.AttributeHttpServerName] = string.Empty;
 
             // TODO: Decide if we want http.url. It seems awful from a cardinality perspective.
             // Retrieving the route data and setting http.target probably makes more sense.
-            labels[SemanticConventions.AttributeHttpUrl] = string.Empty;
+            // labels[SemanticConventions.AttributeHttpUrl] = string.Empty;
 
             // TODO: Retrieve the route.
-            labels[SemanticConventions.AttributeHttpTarget] = string.Empty;
+            // labels[SemanticConventions.AttributeHttpTarget] = string.Empty;
 
             // TODO: Ideally we could do this in the constructor. However, the instrumentation is usually instantiated
             // prior to invoking MeterProvider.SetDefault. Setting the default meter provider is required before metrics

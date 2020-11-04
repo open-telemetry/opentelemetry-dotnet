@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\TestMetricExporter.cs" Link="TestMetricExporter.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\TestMetricProcessor.cs" Link="TestMetricProcessor.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
