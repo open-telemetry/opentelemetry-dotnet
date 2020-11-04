@@ -121,7 +121,7 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
+        internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
             Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
