@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Removed AddOpenTelemetryTracing method which takes Func returning
+  TracerProvider.
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16
