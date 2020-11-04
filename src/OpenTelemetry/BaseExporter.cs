@@ -17,9 +17,6 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
-#if NET461 || NETSTANDARD2_0
-using OpenTelemetry.Logs;
-#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -109,13 +106,6 @@ namespace OpenTelemetry
             this.OnTracerProviderSet(tracerProvider);
         }
 
-#if NET461 || NETSTANDARD2_0
-        internal void SetLogProvider(OpenTelemetryLoggerProvider logProvider)
-        {
-            this.OnLogProviderSet(logProvider);
-        }
-#endif
-
         /// <summary>
         /// Called by <c>Shutdown</c>. This function should block the current
         /// thread until shutdown completed or timed out.
@@ -156,15 +146,5 @@ namespace OpenTelemetry
         protected virtual void OnTracerProviderSet(TracerProvider tracerProvider)
         {
         }
-
-#if NET461 || NETSTANDARD2_0
-        /// <summary>
-        /// Called when the parent <see cref="OpenTelemetryLoggerProvider"/> is set on the exporter.
-        /// </summary>
-        /// <param name="logProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
-        protected virtual void OnLogProviderSet(OpenTelemetryLoggerProvider logProvider)
-        {
-        }
-#endif
     }
 }

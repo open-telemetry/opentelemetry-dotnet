@@ -16,9 +16,6 @@
 
 using System;
 using OpenTelemetry.Internal;
-#if NET461 || NETSTANDARD2_0
-using OpenTelemetry.Logs;
-#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -55,14 +52,6 @@ namespace OpenTelemetry
         {
             this.exporter.SetTracerProvider(tracerProvider);
         }
-
-#if NET461 || NETSTANDARD2_0
-        /// <inheritdoc />
-        internal override void SetLogProvider(OpenTelemetryLoggerProvider logProvider)
-        {
-            this.exporter.SetLogProvider(logProvider);
-        }
-#endif
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)

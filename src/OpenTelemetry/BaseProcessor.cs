@@ -17,9 +17,6 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
-#if NET461 || NETSTANDARD2_0
-using OpenTelemetry.Logs;
-#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -152,16 +149,6 @@ namespace OpenTelemetry
         internal virtual void SetTracerProvider(TracerProvider tracerProvider)
         {
         }
-
-#if NET461 || NETSTANDARD2_0
-        /// <summary>
-        /// Set the parent <see cref="OpenTelemetryLoggerProvider"/>.
-        /// </summary>
-        /// <param name="logProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
-        internal virtual void SetLogProvider(OpenTelemetryLoggerProvider logProvider)
-        {
-        }
-#endif
 
         /// <summary>
         /// Called by <c>ForceFlush</c>. This function should block the current
