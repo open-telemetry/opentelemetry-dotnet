@@ -114,32 +114,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds a DiagnosticSource based instrumentation.
-        /// This is required for libraries which already is instrumented with
-        /// DiagnosticSource and Activity, without using ActivitySource.
-        /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
-            where TInstrumentation : class
-        {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
-
-            this.diagnosticSourceInstrumentationFactories.Add(
-                new DiagnosticSourceInstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
-        }
-
-        /// <summary>
         /// Adds an instrumentation to the provider.
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
@@ -166,6 +140,32 @@ namespace OpenTelemetry.Trace
         public TracerProvider Build()
         {
             return new TracerProviderSdk(this.resource, this.sources, this.diagnosticSourceInstrumentationFactories, this.instrumentationFactories, this.sampler, this.processors);
+        }
+
+        /// <summary>
+        /// Adds a DiagnosticSource based instrumentation.
+        /// This is required for libraries which already is instrumented with
+        /// DiagnosticSource and Activity, without using ActivitySource.
+        /// </summary>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
+            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            this.diagnosticSourceInstrumentationFactories.Add(
+                new DiagnosticSourceInstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
+
+            return this;
         }
 
         internal readonly struct DiagnosticSourceInstrumentationFactory
