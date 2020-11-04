@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add extension method to add `ConsoleExporter` for logs
+  ([#1452](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1452))
+
 * Generalized `ConsoleExporter` to add support for logs
   ([#1438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1438))
 
