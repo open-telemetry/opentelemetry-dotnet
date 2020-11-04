@@ -137,57 +137,6 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
-`Activity`. These can be accessed in `BaseProcessor<Activity>`, and can be used to
-further enrich the Activity as shown below.
-
-The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
-
-The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
-
-```csharp
-internal class MyAspNetEnrichingProcessor : BaseProcessor<Activity>
-{
-    public override void OnStart(Activity activity)
-    {
-        // Retrieve the HttpRequest object.
-        var httpRequest = activity.GetCustomProperty("OTel.AspNetCore.Request")
-                          as HttpRequest;
-        if (httpRequest != null)
-        {
-            // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("mycustomtag", httpRequest.Headers["myheader"]);
-        }
-    }
-
-    public override void OnEnd(Activity activity)
-    {
-        // Retrieve the HttpResponse object.
-        var httpResponse = activity.GetCustomProperty("OTel.AspNetCore.Response")
-                           as HttpResponse;
-        if (httpResponse != null)
-        {
-            var statusCode = httpResponse.StatusCode;
-            bool success = statusCode < 400;
-            // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("myCustomSuccess", success);
-        }
-    }
-}
-```
-
-The custom processor must be added to the provider as below. It is important to
-add the enrichment processor before any exporters so that exporters see the
-changes done by them.
-
-```csharp
- this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddAspNetInstrumentation()
-    .AddProcessor(new MyAspNetEnrichingProcessor())
-    .AddJaegerExporter()
-    .Build();
-```
-
 ## References
 
 * [ASP.NET](https://dotnet.microsoft.com/apps/aspnet)
