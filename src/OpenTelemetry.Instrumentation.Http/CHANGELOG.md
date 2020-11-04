@@ -6,6 +6,15 @@
   `HttpWebRequest` in Activity.CustomProperty. To enrich activity, use the
   Enrich action on the instrumentation.
   ([#1407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1407))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Propagators.DefaultTextMapPropagator will be used as the default Propagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Removed Propagator from Instrumentation Options. Instrumentation now always
+  respect the Propagator.DefaultTextMapPropagator.
+  ([#1448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1448))
 
 ## 0.7.0-beta.1
 

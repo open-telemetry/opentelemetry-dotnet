@@ -128,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
                 new ActivityContext(
                     expectedTraceId,
@@ -144,6 +144,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(
                 (options) =>
@@ -162,11 +163,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                         return httpContext.Request.Path != filter;
                     };
-
-                    if (!carrierFormat.Equals("TraceContext"))
-                    {
-                        options.Propagator = propagator.Object;
-                    }
 
                     options.Enrich = ActivityEnrichment;
                 })

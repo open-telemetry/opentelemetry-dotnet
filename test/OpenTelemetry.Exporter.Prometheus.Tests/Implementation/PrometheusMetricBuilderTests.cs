@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests.Implementation
             builder.WithType("test-type");
 
             var metricValueBuilder = builder.AddValue();
-            metricValueBuilder = metricValueBuilder.WithValue(10.0123);
+            metricValueBuilder = metricValueBuilder.WithName("test-builder-value").WithValue(10.0123);
             metricValueBuilder.WithLabel("test-double", "double");
             builder.Write(writer);
 
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests.Implementation
             string[] lines = actual.Split('\n');
             Assert.Equal("# HELP test_buildertest-description", lines[0]);
             Assert.Equal("# TYPE test_builder test-type", lines[1]);
-            Assert.StartsWith("test_builder{test_double=\"double\"} 10.01", lines[2]);
+            Assert.StartsWith("test_builder_value{test_double=\"double\"} 10.01", lines[2]);
         }
     }
 }

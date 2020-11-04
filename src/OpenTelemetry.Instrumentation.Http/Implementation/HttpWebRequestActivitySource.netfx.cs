@@ -94,8 +94,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            InstrumentRequest(request, activity);
-
             if (activity.IsAllDataRequested)
             {
                 try
@@ -197,12 +195,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
+        private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
+            => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.Propagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {
@@ -214,7 +212,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            var activityContext = Activity.Current?.Context ?? default;
 
+            InstrumentRequest(request, activityContext);
             if (activity == null)
             {
                 // There is a listener but it decided not to sample the current request.

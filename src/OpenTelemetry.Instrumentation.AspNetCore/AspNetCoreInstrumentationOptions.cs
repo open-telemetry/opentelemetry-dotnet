@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
@@ -26,15 +25,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     public class AspNetCoreInstrumentationOptions
     {
-        /// <summary>
-        /// Gets or sets <see cref="IPropagator"/> for context propagation. Default value: <see cref="CompositePropagator"/> with <see cref="TextMapPropagator"/> &amp; <see cref="BaggagePropagator"/>.
-        /// </summary>
-        public IPropagator Propagator { get; set; } = new CompositePropagator(new IPropagator[]
-        {
-            new TextMapPropagator(),
-            new BaggagePropagator(),
-        });
-
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
         /// The Filter gets the HttpContext, and should return a boolean.
@@ -61,5 +51,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md.
+        /// </remarks>
+        public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
+#endif
     }
 }

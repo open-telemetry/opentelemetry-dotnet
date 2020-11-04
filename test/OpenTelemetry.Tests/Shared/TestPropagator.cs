@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace OpenTelemetry.Context.Propagation.Tests
 {
-    public class TestPropagator : IPropagator
+    public class TestPropagator : TextMapPropagator
     {
         private readonly string idHeaderName;
         private readonly string stateHeaderName;
@@ -34,9 +34,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             this.defaultContext = defaultContext;
         }
 
-        public ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
+        public override ISet<string> Fields => new HashSet<string>() { this.idHeaderName, this.stateHeaderName };
 
-        public PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (this.defaultContext)
             {
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return context;
             }
 
-            var traceparentParsed = TextMapPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
+            var traceparentParsed = TraceContextPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
             if (!traceparentParsed)
             {
                 return context;
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             IEnumerable<string> tracestateCollection = getter(carrier, this.stateHeaderName);
             if (tracestateCollection?.Any() ?? false)
             {
-                TextMapPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+                TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
             return new PropagationContext(
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 context.Baggage);
         }
 
-        public void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 

@@ -92,7 +92,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var status = activity.GetStatus();
             Assert.Equal(status, Status.Unset);
-            Assert.False(status.IsOk);
         }
 
         [Theory]
@@ -197,7 +196,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
                 new PropagationContext(
                     new ActivityContext(
@@ -211,8 +210,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
+                        Sdk.SetDefaultTextMapPropagator(propagator.Object);
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
+                            .AddAspNetCoreInstrumentation()
                             .AddProcessor(activityProcessor.Object)
                             .Build();
                     })))
@@ -236,6 +236,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]

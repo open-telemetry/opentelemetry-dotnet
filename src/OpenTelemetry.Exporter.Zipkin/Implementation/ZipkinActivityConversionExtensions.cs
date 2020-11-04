@@ -29,8 +29,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
-        private static readonly string InvalidSpanId = default(ActivitySpanId).ToHexString();
-
 #if !NET452
         private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<(string, int), ZipkinEndpoint>();
 #else
@@ -41,11 +39,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             var context = activity.Context;
 
-            string parentId = EncodeSpanId(activity.ParentSpanId);
-            if (string.Equals(parentId, InvalidSpanId, StringComparison.Ordinal))
-            {
-                parentId = null;
-            }
+            string parentId = activity.ParentSpanId == default ?
+                null
+                : EncodeSpanId(activity.ParentSpanId);
 
             var tagState = new TagEnumerationState
             {
