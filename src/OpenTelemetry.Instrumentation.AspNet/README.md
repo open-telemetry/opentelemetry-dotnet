@@ -137,8 +137,6 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### Special topic - Enriching automatically collected telemetry
-
 ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
 `Activity`. These can be accessed in `BaseProcessor<Activity>`, and can be used to
 further enrich the Activity as shown below.
