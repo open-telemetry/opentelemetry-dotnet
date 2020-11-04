@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
@@ -139,6 +140,14 @@ namespace OpenTelemetry
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Set the parent <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="tracerProvider"><see cref="TracerProvider"/>.</param>
+        internal virtual void SetTracerProvider(TracerProvider tracerProvider)
+        {
         }
 
         /// <summary>

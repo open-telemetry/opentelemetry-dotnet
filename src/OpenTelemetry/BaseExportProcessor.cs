@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
@@ -45,6 +46,15 @@ namespace OpenTelemetry
 
         /// <inheritdoc />
         public abstract override void OnEnd(T data);
+
+        /// <inheritdoc />
+        internal override void SetTracerProvider(TracerProvider tracerProvider)
+        {
+            if (this.exporter is IProviderContainer<TracerProvider> providerContainer)
+            {
+                providerContainer.SetProvider(tracerProvider);
+            }
+        }
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)

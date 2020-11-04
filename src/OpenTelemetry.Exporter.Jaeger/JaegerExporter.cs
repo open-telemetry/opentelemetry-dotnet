@@ -27,7 +27,7 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : BaseExporter<Activity>
+    public class JaegerExporter : BaseExporter<Activity>, IProviderContainer<TracerProvider>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
@@ -67,11 +67,6 @@ namespace OpenTelemetry.Exporter.Jaeger
             {
                 foreach (var activity in activityBatch)
                 {
-                    if (this.processCache == null)
-                    {
-                        this.ApplyLibraryResource(activity.GetResource());
-                    }
-
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
@@ -87,18 +82,23 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        internal void ApplyLibraryResource(Resource libraryResource)
+        void IProviderContainer<TracerProvider>.SetProvider(TracerProvider tracerProvider)
         {
-            if (libraryResource is null)
+            this.SetResource(tracerProvider.GetResource());
+        }
+
+        internal void SetResource(Resource resource)
+        {
+            if (resource is null)
             {
-                throw new ArgumentNullException(nameof(libraryResource));
+                throw new ArgumentNullException(nameof(resource));
             }
 
             var process = this.Process;
 
             string serviceName = null;
             string serviceNamespace = null;
-            foreach (var label in libraryResource.Attributes)
+            foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
 
