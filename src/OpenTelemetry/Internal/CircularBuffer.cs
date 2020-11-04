@@ -39,7 +39,7 @@ namespace OpenTelemetry.Internal
         {
             if (capacity <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity));
+                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "capacity should be greater than zero.");
             }
 
             this.Capacity = capacity;
