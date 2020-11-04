@@ -154,6 +154,11 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
+        // TODO: This class is currently in the OpenTelemetry.Trace namespace.
+        // We could create a new SemanticConventions class in the OpenTelemetry.Metrics namespace,
+        // though this may be a little strange since many of the attribute names within this class
+        // are used for both traces and metrics.
+        // Another option would be to move this class to the OpenTelemetry namespace.
         public const string MetricHttpServerDuration = "http.server.duration";
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
