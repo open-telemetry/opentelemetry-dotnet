@@ -55,6 +55,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public void Dispose()
         {
             this.serverLifeTime?.Dispose();
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
@@ -141,11 +146,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("k1=v1,k2=v2", tracestate);
 
             parent.Stop();
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
         }
 
         [Fact]

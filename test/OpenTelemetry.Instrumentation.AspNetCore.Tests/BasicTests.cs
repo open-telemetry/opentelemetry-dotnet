@@ -236,11 +236,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
         }
 
         [Fact]
@@ -338,6 +333,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public void Dispose()
         {
             this.openTelemetrySdk?.Dispose();
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> activityProcessor, int invocationCount)

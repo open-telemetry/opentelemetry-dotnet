@@ -184,11 +184,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
         }
 
         [Fact]
@@ -321,6 +316,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
