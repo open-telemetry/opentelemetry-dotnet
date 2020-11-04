@@ -107,10 +107,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     contentFromPropagator = context.ActivityContext;
                 });
 
-            // Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options => options.Propagator = propagator.Object)
+                .AddHttpWebRequestInstrumentation()
                 .Build();
 
             var request = (HttpWebRequest)WebRequest.Create(this.url);
@@ -135,6 +135,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(default, contentFromPropagator.SpanId);
 
             parent.Stop();
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
