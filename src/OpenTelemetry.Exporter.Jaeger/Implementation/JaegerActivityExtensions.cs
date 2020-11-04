@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -259,6 +260,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             else if (jaegerTag.VLong.HasValue)
             {
                 PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VLong.Value);
+            }
+
+            if (key == Resource.ResourceTagName)
+            {
+                return;
             }
 
             PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);

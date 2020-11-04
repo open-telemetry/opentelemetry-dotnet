@@ -32,6 +32,7 @@ namespace OpenTelemetry.Resources
         public const string ServiceVersionKey = "service.version";
         public const string LibraryNameKey = "name";
         public const string LibraryVersionKey = "version";
+        public const string ResourceTagName = "otel.resource";
 
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 

@@ -24,8 +24,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public static class ActivityExtensions
     {
-        internal const string ResourcePropertyName = "OTel.Resource";
-
         /// <summary>
         /// Gets the Resource associated with the Activity.
         /// </summary>
@@ -34,7 +32,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Resource GetResource(this Activity activity)
         {
-            return activity?.GetCustomProperty(ResourcePropertyName) is Resource res
+            return activity?.GetTagValue(Resource.ResourceTagName) is Resource res
                 ? res
                 : Resource.Empty;
         }
@@ -47,7 +45,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetResource(this Activity activity, Resource resource)
         {
-            activity.SetCustomProperty(ResourcePropertyName, resource);
+            activity.SetTag(Resource.ResourceTagName, resource);
         }
     }
 }
