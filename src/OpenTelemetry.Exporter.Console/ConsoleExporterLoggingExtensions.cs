@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterLoggingExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,31 +14,32 @@
 // limitations under the License.
 // </copyright>
 
+#if NET461 || NETSTANDARD2_0
 using System;
-using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Trace
 {
-    public static class ConsoleExporterHelperExtensions
+    public static class ConsoleExporterLoggingExtensions
     {
         /// <summary>
-        /// Adds Console exporter to the TracerProvider.
+        /// Adds Console Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
         {
-            if (builder == null)
+            if (loggerOptions == null)
             {
-                throw new ArgumentNullException(nameof(builder));
+                throw new ArgumentNullException(nameof(loggerOptions));
             }
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new ConsoleExporter<Activity>(options)));
+            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new ConsoleExporter<LogRecord>(options)));
         }
     }
 }
+#endif

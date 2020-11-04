@@ -1,4 +1,4 @@
-// <copyright file="ActivitySpanIdConverter.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterOutputTargets.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,20 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace OpenTelemetry.Exporter
 {
-    internal class ActivitySpanIdConverter : JsonConverter<ActivitySpanId>
+    [Flags]
+    public enum ConsoleExporterOutputTargets
     {
-        public override ActivitySpanId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Output to the Console (stdout).
+        /// </summary>
+        Console = 0b1,
 
-        public override void Write(Utf8JsonWriter writer, ActivitySpanId value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value.ToString());
-        }
+        /// <summary>
+        /// Output to the Debug trace.
+        /// </summary>
+        Debug = 0b10,
     }
 }
