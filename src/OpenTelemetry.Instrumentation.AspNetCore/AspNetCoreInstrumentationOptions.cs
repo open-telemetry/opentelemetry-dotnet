@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
@@ -25,6 +26,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     public class AspNetCoreInstrumentationOptions
     {
+        /// <summary>
+        /// Gets or sets <see cref="TextMapPropagator"/> for context propagation.
+        /// By default, <see cref="Propagators.DefaultTextMapPropagator" /> will be used.
+        /// </summary>
+        public TextMapPropagator Propagator { get; set; } = Propagators.DefaultTextMapPropagator;
+
         /// <summary>
         /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
         /// The Filter gets the HttpContext, and should return a boolean.

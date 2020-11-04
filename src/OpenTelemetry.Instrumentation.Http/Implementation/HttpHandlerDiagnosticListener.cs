@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
+            if (this.options.Propagator.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
@@ -115,11 +115,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
             }
 
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-
-            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
+            if (!(this.httpClientSupportsW3C && this.options.Propagator is TraceContextPropagator))
             {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
+                this.options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
             }
         }
 

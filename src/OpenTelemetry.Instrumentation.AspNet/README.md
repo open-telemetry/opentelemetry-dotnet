@@ -71,7 +71,12 @@ public class WebApiApplication : HttpApplication
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`AspNetInstrumentationOptions`, which allows configuring `Filter` as explained below.
+`AspNetInstrumentationOptions`, which allows configuring `Propagator` and
+`Filter` as explained below.
+
+### Propagator
+
+TODO
 
 ### Filter
 
