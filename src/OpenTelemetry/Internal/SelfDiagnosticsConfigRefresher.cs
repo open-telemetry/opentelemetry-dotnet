@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.IO;
 
 namespace OpenTelemetry.Internal
 {
@@ -31,13 +32,20 @@ namespace OpenTelemetry.Internal
         // Commented out for now to avoid the "field was never used" compiler error.
         // private SelfDiagnosticsEventListener eventListener;
 
-        // TODO
-        // public bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
-        // {
-        //    stream = null;
-        //    availableByteCount = 0;
-        //    return false;
-        // }
+        /// <summary>
+        /// Try to get the log stream which is seeked to the position where the next line of log should be written.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes that need to be written.</param>
+        /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>
+        /// <param name="availableByteCount">The number of bytes that is remaining until the end of the stream.</param>
+        /// <returns>Whether the logger should log in the stream.</returns>
+        public virtual bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
+        {
+            // TODO in next PR
+            stream = null;
+            availableByteCount = 0;
+            return false;
+        }
 
         /// <inheritdoc/>
         public void Dispose()
