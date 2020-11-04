@@ -125,6 +125,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using var response = await request.GetResponseAsync();
 
+            // By default parentbasedsampler is used.
+            // In this case, the parent is the manually created parentactivity, which will have TraceFlags as None.
+            // This causes child to be not created.
             Assert.Empty(activityProcessor.Invocations);
 
             Assert.Equal(parent.TraceId, contentFromPropagator.TraceId);
