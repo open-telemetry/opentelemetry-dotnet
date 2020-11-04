@@ -28,8 +28,11 @@ namespace OpenTelemetry.Exporter
     public class ConsoleExporter<T> : BaseExporter<T>
         where T : class
     {
+        private readonly ConsoleExporterOptions options;
+
         public ConsoleExporter(ConsoleExporterOptions options)
         {
+            this.options = options ?? new ConsoleExporterOptions();
         }
 
         public override ExportResult Export(in Batch<T> batch)
@@ -39,26 +42,26 @@ namespace OpenTelemetry.Exporter
                 foreach (var item in batch)
                 {
                     var activity = item as Activity;
-                    Console.WriteLine($"Activity.Id:          {activity.Id}");
+                    this.WriteLine($"Activity.Id:          {activity.Id}");
                     if (!string.IsNullOrEmpty(activity.ParentId))
                     {
-                        Console.WriteLine($"Activity.ParentId:    {activity.ParentId}");
+                        this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                     }
 
-                    Console.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
-                    Console.WriteLine($"Activity.Kind:        {activity.Kind}");
-                    Console.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                    Console.WriteLine($"Activity.Duration:    {activity.Duration}");
+                    this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
+                    this.WriteLine($"Activity.Kind:        {activity.Kind}");
+                    this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    this.WriteLine($"Activity.Duration:    {activity.Duration}");
                     if (activity.TagObjects.Any())
                     {
-                        Console.WriteLine("Activity.TagObjects:");
+                        this.WriteLine("Activity.TagObjects:");
                         foreach (var tag in activity.TagObjects)
                         {
                             var array = tag.Value as Array;
 
                             if (array == null)
                             {
-                                Console.WriteLine($"    {tag.Key}: {tag.Value}");
+                                this.WriteLine($"    {tag.Key}: {tag.Value}");
                                 continue;
                             }
 
@@ -70,43 +73,43 @@ namespace OpenTelemetry.Exporter
                                 Console.Write($"{array.GetValue(i)}");
                             }
 
-                            Console.WriteLine($"]");
+                            this.WriteLine($"]");
                         }
                     }
 
                     if (activity.Events.Any())
                     {
-                        Console.WriteLine("Activity.Events:");
+                        this.WriteLine("Activity.Events:");
                         foreach (var activityEvent in activity.Events)
                         {
-                            Console.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
+                            this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
                             foreach (var attribute in activityEvent.Tags)
                             {
-                                Console.WriteLine($"        {attribute.Key}: {attribute.Value}");
+                                this.WriteLine($"        {attribute.Key}: {attribute.Value}");
                             }
                         }
                     }
 
                     if (activity.Baggage.Any())
                     {
-                        Console.WriteLine("Activity.Baggage:");
+                        this.WriteLine("Activity.Baggage:");
                         foreach (var baggage in activity.Baggage)
                         {
-                            Console.WriteLine($"    {baggage.Key}: {baggage.Value}");
+                            this.WriteLine($"    {baggage.Key}: {baggage.Value}");
                         }
                     }
 
                     var resource = activity.GetResource();
                     if (resource != Resource.Empty)
                     {
-                        Console.WriteLine("Resource associated with Activity:");
+                        this.WriteLine("Resource associated with Activity:");
                         foreach (var resourceAttribute in resource.Attributes)
                         {
-                            Console.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                            this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
                         }
                     }
 
-                    Console.WriteLine();
+                    this.WriteLine(string.Empty);
                 }
             }
 #if NET461 || NETSTANDARD2_0
@@ -116,25 +119,38 @@ namespace OpenTelemetry.Exporter
                 foreach (var item in batch)
                 {
                     var logRecord = item as LogRecord;
-                    Console.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
-                    Console.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
-                    Console.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                    Console.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
-                    Console.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
-                    Console.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
-                    Console.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
-                    Console.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                    this.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
+                    this.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
+                    this.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    this.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
+                    this.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
+                    this.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
+                    this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
+                    this.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
                     if (logRecord.Exception is { })
                     {
-                        Console.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                        this.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
                     }
 
-                    Console.WriteLine();
+                    this.WriteLine(string.Empty);
                 }
             }
 #endif
 
             return ExportResult.Success;
+        }
+
+        private void WriteLine(string message)
+        {
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
+            {
+                Console.WriteLine(message);
+            }
+
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
+            {
+                Debug.WriteLine(message);
+            }
         }
     }
 }
