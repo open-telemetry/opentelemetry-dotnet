@@ -16,10 +16,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -215,13 +217,27 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     o.SuppressDownstreamInstrumentation = true;
                 })
                 .AddHttpClientInstrumentation()
-                .AddAspNetCoreInstrumentation() // Instrumenting the server side as well
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Enrich = (activity, eventName, obj) =>
+                    {
+                        switch (eventName)
+                        {
+                            case "OnStartActivity":
+                                var request = (HttpRequest)obj;
+                                activity.SetCustomProperty("BaggageString", request.Headers["Baggage"].ToString());
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                }) // Instrumenting the server side as well
                 .AddProcessor(processor.Object)
                 .Build())
             {
                 using var activity = source.StartActivity("parent");
                 Assert.NotNull(activity);
-                activity.AddBaggage("item1", "value1");
+                Baggage.Current.SetBaggage("item1", "value1");
 
                 var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
@@ -236,7 +252,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
             Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
             Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
-            Assert.Equal("value1", serverActivity.GetBaggageItem("item1"));
+            Assert.Contains("item1=value1", serverActivity.GetCustomProperty("BaggageString") as string);
         }
 
         [Fact]
