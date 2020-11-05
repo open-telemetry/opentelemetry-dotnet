@@ -201,6 +201,45 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         }
 
         [Fact]
+        public void GrpcPropagatesContextWithSuppressInstrumentation()
+        {
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+            var processor = new Mock<BaseProcessor<Activity>>();
+
+            using var source = new ActivitySource("test-source");
+
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSource("test-source")
+                .AddGrpcClientInstrumentation(o =>
+                {
+                    o.SuppressDownstreamInstrumentation = true;
+                })
+                .AddHttpClientInstrumentation()
+                .AddAspNetCoreInstrumentation() // Instrumenting the server side as well
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var activity = source.StartActivity("parent");
+                Assert.NotNull(activity);
+                activity.AddBaggage("item1", "value1");
+
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
+            }
+
+            Assert.Equal(8, processor.Invocations.Count); // OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
+            var serverActivity = (Activity)processor.Invocations[3].Arguments[0];
+            var clientActivity = (Activity)processor.Invocations[4].Arguments[0];
+
+            Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
+            Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
+            Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
+            Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
+            Assert.Equal("value1", serverActivity.GetBaggageItem("item1"));
+        }
+
+        [Fact]
         public void Grpc_BadArgs()
         {
             TracerProviderBuilder builder = null;
