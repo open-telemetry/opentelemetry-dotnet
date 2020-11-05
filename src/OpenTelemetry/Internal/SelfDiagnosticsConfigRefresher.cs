@@ -33,7 +33,7 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        private const int ConfigUpdatePeriod = 3000;  // in milliseconds
+        private const int ConfigurationUpdatePeriodMilliSeconds = 3000;
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
@@ -90,6 +90,14 @@ namespace OpenTelemetry.Internal
             try
             {
                 var cachedViewStream = this.viewStream.Value;
+
+                // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
+                // Once worker thread updates the MemoryMappedFile, all the cached ViewStream objects become
+                // obsolete.
+                // Each thread creates a new MemoryMappedViewStream the next time it tries to retrieve it.
+                // Whether the MemoryMappedViewStream is obsolete is determined by comparing the current
+                // MemoryMappedFile object with the MemoryMappedFile object cached at the creation time of the
+                // MemoryMappedViewStream.
                 if (cachedViewStream == null || this.memoryMappedFileCache.Value != this.memoryMappedFile)
                 {
                     cachedViewStream = this.memoryMappedFile.CreateViewStream();
@@ -123,11 +131,11 @@ namespace OpenTelemetry.Internal
 
         private async Task Worker(CancellationToken cancellationToken)
         {
-            await Task.Delay(ConfigUpdatePeriod, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
             while (!cancellationToken.IsCancellationRequested)
             {
                 this.UpdateMemoryMappedFileFromConfiguration();
-                await Task.Delay(ConfigUpdatePeriod, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -164,9 +172,15 @@ namespace OpenTelemetry.Internal
             MemoryMappedFile mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
             if (mmf != null)
             {
+                // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
+                // Once worker thread closes the MemoryMappedFile, all the ViewStream objects should be disposed
+                // properly.
                 foreach (MemoryMappedViewStream stream in this.viewStream.Values)
                 {
-                    stream.Dispose();
+                    if (stream != null)
+                    {
+                        stream.Dispose();
+                    }
                 }
 
                 mmf.Dispose();

@@ -263,7 +263,7 @@ namespace OpenTelemetry.Internal
         [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
         public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
         {
-            this.WriteEvent(65, logDirectory, exception);
+            this.WriteEvent(26, logDirectory, exception);
         }
 
 #if DEBUG
