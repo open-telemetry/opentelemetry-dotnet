@@ -137,6 +137,11 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any activity.
+The `Enrich` option is specific to this instrumentation, and is provided to
+get access to `HttpRequest` and `HttpResponse`.
+
 ## References
 
 * [ASP.NET](https://dotnet.microsoft.com/apps/aspnet)
