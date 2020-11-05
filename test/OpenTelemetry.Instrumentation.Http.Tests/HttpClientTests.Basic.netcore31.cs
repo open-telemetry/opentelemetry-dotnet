@@ -211,25 +211,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
-        {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
-            {
-                using var c = new HttpClient();
-                await c.GetAsync(this.url);
-            }
-
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
-        }
-
-        [Fact]
         public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var processor = new Mock<BaseProcessor<Activity>>();
@@ -315,6 +296,52 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(4, activityProcessor.Invocations.Count);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationContextPropagation()
+        {
+            var processor = new Mock<BaseProcessor<Activity>>();
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(this.url),
+                Method = new HttpMethod("GET"),
+            };
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            Baggage.Current.SetBaggage("b1", "v1");
+            using (Sdk.CreateTracerProviderBuilder()
+                        .AddHttpClientInstrumentation()
+                        .AddProcessor(processor.Object)
+                        .Build())
+            {
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+            }
+
+            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
+
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
+            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
+            Assert.True(request.Headers.TryGetValues("Baggage", out var baggages));
+            Assert.Single(traceparents);
+            Assert.Single(tracestates);
+            Assert.Single(baggages);
+
+            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Assert.Equal("b1=v1", baggages.Single());
         }
 
         public void Dispose()

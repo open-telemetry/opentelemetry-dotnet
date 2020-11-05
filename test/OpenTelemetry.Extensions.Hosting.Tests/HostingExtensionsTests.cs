@@ -35,9 +35,8 @@ namespace OpenTelemetry.Extensions.Hosting
             {
                 services.AddOpenTelemetryTracing(builder =>
                 {
-                    builder.AddInstrumentation((activitySource) =>
+                    builder.AddInstrumentation(() =>
                     {
-                        Assert.NotNull(activitySource);
                         callbackRun = true;
                         return testInstrumentation;
                     });
@@ -90,7 +89,7 @@ namespace OpenTelemetry.Extensions.Hosting
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetryTracing((provider, builder) =>
             {
-                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+                builder.AddInstrumentation(() => provider.GetRequiredService<TestInstrumentation>());
             });
 
             var serviceProvider = services.BuildServiceProvider();
@@ -113,7 +112,7 @@ namespace OpenTelemetry.Extensions.Hosting
             Assert.Throws<ArgumentNullException>(() =>
             services.AddOpenTelemetryTracing((provider, builder) =>
             {
-                builder.AddInstrumentation((activitySource) => provider.GetRequiredService<TestInstrumentation>());
+                builder.AddInstrumentation(() => provider.GetRequiredService<TestInstrumentation>());
             }));
         }
 
