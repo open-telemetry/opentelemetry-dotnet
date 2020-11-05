@@ -9,7 +9,7 @@
   ([#1454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1454))
 
 * DiagnosticSource subscription helper classes (DiagnosticSourceSubscriber,
-  ListenerHandler,PropertyFetcher) are made internal. 
+  ListenerHandler,PropertyFetcher) are made internal.
 
 ## 0.7.0-beta.1
 
