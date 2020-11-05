@@ -16,10 +16,9 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,19 +33,11 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
-        private const int FileSizeUpperLimit = 128 * 1024;  // Upper limit for log file size in KB: 128MB
         private const int ConfigUpdatePeriod = 3000;  // in milliseconds
 
-        /// <summary>
-        /// ConfigBufferSize is the maximum bytes of config file that will be read.
-        /// </summary>
-        private const int ConfigBufferSize = 4 * 1024;
-        private const string ConfigFileName = "DiagnosticsConfiguration.json";
-
-        private readonly ThreadLocal<byte[]> configBuffer = new ThreadLocal<byte[]>(() => null);
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
+        private readonly SelfDiagnosticsConfigParser configParser;
 
         /// <summary>
         /// t_memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
@@ -58,17 +49,19 @@ namespace OpenTelemetry.Internal
 
         // Once the configuration file is valid, an eventListener object will be created.
         // Commented out for now to avoid the "field was never used" compiler error.
-        // private SelfDiagnosticsEventListener eventListener;
+        private SelfDiagnosticsEventListener eventListener;
         private volatile MemoryMappedFile memoryMappedFile;
         private string logDirectory;  // Log directory for log files
         private int logFileSize;  // Log file size in bytes
         private long logFilePosition;  // The logger will write into the byte at this position
+        private EventLevel logEventLevel;
 
         public SelfDiagnosticsConfigRefresher()
         {
             this.UpdateMemoryMappedFileFromConfiguration();
             this.cancellationTokenSource = new CancellationTokenSource();
             this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);
+            this.configParser = new SelfDiagnosticsConfigParser();
         }
 
         /// <inheritdoc/>
@@ -128,20 +121,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        internal static bool TryParseLogDirectory(string configJson, out string logDirectory)
-        {
-            var logDirectoryResult = Regex.Match(configJson, @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase);
-            logDirectory = logDirectoryResult.Groups["LogDirectory"].Value;
-            return logDirectoryResult.Success && !string.IsNullOrWhiteSpace(logDirectory);
-        }
-
-        internal static bool TryParseFileSize(string configJson, out int fileSizeInKB)
-        {
-            fileSizeInKB = 0;
-            var fileSizeResult = Regex.Match(configJson, @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase);
-            return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
-        }
-
         private async Task Worker(CancellationToken cancellationToken)
         {
             await Task.Delay(ConfigUpdatePeriod, cancellationToken).ConfigureAwait(false);
@@ -154,7 +133,7 @@ namespace OpenTelemetry.Internal
 
         private void UpdateMemoryMappedFileFromConfiguration()
         {
-            if (this.TryGetConfiguration(out string newLogDirectory, out int fileSizeInKB))
+            if (this.configParser.TryGetConfiguration(out string newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
             {
                 int newFileSize = fileSizeInKB * 1024;
                 if (!newLogDirectory.Equals(this.logDirectory) || this.logFileSize != newFileSize)
@@ -162,57 +141,22 @@ namespace OpenTelemetry.Internal
                     this.CloseLogFile();
                     this.OpenLogFile(newLogDirectory, newFileSize);
                 }
+
+                if (!newEventLevel.Equals(this.logEventLevel))
+                {
+                    if (this.eventListener != null)
+                    {
+                        this.eventListener.Dispose();
+                    }
+
+                    this.eventListener = new SelfDiagnosticsEventListener(newEventLevel, this);
+                    this.logEventLevel = newEventLevel;
+                }
             }
             else
             {
                 this.CloseLogFile();
             }
-        }
-
-        private bool TryGetConfiguration(out string logDirectory, out int fileSizeInKB)
-        {
-            logDirectory = null;
-            fileSizeInKB = 0;
-            try
-            {
-                using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                var buffer = this.configBuffer.Value;
-                if (buffer == null)
-                {
-                    buffer = new byte[ConfigBufferSize]; // TODO: handle OOM
-                    this.configBuffer.Value = buffer;
-                }
-
-                file.Read(buffer, 0, buffer.Length);
-                string configJson = Encoding.UTF8.GetString(buffer);
-                if (!TryParseLogDirectory(configJson, out logDirectory))
-                {
-                    return false;
-                }
-
-                if (!TryParseFileSize(configJson, out fileSizeInKB))
-                {
-                    return false;
-                }
-
-                if (fileSizeInKB < FileSizeLowerLimit)
-                {
-                    fileSizeInKB = FileSizeLowerLimit;
-                }
-
-                if (fileSizeInKB > FileSizeUpperLimit)
-                {
-                    fileSizeInKB = FileSizeUpperLimit;
-                }
-
-                return true;
-            }
-            catch (Exception)
-            {
-                // do nothing on failure to open/read/parse config file
-            }
-
-            return false;
         }
 
         private void CloseLogFile()
