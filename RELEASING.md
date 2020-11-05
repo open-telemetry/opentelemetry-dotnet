@@ -81,14 +81,16 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 
 8.Copy all the NuGet files and symbols into a local folder.
 
-9.Download latest [nuget.exe](https://www.nuget.org/downloads).
+9.Download latest [nuget.exe](https://www.nuget.org/downloads) into
+  the same folder from step 8.
 
 10.Obtain the API key from nuget.org (Only maintainers have access)
 
-11.Run the following command from PowerShell from local folder used in step 8:
+11.Run the following commands from PowerShell from local folder used in step 8:
 
    ```powershell
    .\nuget.exe setApiKey <actual api key>
+
    get-childitem -Recurse | where {$_.extension -eq
    ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source
    https://api.nuget.org/v3/index.json}
