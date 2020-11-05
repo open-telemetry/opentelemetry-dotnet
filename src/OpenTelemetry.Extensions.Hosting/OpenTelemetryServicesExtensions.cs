@@ -48,24 +48,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 return builder.Build();
             });
-            return services;
-        }
-
-        /// <summary>
-        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="createTracerProvider">A delegate that provides the tracer provider to be registered.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<TracerProvider> createTracerProvider)
-        {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
 
             AddOpenTelemetryTracingInternal(services);
-
             return services;
         }
 
@@ -73,31 +57,16 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">The <see cref="TracerProviderBuilder"/> action to configure TracerProviderBuilder.</param>
+        /// <param name="configure">A delegate that provides the tracer provider to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
+        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
             if (services is null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (createTracerProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createTracerProvider));
-            }
-
-            try
-            {
-                services.AddSingleton(s => createTracerProvider(s));
-                AddOpenTelemetryTracingInternal(services);
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            services.Configure<TracerProviderBuilder>(configure);
+            services.Configure(configure);
             services.AddOpenTelemetryTracing();
             return services;
         }
