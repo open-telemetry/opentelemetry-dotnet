@@ -19,7 +19,6 @@ using System.Diagnostics.Tracing;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace OpenTelemetry.Internal
 {
@@ -33,6 +32,15 @@ namespace OpenTelemetry.Internal
         /// ConfigBufferSize is the maximum bytes of config file that will be read.
         /// </summary>
         private const int ConfigBufferSize = 4 * 1024;
+
+        private static readonly Regex LogDirectoryRegex = new Regex(
+            @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex FileSizeRegex = new Regex(
+            @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex EventLevelRegex = new Regex(
+            @"""EventLevel""\s*:\s*""(?<EventLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
         // in both main thread and the worker thread.
@@ -94,7 +102,7 @@ namespace OpenTelemetry.Internal
 
         internal static bool TryParseLogDirectory(string configJson, out string logDirectory)
         {
-            var logDirectoryResult = Regex.Match(configJson, @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase);
+            var logDirectoryResult = LogDirectoryRegex.Match(configJson);
             logDirectory = logDirectoryResult.Groups["LogDirectory"].Value;
             return logDirectoryResult.Success && !string.IsNullOrWhiteSpace(logDirectory);
         }
@@ -102,13 +110,13 @@ namespace OpenTelemetry.Internal
         internal static bool TryParseFileSize(string configJson, out int fileSizeInKB)
         {
             fileSizeInKB = 0;
-            var fileSizeResult = Regex.Match(configJson, @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase);
+            var fileSizeResult = FileSizeRegex.Match(configJson);
             return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
         }
 
         internal static bool TryParseEventLevel(string configJson, out string eventLevel)
         {
-            var eventLevelResult = Regex.Match(configJson, @"""EventLevel""\s*:\s*""(?<EventLevel>.*?)""", RegexOptions.IgnoreCase);
+            var eventLevelResult = EventLevelRegex.Match(configJson);
             eventLevel = eventLevelResult.Groups["EventLevel"].Value;
             return eventLevelResult.Success && !string.IsNullOrWhiteSpace(eventLevel);
         }
