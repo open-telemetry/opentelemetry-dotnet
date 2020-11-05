@@ -17,7 +17,7 @@ Only for Maintainers.
     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
     foreach ($changelog in $changelogs)
     {
-     Add-Content -Path .\combinedchangelog.md $changelog.Directory.Name
+     Add-Content -Path .\combinedchangelog.md "**$changelog.Directory.Name**"
      $lines = Get-Content -Path $changelog.FullName
      $started = $false
      $ended = $false
@@ -44,6 +44,8 @@ Only for Maintainers.
 ```
 
    This generates combined changelog to be used in Github release.
+   Once contents of combined changelog is saved to Github release,
+   delete the file.
 
 3.Run the following PowerShell script from the root of the repo.
    This updates all the changelog to have release date for the
@@ -53,14 +55,14 @@ Only for Maintainers.
    ".1"
 
 ```powershell
-    $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
+     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
     foreach ($changelog in $changelogs)
     {
      (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
 
 ## 0.7.0-beta.1
 
-Released 2020-Oct-16" | Set-Content -Path $changelog.FullName
+Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
     }
 ```
 
