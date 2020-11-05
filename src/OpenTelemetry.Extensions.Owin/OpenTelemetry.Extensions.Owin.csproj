@@ -5,7 +5,7 @@
     <Description>A component to the OWIN pipeline for instrumenting incoming request with System.Diagnostics.Activity and notifying listeners with DiagnosticsSource.</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
     <PackageReference Include="Microsoft.Owin" Version="$(MicrosoftOwinPkgVer)" />
