@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,7 +34,8 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetryTracing(builder =>
+                services.AddOpenTelemetryTracing();
+                services.Configure<TracerProviderBuilder>((builder) =>
                 {
                     builder.AddInstrumentation(() =>
                     {
@@ -76,7 +78,7 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var tracerProvider1 = host.Services.GetRequiredService<TracerProvider>();
             var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
-
+            tracerProvider1.AddProcessor(new TestProcessor());
             Assert.Same(tracerProvider1, tracerProvider2);
         }
 
@@ -87,11 +89,12 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var services = new ServiceCollection();
             services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetryTracing((provider, builder) =>
+            services.Configure<TracerProviderBuilder>((builder) =>
             {
                 builder.AddInstrumentation(() => provider.GetRequiredService<TestInstrumentation>());
             });
 
+            services.AddOpenTelemetryTracing();
             var serviceProvider = services.BuildServiceProvider();
 
             var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
@@ -125,5 +128,9 @@ namespace OpenTelemetry.Extensions.Hosting
                 this.Disposed = true;
             }
         }
+    }
+
+    internal class TestProcessor : BaseProcessor<Activity>
+    {
     }
 }
