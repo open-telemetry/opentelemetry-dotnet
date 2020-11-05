@@ -26,8 +26,11 @@ namespace OpenTelemetry.Extensions.Hosting
 {
     public class HostingExtensionsTests
     {
+        private static readonly string TestActivitySourceName = "TestActivitySource";
+        private static readonly ActivitySource TestActivitySource = new ActivitySource(TestActivitySourceName);
+
         [Fact]
-        public async Task AddOpenTelemetryTracerProviderInstrumentationCreationAndDisposal()
+        public async Task AddOpenTelemetryTracingInstrumentationCreationAndDisposal()
         {
             var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
@@ -67,7 +70,7 @@ namespace OpenTelemetry.Extensions.Hosting
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
+        public void AddOpenTelemetryTracing_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
@@ -78,45 +81,78 @@ namespace OpenTelemetry.Extensions.Hosting
 
             var tracerProvider1 = host.Services.GetRequiredService<TracerProvider>();
             var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
-            tracerProvider1.AddProcessor(new TestProcessor());
             Assert.Same(tracerProvider1, tracerProvider2);
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_ServiceProviderArgument_ServicesRegistered()
+        public async Task AddOpenTelemetryTracingDetectMultipleCalls()
         {
             var testInstrumentation = new TestInstrumentation();
+            int instrumentationCallBackCount = 0;
 
-            var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation);
-            services.Configure<TracerProviderBuilder>((builder) =>
+            var builder = new HostBuilder().ConfigureServices(services =>
             {
-                builder.AddInstrumentation(() => provider.GetRequiredService<TestInstrumentation>());
+                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryTracing();
+                services.Configure<TracerProviderBuilder>((builder) =>
+                {
+                    builder.AddInstrumentation(() =>
+                    {
+                        instrumentationCallBackCount++;
+                        return testInstrumentation;
+                    });
+                });
             });
 
-            services.AddOpenTelemetryTracing();
-            var serviceProvider = services.BuildServiceProvider();
-
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
-
-            Assert.False(testInstrumentation.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(testInstrumentation.Disposed);
+            var host = builder.Build();
+            await host.StartAsync();
+            Assert.Equal(1, instrumentationCallBackCount);
+            await host.StopAsync();
+            host.Dispose();
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_BadArgs_NullServiceCollection()
+        public async Task AddOpenTelemetryTracingE2EDemo()
         {
-            ServiceCollection services = null;
-            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryTracing());
-            Assert.Throws<ArgumentNullException>(() =>
-            services.AddOpenTelemetryTracing((provider, builder) =>
+            var testProcessor = new TestActivityProcessor();
+            var resource = Resources.Resources.CreateServiceResource("serviceName");
+            testProcessor.StartAction = (act) => Assert.Equal("MyActivityName", act.DisplayName);
+            testProcessor.EndAction = (act) => Assert.Equal(resource, act.GetResource());
+            var builder = new HostBuilder().ConfigureServices(services =>
             {
-                builder.AddInstrumentation(() => provider.GetRequiredService<TestInstrumentation>());
-            }));
+                // Add OpentelemetryTracing.
+                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryTracing();
+
+                // Configure TracerProviderBuilder
+                services.Configure<TracerProviderBuilder>((builder) => builder.SetSampler(new AlwaysOnSampler()));
+
+                // Keep configuring TracerProviderBuilder
+                services.Configure<TracerProviderBuilder>((builder) => builder.AddProcessor(testProcessor));
+
+                // Keep configuring TracerProviderBuilder
+                services.Configure<TracerProviderBuilder>((builder) => builder.SetResource(resource));
+
+                // Keep configuring TracerProviderBuilder
+                services.Configure<TracerProviderBuilder>((builder) => builder.AddSource(TestActivitySourceName));
+            });
+
+            var host = builder.Build();
+
+            // Host not started, so this activity is not listened
+            var myActivity = TestActivitySource.StartActivity("MyActivityName");
+            Assert.Null(myActivity);
+
+            await host.StartAsync();
+
+            myActivity = TestActivitySource.StartActivity("MyActivityName");
+            Assert.NotNull(myActivity);
+            myActivity.Stop();
+
+            await host.StopAsync();
         }
 
         internal class TestInstrumentation : IDisposable
@@ -128,9 +164,54 @@ namespace OpenTelemetry.Extensions.Hosting
                 this.Disposed = true;
             }
         }
-    }
 
-    internal class TestProcessor : BaseProcessor<Activity>
-    {
+        internal class TestActivityProcessor : BaseProcessor<Activity>
+        {
+            public Action<Activity> StartAction;
+            public Action<Activity> EndAction;
+
+            public TestActivityProcessor()
+            {
+            }
+
+            public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
+            {
+                this.StartAction = onStart;
+                this.EndAction = onEnd;
+            }
+
+            public bool ShutdownCalled { get; private set; } = false;
+
+            public bool ForceFlushCalled { get; private set; } = false;
+
+            public bool DisposedCalled { get; private set; } = false;
+
+            public override void OnStart(Activity span)
+            {
+                this.StartAction?.Invoke(span);
+            }
+
+            public override void OnEnd(Activity span)
+            {
+                this.EndAction?.Invoke(span);
+            }
+
+            protected override bool OnForceFlush(int timeoutMilliseconds)
+            {
+                this.ForceFlushCalled = true;
+                return true;
+            }
+
+            protected override bool OnShutdown(int timeoutMilliseconds)
+            {
+                this.ShutdownCalled = true;
+                return true;
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                this.DisposedCalled = true;
+            }
+        }
     }
 }
