@@ -193,8 +193,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only Shutdown/Dispose are called because request was filtered.
-                Assert.Equal(2, activityProcessor.Invocations.Count);
+                // only SetTracerProvider/Shutdown/Dispose are called because request was filtered.
+                Assert.Equal(3, activityProcessor.Invocations.Count);
                 return;
             }
 
@@ -202,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(4, activityProcessor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(5, activityProcessor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            span = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(
                 carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent"

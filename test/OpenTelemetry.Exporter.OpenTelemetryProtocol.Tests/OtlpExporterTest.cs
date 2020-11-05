@@ -87,6 +87,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                             new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
                         }));
             }
+            else
+            {
+                exporter.SetResource(Resources.Resource.Empty);
+            }
 
             var builder = Sdk.CreateTracerProviderBuilder()
                 .AddSource(sources[0].Name)
