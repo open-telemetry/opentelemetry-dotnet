@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
             configureOptions?.Invoke(options);
 
             return builder
-                .AddInstrumentation((activitySourceAdapter) => new StackExchangeRedisCallsInstrumentation(connection, options))
+                .AddInstrumentation(() => new StackExchangeRedisCallsInstrumentation(connection, options))
                 .AddSource(StackExchangeRedisCallsInstrumentation.ActivitySourceName);
         }
     }
