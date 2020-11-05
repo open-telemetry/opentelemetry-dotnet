@@ -37,7 +37,7 @@ namespace OpenTelemetry.Internal
         // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
         // in both main thread and the worker thread.
         // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
-        private readonly ThreadLocal<byte[]> configBuffer = new ThreadLocal<byte[]>(() => null);
+        private byte[] configBuffer;
 
         public bool TryGetConfiguration(out string logDirectory, out int fileSizeInKB, out EventLevel eventLevel)
         {
@@ -47,11 +47,11 @@ namespace OpenTelemetry.Internal
             try
             {
                 using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                var buffer = this.configBuffer.Value;
+                var buffer = this.configBuffer;
                 if (buffer == null)
                 {
-                    buffer = new byte[ConfigBufferSize]; // TODO: handle OOM
-                    this.configBuffer.Value = buffer;
+                    buffer = new byte[ConfigBufferSize]; // Fail silently if OOM
+                    this.configBuffer = buffer;
                 }
 
                 file.Read(buffer, 0, buffer.Length);

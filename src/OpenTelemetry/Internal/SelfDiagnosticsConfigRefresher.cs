@@ -58,10 +58,10 @@ namespace OpenTelemetry.Internal
 
         public SelfDiagnosticsConfigRefresher()
         {
+            this.configParser = new SelfDiagnosticsConfigParser();
             this.UpdateMemoryMappedFileFromConfiguration();
             this.cancellationTokenSource = new CancellationTokenSource();
             this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);
-            this.configParser = new SelfDiagnosticsConfigParser();
         }
 
         /// <inheritdoc/>
