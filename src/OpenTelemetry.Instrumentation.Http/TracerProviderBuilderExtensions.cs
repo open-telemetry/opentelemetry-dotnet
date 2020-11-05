@@ -23,7 +23,7 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of dependency instrumentation.
+    /// Extension methods to simplify registering of httpclient instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
