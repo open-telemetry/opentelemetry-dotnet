@@ -60,10 +60,6 @@ This instrumentation can be configured to change the default behavior by using
 `HttpClientInstrumentationOptions` and
 `HttpWebRequestioninstrumentationOptions`.
 
-### Propagator
-
-TODO
-
 ### SetHttpFlavor
 
 By default, this instrumentation does not add the `http.flavor` attribute. The
@@ -111,75 +107,74 @@ instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
-### Special topic - Enriching automatically collected telemetry
+### Enrich
 
-This instrumentation library stores the raw request, response and any exception
-object in the activity. These can be accessed in ActivityProcessors, and can be
-used to further enrich the Activity with additional tags as shown below.
+This option allows one to enrich the activity with additional information
+from the raw request and response objects. The `Enrich` action is
+called only when `activity.IsAllDataRequested` is `true`. It contains the
+activity itself (which can be enriched), the name of the event, and the
+actual raw object.
 
 #### HttpClient instrumentation
 
-The key name for HttpRequestMessage custom property inside Activity is
-"OTel.HttpHandler.Request".
+For event name "OnStartActivity", the actual object will be
+`HttpRequestMessage`.
 
-The key name for HttpResponseMessage custom property inside Activity is
-"OTel.HttpHandler.Response".
+For event name "OnStopActivity", the actual object will be
+`HttpResponseMessage`.
 
-The key name for Exception custom property inside Activity is
-"OTel.HttpHandler.Exception".
+For event name "OnException", the actual object will be
+`Exception`.
 
 #### HttpWebRequest instrumentation
 
-The key name for HttpWebRequest custom property inside Activity is
-"OTel.HttpWebRequest.Request".
+For event name "OnStartActivity", the actual object will be
+`HttpWebRequest`.
 
-The key name for HttpWebResponse custom property inside Activity is
-"OTel.HttpWebRequest.Response".
+For event name "OnStopActivity", the actual object will be
+`HttpWebResponse`.
 
-The key name for Exception custom property inside Activity is
-"OTel.HttpWebRequest.Exception".
+For event name "OnException", the actual object will be
+`Exception`.
+
+The following code snippet shows how to add additional tags using `Enrich`.
 
 ```csharp
-internal class MyHttpEnrichingProcessor : ActivityProcessor
+services.AddOpenTelemetryTracing((builder) =>
 {
-    public override void OnStart(Activity activity)
+    builder
+    .AddHttpClientInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
     {
-        // Retrieve the HttpRequestMessage object.
-        var request = activity.GetCustomProperty("OTel.HttpHandler.Request")
-                          as HttpRequestMessage;
-        if (request != null)
+        if (eventName.Equals("OnStartActivity"))
         {
-            // Add more tags to the activity
-            activity.SetTag("mycustomtag", request.Headers["myheader"]);
+            if (rawObject is HttpRequestMessage request)
+            {
+                activity.SetTag("requestVersion", request.Version);
+            }
         }
-    }
-
-    public override void OnEnd(Activity activity)
-    {
-        // Retrieve the HttpResponseMessage object.
-        var response = activity.GetCustomProperty("OTel.HttpHandler.Response")
-                           as HttpResponseMessage;
-        if (response != null)
+        else if (eventName.Equals("OnStopActivity"))
         {
-            var statusCode = response.StatusCode;
-            bool success = statusCode < 400;
-            // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("myCustomSuccess", success);
+            if (rawObject is HttpResponseMessage response)
+            {
+                activity.SetTag("responseVersion", response.Version);
+            }
         }
-    }
-}
+        else if (eventName.Equals("OnException"))
+        {
+            if (rawObject is Exception exception)
+            {
+                activity.SetTag("stackTrace", exception.StackTrace);
+            }
+        }
+    })
+});
 ```
 
-The custom processor must be added to the provider as below. It is important to
-add the enrichment processor before any exporters so that exporters see the
-changes done by them.
-
-```csharp
-using Sdk.CreateTracerProviderBuilder()
-    .AddProcessor(new MyHttpEnrichingProcessor())
-    .AddConsoleExporter()
-    .Build();
-```
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any
+activity. The `Enrich` option is specific to this instrumentation, and is
+provided to get access to raw request, response, and exception objects.
 
 ## References
 
