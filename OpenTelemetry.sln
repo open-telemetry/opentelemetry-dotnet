@@ -204,6 +204,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\l
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Shared", "src\OpenTelemetry.Shared\OpenTelemetry.Shared.csproj", "{1E504265-1E32-4C61-8CC5-8FA373E16699}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Instrumentation.Owin", "src\OpenTelemetry.Instrumentation.Owin\OpenTelemetry.Instrumentation.Owin.csproj", "{7B55B64E-609F-490E-A283-AD4D85FE2F19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Extensions.Owin", "src\OpenTelemetry.Extensions.Owin\OpenTelemetry.Extensions.Owin.csproj", "{EE939E55-B71A-4BB2-9483-635D92B1254A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -402,6 +406,14 @@ Global
 		{1E504265-1E32-4C61-8CC5-8FA373E16699}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E504265-1E32-4C61-8CC5-8FA373E16699}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E504265-1E32-4C61-8CC5-8FA373E16699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B55B64E-609F-490E-A283-AD4D85FE2F19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B55B64E-609F-490E-A283-AD4D85FE2F19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B55B64E-609F-490E-A283-AD4D85FE2F19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B55B64E-609F-490E-A283-AD4D85FE2F19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE939E55-B71A-4BB2-9483-635D92B1254A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE939E55-B71A-4BB2-9483-635D92B1254A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE939E55-B71A-4BB2-9483-635D92B1254A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE939E55-B71A-4BB2-9483-635D92B1254A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

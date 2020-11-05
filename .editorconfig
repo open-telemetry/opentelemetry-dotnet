@@ -14,6 +14,11 @@ charset = utf-8
 # maintain DOS/Windows style line endings in md files
 [*.md]
 end_of_line = crlf
+# MSBuild files
+[*.{proj,csproj,props,targets}]
+indent_size = 2
+trim_trailing_whitespace = true
+charset = utf-8
 ############################### 
 # .NET Coding Conventions     # 
 ############################### 
