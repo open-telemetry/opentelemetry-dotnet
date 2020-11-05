@@ -100,6 +100,11 @@ namespace OpenTelemetry.Internal
                 // MemoryMappedViewStream.
                 if (cachedViewStream == null || this.memoryMappedFileCache.Value != this.memoryMappedFile)
                 {
+                    // Race condition: The code might reach here right after the worker thread sets memoryMappedFile
+                    // to null in CloseLogFile().
+                    // In this case, let the NullReferenceException be caught and fail silently.
+                    // By design, all events captured will be dropped during a configuration file refresh if
+                    // the file changed, regardless whether the file is deleted or updated.
                     cachedViewStream = this.memoryMappedFile.CreateViewStream();
                     this.viewStream.Value = cachedViewStream;
                     this.memoryMappedFileCache.Value = this.memoryMappedFile;
