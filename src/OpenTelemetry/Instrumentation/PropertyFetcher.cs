@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation
     /// PropertyFetcher fetches a property from an object.
     /// </summary>
     /// <typeparam name="T">The type of the property being fetched.</typeparam>
-    public class PropertyFetcher<T>
+    internal class PropertyFetcher<T>
     {
         private readonly string propertyName;
         private PropertyFetch innerFetcher;
