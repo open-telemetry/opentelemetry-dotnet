@@ -1,4 +1,4 @@
-﻿// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="Program.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -116,22 +116,16 @@ namespace Examples.Console
     [Verb("console", HelpText = "Specify the options required to test console exporter")]
     internal class ConsoleOptions
     {
-        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
-        public bool DisplayAsJson { get; set; }
     }
 
     [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
     internal class OpenTelemetryShimOptions
     {
-        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
-        public bool DisplayAsJson { get; set; }
     }
 
     [Verb("opentracing", HelpText = "Specify the options required to test OpenTracing Shim with console exporter")]
     internal class OpenTracingShimOptions
     {
-        [Option('p', "displayasjson", HelpText = "Specify if the output should be displayed as json or not (default: false)", Default = false)]
-        public bool DisplayAsJson { get; set; }
     }
 
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]

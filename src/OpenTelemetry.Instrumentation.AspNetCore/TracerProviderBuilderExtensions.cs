@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
 
             var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddInstrumentation((activitySource) => new AspNetCoreInstrumentation(activitySource, aspnetCoreOptions));
+            builder.AddDiagnosticSourceInstrumentation((activitySource) => new AspNetCoreInstrumentation(activitySource, aspnetCoreOptions));
 
             return builder;
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="DoubleLastValueAggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="DoubleLastValueAggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override void Checkpoint()
         {
+            base.Checkpoint();
             Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
@@ -39,8 +40,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new DoubleSumData
             {
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkpoint,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="OtlpExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporterOptions
     {
+        internal const string DefaultServiceName = "OpenTelemetry Exporter";
+
+        /// <summary>
+        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
+        /// </summary>
+        public string ServiceName { get; set; } = DefaultServiceName;
+
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
         /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.

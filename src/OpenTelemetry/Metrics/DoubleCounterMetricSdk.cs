@@ -1,4 +1,4 @@
-﻿// <copyright file="DoubleCounterMetricSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="DoubleCounterMetricSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Context;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics

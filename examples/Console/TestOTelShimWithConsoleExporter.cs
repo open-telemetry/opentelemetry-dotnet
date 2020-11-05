@@ -1,4 +1,4 @@
-﻿// <copyright file="TestOTelShimWithConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestOTelShimWithConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ namespace Examples.Console
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                    .AddConsoleExporter()
                     .Build();
 
             // The above line is required only in applications

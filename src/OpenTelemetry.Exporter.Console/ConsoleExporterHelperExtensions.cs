@@ -1,4 +1,4 @@
-﻿// <copyright file="ConsoleExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,8 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Console;
+using System.Diagnostics;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace
 {
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Trace
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return builder.AddProcessor(new SimpleExportActivityProcessor(new ConsoleExporter(options)));
+            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new ConsoleExporter<Activity>(options)));
         }
     }
 }

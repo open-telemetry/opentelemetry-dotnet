@@ -1,4 +1,4 @@
-﻿// <copyright file="ParentBasedSampler.cs" company="OpenTelemetry Authors">
+// <copyright file="ParentBasedSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,21 +20,21 @@ namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
-    /// Otherwise, samples root traces according to the specified delegate sampler.
+    /// Otherwise, samples root traces according to the specified root sampler.
     /// </summary>
     public sealed class ParentBasedSampler : Sampler
     {
-        private readonly Sampler delegateSampler;
+        private readonly Sampler rootSampler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ParentBasedSampler"/> class.
         /// </summary>
-        /// <param name="delegateSampler">The <see cref="Sampler"/> to be called to decide whether or not to sample a root trace.</param>
-        public ParentBasedSampler(Sampler delegateSampler)
+        /// <param name="rootSampler">The <see cref="Sampler"/> to be called for root span/activity.</param>
+        public ParentBasedSampler(Sampler rootSampler)
         {
-            this.delegateSampler = delegateSampler ?? throw new ArgumentNullException(nameof(delegateSampler));
+            this.rootSampler = rootSampler ?? throw new ArgumentNullException(nameof(rootSampler));
 
-            this.Description = $"ParentBased{{{delegateSampler.Description}}}";
+            this.Description = $"ParentBased{{{rootSampler.Description}}}";
         }
 
         /// <inheritdoc />
@@ -43,30 +43,33 @@ namespace OpenTelemetry.Trace
             var parentContext = samplingParameters.ParentContext;
             if (parentContext.TraceId == default)
             {
-                // If no parent, use the delegate to determine sampling.
-                return this.delegateSampler.ShouldSample(samplingParameters);
+                // If no parent, use the rootSampler to determine sampling.
+                return this.rootSampler.ShouldSample(samplingParameters);
             }
 
             // If the parent is sampled keep the sampling decision.
             if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
-                return new SamplingResult(SamplingDecision.RecordAndSampled);
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             }
 
             if (samplingParameters.Links != null)
             {
-                // If any parent link is sampled keep the sampling decision.
+                // If any linked context is sampled keep the sampling decision.
+                // TODO: This is not mentioned in the spec.
+                // Follow up with spec to see if context from Links
+                // must be used in ParentBasedSampler.
                 foreach (var parentLink in samplingParameters.Links)
                 {
                     if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
                     {
-                        return new SamplingResult(SamplingDecision.RecordAndSampled);
+                        return new SamplingResult(SamplingDecision.RecordAndSample);
                     }
                 }
             }
 
             // If parent was not sampled, do not sample.
-            return new SamplingResult(SamplingDecision.NotRecord);
+            return new SamplingResult(SamplingDecision.Drop);
         }
     }
 }

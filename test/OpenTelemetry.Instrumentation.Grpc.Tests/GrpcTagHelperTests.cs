@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcTagHelperTests.cs" company="OpenTelemetry Authors">
+// <copyright file="GrpcTagHelperTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var statusCode = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
 
-            Assert.Equal(StatusCanonicalCode.Ok, statusCode.CanonicalCode);
+            Assert.Equal(StatusCode.Unset, statusCode.StatusCode);
         }
     }
 }

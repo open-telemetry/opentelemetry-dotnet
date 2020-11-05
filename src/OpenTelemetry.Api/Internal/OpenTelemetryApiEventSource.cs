@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenTelemetryApiEventSource.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryApiEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ namespace OpenTelemetry.Internal
 {
     /// <summary>
     /// EventSource implementation for OpenTelemetry API.
+    /// This is used for internal logging of this library.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Api")]
     internal class OpenTelemetryApiEventSource : EventSource

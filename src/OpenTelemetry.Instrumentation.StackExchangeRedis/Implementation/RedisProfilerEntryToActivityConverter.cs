@@ -1,4 +1,4 @@
-﻿// <copyright file="RedisProfilerEntryToActivityConverter.cs" company="OpenTelemetry Authors">
+// <copyright file="RedisProfilerEntryToActivityConverter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 // </copyright>
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
@@ -58,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 // Total:
                 // command.ElapsedTime;             // 00:00:32.4988020
 
-                activity.SetStatus(Status.Ok);
+                activity.SetStatus(Status.Unset);
 
                 activity.SetTag(SemanticConventions.AttributeDbSystem, "redis");
                 activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());

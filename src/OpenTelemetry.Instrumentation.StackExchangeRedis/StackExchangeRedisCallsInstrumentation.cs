@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsInstrumentation.cs" company="OpenTelemetry Authors">
+// <copyright file="StackExchangeRedisCallsInstrumentation.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,9 +48,9 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsInstrumentation"/> class.
         /// </summary>
-        /// <param name="connection"><see cref="ConnectionMultiplexer"/> to instrument.</param>
+        /// <param name="connection"><see cref="IConnectionMultiplexer"/> to instrument.</param>
         /// <param name="options">Configuration options for redis instrumentation.</param>
-        public StackExchangeRedisCallsInstrumentation(ConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
+        public StackExchangeRedisCallsInstrumentation(IConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
         {
             if (connection == null)
             {

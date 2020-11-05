@@ -1,4 +1,4 @@
-﻿// <copyright file="MeterSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricName = doubleObserver.Key;
                     var observerInstrument = doubleObserver.Value;
-                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.LongSum);
+                    var metric = new Metric(this.meterName, metricName, this.meterName + metricName, AggregationType.DoubleSum);
                     try
                     {
                         // TODO: Decide if we want to enforce a timeout. Issue # 542

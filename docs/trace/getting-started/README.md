@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console -v 0.5.0-beta.2
+dotnet add package OpenTelemetry.Exporter.Console -v 0.7.0-beta.1
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -32,7 +32,6 @@ output from the console.
 
 ```text
 Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
-Activity.ParentId:    00-8389584945550f40820b96ce1ceb9299-0000000000000000-00
 Activity.DisplayName: SayHello
 Activity.Kind:        Internal
 Activity.StartTime:   2020-08-12T15:59:10.4461835Z

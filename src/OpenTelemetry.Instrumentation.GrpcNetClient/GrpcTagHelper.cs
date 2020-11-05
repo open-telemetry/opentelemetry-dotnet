@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcTagHelper.cs" company="OpenTelemetry Authors">
+// <copyright file="GrpcTagHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
@@ -37,12 +38,12 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
 
         public static Status GetGrpcStatusCodeFromActivity(Activity activity)
         {
-            var status = Status.Unknown;
+            var status = Status.Unset;
 
             var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
             if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))
             {
-                status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
+                status = ResolveSpanStatusForGrpcStatusCode(statusCode);
             }
 
             return status;
@@ -63,6 +64,28 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
                 rpcMethod = string.Empty;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Helper method that populates span properties from RPC status code according
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#status.
+        /// </summary>
+        /// <param name="statusCode">RPC status code.</param>
+        /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>
+        public static Status ResolveSpanStatusForGrpcStatusCode(int statusCode)
+        {
+            var status = Status.Error;
+
+            if (typeof(StatusCanonicalCode).IsEnumDefined(statusCode))
+            {
+                status = ((StatusCanonicalCode)statusCode) switch
+                {
+                    StatusCanonicalCode.Ok => Status.Unset,
+                    _ => Status.Error,
+                };
+            }
+
+            return status;
         }
     }
 }

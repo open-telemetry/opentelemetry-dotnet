@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         [Theory]
         [MemberData(nameof(TestData))]
-        public void HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
+        public void HttpOutCallsAreCollectedSuccessfully(HttpTestData.HttpOutTestCase tc)
         {
             using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
@@ -47,11 +47,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .SetResource(expectedResource)
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options => options.SetHttpFlavor = tc.SetHttpFlavor)
+                .AddHttpWebRequestInstrumentation(options =>
+                {
+                    options.SetHttpFlavor = tc.SetHttpFlavor;
+                    options.Enrich = ActivityEnrichment;
+                })
                 .Build();
 
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
@@ -87,25 +91,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             ValidateHttpWebRequestActivity(activity, expectedResource, tc.ResponseExpected);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<string, string>()
+            var d = new Dictionary<int, string>()
             {
-                { StatusCanonicalCode.Ok.ToString(), "OK" },
-                { StatusCanonicalCode.Cancelled.ToString(), "CANCELLED" },
-                { StatusCanonicalCode.Unknown.ToString(), "UNKNOWN" },
-                { StatusCanonicalCode.InvalidArgument.ToString(), "INVALID_ARGUMENT" },
-                { StatusCanonicalCode.DeadlineExceeded.ToString(), "DEADLINE_EXCEEDED" },
-                { StatusCanonicalCode.NotFound.ToString(), "NOT_FOUND" },
-                { StatusCanonicalCode.AlreadyExists.ToString(), "ALREADY_EXISTS" },
-                { StatusCanonicalCode.PermissionDenied.ToString(), "PERMISSION_DENIED" },
-                { StatusCanonicalCode.ResourceExhausted.ToString(), "RESOURCE_EXHAUSTED" },
-                { StatusCanonicalCode.FailedPrecondition.ToString(), "FAILED_PRECONDITION" },
-                { StatusCanonicalCode.Aborted.ToString(), "ABORTED" },
-                { StatusCanonicalCode.OutOfRange.ToString(), "OUT_OF_RANGE" },
-                { StatusCanonicalCode.Unimplemented.ToString(), "UNIMPLEMENTED" },
-                { StatusCanonicalCode.Internal.ToString(), "INTERNAL" },
-                { StatusCanonicalCode.Unavailable.ToString(), "UNAVAILABLE" },
-                { StatusCanonicalCode.DataLoss.ToString(), "DATA_LOSS" },
-                { StatusCanonicalCode.Unauthenticated.ToString(), "UNAUTHENTICATED" },
+                { (int)StatusCode.Ok, "OK" },
+                { (int)StatusCode.Error, "ERROR" },
+                { (int)StatusCode.Unset, "UNSET" },
             };
 
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
@@ -128,7 +118,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        Assert.Equal(tc.SpanStatus, d[tagValue]);
+                        Assert.Equal(tc.SpanStatus, d[int.Parse(tagValue)]);
                         continue;
                     }
 
@@ -150,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public void DebugIndividualTestAsync()
+        public void DebugIndividualTest()
         {
             var serializer = new JsonSerializer();
             var input = serializer.Deserialize<HttpTestData.HttpOutTestCase>(new JsonTextReader(new StringReader(@"
@@ -160,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 200,
     ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""OK"",
+    ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""setHttpFlavor"": true,
     ""spanAttributes"": {
@@ -172,22 +162,33 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     }
   }
 ")));
-            this.HttpOutCallsAreCollectedSuccessfullyAsync(input);
+            this.HttpOutCallsAreCollectedSuccessfully(input);
         }
 
         private static void ValidateHttpWebRequestActivity(Activity activityToValidate, Resources.Resource expectedResource, bool responseExpected)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
             Assert.Equal(expectedResource, activityToValidate.GetResource());
-            var request = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpWebRequest);
+        }
 
-            if (responseExpected)
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        {
+            switch (method)
             {
-                var response = activityToValidate.GetCustomProperty(HttpWebRequestActivitySource.ResponseCustomPropertyName);
-                Assert.NotNull(response);
-                Assert.True(response is HttpWebResponse);
+                case "OnStartActivity":
+                    Assert.True(obj is HttpWebRequest);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpWebResponse);
+                    break;
+
+                case "OnException":
+                    Assert.True(obj is Exception);
+                    break;
+
+                default:
+                    break;
             }
         }
     }

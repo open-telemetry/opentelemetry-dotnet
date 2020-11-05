@@ -1,4 +1,4 @@
-﻿// <copyright file="TestConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ namespace Examples.Console
                 .AddSource("MyCompany.MyProduct.MyWebServer")
                 .SetResource(Resources.CreateServiceResource("MyServiceName"))
                 .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
-                .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                .AddConsoleExporter()
                 .Build();
 
             // The above line is required only in applications
@@ -98,7 +98,7 @@ namespace Examples.Console
             return null;
         }
 
-        internal class MyProcessor : ActivityProcessor
+        internal class MyProcessor : BaseProcessor<Activity>
         {
             public override void OnStart(Activity activity)
             {

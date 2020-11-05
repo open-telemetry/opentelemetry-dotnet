@@ -1,4 +1,4 @@
-﻿// <copyright file="SqlEventSourceListener.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="SqlEventSourceListener.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -159,15 +159,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     int compositeState = (int)eventData.Payload[1];
                     if ((compositeState & 0b001) == 0b001)
                     {
-                        activity.SetStatus(Status.Ok);
+                        activity.SetStatus(Status.Unset);
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
+                        activity.SetStatus(Status.Error.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
                     }
                     else
                     {
-                        activity.SetStatus(Status.Unknown.WithDescription("Unknown Sql failure."));
+                        activity.SetStatus(Status.Error.WithDescription("Unknown Sql failure."));
                     }
                 }
             }

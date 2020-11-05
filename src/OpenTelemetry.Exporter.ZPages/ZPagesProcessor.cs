@@ -1,4 +1,4 @@
-﻿// <copyright file="ZPagesProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="ZPagesProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements the zpages span processor that exports spans in OnEnd call without batching.
     /// </summary>
-    public class ZPagesProcessor : ActivityProcessor
+    public class ZPagesProcessor : BaseProcessor<Activity>
     {
         private readonly ZPagesExporter exporter;
 

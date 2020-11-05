@@ -49,6 +49,7 @@ Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
 
 * [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+* [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
@@ -65,6 +66,8 @@ most common customization and extension scenarios:
 
 * [Building a custom instrumentation
   library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
+* [Building a custom log
+  exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
 * [Building a custom trace
   exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
 * [Correlating logs with traces](./docs/logs/correlation/README.md)
@@ -90,8 +93,7 @@ Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
-* [Christoph Neumueller](https://github.com/discostu105), Dynatrace
-* [Liudmila Molkova](https://github.com/lmolkova), Microsoft
+* [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
@@ -131,3 +133,6 @@ See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
 for details on upcoming releases. The dates and features described in issues
 and milestones are estimates, and subject to change.
+
+Daily builds from this repo are published to MyGet, and can be installed from
+[this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).

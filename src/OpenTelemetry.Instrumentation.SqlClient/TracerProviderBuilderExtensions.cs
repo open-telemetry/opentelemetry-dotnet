@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(sqlOptions));
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
             builder.AddSource(SqlClientDiagnosticListener.ActivitySourceName);
 
             return builder;

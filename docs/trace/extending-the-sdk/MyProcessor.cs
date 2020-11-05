@@ -1,4 +1,4 @@
-﻿// <copyright file="MyProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="MyProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,8 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
 
-internal class MyProcessor : ActivityProcessor
+internal class MyProcessor : BaseProcessor<Activity>
 {
     private readonly string name;
 
@@ -44,9 +43,10 @@ internal class MyProcessor : ActivityProcessor
         return true;
     }
 
-    protected override void OnShutdown(int timeoutMilliseconds)
+    protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown({timeoutMilliseconds})");
+        return true;
     }
 
     protected override void Dispose(bool disposing)

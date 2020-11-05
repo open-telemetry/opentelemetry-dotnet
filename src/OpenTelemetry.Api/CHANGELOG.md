@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+* Removed `IsValid` property from `Status`
+  ([#1415](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1415))
+* Removed `IsOk` property from `Status` and fixed `StatusCode` enum values
+  ([#1414](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1414))
+* `B3Propagator` now supports the value `true` to be passed in for the header
+  `X-B3-Sampled`.
+  ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
+* Moving grpc status and helper to grpc project
+  ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Added GlobalPropagators API via Propagators.DefaultTextMapPropagator.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Changed SpanAttributeConstants from public to internal
+  ([#1457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1457))
+
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* `IActivityTagEnumerator` is now `IActivityEnumerator<T>`. Added
+  `EnumerateLinks` extension method on `Activity` for retrieving links
+  efficiently
+  ([#1314](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1314))
+* Added `EnumerateEvents` extension method on `Activity` for retrieving events
+  efficiently
+  ([#1319](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1319))
+* Added `EnumerateTags` extension methods on `ActivityLink` & `ActivityEvent`
+  for retrieving tags efficiently. Renamed `Activity.EnumerateTagValues` ->
+  `Activity.EnumerateTags`.
+  ([#1320](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1320))
+* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-rc.2.20475.5
+  ([#1346](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1346))
+* Updated Span Status as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
@@ -60,7 +98,8 @@ Released 2020-08-28
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
 * Changed `StartSpan` to not set the created span as Active to match the spec
   ([#994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/994))
-* Updated System.Diagnostics.DiagnosticSource to version 5.0.0-preview.8.20407.11.
+* Updated System.Diagnostics.DiagnosticSource to version
+  5.0.0-preview.8.20407.11.
 * Removed `CorrelationContext` and added `Baggage`, an implementation of the
   [`Baggage
   API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)

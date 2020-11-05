@@ -1,4 +1,4 @@
-﻿// <copyright file="Startup.cs" company="OpenTelemetry Authors">
+// <copyright file="Startup.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,6 +75,16 @@ namespace Examples.AspNetCore
                         {
                             zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
                             zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                        }));
+                    break;
+                case "otlp":
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.ServiceName = this.Configuration.GetValue<string>("Otlp:ServiceName");
+                            otlpOptions.Endpoint = this.Configuration.GetValue<string>("Otlp:Endpoint");
                         }));
                     break;
                 default:

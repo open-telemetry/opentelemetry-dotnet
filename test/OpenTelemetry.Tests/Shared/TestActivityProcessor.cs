@@ -1,4 +1,4 @@
-﻿// <copyright file="TestActivityProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="TestActivityProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,10 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests
 {
-    internal class TestActivityProcessor : ActivityProcessor
+    internal class TestActivityProcessor : BaseProcessor<Activity>
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;
@@ -57,9 +56,10 @@ namespace OpenTelemetry.Tests
             return true;
         }
 
-        protected override void OnShutdown(int timeoutMilliseconds)
+        protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalled = true;
+            return true;
         }
 
         protected override void Dispose(bool disposing)

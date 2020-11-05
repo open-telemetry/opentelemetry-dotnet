@@ -1,4 +1,4 @@
-﻿// <copyright file="MyExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="MyExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal static class MyExporterHelperExtensions
@@ -26,6 +28,6 @@ internal static class MyExporterHelperExtensions
             throw new ArgumentNullException(nameof(builder));
         }
 
-        return builder.AddProcessor(new BatchExportActivityProcessor(new MyExporter()));
+        return builder.AddProcessor(new BatchExportProcessor<Activity>(new MyExporter()));
     }
 }

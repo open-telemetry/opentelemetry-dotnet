@@ -1,4 +1,4 @@
-﻿// <copyright file="TraceIdRatioBasedSampler.cs" company="OpenTelemetry Authors">
+// <copyright file="TraceIdRatioBasedSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Globalization;
 
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Trace
         {
             if (probability < 0.0 || probability > 1.0)
             {
-                throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), probability, "Probability must be in range [0.0, 1.0]");
             }
 
             this.probability = probability;

@@ -1,4 +1,4 @@
-﻿// <copyright file="Tracer.cs" company="OpenTelemetry Authors">
+// <copyright file="Tracer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,9 @@ using System.Runtime.CompilerServices;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Tracer to record distributed tracing information.
+    /// Tracer is the class responsible for creating <see cref="TelemetrySpan"/>.
     /// </summary>
+    /// <remarks>Tracer is a wrapper around <see cref="ActivitySource"/> class.</remarks>
     public class Tracer
     {
         internal readonly ActivitySource ActivitySource;

@@ -1,4 +1,4 @@
-﻿// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="Program.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
 
 public class Program
 {
@@ -29,7 +28,7 @@ public class Program
             .AddSource("OTel.Demo")
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
-            .AddProcessor(new SimpleExportActivityProcessor(new MyExporter("ExporterX")))
+            .AddProcessor(new SimpleExportProcessor<Activity>(new MyExporter("ExporterX")))
             .AddMyExporter()
             .Build();
 

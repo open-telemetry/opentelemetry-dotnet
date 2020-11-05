@@ -1,4 +1,4 @@
-﻿// <copyright file="AlwaysOffSampler.cs" company="OpenTelemetry Authors">
+// <copyright file="AlwaysOffSampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,14 @@
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which never samples any activity.
+    /// Sampler implementation which always returns <c>SamplingDecision.Drop</c>.
     /// </summary>
     public sealed class AlwaysOffSampler : Sampler
     {
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
-            return new SamplingResult(SamplingDecision.NotRecord);
+            return new SamplingResult(SamplingDecision.Drop);
         }
     }
 }

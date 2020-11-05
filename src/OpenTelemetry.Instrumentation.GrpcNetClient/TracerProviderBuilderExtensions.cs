@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,8 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of dependency instrumentation.
+    /// Extension methods to simplify registering of gRPClient
+    /// instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Trace
             var grpcOptions = new GrpcClientInstrumentationOptions();
             configure?.Invoke(grpcOptions);
 
-            builder.AddInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource, grpcOptions));
+            builder.AddDiagnosticSourceInstrumentation((activitySource) => new GrpcClientInstrumentation(activitySource, grpcOptions));
             return builder;
         }
     }

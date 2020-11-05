@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+* Record `Exception` in AspNetCore instrumentation based on `RecordException` in
+  `AspNetCoreInstrumentationOptions`
+  ([#1408](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1408))
+* Added configuration option `EnableGrpcAspNetCoreSupport` to enable or disable
+  support for adding OpenTelemetry RPC attributes when using
+  [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore/).
+  This option is enabled by default.
+  ([#1423](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1423))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Propagators.DefaultTextMapPropagator will be used as the default Propagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Removed Propagator from Instrumentation Options. Instrumentation now always
+  respect the Propagator.DefaultTextMapPropagator.
+  ([#1448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1448))
+
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* Instrumentation no longer store raw objects like `HttpRequest` in
+  Activity.CustomProperty. To enrich activity, use the Enrich action on the
+  instrumentation.
+  ([#1261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1261))
+* Span Status is populated as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15
@@ -16,11 +45,11 @@ Released 2020-Sep-15
 
 Released 2020-08-28
 
-* Added Filter public API on AspNetCoreInstrumentationOptions to allow
-  filtering of instrumentation based on HttpContext.
+* Added Filter public API on AspNetCoreInstrumentationOptions to allow filtering
+  of instrumentation based on HttpContext.
 
-* Asp.Net Core Instrumentation automatically populates HttpRequest,
-  HttpResponse in Activity custom property
+* Asp.Net Core Instrumentation automatically populates HttpRequest, HttpResponse
+  in Activity custom property
 
 * Changed the default propagation to support W3C Baggage
   ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))

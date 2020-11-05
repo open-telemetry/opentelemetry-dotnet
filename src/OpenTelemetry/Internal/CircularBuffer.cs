@@ -1,4 +1,4 @@
-﻿// <copyright file="CircularBuffer.cs" company="OpenTelemetry Authors">
+// <copyright file="CircularBuffer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Internal
         {
             if (capacity <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity));
+                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "capacity should be greater than zero.");
             }
 
             this.Capacity = capacity;
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Internal
             var index = (int)(this.tail % this.Capacity);
             while (true)
             {
-                T value = this.trait[index];
+                var value = this.trait[index];
                 if (value == null)
                 {
                     // If we got here it means a writer isn't done.

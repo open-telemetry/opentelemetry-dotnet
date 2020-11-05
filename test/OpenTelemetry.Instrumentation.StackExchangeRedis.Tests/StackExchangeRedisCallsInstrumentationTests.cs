@@ -1,4 +1,4 @@
-﻿// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
+// <copyright file="StackExchangeRedisCallsInstrumentationTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Moq;
@@ -54,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddRedisInstrumentation(connection)
@@ -160,7 +159,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddRedisInstrumentation(null));
 
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Assert.Throws<ArgumentNullException>(() =>
             Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
@@ -181,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
                 Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
-            Assert.Equal(SpanHelper.GetCachedCanonicalCodeString(StatusCanonicalCode.Ok), activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.Equal("redis", activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal(0, activity.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName));
 

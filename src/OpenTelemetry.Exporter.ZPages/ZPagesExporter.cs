@@ -1,4 +1,4 @@
-﻿// <copyright file="ZPagesExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="ZPagesExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
-using OpenTelemetry.Trace;
 using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -26,7 +25,7 @@ namespace OpenTelemetry.Exporter.ZPages
     /// <summary>
     /// Implements ZPages exporter.
     /// </summary>
-    public class ZPagesExporter : ActivityExporter
+    public class ZPagesExporter : BaseExporter<Activity>
     {
         internal readonly ZPagesExporterOptions Options;
         private readonly Timer minuteTimer;

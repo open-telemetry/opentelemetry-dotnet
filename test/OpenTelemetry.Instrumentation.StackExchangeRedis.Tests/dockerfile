@@ -2,15 +2,16 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/dockerfile .
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+ARG SDK_VERSION=3.1
+FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=netcoreapp3.1
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests"
-RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
+RUN dotnet publish "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true -p:TARGET_FRAMEWORK=${PUBLISH_FRAMEWORK}
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS final
+FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
-ENTRYPOINT ["dotnet", "test", "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.dll"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.dll"]

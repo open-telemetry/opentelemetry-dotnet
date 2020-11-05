@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -24,8 +25,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerProviderBuilder
     {
+        private readonly List<DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories = new List<DiagnosticSourceInstrumentationFactory>();
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<ActivityProcessor> processors = new List<ActivityProcessor>();
+
+        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private Resource resource = Resource.Empty;
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
@@ -98,7 +101,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="processor">Activity processor to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddProcessor(ActivityProcessor processor)
+        public TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
@@ -111,13 +114,13 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds auto-instrumentations for activity.
+        /// Adds an instrumentation to the provider.
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
             if (instrumentationFactory == null)
@@ -136,16 +139,56 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build()
         {
-            return new TracerProviderSdk(this.resource, this.sources, this.instrumentationFactories, this.sampler, this.processors);
+            return new TracerProviderSdk(this.resource, this.sources, this.diagnosticSourceInstrumentationFactories, this.instrumentationFactories, this.sampler, this.processors);
+        }
+
+        /// <summary>
+        /// Adds a DiagnosticSource based instrumentation.
+        /// This is required for libraries which is already instrumented with
+        /// DiagnosticSource and Activity, without using ActivitySource.
+        /// </summary>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
+            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            this.diagnosticSourceInstrumentationFactories.Add(
+                new DiagnosticSourceInstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
+
+            return this;
+        }
+
+        internal readonly struct DiagnosticSourceInstrumentationFactory
+        {
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Func<ActivitySourceAdapter, object> Factory;
+
+            internal DiagnosticSourceInstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
+            {
+                this.Name = name;
+                this.Version = version;
+                this.Factory = factory;
+            }
         }
 
         internal readonly struct InstrumentationFactory
         {
             public readonly string Name;
             public readonly string Version;
-            public readonly Func<ActivitySourceAdapter, object> Factory;
+            public readonly Func<object> Factory;
 
-            internal InstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
+            internal InstrumentationFactory(string name, string version, Func<object> factory)
             {
                 this.Name = name;
                 this.Version = version;

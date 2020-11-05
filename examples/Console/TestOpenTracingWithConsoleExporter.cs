@@ -1,4 +1,4 @@
-﻿// <copyright file="TestOpenTracingWithConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestOpenTracingWithConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
                     .SetResource(Resources.CreateServiceResource("MyServiceName"))
-                    .AddConsoleExporter(opt => opt.DisplayAsJson = options.DisplayAsJson)
+                    .AddConsoleExporter()
                     .Build();
 
             // The above line is required only in applications
@@ -40,7 +40,7 @@ namespace Examples.Console
 
             // Following shows how to use the OpenTracing shim
 
-            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TextMapPropagator());
+            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextPropagator());
 
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {

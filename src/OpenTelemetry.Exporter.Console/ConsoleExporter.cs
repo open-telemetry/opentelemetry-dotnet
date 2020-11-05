@@ -1,4 +1,4 @@
-﻿// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,114 +17,140 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+#if NET461 || NETSTANDARD2_0
+using OpenTelemetry.Logs;
+#endif
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
-    public class ConsoleExporter : ActivityExporter
+    public class ConsoleExporter<T> : BaseExporter<T>
+        where T : class
     {
-        private readonly JsonSerializerOptions serializerOptions;
-        private readonly bool displayAsJson;
+        private readonly ConsoleExporterOptions options;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
-            this.serializerOptions = new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            };
-
-            this.displayAsJson = options?.DisplayAsJson ?? false;
-
-            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
-            this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
-            this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
+            this.options = options ?? new ConsoleExporterOptions();
         }
 
-        public override ExportResult Export(in Batch<Activity> batch)
+        public override ExportResult Export(in Batch<T> batch)
         {
-            foreach (var activity in batch)
+            if (typeof(T) == typeof(Activity))
             {
-                if (this.displayAsJson)
+                foreach (var item in batch)
                 {
-                    System.Console.WriteLine(JsonSerializer.Serialize(activity, this.serializerOptions));
-                }
-                else
-                {
-                    System.Console.WriteLine($"Activity.Id:          {activity.Id}");
+                    var activity = item as Activity;
+                    this.WriteLine($"Activity.Id:          {activity.Id}");
                     if (!string.IsNullOrEmpty(activity.ParentId))
                     {
-                        System.Console.WriteLine($"Activity.ParentId:    {activity.ParentId}");
+                        this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                     }
 
-                    System.Console.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
-                    System.Console.WriteLine($"Activity.Kind:        {activity.Kind}");
-                    System.Console.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                    System.Console.WriteLine($"Activity.Duration:    {activity.Duration}");
+                    this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
+                    this.WriteLine($"Activity.Kind:        {activity.Kind}");
+                    this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    this.WriteLine($"Activity.Duration:    {activity.Duration}");
                     if (activity.TagObjects.Any())
                     {
-                        System.Console.WriteLine("Activity.TagObjects:");
+                        this.WriteLine("Activity.TagObjects:");
                         foreach (var tag in activity.TagObjects)
                         {
                             var array = tag.Value as Array;
 
                             if (array == null)
                             {
-                                System.Console.WriteLine($"    {tag.Key}: {tag.Value}");
+                                this.WriteLine($"    {tag.Key}: {tag.Value}");
                                 continue;
                             }
 
-                            System.Console.Write($"    {tag.Key}: [");
+                            Console.Write($"    {tag.Key}: [");
 
                             for (int i = 0; i < array.Length; i++)
                             {
-                                System.Console.Write(i != 0 ? ", " : string.Empty);
-                                System.Console.Write($"{array.GetValue(i)}");
+                                Console.Write(i != 0 ? ", " : string.Empty);
+                                Console.Write($"{array.GetValue(i)}");
                             }
 
-                            System.Console.WriteLine($"]");
+                            this.WriteLine($"]");
                         }
                     }
 
                     if (activity.Events.Any())
                     {
-                        System.Console.WriteLine("Activity.Events:");
+                        this.WriteLine("Activity.Events:");
                         foreach (var activityEvent in activity.Events)
                         {
-                            System.Console.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
+                            this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
                             foreach (var attribute in activityEvent.Tags)
                             {
-                                System.Console.WriteLine($"        {attribute.Key}: {attribute.Value}");
+                                this.WriteLine($"        {attribute.Key}: {attribute.Value}");
                             }
                         }
                     }
 
                     if (activity.Baggage.Any())
                     {
-                        System.Console.WriteLine("Activity.Baggage:");
+                        this.WriteLine("Activity.Baggage:");
                         foreach (var baggage in activity.Baggage)
                         {
-                            System.Console.WriteLine($"    {baggage.Key}: {baggage.Value}");
+                            this.WriteLine($"    {baggage.Key}: {baggage.Value}");
                         }
                     }
 
                     var resource = activity.GetResource();
                     if (resource != Resource.Empty)
                     {
-                        System.Console.WriteLine("Resource associated with Activity:");
+                        this.WriteLine("Resource associated with Activity:");
                         foreach (var resourceAttribute in resource.Attributes)
                         {
-                            System.Console.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                            this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
                         }
                     }
 
-                    System.Console.WriteLine();
+                    this.WriteLine(string.Empty);
                 }
             }
+#if NET461 || NETSTANDARD2_0
+            else if (typeof(T) == typeof(LogRecord))
+            {
+                var rightPaddingLength = 30;
+                foreach (var item in batch)
+                {
+                    var logRecord = item as LogRecord;
+                    this.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
+                    this.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
+                    this.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    this.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
+                    this.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
+                    this.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
+                    this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
+                    this.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                    if (logRecord.Exception is { })
+                    {
+                        this.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                    }
+
+                    this.WriteLine(string.Empty);
+                }
+            }
+#endif
 
             return ExportResult.Success;
+        }
+
+        private void WriteLine(string message)
+        {
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
+            {
+                Console.WriteLine(message);
+            }
+
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
+            {
+                Debug.WriteLine(message);
+            }
         }
     }
 }

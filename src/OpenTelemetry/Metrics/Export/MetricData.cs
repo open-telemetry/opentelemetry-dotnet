@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricData.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricData.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,8 @@ namespace OpenTelemetry.Metrics.Export
     /// </summary>
     public abstract class MetricData
     {
+        public DateTime StartTimestamp { get; set; }
+
         public DateTime Timestamp { get; set; }
 
         public IEnumerable<KeyValuePair<string, string>> Labels { get; set; }

@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+* Instrumentation for `HttpWebRequest` no longer store raw objects like
+  `HttpWebRequest` in Activity.CustomProperty. To enrich activity, use the
+  Enrich action on the instrumentation.
+  ([#1407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1407))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
+  and changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Propagators.DefaultTextMapPropagator will be used as the default Propagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Removed Propagator from Instrumentation Options. Instrumentation now always
+  respect the Propagator.DefaultTextMapPropagator.
+  ([#1448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1448))
+
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* Instrumentation no longer store raw objects like `HttpRequestMessage` in
+  Activity.CustomProperty. To enrich activity, use the Enrich action on the
+  instrumentation.
+  ([#1261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1261))
+* Span Status is populated as per new spec
+  ([#1313](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1313))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15

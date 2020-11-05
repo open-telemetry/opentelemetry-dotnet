@@ -1,4 +1,4 @@
-﻿// <copyright file="JaegerExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger;
 
 namespace OpenTelemetry.Trace
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Trace
             var jaegerExporter = new JaegerExporter(exporterOptions);
 
             // TODO: Pick Simple vs Batching based on JaegerExporterOptions
-            return builder.AddProcessor(new BatchExportActivityProcessor(jaegerExporter));
+            return builder.AddProcessor(new BatchExportProcessor<Activity>(jaegerExporter));
         }
     }
 }

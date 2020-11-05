@@ -1,4 +1,4 @@
-﻿// <copyright file="BufferWriter.cs" company="OpenTelemetry Authors">
+// <copyright file="BufferWriter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             if (initialCapacity < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(initialCapacity));
+                throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, "initialCapacity should be non-negative.");
             }
 
             this.Buffer = new byte[initialCapacity];

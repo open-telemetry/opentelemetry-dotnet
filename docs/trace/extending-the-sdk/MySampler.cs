@@ -1,4 +1,4 @@
-﻿// <copyright file="MySampler.cs" company="OpenTelemetry Authors">
+// <copyright file="MySampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 internal class MySampler : Sampler
@@ -24,6 +22,6 @@ internal class MySampler : Sampler
     public override SamplingResult ShouldSample(in SamplingParameters param)
     {
         Console.WriteLine($"MySampler.ShouldSample({param.Name})");
-        return new SamplingResult(SamplingDecision.RecordAndSampled);
+        return new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }

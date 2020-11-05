@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+* Moving Jaeger Process from public to internal.
+  ([#1421](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1421))
+
+## 0.7.0-beta.1
+
+Released 2020-Oct-16
+
+* Renamed `MaxPacketSize` -> `MaxPayloadSizeInBytes` on `JaegerExporterOptions`.
+  Lowered the default value from 65,000 to 4096.
+  ([#1247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1274))
+
 ## 0.6.0-beta.1
 
 Released 2020-Sep-15

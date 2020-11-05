@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -34,6 +33,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public partial class HttpClientTests
     {
+        public static int Counter;
+
         public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
         [Theory]
@@ -50,13 +51,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation((opt) => opt.SetHttpFlavor = tc.SetHttpFlavor)
+                               .AddHttpClientInstrumentation((opt) =>
+                               {
+                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
+                                   opt.Enrich = ActivityEnrichment;
+                               })
                                .AddProcessor(processor.Object)
                                .SetResource(expectedResource)
                                .Build())
@@ -90,34 +95,20 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(activity, tc.ResponseExpected);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<string, string>()
+            var d = new Dictionary<int, string>()
             {
-                { "Ok", "OK" },
-                { "Cancelled", "CANCELLED" },
-                { "Unknown", "UNKNOWN" },
-                { "InvalidArgument", "INVALID_ARGUMENT" },
-                { "DeadlineExceeded", "DEADLINE_EXCEEDED" },
-                { "NotFound", "NOT_FOUND" },
-                { "AlreadyExists", "ALREADY_EXISTS" },
-                { "PermissionDenied", "PERMISSION_DENIED" },
-                { "ResourceExhausted", "RESOURCE_EXHAUSTED" },
-                { "FailedPrecondition", "FAILED_PRECONDITION" },
-                { "Aborted", "ABORTED" },
-                { "OutOfRange", "OUT_OF_RANGE" },
-                { "Unimplemented", "UNIMPLEMENTED" },
-                { "Internal", "INTERNAL" },
-                { "Unavailable", "UNAVAILABLE" },
-                { "DataLoss", "DATA_LOSS" },
-                { "Unauthenticated", "UNAUTHENTICATED" },
+                { (int)StatusCode.Ok, "OK" },
+                { (int)StatusCode.Error, "ERROR" },
+                { (int)StatusCode.Unset, "UNSET" },
             };
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string]);
+                    d[(int)activity.GetTagValue(SpanAttributeConstants.StatusCodeKey)]);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
@@ -150,7 +141,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 399,
     ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""OK"",
+    ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
       ""http.method"": ""GET"",
@@ -164,6 +155,35 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
+        }
+
+        [Fact]
+        public async Task CheckEnrichmentWhenSampling()
+        {
+            await CheckEnrichment(new AlwaysOffSampler(), 0).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), 2).ConfigureAwait(false);
+        }
+
+        private static async Task CheckEnrichment(Sampler sampler, int expect)
+        {
+            Counter = 0;
+            var processor = new Mock<BaseProcessor<Activity>>();
+            using (Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sampler)
+                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var c = new HttpClient();
+                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+            }
+
+            Assert.Equal(expect, Counter);
+        }
+
+        private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
+        {
+            Counter++;
         }
     }
 }

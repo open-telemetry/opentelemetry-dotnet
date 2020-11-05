@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanAttributeConstants.cs" company="OpenTelemetry Authors">
+// <copyright file="SpanAttributeConstants.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Defines well-known span attribute keys.
     /// </summary>
-    public static class SpanAttributeConstants
+    internal static class SpanAttributeConstants
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string StatusCodeKey = "otel.status_code";

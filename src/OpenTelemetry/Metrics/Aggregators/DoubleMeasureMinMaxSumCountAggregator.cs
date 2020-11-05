@@ -1,4 +1,4 @@
-﻿// <copyright file="DoubleMeasureMinMaxSumCountAggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="DoubleMeasureMinMaxSumCountAggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override void Checkpoint()
         {
+            base.Checkpoint();
             this.checkPoint = Interlocked.Exchange(ref this.summary, new DoubleSummary());
         }
 
@@ -47,10 +48,11 @@ namespace OpenTelemetry.Metrics.Aggregators
             return new DoubleSummaryData
             {
                 Count = this.checkPoint.Count,
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkPoint.Sum,
                 Min = this.checkPoint.Min,
                 Max = this.checkPoint.Max,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

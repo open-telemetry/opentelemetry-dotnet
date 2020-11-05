@@ -1,4 +1,4 @@
-﻿// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
     {
-        public bool DisplayAsJson { get; set; }
+        /// <summary>
+        /// Gets or sets the output targets for the console exporter.
+        /// </summary>
+        public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
     }
 }

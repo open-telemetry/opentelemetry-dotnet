@@ -96,13 +96,13 @@ documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version
-   5.0.0-preview.7.20364.11 or above to your application or library.
+   `5.0.0-rc.2.20475.5` or above to your application or library.
 
     ```xml
     <ItemGroup>
       <PackageReference
         Include="System.Diagnostics.DiagnosticSource"
-        Version="5.0.0-preview.7.20364.11"
+        Version="5.0.0-rc.2.20475.5"
       />
     </ItemGroup>
     ```
@@ -226,15 +226,17 @@ OpenTelemetry samplers chose not to sample this activity.
 
    `Tags` in `Activity` represents the OpenTelemetry [Span
    Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes).
-   Earlier sample showed the usage of `SetTag` method of `Activity` to add
-   tags. It is also possible to provide an initial set of tags during activity
-   creation, as shown below.
+   Earlier sample showed the usage of `SetTag` method of `Activity` to add tags.
+   Refer to the
+   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attribute-and-label-naming)
+   for best practices on naming tags. It is also possible to provide an initial
+   set of tags during activity creation, as shown below.
 
     ```csharp
-    var initialTags = new List<KeyValuePair<string, string>>();
+    var initialTags = new ActivityTagsCollection();
 
-    initialTags.Add(new KeyValuePair<string, string>("tag1", "tagValue1"));
-    initialTags.Add(new KeyValuePair<string, string>("tag2", "tagValue2"));
+    initialTags["com.mycompany.product.mytag1"] = "tagValue1";
+    initialTags["com.mycompany.product.mytag2"] = "tagValue2";
 
     var activity = activitySource.StartActivity(
         "ActivityName",

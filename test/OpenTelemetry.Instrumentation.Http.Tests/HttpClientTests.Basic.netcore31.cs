@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientTests.Basic.netcore31.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientTests.Basic.netcore31.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,10 +56,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddHttpClientInstrumentation());
         }
 
-        [Fact]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -71,9 +73,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-
-            // Ensure that the header value func does not throw if the header key can't be found
-            var mockPropagator = new Mock<IPropagator>();
 
             // var isInjectedHeaderValueGetterThrows = false;
             // mockTextFormat
@@ -93,7 +92,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             //         });
 
             using (Sdk.CreateTracerProviderBuilder()
-                        .AddHttpClientInstrumentation(o => o.Propagator = mockPropagator.Object)
+                        .AddHttpClientInstrumentation(o =>
+                        {
+                            if (shouldEnrich)
+                            {
+                                o.Enrich = ActivityEnrichment;
+                            }
+                        })
                         .AddProcessor(processor.Object)
                         .Build())
             {
@@ -104,7 +109,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(activity, true);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
             Assert.Equal(parent.SpanId, activity.ParentSpanId);
             Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
@@ -119,10 +124,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
         }
 
-        [Fact]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
@@ -130,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var request = new HttpRequestMessage
             {
@@ -144,8 +151,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
             using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation((opt) => opt.Propagator = propagator.Object)
+                   .AddHttpClientInstrumentation((opt) =>
+                   {
+                       if (shouldEnrich)
+                       {
+                           opt.Enrich = ActivityEnrichment;
+                       }
+                   })
                    .AddProcessor(processor.Object)
                    .Build())
             {
@@ -156,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
-            ValidateHttpClientActivity(activity, true);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
             Assert.Equal(parent.SpanId, activity.ParentSpanId);
             Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
@@ -169,12 +184,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
@@ -193,7 +213,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
@@ -212,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
 
             var request = new HttpRequestMessage
             {
@@ -237,7 +257,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
@@ -254,7 +274,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
-            var processor = new Mock<ActivityProcessor>();
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
@@ -275,7 +295,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationCorrelationAndBaggage()
         {
-            var activityProcessor = new Mock<ActivityProcessor>();
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
             using var parent = new Activity("w3c activity");
             parent.SetIdFormat(ActivityIdFormat.W3C);
@@ -286,7 +306,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Baggage.SetBaggage("k2", "v2");
 
             using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichment)
                 .AddProcessor(activityProcessor.Object)
                 .Build())
             {
@@ -295,18 +315,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(4, activityProcessor.Invocations.Count);
-
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
-
-            HttpRequestMessage thisRequest = (HttpRequestMessage)activity.GetCustomProperty(HttpHandlerDiagnosticListener.RequestCustomPropertyName);
-
-            string[] correlationContext = thisRequest.Headers.GetValues("Correlation-Context").First().Split(',');
-            Assert.Single(correlationContext);
-            Assert.Contains("k1=v1", correlationContext);
-
-            string[] baggage = thisRequest.Headers.GetValues("Baggage").First().Split(',');
-            Assert.Single(baggage);
-            Assert.Contains("k2=v2", baggage);
         }
 
         public void Dispose()
@@ -315,18 +323,24 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Activity.Current = null;
         }
 
-        private static void ValidateHttpClientActivity(Activity activityToValidate, bool responseExpected)
+        private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
-            Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-            var request = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.RequestCustomPropertyName);
-            Assert.NotNull(request);
-            Assert.True(request is HttpRequestMessage);
-
-            if (responseExpected)
+            switch (method)
             {
-                var response = activityToValidate.GetCustomProperty(HttpHandlerDiagnosticListener.ResponseCustomPropertyName);
-                Assert.NotNull(response);
-                Assert.True(response is HttpResponseMessage);
+                case "OnStartActivity":
+                    Assert.True(obj is HttpRequestMessage);
+                    break;
+
+                case "OnStopActivity":
+                    Assert.True(obj is HttpResponseMessage);
+                    break;
+
+                case "OnException":
+                    Assert.True(obj is Exception);
+                    break;
+
+                default:
+                    break;
             }
         }
     }

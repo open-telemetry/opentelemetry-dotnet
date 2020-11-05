@@ -1,4 +1,4 @@
-﻿// <copyright file="TestHttpClient.cs" company="OpenTelemetry Authors">
+// <copyright file="TestHttpClient.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ namespace Examples.Console
                 .AddHttpClientInstrumentation()
                 .SetResource(Resources.CreateServiceResource("http-service-example"))
                 .AddSource("http-client-test")
-                .AddConsoleExporter(opt => opt.DisplayAsJson = false)
+                .AddConsoleExporter()
                 .Build();
 
             var source = new ActivitySource("http-client-test");

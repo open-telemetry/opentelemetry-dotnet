@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpWebRequestActivitySource.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestActivitySource.netfx.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -40,10 +38,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
         public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
-
-        public const string RequestCustomPropertyName = "OTel.HttpWebRequest.Request";
-        public const string ResponseCustomPropertyName = "OTel.HttpWebRequest.Response";
-        public const string ExceptionCustomPropertyName = "OTel.HttpWebRequest.Exception";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
@@ -100,11 +94,17 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            InstrumentRequest(request, activity);
-
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    Options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
@@ -120,7 +120,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(ResponseCustomPropertyName, response);
+                try
+                {
+                    Options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                 activity.SetStatus(
@@ -138,7 +146,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            activity.SetCustomProperty(ExceptionCustomPropertyName, exception);
+            try
+            {
+                Options.Enrich?.Invoke(activity, "OnException", exception);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
 
             Status status;
             if (exception is WebException wexc)
@@ -154,47 +169,38 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     switch (wexc.Status)
                     {
                         case WebExceptionStatus.Timeout:
-                            status = Status.DeadlineExceeded;
-                            break;
-                        case WebExceptionStatus.NameResolutionFailure:
-                            status = Status.InvalidArgument.WithDescription(exception.Message);
+                        case WebExceptionStatus.RequestCanceled:
+                            status = Status.Error;
                             break;
                         case WebExceptionStatus.SendFailure:
                         case WebExceptionStatus.ConnectFailure:
                         case WebExceptionStatus.SecureChannelFailure:
                         case WebExceptionStatus.TrustFailure:
-                            status = Status.FailedPrecondition.WithDescription(exception.Message);
-                            break;
                         case WebExceptionStatus.ServerProtocolViolation:
-                            status = Status.Unimplemented.WithDescription(exception.Message);
-                            break;
-                        case WebExceptionStatus.RequestCanceled:
-                            status = Status.Cancelled;
-                            break;
                         case WebExceptionStatus.MessageLengthLimitExceeded:
-                            status = Status.ResourceExhausted.WithDescription(exception.Message);
+                            status = Status.Error.WithDescription(exception.Message);
                             break;
                         default:
-                            status = Status.Unknown.WithDescription(exception.Message);
+                            status = Status.Error.WithDescription(exception.Message);
                             break;
                     }
                 }
             }
             else
             {
-                status = Status.Unknown.WithDescription(exception.Message);
+                status = Status.Error.WithDescription(exception.Message);
             }
 
             activity.SetStatus(status);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
+        private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
+            => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.Propagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {
@@ -206,7 +212,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            var activityContext = Activity.Current?.Context ?? default;
 
+            InstrumentRequest(request, activityContext);
             if (activity == null)
             {
                 // There is a listener but it decided not to sample the current request.

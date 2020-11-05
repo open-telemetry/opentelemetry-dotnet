@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpInListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,12 +26,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.AspNet.Request";
-        public const string ResponseCustomPropertyName = "OTel.AspNet.Response";
-        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
+        internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
-        private readonly PropertyFetcher<object> routeTemplateFetcher = new PropertyFetcher<object>("RouteTemplate");
+        private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
 
@@ -42,7 +41,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.activitySource = activitySource;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Activity is retrieved from Activity.Current later and disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
             var context = HttpContext.Current;
@@ -70,12 +69,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             var request = context.Request;
             var requestValues = request.Unvalidated;
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
 
-            if (!(this.options.Propagator is TextMapPropagator))
+            if (!(textMapPropagator is TraceContextPropagator))
             {
-                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid() && ctx.ActivityContext != activity.Context)
+                if (ctx.ActivityContext.IsValid()
+                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
@@ -109,7 +110,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Url.Host);
@@ -131,14 +140,17 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             Activity activityToEnrich = activity;
             Activity createdActivity = null;
 
-            if (!(this.options.Propagator is TextMapPropagator))
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+            bool isCustomPropagator = !(textMapPropagator is TraceContextPropagator);
+
+            if (isCustomPropagator)
             {
                 // If using custom context propagator, then the activity here
                 // could be either the one from Asp.Net, or the one
                 // this instrumentation created in Start.
                 // This is because Asp.Net, under certain circumstances, restores Activity.Current
                 // to its own activity.
-                if (activity.OperationName.Equals("Microsoft.AspNet.HttpReqIn.Start"))
+                if (activity.OperationName.Equals(ActivityOperationName, StringComparison.Ordinal))
                 {
                     // This block is hit if Asp.Net did restore Current to its own activity,
                     // and we need to retrieve the one created by HttpInListener,
@@ -159,13 +171,19 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                activityToEnrich.SetCustomProperty(ResponseCustomPropertyName, response);
+                try
+                {
+                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                activityToEnrich.SetStatus(
-                    SpanHelper
-                        .ResolveSpanStatusForHttpStatusCode(response.StatusCode)
-                        .WithDescription(response.StatusDescription));
+                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
+                activityToEnrich.SetStatus(status);
 
                 var routeData = context.Request.RequestContext.RouteData;
 
@@ -178,8 +196,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     {
                         var subRouteData = attributeRouting.GetValue(0);
 
-                        var route = this.routeFetcher.Fetch(subRouteData);
-                        template = this.routeTemplateFetcher.Fetch(route) as string;
+                        _ = this.routeFetcher.TryFetch(subRouteData, out var route);
+                        _ = this.routeTemplateFetcher.TryFetch(route, out template);
                     }
                 }
                 else if (routeData.Route is Route route)
@@ -196,9 +214,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            if (!(this.options.Propagator is TextMapPropagator))
+            if (isCustomPropagator)
             {
-                if (activity.OperationName.Equals(ActivityNameByHttpInListener))
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
                 {
                     // If instrumentation started a new Activity, it must
                     // be stopped here.

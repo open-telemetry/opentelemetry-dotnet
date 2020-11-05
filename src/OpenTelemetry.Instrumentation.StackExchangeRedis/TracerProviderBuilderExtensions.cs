@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,12 +29,12 @@ namespace OpenTelemetry.Trace
         /// Enables the outgoing requests automatic data collection for Redis.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="connection"><see cref="ConnectionMultiplexer"/> to instrument.</param>
+        /// <param name="connection"><see cref="IConnectionMultiplexer"/> to instrument.</param>
         /// <param name="configureOptions">Redis configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddRedisInstrumentation(
             this TracerProviderBuilder builder,
-            ConnectionMultiplexer connection,
+            IConnectionMultiplexer connection,
             Action<StackExchangeRedisCallsInstrumentationOptions> configureOptions = null)
         {
             if (builder == null)
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
             configureOptions?.Invoke(options);
 
             return builder
-                .AddInstrumentation((activitySourceAdapter) => new StackExchangeRedisCallsInstrumentation(connection, options))
+                .AddInstrumentation(() => new StackExchangeRedisCallsInstrumentation(connection, options))
                 .AddSource(StackExchangeRedisCallsInstrumentation.ActivitySourceName);
         }
     }

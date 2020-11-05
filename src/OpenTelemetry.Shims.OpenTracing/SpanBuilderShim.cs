@@ -1,4 +1,4 @@
-﻿// <copyright file="SpanBuilderShim.cs" company="OpenTelemetry Authors">
+// <copyright file="SpanBuilderShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (this.error)
             {
-                span.SetStatus(Trace.Status.Unknown);
+                span.SetStatus(Trace.Status.Error);
             }
 
             return new SpanShim(span);

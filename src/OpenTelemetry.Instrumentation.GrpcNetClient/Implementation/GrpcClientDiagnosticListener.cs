@@ -1,4 +1,4 @@
-﻿// <copyright file="GrpcClientDiagnosticListener.cs" company="OpenTelemetry Authors">
+// <copyright file="GrpcClientDiagnosticListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        public const string RequestCustomPropertyName = "OTel.GrpcHandler.Request";
         private readonly GrpcClientInstrumentationOptions options;
 
         private readonly ActivitySourceAdapter activitySource;
@@ -42,7 +41,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
-            if (!(this.startRequestFetcher.Fetch(payload) is HttpRequestMessage request))
+            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
                 return;
@@ -61,7 +60,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetCustomProperty(RequestCustomPropertyName, request);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
@@ -92,9 +99,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
-
-                // Remove the grpc.status_code tag added by the gRPC .NET library
-                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
             }
 
             this.activitySource.Stop(activity);

@@ -1,4 +1,4 @@
-﻿// <copyright file="SqlClientInstrumentationEventSource.cs" company="OpenTelemetry Authors">
+// <copyright file="SqlClientInstrumentationEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public void InvalidPayload(string handlerName, string eventName)
         {
             this.WriteEvent(4, handlerName, eventName);
+        }
+
+        [NonEvent]
+        public void EnrichmentException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EnrichmentException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(5, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void EnrichmentException(string exception)
+        {
+            this.WriteEvent(5, exception);
         }
     }
 }

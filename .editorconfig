@@ -5,12 +5,12 @@
 # All files 
 [*] 
 indent_style = space 
+insert_final_newline = true 
 # Code files 
 [*.{cs,csx,vb,vbx}] 
 indent_size = 4 
-insert_final_newline = true 
 trim_trailing_whitespace = true 
-charset = utf-8-bom 
+charset = utf-8 
 # maintain DOS/Windows style line endings in md files
 [*.md]
 end_of_line = crlf

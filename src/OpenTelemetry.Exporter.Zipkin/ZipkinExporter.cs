@@ -1,4 +1,4 @@
-﻿// <copyright file="ZipkinExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="ZipkinExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,11 @@ using Newtonsoft.Json;
 #else
 using System.Text.Json;
 #endif
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin
@@ -37,9 +39,12 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinExporter : ActivityExporter
+    public class ZipkinExporter : BaseExporter<Activity>
     {
         private readonly ZipkinExporterOptions options;
+#if !NET452
+        private readonly int maxPayloadSizeInBytes;
+#endif
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -47,14 +52,16 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
+        internal ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            this.options = options;
-            this.LocalEndpoint = this.GetLocalZipkinEndpoint();
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+#if !NET452
+            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
+#endif
             this.httpClient = client ?? new HttpClient();
         }
 
-        internal ZipkinEndpoint LocalEndpoint { get; }
+        internal ZipkinEndpoint LocalEndpoint { get; private set; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
@@ -64,14 +71,16 @@ namespace OpenTelemetry.Exporter.Zipkin
 
             try
             {
-                // take a snapshot of the batch
-                var activities = new List<Activity>();
-                foreach (var activity in batch)
-                {
-                    activities.Add(activity);
-                }
+                var requestUri = this.options.Endpoint;
 
-                this.SendBatchActivityAsync(activities, CancellationToken.None).GetAwaiter().GetResult();
+                using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new JsonContent(this, batch),
+                };
+
+                using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+
+                response.EnsureSuccessStatusCode();
 
                 return ExportResult.Success;
             }
@@ -79,9 +88,73 @@ namespace OpenTelemetry.Exporter.Zipkin
             {
                 ZipkinExporterEventSource.Log.FailedExport(ex);
 
-                // TODO distinguish retryable exceptions
                 return ExportResult.Failure;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ZipkinEndpoint EnsureLocalEndpoint(Activity activity)
+        {
+            if (this.LocalEndpoint != null)
+            {
+                return this.LocalEndpoint;
+            }
+
+            var hostName = ResolveHostName();
+
+            string ipv4 = null;
+            string ipv6 = null;
+            if (!string.IsNullOrEmpty(hostName))
+            {
+                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
+                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
+            }
+
+            string serviceName = null;
+            string serviceNamespace = null;
+            Dictionary<string, object> tags = null;
+            foreach (var label in activity.GetResource().Attributes)
+            {
+                string key = label.Key;
+
+                switch (key)
+                {
+                    case Resource.ServiceNameKey:
+                        serviceName = label.Value as string;
+                        continue;
+                    case Resource.ServiceNamespaceKey:
+                        serviceNamespace = label.Value as string;
+                        continue;
+                    case Resource.LibraryNameKey:
+                    case Resource.LibraryVersionKey:
+                        continue;
+                }
+
+                if (tags == null)
+                {
+                    tags = new Dictionary<string, object>();
+                }
+
+                tags[key] = label.Value;
+            }
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                serviceName = serviceNamespace != null
+                    ? serviceNamespace + "." + serviceName
+                    : serviceName;
+            }
+            else
+            {
+                serviceName = this.options.ServiceName;
+            }
+
+            return this.LocalEndpoint = new ZipkinEndpoint(
+                serviceName,
+                ipv4,
+                ipv6,
+                port: null,
+                tags);
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)
@@ -140,37 +213,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             return result;
         }
 
-        private async Task SendBatchActivityAsync(IEnumerable<Activity> batchActivity, CancellationToken cancellationToken)
-        {
-            var requestUri = this.options.Endpoint;
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new JsonContent(this, batchActivity),
-            };
-
-            await this.httpClient.SendAsync(request, cancellationToken);
-        }
-
-        private ZipkinEndpoint GetLocalZipkinEndpoint()
-        {
-            var hostName = ResolveHostName();
-
-            string ipv4 = null;
-            string ipv6 = null;
-            if (!string.IsNullOrEmpty(hostName))
-            {
-                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
-                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
-            }
-
-            return new ZipkinEndpoint(
-                this.options.ServiceName,
-                ipv4,
-                ipv6,
-                null);
-        }
-
         private class JsonContent : HttpContent
         {
             private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
@@ -179,7 +221,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             };
 
             private readonly ZipkinExporter exporter;
-            private readonly IEnumerable<Activity> batchActivity;
+            private readonly Batch<Activity> batch;
 
 #if NET452
             private JsonWriter writer;
@@ -187,10 +229,10 @@ namespace OpenTelemetry.Exporter.Zipkin
             private Utf8JsonWriter writer;
 #endif
 
-            public JsonContent(ZipkinExporter exporter, IEnumerable<Activity> batchActivity)
+            public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
             {
                 this.exporter = exporter;
-                this.batchActivity = batchActivity;
+                this.batch = batch;
 
                 this.Headers.ContentType = JsonHeader;
             }
@@ -213,18 +255,32 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.writer.WriteStartArray();
 
-                foreach (var activity in this.batchActivity)
+                foreach (var activity in this.batch)
                 {
-                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+                    var localEndpoint = this.exporter.EnsureLocalEndpoint(activity);
+
+                    var zipkinSpan = activity.ToZipkinSpan(localEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
+#if !NET452
+                    if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
+                    {
+                        this.writer.Flush();
+                    }
+#endif
                 }
 
                 this.writer.WriteEndArray();
 
-                return this.writer.FlushAsync();
+                this.writer.Flush();
+
+#if NET452
+                return Task.FromResult(true);
+#else
+                return Task.CompletedTask;
+#endif
             }
 
             protected override bool TryComputeLength(out long length)

@@ -1,4 +1,4 @@
-﻿// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -30,21 +31,16 @@ namespace OpenTelemetry.Trace
         private readonly ActivityListener listener;
         private readonly Resource resource;
         private readonly Sampler sampler;
-        private ActivityProcessor processor;
-        private ActivitySourceAdapter adapter;
-
-        static TracerProviderSdk()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-        }
+        private readonly ActivitySourceAdapter adapter;
+        private BaseProcessor<Activity> processor;
 
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
+            IEnumerable<TracerProviderBuilder.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
-            List<ActivityProcessor> processors)
+            List<BaseProcessor<Activity>> processors)
         {
             this.resource = resource;
             this.sampler = sampler;
@@ -54,12 +50,20 @@ namespace OpenTelemetry.Trace
                 this.AddProcessor(processor);
             }
 
-            if (instrumentationFactories.Any())
+            if (diagnosticSourceInstrumentationFactories.Any())
             {
                 this.adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
-                foreach (var instrumentationFactory in instrumentationFactories)
+                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
+                }
+            }
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 
@@ -68,6 +72,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is started.
                 ActivityStarted = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
@@ -83,6 +89,8 @@ namespace OpenTelemetry.Trace
                 // Callback when Activity is stopped.
                 ActivityStopped = (activity) =>
                 {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
@@ -157,7 +165,7 @@ namespace OpenTelemetry.Trace
             this.listener = listener;
         }
 
-        internal TracerProviderSdk AddProcessor(ActivityProcessor processor)
+        internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
@@ -168,13 +176,13 @@ namespace OpenTelemetry.Trace
             {
                 this.processor = processor;
             }
-            else if (this.processor is CompositeActivityProcessor compositeProcessor)
+            else if (this.processor is CompositeProcessor<Activity> compositeProcessor)
             {
                 compositeProcessor.AddProcessor(processor);
             }
             else
             {
-                this.processor = new CompositeActivityProcessor(new[]
+                this.processor = new CompositeProcessor<Activity>(new[]
                 {
                     this.processor,
                     processor,
@@ -228,8 +236,8 @@ namespace OpenTelemetry.Trace
 
             var activitySamplingResult = shouldSample.Decision switch
             {
-                SamplingDecision.RecordAndSampled => ActivitySamplingResult.AllDataAndRecorded,
-                SamplingDecision.Record => ActivitySamplingResult.AllData,
+                SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+                SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
                 _ => ActivitySamplingResult.PropagationData
             };
 

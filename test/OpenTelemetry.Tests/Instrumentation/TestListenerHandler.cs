@@ -1,4 +1,4 @@
-﻿// <copyright file="TestListenerHandler.cs" company="OpenTelemetry Authors">
+// <copyright file="TestListenerHandler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Instrumentation.Tests
 {
-    public class TestListenerHandler : ListenerHandler
+    internal class TestListenerHandler : ListenerHandler
     {
         public int OnStartInvokedCount = 0;
         public int OnStopInvokedCount = 0;

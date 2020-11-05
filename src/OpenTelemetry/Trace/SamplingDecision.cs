@@ -1,4 +1,4 @@
-﻿// <copyright file="SamplingDecision.cs" company="OpenTelemetry Authors">
+// <copyright file="SamplingDecision.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,22 +22,23 @@ namespace OpenTelemetry.Trace
     public enum SamplingDecision
     {
         /// <summary>
-        /// The activity object needs to be created. It will have Name, Source, Id and Baggage.
-        /// Other properties will be ignored.
+        /// The activity will be created but not recorded.
+        /// Activity.IsAllDataRequested will return false.
         /// </summary>
-        NotRecord,
+        Drop,
 
         /// <summary>
-        /// The activity object should be populated with all the propagation info and also all other
-        /// properties such as Links, Tags, and Events. Activity.IsAllDataRequested will return true.
+        /// The activity will be created and recorded, but sampling flag will not be set.
+        /// Activity.IsAllDataRequested will return true.
+        /// Activity.IsRecorded will return false.
         /// </summary>
-        Record,
+        RecordOnly,
 
         /// <summary>
-        /// The activity object should be populated with all the propagation info and also all other
-        /// properties such as Links, Tags, and Events.
-        /// Both Activity.IsAllDataRequested and Activity.IsRecorded will return true.
+        /// The activity will be created, recorded, and sampling flag will be set.
+        /// Activity.IsAllDataRequested will return true.
+        /// Activity.IsRecorded will return true.
         /// </summary>
-        RecordAndSampled,
+        RecordAndSample,
     }
 }

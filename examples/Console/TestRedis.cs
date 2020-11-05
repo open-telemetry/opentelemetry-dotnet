@@ -1,4 +1,4 @@
-﻿// <copyright file="TestRedis.cs" company="OpenTelemetry Authors">
+// <copyright file="TestRedis.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,7 +96,7 @@ namespace Examples.Console
                 catch (ArgumentOutOfRangeException e)
                 {
                     // Set status upon error
-                    activity.SetTag(SpanAttributeConstants.StatusCodeKey, SpanHelper.GetCachedCanonicalCodeString(Status.Internal.CanonicalCode));
+                    activity.SetTag(SpanAttributeConstants.StatusCodeKey, (int)Status.Error.StatusCode);
                     activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
                 }
 
