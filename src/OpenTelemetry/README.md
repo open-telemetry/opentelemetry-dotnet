@@ -89,8 +89,8 @@ using var otel = Sdk.CreateTracerProvider(b => b
 Self diagnostics module is provided to help troubleshooting.
 
 To enable self diagnostics, go to the current directory of your process and
-create a configuration file named `DiagnosticsConfiguration.json` with the
-following content:
+create a configuration file named `OTEL_DIAGNOSTICS.json` with the following
+content:
 
 ```json
 {
