@@ -104,16 +104,23 @@ following content:
 or a relative path to the current directory. `FileSize` is a positive integer,
 which specifies the log file size in
 [KiB](https://en.wikipedia.org/wiki/Kibibyte).
-[`EventLevel`](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel)
-is the level of the events to be captured.
+`EventLevel` is the lowest level of the events to be captured.
+It has to be one of the
+[values](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel#fields)
+of the `EventLevel` enum.
+(The level signifies the severity of an event. Lower severity levels encompass
+higher severity levels. For example, `Warning` includes the `Error` and
+`Critical` levels, which are higher in severity. See
+[here](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel)
+for more.)
 
 The SDK will attempt to open the configuration file in non-exclusive read-only
 mode, read the file and parse it as the configuration file every 3 seconds. If
-the SDK fails to parse the `LogDirectory` or `FileSize` fields as the specified
-format, the configuration file will be treated as invalid and no log file would
-be generated. Otherwise, it will create or overwrite a `FileSize`-KiB file at
-the specific directory `LogDirectory` with the log file named as
-`ExecutableName.ProcessId.log` (e.g. `foobar.exe.12345.log`).
+the SDK fails to parse the `LogDirectory`, `FileSize` or `EventLevel` fields as
+the specified format, the configuration file will be treated as invalid and no
+log file would be generated. Otherwise, it will create or overwrite a
+`FileSize`-KiB file at the specific directory `LogDirectory` with the log file
+named as `ExecutableName.ProcessId.log` (e.g. `foobar.exe.12345.log`).
 
 Note that the `FileSize` has to be between 1 MiB and 128 MiB (inclusive), or it
 will be rounded to the closest upper or lower limit.  When the `LogDirectory` or
