@@ -21,7 +21,9 @@ namespace OpenTelemetry.Implementation
     internal class Context
     {
         public Activity Activity { get; set; }
-        internal bool HasDiagnosticListener { get; set; }
+
+        public bool HasDiagnosticListener { get; set; }
+
         public bool EventLogEnabled { get; set; }
     }
 }

@@ -25,9 +25,8 @@ namespace OpenTelemetry
     {
         /// <summary>Adds a component to the OWIN pipeline for instrumenting incoming request with System.Diagnostics.Activity and notifying listeners with DiagnosticsSource.</summary>
         /// <param name="appBuilder">The application builder.</param>
-        /// <returns>The application builder.</returns>
-        public static void UseOpenTelemetry(this IAppBuilder appBuilder)
+        /// <returns>The application builder instance.</returns>
+        public static IAppBuilder UseOpenTelemetry(this IAppBuilder appBuilder)
             => appBuilder.Use<DiagnosticsMiddleware>();
-
     }
 }

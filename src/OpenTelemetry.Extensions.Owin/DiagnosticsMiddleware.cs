@@ -38,7 +38,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Initializes a new instance of the <see cref="DiagnosticsMiddleware"/> class.
         /// </summary>
-        /// <param name="next">An optional pointer to the next component</param>
+        /// <param name="next">An optional pointer to the next component.</param>
         public DiagnosticsMiddleware(OwinMiddleware next)
             : base(next)
         {
@@ -80,6 +80,7 @@ namespace OpenTelemetry
         private void RequestEnd(IOwinContext owinContext, Exception exception)
         {
             var activity = this.context.Activity;
+
             // Always stop activity if it was started
             if (activity != null)
             {

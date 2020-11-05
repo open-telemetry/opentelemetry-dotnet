@@ -29,11 +29,11 @@ namespace OpenTelemetry.Implementation
 
         /// <summary>
         /// Reads Request-Id and Correlation-Context headers and sets ParentId and Baggage on Activity.
-        /// Based on the code from https://github.com/aspnet/Microsoft.AspNet.TelemetryCorrelation/blob/master/src/Microsoft.AspNet.TelemetryCorrelation/ActivityExtensions.cs#L48
         /// </summary>
         /// <param name="activity">Instance of activity that has not been started yet.</param>
         /// <param name="requestHeaders">Request headers collection.</param>
         /// <returns>true if request was parsed successfully, false - otherwise.</returns>
+        // Based on the code from https://github.com/aspnet/Microsoft.AspNet.TelemetryCorrelation/blob/master/src/Microsoft.AspNet.TelemetryCorrelation/ActivityExtensions.cs#L48.
         public static bool Extract(this Activity activity, IHeaderDictionary requestHeaders)
         {
             if (activity == null)

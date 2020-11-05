@@ -29,10 +29,10 @@ namespace OpenTelemetry.Implementation
         /// <summary>
         /// Reads Correlation-Context and populates it on Activity.Baggage following https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/HttpCorrelationProtocol.md#correlation-context.
         /// Use this method when you want force parsing Correlation-Context is absence of Request-Id or traceparent.
-        /// Based on the code from https://github.com/microsoft/ApplicationInsights-dotnet/blob/2.15.0/WEB/Src/Common/WebHeaderCollectionExtensions.cs#L135
         /// </summary>
         /// <param name="headers">Header collection.</param>
         /// <param name="activity">Activity to populate baggage on.</param>
+        // Based on the code from https://github.com/microsoft/ApplicationInsights-dotnet/blob/2.15.0/WEB/Src/Common/WebHeaderCollectionExtensions.cs#L135.
         public static void ReadActivityBaggage(this IHeaderDictionary headers, Activity activity)
         {
             Debug.Assert(headers != null, "Headers must not be null");
@@ -80,6 +80,7 @@ namespace OpenTelemetry.Implementation
                     if (separatorInd > 0 && separatorInd < kvp.Length - 1)
                     {
                         var separatorIndNext = kvp.Slice(separatorInd + 1).IndexOf('=');
+
                         // check there is just one '=' in key-value-pair
                         if (separatorIndNext < 0)
                         {
