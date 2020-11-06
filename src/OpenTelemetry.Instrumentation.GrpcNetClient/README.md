@@ -31,9 +31,12 @@ Grpc.Net.Client instrumentation must be enabled at application startup.
 
 The following example demonstrates adding Grpc.Net.Client instrumentation to a
 console application. This example also sets up the OpenTelemetry Console
-exporter, which requires adding the package
+exporter and adds instrumentation for HttpClient, which requires adding the packages
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
-to the application.
+and
+[`OpenTelemetry.Instrumentation.Http`](../OpenTelemetry.Instrumentation.Http/README.md)
+to the application. Grpc.Net.Client uses HttpClient, so this example would
+produce an activity for both a gRPC call and its underlying HTTP call.
 
 ```csharp
 using OpenTelemetry.Trace;
@@ -44,6 +47,7 @@ public class Program
     {
         using Sdk.CreateTracerProviderBuilder()
             .AddGrpcClientInstrumentation()
+            .AddHttpClientInstrumentaiton()
             .AddConsoleExporter()
             .Build();
     }
@@ -54,8 +58,65 @@ For an ASP.NET Core application, adding instrumentation is typically done in
 the `ConfigureServices` of your `Startup` class. Refer to documentation for
 [OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
 
-For an ASP.NET application, adding instrumentation is typically done in the
-`Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
+## Advanced configuration
+
+This instrumentation can be configured to change the default behavior by using
+`GrpcClientInstrumentationOptions`.
+
+### SuppressDownstreamInstrumentation
+
+This option prevents downstream instrumentation from being invoked.
+Grpc.Net.Client is built on top of HttpClient. When instrumentation for both
+libraries is enabled, `SuppressDownstreamInstrumentation` prevents
+the HttpClient instrumentation from generating an additional activity.
+Additionally, since HttpClient instrumentation is normally responsible for
+propagating context (e.g., W3C trace context and baggage), Grpc.Net.Client
+instrumentation propagates context when `SuppressDownstreamInstrumentation` is
+enabled.
+
+The following example shows how to use `SuppressDownstreamInstrumentation`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddGrpcClientInstrumentation(
+        opt => opt.SuppressDownstreamInstrumentation = true)
+    .AddHttpClientInstrumentation()
+    .Build();
+```
+
+### Enrich
+
+This option allows one to enrich the activity with additional information
+from the raw `HttpRequestMessage` object. The `Enrich` action is called only
+when `activity.IsAllDataRequested` is `true`. It contains the activity itself
+(which can be enriched), the name of the event, and the actual raw object.
+For event name "OnStartActivity", the actual object will be
+`HttpRequestMessage`.
+
+The following code snippet shows how to add additional tags using `Enrich`.
+
+```csharp
+services.AddOpenTelemetryTracing((builder) =>
+{
+    builder
+    .AddGrpcClientInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
+    {
+        if (eventName.Equals("OnStartActivity"))
+        {
+            if (rawObject is HttpRequestMessage request)
+            {
+                activity.SetTag("requestVersion", request.Version);
+            }
+        }
+    })
+});
+```
+
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any activity.
+The `Enrich` option is specific to this instrumentation, and is provided to
+get access to `HttpRequest` and `HttpResponse`.
 
 ## References
 

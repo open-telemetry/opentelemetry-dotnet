@@ -16,10 +16,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -198,6 +200,59 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             ValidateGrpcActivity(grpcSpan4, expectedResource);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
+        }
+
+        [Fact]
+        public void GrpcPropagatesContextWithSuppressInstrumentation()
+        {
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+            var processor = new Mock<BaseProcessor<Activity>>();
+
+            using var source = new ActivitySource("test-source");
+
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSource("test-source")
+                .AddGrpcClientInstrumentation(o =>
+                {
+                    o.SuppressDownstreamInstrumentation = true;
+                })
+                .AddHttpClientInstrumentation()
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Enrich = (activity, eventName, obj) =>
+                    {
+                        switch (eventName)
+                        {
+                            case "OnStartActivity":
+                                var request = (HttpRequest)obj;
+                                activity.SetCustomProperty("BaggageString", request.Headers["Baggage"].ToString());
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                }) // Instrumenting the server side as well
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var activity = source.StartActivity("parent");
+                Assert.NotNull(activity);
+                Baggage.Current.SetBaggage("item1", "value1");
+
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
+            }
+
+            Assert.Equal(8, processor.Invocations.Count); // OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
+            var serverActivity = (Activity)processor.Invocations[3].Arguments[0];
+            var clientActivity = (Activity)processor.Invocations[4].Arguments[0];
+
+            Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
+            Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
+            Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
+            Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
+            Assert.Contains("item1=value1", serverActivity.GetCustomProperty("BaggageString") as string);
         }
 
         [Fact]
