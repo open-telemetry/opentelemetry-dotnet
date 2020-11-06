@@ -31,9 +31,12 @@ Grpc.Net.Client instrumentation must be enabled at application startup.
 
 The following example demonstrates adding Grpc.Net.Client instrumentation to a
 console application. This example also sets up the OpenTelemetry Console
-exporter, which requires adding the package
+exporter and adds instrumentation for HttpClient, which requires adding the packages
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
-to the application.
+and
+[`OpenTelemetry.Instrumentation.Http`](../OpenTelemetry.Instrumentation.Http/README.md)
+to the application. Grpc.Net.Client uses HttpClient, so this example would
+produce an activity for both a gRPC call and its underlying HTTP call.
 
 ```csharp
 using OpenTelemetry.Trace;
@@ -44,6 +47,7 @@ public class Program
     {
         using Sdk.CreateTracerProviderBuilder()
             .AddGrpcClientInstrumentation()
+            .AddHttpClientInstrumentaiton()
             .AddConsoleExporter()
             .Build();
     }
@@ -79,6 +83,7 @@ The following example shows how to use `SuppressDownstreamInstrumentation`.
 using Sdk.CreateTracerProviderBuilder()
     .AddGrpcClientInstrumentation(
         opt => opt.SuppressDownstreamInstrumentation = true)
+    .AddHttpClientInstrumentation()
     .Build();
 ```
 
