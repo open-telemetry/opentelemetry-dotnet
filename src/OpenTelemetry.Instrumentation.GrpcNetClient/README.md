@@ -73,6 +73,15 @@ propagating context (e.g., W3C trace context and baggage), Grpc.Net.Client
 instrumentation propagates context when `SuppressDownstreamInstrumentation` is
 enabled.
 
+The following example shows how to use `SuppressDownstreamInstrumentation`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddGrpcClientInstrumentation(
+        opt => opt.SuppressDownstreamInstrumentation = true)
+    .Build();
+```
+
 ### Enrich
 
 This option allows one to enrich the activity with additional information
