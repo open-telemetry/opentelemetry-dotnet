@@ -23,7 +23,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net5.0'">
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj" />
   </ItemGroup>
 

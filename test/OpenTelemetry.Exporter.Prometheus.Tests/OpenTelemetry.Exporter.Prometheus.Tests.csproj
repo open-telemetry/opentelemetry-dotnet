@@ -16,6 +16,10 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="5.0.0-rc.2.20475.17" />
+  </ItemGroup>
+  
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.2" />
   </ItemGroup>
@@ -24,7 +28,7 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netcoreapp3.1' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452' OR '$(TargetFramework)' == 'net46' ">
     <Reference Include="System.Net.Http" />
   </ItemGroup>
 
