@@ -31,7 +31,7 @@ namespace Benchmarks.Trace
         public void GlobalSetup()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddInstrumentation((adapter) =>
+                .AddDiagnosticSourceInstrumentation((adapter) =>
                 {
                     this.testInstrumentation = new TestInstrumentation(adapter);
                     return this.testInstrumentation;

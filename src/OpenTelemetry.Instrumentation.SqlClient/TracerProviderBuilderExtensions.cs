@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation((activitySource) => new SqlClientInstrumentation(sqlOptions));
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
             builder.AddSource(SqlClientDiagnosticListener.ActivitySourceName);
 
             return builder;

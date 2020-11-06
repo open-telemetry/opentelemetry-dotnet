@@ -273,7 +273,7 @@ namespace OpenTelemetry.Trace.Tests
             TestInstrumentation testInstrumentation = null;
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;
@@ -326,7 +326,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             TestInstrumentation testInstrumentation = null;
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;
@@ -351,7 +351,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             TestInstrumentation testInstrumentation = null;
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;

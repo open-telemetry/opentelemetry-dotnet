@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
+            IEnumerable<TracerProviderBuilder.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors)
@@ -50,12 +51,20 @@ namespace OpenTelemetry.Trace
                 this.AddProcessor(processor);
             }
 
-            if (instrumentationFactories.Any())
+            if (diagnosticSourceInstrumentationFactories.Any())
             {
                 this.adapter = new ActivitySourceAdapter(sampler, this.processor);
-                foreach (var instrumentationFactory in instrumentationFactories)
+                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
+                }
+            }
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 

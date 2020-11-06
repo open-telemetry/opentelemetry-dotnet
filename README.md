@@ -92,6 +92,7 @@ For edit access, get in touch on
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
+* [Alan West](https://github.com/alanwest), NewRelic
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk

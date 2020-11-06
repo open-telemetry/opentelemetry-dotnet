@@ -102,58 +102,45 @@ instrumentation. OpenTelemetry has a concept of
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
-### Special topic - Enriching automatically collected telemetry
+### Enrich
 
-ASP.NET instrumentation stores the `HttpRequest`, `HttpResponse` objects in the
-`Activity`. These can be accessed in `BaseProcessor<Activity>`, and can be used to
-further enrich the Activity as shown below.
+This option allows one to enrich the activity with additional information
+from the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is
+called only when `activity.IsAllDataRequested` is `true`. It contains the
+activity itself (which can be enriched), the name of the event, and the
+actual raw object.
+For event name "OnStartActivity", the actual object will be `HttpRequest`.
+For event name "OnStopActivity", the actual object will be `HttpResponse`
 
-The key name for HttpRequest custom property inside Activity is "OTel.AspNet.Request".
-
-The key name for HttpResponse custom property inside Activity is "OTel.AspNet.Response".
-
-```csharp
-internal class MyAspNetEnrichingProcessor : BaseProcessor<Activity>
-{
-    public override void OnStart(Activity activity)
-    {
-        // Retrieve the HttpRequest object.
-        var httpRequest = activity.GetCustomProperty("OTel.AspNetCore.Request")
-                          as HttpRequest;
-        if (httpRequest != null)
-        {
-            // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("mycustomtag", httpRequest.Headers["myheader"]);
-        }
-    }
-
-    public override void OnEnd(Activity activity)
-    {
-        // Retrieve the HttpResponse object.
-        var httpResponse = activity.GetCustomProperty("OTel.AspNetCore.Response")
-                           as HttpResponse;
-        if (httpResponse != null)
-        {
-            var statusCode = httpResponse.StatusCode;
-            bool success = statusCode < 400;
-            // Add more tags to the activity or replace an existing tag.
-            activity.SetTag("myCustomSuccess", success);
-        }
-    }
-}
-```
-
-The custom processor must be added to the provider as below. It is important to
-add the enrichment processor before any exporters so that exporters see the
-changes done by them.
+The following code snippet shows how to add additional tags using `Enrich`.
 
 ```csharp
- this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddAspNetInstrumentation()
-    .AddProcessor(new MyAspNetEnrichingProcessor())
-    .AddJaegerExporter()
+this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddAspNetInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
+    {
+        if (eventName.Equals("OnStartActivity"))
+        {
+            if (rawObject is HttpRequest httpRequest)
+            {
+                activity.SetTag("physicalPath", httpRequest.PhysicalPath);
+            }
+        }
+        else if (eventName.Equals("OnStopActivity"))
+        {
+            if (rawObject is HttpResponse httpResponse)
+            {
+                activity.SetTag("responseType", httpResponse.ContentType);
+            }
+        }
+    })
     .Build();
 ```
+
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any activity.
+The `Enrich` option is specific to this instrumentation, and is provided to
+get access to `HttpRequest` and `HttpResponse`.
 
 ## References
 
