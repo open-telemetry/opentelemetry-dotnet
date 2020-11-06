@@ -20,7 +20,7 @@ using System.Threading;
 
 namespace OpenTelemetry.Instrumentation
 {
-    public class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
+    internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
         private readonly Func<string, ListenerHandler> handlerFactory;
         private readonly Func<DiagnosticListener, bool> diagnosticSourceFilter;

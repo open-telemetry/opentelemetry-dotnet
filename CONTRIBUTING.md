@@ -10,8 +10,8 @@ for a summary description of past meetings. To request edit access, join the
 meeting or get in touch on
 [Gitter](https://gitter.im/open-telemetry/opentelemetry-dotnet).
 
-Even though, anybody can contribute, there are benefits of being a member of
-our community. See to the [community membership
+Even though, anybody can contribute, there are benefits of being a member of our
+community. See to the [community membership
 document](https://github.com/open-telemetry/community/blob/master/community-membership.md)
 on how to become a
 [**Member**](https://github.com/open-telemetry/community/blob/master/community-membership.md#member),
@@ -59,12 +59,42 @@ of Windows.
 * Visual Studio 2017+ or Visual Studio Code
 * .NET Framework 4.6+
 
+### Public API
+
+It is critical to keep public API surface small and clean. This repository is
+using `Microsoft.CodeAnalysis.PublicApiAnalyzers` to validate the public APIs.
+This analyzer will check if you changed a public property/method so the change
+will be easily spotted in pull request. It will also ensure that OpenTelemetry
+doesn't expose APIs outside of the library primary concerns like a generic
+helper methods.
+
+#### How to enable and configure
+
+* Create a folder in your project called `.publicApi` with the frameworks that
+  as folders you target.
+* Create two files called `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`
+   in each framework that you target.
+* Add the following lines to your csproj:
+
+```xml
+<ItemGroup>
+  <AdditionalFiles
+Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
+  <AdditionalFiles
+Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
+</ItemGroup>
+```
+
+* Use
+   [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
+   to update the publicApi files.
+
 ## Pull Requests
 
 ### How to Send Pull Requests
 
-Everyone is welcome to contribute code to `opentelemetry-dotnet` via GitHub
-pull requests (PRs).
+Everyone is welcome to contribute code to `opentelemetry-dotnet` via GitHub pull
+requests (PRs).
 
 To create a new PR, fork the project in GitHub and clone the upstream repo:
 

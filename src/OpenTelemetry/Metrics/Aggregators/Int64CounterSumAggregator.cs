@@ -32,6 +32,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         public override void Checkpoint()
         {
             // checkpoints the current running sum into checkpoint, and starts counting again.
+            base.Checkpoint();
             this.checkPoint = Interlocked.Exchange(ref this.sum, 0);
         }
 
@@ -40,8 +41,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new Int64SumData
             {
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkPoint,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

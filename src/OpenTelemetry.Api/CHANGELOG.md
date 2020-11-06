@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.8.0-beta.1
+
+Released 2020-Nov-5
+
 * Removed `IsValid` property from `Status`
   ([#1415](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1415))
 * Removed `IsOk` property from `Status` and fixed `StatusCode` enum values
@@ -17,6 +21,8 @@
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 * Added GlobalPropagators API via Propagators.DefaultTextMapPropagator.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Changed SpanAttributeConstants from public to internal
+  ([#1457](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1457))
 
 ## 0.7.0-beta.1
 

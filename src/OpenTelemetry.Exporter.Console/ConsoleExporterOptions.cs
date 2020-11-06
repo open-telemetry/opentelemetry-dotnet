@@ -18,5 +18,9 @@ namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
     {
+        /// <summary>
+        /// Gets or sets the output targets for the console exporter.
+        /// </summary>
+        public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
     }
 }

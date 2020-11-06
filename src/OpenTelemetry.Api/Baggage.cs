@@ -103,6 +103,7 @@ namespace OpenTelemetry
         /// </summary>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>Baggage key/value pairs.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static IReadOnlyDictionary<string, string> GetBaggage(Baggage baggage = default)
             => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
 
@@ -120,6 +121,7 @@ namespace OpenTelemetry
         /// <param name="name">Baggage item name.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static string GetBaggage(string name, Baggage baggage = default)
             => baggage == default ? Current.GetBaggage(name) : baggage.GetBaggage(name);
 
@@ -130,6 +132,7 @@ namespace OpenTelemetry
         /// <param name="value">Baggage item value.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static Baggage SetBaggage(string name, string value, Baggage baggage = default)
             => baggage == default ? Current.SetBaggage(name, value) : baggage.SetBaggage(name, value);
 
@@ -139,6 +142,7 @@ namespace OpenTelemetry
         /// <param name="baggageItems">Baggage key/value pairs.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems, Baggage baggage = default)
            => baggage == default ? Current.SetBaggage(baggageItems) : baggage.SetBaggage(baggageItems);
 
