@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
 
             foreach (var processor in processors)
             {
-                processor.SetTracerProvider(this);
+                processor.ParentProvider = this;
 
                 this.AddProcessor(processor);
             }

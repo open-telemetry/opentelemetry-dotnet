@@ -130,9 +130,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         /// <inheritdoc/>
-        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
+        protected override void OnParentProviderSet()
         {
-            this.SetResource(tracerProvider.GetResource());
+            this.SetResource(this.ParentProvider.GetResource());
         }
     }
 }

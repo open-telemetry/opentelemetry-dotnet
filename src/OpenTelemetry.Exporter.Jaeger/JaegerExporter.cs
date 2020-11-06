@@ -199,9 +199,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         }
 
         /// <inheritdoc/>
-        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
+        protected override void OnParentProviderSet()
         {
-            this.SetResource(tracerProvider.GetResource());
+            this.SetResource(this.ParentProvider.GetResource());
         }
 
         private void SendCurrentBatches(Batch workingBatch)

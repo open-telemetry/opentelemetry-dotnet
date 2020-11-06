@@ -17,7 +17,6 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
@@ -28,6 +27,20 @@ namespace OpenTelemetry
     public abstract class BaseProcessor<T> : IDisposable
     {
         private int shutdownCount;
+        private BaseProvider parentProvider;
+
+        /// <summary>
+        /// Gets the parent <see cref="BaseProvider"/>.
+        /// </summary>
+        public BaseProvider ParentProvider
+        {
+            get => this.parentProvider;
+            internal set
+            {
+                this.parentProvider = value;
+                this.OnParentProviderSet();
+            }
+        }
 
         /// <summary>
         /// Called synchronously when a telemetry object is started.
@@ -143,14 +156,6 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Set the parent <see cref="TracerProvider"/>.
-        /// </summary>
-        /// <param name="tracerProvider"><see cref="TracerProvider"/>.</param>
-        internal virtual void SetTracerProvider(TracerProvider tracerProvider)
-        {
-        }
-
-        /// <summary>
         /// Called by <c>ForceFlush</c>. This function should block the current
         /// thread until flush completed, shutdown signaled or timed out.
         /// </summary>
@@ -201,6 +206,13 @@ namespace OpenTelemetry
         /// <see langword="false"/> to release only unmanaged resources.
         /// </param>
         protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        /// <summary>
+        /// Called when the parent <see cref="BaseProvider"/> is set.
+        /// </summary>
+        protected virtual void OnParentProviderSet()
         {
         }
     }

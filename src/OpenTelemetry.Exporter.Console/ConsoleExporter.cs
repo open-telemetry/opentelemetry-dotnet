@@ -21,7 +21,6 @@ using System.Linq;
 using OpenTelemetry.Logs;
 #endif
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -29,7 +28,6 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ConsoleExporterOptions options;
-        private TracerProvider tracerProvider;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
@@ -100,7 +98,7 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
-                    var resource = this.tracerProvider?.GetResource() ?? Resource.Empty;
+                    var resource = this.ParentProvider.GetResource();
                     if (resource != Resource.Empty)
                     {
                         this.WriteLine("Resource associated with Activity:");
@@ -139,11 +137,6 @@ namespace OpenTelemetry.Exporter
 #endif
 
             return ExportResult.Success;
-        }
-
-        protected override void OnTracerProviderSet(TracerProvider tracerProvider)
-        {
-            this.tracerProvider = tracerProvider;
         }
 
         private void WriteLine(string message)

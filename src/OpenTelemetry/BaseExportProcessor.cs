@@ -16,7 +16,6 @@
 
 using System;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
@@ -48,9 +47,9 @@ namespace OpenTelemetry
         public abstract override void OnEnd(T data);
 
         /// <inheritdoc />
-        internal override void SetTracerProvider(TracerProvider tracerProvider)
+        protected override void OnParentProviderSet()
         {
-            this.exporter.SetTracerProvider(tracerProvider);
+            this.exporter.ParentProvider = this.ParentProvider;
         }
 
         /// <inheritdoc />

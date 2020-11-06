@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,16 +41,6 @@ namespace OpenTelemetry.Trace
             }
 
             return trait.AddProcessor(processor);
-        }
-
-        public static Resource GetResource(this TracerProvider tracerProvider)
-        {
-            if (tracerProvider is TracerProviderSdk tracerProviderSdk)
-            {
-                return tracerProviderSdk.Resource;
-            }
-
-            return Resource.Empty;
         }
     }
 }

@@ -17,7 +17,6 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
@@ -45,6 +44,20 @@ namespace OpenTelemetry
         where T : class
     {
         private int shutdownCount;
+        private BaseProvider parentProvider;
+
+        /// <summary>
+        /// Gets the parent <see cref="BaseProvider"/>.
+        /// </summary>
+        public BaseProvider ParentProvider
+        {
+            get => this.parentProvider;
+            internal set
+            {
+                this.parentProvider = value;
+                this.OnParentProviderSet();
+            }
+        }
 
         /// <summary>
         /// Exports a batch of telemetry objects.
@@ -101,11 +114,6 @@ namespace OpenTelemetry
             GC.SuppressFinalize(this);
         }
 
-        internal void SetTracerProvider(TracerProvider tracerProvider)
-        {
-            this.OnTracerProviderSet(tracerProvider);
-        }
-
         /// <summary>
         /// Called by <c>Shutdown</c>. This function should block the current
         /// thread until shutdown completed or timed out.
@@ -140,10 +148,9 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Called when the parent <see cref="TracerProvider"/> is set on the exporter.
+        /// Called when the parent <see cref="BaseProvider"/> is set.
         /// </summary>
-        /// <param name="tracerProvider"><see cref="TracerProvider"/>.</param>
-        protected virtual void OnTracerProviderSet(TracerProvider tracerProvider)
+        protected virtual void OnParentProviderSet()
         {
         }
     }
