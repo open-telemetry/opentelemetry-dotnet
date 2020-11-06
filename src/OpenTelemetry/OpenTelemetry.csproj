@@ -7,14 +7,6 @@
     -->
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include=".publicApi\net461\PublicAPI.Shipped.txt" />
-    <Content Include=".publicApi\net461\PublicAPI.Unshipped.txt" />
-    <Content Include=".publicApi\net46\PublicAPI.Shipped.txt" />
-    <Content Include=".publicApi\net46\PublicAPI.Unshipped.txt" />
-    <Content Include=".publicApi\netstandard2.0\PublicAPI.Shipped.txt" />
-    <Content Include=".publicApi\netstandard2.0\PublicAPI.Unshipped.txt" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePkgVer)" />

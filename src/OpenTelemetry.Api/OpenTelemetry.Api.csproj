@@ -4,10 +4,6 @@
     <Description>OpenTelemetry .NET API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include=".publicApi\netstandard2.0\PublicAPI.Shipped.txt" />
-    <Content Include=".publicApi\netstandard2.0\PublicAPI.Unshipped.txt" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />

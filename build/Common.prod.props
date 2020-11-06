@@ -61,8 +61,8 @@
 
   <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
+    <AdditionalFiles Include=".publicApi\*\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include=".publicApi\*\PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
 </Project>
