@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add context propagation, when SuppressDownstreamInstrumentation
+  is enabled.
+  [#1464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1464)
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5
