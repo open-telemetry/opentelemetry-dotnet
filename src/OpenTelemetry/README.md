@@ -109,7 +109,8 @@ which specifies the log file size in
 `LogLevel` is the lowest level of the events to be captured.
 It has to be one of the
 [values](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel#fields)
-of the `EventLevel` enum.
+of the [`EventLevel`
+enum](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel).
 (The level signifies the severity of an event. Lower severity levels encompass
 higher severity levels. For example, `Warning` includes the `Error` and
 `Critical` levels, which are higher in severity. See
