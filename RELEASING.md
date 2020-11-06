@@ -17,7 +17,7 @@ Only for Maintainers.
     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
     foreach ($changelog in $changelogs)
     {
-     Add-Content -Path .\combinedchangelog.md $changelog.Directory.Name
+     Add-Content -Path .\combinedchangelog.md "**$changelog.Directory.Name**"
      $lines = Get-Content -Path $changelog.FullName
      $started = $false
      $ended = $false
@@ -44,6 +44,8 @@ Only for Maintainers.
 ```
 
    This generates combined changelog to be used in Github release.
+   Once contents of combined changelog is saved to Github release,
+   delete the file.
 
 3.Run the following PowerShell script from the root of the repo.
    This updates all the changelog to have release date for the
@@ -53,14 +55,14 @@ Only for Maintainers.
    ".1"
 
 ```powershell
-    $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
+     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
     foreach ($changelog in $changelogs)
     {
      (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
 
 ## 0.7.0-beta.1
 
-Released 2020-Oct-16" | Set-Content -Path $changelog.FullName
+Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
     }
 ```
 
@@ -79,14 +81,16 @@ Released 2020-Oct-16" | Set-Content -Path $changelog.FullName
 
 8.Copy all the NuGet files and symbols into a local folder.
 
-9.Download latest [nuget.exe](https://www.nuget.org/downloads).
+9.Download latest [nuget.exe](https://www.nuget.org/downloads) into
+  the same folder from step 8.
 
 10.Obtain the API key from nuget.org (Only maintainers have access)
 
-11.Run the following command from PowerShell from local folder used in step 8:
+11.Run the following commands from PowerShell from local folder used in step 8:
 
    ```powershell
    .\nuget.exe setApiKey <actual api key>
+
    get-childitem -Recurse | where {$_.extension -eq
    ".nupkg"} | foreach ($_) {.\nuget.exe push $_.fullname -Source
    https://api.nuget.org/v3/index.json}

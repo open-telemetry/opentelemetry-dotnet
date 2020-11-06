@@ -1,4 +1,4 @@
-// <copyright file="ActivityTraceIdConverter.cs" company="OpenTelemetry Authors">
+// <copyright file="NoopTextMapPropagator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,23 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Context.Propagation
 {
-    internal class ActivityTraceIdConverter : JsonConverter<ActivityTraceId>
+    internal class NoopTextMapPropagator : TextMapPropagator
     {
-        public override ActivityTraceId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        private static readonly PropagationContext DefaultPropagationContext = default;
+
+        public override ISet<string> Fields => null;
+
+        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            throw new NotImplementedException();
+            return DefaultPropagationContext;
         }
 
-        public override void Write(Utf8JsonWriter writer, ActivityTraceId value, JsonSerializerOptions options)
+        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            writer.WriteStringValue(value.ToString());
         }
     }
 }

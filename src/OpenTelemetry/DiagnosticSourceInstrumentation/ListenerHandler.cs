@@ -20,7 +20,7 @@ namespace OpenTelemetry.Instrumentation
     /// <summary>
     /// ListenerHandler base class.
     /// </summary>
-    public abstract class ListenerHandler
+    internal abstract class ListenerHandler
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ListenerHandler"/> class.
