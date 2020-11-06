@@ -88,6 +88,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
                 Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
                 Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.NotNull(activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
             }
             else
             {
