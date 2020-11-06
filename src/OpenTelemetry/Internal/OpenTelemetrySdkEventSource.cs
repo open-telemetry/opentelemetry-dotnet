@@ -107,6 +107,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -249,6 +258,12 @@ namespace OpenTelemetry.Internal
         public void ActivityStopped(string operationName, string id)
         {
             this.WriteEvent(25, operationName, id);
+        }
+
+        [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
+        public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
+        {
+            this.WriteEvent(26, logDirectory, exception);
         }
 
 #if DEBUG

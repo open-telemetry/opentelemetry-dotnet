@@ -54,19 +54,127 @@ the `ConfigureServices` of your `Startup` class. Refer to documentation for
 For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
 
-**`AddHttpClientInstrumentation` vs. `AddHttpWebRequestInstrumentation`**
-For .NET Framework, `AddHttpWebRequestInstrumentation` can be used to only add
-instrumentation for `HttpWebRequest`. Using `AddHttpClientInstrumentation` in a
-.NET Framework application will add instrumentation for both `HttpClient` and
-`HttpWebRequest`.
-
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
 `HttpClientInstrumentationOptions` and
 `HttpWebRequestioninstrumentationOptions`.
 
-TODO - describe options
+### SetHttpFlavor
+
+By default, this instrumentation does not add the `http.flavor` attribute. The
+`http.flavor` attribute specifies the kind of HTTP protocol used
+(e.g., `1.1` for HTTP 1.1). The `SetHttpFlavor` option can be used to include
+the `http.flavor` attribute.
+
+The following example shows how to use `SetHttpFlavor`.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddHttpClientInstrumentation(
+        options => options.SetHttpFlavor = true)
+    .AddConsoleExporter()
+    .Build();
+```
+
+### Filter
+
+This instrumentation by default collects all the outgoing HTTP requests. It
+allows filtering of requests by using the `Filter` function option.
+This can be used to filter out any requests based on some condition. The Filter
+receives the request object - `HttpRequestMessage` for .NET Core and
+`HttpWebRequest` for .NET Framework - of the outgoing request and filters out
+the request if the Filter returns false or throws an exception.
+
+The following shows an example of `Filter` being used to filter out all POST
+requests.
+
+```csharp
+using Sdk.CreateTracerProviderBuilder()
+    .AddHttpClientInstrumentation(
+        options => options.Filter =
+            httpRequestMessage =>
+            {
+                // filter out all HTTP POST requests.
+                return httpRequestMessage.Method != HttpMethod.Post;
+            })
+    .AddConsoleExporter()
+    .Build();
+```
+
+It is important to note that this `Filter` option is specific to this
+instrumentation. OpenTelemetry has a concept of a
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
+and the `Filter` option does the filtering *before* the Sampler is invoked.
+
+### Enrich
+
+This option allows one to enrich the activity with additional information
+from the raw request and response objects. The `Enrich` action is
+called only when `activity.IsAllDataRequested` is `true`. It contains the
+activity itself (which can be enriched), the name of the event, and the
+actual raw object.
+
+#### HttpClient instrumentation
+
+For event name "OnStartActivity", the actual object will be
+`HttpRequestMessage`.
+
+For event name "OnStopActivity", the actual object will be
+`HttpResponseMessage`.
+
+For event name "OnException", the actual object will be
+`Exception`.
+
+#### HttpWebRequest instrumentation
+
+For event name "OnStartActivity", the actual object will be
+`HttpWebRequest`.
+
+For event name "OnStopActivity", the actual object will be
+`HttpWebResponse`.
+
+For event name "OnException", the actual object will be
+`Exception`.
+
+The following code snippet shows how to add additional tags using `Enrich`.
+
+```csharp
+services.AddOpenTelemetryTracing((builder) =>
+{
+    builder
+    .AddHttpClientInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
+    {
+        if (eventName.Equals("OnStartActivity"))
+        {
+            if (rawObject is HttpRequestMessage request)
+            {
+                activity.SetTag("requestVersion", request.Version);
+            }
+        }
+        else if (eventName.Equals("OnStopActivity"))
+        {
+            if (rawObject is HttpResponseMessage response)
+            {
+                activity.SetTag("responseVersion", response.Version);
+            }
+        }
+        else if (eventName.Equals("OnException"))
+        {
+            if (rawObject is Exception exception)
+            {
+                activity.SetTag("stackTrace", exception.StackTrace);
+            }
+        }
+    })
+});
+```
+
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any
+activity. The `Enrich` option is specific to this instrumentation, and is
+provided to get access to raw request, response, and exception objects.
 
 ## References
 
