@@ -1,0 +1,266 @@
+Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions
+OpenTelemetry.BaseExportProcessor<T>
+OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
+OpenTelemetry.BaseExporter<T>
+OpenTelemetry.BaseExporter<T>.BaseExporter() -> void
+OpenTelemetry.BaseExporter<T>.Dispose() -> void
+OpenTelemetry.BaseExporter<T>.Shutdown(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.BaseProcessor<T>
+OpenTelemetry.BaseProcessor<T>.BaseProcessor() -> void
+OpenTelemetry.BaseProcessor<T>.Dispose() -> void
+OpenTelemetry.BaseProcessor<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.BaseProcessor<T>.Shutdown(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.Batch<T>
+OpenTelemetry.Batch<T>.Batch() -> void
+OpenTelemetry.Batch<T>.Enumerator
+OpenTelemetry.Batch<T>.Enumerator.Current.get -> T
+OpenTelemetry.Batch<T>.Enumerator.Dispose() -> void
+OpenTelemetry.Batch<T>.Enumerator.Enumerator() -> void
+OpenTelemetry.Batch<T>.Enumerator.MoveNext() -> bool
+OpenTelemetry.Batch<T>.Enumerator.Reset() -> void
+OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
+OpenTelemetry.BatchExportProcessor<T>
+OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
+OpenTelemetry.CompositeProcessor<T>
+OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
+OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
+OpenTelemetry.ExportResult
+OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
+OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult
+OpenTelemetry.Logs.LogRecord
+OpenTelemetry.Logs.LogRecord.CategoryName.get -> string
+OpenTelemetry.Logs.LogRecord.EventId.get -> Microsoft.Extensions.Logging.EventId
+OpenTelemetry.Logs.LogRecord.Exception.get -> System.Exception
+OpenTelemetry.Logs.LogRecord.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.Logs.LogRecord.SpanId.get -> System.Diagnostics.ActivitySpanId
+OpenTelemetry.Logs.LogRecord.State.get -> object
+OpenTelemetry.Logs.LogRecord.Timestamp.get -> System.DateTime
+OpenTelemetry.Logs.LogRecord.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
+OpenTelemetry.Logs.LogRecord.TraceId.get -> System.Diagnostics.ActivityTraceId
+OpenTelemetry.Logs.LogRecord.TraceState.get -> string
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord> processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.OpenTelemetryLoggerOptions() -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateLogger(string categoryName) -> Microsoft.Extensions.Logging.ILogger
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.Dispose() -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Microsoft.Extensions.Options.IOptionsMonitor<OpenTelemetry.Logs.OpenTelemetryLoggerOptions> options) -> void
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Aggregator() -> void
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastEndTimestamp() -> System.DateTimeOffset
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastStartTimestamp() -> System.DateTimeOffset
+OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator
+OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.DoubleCounterSumAggregator() -> void
+OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator
+OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator.DoubleLastValueAggregator() -> void
+OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator
+OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator.DoubleMeasureMinMaxSumCountAggregator() -> void
+OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator
+OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator.Int64CounterSumAggregator() -> void
+OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator
+OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator.Int64LastValueAggregator() -> void
+OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator
+OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Int64MeasureMinMaxSumCountAggregator() -> void
+OpenTelemetry.Metrics.BoundCounterMetricSdkBase<T>
+OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.AggregationType.DoubleSum = 0 -> OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.AggregationType.DoubleSummary = 2 -> OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.AggregationType.Int64Summary = 3 -> OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.AggregationType.LongSum = 1 -> OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.DoubleSumData
+OpenTelemetry.Metrics.Export.DoubleSumData.DoubleSumData() -> void
+OpenTelemetry.Metrics.Export.DoubleSumData.Sum.get -> double
+OpenTelemetry.Metrics.Export.DoubleSumData.Sum.set -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Count.get -> long
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Count.set -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData.DoubleSummaryData() -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Max.get -> double
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Max.set -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Min.get -> double
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Min.set -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Sum.get -> double
+OpenTelemetry.Metrics.Export.DoubleSummaryData.Sum.set -> void
+OpenTelemetry.Metrics.Export.Int64SumData
+OpenTelemetry.Metrics.Export.Int64SumData.Int64SumData() -> void
+OpenTelemetry.Metrics.Export.Int64SumData.Sum.get -> long
+OpenTelemetry.Metrics.Export.Int64SumData.Sum.set -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData
+OpenTelemetry.Metrics.Export.Int64SummaryData.Count.get -> long
+OpenTelemetry.Metrics.Export.Int64SummaryData.Count.set -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData.Int64SummaryData() -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData.Max.get -> long
+OpenTelemetry.Metrics.Export.Int64SummaryData.Max.set -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData.Min.get -> long
+OpenTelemetry.Metrics.Export.Int64SummaryData.Min.set -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData.Sum.get -> long
+OpenTelemetry.Metrics.Export.Int64SummaryData.Sum.set -> void
+OpenTelemetry.Metrics.Export.Metric
+OpenTelemetry.Metrics.Export.Metric.AggregationType.get -> OpenTelemetry.Metrics.Export.AggregationType
+OpenTelemetry.Metrics.Export.Metric.Data.get -> System.Collections.Generic.List<OpenTelemetry.Metrics.Export.MetricData>
+OpenTelemetry.Metrics.Export.Metric.Metric(string metricNamespace, string metricName, string desc, OpenTelemetry.Metrics.Export.AggregationType type) -> void
+OpenTelemetry.Metrics.Export.Metric.MetricDescription.get -> string
+OpenTelemetry.Metrics.Export.Metric.MetricName.get -> string
+OpenTelemetry.Metrics.Export.Metric.MetricNamespace.get -> string
+OpenTelemetry.Metrics.Export.MetricData
+OpenTelemetry.Metrics.Export.MetricData.Labels.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
+OpenTelemetry.Metrics.Export.MetricData.Labels.set -> void
+OpenTelemetry.Metrics.Export.MetricData.MetricData() -> void
+OpenTelemetry.Metrics.Export.MetricData.StartTimestamp.get -> System.DateTime
+OpenTelemetry.Metrics.Export.MetricData.StartTimestamp.set -> void
+OpenTelemetry.Metrics.Export.MetricData.Timestamp.get -> System.DateTime
+OpenTelemetry.Metrics.Export.MetricData.Timestamp.set -> void
+OpenTelemetry.Metrics.Export.MetricExporter
+OpenTelemetry.Metrics.Export.MetricExporter.ExportResult
+OpenTelemetry.Metrics.Export.MetricExporter.ExportResult.FailedNotRetryable = 1 -> OpenTelemetry.Metrics.Export.MetricExporter.ExportResult
+OpenTelemetry.Metrics.Export.MetricExporter.ExportResult.FailedRetryable = 2 -> OpenTelemetry.Metrics.Export.MetricExporter.ExportResult
+OpenTelemetry.Metrics.Export.MetricExporter.ExportResult.Success = 0 -> OpenTelemetry.Metrics.Export.MetricExporter.ExportResult
+OpenTelemetry.Metrics.Export.MetricExporter.MetricExporter() -> void
+OpenTelemetry.Metrics.Export.MetricProcessor
+OpenTelemetry.Metrics.Export.MetricProcessor.MetricProcessor() -> void
+OpenTelemetry.Metrics.Export.UngroupedBatcher
+OpenTelemetry.Metrics.Export.UngroupedBatcher.UngroupedBatcher() -> void
+OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProviderBuilder.Build() -> OpenTelemetry.Metrics.MeterProvider
+OpenTelemetry.Metrics.MeterProviderBuilder.SetExporter(OpenTelemetry.Metrics.Export.MetricExporter exporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProviderBuilder.SetProcessor(OpenTelemetry.Metrics.Export.MetricProcessor processor) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProviderBuilder.SetPushInterval(System.TimeSpan pushInterval) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.ReentrantExportProcessor<T>
+OpenTelemetry.ReentrantExportProcessor<T>.ReentrantExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
+OpenTelemetry.Resources.Resource
+OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
+OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
+OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
+OpenTelemetry.Resources.Resources
+OpenTelemetry.Sdk
+OpenTelemetry.SimpleExportProcessor<T>
+OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
+OpenTelemetry.SuppressInstrumentationScope
+OpenTelemetry.SuppressInstrumentationScope.Dispose() -> void
+OpenTelemetry.Trace.ActivityExtensions
+OpenTelemetry.Trace.AlwaysOffSampler
+OpenTelemetry.Trace.AlwaysOffSampler.AlwaysOffSampler() -> void
+OpenTelemetry.Trace.AlwaysOnSampler
+OpenTelemetry.Trace.AlwaysOnSampler.AlwaysOnSampler() -> void
+OpenTelemetry.Trace.ParentBasedSampler
+OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler) -> void
+OpenTelemetry.Trace.Sampler
+OpenTelemetry.Trace.Sampler.Description.get -> string
+OpenTelemetry.Trace.Sampler.Description.set -> void
+OpenTelemetry.Trace.Sampler.Sampler() -> void
+OpenTelemetry.Trace.SamplingDecision
+OpenTelemetry.Trace.SamplingDecision.Drop = 0 -> OpenTelemetry.Trace.SamplingDecision
+OpenTelemetry.Trace.SamplingDecision.RecordAndSample = 2 -> OpenTelemetry.Trace.SamplingDecision
+OpenTelemetry.Trace.SamplingDecision.RecordOnly = 1 -> OpenTelemetry.Trace.SamplingDecision
+OpenTelemetry.Trace.SamplingParameters
+OpenTelemetry.Trace.SamplingParameters.Kind.get -> System.Diagnostics.ActivityKind
+OpenTelemetry.Trace.SamplingParameters.Links.get -> System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink>
+OpenTelemetry.Trace.SamplingParameters.Name.get -> string
+OpenTelemetry.Trace.SamplingParameters.ParentContext.get -> System.Diagnostics.ActivityContext
+OpenTelemetry.Trace.SamplingParameters.SamplingParameters() -> void
+OpenTelemetry.Trace.SamplingParameters.SamplingParameters(System.Diagnostics.ActivityContext parentContext, System.Diagnostics.ActivityTraceId traceId, string name, System.Diagnostics.ActivityKind kind, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> tags = null, System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink> links = null) -> void
+OpenTelemetry.Trace.SamplingParameters.Tags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
+OpenTelemetry.Trace.SamplingParameters.TraceId.get -> System.Diagnostics.ActivityTraceId
+OpenTelemetry.Trace.SamplingResult
+OpenTelemetry.Trace.SamplingResult.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
+OpenTelemetry.Trace.SamplingResult.Decision.get -> OpenTelemetry.Trace.SamplingDecision
+OpenTelemetry.Trace.SamplingResult.Equals(OpenTelemetry.Trace.SamplingResult other) -> bool
+OpenTelemetry.Trace.SamplingResult.SamplingResult() -> void
+OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision) -> void
+OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
+OpenTelemetry.Trace.SamplingResult.SamplingResult(bool isSampled) -> void
+OpenTelemetry.Trace.TraceIdRatioBasedSampler
+OpenTelemetry.Trace.TraceIdRatioBasedSampler.TraceIdRatioBasedSampler(double probability) -> void
+OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.AddProcessor(OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.Build() -> OpenTelemetry.Trace.TracerProvider
+OpenTelemetry.Trace.TracerProviderBuilder.SetResource(OpenTelemetry.Resources.Resource resource) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.SetSampler(OpenTelemetry.Trace.Sampler sampler) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderExtensions
+abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
+abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Update(T value) -> void
+abstract OpenTelemetry.Metrics.BoundCounterMetricSdkBase<T>.GetAggregator() -> OpenTelemetry.Metrics.Aggregators.Aggregator<T>
+abstract OpenTelemetry.Metrics.Export.MetricExporter.ExportAsync(System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<OpenTelemetry.Metrics.Export.MetricExporter.ExportResult>
+abstract OpenTelemetry.Metrics.Export.MetricProcessor.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
+abstract OpenTelemetry.Metrics.Export.MetricProcessor.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
+abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+const OpenTelemetry.Resources.Resource.LibraryNameKey = "name" -> string
+const OpenTelemetry.Resources.Resource.LibraryVersionKey = "version" -> string
+const OpenTelemetry.Resources.Resource.ServiceInstanceIdKey = "service.instance.id" -> string
+const OpenTelemetry.Resources.Resource.ServiceNameKey = "service.name" -> string
+const OpenTelemetry.Resources.Resource.ServiceNamespaceKey = "service.namespace" -> string
+const OpenTelemetry.Resources.Resource.ServiceVersionKey = "service.version" -> string
+override OpenTelemetry.BaseExportProcessor<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.BatchExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.BatchExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
+override OpenTelemetry.BatchExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.CompositeProcessor<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.CompositeProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.CompositeProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
+override OpenTelemetry.CompositeProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.CompositeProcessor<T>.OnStart(T data) -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.Update(double value) -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator.Update(double newValue) -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.DoubleMeasureMinMaxSumCountAggregator.Update(double value) -> void
+override OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.Int64CounterSumAggregator.Update(long value) -> void
+override OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.Int64LastValueAggregator.Update(long newValue) -> void
+override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Checkpoint() -> void
+override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
+override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
+override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Update(long value) -> void
+override OpenTelemetry.Metrics.Export.UngroupedBatcher.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
+override OpenTelemetry.Metrics.Export.UngroupedBatcher.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
+override OpenTelemetry.ReentrantExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.SimpleExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override OpenTelemetry.Trace.ParentBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
+override OpenTelemetry.Trace.SamplingResult.GetHashCode() -> int
+override OpenTelemetry.Trace.TraceIdRatioBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override abstract OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
+override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
+readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions> configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder
+static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.Resources.Resources.CreateServiceResource(string serviceName, string serviceInstanceId = null, string serviceNamespace = null, string serviceVersion = null) -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void
+static OpenTelemetry.Sdk.SuppressInstrumentation.get -> bool
+static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
+static OpenTelemetry.SuppressInstrumentationScope.Enter() -> int
+static OpenTelemetry.Trace.ActivityExtensions.GetResource(this System.Diagnostics.Activity activity) -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.Trace.ActivityExtensions.SetResource(this System.Diagnostics.Activity activity, OpenTelemetry.Resources.Resource resource) -> void
+static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
+static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
+static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider
+virtual OpenTelemetry.BaseExporter<T>.Dispose(bool disposing) -> void
+virtual OpenTelemetry.BaseExporter<T>.OnShutdown(int timeoutMilliseconds) -> bool
+virtual OpenTelemetry.BaseProcessor<T>.Dispose(bool disposing) -> void
+virtual OpenTelemetry.BaseProcessor<T>.OnEnd(T data) -> void
+virtual OpenTelemetry.BaseProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
+virtual OpenTelemetry.BaseProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
+virtual OpenTelemetry.Logs.OpenTelemetryLoggerProvider.Dispose(bool disposing) -> void
+virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Checkpoint() -> void

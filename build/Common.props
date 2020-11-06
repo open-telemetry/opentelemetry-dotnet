@@ -28,7 +28,7 @@
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
     <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
-    <MicrosoftCodeAnalysisFxCopAnalyzersPkgVer>[3.3.0]</MicrosoftCodeAnalysisFxCopAnalyzersPkgVer>
+    <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.7.1]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,5.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
@@ -56,7 +56,7 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" Condition="'$(Configuration)'=='Release'"/>
-    <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisFxCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
+    <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>-->
   </ItemGroup>
