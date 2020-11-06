@@ -69,6 +69,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 // Grpc.Net.Client rather than the span generated natively by
                 // HttpClient. Injecting here also ensures that baggage is
                 // propagated to downstream services.
+                // Injecting context here also ensures that the configured
+                // propagator is used, as HttpClient by itself will only
+                // do TraceContext propagation.
                 var textMapPropagator = Propagators.DefaultTextMapPropagator;
                 textMapPropagator.Inject(
                     new PropagationContext(activity.Context, Baggage.Current),
