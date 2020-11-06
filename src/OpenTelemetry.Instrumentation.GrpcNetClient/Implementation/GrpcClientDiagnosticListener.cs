@@ -126,6 +126,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+                // Remove the grpc.status_code tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
             }
 
             this.activitySource.Stop(activity);

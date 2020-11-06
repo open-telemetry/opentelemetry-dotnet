@@ -43,6 +43,8 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
             var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
             if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))
             {
+                // setting rpc.grpc.status_code
+                activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, statusCode);
                 status = ResolveSpanStatusForGrpcStatusCode(statusCode);
             }
 

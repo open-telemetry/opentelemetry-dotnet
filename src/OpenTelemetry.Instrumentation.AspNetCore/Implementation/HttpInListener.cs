@@ -313,6 +313,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
@@ -322,17 +325,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // Remove the grpc.method tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
 
-                // TODO: The grpc.status_code attribute added by the library is not currently
-                // removed because the tracing spec for span status is no longer based on
-                // gRPC status codes. Ultimately, the grpc.status_code tag should be replaced
-                // by whatever semantic convention is settled on in the RPC spec.
-                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/1345
-                // activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
+                // Remove the grpc.status_code tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
             }
-
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
-            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
         }
 #endif
     }
