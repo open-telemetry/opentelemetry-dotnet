@@ -31,12 +31,16 @@ Grpc.Net.Client instrumentation must be enabled at application startup.
 
 The following example demonstrates adding Grpc.Net.Client instrumentation to a
 console application. This example also sets up the OpenTelemetry Console
-exporter and adds instrumentation for HttpClient, which requires adding the packages
+exporter and adds instrumentation for HttpClient, which requires adding the
+packages
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 and
 [`OpenTelemetry.Instrumentation.Http`](../OpenTelemetry.Instrumentation.Http/README.md)
-to the application. Grpc.Net.Client uses HttpClient, so this example would
-produce an activity for both a gRPC call and its underlying HTTP call.
+to the application. As Grpc.Net.Client uses HttpClient underneath, it is
+recommended to enable HttpClient instrumentation as well to ensure proper
+context propagation. This would cause an activity being produced for both a gRPC
+call and its underlying HTTP call. This behavior can be
+[configured](#suppressdownstreaminstrumentation).
 
 ```csharp
 using OpenTelemetry.Trace;
@@ -67,12 +71,11 @@ This instrumentation can be configured to change the default behavior by using
 
 This option prevents downstream instrumentation from being invoked.
 Grpc.Net.Client is built on top of HttpClient. When instrumentation for both
-libraries is enabled, `SuppressDownstreamInstrumentation` prevents
-the HttpClient instrumentation from generating an additional activity.
-Additionally, since HttpClient instrumentation is normally responsible for
-propagating context (e.g., W3C trace context and baggage), Grpc.Net.Client
-instrumentation propagates context when `SuppressDownstreamInstrumentation` is
-enabled.
+libraries is enabled, `SuppressDownstreamInstrumentation` prevents the
+HttpClient instrumentation from generating an additional activity. Additionally,
+since HttpClient instrumentation is normally responsible for propagating context
+(ActivityContext and Baggage), Grpc.Net.Client instrumentation propagates
+context when `SuppressDownstreamInstrumentation` is enabled.
 
 The following example shows how to use `SuppressDownstreamInstrumentation`.
 
