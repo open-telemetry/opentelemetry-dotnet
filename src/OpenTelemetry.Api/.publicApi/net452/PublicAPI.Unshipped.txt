@@ -308,3 +308,4 @@ virtual OpenTelemetry.Metrics.MeterFactoryBase.GetMeter(string name, string vers
 virtual OpenTelemetry.Metrics.MeterProvider.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MeterProvider.GetMeter(string name, string version = null) -> OpenTelemetry.Metrics.Meter
 virtual OpenTelemetry.Trace.TracerProvider.Dispose(bool disposing) -> void
+virtual OpenTelemetry.Trace.TracerProvider.OnShutdown(int timeoutMilliseconds) -> bool
