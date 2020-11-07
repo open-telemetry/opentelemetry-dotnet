@@ -2,14 +2,15 @@
 
 ## Unreleased
 
+* Implemented Shutdown for TracerProvider
+  ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5
 
-* TracerProviderBuilder API changes
-  Renamed AddInstrumentation to AddDiagnosticSourceInstrumentation
-  and made internal.
-  Added AddInstrumentation
+* TracerProviderBuilder API changes Renamed AddInstrumentation to
+  AddDiagnosticSourceInstrumentation and made internal. Added AddInstrumentation
   ([#1454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1454))
 
 * DiagnosticSource subscription helper classes (DiagnosticSourceSubscriber,
