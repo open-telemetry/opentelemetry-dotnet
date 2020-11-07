@@ -168,6 +168,7 @@ OpenTelemetry.Trace.Tracer.StartSpan(string name, OpenTelemetry.Trace.SpanKind k
 OpenTelemetry.Trace.TracerProvider
 OpenTelemetry.Trace.TracerProvider.Dispose() -> void
 OpenTelemetry.Trace.TracerProvider.GetTracer(string name, string version = null) -> OpenTelemetry.Trace.Tracer
+OpenTelemetry.Trace.TracerProvider.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void

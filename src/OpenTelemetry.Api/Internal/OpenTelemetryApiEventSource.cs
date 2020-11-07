@@ -56,6 +56,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void TracerProviderException(string evnt, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracerProviderException(evnt, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
@@ -125,6 +134,12 @@ namespace OpenTelemetry.Internal
         public void FailedToInjectBaggage(string format, string error)
         {
             this.WriteEvent(11, format, error);
+        }
+
+        [Event(12, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Warning)]
+        public void TracerProviderException(string evnt, string ex)
+        {
+            this.WriteEvent(12, evnt, ex);
         }
     }
 }
