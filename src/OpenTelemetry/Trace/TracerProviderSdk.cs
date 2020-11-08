@@ -46,8 +46,6 @@ namespace OpenTelemetry.Trace
 
             foreach (var processor in processors)
             {
-                processor.SetParentProvider(this);
-
                 this.AddProcessor(processor);
             }
 
@@ -173,6 +171,8 @@ namespace OpenTelemetry.Trace
             {
                 throw new ArgumentNullException(nameof(processor));
             }
+
+            processor.SetParentProvider(this);
 
             if (this.processor == null)
             {
