@@ -98,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetTracerProvider/Begin/End called
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/Begin/End called
             var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);

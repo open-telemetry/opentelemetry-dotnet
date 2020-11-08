@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 tc.ResponseExpected = false;
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // SetTracerProvider/Begin/End called
+            Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
             ValidateHttpWebRequestActivity(activity);
             Assert.Equal(tc.SpanName, activity.DisplayName);

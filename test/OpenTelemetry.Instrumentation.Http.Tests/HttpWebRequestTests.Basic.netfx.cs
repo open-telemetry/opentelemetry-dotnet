@@ -78,7 +78,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using var response = await request.GetResponseAsync();
 
-            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetTracerProvider/Begin/End called
+            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using var response = await request.GetResponseAsync();
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // SetTracerProvider/Begin/End called
+            Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 

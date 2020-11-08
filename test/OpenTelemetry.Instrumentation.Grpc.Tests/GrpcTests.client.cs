@@ -66,7 +66,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             ValidateGrpcActivity(activity);
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(7, processor.Invocations.Count); // SetTracerProvider + OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
             var httpSpan = (Activity)processor.Invocations[3].Arguments[0];
             var grpcSpan = (Activity)processor.Invocations[4].Arguments[0];
 
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 });
             }
 
-            Assert.Equal(11, processor.Invocations.Count); // SetTracerProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
+            Assert.Equal(11, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
             var grpcSpan1 = (Activity)processor.Invocations[2].Arguments[0];
             var grpcSpan2 = (Activity)processor.Invocations[4].Arguments[0];
             var grpcSpan3 = (Activity)processor.Invocations[6].Arguments[0];

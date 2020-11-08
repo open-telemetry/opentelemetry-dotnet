@@ -44,20 +44,11 @@ namespace OpenTelemetry
         where T : class
     {
         private int shutdownCount;
-        private BaseProvider parentProvider;
 
         /// <summary>
         /// Gets the parent <see cref="BaseProvider"/>.
         /// </summary>
-        public BaseProvider ParentProvider
-        {
-            get => this.parentProvider;
-            internal set
-            {
-                this.parentProvider = value;
-                this.OnParentProviderSet();
-            }
-        }
+        public BaseProvider ParentProvider { get; internal set; }
 
         /// <summary>
         /// Exports a batch of telemetry objects.
@@ -144,13 +135,6 @@ namespace OpenTelemetry
         /// <see langword="false"/> to release only unmanaged resources.
         /// </param>
         protected virtual void Dispose(bool disposing)
-        {
-        }
-
-        /// <summary>
-        /// Called when the parent <see cref="BaseProvider"/> is set.
-        /// </summary>
-        protected virtual void OnParentProviderSet()
         {
         }
     }

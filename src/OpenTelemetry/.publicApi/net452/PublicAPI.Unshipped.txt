@@ -178,7 +178,6 @@ const OpenTelemetry.Resources.Resource.ServiceNameKey = "service.name" -> string
 const OpenTelemetry.Resources.Resource.ServiceNamespaceKey = "service.namespace" -> string
 const OpenTelemetry.Resources.Resource.ServiceVersionKey = "service.version" -> string
 override OpenTelemetry.BaseExportProcessor<T>.Dispose(bool disposing) -> void
-override OpenTelemetry.BaseExportProcessor<T>.OnParentProviderSet() -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.BatchExportProcessor<T>.OnEnd(T data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
@@ -238,12 +237,10 @@ static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.Sampli
 static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider
 virtual OpenTelemetry.BaseExporter<T>.Dispose(bool disposing) -> void
-virtual OpenTelemetry.BaseExporter<T>.OnParentProviderSet() -> void
 virtual OpenTelemetry.BaseExporter<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.Dispose(bool disposing) -> void
 virtual OpenTelemetry.BaseProcessor<T>.OnEnd(T data) -> void
 virtual OpenTelemetry.BaseProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
-virtual OpenTelemetry.BaseProcessor<T>.OnParentProviderSet() -> void
 virtual OpenTelemetry.BaseProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
 virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Checkpoint() -> void

@@ -31,7 +31,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
@@ -65,6 +64,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
+            if (this.LocalEndpoint == null)
+            {
+                this.SetResource(this.ParentProvider.GetResource());
+            }
+
             // Prevent Zipkin's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
@@ -148,12 +152,6 @@ namespace OpenTelemetry.Exporter.Zipkin
                 ipv6,
                 port: null,
                 tags);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnParentProviderSet()
-        {
-            this.SetResource(this.ParentProvider.GetResource());
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)

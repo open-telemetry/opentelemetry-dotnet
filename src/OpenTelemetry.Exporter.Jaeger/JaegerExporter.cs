@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
@@ -65,6 +64,11 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
             try
             {
+                if (this.processCache == null)
+                {
+                    this.SetResource(this.ParentProvider.GetResource());
+                }
+
                 foreach (var activity in activityBatch)
                 {
                     this.AppendSpan(activity.ToJaegerSpan());
@@ -196,12 +200,6 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
 
             base.Dispose(disposing);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnParentProviderSet()
-        {
-            this.SetResource(this.ParentProvider.GetResource());
         }
 
         private void SendCurrentBatches(Batch workingBatch)

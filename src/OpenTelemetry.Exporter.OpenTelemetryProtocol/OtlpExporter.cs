@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
@@ -65,6 +64,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
+            if (this.ProcessResource == null)
+            {
+                this.SetResource(this.ParentProvider.GetResource());
+            }
+
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
@@ -127,12 +131,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
 
             return Task.WaitAny(new Task[] { this.channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
-        }
-
-        /// <inheritdoc/>
-        protected override void OnParentProviderSet()
-        {
-            this.SetResource(this.ParentProvider.GetResource());
         }
     }
 }

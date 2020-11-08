@@ -46,10 +46,11 @@ namespace OpenTelemetry
         /// <inheritdoc />
         public abstract override void OnEnd(T data);
 
-        /// <inheritdoc />
-        protected override void OnParentProviderSet()
+        internal override void SetParentProvider(BaseProvider parentProvider)
         {
-            this.exporter.ParentProvider = this.ParentProvider;
+            base.SetParentProvider(parentProvider);
+
+            this.exporter.ParentProvider = parentProvider;
         }
 
         /// <inheritdoc />

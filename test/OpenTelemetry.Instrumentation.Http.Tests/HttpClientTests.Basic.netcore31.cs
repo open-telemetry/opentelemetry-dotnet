@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -249,7 +249,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -323,7 +323,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[1].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
