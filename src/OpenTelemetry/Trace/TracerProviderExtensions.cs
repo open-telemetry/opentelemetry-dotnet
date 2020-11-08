@@ -40,6 +40,8 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException($"{nameof(provider)} is not an instance of TracerProviderSdk");
             }
 
+            processor.SetParentProvider(trait);
+
             return trait.AddProcessor(processor);
         }
     }
