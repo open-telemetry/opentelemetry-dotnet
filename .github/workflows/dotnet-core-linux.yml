@@ -20,17 +20,17 @@ jobs:
     - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 2.1.807
+        dotnet-version: 2.1.811
 
     - name: Setup .NET Core 3.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
+        dotnet-version: 3.1.403
 
-    # For linux, we have to apply a workaround to enable both dotnet versions at same time	
-    - name: .net SxS	
-      run: |	
-        rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
+    # For linux, we have to apply a workaround to enable both dotnet versions at same time
+    - name: .net SxS
+      run: |
+        rsync -a ${DOTNET_ROOT/3.1.403/2.1.811}/* $DOTNET_ROOT/
 
     - name: Install dependencies
       run: dotnet restore

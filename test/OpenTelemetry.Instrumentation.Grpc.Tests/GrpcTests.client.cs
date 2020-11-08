@@ -238,7 +238,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(8, processor.Invocations.Count); // OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
+            Assert.Equal(9, processor.Invocations.Count); // SetParentProcessor/OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
             var serverActivity = (Activity)processor.Invocations[3].Arguments[0];
             var clientActivity = (Activity)processor.Invocations[4].Arguments[0];
 
