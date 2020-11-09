@@ -109,8 +109,6 @@ OpenTelemetry.Metrics.MeterProviderBuilder.SetExporter(OpenTelemetry.Metrics.Exp
 OpenTelemetry.Metrics.MeterProviderBuilder.SetProcessor(OpenTelemetry.Metrics.Export.MetricProcessor processor) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProviderBuilder.SetPushInterval(System.TimeSpan pushInterval) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.ProviderExtensions
-OpenTelemetry.ReentrantExportProcessor<T>
-OpenTelemetry.ReentrantExportProcessor<T>.ReentrantExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
