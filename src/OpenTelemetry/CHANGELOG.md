@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Removed `GetResource` and `SetResource` `Activity` extension methods. Added
+  `GetResource` extension method on `BaseProvider`
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+* Added `ParentProvider` property on `BaseProcessor` and `BaseExporter` classes.
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+* `Resource` is no longer added to observed `Activity` objects as a
+  `CustomProperty`.
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5

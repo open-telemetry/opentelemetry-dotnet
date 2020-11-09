@@ -14,6 +14,10 @@ OpenTelemetry.Baggage.RemoveBaggage(string name) -> OpenTelemetry.Baggage
 OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> baggageItems) -> OpenTelemetry.Baggage
 OpenTelemetry.Baggage.SetBaggage(params System.Collections.Generic.KeyValuePair<string, string>[] baggageItems) -> OpenTelemetry.Baggage
 OpenTelemetry.Baggage.SetBaggage(string name, string value) -> OpenTelemetry.Baggage
+OpenTelemetry.BaseProvider
+OpenTelemetry.BaseProvider.BaseProvider() -> void
+OpenTelemetry.BaseProvider.Dispose() -> void
+OpenTelemetry.BaseProvider.~BaseProvider() -> void
 OpenTelemetry.Context.Propagation.B3Propagator
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
@@ -70,7 +74,6 @@ OpenTelemetry.Metrics.Meter.Meter() -> void
 OpenTelemetry.Metrics.MeterFactoryBase
 OpenTelemetry.Metrics.MeterFactoryBase.MeterFactoryBase() -> void
 OpenTelemetry.Metrics.MeterProvider
-OpenTelemetry.Metrics.MeterProvider.Dispose() -> void
 OpenTelemetry.Metrics.MeterProvider.MeterProvider() -> void
 OpenTelemetry.Metrics.NoopBoundCounterMetric<T>
 OpenTelemetry.Metrics.NoopBoundCounterMetric<T>.NoopBoundCounterMetric() -> void
@@ -166,7 +169,6 @@ OpenTelemetry.Trace.Tracer.StartRootSpan(string name, OpenTelemetry.Trace.SpanKi
 OpenTelemetry.Trace.Tracer.StartSpan(string name, OpenTelemetry.Trace.SpanKind kind = OpenTelemetry.Trace.SpanKind.Internal, in OpenTelemetry.Trace.SpanContext parentContext = default(OpenTelemetry.Trace.SpanContext), OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.Tracer.StartSpan(string name, OpenTelemetry.Trace.SpanKind kind, in OpenTelemetry.Trace.TelemetrySpan parentSpan, OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.TracerProvider
-OpenTelemetry.Trace.TracerProvider.Dispose() -> void
 OpenTelemetry.Trace.TracerProvider.GetTracer(string name, string version = null) -> OpenTelemetry.Trace.Tracer
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
@@ -300,10 +302,9 @@ static readonly OpenTelemetry.Metrics.NoopMeasureMetric<T>.Instance -> OpenTelem
 static readonly OpenTelemetry.Trace.Status.Error -> OpenTelemetry.Trace.Status
 static readonly OpenTelemetry.Trace.Status.Ok -> OpenTelemetry.Trace.Status
 static readonly OpenTelemetry.Trace.Status.Unset -> OpenTelemetry.Trace.Status
+virtual OpenTelemetry.BaseProvider.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.LabelSet.Labels.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
 virtual OpenTelemetry.Metrics.LabelSet.Labels.set -> void
 virtual OpenTelemetry.Metrics.MeterFactoryBase.GetMeter(string name, string version = null) -> OpenTelemetry.Metrics.Meter
-virtual OpenTelemetry.Metrics.MeterProvider.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MeterProvider.GetMeter(string name, string version = null) -> OpenTelemetry.Metrics.Meter
-virtual OpenTelemetry.Trace.TracerProvider.Dispose(bool disposing) -> void

@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -27,7 +26,6 @@ namespace OpenTelemetry.Trace.Tests
     {
         private TestSampler testSampler;
         private TestActivityProcessor testProcessor;
-        private Resource testResource = Resources.Resources.CreateServiceResource("test-resource");
         private ActivitySourceAdapter activitySourceAdapter;
 
         static ActivitySourceAdapterTest()
@@ -40,33 +38,18 @@ namespace OpenTelemetry.Trace.Tests
         {
             this.testSampler = new TestSampler();
             this.testProcessor = new TestActivityProcessor();
-            this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor, this.testResource);
+            this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor);
         }
 
         [Fact]
         public void ActivitySourceAdapterValidatesConstructor()
         {
             // Sampler null
-            Assert.Throws<ArgumentNullException>(() => new ActivitySourceAdapter(null, this.testProcessor, this.testResource));
-
-            // Resource null
-            Assert.Throws<ArgumentNullException>(() => new ActivitySourceAdapter(this.testSampler, this.testProcessor, null));
+            Assert.Throws<ArgumentNullException>(() => new ActivitySourceAdapter(null, this.testProcessor));
 
             // Processor null. This is not expected to throw as processor can
             // be null and can be later added.
-            var adapter = new ActivitySourceAdapter(this.testSampler, null, this.testResource);
-        }
-
-        [Fact]
-        public void ActivitySourceAdapterSetsResource()
-        {
-            var activity = new Activity("test");
-            activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Internal);
-            activity.Stop();
-            this.activitySourceAdapter.Stop(activity);
-
-            Assert.Equal(this.testResource, activity.GetResource());
+            var adapter = new ActivitySourceAdapter(this.testSampler, null);
         }
 
         [Theory]

@@ -155,13 +155,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 serviceName = "MyService";
 
-                activity.SetResource(new Resource(new Dictionary<string, object>
+                exporter.SetResource(new Resource(new Dictionary<string, object>
                 {
                     [Resource.ServiceNameKey] = serviceName,
                     ["service.tag"] = "hello world",
                 }));
 
                 resoureTags = "\"service.tag\":\"hello world\",";
+            }
+            else
+            {
+                exporter.SetResource(Resource.Empty);
             }
 
             var processor = new SimpleExportProcessor<Activity>(exporter);
