@@ -224,26 +224,8 @@ namespace OpenTelemetry.Trace
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             bool? result;
-            var sw = Stopwatch.StartNew();
+            result = this.processor?.Shutdown(timeoutMilliseconds);
             this.listener?.Dispose();
-            if (timeoutMilliseconds == 0)
-            {
-                result = this.processor?.Shutdown(0);
-                return result ?? true;
-            }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-                if (timeoutMilliseconds == Timeout.Infinite)
-                {
-                    result = this.processor?.Shutdown(Timeout.Infinite);
-                }
-                else
-                {
-                    result = this.processor?.Shutdown((int)Math.Max(timeout, 0));
-                }
-            }
-
             return result ?? true;
         }
 
