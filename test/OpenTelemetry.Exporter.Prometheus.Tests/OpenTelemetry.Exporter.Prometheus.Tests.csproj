@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Unit test project for Prometheus Exporter for OpenTelemetry</Description>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net452;net46</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -16,6 +16,10 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="5.0.0-rc.2.20475.17" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.2" />
   </ItemGroup>
@@ -24,7 +28,7 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netcoreapp3.1' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452' OR '$(TargetFramework)' == 'net46' ">
     <Reference Include="System.Net.Http" />
   </ItemGroup>
 
