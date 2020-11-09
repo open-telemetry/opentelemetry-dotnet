@@ -18,12 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
@@ -40,7 +38,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
-        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
@@ -62,12 +59,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
         }
 
+        internal OtlpResource.Resource ProcessResource { get; private set; }
+
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
+            if (this.ProcessResource == null)
+            {
+                this.SetResource(this.ParentProvider.GetResource());
+            }
+
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(this, activityBatch);
+            request.AddBatch(this.ProcessResource, activityBatch);
 
             try
             {
@@ -87,17 +91,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             return ExportResult.Success;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal OtlpResource.Resource EnsureProcessResource(Activity activity)
+        internal void SetResource(Resource resource)
         {
-            if (this.processResource != null)
-            {
-                return this.processResource;
-            }
-
             OtlpResource.Resource processResource = new OtlpResource.Resource();
 
-            foreach (KeyValuePair<string, object> attribute in activity.GetResource().Attributes)
+            foreach (KeyValuePair<string, object> attribute in resource.Attributes)
             {
                 var oltpAttribute = attribute.ToOtlpAttribute();
                 if (oltpAttribute != null)
@@ -121,7 +119,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 });
             }
 
-            return this.processResource = processResource;
+            this.ProcessResource = processResource;
         }
 
         /// <inheritdoc/>

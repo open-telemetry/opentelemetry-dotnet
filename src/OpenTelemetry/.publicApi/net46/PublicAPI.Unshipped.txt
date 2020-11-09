@@ -1,3 +1,4 @@
+OpenTelemetry.BaseExporter<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
 OpenTelemetry.BaseExportProcessor<T>
 OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.BaseExporter<T>
@@ -8,6 +9,7 @@ OpenTelemetry.BaseProcessor<T>
 OpenTelemetry.BaseProcessor<T>.BaseProcessor() -> void
 OpenTelemetry.BaseProcessor<T>.Dispose() -> void
 OpenTelemetry.BaseProcessor<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
 OpenTelemetry.BaseProcessor<T>.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>
 OpenTelemetry.Batch<T>.Batch() -> void
@@ -106,6 +108,7 @@ OpenTelemetry.Metrics.MeterProviderBuilder.Build() -> OpenTelemetry.Metrics.Mete
 OpenTelemetry.Metrics.MeterProviderBuilder.SetExporter(OpenTelemetry.Metrics.Export.MetricExporter exporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProviderBuilder.SetProcessor(OpenTelemetry.Metrics.Export.MetricProcessor processor) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProviderBuilder.SetPushInterval(System.TimeSpan pushInterval) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.ProviderExtensions
 OpenTelemetry.ReentrantExportProcessor<T>
 OpenTelemetry.ReentrantExportProcessor<T>.ReentrantExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.Resources.Resource
@@ -118,7 +121,6 @@ OpenTelemetry.SimpleExportProcessor<T>
 OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.SuppressInstrumentationScope
 OpenTelemetry.SuppressInstrumentationScope.Dispose() -> void
-OpenTelemetry.Trace.ActivityExtensions
 OpenTelemetry.Trace.AlwaysOffSampler
 OpenTelemetry.Trace.AlwaysOffSampler.AlwaysOffSampler() -> void
 OpenTelemetry.Trace.AlwaysOnSampler
@@ -222,6 +224,7 @@ override OpenTelemetry.Trace.TraceIdRatioBasedSampler.ShouldSample(in OpenTeleme
 override abstract OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
+static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Resources.Resources.CreateServiceResource(string serviceName, string serviceInstanceId = null, string serviceNamespace = null, string serviceVersion = null) -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
@@ -230,8 +233,6 @@ static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propa
 static OpenTelemetry.Sdk.SuppressInstrumentation.get -> bool
 static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
 static OpenTelemetry.SuppressInstrumentationScope.Enter() -> int
-static OpenTelemetry.Trace.ActivityExtensions.GetResource(this System.Diagnostics.Activity activity) -> OpenTelemetry.Resources.Resource
-static OpenTelemetry.Trace.ActivityExtensions.SetResource(this System.Diagnostics.Activity activity, OpenTelemetry.Resources.Resource resource) -> void
 static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider

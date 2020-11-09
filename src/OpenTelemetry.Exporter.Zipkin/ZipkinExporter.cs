@@ -27,12 +27,10 @@ using Newtonsoft.Json;
 #else
 using System.Text.Json;
 #endif
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
@@ -66,6 +64,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
+            if (this.LocalEndpoint == null)
+            {
+                this.SetResource(this.ParentProvider.GetResource());
+            }
+
             // Prevent Zipkin's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
@@ -92,14 +95,8 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ZipkinEndpoint EnsureLocalEndpoint(Activity activity)
+        internal void SetResource(Resource resource)
         {
-            if (this.LocalEndpoint != null)
-            {
-                return this.LocalEndpoint;
-            }
-
             var hostName = ResolveHostName();
 
             string ipv4 = null;
@@ -113,7 +110,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             string serviceName = null;
             string serviceNamespace = null;
             Dictionary<string, object> tags = null;
-            foreach (var label in activity.GetResource().Attributes)
+            foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
 
@@ -149,7 +146,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 serviceName = this.options.ServiceName;
             }
 
-            return this.LocalEndpoint = new ZipkinEndpoint(
+            this.LocalEndpoint = new ZipkinEndpoint(
                 serviceName,
                 ipv4,
                 ipv6,
@@ -257,9 +254,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 foreach (var activity in this.batch)
                 {
-                    var localEndpoint = this.exporter.EnsureLocalEndpoint(activity);
-
-                    var zipkinSpan = activity.ToZipkinSpan(localEndpoint, this.exporter.options.UseShortTraceIds);
+                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
                     zipkinSpan.Write(this.writer);
 
