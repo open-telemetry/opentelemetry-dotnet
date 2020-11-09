@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,10 +27,10 @@ jobs:
       with:
         dotnet-version: 3.1.301
 
-    # For linux, we have to apply a workaround to enable both dotnet versions at same time	
-    - name: .net SxS	
-      run: |	
-        rsync -a ${DOTNET_ROOT/3.1.301/2.1.807}/* $DOTNET_ROOT/
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.100-rc.2.20479.15'
 
     - name: Install dependencies
       run: dotnet restore
