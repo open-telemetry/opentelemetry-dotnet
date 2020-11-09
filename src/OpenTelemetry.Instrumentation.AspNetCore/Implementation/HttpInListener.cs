@@ -315,7 +315,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
-            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+
+            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
@@ -327,6 +329,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // Remove the grpc.status_code tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
+
+                // setting rpc.grpc.status_code
+                activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
             }
         }
 #endif

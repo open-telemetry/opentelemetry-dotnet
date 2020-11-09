@@ -56,7 +56,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var activity = new Activity("operationName");
             activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, "0");
 
-            var statusCode = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            var statusCode = GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status);
 
             Assert.Equal(StatusCode.Unset, statusCode.StatusCode);
             Assert.Equal(0, activity.TagObjects.FirstOrDefault(q => q.Key == SemanticConventions.AttributeRpcGrpcStatusCode).Value);
