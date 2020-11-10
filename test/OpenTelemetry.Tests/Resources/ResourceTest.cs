@@ -344,7 +344,6 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = new_resource.Attributes;
-            Assert.Single(attributes);
             Assert.Equal(3, attributes.Count());
             ValidateTelemetrySdkAttributes(attributes);
         }
@@ -358,7 +357,6 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = new_resource.Attributes;
-            Assert.Single(attributes);
             Assert.Equal(5, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
             ValidateTelemetrySdkAttributes(attributes);
@@ -374,7 +372,6 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = new_resource.Attributes;
-            Assert.Single(attributes);
             Assert.Equal(7, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
             ValidateTelemetrySdkAttributes(attributes);
@@ -396,11 +393,10 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = new_resource.Attributes;
-            Assert.Single(attributes);
             Assert.Equal(4, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey11", "EVVal11"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey22", "EVVal22"), attributes);
         }
 
         public void Dispose()

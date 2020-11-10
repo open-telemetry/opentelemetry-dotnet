@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -364,6 +365,21 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(testInstrumentation.IsDisposed);
             tracerProvider.Dispose();
             Assert.True(testInstrumentation.IsDisposed);
+        }
+
+        [Fact]
+        public void TracerProviderSdkBuildsWithDefaultResource()
+        {
+            var tracerProvider = Sdk.CreateMeterProviderBuilder().Build();
+            var resource = tracerProvider.GetResource();
+            var attributes = resource.Attributes;
+
+            Assert.NotNull(resource);
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+            var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+            Assert.Single(versionAttribute);
         }
 
         public void Dispose()
