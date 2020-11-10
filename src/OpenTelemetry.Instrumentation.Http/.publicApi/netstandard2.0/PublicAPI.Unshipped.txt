@@ -1,0 +1,10 @@
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Filter.get -> System.Func<System.Net.Http.HttpRequestMessage, bool>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Filter.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.HttpClientInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.get -> bool
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.set -> void
+OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

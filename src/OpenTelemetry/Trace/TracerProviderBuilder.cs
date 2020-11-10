@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace
 
         /// <summary>
         /// Adds a DiagnosticSource based instrumentation.
-        /// This is required for libraries which already is instrumented with
+        /// This is required for libraries which is already instrumented with
         /// DiagnosticSource and Activity, without using ActivitySource.
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>

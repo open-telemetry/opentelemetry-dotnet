@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Instrumentation.Tests
 {
-    public class TestListenerHandler : ListenerHandler
+    internal class TestListenerHandler : ListenerHandler
     {
         public int OnStartInvokedCount = 0;
         public int OnStopInvokedCount = 0;

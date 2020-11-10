@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
@@ -65,13 +64,13 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
             try
             {
+                if (this.processCache == null)
+                {
+                    this.SetResource(this.ParentProvider.GetResource());
+                }
+
                 foreach (var activity in activityBatch)
                 {
-                    if (this.processCache == null)
-                    {
-                        this.ApplyLibraryResource(activity.GetResource());
-                    }
-
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
@@ -87,18 +86,18 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        internal void ApplyLibraryResource(Resource libraryResource)
+        internal void SetResource(Resource resource)
         {
-            if (libraryResource is null)
+            if (resource is null)
             {
-                throw new ArgumentNullException(nameof(libraryResource));
+                throw new ArgumentNullException(nameof(resource));
             }
 
             var process = this.Process;
 
             string serviceName = null;
             string serviceNamespace = null;
-            foreach (var label in libraryResource.Attributes)
+            foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
 

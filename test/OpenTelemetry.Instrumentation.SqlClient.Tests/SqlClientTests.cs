@@ -117,7 +117,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count);
+            Assert.Equal(3, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 captureTextCommandContent,
                 false,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[1].Arguments[0]);
+                (Activity)processor.Invocations[2].Arguments[0]);
         }
 
         [Theory]
@@ -249,7 +249,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -258,7 +258,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 false,
                 true,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[1].Arguments[0]);
+                (Activity)processor.Invocations[2].Arguments[0]);
         }
 
         private static void VerifyActivityData(
