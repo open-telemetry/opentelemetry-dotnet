@@ -68,7 +68,6 @@ OpenTelemetry .NET SDK has provided the following built-in processors:
 
 * [BatchExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/BatchExportProcessor.cs)
 * [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
-* [ReentrantExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/ReentrantExportProcessor.cs)
 * [SimpleExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/SimpleExportProcessor.cs)
 
 Custom processors can be implemented to cover more scenarios:
