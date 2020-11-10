@@ -88,15 +88,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
                 Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
                 Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-
-                // Tags added by the library then removed from the instrumentation
-                // TODO: The grpc.status_code attribute added by the library is not currently
-                // removed because the tracing spec for span status is no longer based on
-                // gRPC status codes. Ultimately, the grpc.status_code tag should be replaced
-                // by whatever semantic convention is settled on in the RPC spec.
-                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/1345
                 Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
             }
             else
             {

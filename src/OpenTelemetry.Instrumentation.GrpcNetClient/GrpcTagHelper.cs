@@ -36,17 +36,16 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
             return activity.GetTagValue(GrpcMethodTagName) as string;
         }
 
-        public static Status GetGrpcStatusCodeFromActivity(Activity activity)
+        public static bool TryGetGrpcStatusCodeFromActivity(Activity activity, out int statusCode)
         {
-            var status = Status.Unset;
-
+            statusCode = -1;
             var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
-            if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))
+            if (grpcStatusCodeTag == null)
             {
-                status = ResolveSpanStatusForGrpcStatusCode(statusCode);
+                return false;
             }
 
-            return status;
+            return int.TryParse(grpcStatusCodeTag as string, out statusCode);
         }
 
         public static bool TryParseRpcServiceAndRpcMethod(string grpcMethod, out string rpcService, out string rpcMethod)
