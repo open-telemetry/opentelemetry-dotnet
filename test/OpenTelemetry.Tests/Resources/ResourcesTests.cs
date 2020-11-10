@@ -73,7 +73,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource(null);
             Assert.Equal(3, resource.Attributes.Count());
-            Assert.Equal(Resource.Default, resource);
+            this.AssertDefaultAttributes(resource);
         }
 
         private void AssertDefaultAttributes(Resource resource)

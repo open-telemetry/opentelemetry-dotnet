@@ -33,13 +33,9 @@ namespace OpenTelemetry.Resources
         public const string ServiceVersionKey = "service.version";
         public const string LibraryNameKey = "name";
         public const string LibraryVersionKey = "version";
-        public const string TelemetrySdkNameKey = "telemetry.sdk.name";
-        public const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
-        public const string TelemetrySdkVersionKey = "telemetry.sdk.version";
-
-        private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-        private const char AttributeListSplitter = ',';
-        private const char AttributeKeyValueSplitter = '=';
+        private const string TelemetrySdkNameKey = "telemetry.sdk.name";
+        private const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
+        private const string TelemetrySdkVersionKey = "telemetry.sdk.version";
 
         private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
 
@@ -68,29 +64,40 @@ namespace OpenTelemetry.Resources
         public static Resource Empty { get; } = new Resource(Enumerable.Empty<KeyValuePair<string, object>>());
 
         /// <summary>
-        /// Gets the dafault Resource with attributes from telemetry sdk  and OTEL_RESOURCE_ATTRIBUTES environment variable.
-        /// </summary>
-        public static Resource Default { get; } = new Resource(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(TelemetrySdkNameKey, "opentelemetry"),
-                new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
-                new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
-            })
-            .Merge(GetOTelEnvVarResource());
-
-        /// <summary>
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
 
+        private static Resource TelemetryResource { get; } = new Resource(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(TelemetrySdkNameKey, "opentelemetry"),
+                new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
+                new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
+            });
+
         /// <summary>
-        /// Creates a new <see cref="Resource"/> with user provided attributes, telemetry sdk attributes, and attributes from OTEL_RESOURCE_ATTRIBUTES environment variable.
+        /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
         /// </summary>
-        /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
         /// <returns><see cref="Resource"/>.</returns>
-        public static Resource Create(IEnumerable<KeyValuePair<string, object>> attributes = null)
+        public Resource AddDefaultAttributes()
         {
-            return new Resource(attributes).Merge(Default);
+            return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="Resource"/> with added attributes from resource detectors in the order of the list.
+        /// </summary>
+        /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
+        /// <returns><see cref="Resource"/>.</returns>
+        public Resource AddAttributesFromDetectors(List<IResourceDetector> detectors)
+        {
+            var resource = this;
+            foreach (IResourceDetector detector in detectors)
+            {
+                resource = resource.Merge(detector.Detect());
+            }
+
+            return resource;
         }
 
         /// <summary>
@@ -123,39 +130,6 @@ namespace OpenTelemetry.Resources
             }
 
             return new Resource(newAttributes);
-        }
-
-        internal static Resource GetOTelEnvVarResource()
-        {
-            var resource = Resource.Empty;
-
-            string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
-            if (!string.IsNullOrEmpty(envResourceAttributeValue))
-            {
-                var attributes = ParseResourceAttributes(envResourceAttributeValue);
-                return new Resource(attributes);
-            }
-
-            return resource;
-        }
-
-        private static IEnumerable<KeyValuePair<string, object>> ParseResourceAttributes(string resourceAttributes)
-        {
-            var attributes = new List<KeyValuePair<string, object>>();
-
-            string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
-            foreach (string rawKeyValuePair in rawAttributes)
-            {
-                string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
-                if (keyValuePair.Length != 2)
-                {
-                    continue;
-                }
-
-                attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), keyValuePair[1].Trim()));
-            }
-
-            return attributes;
         }
 
         private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)

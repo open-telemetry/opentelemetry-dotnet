@@ -336,67 +336,71 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void CreateResource_NoParam()
+        public void AddDefaultAttributes_EmptyResource()
         {
             // Arrange
-            var resource = Resource.Create(null);
+            var resource = Resource.Empty;
+            var new_resource = resource.AddDefaultAttributes();
 
             // Assert
-            var attributes = resource.Attributes;
+            var attributes = new_resource.Attributes;
+            Assert.Single(attributes);
             Assert.Equal(3, attributes.Count());
             ValidateTelemetrySdkAttributes(attributes);
         }
 
         [Fact]
-        public void CreateResource_WithParams()
+        public void AddDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
-            var resource = Resource.Create(this.CreateAttributes(2));
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.AddDefaultAttributes();
 
             // Assert
-            var attributes = resource.Attributes;
+            var attributes = new_resource.Attributes;
+            Assert.Single(attributes);
             Assert.Equal(5, attributes.Count());
-            ValidateTelemetrySdkAttributes(attributes);
             ValidateAttributes(attributes, 0, 1);
+            ValidateTelemetrySdkAttributes(attributes);
         }
 
         [Fact]
-        public void GetOTelEnvVarResource_withEmptyString()
+        public void AddDefaultAttributes_WithEnvVar()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, string.Empty);
-            var resource = Resource.GetOTelEnvVarResource();
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.AddDefaultAttributes();
 
-            Assert.Empty(resource.Attributes);
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Single(attributes);
+            Assert.Equal(7, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            ValidateTelemetrySdkAttributes(attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         }
 
         [Fact]
-        public void GetOTelEnvVarResource_withBlankSpaces()
+        public void AddAttributesFromDetectors_OtelEnvDetector()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, "   ");
-            var resource = Resource.GetOTelEnvVarResource();
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey11=EVVal11,EVKey22=EVVal22");
+            var detectors = new List<IResourceDetector>
+            {
+                new OtelEnvResourceDetector(),
+            };
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.AddAttributesFromDetectors(detectors);
 
-            Assert.Empty(resource.Attributes);
-        }
-
-        [Fact]
-        public void GetOTelEnvVarResource_withJustCommas()
-        {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, ",,,");
-            var resource = Resource.GetOTelEnvVarResource();
-
-            Assert.Empty(resource.Attributes);
-        }
-
-        [Fact]
-        public void GetOTelEnvVarResource_withTrailingComma()
-        {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, "Key1=Val1,Key2=Val2,");
-            var resource = Resource.GetOTelEnvVarResource();
-            var attributes = resource.Attributes;
-
-            Assert.Equal(2, attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("Key1", "Val1"), attributes);
-            Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), attributes);
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Single(attributes);
+            Assert.Equal(4, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         }
 
         public void Dispose()
