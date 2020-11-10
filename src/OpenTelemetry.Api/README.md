@@ -109,7 +109,8 @@ required only for the following scenarios.
 1. You want to use terminology matching OpenTelemetry spec (Span vs Activity).
    The [shim](#instrumenting-using-opentelemetryapi-shim)
    can be useful for such users.
-2. Your library is at "edge", and want to access
+2. Your library performs communication with other libraries/components, and want
+   to access
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md),
    to inject and extract context data. Some of the most common libraries
    requiring this include
