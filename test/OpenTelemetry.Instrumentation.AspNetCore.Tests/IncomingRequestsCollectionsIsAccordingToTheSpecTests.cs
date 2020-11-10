@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (processor.Invocations.Count == 2)
+                    if (processor.Invocations.Count == 3)
                     {
                         break;
                     }
@@ -100,8 +100,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(2, processor.Invocations.Count); // begin and end was called
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/Begin/End called
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));

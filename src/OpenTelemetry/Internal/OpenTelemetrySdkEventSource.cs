@@ -295,7 +295,7 @@ namespace OpenTelemetry.Internal
             protected override void OnEventWritten(EventWrittenEventArgs e)
             {
                 string message;
-                if ((e.Payload?.Count ?? 0) > 0)
+                if (e.Message != null && (e.Payload?.Count ?? 0) > 0)
                 {
                     message = string.Format(e.Message, e.Payload.ToArray());
                 }

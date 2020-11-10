@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
 {
     internal class SelfDiagnosticsConfigParser
     {
-        private const string ConfigFileName = "DiagnosticsConfiguration.json";
+        private const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
         private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
         private const int FileSizeUpperLimit = 128 * 1024;  // Upper limit for log file size in KB: 128MB
 
@@ -39,19 +39,19 @@ namespace OpenTelemetry.Internal
         private static readonly Regex FileSizeRegex = new Regex(
             @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex EventLevelRegex = new Regex(
-            @"""EventLevel""\s*:\s*""(?<EventLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex LogLevelRegex = new Regex(
+            @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
         // in both main thread and the worker thread.
         // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
         private byte[] configBuffer;
 
-        public bool TryGetConfiguration(out string logDirectory, out int fileSizeInKB, out EventLevel eventLevel)
+        public bool TryGetConfiguration(out string logDirectory, out int fileSizeInKB, out EventLevel logLevel)
         {
             logDirectory = null;
             fileSizeInKB = 0;
-            eventLevel = EventLevel.LogAlways;
+            logLevel = EventLevel.LogAlways;
             try
             {
                 using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -84,12 +84,12 @@ namespace OpenTelemetry.Internal
                     fileSizeInKB = FileSizeUpperLimit;
                 }
 
-                if (!TryParseEventLevel(configJson, out var eventLevelString))
+                if (!TryParseLogLevel(configJson, out var logLevelString))
                 {
                     return false;
                 }
 
-                eventLevel = (EventLevel)Enum.Parse(typeof(EventLevel), eventLevelString);
+                logLevel = (EventLevel)Enum.Parse(typeof(EventLevel), logLevelString);
                 return true;
             }
             catch (Exception)
@@ -114,11 +114,11 @@ namespace OpenTelemetry.Internal
             return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
         }
 
-        internal static bool TryParseEventLevel(string configJson, out string eventLevel)
+        internal static bool TryParseLogLevel(string configJson, out string logLevel)
         {
-            var eventLevelResult = EventLevelRegex.Match(configJson);
-            eventLevel = eventLevelResult.Groups["EventLevel"].Value;
-            return eventLevelResult.Success && !string.IsNullOrWhiteSpace(eventLevel);
+            var logLevelResult = LogLevelRegex.Match(configJson);
+            logLevel = logLevelResult.Groups["LogLevel"].Value;
+            return logLevelResult.Success && !string.IsNullOrWhiteSpace(logLevel);
         }
     }
 }

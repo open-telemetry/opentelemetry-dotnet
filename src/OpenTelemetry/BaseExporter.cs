@@ -46,6 +46,11 @@ namespace OpenTelemetry
         private int shutdownCount;
 
         /// <summary>
+        /// Gets the parent <see cref="BaseProvider"/>.
+        /// </summary>
+        public BaseProvider ParentProvider { get; internal set; }
+
+        /// <summary>
         /// Exports a batch of telemetry objects.
         /// </summary>
         /// <param name="batch">Batch of telemetry objects to export.</param>

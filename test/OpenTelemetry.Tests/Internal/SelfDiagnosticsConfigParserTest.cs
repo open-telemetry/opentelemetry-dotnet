@@ -81,15 +81,15 @@ namespace OpenTelemetry.Internal.Tests
 
         [Fact]
         [Trait("Platform", "Any")]
-        public void SelfDiagnosticsConfigParser_TryParseEventLevel()
+        public void SelfDiagnosticsConfigParser_TryParseLogLevel()
         {
             string configJson = @"{
                     ""LogDirectory"": ""Diagnostics"",
                     ""FileSize"": 1024,
-                    ""EventLevel"": ""Error""
+                    ""LogLevel"": ""Error""
                     }";
-            Assert.True(SelfDiagnosticsConfigParser.TryParseEventLevel(configJson, out string eventLevelString));
-            Assert.Equal("Error", eventLevelString);
+            Assert.True(SelfDiagnosticsConfigParser.TryParseLogLevel(configJson, out string logLevelString));
+            Assert.Equal("Error", logLevelString);
         }
     }
 }

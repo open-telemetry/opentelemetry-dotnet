@@ -29,6 +29,11 @@ namespace OpenTelemetry
         private int shutdownCount;
 
         /// <summary>
+        /// Gets the parent <see cref="BaseProvider"/>.
+        /// </summary>
+        public BaseProvider ParentProvider { get; private set; }
+
+        /// <summary>
         /// Called synchronously when a telemetry object is started.
         /// </summary>
         /// <param name="data">
@@ -139,6 +144,11 @@ namespace OpenTelemetry
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        internal virtual void SetParentProvider(BaseProvider parentProvider)
+        {
+            this.ParentProvider = parentProvider;
         }
 
         /// <summary>
