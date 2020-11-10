@@ -3,7 +3,8 @@
 - [Extending the OpenTelemetry .NET SDK](#extending-the-opentelemetry-net-sdk)
   - [Exporter](#exporter)
   - [Instrumentation Library](#instrumentation-library)
-    - [Writing instrumentation library](#writing-instrumentation-library)
+    - [Writing own instrumentation library](#writing-own-instrumentation-library)
+      - [Instrumentation library optional requirements](#instrumentation-library-optional-requirements)
   - [Processor](#processor)
   - [Sampler](#sampler)
   - [References](#references)
@@ -62,13 +63,14 @@ Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
 
 ## Instrumentation Library
 
-[Instrumentation
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library)
-denotes the library that provides the instrumentation for a given [Instrumented
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumented-library).
+The goal of the OpenTelemetry project is to make every library and application observable out of the box by having them call OpenTelemetry API directly. However, many libraries will not have such integration, and as such there is a need for a separate library which would inject such calls, using mechanisms such as wrapping interfaces, subscribing to library-specific callbacks, or translating existing telemetry into OpenTelemetry model.
+
+A library which enables instrumentation for another library is called [Instrumentation
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library) and the library it instruments is called the [Instrumented
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumented-library). If a given library has built-in instrumentation with OpenTelemetry, then instrumented library and instrumentation library will be the same.
 
 The [OpenTelemetry .NET Github
-repo](https://github.com/open-telemetry/opentelemetry-dotnet) ships the following instrumentation libraries.
+repo](../../../README.md#getting-started) ships the following instrumentation libraries. The individual docs for them describes the library they instrument, and steps for enabling them.
 
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
@@ -78,24 +80,58 @@ repo](https://github.com/open-telemetry/opentelemetry-dotnet) ships the followin
   client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
-### Writing instrumentation library
+### Writing own instrumentation library
 
 This section describes the steps required to write your own instrumentation library.
 
-If you are writing a new library or modifying an existing library, the recommendation is to use ActivitySource API/OpenTelemetry API to instrument it and emit activity/span.
-If the instrumented library is instrumented using ActivitySource API, then there is no need of
-writing a separate instrumentation library, as instrumented and instrumentation library become
-same in this case. For applications to collect traces from this library, all that is needed is to enable the ActivitySource for the library using `AddSource` method of the `TracerProviderBuilder`.
+*If you are writing a new library or modifying an existing library, the
+recommendation is to use [ActivitySource API/OpenTelemetry
+API](../../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api)
+to instrument it and emit activity/span. If the instrumented library is
+instrumented using ActivitySource API, then there is no need of writing a
+separate instrumentation library, as instrumented and instrumentation library
+become same in this case. For applications to collect traces from this library,
+all that is needed is to enable the ActivitySource for the library using
+`AddSource` method of the `TracerProviderBuilder`. The following section is applicable only if you are writing an instrumentation library for an instrumented library which you cannot modify to emit activities directly*
 
-It is not always possible to modify an existing library. For those libraries, it is required to write an
-Instrumentation Library. The instrumentation library in this case must use ActivitySource API and
-emit activity/span. The mechanics of how the instrumentation library works depends on each library. For example, StackExchaneRedis library allows hooks into the library, and the instrumentation library in this case, leverages them, and emits Span/Activity, on behalf of the instrumented library.
-The instrumentation library must provide extension methods on `TracerProviderBuilder`, to enable the instrumentation. Inside the extension method, the ActivitySource from the instrumentation library must be enabled using `AddSource`. Additionally, if the instrumentation library expects its lifetime to be managed along with the `TracerProvider`, then register itself with the provider using the `AddInstrumentation` method. If the instrumentation is `IDisposable`, it'll be disposed automatically when the TracerProvider itself is disposed.
-(Link to Redis example.)
+As mentioned earlier, the instrumentation library must use ActivitySource API to emit activities. The mechanics of how the instrumentation library works depends on each library. For example, StackExchangeRedis library allows hooks into the library, and the [StackExchangeRedis instrumentation library](../../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis) in this case, leverages them, and emits Span/Activity, on behalf of the instrumented library. Another example is System.Data.SqlClient for .NET Framework, which publishes events using `EventSource`. The [SqlClient instrumentation library](../../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs), in this case subscribes to the `EventSource` callbacks and in turn produces Activity.
 
-There is a special case for libraries which are already instrumented with [Activity](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md), but using the [DiagnosticSource](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md) method. These libraries already emit activities, but it may not conform to the OpenTelemetry semantic conventions. Also, as these libraries do not use ActivitySource to create Activity, they cannot be simply enabled.
-For this case, the recommended approach is to write instrumentation library which subscribe to the DiagnosticSource events from the instrumented library, and in turn produce *new* activity using ActivitySource. This new activity must be created as a sibling of the activity already produced by the library. i.e the new activity must have the same parent as the original activity.
-Some common examples of such libraries include Asp.Net, Asp.Net Core, HttpClient (.NET Core). Instrumentation libraries for these are already provided in this repo.
+#### Instrumentation library optional requirements
+
+The instrumentation library may provide extension methods on
+`TracerProviderBuilder`, to enable the instrumentation. Providing this extension
+method is optional, and the below guidance must be followed:
+
+1. If the instrumentation library requires state management tied to that of
+   `TracerProvider`, then it must register itself with the provider with the
+   `AddInstrumentation` method on the `TracerProviderBuilder`. This causes the
+   instrumentation to be created and disposed along with `TracerProvider`. If
+   the above is required, then it must also provide an extension method on
+   `TracerProviderBuilder`. Inside this extension method, it can do the
+   `AddInstrumentation` method, and `AddSource` to enable its ActivitySource for the provider. An example instrumentation using this approach is [StackExchangeRedis instrumentation](../../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
+   
+2. If the instrumentation library does not requires any state management tied to that of `TracerProvider`, then providing `TracerProviderBuilder` extension
+   method is optional. If provided, then it must call `AddSource` to enable its
+   ActivitySource for the provider.
+3. If instrumentation library does not require state management, and is not
+   providing extension method, then the name of the ActivitySource used the
+   instrumented library must be documented so that end users can enable it using
+   `AddSource` API.
+
+There is a special case for libraries which are already instrumented with
+[Activity](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md),
+but using the
+[DiagnosticSource](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md)
+method. These libraries already emit activities, but it may not conform to the
+OpenTelemetry semantic conventions. Also, as these libraries do not use
+ActivitySource to create Activity, they cannot be simply enabled. For this case,
+the recommended approach is to write instrumentation library which subscribe to
+the DiagnosticSource events from the instrumented library, and in turn produce
+*new* activity using ActivitySource. This new activity must be created as a
+sibling of the activity already produced by the library. i.e the new activity
+must have the same parent as the original activity. Some common examples of such
+libraries include Asp.Net, Asp.Net Core, HttpClient (.NET Core). Instrumentation
+libraries for these are already provided in this repo.
 
 ## Processor
 
