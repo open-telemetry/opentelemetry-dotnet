@@ -36,18 +36,19 @@ namespace Examples.Console
             // which decide to use OpenTelemetry.
 
             var tracer = TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer");
-            var span = tracer.StartSpan("parent span");
-            span.SetAttribute("mystring", "value");
-            span.SetAttribute("myint", 100);
-            span.SetAttribute("mydouble", 101.089);
-            span.SetAttribute("mybool", true);
-            span.UpdateName("parent span new name");
+            using (var parentSpan = tracer.StartActiveSpan("parent span"))
+            {
+                parentSpan.SetAttribute("mystring", "value");
+                parentSpan.SetAttribute("myint", 100);
+                parentSpan.SetAttribute("mydouble", 101.089);
+                parentSpan.SetAttribute("mybool", true);
+                parentSpan.UpdateName("parent span new name");
 
-            var spanChild = tracer.StartSpan("child span");
-            spanChild.AddEvent("sample event").SetAttribute("ch", "value").SetAttribute("more", "attributes");
-            spanChild.End();
-
-            span.End();
+                var childSpan = tracer.StartSpan("child span");
+                childSpan.AddEvent("sample event").SetAttribute("ch", "value").SetAttribute("more", "attributes");
+                childSpan.SetStatus(Status.Ok);
+                childSpan.End();
+            }
 
             System.Console.WriteLine("Press Enter key to exit.");
 

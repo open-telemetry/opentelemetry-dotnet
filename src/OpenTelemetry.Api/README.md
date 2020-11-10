@@ -32,7 +32,7 @@ their application/library. The API only surfaces necessary abstractions to
 instrument an application/library. It does not address concerns like how
 telemetry is exported to a specific telemetry backend, how to sample the
 telemetry, etc. The API consists of [Tracing
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md),
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md), [Logging API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md),
 [Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md),
 [Context and Propagation
@@ -50,6 +50,10 @@ which represent a single operation within a trace. Spans can be nested to form
 a trace tree. Each trace contains a root span, which typically describes the
 entire operation and, optionally one or more sub-spans for its sub-operations.
 
+### Logging API
+
+OpenTelemetry does not introduce own API for logging. Instead it recommends to integrate with existing well-known logging library for each language. For .NET, the logging API is simply the  [Microsoft.Extensions.Logging API](https://docs.microsoft.com/dotnet/core/extensions/logging).
+
 ### Metrics API
 
 [Metrics
@@ -57,6 +61,8 @@ API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/s
 allows users to capture measurements about the execution of a computer program
 at runtime. The Metrics API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
+
+_**Warning:** Metrics API is not recommended for any production use. The API is expected to change heavily._
 
 ## Introduction to OpenTelemetry .NET Tracing API
 
@@ -86,6 +92,14 @@ entirely with `Activity` only. Irrespective of whether shim classes or
 `Activity` is used for instrumentation, the end result would be same. i.e
 Processors/Exporters see the same data.
 
+The recommended way of instrumenting is by using the [.NET Activity API](#instrumenting-a-libraryapplication-with-net-activity-api).
+Users are required to just take dependency on the [DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/5.0.0).
+Adding dependency to [OpenTelemetry.API](https://www.nuget.org/packages/opentelemetry.api) is required only for the following scenarios.
+
+1. You want to use terminology matching OpenTelemetry spec (Span vs Activity). The [shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim) can be useful
+   for such users.
+2. Your library is at "edge", and want to access [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md), to inject and extract context data. Some of the most common libraries requiring this include [HttpClient](../OpenTelemetry.Instrumentation.Http/README.md), [ASP.NET](../OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md). This repo already provides instrumentation for these common libraries. If your library is not built on top of these, and want to leverage propagators, follow the [Propagation API](#propagation-api) section.
+
 ## Instrumenting a library/application with .NET Activity API
 
 ### Basic usage
@@ -96,13 +110,13 @@ documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version
-   `5.0.0-rc.2.20475.5` or above to your application or library.
+   `5.0.0` or above to your application or library.
 
     ```xml
     <ItemGroup>
       <PackageReference
         Include="System.Diagnostics.DiagnosticSource"
-        Version="5.0.0-rc.2.20475.5"
+        Version="5.0.0"
       />
     </ItemGroup>
     ```
@@ -128,17 +142,19 @@ here as well.
     ```
 
     If there are no listeners interested in this activity, the activity above
-    will be null. Ensure that all subsequent calls using this activity is
-    protected with a null check.
+    will be null. This happens when the final application does not enable
+    OpenTelemetry, or when OpenTelemetry samplers chose not to sample this
+    activity.. Ensure that all subsequent calls using this activity is protected
+    with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
    conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
    It is highly recommended to check `activity.IsAllDataRequested`, before
-   populating any tags which are not readily available.
+   populating any tags which are not readily available. `IsAllDataRequested` is same as [Span.IsRecording](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#isrecording) and will be false when samplers decide to not record the activity, and this can be used to avoid any expensive operation to retrieve tags.
 
     ```csharp
     activity?.SetTag("http.method", "GET");
-    if (activity?.IsAllDataRequested ?? false)
+    if (activity != null && activity.IsAllDataRequested == true)
     {
         activity.SetTag("http.url", "http://www.mywebsite.com");
     }
@@ -230,7 +246,7 @@ OpenTelemetry samplers chose not to sample this activity.
    Refer to the
    [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attribute-and-label-naming)
    for best practices on naming tags. It is also possible to provide an initial
-   set of tags during activity creation, as shown below.
+   set of tags during activity creation, as shown below. Tags provided at activity creation is accessible for [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler), whereas any tags added using `SetTag` is not available for samplers.
 
     ```csharp
     var initialTags = new ActivityTagsCollection();
@@ -286,8 +302,8 @@ OpenTelemetry samplers chose not to sample this activity.
 ### Adding Events
 
 It is possible to [add
-event](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#add-events)
-with `Activity` using the `AddEvent` method as shown below.
+events](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#add-events)
+to `Activity` using the `AddEvent` method as shown below.
 
 ```csharp
 activity?.AddEvent(new ActivityEvent("sample activity event."));
@@ -303,21 +319,31 @@ OpenTelemetry defines a concept called
 to be associated with `Activity`. There is no `Status` class in .NET, and hence
 `Status` is set to an `Activity` using the following special tags
 
-`otel.status_code` is the `Tag` name used to store the [Status Canonical
-Code](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#statuscanonicalcode).
+`otel.status_code` is the `Tag` name used to store the `StatusCode`, and
 `otel.status_description` is the `Tag` name used to store the optional
-[Description](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#getdescription)
+`Description`.
 
 Example:
 
 ```csharp
-activity?.SetTag("otel.status_code", "status canonical code");
-activity?.SetTag("otel.status_description", "status description");
+activity?.SetTag("otel.status_code", 2);
+activity?.SetTag("otel.status_description", "error status description");
 ```
 
-## Instrumenting a library/application with OpenTelemetry.API Shim
+StatusCodes can be 0,1,2 which corresponds to `Unset`, `Ok` and `Error` respectively from [StatusCode.cs](./Trace/StatusCode.cs)
 
-This section to be filled after shim is shipped.
+If using OpenTelemetry API [shim](#instrumenting-a-libraryapplication-with-opentelemetryapi-shim), then you can leverage the `SetStatus` extension method on `Activity` as well.
+
+## Instrumenting using OpenTelemetry.API Shim
+
+As mentioned in the introduction section, using OpenTelemetry.API Shim is only recommended if you want to use OpenTelemetry terminology like Tracer,Span instead of ActivitySource,Activity.
+
+Follow [this](../examples/console/TestOTelShimWithConsoleExporter.cs) code for example usage of this shim.
+
+## Context propagation
+
+[OpenTelemetry.API](https://www.nuget.org/packages/opentelemetry.api) must be used to access [Propagators API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md) which defines how to extract and inject context across process boundaries. This is typically required if you are not using any of the .NET communication libraries which has instrumentations already available which does the propagation (eg: Asp.Net Core or HttpClient). In such cases, context extraction and propagation is the responsibility of the library itself.
+An example would be a producer-consumer pattern using some queuing library like RabbitMq. Follow the [messaging example](../examples/MicroserviceExample\README.md) for examples on how to [inject](../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) and [extract](../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs) context.
 
 ## References
 
