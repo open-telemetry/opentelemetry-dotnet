@@ -108,7 +108,7 @@ required only for the following scenarios.
 
 1. You want to use terminology matching OpenTelemetry spec (Span vs Activity).
    The [shim](#instrumenting-using-opentelemetryapi-shim)
-   can be useful for such users.
+   can be useful for such users. Refer to the [comparison of Activity API and OpenTelemetry Tracing API](https://github.com/open-telemetry/opentelemetry-dotnet/issues/947) if you want to compare the differences.
 2. Your library performs communication with other libraries/components, and want
    to access
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md),
@@ -164,7 +164,7 @@ here as well.
 
     If there are no listeners interested in this activity, the activity above
     will be null. This happens when the final application does not enable
-    OpenTelemetry, or when OpenTelemetry samplers chose not to sample this
+    OpenTelemetry (or other `ActivityListener`s), or when OpenTelemetry samplers chose not to sample this
     activity.. Ensure that all subsequent calls using this activity is protected
     with a null check.
 
