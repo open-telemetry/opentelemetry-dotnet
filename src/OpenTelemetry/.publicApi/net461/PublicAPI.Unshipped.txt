@@ -128,8 +128,6 @@ OpenTelemetry.Metrics.MeterProviderBuilder.SetExporter(OpenTelemetry.Metrics.Exp
 OpenTelemetry.Metrics.MeterProviderBuilder.SetProcessor(OpenTelemetry.Metrics.Export.MetricProcessor processor) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProviderBuilder.SetPushInterval(System.TimeSpan pushInterval) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.ProviderExtensions
-OpenTelemetry.ReentrantExportProcessor<T>
-OpenTelemetry.ReentrantExportProcessor<T>.ReentrantExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
@@ -232,7 +230,6 @@ override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.
 override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Update(long value) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
-override OpenTelemetry.ReentrantExportProcessor<T>.OnEnd(T data) -> void
 override OpenTelemetry.SimpleExportProcessor<T>.OnEnd(T data) -> void
 override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
