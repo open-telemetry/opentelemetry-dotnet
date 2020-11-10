@@ -31,6 +31,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public partial class GrpcTests : IDisposable
     {
+        private const string OperationNameHttpRequestIn = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+        private const string OperationNameGrpcOut = "Grpc.Net.Client.GrpcOut";
+
         private readonly GrpcServer<GreeterService> server;
 
         public GrpcTests()
@@ -74,8 +77,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             WaitForProcessorInvocations(processor, 2);
 
             Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
-            var activity = (Activity)processor.Invocations.FirstOrDefault(invo =>
-                invo.Method.Name == "OnEnd" && (invo.Arguments[0] as Activity).OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn").Arguments[0];
+            var activity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
 
@@ -129,6 +131,16 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     return spanProcessor.Invocations.Count >= invocationCount;
                 },
                 TimeSpan.FromSeconds(1)));
+        }
+
+        private static Activity GetActivityFromProcessorInvocation(Mock<BaseProcessor<Activity>> processor, string methodName, string activityOperationName)
+        {
+            return processor.Invocations
+                .FirstOrDefault(invo =>
+                {
+                    return invo.Method.Name == methodName
+                        && (invo.Arguments[0] as Activity)?.OperationName == activityOperationName;
+                })?.Arguments[0] as Activity;
         }
     }
 }

@@ -205,7 +205,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
         }
 
-        [Fact(Skip = "Flacky test")]
+        [Fact]
         public void GrpcPropagatesContextWithSuppressInstrumentation()
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
@@ -238,18 +238,22 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 .AddProcessor(processor.Object)
                 .Build())
             {
-                using var activity = source.StartActivity("parent");
-                Assert.NotNull(activity);
-                Baggage.Current.SetBaggage("item1", "value1");
+                using (var activity = source.StartActivity("parent"))
+                {
+                    Assert.NotNull(activity);
+                    Baggage.Current.SetBaggage("item1", "value1");
 
-                var channel = GrpcChannel.ForAddress(uri);
-                var client = new Greeter.GreeterClient(channel);
-                var rs = client.SayHello(new HelloRequest());
+                    var channel = GrpcChannel.ForAddress(uri);
+                    var client = new Greeter.GreeterClient(channel);
+                    var rs = client.SayHello(new HelloRequest());
+                }
+
+                WaitForProcessorInvocations(processor, 6);
             }
 
             Assert.Equal(9, processor.Invocations.Count); // SetParentProcessor/OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
-            var serverActivity = (Activity)processor.Invocations[4].Arguments[0];
-            var clientActivity = (Activity)processor.Invocations[5].Arguments[0];
+            var serverActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
+            var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
 
             Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
             Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
