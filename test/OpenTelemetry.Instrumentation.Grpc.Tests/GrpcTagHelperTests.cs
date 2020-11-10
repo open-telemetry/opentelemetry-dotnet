@@ -58,9 +58,20 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
             var statusCode = GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status);
+            activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
 
             Assert.Equal(StatusCode.Unset, statusCode.StatusCode);
-            Assert.Equal(0, activity.TagObjects.FirstOrDefault(q => q.Key == SemanticConventions.AttributeRpcGrpcStatusCode).Value);
+            Assert.Equal(status, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+        }
+
+        [Fact]
+        public void GrpcTagHelper_GetGrpcStatusCodeFromEmptyActivity()
+        {
+            var activity = new Activity("operationName");
+
+            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            Assert.Equal(-1, status);
+            Assert.Null(activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
     }
 }

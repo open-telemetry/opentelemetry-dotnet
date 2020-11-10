@@ -126,10 +126,13 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             if (activity.IsAllDataRequested)
             {
                 int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
-                activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
+                if (status != -1)
+                {
+                    activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
 
-                // setting rpc.grpc.status_code
-                activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
+                    // setting rpc.grpc.status_code
+                    activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
+                }
 
                 // Remove the grpc.status_code tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
