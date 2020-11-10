@@ -96,7 +96,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
         [Theory]
