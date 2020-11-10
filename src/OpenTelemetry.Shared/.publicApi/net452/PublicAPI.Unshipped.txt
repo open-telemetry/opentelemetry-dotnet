@@ -1,0 +1,9 @@
+﻿OpenTelemetry.Shared.IPersistentBlob
+OpenTelemetry.Shared.IPersistentBlob.Delete() -> void
+OpenTelemetry.Shared.IPersistentBlob.Lease(int leasePeriodMilliseconds) -> OpenTelemetry.Shared.IPersistentBlob
+OpenTelemetry.Shared.IPersistentBlob.Read() -> byte[]
+OpenTelemetry.Shared.IPersistentBlob.Write(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Shared.IPersistentBlob
+OpenTelemetry.Shared.IPersistentStorage
+OpenTelemetry.Shared.IPersistentStorage.CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Shared.IPersistentBlob
+OpenTelemetry.Shared.IPersistentStorage.GetBlob() -> OpenTelemetry.Shared.IPersistentBlob
+OpenTelemetry.Shared.IPersistentStorage.GetBlobs() -> System.Collections.Generic.IEnumerable<OpenTelemetry.Shared.IPersistentBlob>

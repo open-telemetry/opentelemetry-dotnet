@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using Microsoft.Extensions.DependencyInjection;
 #endif
@@ -30,7 +31,7 @@ public class Program
 #endif
         {
             builder.AddOpenTelemetry(options => options
-                .AddInMemoryExporter()); // TODO: change to console output
+                .AddConsoleExporter());
         });
 
 #if NETCOREAPP2_1

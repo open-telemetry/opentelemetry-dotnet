@@ -259,7 +259,7 @@ namespace OpenTelemetry.Context.Propagation
                 return Convert.ToByte(c);
             }
 
-            throw new ArgumentOutOfRangeException(nameof(c), $"Invalid character: {c}.");
+            throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
         }
     }
 }

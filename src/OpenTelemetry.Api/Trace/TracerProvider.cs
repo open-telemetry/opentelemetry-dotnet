@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -22,7 +21,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Tracer"/>.
     /// </summary>
-    public class TracerProvider : IDisposable
+    public class TracerProvider : BaseProvider
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TracerProvider"/> class.
@@ -50,21 +49,6 @@ namespace OpenTelemetry.Trace
             }
 
             return new Tracer(new ActivitySource(name, version));
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
         }
     }
 }

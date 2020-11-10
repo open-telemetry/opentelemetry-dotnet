@@ -29,25 +29,19 @@ namespace OpenTelemetry.Trace
     {
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
-        private readonly Resource resource;
         private readonly Sampler sampler;
         private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
 
-        static TracerProviderSdk()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-        }
-
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
+            IEnumerable<TracerProviderBuilder.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors)
         {
-            this.resource = resource;
+            this.Resource = resource;
             this.sampler = sampler;
 
             foreach (var processor in processors)
@@ -55,12 +49,20 @@ namespace OpenTelemetry.Trace
                 this.AddProcessor(processor);
             }
 
-            if (instrumentationFactories.Any())
+            if (diagnosticSourceInstrumentationFactories.Any())
             {
-                this.adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
-                foreach (var instrumentationFactory in instrumentationFactories)
+                this.adapter = new ActivitySourceAdapter(sampler, this.processor);
+                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
+                }
+            }
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 
@@ -78,7 +80,6 @@ namespace OpenTelemetry.Trace
 
                     if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                     {
-                        activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
                     }
                 },
@@ -162,12 +163,16 @@ namespace OpenTelemetry.Trace
             this.listener = listener;
         }
 
+        internal Resource Resource { get; }
+
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
                 throw new ArgumentNullException(nameof(processor));
             }
+
+            processor.SetParentProvider(this);
 
             if (this.processor == null)
             {

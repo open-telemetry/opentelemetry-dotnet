@@ -23,7 +23,7 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of dependency instrumentation.
+    /// Extension methods to simplify registering of httpclient instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace
 
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
-            builder.AddInstrumentation((activitySource) => new HttpClientInstrumentation(activitySource, httpClientOptions));
+            builder.AddDiagnosticSourceInstrumentation((activitySource) => new HttpClientInstrumentation(activitySource, httpClientOptions));
 
 #if NETFRAMEWORK
             builder.AddHttpWebRequestInstrumentation(configureHttpWebRequestInstrumentationOptions);
