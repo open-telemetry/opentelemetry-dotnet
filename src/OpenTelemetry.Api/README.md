@@ -122,7 +122,7 @@ required only for the following scenarios.
    Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md). This repo
    already provides instrumentation for these common libraries. If your library
    is not built on top of these, and want to leverage propagators, follow the
-   [Propagation API](#propagation-api) section.
+   [Context propagation](#context-propagation) section.
 
 ## Instrumenting a library/application with .NET Activity API
 
@@ -374,7 +374,7 @@ As mentioned in the introduction section, using OpenTelemetry.API Shim is only
 recommended if you want to use OpenTelemetry terminology like Tracer,Span
 instead of ActivitySource,Activity.
 
-Follow [this](../examples/console/TestOTelShimWithConsoleExporter.cs) code for
+Follow [this](../../examples/console/TestOTelShimWithConsoleExporter.cs) code for
 example usage of this shim.
 
 ## Context propagation
@@ -388,10 +388,10 @@ libraries which has instrumentations already available which does the
 propagation (eg: Asp.Net Core or HttpClient). In such cases, context extraction
 and propagation is the responsibility of the library itself. An example would be
 a producer-consumer pattern using some queuing library like RabbitMq. Follow the
-[messaging example](../examples/MicroserviceExample\README.md) for examples on
+[messaging example](../../examples/MicroserviceExample/README.md) for examples on
 how to
-[inject](../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) and
-[extract](../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
+[inject](../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) and
+[extract](../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
 context.
 
 ## References
