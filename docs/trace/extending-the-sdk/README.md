@@ -60,12 +60,14 @@ Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
 
 ## Instrumentation Library
 
-The goal of the OpenTelemetry project is to make every library and application
-observable out of the box by having them call OpenTelemetry API directly.
-However, many libraries will not have such integration, and as such there is a
-need for a separate library which would inject such calls, using mechanisms such
-as wrapping interfaces, subscribing to library-specific callbacks, or
-translating existing telemetry into OpenTelemetry model.
+The [inspiration of the OpenTelemetry
+project](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#instrumentation-libraries)
+is to make every library and application observable out of the box by having
+them call OpenTelemetry API directly. However, many libraries will not have such
+integration, and as such there is a need for a separate library which would
+inject such calls, using mechanisms such as wrapping interfaces, subscribing to
+library-specific callbacks, or translating existing telemetry into OpenTelemetry
+model.
 
 A library which enables instrumentation for another library is called
 [Instrumentation
