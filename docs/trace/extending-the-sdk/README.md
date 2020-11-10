@@ -132,14 +132,14 @@ method is optional, and the below guidance must be followed:
    `AddInstrumentation` method, and `AddSource` to enable its ActivitySource for
    the provider. An example instrumentation using this approach is
    [StackExchangeRedis
-   instrumentation](../../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
+   instrumentation](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
 
 2. If the instrumentation library does not requires any state management tied to
    that of `TracerProvider`, then providing `TracerProviderBuilder` extension
    method is optional. If provided, then it must call `AddSource` to enable its
    ActivitySource for the provider.
 3. If instrumentation library does not require state management, and is not
-   providing extension method, then the name of the ActivitySource used the
+   providing extension method, then the name of the ActivitySource used by the
    instrumented library must be documented so that end users can enable it using
    `AddSource` API.
 
