@@ -50,13 +50,14 @@ allows users to generate
 [Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span),
 which represent a single operation within a trace. Spans can be nested to form a
 trace tree. Each trace contains a root span, which typically describes the
-entire operation and, optionally one or more sub-spans for its sub-operations.
+entire operation and, optionally one or more child-spans for its
+child-operations.
 
 ### Logging API
 
-OpenTelemetry does not introduce own API for logging. Instead it recommends to
-integrate with existing well-known logging library for each language. For .NET,
-the logging API is simply the  [Microsoft.Extensions.Logging
+OpenTelemetry does not introduce its own API for logging. Instead it recommends
+to integrate with existing well-known logging libraries for each language. For
+.NET, the logging API is simply the [Microsoft.Extensions.Logging
 API](https://docs.microsoft.com/dotnet/core/extensions/logging).
 
 ### Metrics API
@@ -105,7 +106,7 @@ required to just take dependency on the
 [DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/5.0.0).
 Adding dependency to
 [OpenTelemetry.API](https://www.nuget.org/packages/opentelemetry.api) is
-required only for the following scenarios.
+required only for the following scenarios:
 
 1. You want to use terminology matching OpenTelemetry spec (Span vs Activity).
    The [shim](#instrumenting-using-opentelemetryapi-shim) can be useful for such
@@ -168,14 +169,14 @@ here as well.
     If there are no listeners interested in this activity, the activity above
     will be null. This happens when the final application does not enable
     OpenTelemetry (or other `ActivityListener`s), or when OpenTelemetry samplers
-    chose not to sample this activity.. Ensure that all subsequent calls using
-    this activity is protected with a null check.
+    chose not to sample this activity. Ensure that all subsequent calls using
+    this activity are protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
    conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
    It is highly recommended to check `activity.IsAllDataRequested`, before
    populating any tags which are not readily available. `IsAllDataRequested` is
-   same as
+   the same as
    [Span.IsRecording](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#isrecording)
    and will be false when samplers decide to not record the activity, and this
    can be used to avoid any expensive operation to retrieve tags.
@@ -275,9 +276,9 @@ chose not to sample this activity.
    [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attribute-and-label-naming)
    for best practices on naming tags. It is also possible to provide an initial
    set of tags during activity creation, as shown below. Tags provided at
-   activity creation is accessible for
+   activity creation are accessible for
    [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler),
-   whereas any tags added using `SetTag` is not available for samplers.
+   whereas any tags added using `SetTag` are not available for samplers.
 
     ```csharp
     var initialTags = new ActivityTagsCollection();
@@ -361,7 +362,7 @@ activity?.SetTag("otel.status_code", 2);
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-StatusCodes can be 0,1,2 which corresponds to `Unset`, `Ok` and `Error`
+StatusCodes can be 0, 1, 2 which corresponds to `Unset`, `Ok` and `Error`
 respectively from [StatusCode.cs](./Trace/StatusCode.cs)
 
 If using OpenTelemetry API
@@ -371,8 +372,8 @@ can leverage the `SetStatus` extension method on `Activity` as well.
 ## Instrumenting using OpenTelemetry.API Shim
 
 As mentioned in the introduction section, using OpenTelemetry.API Shim is only
-recommended if you want to use OpenTelemetry terminology like Tracer,Span
-instead of ActivitySource,Activity.
+recommended if you want to use OpenTelemetry terminology like Tracer, Span
+instead of ActivitySource, Activity.
 
 Follow [this](../../examples/console/TestOTelShimWithConsoleExporter.cs) code for
 example usage of this shim.
@@ -387,7 +388,7 @@ is typically required if you are not using any of the .NET communication
 libraries which has instrumentations already available which does the
 propagation (eg: Asp.Net Core or HttpClient). In such cases, context extraction
 and propagation is the responsibility of the library itself. An example would be
-a producer-consumer pattern using some queuing library like RabbitMq. Follow the
+a producer-consumer pattern using some queuing library like RabbitMQ. Follow the
 [messaging example](../../examples/MicroserviceExample/README.md) for examples on
 how to
 [inject](../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) and
