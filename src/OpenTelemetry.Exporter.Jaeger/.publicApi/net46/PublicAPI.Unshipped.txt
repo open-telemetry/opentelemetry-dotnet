@@ -4,6 +4,8 @@ OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.get -> string
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentPort.get -> int
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentPort.set -> void
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.GenerateServiceSpecificBatches.get -> bool
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.GenerateServiceSpecificBatches.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.JaegerExporterOptions() -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.get -> int?
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.set -> void

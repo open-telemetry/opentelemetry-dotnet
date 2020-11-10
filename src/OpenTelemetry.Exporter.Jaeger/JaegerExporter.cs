@@ -34,6 +34,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly JaegerThriftClient thriftClient;
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
+        private readonly bool generateServiceSpecificBatches;
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
@@ -51,6 +52,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+            this.generateServiceSpecificBatches = options.GenerateServiceSpecificBatches;
 
             this.Process = new Process(options.ServiceName, options.ProcessTags);
         }
@@ -147,7 +149,9 @@ namespace OpenTelemetry.Exporter.Jaeger
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
+            var spanServiceName = !this.generateServiceSpecificBatches
+                ? this.Process.ServiceName
+                : jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
 
             if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
             {

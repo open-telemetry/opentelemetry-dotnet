@@ -136,11 +136,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(3, batches.First().Count);
         }
 
-        [Fact]
-        public void JaegerTraceExporter_BuildBatchesToTransmit_MultipleBatches()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void JaegerTraceExporter_BuildBatchesToTransmit_MultipleBatches(bool generateServiceSpecificBatches)
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions
+            {
+                ServiceName = "TestService",
+                GenerateServiceSpecificBatches = generateServiceSpecificBatches,
+            });
             jaegerExporter.SetResource(Resource.Empty);
 
             // Act
@@ -156,15 +162,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             var batches = jaegerExporter.CurrentBatches.Values;
 
             // Assert
-            Assert.Equal(2, batches.Count());
 
-            var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
-            Assert.Single(primaryBatch);
-            Assert.Equal(2, primaryBatch.First().Count);
+            if (generateServiceSpecificBatches)
+            {
+                Assert.Equal(2, batches.Count());
 
-            var mySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
-            Assert.Single(mySQLBatch);
-            Assert.Equal(1, mySQLBatch.First().Count);
+                var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
+                Assert.Single(primaryBatch);
+                Assert.Equal(2, primaryBatch.First().Count);
+
+                var mySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
+                Assert.Single(mySQLBatch);
+                Assert.Equal(1, mySQLBatch.First().Count);
+            }
+            else
+            {
+                Assert.Single(batches);
+
+                var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
+                Assert.Single(primaryBatch);
+                Assert.Equal(3, primaryBatch.First().Count);
+            }
         }
 
         [Fact]

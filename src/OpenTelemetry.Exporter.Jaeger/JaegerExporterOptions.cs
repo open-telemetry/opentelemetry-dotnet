@@ -48,5 +48,20 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// Gets or sets the tags that should be sent with telemetry.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not a batch should be sent to the Jaeger agent for each service. Default value: true.
+        /// </summary>
+        /// <remarks>
+        /// Jaeger UI will only detect &amp; color dependency spans when both
+        /// the client &amp; server processes report data to the same Jaeger
+        /// instance. For processes that make calls to non-instrumented services
+        /// (third parties, SQL, legacy systems, etc.) the
+        /// GenerateServiceSpecificBatches flag is provided to trick Jaeger into
+        /// correctly detecting and displaying all dependent spans as if both
+        /// sides reported data. For more details, see <a
+        /// href="https://github.com/jaegertracing/jaeger-ui/issues/594">jaeger-ui/issues/594</a>.
+        /// </remarks>
+        public bool GenerateServiceSpecificBatches { get; set; } = true;
     }
 }
