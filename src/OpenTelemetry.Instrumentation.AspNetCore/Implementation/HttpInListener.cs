@@ -316,8 +316,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
 
-            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
-            if (status != -1)
+            bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+            if (validConversion)
             {
                 activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
             }
@@ -333,7 +333,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // Remove the grpc.status_code tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
 
-                if (status != -1)
+                if (validConversion)
                 {
                     // setting rpc.grpc.status_code
                     activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);

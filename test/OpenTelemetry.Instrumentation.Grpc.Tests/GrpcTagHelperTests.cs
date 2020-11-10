@@ -56,7 +56,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var activity = new Activity("operationName");
             activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, "0");
 
-            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+            Assert.True(validConversion);
+
             var statusCode = GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status);
             activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
 
@@ -69,7 +71,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var activity = new Activity("operationName");
 
-            int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
+            bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+            Assert.False(validConversion);
             Assert.Equal(-1, status);
             Assert.Null(activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }

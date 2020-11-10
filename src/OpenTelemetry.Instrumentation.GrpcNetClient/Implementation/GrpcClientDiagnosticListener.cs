@@ -125,8 +125,8 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                int status = GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity);
-                if (status != -1)
+                bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+                if (validConversion)
                 {
                     activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
 
