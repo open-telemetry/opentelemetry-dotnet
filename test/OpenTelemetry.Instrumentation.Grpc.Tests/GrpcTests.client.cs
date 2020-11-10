@@ -16,10 +16,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
 using Grpc.Net.Client;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -41,10 +43,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"{baseAddress}:{this.server.Port}");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
@@ -56,7 +58,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                             options.Enrich = ActivityEnrichment;
                         }
                     })
-                    .SetResource(expectedResource)
                     .AddProcessor(processor.Object)
                     .Build())
             {
@@ -65,10 +66,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
-            ValidateGrpcActivity(activity, expectedResource);
+            ValidateGrpcActivity(activity);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
             Assert.Equal(parent.SpanId, activity.ParentSpanId);
             Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
@@ -92,11 +93,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             Assert.Equal(Status.Unset, activity.GetStatus());
-            Assert.Equal(expectedResource, activity.GetResource());
 
             // Tags added by the library then removed from the instrumentation
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-            Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
         [Theory]
@@ -105,7 +106,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void GrpcAndHttpClientInstrumentationIsInvoked(bool shouldEnrich)
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
@@ -113,7 +113,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
-                    .SetResource(expectedResource)
                     .AddGrpcClientInstrumentation(options =>
                     {
                         if (shouldEnrich)
@@ -125,16 +124,25 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
+#if NETCOREAPP3_1
                 using var channel = GrpcChannel.ForAddress(uri);
+#else
+                // With net5, based on the grpc changes, the quantity of default activities changed.
+                // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
+                using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
+                {
+                    HttpClient = new HttpClient(),
+                });
+#endif
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(6, processor.Invocations.Count); // OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
-            var httpSpan = (Activity)processor.Invocations[2].Arguments[0];
-            var grpcSpan = (Activity)processor.Invocations[3].Arguments[0];
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
+            var httpSpan = (Activity)processor.Invocations[3].Arguments[0];
+            var grpcSpan = (Activity)processor.Invocations[4].Arguments[0];
 
-            ValidateGrpcActivity(grpcSpan, expectedResource);
+            ValidateGrpcActivity(grpcSpan);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
@@ -146,7 +154,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation(bool shouldEnrich)
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
 
             var parent = new Activity("parent")
@@ -154,7 +161,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
-                    .SetResource(expectedResource)
                     .AddGrpcClientInstrumentation(o =>
                     {
                         o.SuppressDownstreamInstrumentation = true;
@@ -181,23 +187,80 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 });
             }
 
-            Assert.Equal(10, processor.Invocations.Count); // OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
-            var grpcSpan1 = (Activity)processor.Invocations[1].Arguments[0];
-            var grpcSpan2 = (Activity)processor.Invocations[3].Arguments[0];
-            var grpcSpan3 = (Activity)processor.Invocations[5].Arguments[0];
-            var grpcSpan4 = (Activity)processor.Invocations[7].Arguments[0];
+            Assert.Equal(11, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
+            var grpcSpan1 = (Activity)processor.Invocations[2].Arguments[0];
+            var grpcSpan2 = (Activity)processor.Invocations[4].Arguments[0];
+            var grpcSpan3 = (Activity)processor.Invocations[6].Arguments[0];
+            var grpcSpan4 = (Activity)processor.Invocations[8].Arguments[0];
 
-            ValidateGrpcActivity(grpcSpan1, expectedResource);
+            ValidateGrpcActivity(grpcSpan1);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
 
-            ValidateGrpcActivity(grpcSpan2, expectedResource);
+            ValidateGrpcActivity(grpcSpan2);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan2.DisplayName);
 
-            ValidateGrpcActivity(grpcSpan3, expectedResource);
+            ValidateGrpcActivity(grpcSpan3);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan3.DisplayName);
 
-            ValidateGrpcActivity(grpcSpan4, expectedResource);
+            ValidateGrpcActivity(grpcSpan4);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
+        }
+
+        [Fact]
+        public void GrpcPropagatesContextWithSuppressInstrumentation()
+        {
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+            var processor = new Mock<BaseProcessor<Activity>>();
+
+            using var source = new ActivitySource("test-source");
+
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSource("test-source")
+                .AddGrpcClientInstrumentation(o =>
+                {
+                    o.SuppressDownstreamInstrumentation = true;
+                })
+                .AddHttpClientInstrumentation()
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Enrich = (activity, eventName, obj) =>
+                    {
+                        switch (eventName)
+                        {
+                            case "OnStartActivity":
+                                var request = (HttpRequest)obj;
+                                activity.SetCustomProperty("BaggageString", request.Headers["Baggage"].ToString());
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                }) // Instrumenting the server side as well
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using (var activity = source.StartActivity("parent"))
+                {
+                    Assert.NotNull(activity);
+                    Baggage.Current.SetBaggage("item1", "value1");
+
+                    var channel = GrpcChannel.ForAddress(uri);
+                    var client = new Greeter.GreeterClient(channel);
+                    var rs = client.SayHello(new HelloRequest());
+                }
+
+                WaitForProcessorInvocations(processor, 6);
+            }
+
+            Assert.Equal(9, processor.Invocations.Count); // SetParentProcessor/OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
+            var serverActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
+            var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
+
+            Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
+            Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
+            Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
+            Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
+            Assert.Contains("item1=value1", serverActivity.GetCustomProperty("BaggageString") as string);
         }
 
         [Fact]
@@ -207,10 +270,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddGrpcClientInstrumentation());
         }
 
-        private static void ValidateGrpcActivity(Activity activityToValidate, Resources.Resource expectedResource)
+        private static void ValidateGrpcActivity(Activity activityToValidate)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-            Assert.Equal(expectedResource, activityToValidate.GetResource());
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

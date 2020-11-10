@@ -13,4 +13,5 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="StackExchange.Redis" Version="$(StackExchangeRedisPkgVer)" />
   </ItemGroup>
+
 </Project>

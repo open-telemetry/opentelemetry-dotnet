@@ -1,0 +1,4 @@
+Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions
+static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
+static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder> configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
+static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection

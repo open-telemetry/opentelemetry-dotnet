@@ -21,7 +21,6 @@ using System.Linq;
 using OpenTelemetry.Logs;
 #endif
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -99,7 +98,7 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
-                    var resource = activity.GetResource();
+                    var resource = this.ParentProvider.GetResource();
                     if (resource != Resource.Empty)
                     {
                         this.WriteLine("Resource associated with Activity:");

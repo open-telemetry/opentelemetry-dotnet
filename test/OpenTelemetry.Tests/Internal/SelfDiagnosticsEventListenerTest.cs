@@ -22,7 +22,7 @@ using System.Text;
 using Moq;
 using Xunit;
 
-namespace OpenTelemetry.Internal
+namespace OpenTelemetry.Internal.Tests
 {
     public class SelfDiagnosticsEventListenerTest
     {
