@@ -22,7 +22,6 @@ using System.Linq;
 using System.Net;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -46,10 +45,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var host,
                 out var port);
 
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
-                .SetResource(expectedResource)
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpWebRequestInstrumentation(options =>
                 {
@@ -86,9 +83,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 tc.ResponseExpected = false;
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
-            ValidateHttpWebRequestActivity(activity, expectedResource, tc.ResponseExpected);
+            Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            ValidateHttpWebRequestActivity(activity);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
             var d = new Dictionary<int, string>()
@@ -165,10 +162,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.HttpOutCallsAreCollectedSuccessfully(input);
         }
 
-        private static void ValidateHttpWebRequestActivity(Activity activityToValidate, Resources.Resource expectedResource, bool responseExpected)
+        private static void ValidateHttpWebRequestActivity(Activity activityToValidate)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-            Assert.Equal(expectedResource, activityToValidate.GetResource());
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

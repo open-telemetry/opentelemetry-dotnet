@@ -70,22 +70,31 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
+            using var exporter = new OtlpExporter(
+                new OtlpExporterOptions
+                {
+                    ServiceName = optionsServiceName,
+                },
+                new NoopTraceServiceClient());
+
+            if (addResource)
+            {
+                exporter.SetResource(
+                    new Resources.Resource(
+                        new List<KeyValuePair<string, object>>
+                        {
+                            new KeyValuePair<string, object>(Resources.Resource.ServiceNameKey, "service-name"),
+                            new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
+                        }));
+            }
+            else
+            {
+                exporter.SetResource(Resources.Resource.Empty);
+            }
+
             var builder = Sdk.CreateTracerProviderBuilder()
                 .AddSource(sources[0].Name)
                 .AddSource(sources[1].Name);
-
-            Resources.Resource resource = null;
-            if (addResource)
-            {
-                resource = new Resources.Resource(
-                    new List<KeyValuePair<string, object>>
-                    {
-                        new KeyValuePair<string, object>(Resources.Resource.ServiceNameKey, "service-name"),
-                        new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
-                    });
-
-                builder.SetResource(resource);
-            }
 
             using var openTelemetrySdk = builder.Build();
 
@@ -109,14 +118,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
 
-                request.AddBatch(
-                    new OtlpExporter(
-                        new OtlpExporterOptions
-                        {
-                            ServiceName = optionsServiceName,
-                        },
-                        new NoopTraceServiceClient()),
-                    batch);
+                request.AddBatch(exporter.ProcessResource, batch);
 
                 Assert.Single(request.ResourceSpans);
                 var oltpResource = request.ResourceSpans.First().Resource;

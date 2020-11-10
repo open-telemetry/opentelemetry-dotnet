@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Tracer"/>.
     /// </summary>
-    public class TracerProvider : IDisposable
+    public class TracerProvider : BaseProvider
     {
         private int shutdownCount;
 
@@ -97,13 +97,6 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         /// <summary>
         /// Called by <c>Shutdown</c>. This function should block the current
         /// thread until shutdown completed or timed out.
@@ -123,14 +116,6 @@ namespace OpenTelemetry.Trace
         protected virtual bool OnShutdown(int timeoutMilliseconds)
         {
             return true;
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
         }
     }
 }

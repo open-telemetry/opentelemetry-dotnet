@@ -22,6 +22,21 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
+        
+    - name: Setup .NET Core 2.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.1.807
+
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.100-rc.2.20479.15'
 
     - name: Install dependencies
       run: dotnet restore
