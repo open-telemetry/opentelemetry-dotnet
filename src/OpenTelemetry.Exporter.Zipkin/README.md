@@ -21,7 +21,8 @@ You can configure the `ZipkinExporter` with the following options:
 * `Endpoint`: URI address to receive telemetry.
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
-* `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions **other** than 4.5.2 (default 4096).
+* `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions
+   **other** than 4.5.2 (default 4096).
 
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
