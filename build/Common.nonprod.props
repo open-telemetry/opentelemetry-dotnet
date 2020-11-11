@@ -30,14 +30,14 @@
     <GrpcNetClientPkgVer>[2.27.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftExtensionsHostingPkgVer>[3.1.6,5.0)</MicrosoftExtensionsHostingPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingConsolePkgVer>[5.0.0-rc.2.20475.5]</MicrosoftExtensionsLoggingConsolePkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
+    <MicrosoftExtensionsLoggingConsolePkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingConsolePkgVer>
     <MicrosoftNETTestSdkPkgVer>[16.9.0-preview-20201020-06]</MicrosoftNETTestSdkPkgVer>
     <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
     <RabbitMQClientPkgVer>[6.1.0,7.0)</RabbitMQClientPkgVer>
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
-    <SwashbuckleAspNetCorePkgVer>[5.0.0-rc5]</SwashbuckleAspNetCorePkgVer>
+    <SwashbuckleAspNetCorePkgVer>[5.0.0]</SwashbuckleAspNetCorePkgVer>
     <XUnitRunnerVisualStudioPkgVer>[2.4.3,3.0)</XUnitRunnerVisualStudioPkgVer>
     <XUnitPkgVer>[2.4.1,3.0)</XUnitPkgVer>
   </PropertyGroup>
