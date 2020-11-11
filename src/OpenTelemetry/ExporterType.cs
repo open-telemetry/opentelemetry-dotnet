@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Zipkin
+namespace OpenTelemetry
 {
     /// <summary>
     /// Type of exporter to be used.
     /// </summary>
-    public enum ZipkinExporterType
+    public enum ExporterType
     {
         /// <summary>
         /// Use SimpleExportProcessor

@@ -49,10 +49,10 @@ namespace OpenTelemetry
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
         public BatchExportProcessor(
             BaseExporter<T> exporter,
-            int maxQueueSize = 2048,
-            int scheduledDelayMilliseconds = 5000,
-            int exporterTimeoutMilliseconds = 30000,
-            int maxExportBatchSize = 512)
+            int maxQueueSize = BatchExportProcessorDefaultOptions.MaxQueueSize,
+            int scheduledDelayMilliseconds = BatchExportProcessorDefaultOptions.ScheduledDelayMilliseconds,
+            int exporterTimeoutMilliseconds = BatchExportProcessorDefaultOptions.ExporterTimeoutMilliseconds,
+            int maxExportBatchSize = BatchExportProcessorDefaultOptions.MaxExportBatchSize)
             : base(exporter)
         {
             if (maxQueueSize <= 0)

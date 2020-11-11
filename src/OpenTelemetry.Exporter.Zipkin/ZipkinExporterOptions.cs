@@ -55,26 +55,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <summary>
         /// Gets or sets the exporter type for Zipkin Exporter.
         /// </summary>
-        public ZipkinExporterType ExporterType { get; set; } = ZipkinExporterType.SimpleExportProcessor;
+        public ExporterType ExporterType { get; set; } = ExporterType.BatchExportProcessor;
 
         /// <summary>
-        /// Gets or sets the maxQueueSize for BatchExport.
+        /// Gets or sets get or sets the BatchExportProcessor options.
         /// </summary>
-        public int MaxQueueSize { get; set; } = 2048;
-
-        /// <summary>
-        /// Gets or sets the scheduledDelayMilliseconds for BatchExport.
-        /// </summary>
-        public int ScheduledDelayMilliseconds { get; set; } = 5000;
-
-        /// <summary>
-        /// Gets or sets the exporterTimeoutMilliseconds for BatchExport.
-        /// </summary>
-        public int ExporterTimeoutMilliseconds { get; set; } = 30000;
-
-        /// <summary>
-        /// Gets or sets the maxExportBatchSize for BatchExport.
-        /// </summary>
-        public int MaxExportBatchSize { get; set; } = 512;
+        public BatchExportProcessorOptions BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions();
     }
 }
