@@ -81,13 +81,13 @@ The [OpenTelemetry .NET Github repo](../../../README.md#getting-started) ships
 the following instrumentation libraries. The individual docs for them describes
 the library they instrument, and steps for enabling them.
 
-* [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
-* [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
+* [ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md)
+* [ASP.NET Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+* [gRPC client](../../../src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+* [HTTP clients](../../../src/OpenTelemetry.Instrumentation.Http/README.md)
 * [Redis
-  client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
-* [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
+  client](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+* [SQL client](../../../src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 ### Writing own instrumentation library
 
@@ -96,7 +96,7 @@ library.
 
 *If you are writing a new library or modifying an existing library, the
 recommendation is to use [ActivitySource API/OpenTelemetry
-API](../../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api)
+API](../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api)
 to instrument it and emit activity/span. If the instrumented library is
 instrumented using ActivitySource API, then there is no need of writing a
 separate instrumentation library, as instrumented and instrumentation library
@@ -115,7 +115,7 @@ this case, leverages them, and emits Span/Activity, on behalf of the
 instrumented library. Another example is System.Data.SqlClient for .NET
 Framework, which publishes events using `EventSource`. The [SqlClient
 instrumentation
-library](../../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
+library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
 in this case subscribes to the `EventSource` callbacks and in turn produces
 Activity.
 
