@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry Grpc for .NET instrumentation</Description>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
 
     <PackageReference Include="Google.Protobuf" Version="3.12.3" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.30.0" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.30.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
     <PackageReference Include="Grpc.Tools" Version="2.25.0" PrivateAssets="All" />
   </ItemGroup>
 
