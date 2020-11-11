@@ -96,7 +96,7 @@ library.
 
 *If you are writing a new library or modifying an existing library, the
 recommendation is to use [ActivitySource API/OpenTelemetry
-API](../../../src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api)
+API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
 to instrument it and emit activity/span. If the instrumented library is
 instrumented using ActivitySource API, then there is no need of writing a
 separate instrumentation library, as instrumented and instrumentation library
@@ -110,7 +110,7 @@ As mentioned earlier, the instrumentation library must use ActivitySource API to
 emit activities. The mechanics of how the instrumentation library works depends
 on each library. For example, StackExchangeRedis library allows hooks into the
 library, and the [StackExchangeRedis instrumentation
-library](../../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis) in
+library](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis) in
 this case, leverages them, and emits Span/Activity, on behalf of the
 instrumented library. Another example is System.Data.SqlClient for .NET
 Framework, which publishes events using `EventSource`. The [SqlClient
