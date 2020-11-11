@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
@@ -55,11 +56,11 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// <summary>
         /// Gets or sets the exporter type for Zipkin Exporter.
         /// </summary>
-        public ExporterType ExporterType { get; set; } = ExporterType.BatchExportProcessor;
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.BatchExportProcessor;
 
         /// <summary>
         /// Gets or sets get or sets the BatchExportProcessor options.
         /// </summary>
-        public BatchExportProcessorOptions BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }

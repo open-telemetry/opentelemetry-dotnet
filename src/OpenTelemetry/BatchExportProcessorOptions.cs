@@ -21,14 +21,27 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
 {
-    public class BatchExportProcessorOptions
+    public class BatchExportProcessorOptions<T>
+        where T : class
     {
-        public int MaxQueueSize { get; set; } = BatchExportProcessorDefaultOptions.MaxQueueSize;
+        /// <summary>
+        /// Gets or sets the maximum queue size. The queue drops the data if the maximum size is reached. The default value is 2048.
+        /// </summary>
+        public int MaxQueueLength { get; set; } = BatchExportProcessor<T>.DefaultMaxQueueLength;
 
-        public int ScheduledDelayMilliseconds { get; set; } = BatchExportProcessorDefaultOptions.ScheduledDelayMilliseconds;
+        /// <summary>
+        /// Gets or sets the delay interval (in milliseconds) between two consecutive exports. The default value is 5000.
+        /// </summary>
+        public int ScheduledDelayMilliseconds { get; set; } = BatchExportProcessor<T>.DefaultScheduledDelayMilliseconds;
 
-        public int ExporterTimeoutMilliseconds { get; set; } = BatchExportProcessorDefaultOptions.ExporterTimeoutMilliseconds;
+        /// <summary>
+        /// Gets or sets the timeout (in milliseconds) after which the export is cancelled. The default value is 30000.
+        /// </summary>
+        public int TimeoutMilliseconds { get; set; } = BatchExportProcessor<T>.DefaultTimeoutMilliseconds;
 
-        public int MaxExportBatchSize { get; set; } = BatchExportProcessorDefaultOptions.MaxExportBatchSize;
+        /// <summary>
+        /// Gets or sets the maximum batch size of every export. It must be smaller or equal to MaxQueueLength. The default value is 512.
+        /// </summary>
+        public int MaxBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxBatchSize;
     }
 }
