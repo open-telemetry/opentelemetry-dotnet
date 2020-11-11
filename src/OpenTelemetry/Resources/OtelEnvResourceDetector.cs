@@ -33,7 +33,7 @@ namespace OpenTelemetry.Resources
             if (!string.IsNullOrEmpty(envResourceAttributeValue))
             {
                 var attributes = ParseResourceAttributes(envResourceAttributeValue);
-                return new Resource(attributes);
+                resource = new Resource(attributes);
             }
 
             return resource;
