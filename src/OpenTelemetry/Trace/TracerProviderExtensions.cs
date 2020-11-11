@@ -35,12 +35,10 @@ namespace OpenTelemetry.Trace
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
-                return tracerProviderSdk.AddProcessor(processor);
+                tracerProviderSdk.AddProcessor(processor);
             }
-            else
-            {
-                return provider;
-            }
+
+            return provider;
         }
     }
 }
