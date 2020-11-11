@@ -25,12 +25,12 @@
     <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.23.0,3.0)</GrpcPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
-    <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
-    <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,5.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
+    <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
+    <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
     <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.9.0-preview-20201020-06]</MicrosoftCodeCoveragePkgVer>
-    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,5.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
+    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingConfigurationPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
@@ -39,11 +39,11 @@
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
-    <SystemCollectionsImmutablePkgVer>[1.4.0,5.0]</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>[5.0.0-rc.2.20475.5]</SystemDiagnosticSourcePkgVer>
-    <SystemReflectionEmitLightweightPkgVer>[4.7.0,5.0)</SystemReflectionEmitLightweightPkgVer>
-    <SystemTextJsonPkgVer>[4.7.0,5.0)</SystemTextJsonPkgVer>
-    <SystemThreadingTasksExtensionsPkgVer>[4.5.3,5.0)</SystemThreadingTasksExtensionsPkgVer>
+    <SystemCollectionsImmutablePkgVer>[1.4.0,6.0)</SystemCollectionsImmutablePkgVer>
+    <SystemDiagnosticSourcePkgVer>[5.0.0,6.0)</SystemDiagnosticSourcePkgVer>
+    <SystemReflectionEmitLightweightPkgVer>[4.7.0,6.0)</SystemReflectionEmitLightweightPkgVer>
+    <SystemTextJsonPkgVer>[4.7.0,6.0)</SystemTextJsonPkgVer>
+    <SystemThreadingTasksExtensionsPkgVer>[4.5.3,6.0)</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>
