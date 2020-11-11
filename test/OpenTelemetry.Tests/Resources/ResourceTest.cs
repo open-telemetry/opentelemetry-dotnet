@@ -336,11 +336,11 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void AddDefaultAttributes_EmptyResource()
+        public void GetResourceWithDefaultAttributes_EmptyResource()
         {
             // Arrange
             var resource = Resource.Empty;
-            var new_resource = resource.AddDefaultAttributes();
+            var new_resource = resource.GetResourceWithDefaultAttributes();
 
             // Assert
             var attributes = new_resource.Attributes;
@@ -349,11 +349,11 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void AddDefaultAttributes_ResourceWithAttrs()
+        public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
             var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.AddDefaultAttributes();
+            var new_resource = resource.GetResourceWithDefaultAttributes();
 
             // Assert
             var attributes = new_resource.Attributes;
@@ -363,12 +363,12 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void AddDefaultAttributes_WithEnvVar()
+        public void GetResourceWithDefaultAttributes_WithEnvVar()
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
             var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.AddDefaultAttributes();
+            var new_resource = resource.GetResourceWithDefaultAttributes();
 
             // Assert
             var attributes = new_resource.Attributes;
@@ -380,7 +380,7 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void AddAttributesFromDetectors_OtelEnvDetector()
+        public void GetResourceFromDetectors_OtelEnvDetector()
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey11=EVVal11,EVKey22=EVVal22");
@@ -389,7 +389,7 @@ namespace OpenTelemetry.Resources.Tests
                 new OtelEnvResourceDetector(),
             };
             var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.AddAttributesFromDetectors(detectors);
+            var new_resource = resource.GetResourceFromDetectors(detectors);
 
             // Assert
             var attributes = new_resource.Attributes;

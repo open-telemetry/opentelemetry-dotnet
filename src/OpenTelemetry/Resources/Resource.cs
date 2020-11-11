@@ -79,7 +79,7 @@ namespace OpenTelemetry.Resources
         /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
         /// </summary>
         /// <returns><see cref="Resource"/>.</returns>
-        public Resource AddDefaultAttributes()
+        public Resource GetResourceWithDefaultAttributes()
         {
             return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
         }
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
         /// <returns><see cref="Resource"/>.</returns>
-        public Resource AddAttributesFromDetectors(List<IResourceDetector> detectors)
+        public Resource GetResourceFromDetectors(List<IResourceDetector> detectors)
         {
             var resource = this;
             foreach (IResourceDetector detector in detectors)
