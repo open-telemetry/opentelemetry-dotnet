@@ -53,10 +53,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))
             {
-                PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("library.name", activitySource.Name));
+                PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.library.name", activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("library.version", activitySource.Version));
+                    PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>("otel.library.version", activitySource.Version));
                 }
             }
 
