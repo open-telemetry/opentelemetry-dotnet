@@ -24,7 +24,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.5.0\TestApp.AspNetCore.5.0.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.0-rc.2.20475.17" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
