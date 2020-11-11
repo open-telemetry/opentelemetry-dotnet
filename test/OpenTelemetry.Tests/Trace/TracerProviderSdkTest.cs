@@ -371,7 +371,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerProviderSdkBuildsWithDefaultResource()
         {
-            var tracerProvider = Sdk.CreateMeterProviderBuilder().Build();
+            var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
             var resource = tracerProvider.GetResource();
             var attributes = resource.Attributes;
 
