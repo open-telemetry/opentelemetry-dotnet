@@ -28,6 +28,8 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderSdk : TracerProvider
     {
+        internal int ShutdownCount;
+
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
@@ -197,6 +199,30 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        /// <summary>
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnShutdown(int timeoutMilliseconds)
+        {
+            bool? result;
+            result = this.processor?.Shutdown(timeoutMilliseconds);
+            this.listener?.Dispose();
+            return result ?? true;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (this.instrumentations != null)
@@ -221,14 +247,6 @@ namespace OpenTelemetry.Trace
             this.listener?.Dispose();
 
             base.Dispose(disposing);
-        }
-
-        protected override bool OnShutdown(int timeoutMilliseconds)
-        {
-            bool? result;
-            result = this.processor?.Shutdown(timeoutMilliseconds);
-            this.listener?.Dispose();
-            return result ?? true;
         }
 
         private static ActivitySamplingResult ComputeActivitySamplingResult(
