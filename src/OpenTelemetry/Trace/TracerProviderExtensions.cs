@@ -33,14 +33,12 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(processor));
             }
 
-            var trait = provider as TracerProviderSdk;
-
-            if (trait == null)
+            if (provider is TracerProviderSdk tracerProviderSdk)
             {
-                throw new ArgumentException($"{nameof(provider)} is not an instance of TracerProviderSdk");
+                tracerProviderSdk.AddProcessor(processor);
             }
 
-            return trait.AddProcessor(processor);
+            return provider;
         }
     }
 }
