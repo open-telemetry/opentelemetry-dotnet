@@ -110,8 +110,8 @@ As mentioned earlier, the instrumentation library must use ActivitySource API to
 emit activities. The mechanics of how the instrumentation library works depends
 on each library. For example, StackExchangeRedis library allows hooks into the
 library, and the [StackExchangeRedis instrumentation
-library](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis) in
-this case, leverages them, and emits Span/Activity, on behalf of the
+library]../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+in this case, leverages them, and emits Span/Activity, on behalf of the
 instrumented library. Another example is System.Data.SqlClient for .NET
 Framework, which publishes events using `EventSource`. The [SqlClient
 instrumentation
