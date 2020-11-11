@@ -76,31 +76,6 @@ namespace OpenTelemetry.Resources
             });
 
         /// <summary>
-        /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
-        /// </summary>
-        /// <returns><see cref="Resource"/>.</returns>
-        public Resource GetResourceWithDefaultAttributes()
-        {
-            return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
-        }
-
-        /// <summary>
-        /// Returns a new <see cref="Resource"/> with added attributes from resource detectors in the order of the list.
-        /// </summary>
-        /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
-        /// <returns><see cref="Resource"/>.</returns>
-        public Resource GetResourceFromDetectors(List<IResourceDetector> detectors)
-        {
-            var resource = this;
-            foreach (IResourceDetector detector in detectors)
-            {
-                resource = resource.Merge(detector.Detect());
-            }
-
-            return resource;
-        }
-
-        /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
         /// <code>other</code> <see cref="Resource"/>. In case of a collision the current <see cref="Resource"/> takes precedence.
         /// </summary>
@@ -130,6 +105,31 @@ namespace OpenTelemetry.Resources
             }
 
             return new Resource(newAttributes);
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
+        /// </summary>
+        /// <returns><see cref="Resource"/>.</returns>
+        internal Resource GetResourceWithDefaultAttributes()
+        {
+            return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="Resource"/> with added attributes from resource detectors in the order of the list.
+        /// </summary>
+        /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
+        /// <returns><see cref="Resource"/>.</returns>
+        internal Resource GetResourceFromDetectors(List<IResourceDetector> detectors)
+        {
+            var resource = this;
+            foreach (IResourceDetector detector in detectors)
+            {
+                resource = resource.Merge(detector.Detect());
+            }
+
+            return resource;
         }
 
         private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)

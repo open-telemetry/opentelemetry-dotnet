@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Resources
 {
-    public class OtelEnvResourceDetector : IResourceDetector
+    internal class OtelEnvResourceDetector : IResourceDetector
     {
         private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
         private const char AttributeListSplitter = ',';
