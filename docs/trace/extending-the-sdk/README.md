@@ -119,7 +119,12 @@ library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/Sql
 in this case subscribes to the `EventSource` callbacks and in turn produces
 Activity.
 
-#### Instrumentation library optional requirements
+Irrespective of the mechanics used for achieving instrumentation, the
+instrumentation library must use [ActivitySource API/OpenTelemetry
+API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
+to emit Activities on behalf of the instrumented library.
+
+### Instrumentation library optional requirements
 
 The instrumentation library may provide extension methods on
 `TracerProviderBuilder`, to enable the instrumentation. Providing this extension
