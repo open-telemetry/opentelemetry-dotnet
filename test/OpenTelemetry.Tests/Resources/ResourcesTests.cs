@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
@@ -27,47 +28,60 @@ namespace OpenTelemetry.Resources.Tests
         public void ServiceResource_ServiceName()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service");
-            Assert.Equal(2, resource.Attributes.Count());
+            Assert.Equal(5, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Single(resource.Attributes.Where(kvp => kvp.Key == Resource.ServiceNameKey));
             Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == Resource.ServiceInstanceIdKey).Value, out _));
+            this.AssertDefaultAttributes(resource);
         }
 
         [Fact]
         public void ServiceResource_ServiceNameAndInstance()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123");
-            Assert.Equal(2, resource.Attributes.Count());
+            Assert.Equal(5, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
+            this.AssertDefaultAttributes(resource);
         }
 
         [Fact]
         public void ServiceResource_ServiceNameAndInstanceAndNamespace()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace");
-            Assert.Equal(3, resource.Attributes.Count());
+            Assert.Equal(6, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, "my-namespace"), resource.Attributes);
+            this.AssertDefaultAttributes(resource);
         }
 
         [Fact]
         public void ServiceResource_ServiceNameAndInstanceAndNamespaceAndVersion()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace", "semVer:1.2.3");
-            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Equal(7, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNamespaceKey, "my-namespace"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceVersionKey, "semVer:1.2.3"), resource.Attributes);
+            this.AssertDefaultAttributes(resource);
         }
 
         [Fact]
-        public void ServiceResource_Empty()
+        public void ServiceResource_NullParams()
         {
             var resource = OpenTelemetry.Resources.Resources.CreateServiceResource(null);
-            Assert.Empty(resource.Attributes);
+            Assert.Equal(3, resource.Attributes.Count());
+            this.AssertDefaultAttributes(resource);
+        }
+
+        private void AssertDefaultAttributes(Resource resource)
+        {
+            Assert.Contains(new KeyValuePair<string, object>(SemanticConventions.AttributeTelemetrySdkName, "opentelemetry"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(SemanticConventions.AttributeTelemetrySdkLanguage, "dotnet"), resource.Attributes);
+            var versionAttribute = resource.Attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+            Assert.Single(versionAttribute);
         }
     }
 }
