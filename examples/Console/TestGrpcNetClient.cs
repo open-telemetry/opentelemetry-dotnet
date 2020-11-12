@@ -27,6 +27,20 @@ namespace Examples.Console
     {
         internal static object Run()
         {
+            // Prerequisite for running this example.
+            // In a separate console window, start the example
+            // ASP.NET Core gRPC service by running the following command
+            // from the reporoot\examples\GrpcService\.
+            // (eg: C:\repos\opentelemetry-dotnet\examples\GrpcService\)
+            //
+            // dotnet run
+
+            // To run this example, run the following command from
+            // the reporoot\examples\Console\.
+            // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+            //
+            // dotnet run grpc
+
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddGrpcClientInstrumentation()
                 .AddSource("grpc-net-client-test")
@@ -50,6 +64,8 @@ namespace Examples.Console
                     throw;
                 }
             }
+
+            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }
