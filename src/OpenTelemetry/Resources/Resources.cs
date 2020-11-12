@@ -36,7 +36,7 @@ namespace OpenTelemetry.Resources
             if (serviceName == null)
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create service resource", "serviceName", "is null");
-                return Resource.Empty;
+                return Resource.Empty.GetResourceWithDefaultAttributes();
             }
 
             var attributes = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(Resource.ServiceNameKey, serviceName), };
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Resources
                 attributes.Add(new KeyValuePair<string, object>(Resource.ServiceVersionKey, serviceVersion));
             }
 
-            return new Resource(attributes);
+            return new Resource(attributes).GetResourceWithDefaultAttributes();
         }
     }
 }

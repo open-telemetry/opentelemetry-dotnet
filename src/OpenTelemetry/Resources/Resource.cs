@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
@@ -30,6 +31,11 @@ namespace OpenTelemetry.Resources
         public const string ServiceNamespaceKey = "service.namespace";
         public const string ServiceInstanceIdKey = "service.instance.id";
         public const string ServiceVersionKey = "service.version";
+        private const string TelemetrySdkNameKey = "telemetry.sdk.name";
+        private const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
+        private const string TelemetrySdkVersionKey = "telemetry.sdk.version";
+
+        private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
 
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
@@ -59,6 +65,13 @@ namespace OpenTelemetry.Resources
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+        private static Resource TelemetryResource { get; } = new Resource(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(TelemetrySdkNameKey, "opentelemetry"),
+                new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
+                new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
+            });
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -90,6 +103,31 @@ namespace OpenTelemetry.Resources
             }
 
             return new Resource(newAttributes);
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
+        /// </summary>
+        /// <returns><see cref="Resource"/>.</returns>
+        internal Resource GetResourceWithDefaultAttributes()
+        {
+            return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="Resource"/> with added attributes from resource detectors in the order of the list.
+        /// </summary>
+        /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
+        /// <returns><see cref="Resource"/>.</returns>
+        internal Resource GetResourceFromDetectors(List<IResourceDetector> detectors)
+        {
+            var resource = this;
+            foreach (IResourceDetector detector in detectors)
+            {
+                resource = resource.Merge(detector.Detect());
+            }
+
+            return resource;
         }
 
         private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)
