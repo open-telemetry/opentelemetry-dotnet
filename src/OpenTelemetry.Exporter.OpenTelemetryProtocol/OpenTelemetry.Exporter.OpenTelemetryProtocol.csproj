@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="**/*.proto">
+    <Protobuf Include="**/*.proto" Access="internal">
       <ProtoRoot>Implementation</ProtoRoot>
     </Protobuf>
   </ItemGroup>
