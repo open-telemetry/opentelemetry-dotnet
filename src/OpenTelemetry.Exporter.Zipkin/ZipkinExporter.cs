@@ -266,6 +266,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                     }
 #endif
                 }
+
                 this.writer.WriteEndArray();
 
                 this.writer.Flush();
