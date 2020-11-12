@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+* AspNetInstrumentation sets ActivitySource to activities created outside
+  ActivitySource.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5
 
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
-  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
-  and changed from interface to abstract class.
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+  CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
+  changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 * Propagators.DefaultTextMapPropagator will be used as the default Propagator.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
