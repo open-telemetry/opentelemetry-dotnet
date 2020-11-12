@@ -122,9 +122,6 @@ namespace OpenTelemetry.Exporter.Zipkin
                     case Resource.ServiceNamespaceKey:
                         serviceNamespace = label.Value as string;
                         continue;
-                    case Resource.LibraryNameKey:
-                    case Resource.LibraryVersionKey:
-                        continue;
                 }
 
                 if (tags == null)
