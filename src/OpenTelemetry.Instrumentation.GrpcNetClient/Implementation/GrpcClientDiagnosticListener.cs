@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Trace;
@@ -25,8 +26,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        internal const string ActivitySourceName = "OpenTelemetry.Grpc";
-        internal static readonly Version Version = typeof(GrpcClientDiagnosticListener).Assembly.GetName().Version;
+        internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private readonly GrpcClientInstrumentationOptions options;

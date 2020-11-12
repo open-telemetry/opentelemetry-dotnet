@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -30,8 +31,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        internal const string ActivitySourceName = "OpenTelemetry.AspNetCore";
-        internal static readonly Version Version = typeof(HttpInListener).Assembly.GetName().Version;
+        internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
