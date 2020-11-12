@@ -23,12 +23,8 @@ namespace Examples.Console
     {
         internal static object Run(string endpoint)
         {
-            return RunWithActivitySource(endpoint);
-        }
-
-        private static object RunWithActivitySource(string endpoint)
-        {
             /*
+             * Prerequisite to run this example:
              * Setup an OpenTelemetry Collector to run on local docker.
              *
              * Open a terminal window at the examples/Console/ directory and
@@ -51,7 +47,11 @@ namespace Examples.Console
              * For more information about the OpenTelemetry Collector go to https://github.com/open-telemetry/opentelemetry-collector
              *
              */
+            return RunWithActivitySource(endpoint);
+        }
 
+        private static object RunWithActivitySource(string endpoint)
+        {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
