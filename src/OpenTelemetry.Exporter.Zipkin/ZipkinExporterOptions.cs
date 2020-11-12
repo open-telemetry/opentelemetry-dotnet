@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 #endif
 
         /// <summary>
-        /// Gets or sets the exporter type for Zipkin Exporter.
+        /// Gets or sets the export processor type to be used with Zipkin Exporter.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.BatchExportProcessor;
 
