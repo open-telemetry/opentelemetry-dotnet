@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added ExportProcessorType to exporter options
+  ([#1504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1504))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5
