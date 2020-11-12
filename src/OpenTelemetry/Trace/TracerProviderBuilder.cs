@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private Resource resource = Resource.Empty;
+        private Resource resource = Resource.Empty.GetResourceWithDefaultAttributes();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilder()
