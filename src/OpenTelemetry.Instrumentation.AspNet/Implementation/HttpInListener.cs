@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
@@ -28,6 +29,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     {
         internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";
+        internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
         private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
@@ -106,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            this.activitySource.Start(activity, ActivityKind.Server);
+            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {
