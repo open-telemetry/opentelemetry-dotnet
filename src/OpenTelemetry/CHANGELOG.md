@@ -11,6 +11,10 @@
   `CustomProperty`.
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
 * Remove RentrantExportProcessor as it is not required by spec.
+* `ActivitySourceAdapter.Start` requires `ActivitySource` to update new
+  activities.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+  
 
 ## 0.8.0-beta.1
 
