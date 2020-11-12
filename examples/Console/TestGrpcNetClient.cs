@@ -36,7 +36,7 @@ namespace Examples.Console
             var source = new ActivitySource("grpc-net-client-test");
             using (var parent = source.StartActivity("Main", ActivityKind.Server))
             {
-                using var channel = GrpcChannel.ForAddress("https://localhost:5001");
+                using var channel = GrpcChannel.ForAddress("https://localhost:44335");
                 var client = new Greeter.GreeterClient(channel);
 
                 try
