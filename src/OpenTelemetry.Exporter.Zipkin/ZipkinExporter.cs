@@ -108,7 +108,6 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             string serviceName = null;
-            string serviceNamespace = null;
             Dictionary<string, object> tags = null;
             foreach (var label in resource.Attributes)
             {
@@ -118,9 +117,6 @@ namespace OpenTelemetry.Exporter.Zipkin
                 {
                     case Resource.ServiceNameKey:
                         serviceName = label.Value as string;
-                        continue;
-                    case Resource.ServiceNamespaceKey:
-                        serviceNamespace = label.Value as string;
                         continue;
                 }
 
@@ -132,13 +128,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 tags[key] = label.Value;
             }
 
-            if (!string.IsNullOrEmpty(serviceName))
-            {
-                serviceName = serviceNamespace != null
-                    ? serviceNamespace + "." + serviceName
-                    : serviceName;
-            }
-            else
+            if (string.IsNullOrEmpty(serviceName))
             {
                 serviceName = this.options.ServiceName;
             }
