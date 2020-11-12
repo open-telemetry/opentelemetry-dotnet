@@ -103,7 +103,7 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Formats and generates a log message at the Warning level.
+        /// Formats and generates a log message at the Information level.
         /// </summary>
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
