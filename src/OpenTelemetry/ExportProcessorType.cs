@@ -17,17 +17,21 @@
 namespace OpenTelemetry
 {
     /// <summary>
-    /// Type of exporter to be used.
+    /// Type of Export Processor to be used.
     /// </summary>
     public enum ExportProcessorType
     {
         /// <summary>
-        /// Use SimpleExportProcessor
+        /// Use SimpleExportProcessor.
+        /// Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor">
+        /// specifcation</a> for more information.
         /// </summary>
         SimpleExportProcessor,
 
         /// <summary>
-        /// Use BatchExportProcessor
+        /// Use BatchExportProcessor.
+        /// Refer to <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#batching-processor">
+        /// specification</a> for more information.
         /// </summary>
         BatchExportProcessor,
     }
