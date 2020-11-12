@@ -169,8 +169,6 @@ abstract OpenTelemetry.Metrics.Export.MetricExporter.ExportAsync(System.Collecti
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
-const OpenTelemetry.Resources.Resource.LibraryNameKey = "name" -> string
-const OpenTelemetry.Resources.Resource.LibraryVersionKey = "version" -> string
 const OpenTelemetry.Resources.Resource.ServiceInstanceIdKey = "service.instance.id" -> string
 const OpenTelemetry.Resources.Resource.ServiceNameKey = "service.name" -> string
 const OpenTelemetry.Resources.Resource.ServiceNamespaceKey = "service.namespace" -> string
