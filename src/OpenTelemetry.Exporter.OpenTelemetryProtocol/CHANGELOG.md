@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Code generated from proto files has been marked internal. This includes
+  everything under the `OpenTelemetry.Proto` namespace.
+  ([#1524](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1524))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5
