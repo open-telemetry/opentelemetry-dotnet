@@ -26,13 +26,13 @@ namespace OpenTelemetry
         /// Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor">
         /// specifcation</a> for more information.
         /// </summary>
-        SimpleExportProcessor,
+        Simple,
 
         /// <summary>
         /// Use BatchExportProcessor.
         /// Refer to <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#batching-processor">
         /// specification</a> for more information.
         /// </summary>
-        BatchExportProcessor,
+        Batch,
     }
 }

@@ -40,8 +40,8 @@ OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
 OpenTelemetry.ExportProcessorType
-OpenTelemetry.ExportProcessorType.BatchExportProcessor = 1 -> OpenTelemetry.ExportProcessorType
-OpenTelemetry.ExportProcessorType.SimpleExportProcessor = 0 -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Batch = 1 -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult

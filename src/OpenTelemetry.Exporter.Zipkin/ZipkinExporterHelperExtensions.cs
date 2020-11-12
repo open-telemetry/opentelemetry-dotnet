@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             configure?.Invoke(exporterOptions);
             var zipkinExporter = new ZipkinExporter(exporterOptions);
 
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.SimpleExportProcessor)
+            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return builder.AddProcessor(new SimpleExportProcessor<Activity>(zipkinExporter));
             }
