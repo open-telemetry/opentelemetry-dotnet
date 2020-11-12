@@ -266,6 +266,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(26, logDirectory, exception);
         }
 
+        [Event(27, Message = "Failed to create resource from ResourceDetector: '{0}' due to '{1}'.", Level = EventLevel.Warning)]
+        public void ResourceDetectorFailed(string resourceDetector, string issue)
+        {
+            this.WriteEvent(27, resourceDetector, issue);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
