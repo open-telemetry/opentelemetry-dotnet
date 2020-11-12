@@ -25,8 +25,11 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
     internal class GrpcClientDiagnosticListener : ListenerHandler
     {
-        private readonly GrpcClientInstrumentationOptions options;
+        internal const string ActivitySourceName = "OpenTelemetry.Grpc";
+        internal static readonly Version Version = typeof(GrpcClientDiagnosticListener).Assembly.GetName().Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
+        private readonly GrpcClientInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
 
@@ -83,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             activity.DisplayName = grpcMethod?.Trim('/');
 
-            this.activitySource.Start(activity, ActivityKind.Client);
+            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {

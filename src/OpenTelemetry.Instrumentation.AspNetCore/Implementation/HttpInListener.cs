@@ -30,6 +30,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        internal const string ActivitySourceName = "OpenTelemetry.AspNetCore";
+        internal static readonly Version Version = typeof(HttpInListener).Assembly.GetName().Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -104,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            this.activitySource.Start(activity, ActivityKind.Server);
+            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {
