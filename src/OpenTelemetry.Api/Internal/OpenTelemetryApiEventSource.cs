@@ -126,5 +126,155 @@ namespace OpenTelemetry.Internal
         {
             this.WriteEvent(11, format, error);
         }
+
+        [NonEvent]
+        public void LogCritical(string message)
+        {
+            if (this.IsEnabled(EventLevel.Critical, (EventKeywords)(-1)))
+            {
+                this.EmitCriticalEvent(message);
+            }
+        }
+
+        [Event(12, Message = "{0}", Level = EventLevel.Critical)]
+        public void EmitCriticalEvent(string message)
+        {
+            this.WriteEvent(12, message);
+        }
+
+        [NonEvent]
+        public void LogCritical(string message, Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Critical, (EventKeywords)(-1)))
+            {
+                this.EmitCriticalEvent(message, exception.ToInvariantString());
+            }
+        }
+
+        [Event(13, Message = "{0} Exception: {1}", Level = EventLevel.Critical)]
+        public void EmitCriticalEvent(string message, string exception)
+        {
+            this.WriteEvent(13, message, exception);
+        }
+
+        [NonEvent]
+        public void LogError(string message)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EmitErrorEvent(message);
+            }
+        }
+
+        [Event(14, Message = "{0}", Level = EventLevel.Error)]
+        public void EmitErrorEvent(string message)
+        {
+            this.WriteEvent(14, message);
+        }
+
+        [NonEvent]
+        public void LogError(string message, Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.EmitErrorEvent(message, exception.ToInvariantString());
+            }
+        }
+
+        [Event(15, Message = "{0} Exception: {1}", Level = EventLevel.Error)]
+        public void EmitErrorEvent(string message, string exception)
+        {
+            this.WriteEvent(15, message, exception);
+        }
+
+        [NonEvent]
+        public void LogWarning(string message)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.EmitWarningEvent(message);
+            }
+        }
+
+        [Event(16, Message = "{0}", Level = EventLevel.Warning)]
+        public void EmitWarningEvent(string message)
+        {
+            this.WriteEvent(16, message);
+        }
+
+        [NonEvent]
+        public void LogWarning(string message, Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.EmitWarningEvent(message, exception.ToInvariantString());
+            }
+        }
+
+        [Event(17, Message = "{0} Exception: {1}", Level = EventLevel.Warning)]
+        public void EmitWarningEvent(string message, string exception)
+        {
+            this.WriteEvent(17, message, exception);
+        }
+
+        [NonEvent]
+        public void LogInformation(string message)
+        {
+            if (this.IsEnabled(EventLevel.Informational, (EventKeywords)(-1)))
+            {
+                this.EmitInformationEvent(message);
+            }
+        }
+
+        [Event(18, Message = "{0}", Level = EventLevel.Informational)]
+        public void EmitInformationEvent(string message)
+        {
+            this.WriteEvent(18, message);
+        }
+
+        [NonEvent]
+        public void LogInformation(string message, Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Informational, (EventKeywords)(-1)))
+            {
+                this.EmitInformationEvent(message, exception.ToInvariantString());
+            }
+        }
+
+        [Event(19, Message = "{0} Exception: {1}", Level = EventLevel.Informational)]
+        public void EmitInformationEvent(string message, string error)
+        {
+            this.WriteEvent(19, message, error);
+        }
+
+        [NonEvent]
+        public void LogVerbose(string message)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            {
+                this.EmitDebugEvent(message);
+            }
+        }
+
+        [Event(20, Message = "{0}", Level = EventLevel.Verbose)]
+        public void EmitDebugEvent(string message)
+        {
+            this.WriteEvent(20, message);
+        }
+
+        [NonEvent]
+        public void LogVerbose(string message, Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            {
+                this.EmitVerboseEvent(message, exception.ToInvariantString());
+            }
+        }
+
+        [Event(21, Message = "{0} Exception: {1}", Level = EventLevel.Verbose)]
+        public void EmitVerboseEvent(string message, string error)
+        {
+            this.WriteEvent(21, message, error);
+        }
     }
 }

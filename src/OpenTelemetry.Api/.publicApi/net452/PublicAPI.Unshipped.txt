@@ -91,6 +91,17 @@ OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle
 OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle.NoopInt64ObserverMetricHandle() -> void
 OpenTelemetry.Metrics.NoopMeasureMetric<T>
 OpenTelemetry.Metrics.NoopMeasureMetric<T>.NoopMeasureMetric() -> void
+OpenTelemetry.SelfDiagnostics
+OpenTelemetry.SelfDiagnostics.LogCritical(System.Type type, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogCritical(System.Type type, System.Exception exception, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogError(System.Type type, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogError(System.Type type, System.Exception exception, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogWarning(System.Type type, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogWarning(System.Type type, System.Exception exception, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogInformation(System.Type type, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogInformation(System.Type type, System.Exception exception, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogVerbose(System.Type type, string message, params object[] args) -> void
+OpenTelemetry.SelfDiagnostics.LogVerbose(System.Type type, System.Exception exception, string message, params object[] args) -> void
 OpenTelemetry.Trace.ActivityExtensions
 OpenTelemetry.Trace.IActivityEnumerator<T>
 OpenTelemetry.Trace.IActivityEnumerator<T>.ForEach(T item) -> bool
@@ -270,6 +281,7 @@ static OpenTelemetry.Metrics.MeterFactoryBase.Default.get -> OpenTelemetry.Metri
 static OpenTelemetry.Metrics.MeterFactoryBase.SetDefault(OpenTelemetry.Metrics.MeterFactoryBase meterFactory) -> void
 static OpenTelemetry.Metrics.MeterProvider.Default.get -> OpenTelemetry.Metrics.MeterProvider
 static OpenTelemetry.Metrics.MeterProvider.SetDefault(OpenTelemetry.Metrics.MeterProvider meterProvider) -> void
+static OpenTelemetry.SelfDiagnostics.Logger -> OpenTelemetry.SelfDiagnostics
 static OpenTelemetry.Trace.ActivityExtensions.EnumerateEvents<T>(this System.Diagnostics.Activity activity, ref T eventEnumerator) -> void
 static OpenTelemetry.Trace.ActivityExtensions.EnumerateLinks<T>(this System.Diagnostics.Activity activity, ref T linkEnumerator) -> void
 static OpenTelemetry.Trace.ActivityExtensions.EnumerateTags<T>(this System.Diagnostics.Activity activity, ref T tagEnumerator) -> void
