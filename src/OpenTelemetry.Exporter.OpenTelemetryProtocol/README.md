@@ -8,7 +8,7 @@ Collector through a gRPC protocol.
 
 ## Prerequisite
 
-* [Get OpenTelemetry Collector](https://opentelemetry.io/docs/collector/about/)
+* [Get OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
 
 ## Installation
 
@@ -20,9 +20,11 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 
 You can configure the `OtlpExporter` by following the directions below:
 
+* `ServiceName`: Name of the service reporting telemetry.
 * `Endpoint`: Target to which the exporter is going to send traces or metrics.
 * `Credentials`: Client-side channel credentials.
 * `Headers`: Optional headers for the connection.
+* `ChannelOptions`: gRPC channel options.
 
 See the
 [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs)

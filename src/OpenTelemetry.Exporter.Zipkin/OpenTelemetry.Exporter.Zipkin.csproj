@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Implementation\DateTimeOffsetExtensions.net452.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Includes\DateTimeOffsetExtensions.net452.cs" />
     <Reference Include="System.Net.Http" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPkgVer)" />
   </ItemGroup>

@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-* Add context propagation, when SuppressDownstreamInstrumentation
-  is enabled.
+* Add context propagation, when SuppressDownstreamInstrumentation is enabled.
   [#1464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1464)
+* GrpcNetClientInstrumentation sets ActivitySource to activities created outside
+  ActivitySource.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
 
 ## 0.8.0-beta.1
 
