@@ -15,12 +15,14 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
-You can configure the `ZipkinExporter` by following the directions below:
+You can configure the `ZipkinExporter` with the following options:
 
-* `Endpoint`: Zipkin endpoint address.
-* `TimeoutSeconds`: Timeout in seconds.
 * `ServiceName`: Name of the service reporting telemetry.
-* `UseShortTraceIds`: Value indicating whether short trace id should be used.
+* `Endpoint`: URI address to receive telemetry.
+* `UseShortTraceIds`: Whether the trace's ID should be shortened before
+   sending to Zipkin (default false).
+* `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions
+   **other** than 4.5.2 (default 4096).
 
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)

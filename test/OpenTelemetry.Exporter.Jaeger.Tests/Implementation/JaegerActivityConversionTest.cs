@@ -327,7 +327,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             // The last tag should be library.name in this case
             tag = tags[tags.Length - 1];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
-            Assert.Equal("library.name", tag.Key);
+            Assert.Equal("otel.library.name", tag.Key);
             Assert.Equal(nameof(CreateTestActivity), tag.VStr);
 
             var logs = jaegerSpan.Logs.ToArray();

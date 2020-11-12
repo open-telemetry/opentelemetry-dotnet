@@ -31,8 +31,6 @@ namespace OpenTelemetry.Resources
         public const string ServiceNamespaceKey = "service.namespace";
         public const string ServiceInstanceIdKey = "service.instance.id";
         public const string ServiceVersionKey = "service.version";
-        public const string LibraryNameKey = "name";
-        public const string LibraryVersionKey = "version";
         private const string TelemetrySdkNameKey = "telemetry.sdk.name";
         private const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
         private const string TelemetrySdkVersionKey = "telemetry.sdk.version";
