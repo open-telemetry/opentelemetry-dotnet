@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +21,17 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
 {
-    public class ResourceTest
+    public class ResourceTest : IDisposable
     {
         private const string KeyName = "key";
         private const string ValueName = "value";
+        private const string OtelEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
         private static readonly Random Random = new Random();
+
+        public ResourceTest()
+        {
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+        }
 
         [Fact]
         public static void CreateResource_NullAttributeCollection()
@@ -328,6 +335,75 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
         }
 
+        [Fact]
+        public void GetResourceWithDefaultAttributes_EmptyResource()
+        {
+            // Arrange
+            var resource = Resource.Empty;
+            var new_resource = resource.GetResourceWithDefaultAttributes();
+
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Equal(3, attributes.Count());
+            ValidateTelemetrySdkAttributes(attributes);
+        }
+
+        [Fact]
+        public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
+        {
+            // Arrange
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.GetResourceWithDefaultAttributes();
+
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Equal(5, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            ValidateTelemetrySdkAttributes(attributes);
+        }
+
+        [Fact]
+        public void GetResourceWithDefaultAttributes_WithEnvVar()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.GetResourceWithDefaultAttributes();
+
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Equal(7, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            ValidateTelemetrySdkAttributes(attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
+        }
+
+        [Fact]
+        public void GetResourceFromDetectors_OtelEnvDetector()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey11=EVVal11,EVKey22=EVVal22");
+            var detectors = new List<IResourceDetector>
+            {
+                new OtelEnvResourceDetector(),
+            };
+            var resource = new Resource(this.CreateAttributes(2));
+            var new_resource = resource.GetResourceFromDetectors(detectors);
+
+            // Assert
+            var attributes = new_resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey11", "EVVal11"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey22", "EVVal22"), attributes);
+        }
+
+        public void Dispose()
+        {
+            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+        }
+
         private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)
         {
             for (var i = startIndex; i < attributeCount + startIndex; ++i)
@@ -336,10 +412,11 @@ namespace OpenTelemetry.Resources.Tests
             }
         }
 
-        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, object>> attributes, int startIndex = 0)
+        private static void ValidateAttributes(IEnumerable<KeyValuePair<string, object>> attributes, int startIndex = 0, int endIndex = 0)
         {
             var keyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
-            for (var i = startIndex; i < keyValuePairs.Length; ++i)
+            var endInd = endIndex == 0 ? keyValuePairs.Length - 1 : endIndex;
+            for (var i = startIndex; i <= endInd; ++i)
             {
                 Assert.Contains(
                     new KeyValuePair<string, object>(
@@ -353,6 +430,14 @@ namespace OpenTelemetry.Resources.Tests
             Assert.NotNull(resource.Attributes);
             Assert.Equal(attributeCount, resource.Attributes.Count());
             ValidateAttributes(resource.Attributes);
+        }
+
+        private static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        {
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+            var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+            Assert.Single(versionAttribute);
         }
 
         private static string RandomString(int length)
