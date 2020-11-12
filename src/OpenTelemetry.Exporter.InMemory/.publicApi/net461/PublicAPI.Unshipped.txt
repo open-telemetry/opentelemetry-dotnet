@@ -1,8 +1,6 @@
 Microsoft.Extensions.Logging.InMemoryExporterLoggingExtensions
 OpenTelemetry.Exporter.InMemoryExporter<T>
 OpenTelemetry.Exporter.InMemoryExporter<T>.InMemoryExporter(System.Collections.Generic.ICollection<T> exportedItems) -> void
-OpenTelemetry.Exporter.InMemoryExporterOptions
-OpenTelemetry.Exporter.InMemoryExporterOptions.InMemoryExporterOptions() -> void
 OpenTelemetry.InMemoryExporterHelperExtensions
 override OpenTelemetry.Exporter.InMemoryExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
 static Microsoft.Extensions.Logging.InMemoryExporterLoggingExtensions.AddInMemoryExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Collections.Generic.ICollection<LogRecord> exportedItems) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
