@@ -15,14 +15,10 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace Benchmarks.Instrumentation
 {
@@ -31,24 +27,15 @@ namespace Benchmarks.Instrumentation
     public class InstrumentedAspNetCoreBenchmark
     {
         private const string LocalhostUrl = "http://localhost:5050";
-        private const string ResourceName = "aspnetcore-service-example";
-        private const string SourceName = "aspnetcore-test";
 
         private HttpClient client;
         private LocalServer localServer;
-        private TracerProvider tracerProvider;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
             this.localServer = new LocalServer(LocalhostUrl, true);
             this.client = new HttpClient();
-
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation()
-                .SetResource(Resources.CreateServiceResource(ResourceName))
-                .AddSource(SourceName)
-                .Build();
         }
 
         [GlobalCleanup]
@@ -56,7 +43,6 @@ namespace Benchmarks.Instrumentation
         {
             this.localServer.Dispose();
             this.client.Dispose();
-            this.tracerProvider.Dispose();
         }
 
         [Benchmark]
