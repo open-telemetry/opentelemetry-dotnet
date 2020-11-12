@@ -111,9 +111,6 @@ namespace OpenTelemetry.Exporter.Jaeger
                         case Resource.ServiceNamespaceKey:
                             serviceNamespace = strVal;
                             continue;
-                        case Resource.LibraryNameKey:
-                        case Resource.LibraryVersionKey:
-                            continue;
                     }
                 }
 
