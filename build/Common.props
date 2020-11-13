@@ -21,15 +21,22 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
+    <CoverletCollectorPkgVer>[1.3.0,2.0)</CoverletCollectorPkgVer>
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
+    <GrpcAspNetCoreServerPkgVer>[2.30.0, 3.0)</GrpcAspNetCoreServerPkgVer>
+    <GrpcNetClientPkgVer>[2.32.0,3.0)</GrpcNetClientPkgVer>
     <GrpcPkgVer>[2.23.0,3.0)</GrpcPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
+    <MicrosoftAspNetWebApiWebHostPkgVer>[5.2.7,6.0)</MicrosoftAspNetWebApiWebHostPkgVer>
+    <MicrosoftAspNetMvcPkgVer>[5.2.7,6.0)</MicrosoftAspNetMvcPkgVer>
     <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
+    <MicrosoftAspNetWebPagesPkgVer>[3.2.7,4.0)</MicrosoftAspNetWebPagesPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.9.0-preview-20201020-06]</MicrosoftCodeCoveragePkgVer>
+    <MicrosoftExtensionsHostingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsHostingPkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingConfigurationPkgVer>
