@@ -30,8 +30,6 @@ namespace OpenTelemetry.Resources
         public const string ServiceNamespaceKey = "service.namespace";
         public const string ServiceInstanceIdKey = "service.instance.id";
         public const string ServiceVersionKey = "service.version";
-        public const string LibraryNameKey = "name";
-        public const string LibraryVersionKey = "version";
 
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 

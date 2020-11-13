@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         {
             if (this.LocalEndpoint == null)
             {
-                this.SetResource(this.ParentProvider.GetResource());
+                this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
             }
 
             // Prevent Zipkin's HTTP operations from being instrumented.
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
         }
 
-        internal void SetResource(Resource resource)
+        internal void SetLocalEndpointFromResource(Resource resource)
         {
             var hostName = ResolveHostName();
 
@@ -121,9 +121,6 @@ namespace OpenTelemetry.Exporter.Zipkin
                         continue;
                     case Resource.ServiceNamespaceKey:
                         serviceNamespace = label.Value as string;
-                        continue;
-                    case Resource.LibraryNameKey:
-                    case Resource.LibraryVersionKey:
                         continue;
                 }
 
