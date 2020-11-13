@@ -264,6 +264,7 @@ static OpenTelemetry.SuppressInstrumentationScope.Enter() -> int
 static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider
+static OpenTelemetry.Trace.TracerProviderExtensions.Shutdown(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
 virtual OpenTelemetry.BaseExporter<T>.Dispose(bool disposing) -> void
 virtual OpenTelemetry.BaseExporter<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.Dispose(bool disposing) -> void
