@@ -256,7 +256,7 @@ namespace OpenTelemetry.Internal
                 else
                 {
                     this.EmitVerboseEventWithException(formattedMessage, exception.ToInvariantString());
-                } 
+                }
             }
         }
 
