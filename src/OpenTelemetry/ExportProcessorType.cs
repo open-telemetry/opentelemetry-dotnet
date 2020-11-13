@@ -24,7 +24,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Use SimpleExportProcessor.
         /// Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor">
-        /// specifcation</a> for more information.
+        /// specification</a> for more information.
         /// </summary>
         Simple,
 
