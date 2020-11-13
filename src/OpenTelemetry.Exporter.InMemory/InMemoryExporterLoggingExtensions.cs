@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections.Generic;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -24,17 +25,19 @@ namespace Microsoft.Extensions.Logging
 {
     public static class InMemoryExporterLoggingExtensions
     {
-        public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<InMemoryExporterOptions> configure = null)
+        public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, ICollection<LogRecord> exportedItems)
         {
             if (loggerOptions == null)
             {
                 throw new ArgumentNullException(nameof(loggerOptions));
             }
 
-            var options = new InMemoryExporterOptions();
-            configure?.Invoke(options);
+            if (exportedItems == null)
+            {
+                throw new ArgumentNullException(nameof(exportedItems));
+            }
 
-            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(options)));
+            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(exportedItems)));
         }
     }
 }
