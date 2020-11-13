@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;

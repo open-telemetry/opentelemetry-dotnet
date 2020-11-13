@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Exporter.Zipkin
 {
@@ -51,5 +52,15 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// </summary>
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 #endif
+
+        /// <summary>
+        /// Gets or sets the export processor type to be used with Zipkin Exporter.
+        /// </summary>
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+
+        /// <summary>
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
+        /// </summary>
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }
