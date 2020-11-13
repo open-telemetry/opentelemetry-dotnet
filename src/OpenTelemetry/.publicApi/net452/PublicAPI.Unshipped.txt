@@ -22,9 +22,22 @@ OpenTelemetry.Batch<T>.Enumerator.Reset() -> void
 OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
 OpenTelemetry.BatchExportProcessor<T>
 OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
+OpenTelemetry.BatchExportProcessorOptions<T>
+OpenTelemetry.BatchExportProcessorOptions<T>.BatchExportProcessorOptions() -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> void
 OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
+OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Batch = 1 -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult
