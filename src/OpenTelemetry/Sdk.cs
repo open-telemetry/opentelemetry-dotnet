@@ -68,7 +68,7 @@ namespace OpenTelemetry
         /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
-            return new TracerProviderBuilder();
+            return new TracerProviderBuilderSdk();
         }
     }
 }

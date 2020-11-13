@@ -22,7 +22,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;

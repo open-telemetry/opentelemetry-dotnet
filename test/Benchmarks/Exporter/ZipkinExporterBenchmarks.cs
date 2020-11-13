@@ -20,7 +20,6 @@ using System.IO;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
-using OpenTelemetry.Benchmarks;
 using OpenTelemetry.Exporter.Zipkin;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
