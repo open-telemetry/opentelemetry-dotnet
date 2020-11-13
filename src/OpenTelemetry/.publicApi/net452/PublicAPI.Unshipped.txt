@@ -1,7 +1,3 @@
-const OpenTelemetry.BatchExportProcessor<T>.DefaultMaxBatchSize = 512 -> int
-const OpenTelemetry.BatchExportProcessor<T>.DefaultMaxQueueLength = 2048 -> int
-const OpenTelemetry.BatchExportProcessor<T>.DefaultScheduledDelayMilliseconds = 5000 -> int
-const OpenTelemetry.BatchExportProcessor<T>.DefaultTimeoutMilliseconds = 30000 -> int
 OpenTelemetry.BaseExporter<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
 OpenTelemetry.BaseExportProcessor<T>
 OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
@@ -28,14 +24,14 @@ OpenTelemetry.BatchExportProcessor<T>
 OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessorOptions<T>
 OpenTelemetry.BatchExportProcessorOptions<T>.BatchExportProcessorOptions() -> void
-OpenTelemetry.BatchExportProcessorOptions<T>.MaxBatchSize.get -> int
-OpenTelemetry.BatchExportProcessorOptions<T>.MaxBatchSize.set -> void
-OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueLength.get -> int
-OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueLength.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.set -> void
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.get -> int
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> void
-OpenTelemetry.BatchExportProcessorOptions<T>.TimeoutMilliseconds.get -> int
-OpenTelemetry.BatchExportProcessorOptions<T>.TimeoutMilliseconds.set -> void
 OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void

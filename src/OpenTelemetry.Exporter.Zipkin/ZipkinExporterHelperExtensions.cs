@@ -51,10 +51,10 @@ namespace OpenTelemetry.Trace
             {
                 return builder.AddProcessor(new BatchExportProcessor<Activity>(
                     zipkinExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueLength,
+                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.TimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxBatchSize));
+                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
             }
         }
     }

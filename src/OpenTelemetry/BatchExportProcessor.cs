@@ -28,10 +28,10 @@ namespace OpenTelemetry
     public class BatchExportProcessor<T> : BaseExportProcessor<T>
         where T : class
     {
-        public const int DefaultMaxQueueLength = 2048;
-        public const int DefaultScheduledDelayMilliseconds = 5000;
-        public const int DefaultTimeoutMilliseconds = 30000;
-        public const int DefaultMaxBatchSize = 512;
+        internal const int DefaultMaxQueueSize = 2048;
+        internal const int DefaultScheduledDelayMilliseconds = 5000;
+        internal const int DefaultExporterTimeoutMilliseconds = 30000;
+        internal const int DefaultMaxExportBatchSize = 512;
 
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
@@ -54,10 +54,10 @@ namespace OpenTelemetry
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
         public BatchExportProcessor(
             BaseExporter<T> exporter,
-            int maxQueueSize = DefaultMaxQueueLength,
+            int maxQueueSize = DefaultMaxQueueSize,
             int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
-            int exporterTimeoutMilliseconds = DefaultTimeoutMilliseconds,
-            int maxExportBatchSize = DefaultMaxBatchSize)
+            int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
+            int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
             if (maxQueueSize <= 0)
