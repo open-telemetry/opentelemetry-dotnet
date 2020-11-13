@@ -56,6 +56,7 @@ namespace Benchmarks.Trace
 
         private class TestInstrumentation
         {
+            internal static ActivitySource ActivitySource = new ActivitySource("test", "1.0.0");
             private ActivitySourceAdapter adapter;
 
             public TestInstrumentation(ActivitySourceAdapter adapter)
@@ -65,7 +66,7 @@ namespace Benchmarks.Trace
 
             public void Start(Activity activity)
             {
-                this.adapter.Start(activity, ActivityKind.Internal);
+                this.adapter.Start(activity, ActivityKind.Internal, ActivitySource);
             }
 
             public void Stop(Activity activity)

@@ -11,8 +11,11 @@
   `CustomProperty`.
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
 * Remove RentrantExportProcessor as it is not required by spec.
-* Implemented Shutdown for TracerProvider
-  ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
+* `ActivitySourceAdapter` supports setting `ActivitySource` for Activities
+  created without `ActivitySource`.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+  * Implemented Shutdown for TracerProvider
+    ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
 
 ## 0.8.0-beta.1
 

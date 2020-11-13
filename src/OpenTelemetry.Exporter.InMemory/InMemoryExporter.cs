@@ -21,11 +21,11 @@ namespace OpenTelemetry.Exporter
     public class InMemoryExporter<T> : BaseExporter<T>
         where T : class
     {
-        private readonly ICollection<object> exportedItems;
+        private readonly ICollection<T> exportedItems;
 
-        public InMemoryExporter(InMemoryExporterOptions options = null)
+        public InMemoryExporter(ICollection<T> exportedItems)
         {
-            this.exportedItems = options?.ExportedItems;
+            this.exportedItems = exportedItems;
         }
 
         public override ExportResult Export(in Batch<T> batch)
