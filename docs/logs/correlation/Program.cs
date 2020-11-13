@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Trace;
 
 public class Program
 {

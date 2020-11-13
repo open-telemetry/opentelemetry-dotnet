@@ -39,8 +39,8 @@ namespace OpenTelemetry.Trace
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilder.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
-            IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
+            IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
+            IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors)
         {
