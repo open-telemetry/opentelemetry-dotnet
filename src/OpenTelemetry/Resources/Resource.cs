@@ -82,7 +82,7 @@ namespace OpenTelemetry.Resources
         /// <param name="serviceVersion">Optional version of the service.</param>
         /// <param name="autoGenerateServiceInstanceId">Specify <see langword="true"/> to automatically generate a <see cref="Guid"/> for <paramref name="serviceInstanceId"/> if not supplied.</param>
         /// <param name="serviceInstanceId">Optional unique identifier of the service instance.</param>
-        /// <param name="attributes">Optional <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
+        /// <param name="attributes">Optional <see cref="IEnumerable{T}"/> of attributes that describe the service.</param>
         /// <returns>Returns a new <see cref="Resource"/>.</returns>
         public static Resource Create(
             string serviceName = null,
