@@ -1,7 +1,11 @@
 OpenTelemetry.Exporter.Zipkin.ZipkinExporter
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions
+OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.BatchExportProcessorOptions.set -> void
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.Endpoint.get -> System.Uri
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.Endpoint.set -> void
+OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.ServiceName.get -> string
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.ServiceName.set -> void
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.UseShortTraceIds.get -> bool
