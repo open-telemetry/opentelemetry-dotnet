@@ -1,6 +1,8 @@
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.ActivityContextExtensions
 OpenTelemetry.Baggage
 OpenTelemetry.Baggage.Baggage() -> void
@@ -198,6 +200,7 @@ abstract OpenTelemetry.Metrics.Meter.CreateInt64Counter(string name, bool monoto
 abstract OpenTelemetry.Metrics.Meter.CreateInt64Measure(string name, bool absolute = true) -> OpenTelemetry.Metrics.MeasureMetric<long>
 abstract OpenTelemetry.Metrics.Meter.CreateInt64Observer(string name, System.Action<OpenTelemetry.Metrics.Int64ObserverMetric> callback, bool absolute = true) -> OpenTelemetry.Metrics.Int64ObserverMetric
 abstract OpenTelemetry.Metrics.Meter.GetLabelSet(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.LabelSet
+OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
 override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
