@@ -102,15 +102,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerTraceExporter_SetResource_IgnoreLibraryResources()
+        public void JaegerTraceExporter_SetResource_IgnoreServiceResources()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
             jaegerTraceExporter.SetResource(new Resource(new Dictionary<string, object>
             {
-                [Resource.LibraryNameKey] = "libname",
-                [Resource.LibraryVersionKey] = "libversion",
+                [Resource.ServiceNameKey] = "servicename",
+                [Resource.ServiceNamespaceKey] = "servicenamespace",
             }));
 
             Assert.Null(process.Tags);

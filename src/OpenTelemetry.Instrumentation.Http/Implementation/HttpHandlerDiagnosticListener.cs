@@ -30,6 +30,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
+        internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly ActivitySourceAdapter activitySource;
@@ -79,7 +84,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity, ActivityKind.Client);
+            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {
