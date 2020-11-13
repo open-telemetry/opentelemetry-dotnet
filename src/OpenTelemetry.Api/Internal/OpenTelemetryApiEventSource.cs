@@ -147,12 +147,12 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Critical, (EventKeywords)(-1)))
             {
-                this.EmitCriticalEvent(message, exception.ToInvariantString());
+                this.EmitCriticalEventWithException(message, exception.ToInvariantString());
             }
         }
 
         [Event(13, Message = "{0} Exception: {1}", Level = EventLevel.Critical)]
-        public void EmitCriticalEvent(string message, string exception)
+        public void EmitCriticalEventWithException(string message, string exception)
         {
             this.WriteEvent(13, message, exception);
         }
@@ -177,12 +177,12 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.EmitErrorEvent(message, exception.ToInvariantString());
+                this.EmitErrorEventWithException(message, exception.ToInvariantString());
             }
         }
 
         [Event(15, Message = "{0} Exception: {1}", Level = EventLevel.Error)]
-        public void EmitErrorEvent(string message, string exception)
+        public void EmitErrorEventWithException(string message, string exception)
         {
             this.WriteEvent(15, message, exception);
         }
@@ -207,12 +207,12 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.EmitWarningEvent(message, exception.ToInvariantString());
+                this.EmitWarningEventWithException(message, exception.ToInvariantString());
             }
         }
 
         [Event(17, Message = "{0} Exception: {1}", Level = EventLevel.Warning)]
-        public void EmitWarningEvent(string message, string exception)
+        public void EmitWarningEventWithException(string message, string exception)
         {
             this.WriteEvent(17, message, exception);
         }
@@ -237,12 +237,12 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Informational, (EventKeywords)(-1)))
             {
-                this.EmitInformationEvent(message, exception.ToInvariantString());
+                this.EmitInformationEventWithException(message, exception.ToInvariantString());
             }
         }
 
         [Event(19, Message = "{0} Exception: {1}", Level = EventLevel.Informational)]
-        public void EmitInformationEvent(string message, string error)
+        public void EmitInformationEventWithException(string message, string error)
         {
             this.WriteEvent(19, message, error);
         }
@@ -267,12 +267,12 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
             {
-                this.EmitVerboseEvent(message, exception.ToInvariantString());
+                this.EmitVerboseEventWithException(message, exception.ToInvariantString());
             }
         }
 
         [Event(21, Message = "{0} Exception: {1}", Level = EventLevel.Verbose)]
-        public void EmitVerboseEvent(string message, string error)
+        public void EmitVerboseEventWithException(string message, string error)
         {
             this.WriteEvent(21, message, error);
         }
