@@ -137,7 +137,7 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Formats and generates a log message at the Critical level.
+        /// Formats and generates a log message at the Verbose level.
         /// </summary>
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="exception">The exception to log.</param>
