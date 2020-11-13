@@ -21,7 +21,6 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
-    <CoverletCollectorPkgVer>[1.3.0,2.0)</CoverletCollectorPkgVer>
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
     <GrpcAspNetCoreServerPkgVer>[2.30.0, 3.0)</GrpcAspNetCoreServerPkgVer>
