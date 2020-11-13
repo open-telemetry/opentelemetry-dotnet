@@ -1,4 +1,3 @@
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.get -> System.Collections.Generic.IEnumerable<Grpc.Core.ChannelOption>
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.set -> void
@@ -12,5 +11,4 @@ OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.OtlpExporterOpt
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ServiceName.get -> string
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ServiceName.set -> void
 OpenTelemetry.Trace.OtlpExporterHelperExtensions
-override OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 static OpenTelemetry.Trace.OtlpExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
