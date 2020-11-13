@@ -20,7 +20,7 @@ in `ZipkinExporterOptions`:
 
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
    associated with the telemetry has "service.name" defined, then it'll be
-   preffered over this option.
+   preferred over this option.
 * `Endpoint`: URI address to receive telemetry.
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
