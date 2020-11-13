@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Added ExportProcessorType to exporter options
+  ([#1504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1504))
+* Zipkin tags used for InstrumentationLibrary changed from library.name,
+  library.version to otel.library.name, otel.library.version respectively.
+* Sending `service.namespace` as Zipkin tag.
+  ([#1521](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1521))
+
 ## 0.8.0-beta.1
 
 Released 2020-Nov-5

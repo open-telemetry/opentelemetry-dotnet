@@ -116,6 +116,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void TracerProviderException(string evnt, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            {
+                this.TracerProviderException(evnt, ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -264,6 +273,18 @@ namespace OpenTelemetry.Internal
         public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
         {
             this.WriteEvent(26, logDirectory, exception);
+        }
+
+        [Event(27, Message = "Failed to create resource from ResourceDetector: '{0}' due to '{1}'.", Level = EventLevel.Warning)]
+        public void ResourceDetectorFailed(string resourceDetector, string issue)
+        {
+            this.WriteEvent(27, resourceDetector, issue);
+        }
+
+        [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Warning)]
+        public void TracerProviderException(string evnt, string ex)
+        {
+            this.WriteEvent(28, evnt, ex);
         }
 
 #if DEBUG

@@ -33,7 +33,7 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        private const int ConfigurationUpdatePeriodMilliSeconds = 3000;
+        private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
