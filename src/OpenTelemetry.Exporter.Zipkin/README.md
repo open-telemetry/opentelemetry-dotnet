@@ -15,9 +15,12 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
-You can configure the `ZipkinExporter` with the following options:
+You can configure the `ZipkinExporter` with the following options
+in `ZipkinExporterOptions`:
 
-* `ServiceName`: Name of the service reporting telemetry.
+* `ServiceName`: Name of the service reporting telemetry. If the `Resource`
+   associated with the telemetry has "service.name" defined, then it'll be
+   preferred over this option.
 * `Endpoint`: URI address to receive telemetry.
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
