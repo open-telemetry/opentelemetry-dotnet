@@ -42,7 +42,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
-        /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
+        /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
         public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
@@ -72,6 +72,63 @@ namespace OpenTelemetry.Resources
                 new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
                 new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
             });
+
+        /// <summary>
+        /// Creates a new <see cref="Resource"/> from service information following standard convention
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md#service.
+        /// </summary>
+        /// <param name="serviceName">Optional name of the service.</param>
+        /// <param name="serviceNamespace">Optional namespace of the service.</param>
+        /// <param name="serviceVersion">Optional version of the service.</param>
+        /// <param name="autoGenerateServiceInstanceId">Specify <see langword="true"/> to automatically generate a <see cref="Guid"/> for <paramref name="serviceInstanceId"/> if not supplied.</param>
+        /// <param name="serviceInstanceId">Optional unique identifier of the service instance.</param>
+        /// <param name="attributes">Optional <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
+        /// <returns>Returns a new <see cref="Resource"/>.</returns>
+        public static Resource Create(
+            string serviceName = null,
+            string serviceNamespace = null,
+            string serviceVersion = null,
+            bool autoGenerateServiceInstanceId = true,
+            string serviceInstanceId = null,
+            IEnumerable<KeyValuePair<string, object>> attributes = null)
+        {
+            Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
+
+            if (attributes != null)
+            {
+                foreach (KeyValuePair<string, object> attribute in attributes.Select(SanitizeAttribute).ToList())
+                {
+                    resourceAttributes[attribute.Key] = attribute.Value;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                resourceAttributes.Add(ServiceNameKey, serviceName);
+            }
+
+            if (!string.IsNullOrEmpty(serviceNamespace))
+            {
+                resourceAttributes.Add(ServiceNamespaceKey, serviceNamespace);
+            }
+
+            if (!string.IsNullOrEmpty(serviceVersion))
+            {
+                resourceAttributes.Add(ServiceVersionKey, serviceVersion);
+            }
+
+            if (serviceInstanceId == null && autoGenerateServiceInstanceId)
+            {
+                serviceInstanceId = Guid.NewGuid().ToString();
+            }
+
+            if (serviceInstanceId != null)
+            {
+                resourceAttributes.Add(ServiceInstanceIdKey, serviceInstanceId);
+            }
+
+            return new Resource(resourceAttributes).GetResourceWithDefaultAttributes();
+        }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.

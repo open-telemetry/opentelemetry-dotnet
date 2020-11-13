@@ -126,7 +126,6 @@ OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
-OpenTelemetry.Resources.Resources
 OpenTelemetry.Sdk
 OpenTelemetry.SimpleExportProcessor<T>
 OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
@@ -233,8 +232,8 @@ override abstract OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.Resources.Resource.Create(string serviceName = null, string serviceNamespace = null, string serviceVersion = null, bool autoGenerateServiceInstanceId = true, string serviceInstanceId = null, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes = null) -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
-static OpenTelemetry.Resources.Resources.CreateServiceResource(string serviceName, string serviceInstanceId = null, string serviceNamespace = null, string serviceVersion = null) -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void

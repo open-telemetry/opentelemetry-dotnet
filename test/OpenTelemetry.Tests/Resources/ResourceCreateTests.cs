@@ -1,4 +1,4 @@
-// <copyright file="ResourcesTests.cs" company="OpenTelemetry Authors">
+// <copyright file="ResourceCreateTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,12 @@ using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
 {
-    public class ResourcesTests
+    public class ResourceCreateTests
     {
         [Fact]
         public void ServiceResource_ServiceName()
         {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service");
+            var resource = Resource.Create("my-service");
             Assert.Equal(5, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Single(resource.Attributes.Where(kvp => kvp.Key == Resource.ServiceNameKey));
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void ServiceResource_ServiceNameAndInstance()
         {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123");
+            var resource = Resource.Create("my-service", serviceInstanceId: "123");
             Assert.Equal(5, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void ServiceResource_ServiceNameAndInstanceAndNamespace()
         {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace");
+            var resource = Resource.Create("my-service", "my-namespace", serviceInstanceId: "123");
             Assert.Equal(6, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void ServiceResource_ServiceNameAndInstanceAndNamespaceAndVersion()
         {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource("my-service", "123", "my-namespace", "semVer:1.2.3");
+            var resource = Resource.Create("my-service", "my-namespace", "semVer:1.2.3", serviceInstanceId: "123");
             Assert.Equal(7, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceInstanceIdKey, "123"), resource.Attributes);
@@ -69,10 +69,19 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void ServiceResource_AutoGenerateServiceInstanceIdOff()
+        {
+            var resource = Resource.Create("my-service", autoGenerateServiceInstanceId: false);
+            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>(Resource.ServiceNameKey, "my-service"), resource.Attributes);
+            this.AssertDefaultAttributes(resource);
+        }
+
+        [Fact]
         public void ServiceResource_NullParams()
         {
-            var resource = OpenTelemetry.Resources.Resources.CreateServiceResource(null);
-            Assert.Equal(3, resource.Attributes.Count());
+            var resource = Resource.Create();
+            Assert.Equal(4, resource.Attributes.Count());
             this.AssertDefaultAttributes(resource);
         }
 
