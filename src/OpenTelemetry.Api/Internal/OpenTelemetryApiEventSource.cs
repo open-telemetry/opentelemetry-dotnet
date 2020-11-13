@@ -128,11 +128,19 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LogCritical(string message)
+        public void LogCritical(Type type, Exception exception, string message, params object[] args)
         {
             if (this.IsEnabled(EventLevel.Critical, (EventKeywords)(-1)))
             {
-                this.EmitCriticalEvent(message);
+                string formattedMessage = string.Format($"{type.FullName}: {message}", args);
+                if (exception == null)
+                {
+                    this.EmitCriticalEvent(formattedMessage);
+                }
+                else
+                {
+                    this.EmitCriticalEventWithException(formattedMessage, exception.ToInvariantString());
+                }
             }
         }
 
@@ -142,15 +150,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(12, message);
         }
 
-        [NonEvent]
-        public void LogCritical(string message, Exception exception)
-        {
-            if (this.IsEnabled(EventLevel.Critical, (EventKeywords)(-1)))
-            {
-                this.EmitCriticalEventWithException(message, exception.ToInvariantString());
-            }
-        }
-
         [Event(13, Message = "{0} Exception: {1}", Level = EventLevel.Critical)]
         public void EmitCriticalEventWithException(string message, string exception)
         {
@@ -158,11 +157,19 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LogError(string message)
+        public void LogError(Type type, Exception exception, string message, params object[] args)
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
-                this.EmitErrorEvent(message);
+                string formattedMessage = string.Format($"{type.FullName}: {message}", args);
+                if (exception == null)
+                {
+                    this.EmitErrorEvent(formattedMessage);
+                }
+                else
+                {
+                    this.EmitErrorEventWithException(formattedMessage, exception.ToInvariantString());
+                }
             }
         }
 
@@ -172,15 +179,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(14, message);
         }
 
-        [NonEvent]
-        public void LogError(string message, Exception exception)
-        {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
-            {
-                this.EmitErrorEventWithException(message, exception.ToInvariantString());
-            }
-        }
-
         [Event(15, Message = "{0} Exception: {1}", Level = EventLevel.Error)]
         public void EmitErrorEventWithException(string message, string exception)
         {
@@ -188,11 +186,19 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LogWarning(string message)
+        public void LogWarning(Type type, Exception exception, string message, params object[] args)
         {
             if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
             {
-                this.EmitWarningEvent(message);
+                string formattedMessage = string.Format($"{type.FullName}: {message}", args);
+                if (exception == null)
+                {
+                    this.EmitWarningEvent(formattedMessage);
+                }
+                else
+                {
+                    this.EmitWarningEventWithException(formattedMessage, exception.ToInvariantString());
+                }
             }
         }
 
@@ -202,15 +208,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(16, message);
         }
 
-        [NonEvent]
-        public void LogWarning(string message, Exception exception)
-        {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
-            {
-                this.EmitWarningEventWithException(message, exception.ToInvariantString());
-            }
-        }
-
         [Event(17, Message = "{0} Exception: {1}", Level = EventLevel.Warning)]
         public void EmitWarningEventWithException(string message, string exception)
         {
@@ -218,11 +215,19 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LogInformation(string message)
+        public void LogInformation(Type type, Exception exception, string message, params object[] args)
         {
             if (this.IsEnabled(EventLevel.Informational, (EventKeywords)(-1)))
             {
-                this.EmitInformationEvent(message);
+                string formattedMessage = string.Format($"{type.FullName}: {message}", args);
+                if (exception == null)
+                {
+                    this.EmitInformationEvent(formattedMessage);
+                }
+                else
+                {
+                    this.EmitInformationEventWithException(formattedMessage, exception.ToInvariantString());
+                }
             }
         }
 
@@ -232,15 +237,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(18, message);
         }
 
-        [NonEvent]
-        public void LogInformation(string message, Exception exception)
-        {
-            if (this.IsEnabled(EventLevel.Informational, (EventKeywords)(-1)))
-            {
-                this.EmitInformationEventWithException(message, exception.ToInvariantString());
-            }
-        }
-
         [Event(19, Message = "{0} Exception: {1}", Level = EventLevel.Informational)]
         public void EmitInformationEventWithException(string message, string error)
         {
@@ -248,27 +244,26 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LogVerbose(string message)
+        public void LogVerbose(Type type, Exception exception, string message, params object[] args)
         {
             if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
             {
-                this.EmitDebugEvent(message);
+                string formattedMessage = string.Format($"{type.FullName}: {message}", args);
+                if (exception == null)
+                {
+                    this.EmitVerboseEvent(formattedMessage);
+                }
+                else
+                {
+                    this.EmitVerboseEventWithException(formattedMessage, exception.ToInvariantString());
+                } 
             }
         }
 
         [Event(20, Message = "{0}", Level = EventLevel.Verbose)]
-        public void EmitDebugEvent(string message)
+        public void EmitVerboseEvent(string message)
         {
             this.WriteEvent(20, message);
-        }
-
-        [NonEvent]
-        public void LogVerbose(string message, Exception exception)
-        {
-            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
-            {
-                this.EmitVerboseEventWithException(message, exception.ToInvariantString());
-            }
         }
 
         [Event(21, Message = "{0} Exception: {1}", Level = EventLevel.Verbose)]

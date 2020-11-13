@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -39,9 +40,10 @@ namespace OpenTelemetry
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogCritical(Type type, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogCritical(string.Format($"{type.FullName}: {message}", args));
+            OpenTelemetryApiEventSource.Log.LogCritical(type, null, message, args);
         }
 
         /// <summary>
@@ -51,9 +53,10 @@ namespace OpenTelemetry
         /// <param name="exception">The exception to log.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogCritical(Type type, Exception exception, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogCritical(string.Format($"{type.FullName}: {message}", args), exception);
+            OpenTelemetryApiEventSource.Log.LogCritical(type, exception, message, args);
         }
 
         /// <summary>
@@ -62,9 +65,10 @@ namespace OpenTelemetry
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogError(Type type, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogError(string.Format($"{type.FullName}: {message}", args));
+            OpenTelemetryApiEventSource.Log.LogError(type, null, message, args);
         }
 
         /// <summary>
@@ -74,9 +78,10 @@ namespace OpenTelemetry
         /// <param name="exception">The exception to log.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogError(Type type, Exception exception, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogError(string.Format($"{type.FullName}: {message}", args), exception);
+            OpenTelemetryApiEventSource.Log.LogError(type, exception, message, args);
         }
 
         /// <summary>
@@ -85,9 +90,10 @@ namespace OpenTelemetry
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogWarning(Type type, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogWarning(string.Format($"{type.FullName}: {message}", args));
+            OpenTelemetryApiEventSource.Log.LogWarning(type, null, message, args);
         }
 
         /// <summary>
@@ -97,9 +103,10 @@ namespace OpenTelemetry
         /// <param name="exception">The exception to log.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogWarning(Type type, Exception exception, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogWarning(string.Format($"{type.FullName}: {message}", args), exception);
+            OpenTelemetryApiEventSource.Log.LogWarning(type, exception, message, args);
         }
 
         /// <summary>
@@ -108,9 +115,10 @@ namespace OpenTelemetry
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogInformation(Type type, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogInformation(string.Format($"{type.FullName}: {message}", args));
+            OpenTelemetryApiEventSource.Log.LogInformation(type, null, message, args);
         }
 
         /// <summary>
@@ -120,9 +128,10 @@ namespace OpenTelemetry
         /// <param name="exception">The exception to log.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogInformation(Type type, Exception exception, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogInformation(string.Format($"{type.FullName}: {message}", args), exception);
+            OpenTelemetryApiEventSource.Log.LogInformation(type, exception, message, args);
         }
 
         /// <summary>
@@ -131,9 +140,10 @@ namespace OpenTelemetry
         /// <param name="type">The type of the class where the log origins from.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogVerbose(Type type, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogVerbose(string.Format($"{type.FullName}: {message}", args));
+            OpenTelemetryApiEventSource.Log.LogVerbose(type, null, message, args);
         }
 
         /// <summary>
@@ -143,9 +153,10 @@ namespace OpenTelemetry
         /// <param name="exception">The exception to log.</param>
         /// <param name="message">Format string of the log message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LogVerbose(Type type, Exception exception, string message, params object[] args)
         {
-            OpenTelemetryApiEventSource.Log.LogVerbose(string.Format($"{type.FullName}: {message}", args), exception);
+            OpenTelemetryApiEventSource.Log.LogVerbose(type, exception, message, args);
         }
     }
 }
