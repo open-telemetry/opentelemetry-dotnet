@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpExporter : BaseExporter<Activity>
+    internal class OtlpExporter : BaseExporter<Activity>
     {
         private readonly OtlpExporterOptions options;
         private readonly Channel channel;

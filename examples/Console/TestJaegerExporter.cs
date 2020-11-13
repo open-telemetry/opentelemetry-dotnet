@@ -22,6 +22,11 @@ namespace Examples.Console
     {
         internal static object Run(string host, int port)
         {
+            // To run this example, run the following command from
+            // the reporoot\examples\Console\.
+            // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+            //
+            // dotnet run jaeger -h localhost -p 6831
             return RunWithActivity(host, port);
         }
 
