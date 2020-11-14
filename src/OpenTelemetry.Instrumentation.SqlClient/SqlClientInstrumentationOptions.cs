@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
@@ -38,6 +39,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
          */
         private static readonly Regex DataSourceRegex = new Regex("^(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, string> DBUserCache = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
@@ -150,6 +152,34 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                 if (!string.IsNullOrEmpty(connectionDetails.Port))
                 {
                     sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                }
+            }
+        }
+
+        internal void AddDBUserToActivity(string connectionString, Activity sqlActivity)
+        {
+            if (!this.EnableConnectionLevelAttributes)
+            {
+                sqlActivity.SetTag(SemanticConventions.AttributeDbConnectionString, connectionString);
+            }
+            else
+            {
+                if (!DBUserCache.TryGetValue(connectionString, out string dbUser))
+                {
+                    var builder = new DbConnectionStringBuilder
+                    {
+                        ConnectionString = connectionString,
+                    };
+
+                    if (builder.TryGetValue("User ID", out var userId) || builder.TryGetValue("user", out userId) || builder.TryGetValue("UID", out userId))
+                    {
+                        DBUserCache.TryAdd(connectionString, (string)userId);
+                        sqlActivity.SetTag(SemanticConventions.AttributeDbUser, (string)userId);
+                    }
+                }
+                else
+                {
+                    sqlActivity.SetTag(SemanticConventions.AttributeDbUser, dbUser);
                 }
             }
         }

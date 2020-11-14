@@ -94,5 +94,27 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
+
+        [Theory]
+        [InlineData(true, "Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word", "sa")]
+        [InlineData(true, "Data Source=127.0.0.1,5433; UID=sa; Password=Pass@word", "sa")]
+        [InlineData(true, "Data Source=127.0.0.1,5433; user=sa; Password=Pass@word", "sa")]
+        [InlineData(true, "Data Source=127.0.0.1,5433; Password=Pass@word", null)]
+        [InlineData(false, "Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word", null)]
+        public void SqlClientInstrumentationOptions_EnableConnectionLevelAttributes_DBUser(
+            bool enableConnectionLevelAttributes,
+            string connectionString,
+            string userId)
+        {
+            var source = new ActivitySource("sql-client-instrumentation");
+            var activity = source.StartActivity("Test Sql Activity");
+            var options = new SqlClientInstrumentationOptions
+            {
+                EnableConnectionLevelAttributes = enableConnectionLevelAttributes,
+            };
+            options.AddDBUserToActivity(connectionString, activity);
+
+            Assert.Equal(userId, activity.GetTagValue(SemanticConventions.AttributeDbUser));
+        }
     }
 }

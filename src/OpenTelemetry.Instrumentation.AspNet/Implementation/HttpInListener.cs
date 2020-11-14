@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Web.Routing;
@@ -128,6 +129,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.Url.ToString());
+
+                var xForwardedFor = request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+                if (!string.IsNullOrEmpty(xForwardedFor))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
+                }
 
                 try
                 {

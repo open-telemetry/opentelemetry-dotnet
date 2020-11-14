@@ -121,7 +121,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, dataSource, activity);
+            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, dataSource, sqlConnection.ConnectionString, activity);
         }
 
         [Theory]
@@ -196,6 +196,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 captureTextCommandContent,
                 false,
                 sqlConnection.DataSource,
+                sqlConnection.ConnectionString,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
 
@@ -258,6 +259,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 false,
                 true,
                 sqlConnection.DataSource,
+                sqlConnection.ConnectionString,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
 
@@ -268,6 +270,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureTextCommandContent,
             bool isFailure,
             string dataSource,
+            string connectionString,
             Activity activity)
         {
             Assert.Equal("master", activity.DisplayName);
@@ -315,6 +318,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             }
 
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
+            Assert.Equal(connectionString, activity.GetTagValue(SemanticConventions.AttributeDbConnectionString));
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

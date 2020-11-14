@@ -47,15 +47,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
-        [InlineData("/api/values", "user-agent", 503, "503")]
-        [InlineData("/api/values", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null, true)]
+        [InlineData("/api/values", "user-agent", 503, "503", "127.0.0.1")]
+        [InlineData("/api/values", null, 503, null, null)]
+        [InlineData("/api/exception", null, 503, null, null)]
+        [InlineData("/api/exception", null, 503, null, null, true)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(
             string urlPath,
             string userAgent,
             int statusCode,
             string reasonPhrase,
+            string xForwardedFor,
             bool recordException = false)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
@@ -76,6 +77,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     if (!string.IsNullOrEmpty(userAgent))
                     {
                         client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                        client.DefaultRequestHeaders.Add("X-Forwarded-For", xForwardedFor);
                     }
 
                     // Act
@@ -137,6 +139,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpClientIP, xForwardedFor);
 
             activity.Dispose();
             processor.Object.Dispose();

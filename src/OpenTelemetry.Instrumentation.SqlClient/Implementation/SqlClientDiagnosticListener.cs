@@ -45,6 +45,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         private readonly PropertyFetcher<object> commandFetcher = new PropertyFetcher<object>("Command");
         private readonly PropertyFetcher<object> connectionFetcher = new PropertyFetcher<object>("Connection");
+        private readonly PropertyFetcher<object> connectionStringFetcher = new PropertyFetcher<object>("ConnectionString");
         private readonly PropertyFetcher<object> dataSourceFetcher = new PropertyFetcher<object>("DataSource");
         private readonly PropertyFetcher<object> databaseFetcher = new PropertyFetcher<object>("Database");
         private readonly PropertyFetcher<CommandType> commandTypeFetcher = new PropertyFetcher<CommandType>("CommandType");
@@ -99,12 +100,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             }
 
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
+                            _ = this.connectionStringFetcher.TryFetch(connection, out var connectionString);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
                             activity.SetTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
+                            this.options.AddDBUserToActivity((string)connectionString, activity);
 
                             if (this.commandTypeFetcher.TryFetch(command, out CommandType commandType))
                             {
