@@ -3,6 +3,9 @@
 ## Unreleased
 
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0
+* Mark Activity extension methods as internal as these are not
+  required to be public. GetTagValue,EnumerateTags, 
+  EnumerateLinks, EnumerateEvents. See []() for full changes.
 
 ## 0.8.0-beta.1
 
