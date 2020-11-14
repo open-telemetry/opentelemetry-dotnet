@@ -14,33 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using Microsoft.Extensions.DependencyInjection;
-#endif
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Trace;
 
 public class Program
 {
     public static void Main()
     {
-#if NETCOREAPP2_1
-        var serviceCollection = new ServiceCollection().AddLogging(builder =>
-#else
-        using var loggerFactory = LoggerFactory.Create(builder =>
-#endif
+        using (var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options => options
                 .AddConsoleExporter());
-        });
+        }))
+        {
+            var logger = loggerFactory.CreateLogger<Program>();
 
-#if NETCOREAPP2_1
-        using var serviceProvider = serviceCollection.BuildServiceProvider();
-        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-#else
-        var logger = loggerFactory.CreateLogger<Program>();
-#endif
-
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        }
     }
 }
