@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    public class ZipkinExporter : BaseExporter<Activity>
+    internal class ZipkinExporter : BaseExporter<Activity>
     {
         private readonly ZipkinExporterOptions options;
 #if !NET452

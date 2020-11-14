@@ -26,7 +26,7 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : BaseExporter<Activity>
+    internal class JaegerExporter : BaseExporter<Activity>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
