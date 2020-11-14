@@ -115,15 +115,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Url.Host);
@@ -137,6 +128,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.Url.ToString());
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -176,15 +176,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                try
-                {
-                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
-                }
-                catch (Exception ex)
-                {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
@@ -216,6 +207,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // Override the name that was previously set to the path part of URL.
                     activityToEnrich.DisplayName = template;
                     activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, template);
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
             }
 

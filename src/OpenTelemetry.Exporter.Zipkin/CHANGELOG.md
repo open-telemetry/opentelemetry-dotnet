@@ -8,6 +8,8 @@
   library.version to otel.library.name, otel.library.version respectively.
 * Sending `service.namespace` as Zipkin tag.
   ([#1521](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1521))
+* The `ZipkinExporter` class has been made internal.
+  ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
 
 ## 0.8.0-beta.1
 
