@@ -71,7 +71,7 @@ namespace OpenTelemetry.Resources
         }
 
         internal static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddTelemetrySdk().AddEnvironmentVariableDetector();
+            => new ResourceBuilder().AddTelemetrySdk();
 
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {

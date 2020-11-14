@@ -112,10 +112,10 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Adds resource attributes parsed from environment variables to a <see
-        /// cref="ResourceBuilder"/> following <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#service">semantic
-        /// conventions</a>.
+        /// Adds resource attributes parsed from an environment variable to a
+        /// <see cref="ResourceBuilder"/> following the <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
+        /// SDK</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
         /// <param name="environmentVariableName">The name of the environment variable to parse. Default value: <see cref="OtelEnvResourceDetector.OTelResourceEnvVarKey"/>.</param>
