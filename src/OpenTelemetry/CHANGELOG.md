@@ -19,14 +19,13 @@
 * `OpenTelemetry.Resources.Resources.CreateServiceResource` has been removed in
   favor of the `ResourceBuilder` API.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
-* By default `TracerProvider` will set a `Resource` containing:  
+* By default `TracerProvider` will set a `Resource` containing [Telemetry
+    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)
+    details
+    ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533)):
   * `telemetry.sdk.name` = `opentelemetry`
   * `telemetry.sdk.language` = `dotnet`
-  * `telemetry.sdk.version` = [SDK version]  
-    See the [Telemetry
-    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)
-    specification for details.
-    ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
+  * `telemetry.sdk.version` = [SDK version]
 
 ## 0.8.0-beta.1
 
