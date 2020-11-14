@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +31,8 @@ namespace OpenTelemetry.Trace
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private Resource resource = Resource.Empty.GetResourceWithDefaultAttributes();
+        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
+        private Action<ResourceBuilder> configureResources;
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilderSdk()
@@ -116,7 +118,18 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(resource));
             }
 
-            this.resource = resource;
+            this.resourceBuilder = new ResourceBuilder().AddResource(resource);
+            return this;
+        }
+
+        /// <summary>
+        /// Registers a callback that will be executed to configure the <see cref="Resource"/> for the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="configureResource"><see cref="ResourceBuilder"/>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder ConfigureResource(Action<ResourceBuilder> configureResource)
+        {
+            this.configureResources = configureResource ?? throw new ArgumentNullException(nameof(configureResource));
             return this;
         }
 
@@ -139,7 +152,15 @@ namespace OpenTelemetry.Trace
 
         internal TracerProvider Build()
         {
-            return new TracerProviderSdk(this.resource, this.sources, this.diagnosticSourceInstrumentationFactories, this.instrumentationFactories, this.sampler, this.processors);
+            this.configureResources?.Invoke(this.resourceBuilder);
+
+            return new TracerProviderSdk(
+                this.resourceBuilder.Build(),
+                this.sources,
+                this.diagnosticSourceInstrumentationFactories,
+                this.instrumentationFactories,
+                this.sampler,
+                this.processors);
         }
 
         /// <summary>

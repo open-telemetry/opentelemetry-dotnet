@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
@@ -27,16 +26,6 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class Resource
     {
-        public const string ServiceNameKey = "service.name";
-        public const string ServiceNamespaceKey = "service.namespace";
-        public const string ServiceInstanceIdKey = "service.instance.id";
-        public const string ServiceVersionKey = "service.version";
-        private const string TelemetrySdkNameKey = "telemetry.sdk.name";
-        private const string TelemetrySdkLanguageKey = "telemetry.sdk.language";
-        private const string TelemetrySdkVersionKey = "telemetry.sdk.version";
-
-        private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
-
         // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
         /// <summary>
@@ -65,70 +54,6 @@ namespace OpenTelemetry.Resources
         /// Gets the collection of key-value pairs describing the resource.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
-
-        private static Resource TelemetryResource { get; } = new Resource(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(TelemetrySdkNameKey, "opentelemetry"),
-                new KeyValuePair<string, object>(TelemetrySdkLanguageKey, "dotnet"),
-                new KeyValuePair<string, object>(TelemetrySdkVersionKey, Version.ToString()),
-            });
-
-        /// <summary>
-        /// Creates a new <see cref="Resource"/> from service information following standard convention
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-resource-semantic-conventions.md#service.
-        /// </summary>
-        /// <param name="serviceName">Optional name of the service.</param>
-        /// <param name="serviceNamespace">Optional namespace of the service.</param>
-        /// <param name="serviceVersion">Optional version of the service.</param>
-        /// <param name="autoGenerateServiceInstanceId">Specify <see langword="true"/> to automatically generate a <see cref="Guid"/> for <paramref name="serviceInstanceId"/> if not supplied.</param>
-        /// <param name="serviceInstanceId">Optional unique identifier of the service instance.</param>
-        /// <param name="attributes">Optional <see cref="IEnumerable{T}"/> of attributes that describe the service.</param>
-        /// <returns>Returns a new <see cref="Resource"/>.</returns>
-        public static Resource Create(
-            string serviceName = null,
-            string serviceNamespace = null,
-            string serviceVersion = null,
-            bool autoGenerateServiceInstanceId = true,
-            string serviceInstanceId = null,
-            IEnumerable<KeyValuePair<string, object>> attributes = null)
-        {
-            Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
-
-            if (attributes != null)
-            {
-                foreach (KeyValuePair<string, object> attribute in attributes.Select(SanitizeAttribute).ToList())
-                {
-                    resourceAttributes[attribute.Key] = attribute.Value;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(serviceName))
-            {
-                resourceAttributes.Add(ServiceNameKey, serviceName);
-            }
-
-            if (!string.IsNullOrEmpty(serviceNamespace))
-            {
-                resourceAttributes.Add(ServiceNamespaceKey, serviceNamespace);
-            }
-
-            if (!string.IsNullOrEmpty(serviceVersion))
-            {
-                resourceAttributes.Add(ServiceVersionKey, serviceVersion);
-            }
-
-            if (serviceInstanceId == null && autoGenerateServiceInstanceId)
-            {
-                serviceInstanceId = Guid.NewGuid().ToString();
-            }
-
-            if (serviceInstanceId != null)
-            {
-                resourceAttributes.Add(ServiceInstanceIdKey, serviceInstanceId);
-            }
-
-            return new Resource(resourceAttributes).GetResourceWithDefaultAttributes();
-        }
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
@@ -162,36 +87,9 @@ namespace OpenTelemetry.Resources
             return new Resource(newAttributes);
         }
 
-        /// <summary>
-        /// Returns a new <see cref="Resource"/> with added attributes from telemetry sdk and the <see cref="OtelEnvResourceDetector"/>.
-        /// </summary>
-        /// <returns><see cref="Resource"/>.</returns>
-        internal Resource GetResourceWithDefaultAttributes()
-        {
-            return this.Merge(TelemetryResource).Merge(new OtelEnvResourceDetector().Detect());
-        }
-
-        /// <summary>
-        /// Returns a new <see cref="Resource"/> with added attributes from resource detectors in the order of the list.
-        /// </summary>
-        /// <param name="detectors">A list of <see cref="IResourceDetector"/>.</param>
-        /// <returns><see cref="Resource"/>.</returns>
-        internal Resource GetResourceFromDetectors(List<IResourceDetector> detectors)
-        {
-            var resource = this;
-            foreach (IResourceDetector detector in detectors)
-            {
-                resource = resource.Merge(detector.Detect());
-            }
-
-            return resource;
-        }
-
         private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)
         {
-            string sanitizedKey = null;
-            object sanitizedValue = null;
-
+            string sanitizedKey;
             if (attribute.Key == null)
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute key", "Attribute key should be non-null string.");
@@ -202,6 +100,7 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
+            object sanitizedValue;
             if (!IsValidValue(attribute.Value))
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null string, long, bool or double.");

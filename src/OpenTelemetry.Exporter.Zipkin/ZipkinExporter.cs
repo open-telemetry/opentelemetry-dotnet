@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 switch (key)
                 {
-                    case Resource.ServiceNameKey:
+                    case ResourceSemanticConventions.AttributeServiceName:
                         serviceName = label.Value as string;
                         continue;
                 }

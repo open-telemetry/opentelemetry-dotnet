@@ -105,10 +105,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     switch (key)
                     {
-                        case Resource.ServiceNameKey:
+                        case ResourceSemanticConventions.AttributeServiceName:
                             serviceName = strVal;
                             continue;
-                        case Resource.ServiceNamespaceKey:
+                        case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
                             continue;
                     }

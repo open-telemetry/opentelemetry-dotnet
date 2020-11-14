@@ -55,6 +55,22 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Registers a callback that will be executed to configure the <see cref="Resource"/> for the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="configureResource"><see cref="ResourceBuilder"/>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configureResource)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.ConfigureResource(configureResource);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Adds processor to the provider.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
