@@ -5,6 +5,8 @@
 * Jaeger tags used for InstrumentationLibrary changed from library.name,
   library.version to otel.library.name, otel.library.version respectively.
   ([#1513](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1513))
+* The `JaegerExporter` class has been made internal.
+  ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
 
 ## 0.8.0-beta.1
 
