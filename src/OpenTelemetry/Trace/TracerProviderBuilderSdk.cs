@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-        private Action<ResourceBuilder> configureResources;
+        private Action<ResourceBuilder> configureResource;
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilderSdk()
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder ConfigureResource(Action<ResourceBuilder> configureResource)
         {
-            this.configureResources = configureResource ?? throw new ArgumentNullException(nameof(configureResource));
+            this.configureResource = configureResource ?? throw new ArgumentNullException(nameof(configureResource));
             return this;
         }
 
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProvider Build()
         {
-            this.configureResources?.Invoke(this.resourceBuilder);
+            this.configureResource?.Invoke(this.resourceBuilder);
 
             return new TracerProviderSdk(
                 this.resourceBuilder.Build(),
