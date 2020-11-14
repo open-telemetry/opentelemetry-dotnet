@@ -4,7 +4,7 @@
 
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0
 * Mark Activity extension methods as internal as these are not required to be
-  public. GetTagValue,EnumerateTags, EnumerateLinks, EnumerateEvents. See
+  public. GetTagValue, EnumerateTags, EnumerateLinks, EnumerateEvents. See
   [#1544](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1544)
   for full changes.
 
