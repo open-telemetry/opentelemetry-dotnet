@@ -11,6 +11,6 @@ OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ProcessTags.get -> System.Co
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ProcessTags.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ServiceName.get -> string
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ServiceName.set -> void
-OpenTelemetry.Trace.JaegerExporterHelperExtensions
+OpenTelemetry.JaegerExporterHelperExtensions
 override OpenTelemetry.Exporter.Jaeger.JaegerExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
-static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

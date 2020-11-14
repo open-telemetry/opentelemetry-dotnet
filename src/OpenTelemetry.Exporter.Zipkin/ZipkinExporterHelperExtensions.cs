@@ -16,9 +16,10 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 using OpenTelemetry.Exporter.Zipkin;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
     /// Extension methods to simplify registering of Zipkin exporter.

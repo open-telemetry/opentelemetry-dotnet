@@ -17,8 +17,9 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry
 {
     /// <summary>
     /// Extension methods to simplify registering a Jaeger exporter.
