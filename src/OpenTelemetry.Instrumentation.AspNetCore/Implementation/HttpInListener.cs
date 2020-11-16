@@ -112,15 +112,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
@@ -144,6 +135,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -160,15 +160,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
 #if NETSTANDARD2_1
@@ -183,6 +174,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #else
                 SetStatusFromHttpStatusCode(activity, response.StatusCode);
 #endif
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
@@ -245,6 +245,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+
                 try
                 {
                     this.options.Enrich?.Invoke(activity, "OnException", exc);
@@ -253,13 +260,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                if (this.options.RecordException)
-                {
-                    activity.RecordException(exc);
-                }
-
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 

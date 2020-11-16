@@ -96,6 +96,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (activity.IsAllDataRequested)
             {
+                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
+                if (Options.SetHttpFlavor)
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                }
+
                 try
                 {
                     Options.Enrich?.Invoke(activity, "OnStartActivity", request);
@@ -103,14 +111,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 catch (Exception ex)
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
-                if (Options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 }
             }
         }
@@ -120,6 +120,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+
+                activity.SetStatus(
+                    SpanHelper
+                        .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                        .WithDescription(response.StatusDescription));
+
                 try
                 {
                     Options.Enrich?.Invoke(activity, "OnStopActivity", response);
@@ -128,13 +135,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
-
-                activity.SetStatus(
-                    SpanHelper
-                        .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
-                        .WithDescription(response.StatusDescription));
             }
         }
 
@@ -144,15 +144,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (!activity.IsAllDataRequested)
             {
                 return;
-            }
-
-            try
-            {
-                Options.Enrich?.Invoke(activity, "OnException", exception);
-            }
-            catch (Exception ex)
-            {
-                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
             }
 
             Status status;
@@ -192,6 +183,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             activity.SetStatus(status);
+
+            try
+            {
+                Options.Enrich?.Invoke(activity, "OnException", exception);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

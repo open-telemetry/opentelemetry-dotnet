@@ -34,6 +34,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         private readonly GrpcClientInstrumentationOptions options;
         private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
+        private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
 
         public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
@@ -92,15 +93,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
@@ -123,6 +115,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 }
 
                 activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -141,6 +142,18 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
                 // Remove the grpc.status_code tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
+
+                if (this.stopRequestFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                {
+                    try
+                    {
+                        this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    }
+                    catch (Exception ex)
+                    {
+                        GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
+                }
             }
 
             this.activitySource.Stop(activity);
