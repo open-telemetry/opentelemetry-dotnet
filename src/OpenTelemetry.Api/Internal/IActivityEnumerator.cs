@@ -22,7 +22,7 @@ namespace OpenTelemetry.Trace
     /// An interface used to perform zero-allocation enumeration of <see cref="Activity"/> elements. Implementation must be a struct.
     /// </summary>
     /// <typeparam name="T">Enumerated item type.</typeparam>
-    public interface IActivityEnumerator<T>
+    internal interface IActivityEnumerator<T>
     {
         /// <summary>
         /// Called for each <see cref="Activity"/> item while the enumeration is executing.

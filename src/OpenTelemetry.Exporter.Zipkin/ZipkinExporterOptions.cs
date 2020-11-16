@@ -31,7 +31,8 @@ namespace OpenTelemetry.Exporter.Zipkin
 #endif
 
         /// <summary>
-        /// Gets or sets the name of the service reporting telemetry.
+        /// Gets or sets the name of the service reporting telemetry. If the `Resource` associated with the telemetry
+        /// has "service.name" defined, then it'll be preferred over this option.
         /// </summary>
         public string ServiceName { get; set; } = DefaultServiceName;
 
