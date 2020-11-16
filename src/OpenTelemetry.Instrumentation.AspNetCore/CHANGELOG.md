@@ -5,9 +5,11 @@
 * AspNetCoreInstrumentation sets ActivitySource to activities created outside
   ActivitySource.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
-* For gRPC invocations, leading forward slash is trimmed from span name in
-  order to conform to the specification.
+* For gRPC invocations, leading forward slash is trimmed from span name in order
+  to conform to the specification.
   ([#1551](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1551))
+* Added SpanHelper.cs file as a link to the the project.
+  ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1
 
