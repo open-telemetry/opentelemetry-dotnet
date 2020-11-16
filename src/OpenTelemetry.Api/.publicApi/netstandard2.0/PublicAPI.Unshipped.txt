@@ -94,8 +94,6 @@ OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle.NoopInt64ObserverMetricHandl
 OpenTelemetry.Metrics.NoopMeasureMetric<T>
 OpenTelemetry.Metrics.NoopMeasureMetric<T>.NoopMeasureMetric() -> void
 OpenTelemetry.Trace.ActivityExtensions
-OpenTelemetry.Trace.IActivityEnumerator<T>
-OpenTelemetry.Trace.IActivityEnumerator<T>.ForEach(T item) -> bool
 OpenTelemetry.Trace.Link
 OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Trace.Link.Context.get -> OpenTelemetry.Trace.SpanContext
@@ -273,13 +271,7 @@ static OpenTelemetry.Metrics.MeterFactoryBase.Default.get -> OpenTelemetry.Metri
 static OpenTelemetry.Metrics.MeterFactoryBase.SetDefault(OpenTelemetry.Metrics.MeterFactoryBase meterFactory) -> void
 static OpenTelemetry.Metrics.MeterProvider.Default.get -> OpenTelemetry.Metrics.MeterProvider
 static OpenTelemetry.Metrics.MeterProvider.SetDefault(OpenTelemetry.Metrics.MeterProvider meterProvider) -> void
-static OpenTelemetry.Trace.ActivityExtensions.EnumerateEvents<T>(this System.Diagnostics.Activity activity, ref T eventEnumerator) -> void
-static OpenTelemetry.Trace.ActivityExtensions.EnumerateLinks<T>(this System.Diagnostics.Activity activity, ref T linkEnumerator) -> void
-static OpenTelemetry.Trace.ActivityExtensions.EnumerateTags<T>(this System.Diagnostics.Activity activity, ref T tagEnumerator) -> void
-static OpenTelemetry.Trace.ActivityExtensions.EnumerateTags<T>(this System.Diagnostics.ActivityEvent activityEvent, ref T tagEnumerator) -> void
-static OpenTelemetry.Trace.ActivityExtensions.EnumerateTags<T>(this System.Diagnostics.ActivityLink activityLink, ref T tagEnumerator) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
-static OpenTelemetry.Trace.ActivityExtensions.GetTagValue(this System.Diagnostics.Activity activity, string tagName) -> object
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void
 static OpenTelemetry.Trace.Link.operator !=(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool
