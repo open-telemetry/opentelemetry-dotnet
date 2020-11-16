@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A collection of helper methods to be used when building spans.
     /// </summary>
-    public static class SpanHelper
+    internal static class SpanHelper
     {
         /// <summary>
         /// Helper method that populates span properties from http status code according
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="httpStatusCode">Http status code.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Http status code.</returns>
-        public static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
+        internal static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
         {
             var status = Status.Error;
 

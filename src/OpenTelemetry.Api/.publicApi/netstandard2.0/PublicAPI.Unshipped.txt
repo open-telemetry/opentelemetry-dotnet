@@ -123,7 +123,6 @@ OpenTelemetry.Trace.SpanContext.SpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Trace.SpanContext.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
 OpenTelemetry.Trace.SpanContext.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Trace.SpanContext.TraceState.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
-OpenTelemetry.Trace.SpanHelper
 OpenTelemetry.Trace.SpanKind
 OpenTelemetry.Trace.SpanKind.Client = 3 -> OpenTelemetry.Trace.SpanKind
 OpenTelemetry.Trace.SpanKind.Consumer = 5 -> OpenTelemetry.Trace.SpanKind
@@ -279,7 +278,6 @@ static OpenTelemetry.Trace.Link.operator ==(OpenTelemetry.Trace.Link link1, Open
 static OpenTelemetry.Trace.SpanContext.implicit operator System.Diagnostics.ActivityContext(OpenTelemetry.Trace.SpanContext spanContext) -> System.Diagnostics.ActivityContext
 static OpenTelemetry.Trace.SpanContext.operator !=(OpenTelemetry.Trace.SpanContext spanContext1, OpenTelemetry.Trace.SpanContext spanContext2) -> bool
 static OpenTelemetry.Trace.SpanContext.operator ==(OpenTelemetry.Trace.SpanContext spanContext1, OpenTelemetry.Trace.SpanContext spanContext2) -> bool
-static OpenTelemetry.Trace.SpanHelper.ResolveSpanStatusForHttpStatusCode(int httpStatusCode) -> OpenTelemetry.Trace.Status
 static OpenTelemetry.Trace.Status.operator !=(OpenTelemetry.Trace.Status status1, OpenTelemetry.Trace.Status status2) -> bool
 static OpenTelemetry.Trace.Status.operator ==(OpenTelemetry.Trace.Status status1, OpenTelemetry.Trace.Status status2) -> bool
 static OpenTelemetry.Trace.Tracer.CurrentSpan.get -> OpenTelemetry.Trace.TelemetrySpan
