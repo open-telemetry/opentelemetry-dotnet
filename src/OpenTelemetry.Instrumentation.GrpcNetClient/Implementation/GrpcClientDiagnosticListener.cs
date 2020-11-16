@@ -134,7 +134,10 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
                 if (validConversion)
                 {
-                    activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
+                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    {
+                        activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
+                    }
 
                     // setting rpc.grpc.status_code
                     activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
