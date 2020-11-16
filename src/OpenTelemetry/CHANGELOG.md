@@ -14,8 +14,9 @@
 * `ActivitySourceAdapter` supports setting `ActivitySource` for Activities
   created without `ActivitySource`.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
-  * Implemented Shutdown for TracerProvider
-    ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
+* Implemented Shutdown for TracerProvider
+  ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
+* Marked CompositeProcessor as internal, as its an implementation detail.
 
 ## 0.8.0-beta.1
 

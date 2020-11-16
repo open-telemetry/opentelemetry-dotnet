@@ -33,9 +33,6 @@ OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.get -> int
 OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.set -> void
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.get -> int
 OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> void
-OpenTelemetry.CompositeProcessor<T>
-OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
-OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
 OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportProcessorType.Batch = 1 -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorType

@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
 {
-    public class CompositeProcessor<T> : BaseProcessor<T>
+    internal class CompositeProcessor<T> : BaseProcessor<T>
     {
         private DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
