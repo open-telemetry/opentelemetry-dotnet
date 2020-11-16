@@ -182,11 +182,6 @@ override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds
 override OpenTelemetry.BatchExportProcessor<T>.OnEnd(T data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 override OpenTelemetry.BatchExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.CompositeProcessor<T>.Dispose(bool disposing) -> void
-override OpenTelemetry.CompositeProcessor<T>.OnEnd(T data) -> void
-override OpenTelemetry.CompositeProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
-override OpenTelemetry.CompositeProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.CompositeProcessor<T>.OnStart(T data) -> void
 override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.Checkpoint() -> void
 override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
 override OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
