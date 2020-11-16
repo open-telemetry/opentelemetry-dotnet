@@ -256,7 +256,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
 
             Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
-            Assert.Equal($"/greet.Greeter/SayHello", serverActivity.DisplayName);
+            Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
             Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
             Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
             Assert.Contains("item1=value1", serverActivity.GetCustomProperty("BaggageString") as string);
