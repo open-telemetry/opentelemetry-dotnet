@@ -22,9 +22,22 @@ OpenTelemetry.Batch<T>.Enumerator.Reset() -> void
 OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
 OpenTelemetry.BatchExportProcessor<T>
 OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
+OpenTelemetry.BatchExportProcessorOptions<T>
+OpenTelemetry.BatchExportProcessorOptions<T>.BatchExportProcessorOptions() -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxExportBatchSize.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.MaxQueueSize.set -> void
+OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.get -> int
+OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> void
 OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
+OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Batch = 1 -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult
@@ -152,13 +165,7 @@ OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDe
 OpenTelemetry.Trace.SamplingResult.SamplingResult(bool isSampled) -> void
 OpenTelemetry.Trace.TraceIdRatioBasedSampler
 OpenTelemetry.Trace.TraceIdRatioBasedSampler.TraceIdRatioBasedSampler(double probability) -> void
-OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Trace.TracerProviderBuilder.AddProcessor(OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Trace.TracerProviderBuilder.Build() -> OpenTelemetry.Trace.TracerProvider
-OpenTelemetry.Trace.TracerProviderBuilder.SetResource(OpenTelemetry.Resources.Resource resource) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Trace.TracerProviderBuilder.SetSampler(OpenTelemetry.Trace.Sampler sampler) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilderExtensions
 OpenTelemetry.Trace.TracerProviderExtensions
 abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
 abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
@@ -169,8 +176,6 @@ abstract OpenTelemetry.Metrics.Export.MetricExporter.ExportAsync(System.Collecti
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
-const OpenTelemetry.Resources.Resource.LibraryNameKey = "name" -> string
-const OpenTelemetry.Resources.Resource.LibraryVersionKey = "version" -> string
 const OpenTelemetry.Resources.Resource.ServiceInstanceIdKey = "service.instance.id" -> string
 const OpenTelemetry.Resources.Resource.ServiceNameKey = "service.name" -> string
 const OpenTelemetry.Resources.Resource.ServiceNamespaceKey = "service.namespace" -> string
@@ -233,6 +238,11 @@ static OpenTelemetry.SuppressInstrumentationScope.Enter() -> int
 static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool
 static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider
+static OpenTelemetry.Trace.TracerProviderExtensions.Shutdown(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.Resources.Resource resource) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.Trace.Sampler sampler) -> OpenTelemetry.Trace.TracerProviderBuilder
 virtual OpenTelemetry.BaseExporter<T>.Dispose(bool disposing) -> void
 virtual OpenTelemetry.BaseExporter<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.Dispose(bool disposing) -> void

@@ -34,18 +34,19 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckConstructorWithInvalidValues()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 1, maxExportBatchSize: 2049));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), exporterTimeoutMilliseconds: -1));
+            var exportedItems = new List<Activity>();
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxExportBatchSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 1, maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), scheduledDelayMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
@@ -69,7 +70,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckForceFlushWithInvalidTimeout()
         {
-            using var exporter = new InMemoryExporter<Activity>();
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
@@ -80,8 +82,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckForceFlushExport(int timeout)
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
@@ -119,8 +121,8 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckShutdownExport(int timeout)
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,

@@ -2,6 +2,8 @@ abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTele
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
 OpenTelemetry.ActivityContextExtensions
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Baggage
 OpenTelemetry.Baggage.Baggage() -> void
 OpenTelemetry.Baggage.ClearBaggage() -> OpenTelemetry.Baggage
@@ -200,6 +202,7 @@ abstract OpenTelemetry.Metrics.Meter.CreateInt64Observer(string name, System.Act
 abstract OpenTelemetry.Metrics.Meter.GetLabelSet(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.LabelSet
 override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
+OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
 override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext

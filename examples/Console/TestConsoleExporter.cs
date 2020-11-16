@@ -24,6 +24,11 @@ namespace Examples.Console
 {
     internal class TestConsoleExporter
     {
+        // To run this example, run the following command from
+        // the reporoot\examples\Console\.
+        // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+        //
+        // dotnet run console
         internal static object Run(ConsoleOptions options)
         {
             // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"

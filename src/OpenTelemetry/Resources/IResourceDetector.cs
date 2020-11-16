@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="IResourceDetector.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Resources
 {
-    public class InMemoryExporterOptions
+    /// <summary>
+    /// An interface for Resource detectors.
+    /// </summary>
+    internal interface IResourceDetector
     {
-        public ICollection<object> ExportedItems { get; set; }
+        /// <summary>
+        /// Called to get a resource with attributes from detector.
+        /// </summary>
+        /// <returns>An instance of <see cref="Resource"/>.</returns>
+        Resource Detect();
     }
 }

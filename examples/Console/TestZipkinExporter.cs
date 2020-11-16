@@ -24,12 +24,15 @@ namespace Examples.Console
     {
         internal static object Run(string zipkinUri)
         {
-            /*
-             * Setup zipkin inside local docker.
-             * docker run -d -p 9411:9411 openzipkin/zipkin
-             *
-             * In zipkinUri, use http://localhost:9411/api/v2/spans
-             */
+            // Prerequisite for running this example.
+            // Setup zipkin inside local docker using following command:
+            // docker run -d -p 9411:9411 openzipkin/zipkin
+
+            // To run this example, run the following command from
+            // the reporoot\examples\Console\.
+            // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+            //
+            // dotnet run zipkin -u http://localhost:9411/api/v2/spans
 
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Zipkin exporter.
