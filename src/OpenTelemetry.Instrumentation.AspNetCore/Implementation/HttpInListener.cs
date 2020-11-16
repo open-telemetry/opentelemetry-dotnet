@@ -169,10 +169,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else
                 {
-                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    {
+                        SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    }
                 }
 #else
-                SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                }
 #endif
 
                 try

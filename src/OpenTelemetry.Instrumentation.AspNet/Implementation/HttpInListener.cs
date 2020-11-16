@@ -179,7 +179,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
                 Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                activityToEnrich.SetStatus(status);
+                if (activityToEnrich.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    activityToEnrich.SetStatus(status);
+                }
 
                 var routeData = context.Request.RequestContext.RouteData;
 
