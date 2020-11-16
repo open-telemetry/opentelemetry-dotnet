@@ -319,7 +319,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // The RPC semantic conventions indicate the span name
             // should not have a leading forward slash.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
-            activity.DisplayName = grpcMethod.Trim('/');
+            activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
