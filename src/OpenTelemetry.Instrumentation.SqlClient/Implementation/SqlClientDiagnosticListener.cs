@@ -89,14 +89,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             _ = this.databaseFetcher.TryFetch(connection, out var database);
 
                             activity.DisplayName = (string)database;
-                            try
-                            {
-                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
-                            }
-                            catch (Exception ex)
-                            {
-                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
-                            }
 
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
@@ -132,6 +124,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                         activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
                                         break;
                                 }
+                            }
+
+                            try
+                            {
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
                             }
                         }
                     }
