@@ -15,9 +15,7 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -43,10 +41,7 @@ namespace OpenTelemetry.Trace
             Debug.Assert(activity != null, "Activity should not be null");
 
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, (int)status.StatusCode);
-            if (!string.IsNullOrEmpty(status.Description))
-            {
-                activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
-            }
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
         /// <summary>

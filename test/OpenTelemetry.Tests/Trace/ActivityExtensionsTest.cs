@@ -60,6 +60,24 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void SetStatusWithDescriptionTwice()
+        {
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .Build();
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetStatus(Status.Error.WithDescription("Not Found"));
+            activity.SetStatus(Status.Ok);
+            activity?.Stop();
+
+            var status = activity.GetStatus();
+            Assert.Equal(StatusCode.Ok, status.StatusCode);
+            Assert.Null(status.Description);
+        }
+
+        [Fact]
         public void SetCancelledStatus()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
