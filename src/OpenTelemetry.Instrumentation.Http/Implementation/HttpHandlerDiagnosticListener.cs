@@ -88,15 +88,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
@@ -104,6 +95,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (this.options.SetHttpFlavor)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
             }
 
@@ -138,6 +138,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+
+                    activity.SetStatus(
+                        SpanHelper
+                            .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
+                            .WithDescription(response.ReasonPhrase));
+
                     try
                     {
                         this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
@@ -146,13 +153,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                     }
-
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
-
-                    activity.SetStatus(
-                        SpanHelper
-                            .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
-                            .WithDescription(response.ReasonPhrase));
                 }
             }
 
@@ -167,15 +167,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
-                }
-
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
-                }
-                catch (Exception ex)
-                {
-                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
 
                 if (exc is HttpRequestException)
@@ -194,6 +185,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
             }
         }
