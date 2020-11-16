@@ -316,6 +316,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
+            // The RPC semantic conventions indicate the span name
+            // should not have a leading forward slash.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            activity.DisplayName = grpcMethod.TrimStart('/');
+
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
