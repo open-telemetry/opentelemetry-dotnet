@@ -20,6 +20,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingPkgVer)" />
   </ItemGroup>
 </Project>
