@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="httpStatusCode">Http status code.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Http status code.</returns>
-        internal static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
+        public static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
         {
             var status = Status.Error;
 
