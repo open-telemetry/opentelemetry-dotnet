@@ -19,7 +19,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A collection of helper methods to be used when building spans.
     /// </summary>
-    public static class SpanHelper
+    internal static class SpanHelper
     {
         /// <summary>
         /// Helper method that populates span properties from http status code according
