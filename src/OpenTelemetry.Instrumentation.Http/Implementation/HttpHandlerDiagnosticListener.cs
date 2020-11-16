@@ -123,16 +123,23 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // requestTaskStatus is not null
                 _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
+                StatusCode currentStatusCode = activity.GetStatus().StatusCode;
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        activity.SetStatus(Status.Error);
+                        if (currentStatusCode == StatusCode.Unset)
+                        {
+                            activity.SetStatus(Status.Error);
+                        }
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
-                        // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                        activity.SetStatus(Status.Error);
+                        if (currentStatusCode == StatusCode.Unset)
+                        {
+                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            activity.SetStatus(Status.Error);
+                        }
                     }
                 }
 
@@ -140,10 +147,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    activity.SetStatus(
+                    if (currentStatusCode == StatusCode.Unset)
+                    {
+                        activity.SetStatus(
                         SpanHelper
                             .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
                             .WithDescription(response.ReasonPhrase));
+                    }
 
                     try
                     {
