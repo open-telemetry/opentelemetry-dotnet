@@ -26,6 +26,27 @@ namespace OpenTelemetry.Resources
     {
         private readonly List<Resource> resources = new List<Resource>();
 
+        private ResourceBuilder()
+        {
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ResourceBuilder"/> instance with SDK defaults
+        /// added. See <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/semantic_conventions/">resource
+        /// semantic conventions</a> for details.
+        /// </summary>
+        /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
+        public static ResourceBuilder CreateDefault()
+            => new ResourceBuilder().AddTelemetrySdk(); // TODO: Seek spec clarify on whether or not OtelEnvResourceDetector should be added by default.
+
+        /// <summary>
+        /// Creates an empty <see cref="ResourceBuilder"/> instance.
+        /// </summary>
+        /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
+        public static ResourceBuilder CreateEmpty()
+            => new ResourceBuilder();
+
         /// <summary>
         /// Add a <see cref="Resource"/> to the builder.
         /// </summary>
@@ -69,9 +90,6 @@ namespace OpenTelemetry.Resources
 
             return finalResource;
         }
-
-        internal static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddTelemetrySdk();
 
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {

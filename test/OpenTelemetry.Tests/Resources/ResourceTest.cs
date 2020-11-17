@@ -338,7 +338,7 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_EmptyResource()
         {
             // Arrange
-            var resource = new ResourceBuilder().AddTelemetrySdk().AddEnvironmentVariableDetector().Build();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
-            var resource = new ResourceBuilder().AddTelemetrySdk().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -364,7 +364,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
-            var resource = new ResourceBuilder().AddTelemetrySdk().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;

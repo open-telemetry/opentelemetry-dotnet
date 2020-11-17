@@ -16,8 +16,11 @@
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
 * Implemented `Shutdown` for `TracerProvider`.
   ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
-* `OpenTelemetry.Resources.Resources.CreateServiceResource` has been removed in
+* `Resources.CreateServiceResource` has been removed in
   favor of the `ResourceBuilder` API.
+  ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
+* `TracerProviderBuilder.SetResource` has been changed to
+  `TracerProviderBuilder.SetResourceBuilder`.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
 * By default `TracerProvider` will set a `Resource` containing [Telemetry
     SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)

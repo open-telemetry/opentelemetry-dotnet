@@ -57,11 +57,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             Assert.Equal("TestService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(new ResourceBuilder().AddService("MyService").Build());
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
             Assert.Equal("MyService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(new ResourceBuilder().AddService("MyService", "MyNamespace").Build());
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
 
             Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
