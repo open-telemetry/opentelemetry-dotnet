@@ -57,11 +57,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             Assert.Equal("TestService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(Resources.Resources.CreateServiceResource("MyService"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
             Assert.Equal("MyService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(Resources.Resources.CreateServiceResource("MyService", serviceNamespace: "MyNamespace"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
 
             Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
@@ -109,8 +109,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             jaegerTraceExporter.SetResource(new Resource(new Dictionary<string, object>
             {
-                [Resource.ServiceNameKey] = "servicename",
-                [Resource.ServiceNamespaceKey] = "servicenamespace",
+                [ResourceSemanticConventions.AttributeServiceName] = "servicename",
+                [ResourceSemanticConventions.AttributeServiceNamespace] = "servicenamespace",
             }));
 
             Assert.Null(process.Tags);
