@@ -57,7 +57,7 @@ namespace Examples.Console
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResource(Resources.CreateServiceResource("otlp-test"))
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
                     .AddOtlpExporter(opt => opt.Endpoint = endpoint)
                     .Build();
 
