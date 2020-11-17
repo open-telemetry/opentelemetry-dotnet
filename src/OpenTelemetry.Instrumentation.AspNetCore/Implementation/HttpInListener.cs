@@ -145,10 +145,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
 
-                var xForwardedFor = request.Headers["X-Forwarded-For"].FirstOrDefault();
-                if (!string.IsNullOrEmpty(xForwardedFor))
+                if (this.options.RecordHttpServerAttributes)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
+                    var xForwardedFor = request.Headers["X-Forwarded-For"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(xForwardedFor))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
+                    }
                 }
             }
         }

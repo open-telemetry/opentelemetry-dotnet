@@ -52,6 +52,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </remarks>
         public bool RecordException { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to record http server attributes or not.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/a2758014f408f64ff84728918d671ee3fdab2225/specification/trace/semantic_conventions/http.md#http-server-semantic-conventions.
+        /// </remarks>
+        public bool RecordHttpServerAttributes { get; set; }
+
 #if NETSTANDARD2_1
         /// <summary>
         /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.

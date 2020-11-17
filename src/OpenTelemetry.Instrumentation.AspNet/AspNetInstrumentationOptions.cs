@@ -43,5 +43,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// The type of this object depends on the event, which is given by the above parameter.</para>
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to record http server attributes or not.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/a2758014f408f64ff84728918d671ee3fdab2225/specification/trace/semantic_conventions/http.md#http-server-semantic-conventions.
+        /// </remarks>
+        public bool RecordHttpServerAttributes { get; set; }
     }
 }

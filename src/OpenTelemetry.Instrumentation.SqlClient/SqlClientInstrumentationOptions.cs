@@ -158,11 +158,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         internal void AddDBUserToActivity(string connectionString, Activity sqlActivity)
         {
-            if (!this.EnableConnectionLevelAttributes)
-            {
-                sqlActivity.SetTag(SemanticConventions.AttributeDbConnectionString, connectionString);
-            }
-            else
+            if (this.EnableConnectionLevelAttributes)
             {
                 if (!DBUserCache.TryGetValue(connectionString, out string dbUser))
                 {

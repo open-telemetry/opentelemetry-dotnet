@@ -47,17 +47,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
-        [InlineData("/api/values", "user-agent", 503, "503", "127.0.0.1")]
-        [InlineData("/api/values", null, 503, null, null)]
-        [InlineData("/api/exception", null, 503, null, null)]
-        [InlineData("/api/exception", null, 503, null, null, true)]
+        [InlineData("/api/values", "user-agent", 503, "503", "127.0.0.1", false, true)]
+        [InlineData("/api/values", null, 503, null, null, false, true)]
+        [InlineData("/api/exception", null, 503, null, null, false, true)]
+        [InlineData("/api/exception", null, 503, null, "127.0.0.1", true, false)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(
             string urlPath,
             string userAgent,
             int statusCode,
             string reasonPhrase,
             string xForwardedFor,
-            bool recordException = false)
+            bool recordException = false,
+            bool recordHttpServerAttributes = false)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -67,7 +68,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options =>
+                        {
+                            options.RecordException = recordException;
+                            options.RecordHttpServerAttributes = recordHttpServerAttributes;
+                        })
                         .AddProcessor(processor.Object));
                     }))
                 .CreateClient())
@@ -138,8 +143,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Equal("exception", activity.Events.First().Name);
             }
 
+            if (recordHttpServerAttributes)
+            {
+                Assert.Equal(xForwardedFor, activity.GetTagValue(SemanticConventions.AttributeHttpClientIP));
+            }
+            else
+            {
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeHttpClientIP));
+            }
+
             this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
-            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpClientIP, xForwardedFor);
 
             activity.Dispose();
             processor.Object.Dispose();
