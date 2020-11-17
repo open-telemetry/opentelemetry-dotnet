@@ -145,7 +145,6 @@ OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.ResourceBuilder
-OpenTelemetry.Resources.ResourceBuilder.AddResource(OpenTelemetry.Resources.Resource resource) -> OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.ResourceBuilderExtensions
