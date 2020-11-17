@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         [Fact]
         public void JaegerExporter_BadArgs()
         {
@@ -38,10 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerTraceExporter_ctor_NullServiceNameAllowed()
         {
-            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions
-            {
-                ServiceName = null,
-            });
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             Assert.NotNull(jaegerTraceExporter);
         }
 
@@ -120,7 +119,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_DefaultBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
             jaegerExporter.SetResource(Resource.Empty);
 
             // Act
@@ -132,7 +131,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             // Assert
             Assert.Single(batches);
-            Assert.Equal("TestService", batches.First().Process.ServiceName);
+            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
             Assert.Equal(3, batches.First().Count);
         }
 
@@ -140,7 +139,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_MultipleBatches()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
             jaegerExporter.SetResource(Resource.Empty);
 
             // Act
@@ -158,7 +157,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             // Assert
             Assert.Equal(2, batches.Count());
 
-            var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
+            var primaryBatch = batches.Where(b => b.Process.ServiceName == DefaultServiceName);
             Assert.Single(primaryBatch);
             Assert.Equal(2, primaryBatch.First().Count);
 
@@ -171,7 +170,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPayloadSizeInBytes = 1500 });
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 });
             jaegerExporter.SetResource(Resource.Empty);
 
             // Act
@@ -183,7 +182,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             // Assert
             Assert.Single(batches);
-            Assert.Equal("TestService", batches.First().Process.ServiceName);
+            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
             Assert.Equal(1, batches.First().Count);
         }
 
