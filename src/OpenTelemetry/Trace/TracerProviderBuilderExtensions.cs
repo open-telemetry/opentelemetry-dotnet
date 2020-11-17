@@ -42,13 +42,13 @@ namespace OpenTelemetry.Trace
         /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
-        /// <param name="resource">Resource to be associate with all traces.</param>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> to be associate with all traces.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder SetResource(this TracerProviderBuilder tracerProviderBuilder, Resource resource)
+        public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, ResourceBuilder resourceBuilder)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.SetResource(resource);
+                tracerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
             }
 
             return tracerProviderBuilder;
