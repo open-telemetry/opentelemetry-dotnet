@@ -27,12 +27,12 @@ namespace OpenTelemetry
     {
         private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
 
-        private static Resource TelemetryResource { get; } = new Resource(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeTelemetrySdkName, "opentelemetry"),
-                new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeTelemetrySdkLanguage, "dotnet"),
-                new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeTelemetrySdkVersion, Version.ToString()),
-            });
+        private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
+        {
+            [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
+            [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Version.ToString(),
+        });
 
         /// <summary>
         /// Adds service information to a <see cref="ResourceBuilder"/>
