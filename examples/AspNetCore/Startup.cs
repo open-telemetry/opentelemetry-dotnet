@@ -81,11 +81,11 @@ namespace Examples.AspNetCore
                     break;
                 case "otlp":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otlp:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddOtlpExporter(otlpOptions =>
                         {
-                            otlpOptions.ServiceName = this.Configuration.GetValue<string>("Otlp:ServiceName");
                             otlpOptions.Endpoint = this.Configuration.GetValue<string>("Otlp:Endpoint");
                         }));
                     break;
