@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Trace
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private Resource resource = Resource.Empty.GetResourceWithDefaultAttributes();
+        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         internal TracerProviderBuilderSdk()
@@ -95,28 +96,18 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            if (sampler == null)
-            {
-                throw new ArgumentNullException(nameof(sampler));
-            }
-
-            this.sampler = sampler;
+            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
         }
 
         /// <summary>
         /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
         /// </summary>
-        /// <param name="resource">Resource to be associate with all traces.</param>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> to be associate with all traces.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder SetResource(Resource resource)
+        internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            if (resource == null)
-            {
-                throw new ArgumentNullException(nameof(resource));
-            }
-
-            this.resource = resource;
+            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
             return this;
         }
 
@@ -139,7 +130,13 @@ namespace OpenTelemetry.Trace
 
         internal TracerProvider Build()
         {
-            return new TracerProviderSdk(this.resource, this.sources, this.diagnosticSourceInstrumentationFactories, this.instrumentationFactories, this.sampler, this.processors);
+            return new TracerProviderSdk(
+                this.resourceBuilder.Build(),
+                this.sources,
+                this.diagnosticSourceInstrumentationFactories,
+                this.instrumentationFactories,
+                this.sampler,
+                this.processors);
         }
 
         /// <summary>
