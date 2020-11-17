@@ -73,8 +73,6 @@ using var otel = Sdk.CreateTracerProvider(b => b
 
 ## Advanced topics
 
-* Logs
-  * [Correlating logs with traces](../../docs/logs/correlation/README.md)
 * Metrics
   * [Building your own Exporter](../../docs/metrics/building-your-own-exporter.md)
 * Trace
