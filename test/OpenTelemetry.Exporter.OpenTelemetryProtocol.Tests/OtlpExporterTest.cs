@@ -126,7 +126,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 }
                 else
                 {
-                    Assert.DoesNotContain(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey);
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == "OpenTelemetry Exporter");
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
