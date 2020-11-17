@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.Console
@@ -35,10 +36,10 @@ namespace Examples.Console
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Jaeger exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("jaeger-test"))
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .AddJaegerExporter(o =>
                     {
-                        o.ServiceName = "jaeger-test";
                         o.AgentHost = host;
                         o.AgentPort = port;
                     })

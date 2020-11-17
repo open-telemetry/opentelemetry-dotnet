@@ -23,6 +23,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNetCore
@@ -58,11 +60,11 @@ namespace Examples.AspNetCore
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
                         {
-                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
                             jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
                             jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
                         }));
