@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Resources;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
@@ -77,12 +78,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             if (addResource)
             {
                 exporter.SetResource(
-                    new Resources.Resource(
+                    ResourceBuilder.CreateEmpty().AddAttributes(
                         new List<KeyValuePair<string, object>>
                         {
                             new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceName, "service-name"),
                             new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                        }));
+                        }).Build());
             }
             else
             {
