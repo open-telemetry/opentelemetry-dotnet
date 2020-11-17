@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<string> sources = new List<string>();
+        private readonly List<Source> sources = new List<Source>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
@@ -65,25 +65,25 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds given activitysource names to the list of subscribed sources.
         /// </summary>
-        /// <param name="names">Activity source names.</param>
+        /// <param name="sources">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public override TracerProviderBuilder AddSource(params string[] names)
+        public override TracerProviderBuilder AddSource(params Source[] sources)
         {
-            if (names == null)
+            if (sources == null)
             {
-                throw new ArgumentNullException(nameof(names));
+                throw new ArgumentNullException(nameof(sources));
             }
 
-            foreach (var name in names)
+            foreach (var source in sources)
             {
-                if (string.IsNullOrWhiteSpace(name))
+                if (string.IsNullOrWhiteSpace(source.Name))
                 {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
+                    throw new ArgumentException($"{nameof(sources)} contains null or whitespace name.");
                 }
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
-                this.sources.Add(name);
+                this.sources.Add(source);
             }
 
             return this;
