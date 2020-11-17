@@ -70,7 +70,6 @@ most common customization and extension scenarios:
   exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
 * [Building a custom trace
   exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
-* [Correlating logs with traces](./docs/logs/correlation/README.md)
 
 ## Contributing
 

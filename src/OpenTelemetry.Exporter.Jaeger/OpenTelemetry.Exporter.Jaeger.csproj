@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard2.0;netstandard2.1</TargetFrameworks>
@@ -18,7 +18,8 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\IActivityEnumerator.cs" Link="Includes\IActivityEnumerator.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\EnumerationHelper.cs" Link="Includes\EnumerationHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PooledList.cs" Link="Includes\PooledList.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Exporter\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
   </ItemGroup>
 
   <ItemGroup>

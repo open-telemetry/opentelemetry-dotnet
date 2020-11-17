@@ -30,7 +30,7 @@ namespace Benchmarks.Instrumentation
     public class InstrumentedHttpClientBenchmark
     {
         private const string ActivityName = "incoming request";
-        private const string ResourceName = "http-service-example";
+        private const string ServiceName = "http-service-example";
         private const string SourceName = "http-client-test";
 
         private HttpClient httpClient;
@@ -53,7 +53,7 @@ namespace Benchmarks.Instrumentation
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .SetResource(Resources.CreateServiceResource(ResourceName))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ServiceName))
                 .AddSource(SourceName)
                 .Build();
 
