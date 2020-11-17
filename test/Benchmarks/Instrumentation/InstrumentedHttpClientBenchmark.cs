@@ -53,7 +53,7 @@ namespace Benchmarks.Instrumentation
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .ConfigureResource(r => r.AddService(ServiceName))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ServiceName))
                 .AddSource(SourceName)
                 .Build();
 
