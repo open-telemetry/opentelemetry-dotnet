@@ -112,15 +112,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
@@ -152,6 +143,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
                     }
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
             }
         }
