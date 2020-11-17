@@ -22,17 +22,18 @@ namespace OpenTelemetry.Resources
 {
     /// <summary>
     /// <see cref="Resource"/> represents a resource, which captures identifying information about the entities
-    /// for which signals (stats or traces) are reported.
+    /// for which telemetry is reported.
+    /// Use <see cref="ResourceBuilder"/> to construct resource instances.
     /// </summary>
     public class Resource
     {
-        // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
+        // This implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
         /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
-        public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
+        internal Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
             {
