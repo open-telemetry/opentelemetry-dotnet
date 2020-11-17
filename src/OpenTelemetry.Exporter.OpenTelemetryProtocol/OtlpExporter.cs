@@ -104,21 +104,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 }
             }
 
-            if (!processResource.Attributes.Any(kvp => kvp.Key == Resource.ServiceNameKey))
-            {
-                string serviceName = this.options.ServiceName;
-                if (string.IsNullOrEmpty(serviceName))
-                {
-                    serviceName = OtlpExporterOptions.DefaultServiceName;
-                }
-
-                processResource.Attributes.Add(new OtlpCommon.KeyValue
-                {
-                    Key = Resource.ServiceNameKey,
-                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
-                });
-            }
-
             this.ProcessResource = processResource;
         }
 
