@@ -22,22 +22,9 @@ namespace OpenTelemetry.Resources
 {
     internal class OtelEnvResourceDetector : IResourceDetector
     {
-        public const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-
+        private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
         private const char AttributeListSplitter = ',';
         private const char AttributeKeyValueSplitter = '=';
-
-        private readonly string environmentVariableName;
-
-        public OtelEnvResourceDetector(string environmentVariableName = null)
-        {
-            if (string.IsNullOrEmpty(environmentVariableName))
-            {
-                environmentVariableName = OTelResourceEnvVarKey;
-            }
-
-            this.environmentVariableName = environmentVariableName;
-        }
 
         public Resource Detect()
         {
@@ -45,7 +32,7 @@ namespace OpenTelemetry.Resources
 
             try
             {
-                string envResourceAttributeValue = Environment.GetEnvironmentVariable(this.environmentVariableName);
+                string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
                 if (!string.IsNullOrEmpty(envResourceAttributeValue))
                 {
                     var attributes = ParseResourceAttributes(envResourceAttributeValue);

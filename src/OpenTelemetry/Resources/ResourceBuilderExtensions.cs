@@ -118,11 +118,10 @@ namespace OpenTelemetry
         /// SDK</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
-        /// <param name="environmentVariableName">The name of the environment variable to parse. Default value: <see cref="OtelEnvResourceDetector.OTelResourceEnvVarKey"/>.</param>
         /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
-        public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder, string environmentVariableName = null)
+        public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
         {
-            return resourceBuilder.AddDetector(new OtelEnvResourceDetector(environmentVariableName));
+            return resourceBuilder.AddDetector(new OtelEnvResourceDetector());
         }
     }
 }
