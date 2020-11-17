@@ -83,8 +83,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     new Resources.Resource(
                         new List<KeyValuePair<string, object>>
                         {
-                            new KeyValuePair<string, object>(Resources.Resource.ServiceNameKey, "service-name"),
-                            new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
+                            new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceName, "service-name"),
+                            new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
                         }));
             }
             else
@@ -124,12 +124,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var oltpResource = request.ResourceSpans.First().Resource;
                 if (addResource)
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNamespaceKey && kvp.Value.StringValue == "ns1");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == optionsServiceName);
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == optionsServiceName);
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
