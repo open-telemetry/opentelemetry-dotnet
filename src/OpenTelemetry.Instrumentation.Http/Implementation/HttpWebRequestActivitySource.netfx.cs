@@ -204,9 +204,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private static void ProcessRequest(HttpWebRequest request)
         {
-            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request) || !Options.EventFilter(request))
+            if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
             {
-                // No subscribers to the ActivitySource or this request was instrumented by previous
+                // No subscribers to the ActivitySource or User provider Filter is
+                // filtering this request.
+                // Propagation must still be done in such cases, to allow
+                // downstream services to continue from parent context, if any.
+                // Eg: Parent could be the Asp.Net activity.
+                InstrumentRequest(request, Activity.Current?.Context ?? default);
+                return;
+            }
+
+            if (IsRequestInstrumented(request))
+            {
+                // This request was instrumented by previous
                 // ProcessRequest, such is the case with redirect responses where the same request is sent again.
                 return;
             }
@@ -214,6 +225,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
             var activityContext = Activity.Current?.Context ?? default;
 
+            // Propagation must still be done in all cases, to allow
+            // downstream services to continue from parent context, if any.
+            // Eg: Parent could be the Asp.Net activity.
             InstrumentRequest(request, activityContext);
             if (activity == null)
             {
