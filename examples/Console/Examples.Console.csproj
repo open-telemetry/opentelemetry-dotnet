@@ -20,7 +20,7 @@
     </PackageReference>
     <PackageReference Include="StackExchange.Redis" Version="$(StackExchangeRedisPkgVer)" />
 
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Trace\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -26,7 +26,7 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : BaseExporter<Activity>
+    internal class JaegerExporter : BaseExporter<Activity>
     {
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
@@ -105,10 +105,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     switch (key)
                     {
-                        case Resource.ServiceNameKey:
+                        case ResourceSemanticConventions.AttributeServiceName:
                             serviceName = strVal;
                             continue;
-                        case Resource.ServiceNamespaceKey:
+                        case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
                             continue;
                     }

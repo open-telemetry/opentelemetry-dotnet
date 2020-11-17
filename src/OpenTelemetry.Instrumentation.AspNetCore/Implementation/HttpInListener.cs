@@ -169,15 +169,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
 #if NETSTANDARD2_1
@@ -187,11 +178,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else
                 {
-                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    {
+                        SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    }
                 }
 #else
-                SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                }
 #endif
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
@@ -254,6 +260,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+
                 try
                 {
                     this.options.Enrich?.Invoke(activity, "OnException", exc);
@@ -262,13 +275,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                if (this.options.RecordException)
-                {
-                    activity.RecordException(exc);
-                }
-
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 
@@ -325,6 +331,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
+            // The RPC semantic conventions indicate the span name
+            // should not have a leading forward slash.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            activity.DisplayName = grpcMethod.TrimStart('/');
+
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);

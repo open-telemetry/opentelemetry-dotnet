@@ -57,11 +57,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             Assert.Equal("TestService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(Resources.Resources.CreateServiceResource("MyService"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
             Assert.Equal("MyService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(Resources.Resources.CreateServiceResource("MyService", serviceNamespace: "MyNamespace"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
 
             Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
@@ -72,10 +72,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.SetResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag"] = "value",
-            }));
+            }).Build());
 
             Assert.NotNull(process.Tags);
             Assert.Single(process.Tags);
@@ -90,10 +90,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
 
-            jaegerTraceExporter.SetResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag2"] = "value2",
-            }));
+            }).Build());
 
             Assert.NotNull(process.Tags);
             Assert.Equal(2, process.Tags.Count);
@@ -107,11 +107,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.SetResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
-                [Resource.ServiceNameKey] = "servicename",
-                [Resource.ServiceNamespaceKey] = "servicenamespace",
-            }));
+                [ResourceSemanticConventions.AttributeServiceName] = "servicename",
+                [ResourceSemanticConventions.AttributeServiceNamespace] = "servicenamespace",
+            }).Build());
 
             Assert.Null(process.Tags);
         }

@@ -23,6 +23,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNetCore
@@ -79,11 +81,11 @@ namespace Examples.AspNetCore
                     break;
                 case "otlp":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otlp:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddOtlpExporter(otlpOptions =>
                         {
-                            otlpOptions.ServiceName = this.Configuration.GetValue<string>("Otlp:ServiceName");
                             otlpOptions.Endpoint = this.Configuration.GetValue<string>("Otlp:Endpoint");
                         }));
                     break;

@@ -35,7 +35,7 @@ namespace Examples.Console
             // and use a custom MyProcessor, along with Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("MyCompany.MyProduct.MyWebServer")
-                .SetResource(Resources.CreateServiceResource("MyServiceName"))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
                 .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
                 .AddConsoleExporter()
                 .Build();
