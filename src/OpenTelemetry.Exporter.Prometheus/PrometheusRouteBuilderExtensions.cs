@@ -16,10 +16,10 @@
 
 #if NETSTANDARD2_0
 
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Exporter.Prometheus;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
     /// Provides extension methods for <see cref="IApplicationBuilder"/> to add Prometheus Scraper Endpoint.
