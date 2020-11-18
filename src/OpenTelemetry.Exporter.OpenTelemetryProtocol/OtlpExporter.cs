@@ -34,6 +34,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     internal class OtlpExporter : BaseExporter<Activity>
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         private readonly OtlpExporterOptions options;
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
@@ -104,18 +106,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 }
             }
 
-            if (!processResource.Attributes.Any(kvp => kvp.Key == Resource.ServiceNameKey))
+            if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
             {
-                string serviceName = this.options.ServiceName;
-                if (string.IsNullOrEmpty(serviceName))
-                {
-                    serviceName = OtlpExporterOptions.DefaultServiceName;
-                }
-
                 processResource.Attributes.Add(new OtlpCommon.KeyValue
                 {
-                    Key = Resource.ServiceNameKey,
-                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
+                    Key = ResourceSemanticConventions.AttributeServiceName,
+                    Value = new OtlpCommon.AnyValue { StringValue = DefaultServiceName },
                 });
             }
 

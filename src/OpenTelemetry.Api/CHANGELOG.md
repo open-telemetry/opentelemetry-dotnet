@@ -2,11 +2,25 @@
 
 ## Unreleased
 
+* In order to align with the
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
+  the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`
+  extension) will now be set as the `Unset`, `Error`, or `Ok` string
+  representation instead of the `0`, `1`, or `2` integer representation.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0
 * Mark Activity extension methods as internal as these are not required to be
   public. GetTagValue, EnumerateTags, EnumerateLinks, EnumerateEvents. See
   [#1544](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1544)
   for full changes.
+* Changed SpanHelper class from public to internal. Moved SpanHelper.cs to
+  OpenTelemetry.Api\Internal
+  ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1
 
@@ -21,9 +35,9 @@ Released 2020-Nov-5
   ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
 * Moving grpc status and helper to grpc project
   ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
-  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
-  and changed from interface to abstract class.
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+  CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
+  changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 * Added GlobalPropagators API via Propagators.DefaultTextMapPropagator.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))

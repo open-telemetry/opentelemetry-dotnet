@@ -26,7 +26,6 @@ namespace OpenTelemetry.Resources.Tests
         private const string KeyName = "key";
         private const string ValueName = "value";
         private const string OtelEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-        private static readonly Random Random = new Random();
 
         public ResourceTest()
         {
@@ -339,11 +338,10 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_EmptyResource()
         {
             // Arrange
-            var resource = Resource.Empty;
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
+            var attributes = resource.Attributes;
             Assert.Equal(3, attributes.Count());
             ValidateTelemetrySdkAttributes(attributes);
         }
@@ -352,11 +350,10 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
+            var attributes = resource.Attributes;
             Assert.Equal(5, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
             ValidateTelemetrySdkAttributes(attributes);
@@ -367,36 +364,15 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
+            var attributes = resource.Attributes;
             Assert.Equal(7, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
             ValidateTelemetrySdkAttributes(attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
-        }
-
-        [Fact]
-        public void GetResourceFromDetectors_OtelEnvDetector()
-        {
-            // Arrange
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey11=EVVal11,EVKey22=EVVal22");
-            var detectors = new List<IResourceDetector>
-            {
-                new OtelEnvResourceDetector(),
-            };
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceFromDetectors(detectors);
-
-            // Assert
-            var attributes = new_resource.Attributes;
-            Assert.Equal(4, attributes.Count());
-            ValidateAttributes(attributes, 0, 1);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey11", "EVVal11"), attributes);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey22", "EVVal22"), attributes);
         }
 
         public void Dispose()
@@ -438,13 +414,6 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
             var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
             Assert.Single(versionAttribute);
-        }
-
-        private static string RandomString(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[Random.Next(s.Length)]).ToArray());
         }
 
         private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)

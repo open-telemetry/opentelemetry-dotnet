@@ -20,14 +20,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
-
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
-
-        /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
-        /// </summary>
-        public string ServiceName { get; set; } = DefaultServiceName;
 
         /// <summary>
         /// Gets or sets the Jaeger agent host. Default value: localhost.

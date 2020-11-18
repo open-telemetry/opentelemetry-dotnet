@@ -31,11 +31,6 @@ namespace OpenTelemetry.Tests
             {
                 VerifyMethodImplementation(eventSource, publicMethod);
             }
-
-            foreach (MethodInfo publicMethod in GetEventMethods(eventSource))
-            {
-                VerifyMethodImplementation(eventSource, publicMethod);
-            }
         }
 
         private static void VerifyMethodImplementation(EventSource eventSource, MethodInfo eventMethod)
@@ -149,12 +144,6 @@ namespace OpenTelemetry.Tests
         {
             MethodInfo[] methods = eventSource.GetType().GetMethods();
             return methods.Where(m => m.GetCustomAttributes(typeof(EventAttribute), false).Any());
-        }
-
-        private static IEnumerable<MethodInfo> GetNonEventMethods(EventSource eventSource)
-        {
-            MethodInfo[] methods = eventSource.GetType().GetMethods();
-            return methods.Where(m => m.GetCustomAttributes(typeof(NonEventAttribute), false).Any());
         }
     }
 }

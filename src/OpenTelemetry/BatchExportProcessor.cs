@@ -108,7 +108,7 @@ namespace OpenTelemetry
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
         /// <inheritdoc/>
-        public override void OnEnd(T data)
+        public override void OnExport(T data)
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             this.WriteEvent(1, handlerName, eventName, ex);
         }
 
-        [Event(2, Message = "Current Activity is NULL the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
+        [Event(2, Message = "Current Activity is NULL in the '{0}' callback. Span will not be recorded.", Level = EventLevel.Warning)]
         public void NullActivity(string eventName)
         {
             this.WriteEvent(2, eventName);
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             }
         }
 
-        [Event(5, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        [Event(5, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
         public void EnrichmentException(string exception)
         {
             this.WriteEvent(5, exception);

@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -36,6 +37,7 @@ namespace OpenTelemetry
 
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
+            SelfDiagnostics.EnsureInitialized();
         }
 
         /// <summary>

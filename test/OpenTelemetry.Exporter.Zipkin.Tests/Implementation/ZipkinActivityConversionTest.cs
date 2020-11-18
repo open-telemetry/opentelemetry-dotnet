@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
@@ -83,6 +85,37 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), zipkinSpan.Timestamp);
             Assert.Equal((long)activity.Duration.TotalMilliseconds * 1000, zipkinSpan.Duration);
+        }
+
+        [Theory]
+        [InlineData(StatusCode.Unset, false)]
+        [InlineData(StatusCode.Ok, false)]
+        [InlineData(StatusCode.Error, true)]
+        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode statusCode, bool hasErrorFlag)
+        {
+            var status = statusCode switch
+            {
+                StatusCode.Unset => Status.Unset,
+                StatusCode.Ok => Status.Ok,
+                StatusCode.Error => Status.Error,
+                _ => throw new InvalidOperationException(),
+            };
+
+            // Arrange
+            var activity = ZipkinExporterTests.CreateTestActivity(status: status);
+
+            // Act
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert
+            if (hasErrorFlag)
+            {
+                Assert.Contains(zipkinSpan.Tags.Value, t => t.Key == "error" && (string)t.Value == "true");
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags.Value, t => t.Key == "error");
+            }
         }
     }
 }
