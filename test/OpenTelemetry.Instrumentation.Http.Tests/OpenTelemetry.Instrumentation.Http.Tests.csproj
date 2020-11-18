@@ -13,6 +13,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\IActivityEnumerator.cs" Link="Includes\IActivityEnumerator.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\EnumerationHelper.cs" Link="Includes\EnumerationHelper.cs" />
   </ItemGroup>
