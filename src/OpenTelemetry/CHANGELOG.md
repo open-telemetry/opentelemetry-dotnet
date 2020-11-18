@@ -32,7 +32,8 @@
 * `Resource` constructor marked as internal, as `ResourceBuilder` is the
   recommended API to build resources.
   ([#1566](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1566))
-* Added check for ActivityTraceFlags for export
+* Changed BaseExportProcessor to have it override OnExport instead of OnEnd;
+  Added check for ActivityTraceFlags to BaseExportProcessor OnEnd
   ([#1574](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1574))
 
 ## 0.8.0-beta.1
