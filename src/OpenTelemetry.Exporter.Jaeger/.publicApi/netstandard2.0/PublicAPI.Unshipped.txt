@@ -8,7 +8,5 @@ OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.get ->
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ProcessTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ProcessTags.set -> void
-OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ServiceName.get -> string
-OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ServiceName.set -> void
 OpenTelemetry.Trace.JaegerExporterHelperExtensions
 static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

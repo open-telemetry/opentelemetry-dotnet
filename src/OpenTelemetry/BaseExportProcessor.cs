@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -44,7 +45,17 @@ namespace OpenTelemetry
         }
 
         /// <inheritdoc />
-        public abstract override void OnEnd(T data);
+        public sealed override void OnEnd(T data)
+        {
+            if (data is Activity activity && activity.ActivityTraceFlags == ActivityTraceFlags.None)
+            {
+                return;
+            }
+
+            this.OnExport(data);
+        }
+
+        public abstract void OnExport(T data);
 
         internal override void SetParentProvider(BaseProvider parentProvider)
         {

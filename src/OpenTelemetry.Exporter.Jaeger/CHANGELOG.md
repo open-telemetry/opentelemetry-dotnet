@@ -2,11 +2,19 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Jaeger tags used for InstrumentationLibrary changed from library.name,
   library.version to otel.library.name, otel.library.version respectively.
   ([#1513](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1513))
 * The `JaegerExporter` class has been made internal.
   ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
+* Removed `ServiceName` from options available on the `AddJaegerExporter`
+  extension. It is not required by the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md).
+  ([#1572](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1572))
 
 ## 0.8.0-beta.1
 

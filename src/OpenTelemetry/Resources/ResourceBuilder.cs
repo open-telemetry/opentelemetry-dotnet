@@ -48,23 +48,6 @@ namespace OpenTelemetry.Resources
             => new ResourceBuilder();
 
         /// <summary>
-        /// Add a <see cref="Resource"/> to the builder.
-        /// </summary>
-        /// <param name="resource"><see cref="Resource"/>.</param>
-        /// <returns><see cref="ResourceBuilder"/> for chaining.</returns>
-        public ResourceBuilder AddResource(Resource resource)
-        {
-            if (resource == null)
-            {
-                throw new ArgumentNullException(nameof(resource));
-            }
-
-            this.resources.Add(resource);
-
-            return this;
-        }
-
-        /// <summary>
         /// Clears the <see cref="Resource"/>s added to the builder.
         /// </summary>
         /// <returns><see cref="ResourceBuilder"/> for chaining.</returns>
@@ -91,6 +74,8 @@ namespace OpenTelemetry.Resources
             return finalResource;
         }
 
+        // Internal until spec is finalized.
+        // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
             if (resourceDetector == null)
@@ -104,6 +89,18 @@ namespace OpenTelemetry.Resources
             {
                 this.resources.Add(resource);
             }
+
+            return this;
+        }
+
+        internal ResourceBuilder AddResource(Resource resource)
+        {
+            if (resource == null)
+            {
+                throw new ArgumentNullException(nameof(resource));
+            }
+
+            this.resources.Add(resource);
 
             return this;
         }

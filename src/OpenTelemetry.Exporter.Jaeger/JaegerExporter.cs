@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter.Jaeger
 {
     internal class JaegerExporter : BaseExporter<Activity>
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
         private readonly TTransport clientTransport;
@@ -52,7 +54,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
 
-            this.Process = new Process(options.ServiceName, options.ProcessTags);
+            this.Process = new Process(DefaultServiceName, options.ProcessTags);
         }
 
         internal Process Process { get; set; }
@@ -131,7 +133,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (string.IsNullOrEmpty(process.ServiceName))
             {
-                process.ServiceName = JaegerExporterOptions.DefaultServiceName;
+                process.ServiceName = DefaultServiceName;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
