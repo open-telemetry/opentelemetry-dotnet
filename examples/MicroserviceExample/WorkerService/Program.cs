@@ -40,7 +40,7 @@ namespace WorkerService
                     services.AddOpenTelemetryTracing((builder) =>
                     {
                         builder
-                            .AddSource(new Source(nameof(MessageReceiver)))
+                            .AddSource(nameof(MessageReceiver))
                             .AddZipkinExporter(b =>
                             {
                                 var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
