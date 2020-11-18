@@ -23,10 +23,27 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public struct Source
     {
+        /// <summary>
+        /// Source name.
+        /// </summary>
         public readonly string Name;
+
+        /// <summary>
+        /// Min version of the assembly.
+        /// </summary>
         public readonly Version MinVersion;
+
+        /// <summary>
+        /// Max version of the assembly.
+        /// </summary>
         public readonly Version MaxVersion;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Source"/> struct.
+        /// </summary>
+        /// <param name="name">Name of the source.</param>
+        /// <param name="minVersion">Min version.</param>
+        /// <param name="maxVersion">Max version.</param>
         public Source(string name, Version minVersion = null, Version maxVersion = null)
         {
             this.Name = name;
