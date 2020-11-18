@@ -134,9 +134,9 @@ log file would be generated. Otherwise, it will create or overwrite the log
 file as described above.
 
 Note that the `FileSize` has to be between 1 MiB and 128 MiB (inclusive), or it
-will be rounded to the closest upper or lower limit.  When the `LogDirectory` or
+will be rounded to the closest upper or lower limit. When the `LogDirectory` or
 `FileSize` is found to be changed, the SDK will create or overwrite a file with
-new logs according to the new configuration.  The configuration file has to be
+new logs according to the new configuration. The configuration file has to be
 no more than 4 KiB. In case the file is larger than 4 KiB, only the first 4 KiB
 of content will be read.
 
