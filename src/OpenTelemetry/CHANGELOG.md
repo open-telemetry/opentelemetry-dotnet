@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* The following extension methods on `ResourceBuilder` has been moved from the
+  `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
+  `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
+  `AddTelemetrySdk`.
+  ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

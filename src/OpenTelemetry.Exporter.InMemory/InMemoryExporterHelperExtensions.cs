@@ -18,9 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Trace;
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Trace
 {
     public static class InMemoryExporterHelperExtensions
     {

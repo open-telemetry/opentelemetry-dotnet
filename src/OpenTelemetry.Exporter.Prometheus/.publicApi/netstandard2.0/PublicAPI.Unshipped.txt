@@ -13,9 +13,9 @@ OpenTelemetry.Exporter.Prometheus.PrometheusExporterOptions
 OpenTelemetry.Exporter.Prometheus.PrometheusExporterOptions.PrometheusExporterOptions() -> void
 OpenTelemetry.Exporter.Prometheus.PrometheusExporterOptions.Url.get -> string
 OpenTelemetry.Exporter.Prometheus.PrometheusExporterOptions.Url.set -> void
-OpenTelemetry.Exporter.Prometheus.PrometheusRouteBuilderExtensions
+Microsoft.AspNetCore.Builder.PrometheusRouteBuilderExtensions
 override OpenTelemetry.Exporter.Prometheus.PrometheusExporter.ExportAsync(System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<OpenTelemetry.Metrics.Export.MetricExporter.ExportResult>
 static OpenTelemetry.Exporter.Prometheus.PrometheusExporterExtensions.GetMetricsCollection(this OpenTelemetry.Exporter.Prometheus.PrometheusExporter exporter) -> string
 static OpenTelemetry.Exporter.Prometheus.PrometheusExporterExtensions.WriteMetricsCollection(this OpenTelemetry.Exporter.Prometheus.PrometheusExporter exporter, System.IO.StreamWriter writer) -> void
-static OpenTelemetry.Exporter.Prometheus.PrometheusRouteBuilderExtensions.UsePrometheus(this Microsoft.AspNetCore.Builder.IApplicationBuilder app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
+static Microsoft.AspNetCore.Builder.PrometheusRouteBuilderExtensions.UsePrometheus(this Microsoft.AspNetCore.Builder.IApplicationBuilder app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
 virtual OpenTelemetry.Exporter.Prometheus.PrometheusExporterMetricsHttpServer.Dispose(bool disposing) -> void

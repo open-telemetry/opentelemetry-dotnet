@@ -43,8 +43,19 @@ namespace OpenTelemetry.Trace
             configure?.Invoke(exporterOptions);
             var jaegerExporter = new JaegerExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on JaegerExporterOptions
-            return builder.AddProcessor(new BatchExportProcessor<Activity>(jaegerExporter));
+            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            {
+                return builder.AddProcessor(new SimpleExportProcessor<Activity>(jaegerExporter));
+            }
+            else
+            {
+                return builder.AddProcessor(new BatchExportProcessor<Activity>(
+                    jaegerExporter,
+                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+            }
         }
     }
 }

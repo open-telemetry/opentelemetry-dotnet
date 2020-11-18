@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* In `JaegerExporterOptions`: Exporter options now include a switch for
+  Batch vs Simple exporter, and settings for batch exporting properties.
+
 * Jaeger will now set the `error` tag when `otel.status_code` is set to `Error`.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
 
