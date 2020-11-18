@@ -180,8 +180,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 if (activityToEnrich.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activityToEnrich.SetStatus(status);
+                    activityToEnrich.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 
                 var routeData = context.Request.RequestContext.RouteData;

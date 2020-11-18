@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -34,10 +33,12 @@ namespace OpenTelemetry.Trace
         /// This extension provides a workaround to retrieve Status from special tags with key name otel.status_code and otel.status_description.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
-        /// <returns>Activity execution status.</returns>
+        /// <param name="statusCode"><see cref="StatusCode"/>.</param>
+        /// <param name="statusDescription">Status description.</param>
+        /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static Status GetStatusHelper(this Activity activity)
+        public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string statusDescription)
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
@@ -45,31 +46,16 @@ namespace OpenTelemetry.Trace
 
             ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
 
-            if (!state.IsValid)
+            if (!state.StatusCode.HasValue)
             {
-                return default;
+                statusCode = default;
+                statusDescription = null;
+                return false;
             }
 
-            Status status;
-            if (state.StatusCode == StatusCode.Error)
-            {
-                status = Status.Error;
-            }
-            else if (state.StatusCode == StatusCode.Ok)
-            {
-                status = Status.Ok;
-            }
-            else
-            {
-                status = Status.Unset;
-            }
-
-            if (!string.IsNullOrEmpty(state.StatusDescription))
-            {
-                return status.WithDescription(state.StatusDescription);
-            }
-
-            return status;
+            statusCode = state.StatusCode.Value;
+            statusDescription = state.StatusDescription;
+            return true;
         }
 
         /// <summary>
@@ -193,9 +179,7 @@ namespace OpenTelemetry.Trace
 
         private struct ActivityStatusTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
         {
-            public bool IsValid;
-
-            public StatusCode StatusCode;
+            public StatusCode? StatusCode;
 
             public string StatusDescription;
 
@@ -204,15 +188,14 @@ namespace OpenTelemetry.Trace
                 switch (item.Key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = (StatusCode)item.Value;
-                        this.IsValid = this.StatusCode == StatusCode.Error || this.StatusCode == StatusCode.Ok || this.StatusCode == StatusCode.Unset;
+                        this.StatusCode = StatusHelper.GetStatusCodeForStringName(item.Value as string);
                         break;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = item.Value as string;
                         break;
                 }
 
-                return this.IsValid || this.StatusDescription == null;
+                return !this.StatusCode.HasValue || this.StatusDescription == null;
             }
         }
 

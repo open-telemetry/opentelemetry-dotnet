@@ -171,13 +171,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     if (activity.GetStatus().StatusCode == StatusCode.Unset)
                     {
-                        SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                     }
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 #endif
 
@@ -302,13 +302,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             return builder.ToString();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetStatusFromHttpStatusCode(Activity activity, int statusCode)
-        {
-            var status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            activity.SetStatus(status);
         }
 
 #if NETSTANDARD2_1

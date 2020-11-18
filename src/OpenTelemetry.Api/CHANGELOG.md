@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* In order to align with the
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
+  the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`
+  extension) will now be set as the `Unset`, `Error`, or `Ok` string
+  representation instead of the `0`, `1`, or `2` integer representation.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
