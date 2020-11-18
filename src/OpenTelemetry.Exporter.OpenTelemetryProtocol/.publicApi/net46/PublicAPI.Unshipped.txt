@@ -8,7 +8,5 @@ OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Endpoint.set ->
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.get -> Grpc.Core.Metadata
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.OtlpExporterOptions() -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ServiceName.get -> string
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ServiceName.set -> void
 OpenTelemetry.Trace.OtlpExporterHelperExtensions
 static OpenTelemetry.Trace.OtlpExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Resources;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
@@ -58,9 +59,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData(true, null)]
-        [InlineData(false, "test-service")]
-        public void ToOtlpResourceSpansTest(bool addResource, string optionsServiceName)
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ToOtlpResourceSpansTest(bool addResource)
         {
             var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
             var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
@@ -71,21 +72,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
 
             using var exporter = new OtlpExporter(
-                new OtlpExporterOptions
-                {
-                    ServiceName = optionsServiceName,
-                },
+                new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
 
             if (addResource)
             {
                 exporter.SetResource(
-                    new Resources.Resource(
+                    ResourceBuilder.CreateEmpty().AddAttributes(
                         new List<KeyValuePair<string, object>>
                         {
                             new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceName, "service-name"),
                             new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                        }));
+                        }).Build());
             }
             else
             {
@@ -129,7 +127,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == optionsServiceName);
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "OpenTelemetry Exporter");
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)

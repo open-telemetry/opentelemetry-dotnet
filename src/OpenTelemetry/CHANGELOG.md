@@ -29,6 +29,9 @@
   * `telemetry.sdk.name` = `opentelemetry`
   * `telemetry.sdk.language` = `dotnet`
   * `telemetry.sdk.version` = [SDK version]
+* `Resource` constructor marked as internal, as `ResourceBuilder` is
+  the recommended API to build resources.
+  ([#1566](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1566))
 
 ## 0.8.0-beta.1
 
