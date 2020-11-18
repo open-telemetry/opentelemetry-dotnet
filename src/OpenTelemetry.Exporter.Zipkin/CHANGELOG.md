@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Added ExportProcessorType to exporter options
   ([#1504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1504))
 * Zipkin tags used for InstrumentationLibrary changed from library.name,

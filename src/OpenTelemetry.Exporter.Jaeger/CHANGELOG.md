@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Jaeger tags used for InstrumentationLibrary changed from library.name,
   library.version to otel.library.name, otel.library.version respectively.
   ([#1513](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1513))

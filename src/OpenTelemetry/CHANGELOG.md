@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Removed `GetResource` and `SetResource` `Activity` extension methods. Added
   `GetResource` extension method on `BaseProvider`
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
