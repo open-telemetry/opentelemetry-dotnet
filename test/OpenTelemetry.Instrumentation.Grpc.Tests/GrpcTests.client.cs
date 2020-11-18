@@ -214,7 +214,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             using var source = new ActivitySource("test-source");
 
             using (Sdk.CreateTracerProviderBuilder()
-                .AddSource("test-source")
+                .AddSource(new Source("test-source"))
                 .AddGrpcClientInstrumentation(o =>
                 {
                     o.SuppressDownstreamInstrumentation = true;

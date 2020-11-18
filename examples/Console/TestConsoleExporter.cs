@@ -34,7 +34,7 @@ namespace Examples.Console
             // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"
             // and use a custom MyProcessor, along with Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("MyCompany.MyProduct.MyWebServer")
+                .AddSource(new Source("MyCompany.MyProduct.MyWebServer"))
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
                 .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
                 .AddConsoleExporter()

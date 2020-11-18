@@ -27,7 +27,7 @@ namespace Examples.Console
             // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddSource("MyCompany.MyProduct.MyWebServer")
+                    .AddSource(new Source("MyCompany.MyProduct.MyWebServer"))
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
                     .AddConsoleExporter()
                     .Build();

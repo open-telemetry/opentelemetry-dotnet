@@ -62,20 +62,20 @@ namespace Benchmarks.Trace
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithOneProcessor.Name)
+                .AddSource(new Source(this.sourceWithOneProcessor.Name))
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithTwoProcessors.Name)
+                .AddSource(new Source(this.sourceWithTwoProcessors.Name))
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithThreeProcessors.Name)
+                .AddSource(new Source(this.sourceWithThreeProcessors.Name))
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())

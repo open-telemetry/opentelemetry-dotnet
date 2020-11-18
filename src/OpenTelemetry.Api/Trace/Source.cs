@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -22,12 +24,14 @@ namespace OpenTelemetry.Trace
     public struct Source
     {
         public readonly string Name;
-        public readonly string Version;
+        public readonly Version MinVersion;
+        public readonly Version MaxVersion;
 
-        public Source(string name, string version)
+        public Source(string name, Version minVersion = null, Version maxVersion = null)
         {
             this.Name = name;
-            this.Version = version;
+            this.MinVersion = minVersion;
+            this.MaxVersion = maxVersion;
         }
     }
 }

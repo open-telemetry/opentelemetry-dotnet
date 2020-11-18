@@ -54,7 +54,7 @@ namespace Benchmarks.Instrumentation
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ServiceName))
-                .AddSource(SourceName)
+                .AddSource(new Source(SourceName))
                 .Build();
 
             this.url = $"http://{host}:{port}/";

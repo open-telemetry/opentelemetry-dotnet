@@ -26,7 +26,7 @@ public class Program
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("OTel.Demo")
+            .AddSource(new Source("OTel.Demo"))
             .Build();
 
         using var loggerFactory = LoggerFactory.Create(builder =>

@@ -34,7 +34,7 @@ namespace Benchmarks.Trace
         public void GlobalSetup()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("BenchMark")
+                .AddSource(new Source("BenchMark"))
                 .Build();
         }
 

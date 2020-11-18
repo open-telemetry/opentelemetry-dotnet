@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
 
             HttpWebRequestActivitySource.Options = options;
 
-            builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
+            builder.AddSource(new Source(HttpWebRequestActivitySource.ActivitySourceName));
 
             return builder;
         }

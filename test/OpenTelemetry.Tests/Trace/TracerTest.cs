@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartRootSpan_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartRootSpan(null);
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartSpan_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartSpan(null);
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartActiveSpan_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartActiveSpan(null);
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartSpan_FromParent_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartSpan_FromParentContext_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var blankContext = default(SpanContext);
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartActiveSpan_FromParent_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartActiveSpan(null, SpanKind.Client, TelemetrySpan.NoopInstance);
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartActiveSpan_FromParentContext_BadArgs_NullSpanName()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var blankContext = default(SpanContext);
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Tracer_StartActiveSpan_CreatesActiveSpan()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span1 = this.tracer.StartActiveSpan("Test");
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace.Tests
         public void GetCurrentSpanBlank()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
             Assert.False(Tracer.CurrentSpan.Context.IsValid);
         }
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Trace.Tests
         public void GetCurrentSpanBlankWontThrowOnEnd()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
             var current = Tracer.CurrentSpan;
             current.End();
@@ -215,7 +215,7 @@ namespace OpenTelemetry.Trace.Tests
         public void GetCurrentSpan()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
 
             var span = this.tracer.StartSpan("foo");
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CreateSpan_Sampled()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .Build();
             var span = this.tracer.StartSpan("foo");
             Assert.True(span.IsRecording);
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CreateSpan_NotSampled()
         {
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddSource("tracername")
+                .AddSource(new Source("tracername"))
                 .SetSampler(new AlwaysOffSampler())
                 .Build();
 

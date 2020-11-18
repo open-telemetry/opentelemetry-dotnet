@@ -135,6 +135,7 @@ namespace OpenTelemetry.Trace
                     if (source.Name.Contains('*'))
                     {
                         wildcardMode = true;
+                        break;
                     }
                 }
 
@@ -149,11 +150,11 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new Dictionary<string, Source>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var source in sources)
                     {
-                        activitySources[source.Name] = source.Version;
+                        activitySources[source.Name] = source;
                     }
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -162,14 +163,7 @@ namespace OpenTelemetry.Trace
                     {
                         if (activitySources.ContainsKey(activitySource.Name))
                         {
-                            // retrieving from dictionary to check version
-                            var version = activitySources[activitySource.Name];
-                            if (string.IsNullOrWhiteSpace(version))
-                            {
-                                return true;
-                            }
-
-                            return version.Equals(activitySource.Version, StringComparison.OrdinalIgnoreCase);
+                            return CheckVersions(activitySource.Version, activitySources[activitySource.Name]);
                         }
 
                         return false;
@@ -182,6 +176,34 @@ namespace OpenTelemetry.Trace
         }
 
         internal Resource Resource { get; }
+
+        internal static bool CheckVersions(string activitySourceVersion, Source source)
+        {
+            if (string.IsNullOrEmpty(activitySourceVersion))
+            {
+                return true;
+            }
+
+            var currentVersion = new Version(activitySourceVersion);
+
+            if (source.MinVersion == null && source.MaxVersion == null)
+            {
+                return true;
+            }
+
+            bool validation = false;
+            if (source.MinVersion != null)
+            {
+                validation = source.MinVersion <= currentVersion;
+            }
+
+            if (source.MaxVersion != null)
+            {
+                validation = source.MaxVersion >= currentVersion;
+            }
+
+            return validation;
+        }
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
