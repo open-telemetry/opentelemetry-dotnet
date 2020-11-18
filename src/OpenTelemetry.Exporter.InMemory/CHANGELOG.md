@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Updated AddInMemoryExporter extension methods for TracerProviderBuilder and
   OpenTelemetryLoggerOptions
   ([#1514](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1514))

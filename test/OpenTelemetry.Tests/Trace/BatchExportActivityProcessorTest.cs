@@ -53,7 +53,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 1,
                 scheduledDelayMilliseconds: 100_000);
 
-            processor.OnEnd(new Activity("start"));
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
 
             for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
             {
@@ -90,8 +93,14 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnEnd(new Activity("start1"));
-            processor.OnEnd(new Activity("start2"));
+            var activity1 = new Activity("start1");
+            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            var activity2 = new Activity("start2");
+            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity1);
+            processor.OnEnd(activity2);
 
             Assert.Equal(0, processor.ProcessedCount);
 
@@ -129,7 +138,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnEnd(new Activity("start"));
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
             processor.Shutdown(timeout);
 
             if (timeout == 0)
@@ -143,6 +155,26 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);
             Assert.Equal(0, processor.DroppedCount);
+        }
+
+        [Fact]
+        public void CheckExportForRecordingButNotSampledActivity()
+        {
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
+            using var processor = new BatchExportProcessor<Activity>(
+                exporter,
+                maxQueueSize: 1,
+                maxExportBatchSize: 1);
+
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            processor.OnEnd(activity);
+            processor.Shutdown();
+
+            Assert.Empty(exportedItems);
+            Assert.Equal(0, processor.ProcessedCount);
         }
     }
 }

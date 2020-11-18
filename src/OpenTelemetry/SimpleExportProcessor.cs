@@ -38,7 +38,7 @@ namespace OpenTelemetry
         }
 
         /// <inheritdoc />
-        public override void OnEnd(T data)
+        public override void OnExport(T data)
         {
             lock (this.syncObject)
             {
