@@ -206,6 +206,30 @@ class MyProcessor : BaseProcessor<Activity>
 
 A demo processor is shown [here](./MyProcessor.cs).
 
+### Filtering Processor
+
+A common use case of writing custom processor is to filter Activities from being
+exported. Such a "FilteringProcessor" can be written as a wrapper around an
+underlying processor. An example "FilteringProcessor" is shown
+[here](./MyFilteringProcessor.cs).
+
+When using such a filtering processor, instead of using extension method to
+register the exporter, they must be registered manually as shown below:
+
+```csharp
+    using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        .SetSampler(new MySampler())
+        .AddSource("OTel.Demo")
+        .AddProcessor(new MyFilteringProcessor(
+            new SimpleExportProcessor<Activity>(new MyExporter("ExporterX")),
+            (act) => true))
+        .Build();
+```
+
+Most [instrumentation libraries](#instrumentation-library) shipped from this
+repo provides a built-in `Filter` option to achieve the same effect. In such
+cases, it is recommended to use that option as it offers higher performance.
+
 ## Sampler
 
 OpenTelemetry .NET SDK has provided the following built-in samplers:
