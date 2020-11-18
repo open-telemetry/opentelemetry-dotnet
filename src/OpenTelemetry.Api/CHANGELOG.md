@@ -7,8 +7,8 @@
   public. GetTagValue, EnumerateTags, EnumerateLinks, EnumerateEvents. See
   [#1544](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1544)
   for full changes.
-* Changed SpanHelper class and ResolveSpanStatusForHttpStatusCode method from
-  public to internal. Moved SpanHelper.cs to OpenTelemetry.Api\Internal
+* Changed SpanHelper class from public to internal. Moved SpanHelper.cs to
+  OpenTelemetry.Api\Internal
   ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1
