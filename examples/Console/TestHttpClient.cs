@@ -35,7 +35,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("http-service-example"))
-                .AddSource(new Source("http-client-test"))
+                .AddSource("http-client-test")
                 .AddConsoleExporter()
                 .Build();
 

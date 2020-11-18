@@ -34,7 +34,7 @@ namespace Examples.Console
             httpServer.Start();
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                    .AddSource(new Source("zpages-test"))
+                    .AddSource("zpages-test")
                     .AddZPagesExporter(o =>
                     {
                         o.Url = zpagesOptions.Url;

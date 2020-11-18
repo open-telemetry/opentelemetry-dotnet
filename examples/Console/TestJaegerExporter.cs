@@ -37,7 +37,7 @@ namespace Examples.Console
             // and use the Jaeger exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("jaeger-test"))
-                    .AddSource(new Source("Samples.SampleClient"), new Source("Samples.SampleServer"))
+                    .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .AddJaegerExporter(o =>
                     {
                         o.AgentHost = host;

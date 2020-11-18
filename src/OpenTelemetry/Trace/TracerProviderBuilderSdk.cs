@@ -65,6 +65,33 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds given activitysource names to the list of subscribed sources.
         /// </summary>
+        /// <param name="names">Activity source names.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder" /> for chaining.</returns>
+        public override TracerProviderBuilder AddSource(params string[] names)
+        {
+            if (names == null)
+            {
+                throw new ArgumentNullException(nameof(names));
+            }
+
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ArgumentException($"{nameof(names)} contains null or whitespace name.");
+                }
+
+                // TODO: We need to fix the listening model.
+                // Today it ignores version.
+                this.sources.Add(new Source(name));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds given activitysource names to the list of subscribed sources.
+        /// </summary>
         /// <param name="sources">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public override TracerProviderBuilder AddSource(params Source[] sources)

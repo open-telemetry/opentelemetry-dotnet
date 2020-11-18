@@ -3,6 +3,7 @@ abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> Syste
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params OpenTelemetry.Trace.Source[] sources) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.ActivityContextExtensions
 OpenTelemetry.Baggage
 OpenTelemetry.Baggage.Baggage() -> void
