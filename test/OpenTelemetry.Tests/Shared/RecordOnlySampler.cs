@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="RecordOnlySampler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Tests
 {
-    public class InMemoryExporterOptions
+    internal class RecordOnlySampler : TestSampler
     {
-        public ICollection<object> ExportedItems { get; set; }
+        public override SamplingResult ShouldSample(in SamplingParameters param)
+        {
+            return new SamplingResult(SamplingDecision.RecordOnly);
+        }
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="TracerProviderBuilderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,49 +24,41 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Build TracerProvider with Resource, Sampler, Processors and Instrumentation.
     /// </summary>
-    public class TracerProviderBuilder
+    internal class TracerProviderBuilderSdk : TracerProviderBuilder
     {
         private readonly List<DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories = new List<DiagnosticSourceInstrumentationFactory>();
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private Resource resource = Resource.Empty.GetResourceWithDefaultAttributes();
+        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
-        internal TracerProviderBuilder()
+        internal TracerProviderBuilderSdk()
         {
         }
 
         /// <summary>
-        /// Sets sampler.
+        /// Adds an instrumentation to the provider.
         /// </summary>
-        /// <param name="sampler">Sampler instance.</param>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder SetSampler(Sampler sampler)
+        public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
+            Func<TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
         {
-            if (sampler == null)
+            if (instrumentationFactory == null)
             {
-                throw new ArgumentNullException(nameof(sampler));
+                throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
-            this.sampler = sampler;
-            return this;
-        }
+            this.instrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
 
-        /// <summary>
-        /// Sets the <see cref="Resource"/> describing the app associated with all traces. Overwrites currently set resource.
-        /// </summary>
-        /// <param name="resource">Resource to be associate with all traces.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder SetResource(Resource resource)
-        {
-            if (resource == null)
-            {
-                throw new ArgumentNullException(nameof(resource));
-            }
-
-            this.resource = resource;
             return this;
         }
 
@@ -74,7 +67,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="names">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddSource(params string[] names)
+        public override TracerProviderBuilder AddSource(params string[] names)
         {
             if (names == null)
             {
@@ -97,11 +90,34 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Sets sampler.
+        /// </summary>
+        /// <param name="sampler">Sampler instance.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder SetSampler(Sampler sampler)
+        {
+            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// </summary>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
+        {
+            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            return this;
+        }
+
+        /// <summary>
         /// Adds processor to the provider.
         /// </summary>
         /// <param name="processor">Activity processor to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
+        internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
@@ -113,33 +129,15 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        /// <summary>
-        /// Adds an instrumentation to the provider.
-        /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-            Func<TInstrumentation> instrumentationFactory)
-            where TInstrumentation : class
+        internal TracerProvider Build()
         {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
-
-            this.instrumentationFactories.Add(
-                new InstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
-        }
-
-        public TracerProvider Build()
-        {
-            return new TracerProviderSdk(this.resource, this.sources, this.diagnosticSourceInstrumentationFactories, this.instrumentationFactories, this.sampler, this.processors);
+            return new TracerProviderSdk(
+                this.resourceBuilder.Build(),
+                this.sources,
+                this.diagnosticSourceInstrumentationFactories,
+                this.instrumentationFactories,
+                this.sampler,
+                this.processors);
         }
 
         /// <summary>

@@ -255,6 +255,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             if (jaegerTag.VStr != null)
             {
                 PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VStr);
+
+                if (key == SpanAttributeConstants.StatusCodeKey && jaegerTag.VStr == "Error")
+                {
+                    PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag("error", JaegerTagType.BOOL, vBool: true));
+                }
             }
             else if (jaegerTag.VLong.HasValue)
             {

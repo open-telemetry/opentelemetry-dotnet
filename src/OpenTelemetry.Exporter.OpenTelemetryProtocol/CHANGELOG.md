@@ -2,9 +2,19 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Code generated from proto files has been marked internal. This includes
   everything under the `OpenTelemetry.Proto` namespace.
   ([#1524](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1524))
+* The `OtlpExporter` class has been made internal.
+  ([#1528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1528))
+* Removed `ServiceName` from options available on the `AddOtlpExporter`
+  extension. It is not required by the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/protocol/exporter.md#configuration-options).
+  ([#1557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1557))
 
 ## 0.8.0-beta.1
 

@@ -26,8 +26,10 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    public class JaegerExporter : BaseExporter<Activity>
+    internal class JaegerExporter : BaseExporter<Activity>
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
         private readonly TTransport clientTransport;
@@ -52,7 +54,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
 
-            this.Process = new Process(options.ServiceName, options.ProcessTags);
+            this.Process = new Process(DefaultServiceName, options.ProcessTags);
         }
 
         internal Process Process { get; set; }
@@ -105,10 +107,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     switch (key)
                     {
-                        case Resource.ServiceNameKey:
+                        case ResourceSemanticConventions.AttributeServiceName:
                             serviceName = strVal;
                             continue;
-                        case Resource.ServiceNamespaceKey:
+                        case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
                             continue;
                     }
@@ -131,7 +133,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (string.IsNullOrEmpty(process.ServiceName))
             {
-                process.ServiceName = JaegerExporterOptions.DefaultServiceName;
+                process.ServiceName = DefaultServiceName;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();

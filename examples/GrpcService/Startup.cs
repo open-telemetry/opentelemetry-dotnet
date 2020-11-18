@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.GrpcService
@@ -44,10 +46,10 @@ namespace Examples.GrpcService
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
                         {
-                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
                             jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
                             jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
                         }));

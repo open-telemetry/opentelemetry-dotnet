@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -36,6 +37,7 @@ namespace OpenTelemetry
 
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
+            SelfDiagnostics.EnsureInitialized();
         }
 
         /// <summary>
@@ -68,7 +70,7 @@ namespace OpenTelemetry
         /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
-            return new TracerProviderBuilder();
+            return new TracerProviderBuilderSdk();
         }
     }
 }
