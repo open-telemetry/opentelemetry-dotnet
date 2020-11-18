@@ -34,7 +34,7 @@ namespace Benchmarks.Trace
         public void GlobalSetup()
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(new Source("BenchMark"))
+                .AddSource(new OpenTelemetry.Trace.TraceSource("BenchMark"))
                 .Build();
         }
 

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk(
             Resource resource,
-            IEnumerable<Source> sources,
+            IEnumerable<TraceSource> sources,
             IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, Source>(StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new Dictionary<string, TraceSource>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var source in sources)
                     {
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Trace
 
         internal Resource Resource { get; }
 
-        internal static bool CheckVersions(string activitySourceVersion, Source source)
+        internal static bool CheckVersions(string activitySourceVersion, TraceSource source)
         {
             if (string.IsNullOrEmpty(activitySourceVersion))
             {

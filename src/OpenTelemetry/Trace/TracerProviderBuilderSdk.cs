@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
 
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<Source> sources = new List<Source>();
+        private readonly List<TraceSource> sources = new List<TraceSource>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
@@ -81,9 +81,7 @@ namespace OpenTelemetry.Trace
                     throw new ArgumentException($"{nameof(names)} contains null or whitespace name.");
                 }
 
-                // TODO: We need to fix the listening model.
-                // Today it ignores version.
-                this.sources.Add(new Source(name));
+                this.sources.Add(new TraceSource(name));
             }
 
             return this;
@@ -94,7 +92,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="sources">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public override TracerProviderBuilder AddSource(params Source[] sources)
+        public override TracerProviderBuilder AddSource(params TraceSource[] sources)
         {
             if (sources == null)
             {

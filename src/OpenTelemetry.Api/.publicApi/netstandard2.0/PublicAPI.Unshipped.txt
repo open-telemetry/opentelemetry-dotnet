@@ -1,7 +1,7 @@
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
-abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params OpenTelemetry.Trace.Source[] sources) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params OpenTelemetry.Trace.TraceSource[] sources) -> OpenTelemetry.Trace.TracerProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.ActivityContextExtensions
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
@@ -102,9 +102,6 @@ OpenTelemetry.Trace.Link.Equals(OpenTelemetry.Trace.Link other) -> bool
 OpenTelemetry.Trace.Link.Link() -> void
 OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext) -> void
 OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes attributes) -> void
-OpenTelemetry.Trace.Source
-OpenTelemetry.Trace.Source.Source() -> void
-OpenTelemetry.Trace.Source.Source(string name, System.Version minVersion = null, System.Version maxVersion = null) -> void
 OpenTelemetry.Trace.SpanAttributes
 OpenTelemetry.Trace.SpanAttributes.Add(string key, bool value) -> void
 OpenTelemetry.Trace.SpanAttributes.Add(string key, bool[] values) -> void
@@ -201,6 +198,9 @@ abstract OpenTelemetry.Metrics.Meter.CreateInt64Counter(string name, bool monoto
 abstract OpenTelemetry.Metrics.Meter.CreateInt64Measure(string name, bool absolute = true) -> OpenTelemetry.Metrics.MeasureMetric<long>
 abstract OpenTelemetry.Metrics.Meter.CreateInt64Observer(string name, System.Action<OpenTelemetry.Metrics.Int64ObserverMetric> callback, bool absolute = true) -> OpenTelemetry.Metrics.Int64ObserverMetric
 abstract OpenTelemetry.Metrics.Meter.GetLabelSet(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.LabelSet
+OpenTelemetry.Trace.TraceSource
+OpenTelemetry.Trace.TraceSource.Name.get -> string
+OpenTelemetry.Trace.TraceSource.TraceSource(string name, string minVersion = null, string maxVersion = null) -> void
 override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
 OpenTelemetry.Trace.TracerProviderBuilder
@@ -248,9 +248,8 @@ override OpenTelemetry.Trace.SpanContext.GetHashCode() -> int
 override OpenTelemetry.Trace.Status.Equals(object obj) -> bool
 override OpenTelemetry.Trace.Status.GetHashCode() -> int
 override OpenTelemetry.Trace.Status.ToString() -> string
-readonly OpenTelemetry.Trace.Source.MaxVersion -> System.Version
-readonly OpenTelemetry.Trace.Source.MinVersion -> System.Version
-readonly OpenTelemetry.Trace.Source.Name -> string
+readonly OpenTelemetry.Trace.TraceSource.MaxVersion -> System.Version
+readonly OpenTelemetry.Trace.TraceSource.MinVersion -> System.Version
 static OpenTelemetry.ActivityContextExtensions.IsValid(this System.Diagnostics.ActivityContext ctx) -> bool
 static OpenTelemetry.Baggage.ClearBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.Create(System.Collections.Generic.Dictionary<string, string> baggageItems = null) -> OpenTelemetry.Baggage

@@ -34,12 +34,12 @@ namespace Benchmarks.Trace
         public void GlobalSetup()
         {
             this.tracerProviderAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
-                .AddSource(new Source("AlwaysOnSample"))
+                .AddSource(new TraceSource("AlwaysOnSample"))
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
             this.tracerProviderAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
-                .AddSource(new Source("AlwaysOffSample"))
+                .AddSource(new TraceSource("AlwaysOffSample"))
                 .SetSampler(new AlwaysOffSampler())
                 .Build();
 

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Tests
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(new Source(ActivitySourceName))
+                .AddSource(new TraceSource(ActivitySourceName))
                 .SetSampler(testSampler)
                 .Build();
 
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Trace.Tests
 
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
-                .AddSource(new Source(ActivitySourceName))
+                .AddSource(new TraceSource(ActivitySourceName))
                 .SetSampler(testSampler)
                 .Build();
 
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace.Tests
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
-                    .AddSource(new Source(ActivitySourceName))
+                    .AddSource(new TraceSource(ActivitySourceName))
                     .SetSampler(testSampler)
                     .Build();
 
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Trace.Tests
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
-                    .AddSource(new Source(ActivitySourceName))
+                    .AddSource(new TraceSource(ActivitySourceName))
                     .SetSampler(testSampler)
                     .Build();
 
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddSource(new Source("random"))
+                        .AddSource(new TraceSource("random"))
                         .AddProcessor(testActivityProcessor)
                         .SetSampler(testSampler)
                         .Build();
@@ -393,19 +393,7 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData("1.0.0", "", "0.0.1", false)]
         public void TracerProviderSdkCheckVersions(string currentVersion, string minver, string maxver, bool expect)
         {
-            Version minVersion = null, maxVersion = null;
-
-            if (!string.IsNullOrEmpty(minver))
-            {
-                minVersion = new Version(minver);
-            }
-
-            if (!string.IsNullOrEmpty(maxver))
-            {
-                maxVersion = new Version(maxver);
-            }
-
-            var result = TracerProviderSdk.CheckVersions(currentVersion, new Source("Test", minVersion, maxVersion));
+            var result = TracerProviderSdk.CheckVersions(currentVersion, new TraceSource("Test", minver, maxver));
             Assert.Equal(expect, result);
         }
 

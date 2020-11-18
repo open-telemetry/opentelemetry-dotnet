@@ -48,6 +48,6 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="sources">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public abstract TracerProviderBuilder AddSource(params Source[] sources);
+        public abstract TracerProviderBuilder AddSource(params TraceSource[] sources);
     }
 }

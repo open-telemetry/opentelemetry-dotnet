@@ -1,4 +1,4 @@
-// <copyright file="Source.cs" company="OpenTelemetry Authors">
+// <copyright file="TraceSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,8 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Controls the source name and version that will be analyzed.
     /// </summary>
-    public struct Source
+    public class TraceSource
     {
-        /// <summary>
-        /// Source name.
-        /// </summary>
-        public readonly string Name;
-
         /// <summary>
         /// Min version of the assembly.
         /// </summary>
@@ -39,16 +34,41 @@ namespace OpenTelemetry.Trace
         public readonly Version MaxVersion;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Source"/> struct.
+        /// Initializes a new instance of the <see cref="TraceSource"/> class.
         /// </summary>
         /// <param name="name">Name of the source.</param>
         /// <param name="minVersion">Min version.</param>
         /// <param name="maxVersion">Max version.</param>
-        public Source(string name, Version minVersion = null, Version maxVersion = null)
+        public TraceSource(string name, string minVersion = null, string maxVersion = null)
         {
             this.Name = name;
-            this.MinVersion = minVersion;
-            this.MaxVersion = maxVersion;
+            this.MinVersion = null;
+            this.MaxVersion = null;
+
+            if (!string.IsNullOrEmpty(minVersion))
+            {
+                if (!Version.TryParse(minVersion, out Version v))
+                {
+                    throw new ArgumentException($"{nameof(minVersion)} is invalid");
+                }
+
+                this.MinVersion = v;
+            }
+
+            if (!string.IsNullOrEmpty(maxVersion))
+            {
+                if (!Version.TryParse(maxVersion, out Version v))
+                {
+                    throw new ArgumentException($"{nameof(maxVersion)} is invalid");
+                }
+
+                this.MaxVersion = v;
+            }
         }
+
+        /// <summary>
+        /// Gets source name.
+        /// </summary>
+        public string Name { get; }
     }
 }

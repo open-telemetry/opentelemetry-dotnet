@@ -35,20 +35,20 @@ namespace Benchmarks.Trace
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(new Source("Benchmark.OneProcessor"))
+                .AddSource(new OpenTelemetry.Trace.TraceSource("Benchmark.OneProcessor"))
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(new Source("Benchmark.TwoProcessors"))
+                .AddSource(new OpenTelemetry.Trace.TraceSource("Benchmark.TwoProcessors"))
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(new Source("Benchmark.ThreeProcessors"))
+                .AddSource(new OpenTelemetry.Trace.TraceSource("Benchmark.ThreeProcessors"))
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
