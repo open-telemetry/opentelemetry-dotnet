@@ -2,6 +2,7 @@ OpenTelemetry.Shims.OpenTracing.ScopeManagerShim
 OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.Activate(OpenTracing.ISpan span, bool finishSpanOnDispose) -> OpenTracing.IScope
 OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.Active.get -> OpenTracing.IScope
 OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.ScopeManagerShim(OpenTelemetry.Trace.Tracer tracer) -> void
+OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.SpanScopeTableCount.get -> int
 OpenTelemetry.Shims.OpenTracing.SpanBuilderShim
 OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.AddReference(string referenceType, OpenTracing.ISpanContext referencedContext) -> OpenTracing.ISpanBuilder
 OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.AsChildOf(OpenTracing.ISpan parent) -> OpenTracing.ISpanBuilder
