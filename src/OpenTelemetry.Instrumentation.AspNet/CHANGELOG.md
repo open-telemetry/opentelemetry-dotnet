@@ -5,8 +5,6 @@
 * AspNetInstrumentation sets ActivitySource to activities created outside
   ActivitySource.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
-* Added SpanHelper class as a link to the the project.
-  ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1
 
