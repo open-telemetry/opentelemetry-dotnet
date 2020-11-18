@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -434,6 +435,37 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "nullTag");
         }
 
+        [Theory]
+        [InlineData(StatusCode.Unset, false)]
+        [InlineData(StatusCode.Ok, false)]
+        [InlineData(StatusCode.Error, true)]
+        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode statusCode, bool hasErrorFlag)
+        {
+            var status = statusCode switch
+            {
+                StatusCode.Unset => Status.Unset,
+                StatusCode.Ok => Status.Ok,
+                StatusCode.Error => Status.Error,
+                _ => throw new InvalidOperationException(),
+            };
+
+            // Arrange
+            var activity = CreateTestActivity(status: status);
+
+            // Act
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert
+            if (hasErrorFlag)
+            {
+                Assert.Contains(jaegerSpan.Tags, t => t.Key == "error" && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+            }
+            else
+            {
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "error");
+            }
+        }
+
         internal static Activity CreateTestActivity(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
@@ -441,7 +473,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             bool addLinks = true,
             Resource resource = null,
             ActivityKind kind = ActivityKind.Client,
-            bool isRootSpan = false)
+            bool isRootSpan = false,
+            Status? status = null)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -521,6 +554,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 {
                     activity.AddEvent(evnt);
                 }
+            }
+
+            if (status.HasValue)
+            {
+                activity.SetStatus(status.Value);
             }
 
             activity.SetEndTime(endTimestamp);

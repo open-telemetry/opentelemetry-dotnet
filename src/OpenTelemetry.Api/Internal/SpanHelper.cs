@@ -26,17 +26,21 @@ namespace OpenTelemetry.Trace
         /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md#status.
         /// </summary>
         /// <param name="httpStatusCode">Http status code.</param>
+        /// <param name="httpStatusDescription">Http status description.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Http status code.</returns>
-        public static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
+        public static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode, string httpStatusDescription = null)
         {
-            var status = Status.Error;
-
             if (httpStatusCode >= 100 && httpStatusCode <= 399)
             {
-                status = Status.Unset;
+                return Status.Unset;
             }
 
-            return status;
+            if (!string.IsNullOrEmpty(httpStatusDescription))
+            {
+                return Status.Error.WithDescription(httpStatusDescription);
+            }
+
+            return Status.Error;
         }
     }
 }

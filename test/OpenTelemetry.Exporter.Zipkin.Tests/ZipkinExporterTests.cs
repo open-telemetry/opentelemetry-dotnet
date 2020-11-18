@@ -204,7 +204,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
            bool addEvents = true,
            bool addLinks = true,
            Resource resource = null,
-           ActivityKind kind = ActivityKind.Client)
+           ActivityKind kind = ActivityKind.Client,
+           Status? status = null)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -284,6 +285,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 {
                     activity.AddEvent(evnt);
                 }
+            }
+
+            if (status.HasValue)
+            {
+                activity.SetStatus(status.Value);
             }
 
             activity.SetEndTime(endTimestamp);
