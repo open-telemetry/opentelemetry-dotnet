@@ -33,7 +33,7 @@ jobs:
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore -f net5.0
 
     - name: dotnet test
       run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true -f net5.0
