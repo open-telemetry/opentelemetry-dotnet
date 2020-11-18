@@ -184,7 +184,10 @@ namespace OpenTelemetry.Trace
                 return true;
             }
 
-            var currentVersion = new Version(activitySourceVersion);
+            if (!Version.TryParse(activitySourceVersion, out Version currentVersion))
+            {
+                return true;
+            }
 
             if (source.MinVersion == null && source.MaxVersion == null)
             {
