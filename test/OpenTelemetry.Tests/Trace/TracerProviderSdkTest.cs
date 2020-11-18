@@ -386,6 +386,8 @@ namespace OpenTelemetry.Trace.Tests
         [Theory]
         [InlineData(null, null, null, true)]
         [InlineData("1.0.0", "0.0.1", "2.0.0", true)]
+        [InlineData("1.0.0", null, "2.0.0", true)]
+        [InlineData("1.0.0", "0.0.1", null, true)]
         [InlineData("3.0.0", "0.0.1", "2.0.0", false)]
         [InlineData("1.0.0", "2.0.0", "", false)]
         [InlineData("1.0.0", "", "0.0.1", false)]
