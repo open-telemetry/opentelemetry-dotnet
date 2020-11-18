@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* `otel.status_description` tag will no longer be set to the http status
+  description/reason phrase for outgoing http spans.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
