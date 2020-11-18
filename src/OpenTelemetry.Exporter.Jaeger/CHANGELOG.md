@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 * In `JaegerExporterOptions`: Exporter options now include a switch for
   Batch vs Simple exporter, and settings for batch exporting properties.
 
