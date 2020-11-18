@@ -88,11 +88,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             ValidateHttpWebRequestActivity(activity);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<int, string>()
+            var d = new Dictionary<string, string>()
             {
-                { (int)StatusCode.Ok, "OK" },
-                { (int)StatusCode.Error, "ERROR" },
-                { (int)StatusCode.Unset, "UNSET" },
+                { "Ok", "OK" },
+                { "Error", "ERROR" },
+                { "Unset", "UNSET" },
             };
 
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        Assert.Equal(tc.SpanStatus, d[int.Parse(tagValue)]);
+                        Assert.Equal(tc.SpanStatus, d[tagValue]);
                         continue;
                     }
 

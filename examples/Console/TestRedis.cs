@@ -95,9 +95,7 @@ namespace Examples.Console
                 }
                 catch (ArgumentOutOfRangeException e)
                 {
-                    // Set status upon error
-                    activity.SetTag(SpanAttributeConstants.StatusCodeKey, (int)Status.Error.StatusCode);
-                    activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, e.ToString());
+                    activity.SetStatus(Status.Error.WithDescription(e.ToString()));
                 }
 
                 // Annotate our activity to capture metadata about our operation

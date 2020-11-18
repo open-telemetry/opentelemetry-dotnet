@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Zipkin will now set the `error` tag when `otel.status_code` is set to `Error`.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Added ExportProcessorType to exporter options
   ([#1504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1504))
 * Zipkin tags used for InstrumentationLibrary changed from library.name,
