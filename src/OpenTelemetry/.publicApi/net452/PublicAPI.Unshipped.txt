@@ -180,7 +180,7 @@ abstract OpenTelemetry.Metrics.Export.MetricProcessor.Process(OpenTelemetry.Metr
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.BaseExportProcessor<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.BatchExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.BatchExportProcessor<T>.OnExport(T data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 override OpenTelemetry.BatchExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.CompositeProcessor<T>.Dispose(bool disposing) -> void
@@ -214,14 +214,15 @@ override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.
 override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Update(long value) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
-override OpenTelemetry.SimpleExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T data) -> void
 override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.ParentBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
 override OpenTelemetry.Trace.SamplingResult.GetHashCode() -> int
 override OpenTelemetry.Trace.TraceIdRatioBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
-override abstract OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
+abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T data) -> void
+override sealed OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
