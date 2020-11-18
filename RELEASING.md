@@ -17,7 +17,7 @@ Only for Maintainers.
     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
     foreach ($changelog in $changelogs)
     {
-     Add-Content -Path .\combinedchangelog.md "**$changelog.Directory.Name**"
+     Add-Content -Path .\combinedchangelog.md -Value "**$($changelog.Directory.Name)**"
      $lines = Get-Content -Path $changelog.FullName
      $started = $false
      $ended = $false
@@ -50,7 +50,7 @@ Only for Maintainers.
 3.Run the following PowerShell script from the root of the repo.
    This updates all the changelog to have release date for the
    current version being released.
-   Replace the date with actual date, version with actual version.
+   Replace the version with actual version.
    The actual version would be the tag name from step1 appended with
    ".1"
 
