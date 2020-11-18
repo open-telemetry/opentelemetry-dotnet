@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* `AddInMemoryExporter` extension method for traces moved from
+  `OpenTelemetry` namespace to `OpenTelemetry.Trace` namespace.
+  ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+* `AddInMemoryExporter` extension method for logs moved from
+  `Microsoft.Extensions.Logging` namespace to `OpenTelemetry.Logs` namespace.
+  ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
