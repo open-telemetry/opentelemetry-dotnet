@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
                 Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
-            Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal(Status.Unset, activity.GetStatus());
             Assert.Equal("redis", activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal(0, activity.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName));
 

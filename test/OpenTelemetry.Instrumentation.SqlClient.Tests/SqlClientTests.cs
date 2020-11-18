@@ -275,13 +275,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-                Assert.Null(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+                Assert.Equal(Status.Unset, activity.GetStatus());
             }
             else
             {
-                Assert.Equal((int)StatusCode.Error, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-                Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+                var status = activity.GetStatus();
+                Assert.Equal(Status.Error.StatusCode, status.StatusCode);
+                Assert.NotNull(status.Description);
             }
 
             Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));

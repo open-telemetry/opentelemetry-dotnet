@@ -29,14 +29,12 @@ namespace OpenTelemetry.Trace
         /// <returns>Resolved span <see cref="Status"/> for the Http status code.</returns>
         public static Status ResolveSpanStatusForHttpStatusCode(int httpStatusCode)
         {
-            var status = Status.Error;
-
             if (httpStatusCode >= 100 && httpStatusCode <= 399)
             {
-                status = Status.Unset;
+                return Status.Unset;
             }
 
-            return status;
+            return Status.Error;
         }
     }
 }
