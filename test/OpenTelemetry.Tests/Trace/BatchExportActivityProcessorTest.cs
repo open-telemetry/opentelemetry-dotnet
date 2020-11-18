@@ -158,26 +158,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void CheckExportForRecordingAndSampledActivity()
-        {
-            var exportedItems = new List<Activity>();
-            using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(
-                exporter,
-                maxQueueSize: 1,
-                maxExportBatchSize: 1);
-
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-
-            processor.OnEnd(activity);
-            processor.Shutdown();
-
-            Assert.Single(exportedItems);
-            Assert.Equal(1, processor.ProcessedCount);
-        }
-
-        [Fact]
         public void CheckExportForRecordingButNotSampledActivity()
         {
             var exportedItems = new List<Activity>();
