@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* `AddConsoleExporter` extension method for logs moved from
+  `OpenTelemetry.Trace` namespace to `OpenTelemetry.Logs` namespace.
+  ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

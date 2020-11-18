@@ -16,9 +16,8 @@
 
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Resources;
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Resources
 {
     /// <summary>
     /// Contains extension methods for building <see cref="Resource"/>s.
