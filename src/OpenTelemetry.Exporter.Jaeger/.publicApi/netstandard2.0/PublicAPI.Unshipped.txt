@@ -3,6 +3,10 @@ OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.get -> string
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentPort.get -> int
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentPort.set -> void
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.BatchExportProcessorOptions.set -> void
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.JaegerExporterOptions() -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.get -> int?
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.MaxPayloadSizeInBytes.set -> void
