@@ -194,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
 
-            VerifyActivityStopTags(200, "OK", activity);
+            VerifyActivityStopTags(200, activity);
         }
 
         [Theory]
@@ -374,7 +374,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
 
-            VerifyActivityStopTags(200, "OK", activity);
+            VerifyActivityStopTags(200, activity);
         }
 
         [Fact]
@@ -480,7 +480,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
 
-            VerifyActivityStopTags(204, "No Content", activity);
+            VerifyActivityStopTags(204, activity);
         }
 
         /// <summary>
@@ -781,10 +781,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
         }
 
-        private static void VerifyActivityStopTags(int statusCode, string statusText, Activity activity)
+        private static void VerifyActivityStopTags(int statusCode, Activity activity)
         {
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-            Assert.Equal(statusText, activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
