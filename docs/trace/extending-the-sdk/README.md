@@ -210,7 +210,7 @@ A demo processor is shown [here](./MyProcessor.cs).
 
 A common use case of writing custom processor is to filter Activities from being
 exported. Such a "FilteringProcessor" can be written as a wrapper around an
-exporting processor. An example "FilteringProcessor" is shown
+underlying processor. An example "FilteringProcessor" is shown
 [here](./MyFilteringProcessor.cs).
 
 When using such a filtering processor, instead of using extension method to

@@ -20,32 +20,32 @@ using OpenTelemetry;
 
 internal class MyFilteringProcessor : BaseProcessor<Activity>
 {
-    private Func<Activity, bool> filter;
-    private BaseProcessor<Activity> exportProcessor;
+    private readonly Func<Activity, bool> filter;
+    private BaseProcessor<Activity> processor;
 
-    public MyFilteringProcessor(BaseProcessor<Activity> exportProcessor, Func<Activity, bool> filter)
+    public MyFilteringProcessor(BaseProcessor<Activity> processor, Func<Activity, bool> filter)
     {
         if (filter == null)
         {
             throw new ArgumentNullException(nameof(filter));
         }
 
-        if (exportProcessor == null)
+        if (processor == null)
         {
-            throw new ArgumentNullException(nameof(exportProcessor));
+            throw new ArgumentNullException(nameof(processor));
         }
 
         this.filter = filter;
-        this.exportProcessor = exportProcessor;
+        this.processor = processor;
     }
 
     public override void OnEnd(Activity activity)
     {
-        // Call the exporting processor
+        // Call the underlying processor
         // only if the Filter returns true.
         if (this.filter(activity))
         {
-            this.exportProcessor.OnEnd(activity);
+            this.processor.OnEnd(activity);
         }
     }
 }
