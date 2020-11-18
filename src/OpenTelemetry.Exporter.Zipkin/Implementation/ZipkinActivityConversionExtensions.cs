@@ -174,6 +174,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 if (activityTag.Value is string strVal)
                 {
                     PeerServiceResolver.InspectTag(ref this, key, strVal);
+
+                    if (key == SpanAttributeConstants.StatusCodeKey && strVal == "Error")
+                    {
+                        PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", "true"));
+                    }
                 }
                 else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
                 {
