@@ -157,7 +157,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(0, processor.DroppedCount);
         }
 
-
         [Fact]
         public void CheckExportForRecordingAndSampledActivity()
         {
