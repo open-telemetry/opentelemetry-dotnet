@@ -24,16 +24,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup .NET Core 2.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.1.x
-
-    - name: Setup .NET Core 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.x
-
     - name: Setup .NET 5
       uses: actions/setup-dotnet@v1
       with:
@@ -45,11 +35,8 @@ jobs:
     - name: dotnet build
       run: dotnet build --configuration Release --no-restore
 
-#    - name: dotnet test
-#      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
-
     - name: dotnet test
-      run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
+      run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true -f net5.0
 
     - name: Process code coverage
       run: .\build\process-codecoverage.ps1

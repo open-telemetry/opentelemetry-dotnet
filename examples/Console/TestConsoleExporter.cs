@@ -59,7 +59,7 @@ namespace Examples.Console
                 {
                     parent.DisplayName = "HttpIn DisplayName";
 
-                    // IsAllDataRequested is the equivalent of Span.IsRecording
+                    // activity.IsAllDataRequested is the equivalent of Span.IsRecording
                     if (parent.IsAllDataRequested)
                     {
                         parent.SetTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
