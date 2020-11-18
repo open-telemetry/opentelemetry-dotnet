@@ -17,11 +17,9 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
 
-namespace Microsoft.Extensions.Logging
+namespace OpenTelemetry.Logs
 {
     public static class InMemoryExporterLoggingExtensions
     {

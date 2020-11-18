@@ -17,9 +17,8 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Logs
 {
     public static class ConsoleExporterLoggingExtensions
     {

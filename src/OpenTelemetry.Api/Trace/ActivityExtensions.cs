@@ -19,6 +19,11 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
+// The Activity class is in the System.Diagnostics namespace.
+// These extension methods on Activity are intentionally not placed in the
+// same namespace as Activity to prevent name collisions in the future.
+// The OpenTelemetry.Trace namespace is used because Activity is analogous
+// to Span in OpenTelemetry.
 namespace OpenTelemetry.Trace
 {
     /// <summary>

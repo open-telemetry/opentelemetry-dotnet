@@ -20,6 +20,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 #if !NETFRAMEWORK
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
