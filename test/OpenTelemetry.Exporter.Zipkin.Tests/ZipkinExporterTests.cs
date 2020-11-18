@@ -155,11 +155,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 serviceName = "MyService";
 
-                exporter.SetLocalEndpointFromResource(new Resource(new Dictionary<string, object>
+                exporter.SetLocalEndpointFromResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
                 {
                     [ResourceSemanticConventions.AttributeServiceName] = serviceName,
                     ["service.tag"] = "hello world",
-                }));
+                }).Build());
 
                 resoureTags = "\"service.tag\":\"hello world\",";
             }

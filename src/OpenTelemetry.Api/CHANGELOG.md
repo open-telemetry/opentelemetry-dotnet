@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0
 * Mark Activity extension methods as internal as these are not required to be
   public. GetTagValue, EnumerateTags, EnumerateLinks, EnumerateEvents. See
   [#1544](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1544)
   for full changes.
-* Changed SpanHelper class and ResolveSpanStatusForHttpStatusCode method from
-  public to internal. Moved SpanHelper.cs to OpenTelemetry.Api\Internal
+* Changed SpanHelper class from public to internal. Moved SpanHelper.cs to
+  OpenTelemetry.Api\Internal
   ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1

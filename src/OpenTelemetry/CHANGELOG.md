@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Removed `GetResource` and `SetResource` `Activity` extension methods. Added
   `GetResource` extension method on `BaseProvider`
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
@@ -16,8 +20,8 @@
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
 * Implemented `Shutdown` for `TracerProvider`.
   ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
-* `Resources.CreateServiceResource` has been removed in
-  favor of the `ResourceBuilder` API.
+* `Resources.CreateServiceResource` has been removed in favor of the
+  `ResourceBuilder` API.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
 * `TracerProviderBuilder.SetResource` has been changed to
   `TracerProviderBuilder.SetResourceBuilder`.
@@ -29,6 +33,12 @@
   * `telemetry.sdk.name` = `opentelemetry`
   * `telemetry.sdk.language` = `dotnet`
   * `telemetry.sdk.version` = [SDK version]
+* `Resource` constructor marked as internal, as `ResourceBuilder` is the
+  recommended API to build resources.
+  ([#1566](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1566))
+* Changed BaseExportProcessor to have it override OnExport instead of OnEnd;
+  Added check for ActivityTraceFlags to BaseExportProcessor OnEnd
+  ([#1574](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1574))
 
 ## 0.8.0-beta.1
 
