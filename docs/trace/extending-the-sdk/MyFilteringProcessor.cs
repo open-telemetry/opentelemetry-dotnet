@@ -21,9 +21,9 @@ using OpenTelemetry;
 internal class MyFilteringProcessor : BaseProcessor<Activity>
 {
     private Func<Activity, bool> filter;
-    private BaseExportProcessor<Activity> exportProcessor;
+    private BaseProcessor<Activity> exportProcessor;
 
-    public MyFilteringProcessor(BaseExportProcessor<Activity> exportProcessor, Func<Activity, bool> filter)
+    public MyFilteringProcessor(BaseProcessor<Activity> exportProcessor, Func<Activity, bool> filter)
     {
         if (filter == null)
         {
