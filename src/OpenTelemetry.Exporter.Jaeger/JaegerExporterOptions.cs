@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
@@ -41,5 +42,15 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// Gets or sets the tags that should be sent with telemetry.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the export processor type to be used with Jaeger Exporter.
+        /// </summary>
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+
+        /// <summary>
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
+        /// </summary>
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }
