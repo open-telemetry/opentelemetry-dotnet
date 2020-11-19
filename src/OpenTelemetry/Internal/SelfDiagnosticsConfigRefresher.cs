@@ -206,7 +206,7 @@ namespace OpenTelemetry.Internal
                 this.memoryMappedFile = MemoryMappedFile.CreateFromFile(filePath, FileMode.Create, null, newFileSize);
                 this.logDirectory = newLogDirectory;
                 this.logFileSize = newFileSize;
-                this.logFilePosition = 0;
+                this.logFilePosition = MessageOnNewFile.Length;
                 using var stream = this.memoryMappedFile.CreateViewStream();
                 stream.Write(MessageOnNewFile, 0, MessageOnNewFile.Length);
             }
