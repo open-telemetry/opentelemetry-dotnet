@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
-        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
