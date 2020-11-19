@@ -1,6 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net461;net462;net47;net471;net472;net48;netcoreapp2.1;netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>net461;net462;net47;net471;net472;net48;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
