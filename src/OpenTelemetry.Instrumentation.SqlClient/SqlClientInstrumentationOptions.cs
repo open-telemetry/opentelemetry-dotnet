@@ -68,6 +68,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
+        /// </remarks>
+        public bool RecordException { get; set; }
+
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {
             Match match = DataSourceRegex.Match(dataSource);

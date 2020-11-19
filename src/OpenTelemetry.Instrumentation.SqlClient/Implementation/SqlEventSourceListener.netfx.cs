@@ -33,6 +33,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         internal const int BeginExecuteEventId = 1;
         internal const int EndExecuteEventId = 2;
 
+        private const string SqlExceptionTypeName = "System.Data.SqlClient.SqlException";
+
         private readonly SqlClientInstrumentationOptions options;
         private EventSource eventSource;
 
@@ -163,7 +165,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
-                        activity.SetStatus(Status.Error.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
+                        var errorText = $"SqlExceptionNumber {eventData.Payload[2]} thrown.";
+                        activity.SetStatus(Status.Error.WithDescription(errorText));
+
+                        if (this.options.RecordException)
+                        {
+                            this.RecordException(activity, errorText);
+                        }
                     }
                     else
                     {
@@ -175,6 +183,23 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             {
                 activity.Stop();
             }
+        }
+
+        private void RecordException(Activity activity, string errorText)
+        {
+            var tagsCollection = new ActivityTagsCollection
+            {
+                // The real exception object is unavailable via the EventSource but we
+                // know that it must be of type "SqlException".
+                { SemanticConventions.AttributeExceptionType, SqlExceptionTypeName },
+
+                // Not the message the real exception object would have, but at least we can
+                // report the SqlException.Number in the "exception.message" to have something
+                // useful.
+                { SemanticConventions.AttributeExceptionMessage, errorText },
+            };
+
+            activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
     }
 }
