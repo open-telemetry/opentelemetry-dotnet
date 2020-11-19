@@ -20,31 +20,35 @@ using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    internal class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
+    public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
         {
-            this.Init((logRecord, writeTo) => this.ExportLogRecord(logRecord, writeTo));
         }
 
-        private void ExportLogRecord(LogRecord logRecord, Action<string> writeLine)
+        public override ExportResult Export(in Batch<LogRecord> batch)
         {
             var rightPaddingLength = 30;
-            writeLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
-            writeLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
-            writeLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-            writeLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
-            writeLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
-            writeLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
-            writeLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
-            writeLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
-            if (logRecord.Exception is { })
+            foreach (var logRecord in batch)
             {
-                writeLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                this.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
+                this.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
+                this.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                this.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
+                this.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
+                this.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
+                this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
+                this.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                if (logRecord.Exception is { })
+                {
+                    this.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                }
+
+                this.WriteLine(string.Empty);
             }
 
-            writeLine(string.Empty);
+            return ExportResult.Success;
         }
     }
 }

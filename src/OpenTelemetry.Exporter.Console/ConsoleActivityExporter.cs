@@ -21,73 +21,80 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.Console
 {
-    internal class ConsoleActivityExporter : ConsoleExporter<Activity>
+    public class ConsoleActivityExporter : ConsoleExporter<Activity>
     {
         public ConsoleActivityExporter(ConsoleExporterOptions options)
-            : base(options) => this.Init((activity, writeTo) => this.ExportActivity(activity, writeTo));
-
-        private void ExportActivity(Activity activity, Action<string> writeLine)
+            : base(options)
         {
-                writeLine($"Activity.Id:          {activity.Id}");
+        }
+
+        public override ExportResult Export(in Batch<Activity> batch)
+        {
+            foreach (var activity in batch)
+            {
+                this.WriteLine($"Activity.Id:          {activity.Id}");
                 if (!string.IsNullOrEmpty(activity.ParentId))
                 {
-                    writeLine($"Activity.ParentId:    {activity.ParentId}");
+                    this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                 }
 
-                writeLine($"Activity.DisplayName: {activity.DisplayName}");
-                writeLine($"Activity.Kind:        {activity.Kind}");
-                writeLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                writeLine($"Activity.Duration:    {activity.Duration}");
+                this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
+                this.WriteLine($"Activity.Kind:        {activity.Kind}");
+                this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                this.WriteLine($"Activity.Duration:    {activity.Duration}");
                 if (activity.TagObjects.Any())
                 {
-                    writeLine("Activity.TagObjects:");
+                    this.WriteLine("Activity.TagObjects:");
                     foreach (var tag in activity.TagObjects)
                     {
                         var array = tag.Value as Array;
 
                         if (array == null)
                         {
-                            writeLine($"    {tag.Key}: {tag.Value}");
+                            this.WriteLine($"    {tag.Key}: {tag.Value}");
                             continue;
                         }
 
-                        writeLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
+                        this.WriteLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
                     }
                 }
 
                 if (activity.Events.Any())
                 {
-                    writeLine("Activity.Events:");
+                    this.WriteLine("Activity.Events:");
                     foreach (var activityEvent in activity.Events)
                     {
-                        writeLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
+                        this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
                         foreach (var attribute in activityEvent.Tags)
                         {
-                            writeLine($"        {attribute.Key}: {attribute.Value}");
+                            this.WriteLine($"        {attribute.Key}: {attribute.Value}");
                         }
                     }
                 }
 
                 if (activity.Baggage.Any())
                 {
-                    writeLine("Activity.Baggage:");
+                    this.WriteLine("Activity.Baggage:");
                     foreach (var baggage in activity.Baggage)
                     {
-                        writeLine($"    {baggage.Key}: {baggage.Value}");
+                        this.WriteLine($"    {baggage.Key}: {baggage.Value}");
                     }
                 }
 
                 var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)
                 {
-                    writeLine("Resource associated with Activity:");
+                    this.WriteLine("Resource associated with Activity:");
                     foreach (var resourceAttribute in resource.Attributes)
                     {
-                        writeLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
                     }
                 }
 
-                writeLine(string.Empty);
+                this.WriteLine(string.Empty);
+            }
+
+            return ExportResult.Success;
         }
     }
 }

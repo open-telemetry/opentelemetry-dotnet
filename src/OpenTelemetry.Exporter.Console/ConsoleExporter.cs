@@ -19,38 +19,19 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleExporter<T> : BaseExporter<T>
+    public abstract class ConsoleExporter<T> : BaseExporter<T>
         where T : class
     {
         private readonly ConsoleExporterOptions options;
-        private Action<T, Action<string>> exportMethod;
 
         public ConsoleExporter(ConsoleExporterOptions options)
         {
             this.options = options ?? new ConsoleExporterOptions();
         }
 
-        public override ExportResult Export(in Batch<T> batch)
-        {
-            if (this.exportMethod == null)
-            {
-                return ExportResult.Failure;
-            }
+        public abstract override ExportResult Export(in Batch<T> batch);
 
-            foreach (var item in batch)
-            {
-                this.exportMethod(item, this.WriteLine);
-            }
-
-            return ExportResult.Success;
-        }
-
-        internal void Init(Action<T, Action<string>> exportMethod)
-        {
-            this.exportMethod = exportMethod;
-        }
-
-        private void WriteLine(string message)
+        internal void WriteLine(string message)
         {
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
             {
