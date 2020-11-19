@@ -32,7 +32,7 @@ properties:
   the same machine as your application or service.
 * `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default
   `6831`).
-* `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets 
+* `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
   sent to the agent. (default `65000`).
 * `ProcessTags`: Which tags should be sent with telemetry.
 * `ExportProcessorType`: Whether the exporter should use

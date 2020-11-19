@@ -15,7 +15,7 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
-You can configure the `ZipkinExporter` through 
+You can configure the `ZipkinExporter` through
 `ZipkinExporterOptions` properties:
 
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
