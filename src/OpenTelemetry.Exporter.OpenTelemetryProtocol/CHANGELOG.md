@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* In `OtlpExporterOptions.cs`: Exporter options now include a switch for
+  Batch vs Simple exporter, and settings for batch exporting properties.
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
