@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         public IEnumerable<ChannelOption> ChannelOptions { get; set; }
 
         /// <summary>
-        /// Gets or sets the export processor type to be used with Jaeger Exporter.
+        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
