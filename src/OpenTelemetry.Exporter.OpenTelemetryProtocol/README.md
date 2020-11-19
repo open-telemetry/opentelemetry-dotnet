@@ -25,7 +25,7 @@ You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
 * `Headers`: Optional headers for the connection.
 * `ChannelOptions`: gRPC channel options.
 * `ExportProcessorType`: Whether the exporter should use
-  [Batch or Simple base exporter](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry#introduction)
+  [Batch or Simple base exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
   .
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
