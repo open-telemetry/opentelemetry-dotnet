@@ -43,8 +43,19 @@ namespace OpenTelemetry.Trace
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on OtlpExporterOptions
-            return builder.AddProcessor(new BatchExportProcessor<Activity>(otlpExporter));
+            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            {
+                return builder.AddProcessor(new SimpleExportProcessor<Activity>(otlpExporter));
+            }
+            else
+            {
+                return builder.AddProcessor(new BatchExportProcessor<Activity>(
+                    otlpExporter,
+                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+            }
         }
     }
 }

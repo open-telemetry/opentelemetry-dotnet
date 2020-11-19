@@ -25,15 +25,21 @@ dotnet add package OpenTelemetry.Exporter.Jaeger
 
 ## Configuration
 
-You can configure the `JaegerExporter` by following the directions below:
+You can configure the `JaegerExporter` through `JaegerExporterOptions`
+properties:
 
-* `ServiceName`: The name of your application or service.
 * `AgentHost`: Usually `localhost` since an agent should usually be running on
   the same machine as your application or service.
 * `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default
   `6831`).
-* `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the
-  agent. (default `65000`).
+* `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
+  sent to the agent. (default `65000`).
+* `ProcessTags`: Which tags should be sent with telemetry.
+* `ExportProcessorType`: Whether the exporter should use
+  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
+  .
+* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
+  Only used if ExportProcessorType is set to Batch.
 
 See the
 [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
