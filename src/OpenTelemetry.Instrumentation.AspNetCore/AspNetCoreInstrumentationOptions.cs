@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public bool RecordException { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to record http server attributes or not.
+        /// Gets or sets a value indicating whether to record http server attributes or not. Default value: False.
         /// </summary>
         /// <remarks>
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/a2758014f408f64ff84728918d671ee3fdab2225/specification/trace/semantic_conventions/http.md#http-server-semantic-conventions.

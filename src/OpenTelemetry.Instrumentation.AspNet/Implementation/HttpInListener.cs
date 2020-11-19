@@ -137,6 +137,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
                     }
+                    else
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpClientIP, context.Request.ServerVariables["REMOTE_ADDR"]);
+                    }
                 }
 
                 try

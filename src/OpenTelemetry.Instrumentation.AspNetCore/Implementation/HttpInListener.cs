@@ -143,6 +143,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpClientIP, xForwardedFor.Split(',').First().Trim());
                     }
+                    else
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpClientIP, context.Connection.RemoteIpAddress.ToString());
+                    }
                 }
 
                 try

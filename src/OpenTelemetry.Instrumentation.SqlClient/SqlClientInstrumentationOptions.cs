@@ -52,10 +52,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         public bool SetTextCommandContent { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse 1) the database user id from connection string, 2) the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
         /// </summary>
         /// <remarks>
-        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
+        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, 1) database user id will be parsed from connection string and be sent as the <see cref="SemanticConventions.AttributeDbUser"/>, 2) SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; }
 
@@ -158,25 +158,22 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         internal void AddDBUserToActivity(string connectionString, Activity sqlActivity)
         {
-            if (this.EnableConnectionLevelAttributes)
+            if (!DBUserCache.TryGetValue(connectionString, out string dbUser))
             {
-                if (!DBUserCache.TryGetValue(connectionString, out string dbUser))
+                var builder = new DbConnectionStringBuilder
                 {
-                    var builder = new DbConnectionStringBuilder
-                    {
-                        ConnectionString = connectionString,
-                    };
+                    ConnectionString = connectionString,
+                };
 
-                    if (builder.TryGetValue("User ID", out var userId) || builder.TryGetValue("user", out userId) || builder.TryGetValue("UID", out userId))
-                    {
-                        DBUserCache.TryAdd(connectionString, (string)userId);
-                        sqlActivity.SetTag(SemanticConventions.AttributeDbUser, (string)userId);
-                    }
-                }
-                else
+                if (builder.TryGetValue("User ID", out var userId) || builder.TryGetValue("user", out userId) || builder.TryGetValue("UID", out userId))
                 {
-                    sqlActivity.SetTag(SemanticConventions.AttributeDbUser, dbUser);
+                    DBUserCache.TryAdd(connectionString, (string)userId);
+                    sqlActivity.SetTag(SemanticConventions.AttributeDbUser, (string)userId);
                 }
+            }
+            else
+            {
+                sqlActivity.SetTag(SemanticConventions.AttributeDbUser, dbUser);
             }
         }
 

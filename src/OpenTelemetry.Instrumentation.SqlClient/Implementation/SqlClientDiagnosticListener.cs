@@ -92,14 +92,18 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             activity.DisplayName = (string)database;
 
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
-                            _ = this.connectionStringFetcher.TryFetch(connection, out var connectionString);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
                             activity.SetTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
-                            this.options.AddDBUserToActivity((string)connectionString, activity);
+
+                            if (this.options.EnableConnectionLevelAttributes)
+                            {
+                                _ = this.connectionStringFetcher.TryFetch(connection, out var connectionString);
+                                this.options.AddDBUserToActivity((string)connectionString, activity);
+                            }
 
                             if (this.commandTypeFetcher.TryFetch(command, out CommandType commandType))
                             {
