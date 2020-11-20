@@ -30,11 +30,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     internal class SqlEventSourceListener : EventListener
     {
         internal const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
+        internal const string MdsEventSourceName = "Microsoft.Data.SqlClient.EventSource";
+
         internal const int BeginExecuteEventId = 1;
         internal const int EndExecuteEventId = 2;
 
         private readonly SqlClientInstrumentationOptions options;
-        private EventSource eventSource;
+        private EventSource adoNetEventSource;
+        private EventSource mdsEventSource;
 
         public SqlEventSourceListener(SqlClientInstrumentationOptions options = null)
         {
@@ -43,9 +46,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         public override void Dispose()
         {
-            if (this.eventSource != null)
+            if (this.adoNetEventSource != null)
             {
-                this.DisableEvents(this.eventSource);
+                this.DisableEvents(this.adoNetEventSource);
+            }
+
+            if (this.mdsEventSource != null)
+            {
+                this.DisableEvents(this.mdsEventSource);
             }
 
             base.Dispose();
@@ -55,7 +63,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         {
             if (eventSource?.Name.StartsWith(AdoNetEventSourceName, StringComparison.Ordinal) == true)
             {
-                this.eventSource = eventSource;
+                this.adoNetEventSource = eventSource;
+                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+            }
+
+            if (eventSource?.Name.StartsWith(MdsEventSourceName, StringComparison.Ordinal) == true)
+            {
+                this.mdsEventSource = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
             }
 
