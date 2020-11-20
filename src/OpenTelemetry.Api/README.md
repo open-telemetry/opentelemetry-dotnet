@@ -358,7 +358,7 @@ to be associated with `Activity`. There is no `Status` class in .NET, and hence
 Example:
 
 ```csharp
-activity?.SetTag("otel.status_code", StatusCode.Error);
+activity?.SetTag("otel.status_code", "Error");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
