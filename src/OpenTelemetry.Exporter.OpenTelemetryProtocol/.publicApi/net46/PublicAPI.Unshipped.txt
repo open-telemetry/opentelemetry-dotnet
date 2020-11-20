@@ -1,10 +1,14 @@
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.get -> System.Collections.Generic.IEnumerable<Grpc.Core.ChannelOption>
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Credentials.get -> Grpc.Core.ChannelCredentials
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Credentials.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Endpoint.get -> string
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Endpoint.set -> void
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.get -> Grpc.Core.Metadata
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.OtlpExporterOptions() -> void
