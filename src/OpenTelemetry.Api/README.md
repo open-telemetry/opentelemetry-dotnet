@@ -362,7 +362,7 @@ activity?.SetTag("otel.status_code", "Error");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-Values for the StatusCode tag have to be the strings "Unset", "Ok", or "Error",
+Values for the StatusCode tag must be one of the strings "Unset", "Ok", or "Error",
 which correspond respectively to the enums `Unset`, `Ok`, and `Error` from
 [`StatusCode`](./Trace/StatusCode.cs).
 
