@@ -362,8 +362,9 @@ activity?.SetTag("otel.status_code", "Error");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-[`StatusCode`](./Trace/StatusCode.cs) is an enum with options for `Unset`,
-`Ok` and `Error`.
+Values for the StatusCode tag have to be the strings "Unset", "Ok", or "Error",
+which correspond respectively to the enums `Unset`, `Ok`, and `Error` from
+[`StatusCode`](./Trace/StatusCode.cs).
 
 If using OpenTelemetry API
 [shim](#instrumenting-using-opentelemetryapi-shim), then you
