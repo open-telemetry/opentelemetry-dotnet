@@ -19,6 +19,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
@@ -45,9 +46,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/0", false, true)]
+        [InlineData(CommandType.Text, "select 1/0", false, true, true)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
+        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false, bool recordException = false)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
@@ -55,6 +57,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStoredProcedureCommandName = captureText;
+                    options.RecordException = recordException;
                 })
                 .Build();
 
@@ -83,19 +86,22 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureText, isFailure, dataSource, activity);
+            VerifyActivityData(commandType, commandText, captureText, isFailure, recordException, dataSource, activity);
         }
 
         [Theory]
         [InlineData(CommandType.Text, "select 1/1", false)]
-        [InlineData(CommandType.Text, "select 1/0", false, true)]
+        [InlineData(CommandType.Text, "select 1/0", false, true, false)]
+        [InlineData(CommandType.Text, "select 1/0", false, true, true)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, false, 0, true)]
+        [InlineData(CommandType.Text, "select 1/0", false, true, true, 1, true)]
         public void EventSourceFakeTests(
             CommandType commandType,
             string commandText,
             bool captureText,
             bool isFailure = false,
+            bool recordException = false,
             int sqlExceptionNumber = 0,
             bool enableConnectionLevelAttributes = false)
         {
@@ -108,6 +114,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 {
                     options.SetStoredProcedureCommandName = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
+                    options.RecordException = recordException;
                 })
                 .Build();
 
@@ -132,7 +139,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
+            // Instrumentation won't record SqlException if EventSource didn't sent isSqlException flag
+            bool willRecordSqlException = recordException && isSqlExceptionFlag == 0b010;
+
+            VerifyActivityData(commandType, commandText, captureText, isFailure, willRecordSqlException, "127.0.0.1", activity, enableConnectionLevelAttributes);
         }
 
         [Fact]
@@ -177,6 +187,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             string commandText,
             bool captureText,
             bool isFailure,
+            bool recordException,
             string dataSource,
             Activity activity,
             bool enableConnectionLevelAttributes = false)
@@ -236,6 +247,18 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 var status = activity.GetStatus();
                 Assert.Equal(Status.Error.StatusCode, status.StatusCode);
                 Assert.NotNull(status.Description);
+
+                if (recordException)
+                {
+                    var events = activity.Events.ToList();
+                    Assert.Single(events);
+
+                    Assert.Equal("exception", events[0].Name);
+                }
+                else
+                {
+                    Assert.Empty(activity.Events);
+                }
             }
         }
 
