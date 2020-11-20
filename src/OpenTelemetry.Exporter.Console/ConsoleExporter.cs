@@ -24,12 +24,10 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ConsoleExporterOptions options;
 
-        public ConsoleExporter(ConsoleExporterOptions options)
+        protected ConsoleExporter(ConsoleExporterOptions options)
         {
             this.options = options ?? new ConsoleExporterOptions();
         }
-
-        public abstract override ExportResult Export(in Batch<T> batch);
 
         internal void WriteLine(string message)
         {
