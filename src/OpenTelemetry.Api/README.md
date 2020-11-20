@@ -349,7 +349,7 @@ corresponding overloads of `ActivityEvent`.
 OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
 to be associated with `Activity`. There is no `Status` class in .NET, and hence
-`Status` is set to an `Activity` using the following special tags
+`Status` is set to an `Activity` using the following special tags:
 
 `otel.status_code` is the `Tag` name used to store the `StatusCode`, and
 `otel.status_description` is the `Tag` name used to store the optional
@@ -358,12 +358,12 @@ to be associated with `Activity`. There is no `Status` class in .NET, and hence
 Example:
 
 ```csharp
-activity?.SetTag("otel.status_code", 2);
+activity?.SetTag("otel.status_code", StatusCode.Error);
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-StatusCodes can be 0, 1, 2 which corresponds to `Unset`, `Ok` and `Error`
-respectively from [StatusCode.cs](./Trace/StatusCode.cs)
+[`StatusCode`](./Trace/StatusCode.cs) is an enum with options for `Unset`,
+`Ok` and `Error`.
 
 If using OpenTelemetry API
 [shim](#instrumenting-using-opentelemetryapi-shim), then you
