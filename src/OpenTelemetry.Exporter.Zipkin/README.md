@@ -15,13 +15,16 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
+You can enable the the `ZipkinExporter` with the `AddZipkinExporter()`
+[extension method](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/src/OpenTelemetry.Exporter.Zipkin/ZipkinExporterHelperExtensions.cs#L35).
+
 You can configure the `ZipkinExporter` through
 `ZipkinExporterOptions` properties:
 
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
    associated with the telemetry has "service.name" defined, then it'll be
    preferred over this option.
-* `Endpoint`: URI address to receive telemetry.
+* `Endpoint`: URI address to receive telemetry (default 'https://zipkin-server-name:9411/api/v2/spans').
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
 * `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions
@@ -32,6 +35,7 @@ You can configure the `ZipkinExporter` through
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
+## Usage
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
 for example use.
