@@ -35,7 +35,6 @@ You can configure the `ZipkinExporter` through
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
-## Usage
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
 for example use.
