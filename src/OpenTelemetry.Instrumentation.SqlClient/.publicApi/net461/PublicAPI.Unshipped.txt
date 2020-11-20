@@ -3,10 +3,8 @@ OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.EnableCo
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.EnableConnectionLevelAttributes.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.set -> void
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.get -> bool
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.set -> void
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetTextCommandContent.get -> bool
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetTextCommandContent.set -> void
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStatementText.get -> bool
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStatementText.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SqlClientInstrumentationOptions() -> void
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddSqlClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

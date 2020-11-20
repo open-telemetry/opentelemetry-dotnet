@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetStoredProcedureCommandName = captureText;
+                    options.SetStatementText = captureText;
                 })
                 .Build();
 
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetStoredProcedureCommandName = captureText;
+                    options.SetStatementText = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 })
                 .Build();
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             Assert.Equal("master", activity.DisplayName);
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
 
             if (!enableConnectionLevelAttributes)
             {
@@ -214,17 +214,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             }
 
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
-            Assert.Equal(commandType.ToString(), activity.GetTagValue(SpanAttributeConstants.DatabaseStatementTypeKey));
-            if (commandType == CommandType.StoredProcedure)
+
+            // "db.statement_type" is never set by the SqlEventSource instrumentation
+            Assert.Null(activity.GetTagValue(SpanAttributeConstants.DatabaseStatementTypeKey));
+            if (captureText)
             {
-                if (captureText)
-                {
-                    Assert.Equal(commandText, activity.GetTagValue(SemanticConventions.AttributeDbStatement));
-                }
-                else
-                {
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeDbStatement));
-                }
+                Assert.Equal(commandText, activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+            }
+            else
+            {
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
             if (!isFailure)

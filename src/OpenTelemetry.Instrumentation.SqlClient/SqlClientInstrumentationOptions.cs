@@ -39,6 +39,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         private static readonly Regex DataSourceRegex = new Regex("^(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
+        // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
+        // StoredProcedures from regular Text sql commands.
+#if NETFRAMEWORK
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should
+        /// add the text of the executed Sql commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
+        /// Default value: False.
+        /// </summary>
+        public bool SetStatementText { get; set; }
+#else
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
         /// </summary>
@@ -48,6 +59,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
         public bool SetTextCommandContent { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.

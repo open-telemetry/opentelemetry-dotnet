@@ -15,13 +15,14 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
-using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
+    // TODO: fix summary
+
     /// <summary>
     /// .NET Framework SqlClient doesn't emit DiagnosticSource events.
     /// We hook into its EventSource if it is available:
@@ -102,8 +103,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 [0] -> ObjectId
                 [1] -> DataSource
                 [2] -> Database
-                [3] -> CommandText ([3] = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty)
+                [3] -> CommandText([3] = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty)
              */
+
+            // TODO: fix above comment
 
             if ((eventData?.Payload?.Count ?? 0) < 4)
             {
@@ -111,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            var activity = SqlClientDiagnosticListener.SqlClientActivitySource.StartActivity(SqlClientDiagnosticListener.ActivityName, ActivityKind.Client);
+            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
             if (activity == null)
             {
                 // There is no listener or it decided not to sample the current request.
@@ -124,23 +127,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName);
+                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                 activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
                 string commandText = (string)eventData.Payload[3];
-                if (string.IsNullOrEmpty(commandText))
+                if (!string.IsNullOrEmpty(commandText) && this.options.SetStatementText)
                 {
-                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
-                }
-                else
-                {
-                    activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
-                    if (this.options.SetStoredProcedureCommandName)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }
             }
         }
@@ -161,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             }
 
             var activity = Activity.Current;
-            if (activity?.Source != SqlClientDiagnosticListener.SqlClientActivitySource)
+            if (activity?.Source != SqlActivitySourceHelper.ActivitySource)
             {
                 return;
             }
