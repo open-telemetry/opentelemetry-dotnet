@@ -77,8 +77,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 this.adoNetEventSource = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
             }
-
-            if (eventSource?.Name.StartsWith(MdsEventSourceName, StringComparison.Ordinal) == true)
+            else if (eventSource?.Name.StartsWith(MdsEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.mdsEventSource = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
