@@ -114,7 +114,6 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-
 ## EnableConnectionLevelAttributes
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
