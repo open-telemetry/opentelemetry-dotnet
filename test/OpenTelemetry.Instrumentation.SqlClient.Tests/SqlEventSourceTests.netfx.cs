@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureText, isFailure, dataSource, activity);
+            VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
         }
 
         [Theory]
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
+            VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
         }
 
         [Theory]
@@ -181,8 +181,46 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(3, activityProcessor.Invocations.Count); // SetTracerProvider/OnShutdown/Dispose called.
         }
 
+        [Theory]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource))]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource))]
+        public void DefaultCaptureTextTrue(Type eventSourceType)
+        {
+            using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddSqlClientInstrumentation()
+                .Build();
+
+            int objectId = Guid.NewGuid().GetHashCode();
+
+            const string commandText = "TestCommandTest";
+            fakeSqlEventSource.WriteBeginExecuteEvent(objectId, "127.0.0.1", "master", commandText);
+
+            // success is stored in the first bit in compositeState 0b001
+            int successFlag = 1;
+
+            // isSqlException is stored in the second bit in compositeState 0b010
+            int isSqlExceptionFlag = 2;
+
+            // synchronous state is stored in the third bit in compositeState 0b100
+            int synchronousFlag = 4;
+
+            int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
+
+            fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, 0);
+            shutdownSignal.Dispose();
+            Assert.Equal(5, activityProcessor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            const bool captureText = true;
+            VerifyActivityData(commandText, captureText, false, "127.0.0.1", activity, false);
+        }
+
         private static void VerifyActivityData(
-            CommandType commandType,
             string commandText,
             bool captureText,
             bool isFailure,
