@@ -15,8 +15,7 @@ dotnet add package OpenTelemetry.Exporter.Zipkin
 
 ## Configuration
 
-You can enable the the `ZipkinExporter` with the `AddZipkinExporter()`
-[extension method](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/src/OpenTelemetry.Exporter.Zipkin/ZipkinExporterHelperExtensions.cs#L35).
+You can enable the the `ZipkinExporter` with the `AddZipkinExporter()`.
 
 You can configure the `ZipkinExporter` through
 `ZipkinExporterOptions` properties:
