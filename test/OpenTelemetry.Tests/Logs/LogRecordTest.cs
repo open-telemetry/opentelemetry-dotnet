@@ -65,6 +65,15 @@ namespace OpenTelemetry.Tests.Logs
         }
 
         [Fact]
+        public void CheckCateogryNameForLog()
+        {
+            this.logger.LogInformation("Log");
+            var categoryName = this.exportedItems[0].CategoryName;
+
+            Assert.Equal(typeof(LogRecordTest).FullName, categoryName);
+        }
+
+        [Fact]
         public void CheckLogLevelForTrace()
         {
             var message = "Log Trace";
