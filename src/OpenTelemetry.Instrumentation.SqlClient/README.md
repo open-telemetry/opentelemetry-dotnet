@@ -100,16 +100,22 @@ are not available. Instead, `SetStatementText` should be used to control whether
 this instrumentation should set the `db.statement` attribute to the text of the
 `SqlCommand` being executed.
 
-Text capturing is _enabled_ by default. It will capture both `CommandType.Text`
-and `CommandType.StoredProcedure` when using [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/),
+Text capturing is _disabled_ by default. If enabled, the instrumentation will
+capture both `CommandType.Text` and `CommandType.StoredProcedure` when using
+[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/),
 and only `CommandType.StoredProcedure` when using `System.Data.SqlClient`.
 
-To turn statement capturing off use the options like in below example:
+To turn statement capturing on, use the options like in below example. Be
+aware that `CommandType.Text` SQL might contain sensitive data.
+On [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+only set this to `true` if you are absolutely sure that you are using
+exclusively stored procedures, or have no sensitive data in your 
+`sqlCommand.CommandText`.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetStatementText = false)
+        options => options.SetStatementText = true)
     .AddConsoleExporter()
     .Build();
 ```

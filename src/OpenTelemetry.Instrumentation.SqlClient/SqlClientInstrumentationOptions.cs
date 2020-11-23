@@ -46,9 +46,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should
         /// add the text of the executed Sql commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
-        /// Default value: True.
+        /// Default value: False.
         /// </summary>
-        public bool SetStatementText { get; set; } = true;
+        /// <remarks>
+        /// <para>
+        /// WARNING: potential sensitive data capture! If you use <c>Microsoft.Data.SqlClient</c>, the instrumentation will capture <c>sqlCommand.CommandText</c>
+        /// for <see cref="CommandType.StoredProcedure"/> and <see cref="CommandType.Text"/>. Make sure your <c>CommandText</c> property never contains
+        /// any sensitive data for <see cref="CommandType.Text"/> commands.
+        /// </para>
+        /// <para>
+        /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
+        /// </para>
+        /// </remarks>
+        public bool SetStatementText { get; set; }
 #else
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.

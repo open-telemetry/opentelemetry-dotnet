@@ -184,7 +184,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [Theory]
         [InlineData(typeof(FakeBehavingAdoNetSqlEventSource))]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource))]
-        public void DefaultCaptureTextTrue(Type eventSourceType)
+        public void DefaultCaptureTextFalse(Type eventSourceType)
         {
             using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
@@ -216,7 +216,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            const bool captureText = true;
+            const bool captureText = false;
             VerifyActivityData(commandText, captureText, false, "127.0.0.1", activity, false);
         }
 
