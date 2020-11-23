@@ -18,13 +18,17 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 
 ## Configuration
 
-You can configure the `OtlpExporter` by following the directions below:
+You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
 
-* `ServiceName`: Name of the service reporting telemetry.
 * `Endpoint`: Target to which the exporter is going to send traces or metrics.
 * `Credentials`: Client-side channel credentials.
 * `Headers`: Optional headers for the connection.
 * `ChannelOptions`: gRPC channel options.
+* `ExportProcessorType`: Whether the exporter should use
+  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
+  .
+* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
+  Only used if ExportProcessorType is set to Batch.
 
 See the
 [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs)
