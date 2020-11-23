@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// <summary>
     /// Aggregator which calculates summary (Min,Max,Sum,Count) from measures.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class DoubleMeasureMinMaxSumCountAggregator : Aggregator<double>
     {
         private DoubleSummary summary = new DoubleSummary();
