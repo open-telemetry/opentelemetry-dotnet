@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("string_array", eventField.Key);
             Assert.Equal("b", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -340,7 +340,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
@@ -351,7 +351,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -456,6 +456,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             var jaegerSpan = activity.ToJaegerSpan();
 
             // Assert
+
+            if (statusCode == StatusCode.Unset)
+            {
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else
+            {
+                Assert.Equal(
+                    StatusHelper.GetStringNameForStatusCode(statusCode),
+                    jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+            }
+
             if (hasErrorFlag)
             {
                 Assert.Contains(jaegerSpan.Tags, t => t.Key == "error" && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
