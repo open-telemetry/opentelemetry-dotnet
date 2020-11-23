@@ -109,8 +109,7 @@ To turn statement capturing on, use the options like in below example. Be
 aware that `CommandType.Text` SQL might contain sensitive data.
 On [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
 only set this to `true` if you are absolutely sure that you are using
-exclusively stored procedures, or have no sensitive data in your 
-`sqlCommand.CommandText`.
+exclusively stored procedures, or have no sensitive data in your `sqlCommand.CommandText`.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
