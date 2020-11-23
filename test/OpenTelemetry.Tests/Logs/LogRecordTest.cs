@@ -54,6 +54,7 @@ namespace OpenTelemetry.Tests.Logs
             {
                 builder.AddOpenTelemetry(options => options
                     .AddProcessor(this.processor));
+                builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
 
 #if NETCOREAPP2_1
@@ -73,74 +74,20 @@ namespace OpenTelemetry.Tests.Logs
             Assert.Equal(typeof(LogRecordTest).FullName, categoryName);
         }
 
-        [Fact]
-        public void CheckLogLevelForTrace()
+        [Theory]
+        [InlineData(LogLevel.Trace)]
+        [InlineData(LogLevel.Debug)]
+        [InlineData(LogLevel.Information)]
+        [InlineData(LogLevel.Warning)]
+        [InlineData(LogLevel.Error)]
+        [InlineData(LogLevel.Critical)]
+        public void CheckLogLevel(LogLevel logLevel)
         {
-            var message = "Log Trace";
-            this.logger.LogTrace(message);
+            var message = $"Log {logLevel}";
+            this.logger.Log(logLevel, message);
 
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Trace, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForDebug()
-        {
-            var message = "Log Debug";
-            this.logger.LogDebug(message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Debug, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForInformation()
-        {
-            var message = "Log Information";
-            this.logger.LogInformation(message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Information, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForWarning()
-        {
-            var message = "Log Warning";
-            this.logger.LogWarning(message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Warning, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForError()
-        {
-            var message = "Log Error";
-            this.logger.LogError(message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Error, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForCritical()
-        {
-            var message = "Log Critical";
-            this.logger.LogCritical(message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.Critical, logLevel);
-        }
-
-        [Fact]
-        public void CheckLogLevelForNone()
-        {
-            var message = "Log None";
-            this.logger.Log(LogLevel.None, message);
-
-            var logLevel = this.exportedItems[0].LogLevel;
-            Assert.Equal(LogLevel.None, logLevel);
+            var logLevelRecorded = this.exportedItems[0].LogLevel;
+            Assert.Equal(logLevel, logLevelRecorded);
         }
 
         [Fact]
@@ -329,24 +276,13 @@ namespace OpenTelemetry.Tests.Logs
         [Fact]
         public void CheckTraceIdForLogWithinDroppedActivity()
         {
-            var sampler = new AlwaysOffSampler();
-            var exportedActivityList = new List<Activity>();
-            var activitySourceName = "LogRecordTest";
-            var activitySource = new ActivitySource(activitySourceName);
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(activitySourceName)
-                .SetSampler(sampler)
-                .AddInMemoryExporter(exportedActivityList)
-                .Build();
-
-            using var activity = activitySource.StartActivity("Activity");
-
             this.logger.LogInformation("Log within a dropped activity");
             var logRecord = this.exportedItems[0];
 
-            Assert.Equal(activity.TraceId, logRecord.TraceId);
-            Assert.Equal(activity.SpanId, logRecord.SpanId);
-            Assert.True(activity.ActivityTraceFlags.Equals(logRecord.TraceFlags));
+            Assert.Null(Activity.Current);
+            Assert.Equal(default, logRecord.TraceId);
+            Assert.Equal(default, logRecord.SpanId);
+            Assert.Equal(default, logRecord.TraceFlags);
         }
 
         [Fact]
@@ -367,9 +303,10 @@ namespace OpenTelemetry.Tests.Logs
             this.logger.LogInformation("Log within activity marked as RecordOnly");
             var logRecord = this.exportedItems[0];
 
-            Assert.Equal(activity.TraceId, logRecord.TraceId);
-            Assert.Equal(activity.SpanId, logRecord.SpanId);
-            Assert.True(activity.ActivityTraceFlags.Equals(logRecord.TraceFlags));
+            var currentActivity = Activity.Current;
+            Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
+            Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
+            Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
         }
 
         [Fact]
@@ -390,9 +327,10 @@ namespace OpenTelemetry.Tests.Logs
             this.logger.LogInformation("Log within activity marked as RecordAndSample");
             var logRecord = this.exportedItems[0];
 
-            Assert.Equal(activity.TraceId, logRecord.TraceId);
-            Assert.Equal(activity.SpanId, logRecord.SpanId);
-            Assert.True(activity.ActivityTraceFlags.Equals(logRecord.TraceFlags));
+            var currentActivity = Activity.Current;
+            Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
+            Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
+            Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
         }
 
         public void Dispose()
