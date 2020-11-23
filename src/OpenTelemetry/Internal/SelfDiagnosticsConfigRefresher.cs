@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,6 +35,8 @@ namespace OpenTelemetry.Internal
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
         private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
+
+        private static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.");
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
@@ -203,7 +206,9 @@ namespace OpenTelemetry.Internal
                 this.memoryMappedFile = MemoryMappedFile.CreateFromFile(filePath, FileMode.Create, null, newFileSize);
                 this.logDirectory = newLogDirectory;
                 this.logFileSize = newFileSize;
-                this.logFilePosition = 0;
+                this.logFilePosition = MessageOnNewFile.Length;
+                using var stream = this.memoryMappedFile.CreateViewStream();
+                stream.Write(MessageOnNewFile, 0, MessageOnNewFile.Length);
             }
             catch (Exception ex)
             {

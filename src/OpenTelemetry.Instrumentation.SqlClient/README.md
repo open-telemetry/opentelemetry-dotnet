@@ -120,6 +120,41 @@ using Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+### Enrich
+
+This option, available on .NET Core only, allows one to enrich the activity
+with additional information from the raw `SqlCommand` object. The `Enrich`
+action is called only when `activity.IsAllDataRequested` is `true`. It contains
+the activity itself (which can be enriched), the name of the event, and the
+actual raw object.
+
+Currently there is only one event name reported, "OnCustom". The actual object
+is `Microsoft.Data.SqlClient.SqlCommand` for `Microsoft.Data.SqlClient` and
+`System.Data.SqlClient.SqlCommand` for `System.Data.SqlClient`.
+
+The following code snippet shows how to add additional tags using `Enrich`.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
+    {
+        if (eventName.Equals("OnCustom"))
+        {
+            if (rawObject is SqlCommand cmd)
+            {
+                activity.SetTag("db.commandTimeout", cmd.CommandTimeout);
+            }
+        };
+    })
+    .Build();
+```
+
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any activity.
+The `Enrich` option is specific to this instrumentation, and is provided to
+get access to `SqlCommand` object.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
