@@ -54,6 +54,11 @@ namespace OpenTelemetry.Internal
             logLevel = EventLevel.LogAlways;
             try
             {
+                if (!File.Exists(ConfigFileName))
+                {
+                    return false;
+                }
+
                 using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 var buffer = this.configBuffer;
                 if (buffer == null)
