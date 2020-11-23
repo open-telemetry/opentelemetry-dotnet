@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter
             this.options = options ?? new ConsoleExporterOptions();
         }
 
-        internal void WriteLine(string message)
+        protected void WriteLine(string message)
         {
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
             {

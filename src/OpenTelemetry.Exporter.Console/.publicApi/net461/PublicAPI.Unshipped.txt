@@ -4,6 +4,7 @@ OpenTelemetry.Exporter.Console.ConsoleLogRecordExporter
 OpenTelemetry.Exporter.Console.ConsoleLogRecordExporter.ConsoleLogRecordExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
 OpenTelemetry.Exporter.ConsoleExporter<T>
 OpenTelemetry.Exporter.ConsoleExporter<T>.ConsoleExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
+OpenTelemetry.Exporter.ConsoleExporter<T>.WriteLine(string message) -> void
 OpenTelemetry.Exporter.ConsoleExporterOptions
 OpenTelemetry.Exporter.ConsoleExporterOptions.ConsoleExporterOptions() -> void
 OpenTelemetry.Exporter.ConsoleExporterOptions.Targets.get -> OpenTelemetry.Exporter.ConsoleExporterOutputTargets
