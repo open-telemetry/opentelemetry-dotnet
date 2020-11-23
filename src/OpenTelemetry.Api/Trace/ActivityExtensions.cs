@@ -83,7 +83,7 @@ namespace OpenTelemetry.Trace
 
             var tagsCollection = new ActivityTagsCollection
             {
-                { SemanticConventions.AttributeExceptionType, ex.GetType().Name },
+                { SemanticConventions.AttributeExceptionType, ex.GetType().FullName },
                 { SemanticConventions.AttributeExceptionStacktrace, ex.ToInvariantString() },
             };
 

@@ -8,6 +8,13 @@
 * Jaeger will now set the `error` tag when `otel.status_code` is set to `Error`.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
 
+* Jaeger will no longer send the `otel.status_code` tag if the value is `Unset`.
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
+
+* Span Event.Name will now be populated as the `event` field on Jaeger Logs
+  instead of `message`.
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

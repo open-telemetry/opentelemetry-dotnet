@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console -v 0.7.0-beta.1
+dotnet add package OpenTelemetry.Exporter.Console -v 1.0.0-rc1.1
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):

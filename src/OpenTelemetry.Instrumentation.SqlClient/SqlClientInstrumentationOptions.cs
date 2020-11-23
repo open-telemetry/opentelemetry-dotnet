@@ -63,9 +63,26 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
         /// <para>string: the name of the event.</para>
-        /// <para>object: the raw object from which additional information can be extracted to enrich the activity.
-        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// <para>object: the raw <c>SqlCommand</c> object from which additional information can be extracted to enrich the activity.</para>
+        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
         /// </remarks>
+        /// <example>
+        /// <code>
+        /// using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        ///     .AddSqlClientInstrumentation(opt => opt.Enrich
+        ///         = (activity, eventName, rawObject) =>
+        ///      {
+        ///         if (eventName.Equals("OnCustom"))
+        ///         {
+        ///             if (rawObject is SqlCommand cmd)
+        ///             {
+        ///                 activity.SetTag("db.commandTimeout", cmd.CommandTimeout);
+        ///             }
+        ///         }
+        ///      })
+        ///     .Build();
+        /// </code>
+        /// </example>
         public Action<Activity, string, object> Enrich { get; set; }
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
