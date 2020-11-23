@@ -175,9 +175,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     PeerServiceResolver.InspectTag(ref this, key, strVal);
 
-                    if (key == SpanAttributeConstants.StatusCodeKey && strVal == "Error")
+                    if (key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", "true"));
+                        if (strVal == "Error")
+                        {
+                            PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", "true"));
+                        }
+                        else if (strVal == "Unset")
+                        {
+                            // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                            return true;
+                        }
                     }
                 }
                 else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)

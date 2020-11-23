@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -45,7 +46,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), zipkinSpan.Duration);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -70,12 +71,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             Assert.Equal(ZipkinSpanName, zipkinSpan.Name);
-            Assert.Empty(zipkinSpan.Annotations.Value);
+            Assert.Empty(zipkinSpan.Annotations);
             Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -108,13 +109,25 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert
-            if (hasErrorFlag)
+
+            if (statusCode == StatusCode.Unset)
             {
-                Assert.Contains(zipkinSpan.Tags.Value, t => t.Key == "error" && (string)t.Value == "true");
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
             }
             else
             {
-                Assert.DoesNotContain(zipkinSpan.Tags.Value, t => t.Key == "error");
+                Assert.Equal(
+                    StatusHelper.GetStringNameForStatusCode(statusCode),
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            if (hasErrorFlag)
+            {
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == "true");
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
             }
         }
     }
