@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class ScopeManagerShim : IScopeManager
+    internal sealed class ScopeManagerShim : IScopeManager
     {
         private static readonly ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope>();
 
