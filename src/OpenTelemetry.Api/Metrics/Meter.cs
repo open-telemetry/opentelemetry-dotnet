@@ -22,6 +22,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Main interface to obtain metric instruments.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class Meter
     {
         /// <summary>

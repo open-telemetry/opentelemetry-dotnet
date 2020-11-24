@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics.Export
 {
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class Int64SummaryData : MetricData
     {
         public long Count { get; set; }

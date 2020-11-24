@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,6 +23,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Normalized name value pairs of metric labels.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class LabelSet
     {
         /// <summary>

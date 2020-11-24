@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -22,6 +23,7 @@ namespace OpenTelemetry.Metrics
     /// No op measure handle.
     /// </summary>
     /// <typeparam name="T">The type of Measure. Only long and double are supported now.</typeparam>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public sealed class NoopBoundMeasureMetric<T> : BoundMeasureMetric<T>
         where T : struct
     {

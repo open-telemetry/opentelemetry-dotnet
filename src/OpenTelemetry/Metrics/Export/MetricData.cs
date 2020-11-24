@@ -22,6 +22,7 @@ namespace OpenTelemetry.Metrics.Export
     /// <summary>
     /// MetricData base class.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class MetricData
     {
         public DateTime StartTimestamp { get; set; }
