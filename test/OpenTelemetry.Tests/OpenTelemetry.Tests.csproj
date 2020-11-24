@@ -17,7 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' Or '$(TargetFramework)' == 'net5.0'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net452' And '$(TargetFramework)' != 'net46' And '$(TargetFramework)' != 'netcoreapp2.1'">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingPkgVer)" />
   </ItemGroup>
 
