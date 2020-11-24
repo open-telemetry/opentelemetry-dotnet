@@ -61,7 +61,8 @@ This instrumentation can be configured to change the default behavior by using
 
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using `Filter` function in
-`AspNetCoreInstrumentationOptions`. This defines the condition for allowable requests. The Filter receives the `HttpContext` of the incoming
+`AspNetCoreInstrumentationOptions`. This defines the condition for allowable
+requests. The Filter receives the `HttpContext` of the incoming
 request, and does not instrument the request if the Filter returns false or throws
 exception.
 
