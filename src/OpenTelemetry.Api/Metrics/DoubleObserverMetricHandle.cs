@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Handle to the metrics observer with the defined <see cref="LabelSet"/>.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class DoubleObserverMetricHandle
     {
         /// <summary>

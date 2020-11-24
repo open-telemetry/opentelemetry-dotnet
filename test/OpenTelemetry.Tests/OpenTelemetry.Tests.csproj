@@ -3,6 +3,7 @@
     <Description>Unit test project for OpenTelemetry</Description>
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net46;net452</TargetFrameworks>
+    <NoWarn>$(NoWarn),CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

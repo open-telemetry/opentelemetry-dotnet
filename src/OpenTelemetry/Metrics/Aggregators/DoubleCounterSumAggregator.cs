@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// <summary>
     /// Basic aggregator which calculates a Sum from individual measurements.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class DoubleCounterSumAggregator : Aggregator<double>
     {
         private double sum;
