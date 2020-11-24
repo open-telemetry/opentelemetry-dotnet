@@ -95,11 +95,10 @@ namespace OpenTelemetry.Tests.Logs
         {
             var message = "Hello, World!";
             this.logger.LogInformation(message);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, itemCount);
+            Assert.Equal(1, state.Count);
 
             Assert.Equal(message.ToString(), state.ToString());
         }
@@ -109,11 +108,10 @@ namespace OpenTelemetry.Tests.Logs
         {
             var message = $"Hello from potato {0.99}.";
             this.logger.LogInformation(message);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, itemCount);
+            Assert.Equal(1, state.Count);
 
             Assert.Equal(message.ToString(), state.ToString());
         }
@@ -121,35 +119,24 @@ namespace OpenTelemetry.Tests.Logs
         [Fact]
         public void CheckStateForStructuredLogWithTemplate()
         {
-            this.logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var message = "Hello from {name} {price}.";
+            this.logger.LogInformation(message, "tomato", 2.99);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state has name, price and {OriginalFormat}
-            Assert.Equal(3, itemCount);
+            Assert.Equal(3, state.Count);
 
-            // Get value for {name}
-            var firstArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 0 });
-            var firstArgumentKey = firstArgument.GetType().GetProperty("Key").GetValue(firstArgument).ToString();
-            var firstArgumentValue = firstArgument.GetType().GetProperty("Value").GetValue(firstArgument).ToString();
+            // Check if first item is name
+            Assert.Equal("name", state[0].Key);
+            Assert.Equal("tomato", state[0].Value);
 
-            Assert.Equal("name", firstArgumentKey);
-            Assert.Equal("tomato", firstArgumentValue);
+            // Check if second item is price
+            Assert.Equal("price", state[1].Key);
+            Assert.Equal(2.99, state[1].Value);
 
-            // Get value for {price}
-            var secondArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 1 });
-            var secondArgumentKey = secondArgument.GetType().GetProperty("Key").GetValue(secondArgument).ToString();
-            var secondArgumentValue = Convert.ToDouble(secondArgument.GetType().GetProperty("Value").GetValue(secondArgument));
-
-            Assert.Equal("price", secondArgumentKey);
-            Assert.Equal(2.99, secondArgumentValue);
-
-            // Get value for {OriginalFormat}
-            var thirdArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 2 });
-            var thirdArgumentKey = thirdArgument.GetType().GetProperty("Key").GetValue(thirdArgument).ToString();
-            var thirdArgumentValue = thirdArgument.GetType().GetProperty("Value").GetValue(thirdArgument).ToString();
-            Assert.Equal("{OriginalFormat}", thirdArgumentKey);
-            Assert.Equal("Hello from {name} {price}.", thirdArgumentValue);
+            // Check if third item is {OriginalFormat}
+            Assert.Equal("{OriginalFormat}", state[2].Key);
+            Assert.Equal(message, state[2].Value);
 
             Assert.Equal($"Hello from tomato 2.99.", state.ToString());
         }
@@ -159,28 +146,20 @@ namespace OpenTelemetry.Tests.Logs
         {
             var food = new Food { Name = "artichoke", Price = 3.99 };
             this.logger.LogInformation("{food}", food);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has food and {OriginalFormat}
-            Assert.Equal(2, itemCount);
+            Assert.Equal(2, state.Count);
 
-            // Get value for food
-            var firstArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 0 });
-            var firstArgumentKey = firstArgument.GetType().GetProperty("Key").GetValue(firstArgument).ToString();
-            var firstArgumentValue = (Food)firstArgument.GetType().GetProperty("Value").GetValue(firstArgument);
+            // Check if the first item is food
+            var stateFirstItem = (Food)state[0].Value;
+            Assert.Equal("food", state[0].Key);
+            Assert.Equal(food.Name, stateFirstItem.Name);
+            Assert.Equal(food.Price, stateFirstItem.Price);
 
-            Assert.Equal("food", firstArgumentKey);
-            Assert.Equal(food.Name, firstArgumentValue.Name);
-            Assert.Equal(food.Price, firstArgumentValue.Price);
-
-            // Get value for {OriginalFormat}
-            var secondArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 1 });
-            var secondArgumentKey = secondArgument.GetType().GetProperty("Key").GetValue(secondArgument).ToString();
-            var secondArgumentValue = secondArgument.GetType().GetProperty("Value").GetValue(secondArgument).ToString();
-
-            Assert.Equal("{OriginalFormat}", secondArgumentKey);
-            Assert.Equal("{food}", secondArgumentValue);
+            // Check if second item is {OriginalFormat}
+            Assert.Equal("{OriginalFormat}", state[1].Key);
+            Assert.Equal("{food}", state[1].Value);
 
             Assert.Equal(food.ToString(), state.ToString());
         }
@@ -190,30 +169,21 @@ namespace OpenTelemetry.Tests.Logs
         {
             var anonymousType = new { Name = "pumpkin", Price = 5.99 };
             this.logger.LogInformation("{food}", anonymousType);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
-            // state only food and {OriginalFormat}
-            Assert.Equal(2, itemCount);
+            // state only has food and {OriginalFormat}
+            Assert.Equal(2, state.Count);
 
-            // Get value for {food}
-            var firstArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 0 });
-            var firstArgumentKey = firstArgument.GetType().GetProperty("Key").GetValue(firstArgument).ToString();
-            var firstArgumentValue = firstArgument.GetType().GetProperty("Value").GetValue(firstArgument);
-            var firstArgumentValueName = firstArgumentValue.GetType().GetProperty("Name").GetValue(firstArgumentValue).ToString();
-            var firstArgumentValuePrice = Convert.ToDouble(firstArgumentValue.GetType().GetProperty("Price").GetValue(firstArgumentValue));
+            // Check if the first item is the anonymous type logged
+            var stateFirstItem = state[0].Value as dynamic;
 
-            Assert.Equal("food", firstArgumentKey);
-            Assert.Equal(anonymousType.Name, firstArgumentValueName);
-            Assert.Equal(anonymousType.Price, firstArgumentValuePrice);
+            Assert.Equal("food", state[0].Key);
+            Assert.Equal(anonymousType.Name, stateFirstItem.Name);
+            Assert.Equal(anonymousType.Price, stateFirstItem.Price);
 
-            // Get value for {OriginalFormat}
-            var secondArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 1 });
-            var secondArgumentKey = secondArgument.GetType().GetProperty("Key").GetValue(secondArgument).ToString();
-            var secondArgumentValue = secondArgument.GetType().GetProperty("Value").GetValue(secondArgument).ToString();
-
-            Assert.Equal("{OriginalFormat}", secondArgumentKey);
-            Assert.Equal("{food}", secondArgumentValue);
+            // Check if the second item is {OriginalFormat}
+            Assert.Equal("{OriginalFormat}", state[1].Key);
+            Assert.Equal("{food}", state[1].Value);
 
             Assert.Equal(anonymousType.ToString(), state.ToString());
         }
@@ -227,27 +197,19 @@ namespace OpenTelemetry.Tests.Logs
                 ["Price"] = 299.99,
             };
             this.logger.LogInformation("{food}", food);
-            var state = this.exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
-            // state only food and {OriginalFormat}
-            Assert.Equal(2, itemCount);
+            // state only has food and {OriginalFormat}
+            Assert.Equal(2, state.Count);
 
-            // Get value for {food}
-            var firstArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 0 });
-            var firstArgumentKey = firstArgument.GetType().GetProperty("Key").GetValue(firstArgument).ToString();
-            var firstArgumentValue = firstArgument.GetType().GetProperty("Value").GetValue(firstArgument) as Dictionary<string, object>;
+            // Check if first item is food
+            var stateFirstItem = state[0].Value as Dictionary<string, object>;
+            Assert.Equal("food", state[0].Key);
+            Assert.True(food.Count == stateFirstItem.Count && !food.Except(stateFirstItem).Any());
 
-            Assert.Equal("food", firstArgumentKey);
-            Assert.True(food.Count == firstArgumentValue.Count && !food.Except(firstArgumentValue).Any());
-
-            // Get value for {OriginalFormat}
-            var secondArgument = state.GetType().GetProperty("Item").GetValue(state, new object[] { 1 });
-            var secondArgumentKey = secondArgument.GetType().GetProperty("Key").GetValue(secondArgument).ToString();
-            var secondArgumentValue = secondArgument.GetType().GetProperty("Value").GetValue(secondArgument).ToString();
-
-            Assert.Equal("{OriginalFormat}", secondArgumentKey);
-            Assert.Equal("{food}", secondArgumentValue);
+            // Check if the second item is {OriginalFormat}
+            Assert.Equal("{OriginalFormat}", state[1].Key);
+            Assert.Equal("{food}", state[1].Value);
 
             Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
         }
@@ -304,6 +266,7 @@ namespace OpenTelemetry.Tests.Logs
             var logRecord = this.exportedItems[0];
 
             var currentActivity = Activity.Current;
+            Assert.NotNull(Activity.Current);
             Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
             Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
@@ -328,6 +291,7 @@ namespace OpenTelemetry.Tests.Logs
             var logRecord = this.exportedItems[0];
 
             var currentActivity = Activity.Current;
+            Assert.NotNull(Activity.Current);
             Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
             Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
