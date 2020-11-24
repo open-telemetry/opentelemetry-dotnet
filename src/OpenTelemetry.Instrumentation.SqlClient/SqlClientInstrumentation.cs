@@ -25,9 +25,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     {
         internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
 
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 #if NETFRAMEWORK
         private readonly SqlEventSourceListener sqlEventSourceListener;
+#else
+        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 #endif
 
         /// <summary>
@@ -36,23 +37,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <param name="options">Configuration options for sql instrumentation.</param>
         public SqlClientInstrumentation(SqlClientInstrumentationOptions options = null)
         {
+#if NETFRAMEWORK
+            this.sqlEventSourceListener = new SqlEventSourceListener(options);
+#else
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                name => new SqlClientDiagnosticListener(name, options),
                listener => listener.Name == SqlClientDiagnosticListenerName,
                null);
             this.diagnosticSourceSubscriber.Subscribe();
-
-#if NETFRAMEWORK
-            this.sqlEventSourceListener = new SqlEventSourceListener(options);
 #endif
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber?.Dispose();
 #if NETFRAMEWORK
             this.sqlEventSourceListener?.Dispose();
+#else
+            this.diagnosticSourceSubscriber?.Dispose();
 #endif
         }
     }
