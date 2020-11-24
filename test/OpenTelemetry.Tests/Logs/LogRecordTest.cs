@@ -126,17 +126,17 @@ namespace OpenTelemetry.Tests.Logs
             // state has name, price and {OriginalFormat}
             Assert.Equal(3, state.Count);
 
-            // Check if first item is name
-            Assert.Equal("name", state[0].Key);
-            Assert.Equal("tomato", state[0].Value);
+            // Check if state has name
+            Assert.Contains(state, item => item.Key == "name");
+            Assert.Equal("tomato", state.First(item => item.Key == "name").Value);
 
-            // Check if second item is price
-            Assert.Equal("price", state[1].Key);
-            Assert.Equal(2.99, state[1].Value);
+            // Check if state has price
+            Assert.Contains(state, item => item.Key == "price");
+            Assert.Equal(2.99, state.First(item => item.Key == "price").Value);
 
-            // Check if third item is {OriginalFormat}
-            Assert.Equal("{OriginalFormat}", state[2].Key);
-            Assert.Equal(message, state[2].Value);
+            // Check if state has OriginalFormat
+            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
+            Assert.Equal(message, state.First(item => item.Key == "{OriginalFormat}").Value);
 
             Assert.Equal($"Hello from tomato 2.99.", state.ToString());
         }
@@ -148,18 +148,19 @@ namespace OpenTelemetry.Tests.Logs
             this.logger.LogInformation("{food}", food);
             var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
-            // state only has food and {OriginalFormat}
+            // state has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
 
-            // Check if the first item is food
-            var stateFirstItem = (Food)state[0].Value;
-            Assert.Equal("food", state[0].Key);
-            Assert.Equal(food.Name, stateFirstItem.Name);
-            Assert.Equal(food.Price, stateFirstItem.Price);
+            // Check if state has food
+            Assert.Contains(state, item => item.Key == "food");
 
-            // Check if second item is {OriginalFormat}
-            Assert.Equal("{OriginalFormat}", state[1].Key);
-            Assert.Equal("{food}", state[1].Value);
+            var foodParameter = (Food)state.First(item => item.Key == "food").Value;
+            Assert.Equal(food.Name, foodParameter.Name);
+            Assert.Equal(food.Price, foodParameter.Price);
+
+            // Check if state has OriginalFormat
+            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
 
             Assert.Equal(food.ToString(), state.ToString());
         }
@@ -171,19 +172,19 @@ namespace OpenTelemetry.Tests.Logs
             this.logger.LogInformation("{food}", anonymousType);
             var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
-            // state only has food and {OriginalFormat}
+            // state has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
 
-            // Check if the first item is the anonymous type logged
-            var stateFirstItem = state[0].Value as dynamic;
+            // Check if state has food
+            Assert.Contains(state, item => item.Key == "food");
 
-            Assert.Equal("food", state[0].Key);
-            Assert.Equal(anonymousType.Name, stateFirstItem.Name);
-            Assert.Equal(anonymousType.Price, stateFirstItem.Price);
+            var foodParameter = state.First(item => item.Key == "food").Value as dynamic;
+            Assert.Equal(anonymousType.Name, foodParameter.Name);
+            Assert.Equal(anonymousType.Price, foodParameter.Price);
 
-            // Check if the second item is {OriginalFormat}
-            Assert.Equal("{OriginalFormat}", state[1].Key);
-            Assert.Equal("{food}", state[1].Value);
+            // Check if state has OriginalFormat
+            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
 
             Assert.Equal(anonymousType.ToString(), state.ToString());
         }
@@ -202,14 +203,15 @@ namespace OpenTelemetry.Tests.Logs
             // state only has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
 
-            // Check if first item is food
-            var stateFirstItem = state[0].Value as Dictionary<string, object>;
-            Assert.Equal("food", state[0].Key);
-            Assert.True(food.Count == stateFirstItem.Count && !food.Except(stateFirstItem).Any());
+            // Check if state has food
+            Assert.Contains(state, item => item.Key == "food");
 
-            // Check if the second item is {OriginalFormat}
-            Assert.Equal("{OriginalFormat}", state[1].Key);
-            Assert.Equal("{food}", state[1].Value);
+            var foodParameter = state.First(item => item.Key == "food").Value as Dictionary<string, object>;
+            Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
+
+            // Check if state has OriginalFormat
+            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
 
             Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
         }
