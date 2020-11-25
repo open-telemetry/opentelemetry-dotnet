@@ -146,7 +146,7 @@ namespace OpenTelemetry.Trace.Tests
 
             if (timeout == 0)
             {
-                // ForceFlush(0) will trigger flush and return immediately, so let's sleep for a while
+                // Shutdown(0) will trigger flush and return immediately, so let's sleep for a while
                 Thread.Sleep(1_000);
             }
 

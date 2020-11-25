@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.Console;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorIgnoresActivityWhenDropped()
         {
             var sampler = new AlwaysOffSampler();
-            var processor = new TestActivityExportProcessor(new ConsoleExporter<Activity>(null));
+            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorIgnoresActivityMarkedAsRecordOnly()
         {
             var sampler = new RecordOnlySampler();
-            var processor = new TestActivityExportProcessor(new ConsoleExporter<Activity>(null));
+            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -72,7 +73,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorExportsActivityMarkedAsRecordAndSample()
         {
             var sampler = new AlwaysOnSampler();
-            var processor = new TestActivityExportProcessor(new ConsoleExporter<Activity>(null));
+            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)

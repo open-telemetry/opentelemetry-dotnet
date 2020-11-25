@@ -61,10 +61,10 @@ This instrumentation can be configured to change the default behavior by using
 
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using `Filter` function in
-`AspNetCoreInstrumentationOptions`. This can be used to filter out any requests
-based on some condition. The Filter receives the `HttpContext` of the incoming
-request, and filters out the request if the Filter returns false or throws
-exception.
+`AspNetCoreInstrumentationOptions`. This defines the condition for allowable
+requests. The Filter receives the `HttpContext` of the incoming
+request, and does not collect telemetry about the request if the Filter
+returns false or throws exception.
 
 The following code snippet shows how to use `Filter` to filter out all POST
 requests.
@@ -76,8 +76,8 @@ services.AddOpenTelemetryTracing(
             opt => opt.Filter =
                 (httpContext) =>
                 {
-                    // filter out all HTTP POST requests.
-                    return !httpContext.Request.Method.Equals("POST");
+                    // only collect telemetry about HTTP GET requests
+                    return httpContext.Request.Method.Equals("GET");
                 })
         .AddJaegerExporter()
         );

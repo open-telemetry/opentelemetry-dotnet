@@ -1,5 +1,10 @@
+OpenTelemetry.Exporter.Console.ConsoleActivityExporter
+OpenTelemetry.Exporter.Console.ConsoleActivityExporter.ConsoleActivityExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
+OpenTelemetry.Exporter.Console.ConsoleLogRecordExporter
+OpenTelemetry.Exporter.Console.ConsoleLogRecordExporter.ConsoleLogRecordExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
 OpenTelemetry.Exporter.ConsoleExporter<T>
 OpenTelemetry.Exporter.ConsoleExporter<T>.ConsoleExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
+OpenTelemetry.Exporter.ConsoleExporter<T>.WriteLine(string message) -> void
 OpenTelemetry.Exporter.ConsoleExporterOptions
 OpenTelemetry.Exporter.ConsoleExporterOptions.ConsoleExporterOptions() -> void
 OpenTelemetry.Exporter.ConsoleExporterOptions.Targets.get -> OpenTelemetry.Exporter.ConsoleExporterOutputTargets
@@ -9,6 +14,7 @@ OpenTelemetry.Exporter.ConsoleExporterOutputTargets.Console = 1 -> OpenTelemetry
 OpenTelemetry.Exporter.ConsoleExporterOutputTargets.Debug = 2 -> OpenTelemetry.Exporter.ConsoleExporterOutputTargets
 OpenTelemetry.Trace.ConsoleExporterHelperExtensions
 OpenTelemetry.Logs.ConsoleExporterLoggingExtensions
-override OpenTelemetry.Exporter.ConsoleExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.Console.ConsoleActivityExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> batch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.Console.ConsoleLogRecordExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Logs.LogRecord> batch) -> OpenTelemetry.ExportResult
 static OpenTelemetry.Trace.ConsoleExporterHelperExtensions.AddConsoleExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Logs.ConsoleExporterLoggingExtensions.AddConsoleExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
