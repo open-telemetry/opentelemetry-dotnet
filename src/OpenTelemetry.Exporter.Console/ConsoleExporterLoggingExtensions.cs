@@ -17,6 +17,7 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.Console;
 
 namespace OpenTelemetry.Logs
 {
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Logs
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new ConsoleExporter<LogRecord>(options)));
+            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new ConsoleLogRecordExporter(options)));
         }
     }
 }
