@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetStringNameForStatusCode(status.StatusCode));
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
 
