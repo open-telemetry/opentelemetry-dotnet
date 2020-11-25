@@ -1,52 +1,3 @@
-OpenTelemetry.Shims.OpenTracing.ScopeManagerShim
-OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.Activate(OpenTracing.ISpan span, bool finishSpanOnDispose) -> OpenTracing.IScope
-OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.Active.get -> OpenTracing.IScope
-OpenTelemetry.Shims.OpenTracing.ScopeManagerShim.ScopeManagerShim(OpenTelemetry.Trace.Tracer tracer) -> void
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.AddReference(string referenceType, OpenTracing.ISpanContext referencedContext) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.AsChildOf(OpenTracing.ISpan parent) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.AsChildOf(OpenTracing.ISpanContext parent) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.IgnoreActiveSpan() -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.SpanBuilderShim(OpenTelemetry.Trace.Tracer tracer, string spanName, System.Collections.Generic.IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null) -> void
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.Start() -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.StartActive() -> OpenTracing.IScope
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.StartActive(bool finishSpanOnDispose) -> OpenTracing.IScope
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithStartTimestamp(System.DateTimeOffset timestamp) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(OpenTracing.Tag.BooleanTag tag, bool value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(OpenTracing.Tag.IntOrStringTag tag, string value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(OpenTracing.Tag.IntTag tag, int value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(OpenTracing.Tag.StringTag tag, string value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(string key, bool value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(string key, double value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(string key, int value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanBuilderShim.WithTag(string key, string value) -> OpenTracing.ISpanBuilder
-OpenTelemetry.Shims.OpenTracing.SpanContextShim
-OpenTelemetry.Shims.OpenTracing.SpanContextShim.GetBaggageItems() -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
-OpenTelemetry.Shims.OpenTracing.SpanContextShim.SpanContext.get -> OpenTelemetry.Trace.SpanContext
-OpenTelemetry.Shims.OpenTracing.SpanContextShim.SpanContextShim(in OpenTelemetry.Trace.SpanContext spanContext) -> void
-OpenTelemetry.Shims.OpenTracing.SpanContextShim.SpanId.get -> string
-OpenTelemetry.Shims.OpenTracing.SpanContextShim.TraceId.get -> string
-OpenTelemetry.Shims.OpenTracing.SpanShim
-OpenTelemetry.Shims.OpenTracing.SpanShim.Context.get -> OpenTracing.ISpanContext
-OpenTelemetry.Shims.OpenTracing.SpanShim.Finish() -> void
-OpenTelemetry.Shims.OpenTracing.SpanShim.Finish(System.DateTimeOffset finishTimestamp) -> void
-OpenTelemetry.Shims.OpenTracing.SpanShim.GetBaggageItem(string key) -> string
-OpenTelemetry.Shims.OpenTracing.SpanShim.Log(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> fields) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.Log(System.DateTimeOffset timestamp, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> fields) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.Log(System.DateTimeOffset timestamp, string event) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.Log(string event) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetBaggageItem(string key, string value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetOperationName(string operationName) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(OpenTracing.Tag.BooleanTag tag, bool value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(OpenTracing.Tag.IntOrStringTag tag, string value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(OpenTracing.Tag.IntTag tag, int value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(OpenTracing.Tag.StringTag tag, string value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(string key, bool value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(string key, double value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(string key, int value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SetTag(string key, string value) -> OpenTracing.ISpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.Span.get -> OpenTelemetry.Trace.TelemetrySpan
-OpenTelemetry.Shims.OpenTracing.SpanShim.SpanShim(OpenTelemetry.Trace.TelemetrySpan span) -> void
 OpenTelemetry.Shims.OpenTracing.TracerShim
 OpenTelemetry.Shims.OpenTracing.TracerShim.ActiveSpan.get -> OpenTracing.ISpan
 OpenTelemetry.Shims.OpenTracing.TracerShim.BuildSpan(string operationName) -> OpenTracing.ISpanBuilder
@@ -54,4 +5,3 @@ OpenTelemetry.Shims.OpenTracing.TracerShim.Extract<TCarrier>(OpenTracing.Propaga
 OpenTelemetry.Shims.OpenTracing.TracerShim.Inject<TCarrier>(OpenTracing.ISpanContext spanContext, OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier) -> void
 OpenTelemetry.Shims.OpenTracing.TracerShim.ScopeManager.get -> OpenTracing.IScopeManager
 OpenTelemetry.Shims.OpenTracing.TracerShim.TracerShim(OpenTelemetry.Trace.Tracer tracer, OpenTelemetry.Context.Propagation.TextMapPropagator textFormat) -> void
-const OpenTelemetry.Shims.OpenTracing.SpanShim.DefaultEventName = "log" -> string
