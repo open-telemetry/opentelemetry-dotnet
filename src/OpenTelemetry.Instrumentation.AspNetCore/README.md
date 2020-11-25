@@ -63,8 +63,8 @@ This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using `Filter` function in
 `AspNetCoreInstrumentationOptions`. This defines the condition for allowable
 requests. The Filter receives the `HttpContext` of the incoming
-request, and does not collect telemetry about the request if the Filter returns false or throws
-exception.
+request, and does not collect telemetry about the request if the Filter
+returns false or throws exception.
 
 The following code snippet shows how to use `Filter` to filter out all POST
 requests.
