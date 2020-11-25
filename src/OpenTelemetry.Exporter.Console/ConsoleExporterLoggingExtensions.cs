@@ -37,7 +37,7 @@ namespace OpenTelemetry.Logs
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new ConsoleExporter<LogRecord>(options)));
+            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleExporter<LogRecord>(options)));
         }
     }
 }

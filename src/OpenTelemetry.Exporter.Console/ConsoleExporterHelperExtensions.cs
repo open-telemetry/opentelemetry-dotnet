@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new ConsoleExporter<Activity>(options)));
+            return builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleExporter<Activity>(options)));
         }
     }
 }

@@ -28,18 +28,18 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckNullExporter()
         {
-            Assert.Throws<ArgumentNullException>(() => new BatchExportProcessor<Activity>(null));
+            Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null));
         }
 
         [Fact]
         public void CheckConstructorWithInvalidValues()
         {
             var exportedItems = new List<Activity>();
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 1, maxExportBatchSize: 2049));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), exporterTimeoutMilliseconds: -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), maxExportBatchSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 1, maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), scheduledDelayMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(
+            using var processor = new BatchActivityExportProcessor(
                 exporter,
                 maxQueueSize: 1,
                 maxExportBatchSize: 1,
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
+            using var processor = new BatchActivityExportProcessor(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
 
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(
+            using var processor = new BatchActivityExportProcessor(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(
+            using var processor = new BatchActivityExportProcessor(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new BatchExportProcessor<Activity>(
+            using var processor = new BatchActivityExportProcessor(
                 exporter,
                 maxQueueSize: 1,
                 maxExportBatchSize: 1);
