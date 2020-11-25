@@ -8,6 +8,12 @@
   extension) will now be set as the `Unset`, `Error`, or `Ok` string
   representation instead of the `0`, `1`, or `2` integer representation.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+* Metrics API/SDK support is in an experimental state and is not recommended for
+  production use. All metric APIs have been marked with the `Obsolete`
+  attribute. See
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for more information.
+  ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
 
 ## 1.0.0-rc1.1
 

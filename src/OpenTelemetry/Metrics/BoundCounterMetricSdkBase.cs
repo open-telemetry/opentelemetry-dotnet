@@ -14,10 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Metrics.Aggregators;
 
 namespace OpenTelemetry.Metrics
 {
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class BoundCounterMetricSdkBase<T> : BoundCounterMetric<T>
         where T : struct
     {

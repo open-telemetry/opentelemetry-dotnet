@@ -64,12 +64,12 @@ namespace OpenTelemetry.Exporter
                                 continue;
                             }
 
-                            Console.Write($"    {tag.Key}: [");
+                            this.Write($"    {tag.Key}: [");
 
                             for (int i = 0; i < array.Length; i++)
                             {
-                                Console.Write(i != 0 ? ", " : string.Empty);
-                                Console.Write($"{array.GetValue(i)}");
+                                this.Write(i != 0 ? ", " : string.Empty);
+                                this.Write($"{array.GetValue(i)}");
                             }
 
                             this.WriteLine($"]");
@@ -149,6 +149,19 @@ namespace OpenTelemetry.Exporter
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
             {
                 Debug.WriteLine(message);
+            }
+        }
+
+        private void Write(string message)
+        {
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
+            {
+                Console.Write(message);
+            }
+
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
+            {
+                Debug.Write(message);
             }
         }
     }
