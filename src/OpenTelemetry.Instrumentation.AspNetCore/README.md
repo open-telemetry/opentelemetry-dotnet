@@ -76,7 +76,7 @@ services.AddOpenTelemetryTracing(
             opt => opt.Filter =
                 (httpContext) =>
                 {
-                    // only instrument HTTP GET requests
+                    // only collect telemetry about HTTP GET requests
                     return httpContext.Request.Method.Equals("GET");
                 })
         .AddJaegerExporter()
