@@ -111,9 +111,12 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnExport(T data)
         {
-            if (this.exporterProcException != null)
+            lock (this.exporterProcException)
             {
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), this.exporterProcException);
+                if (this.exporterProcException != null)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), this.exporterProcException);
+                }
             }
 
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
@@ -229,7 +232,10 @@ namespace OpenTelemetry
                     }
                     catch (Exception ex)
                     {
-                        this.exporterProcException = ex;
+                        lock (this.exporterProcException)
+                        {
+                            this.exporterProcException = ex;
+                        }
                     }
 
                     this.dataExportedNotification.Set();
