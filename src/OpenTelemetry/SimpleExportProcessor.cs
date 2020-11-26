@@ -48,7 +48,7 @@ namespace OpenTelemetry
                 }
                 catch (Exception ex)
                 {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
                 }
             }
         }
