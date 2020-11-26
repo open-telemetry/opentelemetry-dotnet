@@ -43,7 +43,6 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
-        private Exception exporterProcException;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -111,14 +110,6 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnExport(T data)
         {
-            lock (this.exporterProcException)
-            {
-                if (this.exporterProcException != null)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), this.exporterProcException);
-                }
-            }
-
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
@@ -232,10 +223,7 @@ namespace OpenTelemetry
                     }
                     catch (Exception ex)
                     {
-                        lock (this.exporterProcException)
-                        {
-                            this.exporterProcException = ex;
-                        }
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
                     }
 
                     this.dataExportedNotification.Set();
