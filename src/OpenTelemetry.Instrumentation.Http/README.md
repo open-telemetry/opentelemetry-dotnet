@@ -72,7 +72,7 @@ The following example shows how to use `SetHttpFlavor`.
 ```csharp
 using Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        options => options.SetHttpFlavor = true)
+        (options) => options.SetHttpFlavor = true)
     .AddConsoleExporter()
     .Build();
 ```
@@ -81,22 +81,23 @@ using Sdk.CreateTracerProviderBuilder()
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `Filter` function option.
-This can be used to filter out any requests based on some condition. The Filter
+This defines the condition for allowable requests. The Filter
 receives the request object - `HttpRequestMessage` for .NET Core and
-`HttpWebRequest` for .NET Framework - of the outgoing request and filters out
-the request if the Filter returns false or throws an exception.
+`HttpWebRequest` for .NET Framework - of the outgoing request and does not
+collect telemetry about the request if the Filter returns false or throws
+exception.
 
-The following shows an example of `Filter` being used to filter out all POST
+The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
 using Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        options => options.Filter =
-            httpRequestMessage =>
+        (options) => options.Filter =
+            (httpRequestMessage) =>
             {
-                // filter out all HTTP POST requests.
-                return httpRequestMessage.Method != HttpMethod.Post;
+                // only collect telemetry about HTTP GET requests
+                return httpRequestMessage.Method.Equals(HttpMethod.Get);
             })
     .AddConsoleExporter()
     .Build();
@@ -143,7 +144,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 services.AddOpenTelemetryTracing((builder) =>
 {
     builder
-    .AddHttpClientInstrumentation(opt => opt.Enrich
+    .AddHttpClientInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))
