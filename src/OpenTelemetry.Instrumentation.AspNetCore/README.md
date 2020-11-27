@@ -45,9 +45,9 @@ public void ConfigureServices(IServiceCollection services)
 {
     services.AddOpenTelemetryTracing(
         (builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddJaegerExporter()
-                );
+            .AddAspNetCoreInstrumentation()
+            .AddJaegerExporter()
+            );
 }
 ```
 
@@ -104,7 +104,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 services.AddOpenTelemetryTracing((builder) =>
 {
     builder
-    .AddAspNetCoreInstrumentation(opt => opt.Enrich
+    .AddAspNetCoreInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))
