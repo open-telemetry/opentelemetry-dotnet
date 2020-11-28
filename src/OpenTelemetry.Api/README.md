@@ -358,11 +358,11 @@ to be associated with `Activity`. There is no `Status` class in .NET, and hence
 Example:
 
 ```csharp
-activity?.SetTag("otel.status_code", "Error");
+activity?.SetTag("otel.status_code", "ERROR");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-Values for the StatusCode tag must be one of the strings "Unset", "Ok", or "Error",
+Values for the StatusCode tag must be one of the strings "UNSET", "OK", or "ERROR",
 which correspond respectively to the enums `Unset`, `Ok`, and `Error` from
 [`StatusCode`](./Trace/StatusCode.cs).
 
