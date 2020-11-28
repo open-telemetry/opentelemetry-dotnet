@@ -5,13 +5,17 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Getting started](#getting-started)
-* [Configuration](#configuration)
+* [Getting started with Logs](#getting-started-with-logging)
+* [Getting started with Traces](#getting-started-with-tracing)
+* [Tracing Configuration](#tracing-configuration)
+  * [ActivitySource](#activity-source)
   * [Instrumentation](#instrumentation)
   * [Processor](#processor)
   * [Resource](#resource)
   * [Sampler](#sampler)
 * [Advanced topics](#advanced-topics)
+  * [Propagators](#propagators)
+* [Troubleshooting](#troubleshooting)
 * [References](#references)
 
 ## Installation
@@ -83,127 +87,18 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
 `TracerProvider` holds the SDK configuration. It includes the following:
 
-1. The
-   [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
-   to be used.
-2. The
-   [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
-   associated with the traces.
+1. The list of `ActivitySource`s (aka Tracer) from which traces are collected.
+2. The list of instrumentations enabled via
+   [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library).
 3. The list of
    [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
-   to be invoked for the traces.
-4. The list of `ActivitySource`s (aka Tracer) from which traces are collected.
-5. The list of instrumentations enabled via
-   [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library).
 
-### Sampler
-
-[Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
-are used to control the noise and overhead introduced by OpenTelemetry by
-reducing the number of samples of traces collected and sent to the processors.
-If no sampler is explicitly configured, the default is to use
-`ParentBased(root=AlwaysOn)`. `SetSampler` method on `TracerProviderBuilder` can
-be used to set sampler. Only one sampler can be associated with a provider. If
-multiple `SetSampler` is called, the last one wins. Also, it is not possible to
-change the sampler *after* the provider is built, by calling the `Build()`
-method on the `TracerProviderBuilder`.
-
-The snippet below shows configuring a custom sampler to the provider.
-
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetSampler(new TraceIdRatioBasedSampler(0.25))
-    .Build();
-```
-
-### Resource
-
-[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
-is the immutable representation of the entity producing the telemetry. If no
-`Resource` is explicitly configured, the default is to use a resource indicating
-this [Telemetry
-SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk).
-`SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
-`ResourceBuilder` on the provider. When the provider is built, it automatically
-builds the final `Resource` from the configured `ResourceBuilder`. As with
-samplers, there can only be a single `Resource` associated with a provider. If
-multiple `SetResourceBuilder` is called, the last one wins. Also, it is not
-possible to change the resource builder *after* the provider is built, by
-calling the `Build()` method on the `TracerProviderBuilder`. `ResourceBuilder`
-offers various methods to construct resource comprising of multiple attributes
-from various sources.
-
-The snippet below shows configuring a custom `ResourceBuilder` to the provider.
-
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
-    .Build();
-```
-
-### Processor
-
-[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
-allows hooks for start and end of telemetry. If no processors are configured,
-then traces are simply dropped by the SDK. `AddProcessor` method on
-`TracerProviderBuilder` should be used to add a processor. There can be any
-number of processors added to the provider, and they are invoked in the same
-order as they are added. Unlike `Sampler` or `Resource`, processors can be added
-to the provider even *after* it is built.
-
-The snippet below shows how to add processors to the provider before and after
-it is built.
-
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddProcessor(new MyProcessor1())
-    .AddProcessor(new MyProcessor2()))
-    .Build();
-
-// Processors can be added to provider even after it is built.
-// Only those traces which are emitted after this line, will be sent to it.
-tracerProvider.AddProcessor(new MyProcessor3());
-```
-
-A `TracerProvider` assumes ownership of any processors added to it. This means
-that, provider will call `Shutdown` method on the processor, when it is
-shutdown, and disposes the processor when it is disposed. If multiple providers
-are being setup in an application, then separate instances of processors must be
-configured on them. Otherwise, shutting down one provider can cause the
-processor in other provider to be shut down as well, leading to undesired
-results.
-
-Processors can be used for enriching the telemetry and exporting the telemetry
-to an exporter. For enriching purposes, one must write a custom processor, and
-override the `OnStart` method with logic to enrich the telemetry. For exporting
-purposes, the SDK provides the following built-in processors:
-
-* [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#batching-processor)
-  : This is an exporting processor which batches the telemetry before sending to
-  the configured exporter.
-* [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
-  : This is a processor which can be composed from multiple processors. This is
-  typically used to construct multiple processing pipelines, each ending with
-  its own exporter.
-* [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor)
-  : This is an exporting processor which passes telemetry to the configured
-  exporter without any batching.
-
-Follow [this](docs/trace/extending-the-sdk#processor) document to learn about
-how to write own processors.
-
-*The processors shipped from this SDK are generics, and supports tracing and
-logging, by supporting `Activity` and `LogRecord` respectively.*
+4. The
+   [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
+   associated with the traces.
+5. The
+   [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+   to be used.
 
 ### Activity Source
 
@@ -250,9 +145,118 @@ provider, unless the life cycle of the instrumentation must be managed by the
 provider. If the instrumentation must be activated/shutdown/disposed along with
 the provider, then the instrumentation must be added to the provider.
 
-Follow [this](docs/trace/extending-the-sdk#instrumentation-library) document to
-learn about the instrumentation libraries shipped from this repo, and also to
-learn about writing own instrumentations.
+Follow [this](../../docs/trace/extending-the-sdk#instrumentation-library)
+document to learn about the instrumentation libraries shipped from this repo,
+and also to learn about writing own instrumentations.
+
+### Processor
+
+[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
+allows hooks for start and end of telemetry. If no processors are configured,
+then traces are simply dropped by the SDK. `AddProcessor` method on
+`TracerProviderBuilder` should be used to add a processor. There can be any
+number of processors added to the provider, and they are invoked in the same
+order as they are added. Unlike `Sampler` or `Resource`, processors can be added
+to the provider even *after* it is built.
+
+The snippet below shows how to add processors to the provider before and after
+it is built.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddProcessor(new MyProcessor1())
+    .AddProcessor(new MyProcessor2()))
+    .Build();
+
+// Processors can be added to provider even after it is built.
+// Only those traces which are emitted after this line, will be sent to it.
+tracerProvider.AddProcessor(new MyProcessor3());
+```
+
+A `TracerProvider` assumes ownership of any processors added to it. This means
+that, provider will call `Shutdown` method on the processor, when it is
+shutdown, and disposes the processor when it is disposed. If multiple providers
+are being setup in an application, then separate instances of processors must be
+configured on them. Otherwise, shutting down one provider can cause the
+processor in other provider to be shut down as well, leading to undesired
+results.
+
+Processors can be used for enriching the telemetry and exporting the telemetry
+to an exporter. For enriching purposes, one must write a custom processor, and
+override the `OnStart` method with logic to enrich the telemetry. For exporting
+purposes, the SDK provides the following built-in processors:
+
+* [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#batching-processor)
+  : This is an exporting processor which batches the telemetry before sending to
+  the configured exporter.
+* [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
+  : This is a processor which can be composed from multiple processors. This is
+  typically used to construct multiple processing pipelines, each ending with
+  its own exporter.
+* [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor)
+  : This is an exporting processor which passes telemetry to the configured
+  exporter without any batching.
+
+Follow [this](../../docs/trace/extending-the-sdk#processor) document to learn about
+how to write own processors.
+
+*The processors shipped from this SDK are generics, and supports tracing and
+logging, by supporting `Activity` and `LogRecord` respectively.*
+
+### Resource
+
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
+is the immutable representation of the entity producing the telemetry. If no
+`Resource` is explicitly configured, the default is to use a resource indicating
+this [Telemetry
+SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk).
+`SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
+`ResourceBuilder` on the provider. When the provider is built, it automatically
+builds the final `Resource` from the configured `ResourceBuilder`. As with
+samplers, there can only be a single `Resource` associated with a provider. If
+multiple `SetResourceBuilder` is called, the last one wins. Also, it is not
+possible to change the resource builder *after* the provider is built, by
+calling the `Build()` method on the `TracerProviderBuilder`. `ResourceBuilder`
+offers various methods to construct resource comprising of multiple attributes
+from various sources.
+
+The snippet below shows configuring a custom `ResourceBuilder` to the provider.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
+    .Build();
+```
+
+### Sampler
+
+[Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+are used to control the noise and overhead introduced by OpenTelemetry by
+reducing the number of samples of traces collected and sent to the processors.
+If no sampler is explicitly configured, the default is to use
+`ParentBased(root=AlwaysOn)`. `SetSampler` method on `TracerProviderBuilder` can
+be used to set sampler. Only one sampler can be associated with a provider. If
+multiple `SetSampler` is called, the last one wins. Also, it is not possible to
+change the sampler *after* the provider is built, by calling the `Build()`
+method on the `TracerProviderBuilder`.
+
+The snippet below shows configuring a custom sampler to the provider.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetSampler(new TraceIdRatioBasedSampler(0.25))
+    .Build();
+```
 
 ## Advanced topics
 
