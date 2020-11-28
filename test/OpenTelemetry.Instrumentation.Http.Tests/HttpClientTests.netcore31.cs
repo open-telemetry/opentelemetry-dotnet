@@ -96,17 +96,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<string, string>()
-            {
-                { "Ok", "OK" },
-                { "Error", "ERROR" },
-                { "Unset", "UNSET" },
-            };
-
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string]);
+                    activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {

@@ -5,11 +5,13 @@
 * In `JaegerExporterOptions`: Exporter options now include a switch for
   Batch vs Simple exporter, and settings for batch exporting properties.
 
-* Jaeger will now set the `error` tag when `otel.status_code` is set to `Error`.
-  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+* Jaeger will now set the `error` tag when `otel.status_code` is set to `ERROR`.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579) &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
 
-* Jaeger will no longer send the `otel.status_code` tag if the value is `Unset`.
-  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
+* Jaeger will no longer send the `otel.status_code` tag if the value is `UNSET`.
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609) &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
 
 * Span Event.Name will now be populated as the `event` field on Jaeger Logs
   instead of `message`.
