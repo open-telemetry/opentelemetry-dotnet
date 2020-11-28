@@ -24,8 +24,8 @@ dotnet add package OpenTelemetry
 
 OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
 implements the Tracing API, the Metrics API, and the Context API.  Once a valid
-SDK is installed and configured, all the OpenTelemetry API methods used to
-instrument an application, starts emitting telemetry, instead of being no-ops.
+SDK is installed and configured, all the OpenTelemetry API methods, which were
+no-ops without an SDK, will start emitting telemetry.
 This SDK also supports
 [Logging](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md)
 by integrating with
