@@ -70,7 +70,7 @@ with the intent to produce continuous summaries of those measurements.
 
 _**Warning:** OpenTelemetry .NET has a prototype Metrics API implementation only
 and is not recommended for any production use. The API is expected to change
-heavily._
+heavily. Please check the [Metric support plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
 
 ## Introduction to OpenTelemetry .NET Tracing API
 
