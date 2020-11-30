@@ -20,7 +20,7 @@ using global::OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class SpanContextShim : ISpanContext
+    internal sealed class SpanContextShim : ISpanContext
     {
         public SpanContextShim(in Trace.SpanContext spanContext)
         {

@@ -60,7 +60,7 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
-### SetStoredProcedureCommandName
+### SetStoredProcedureCommandName (.NET Core)
 
 By default, when CommandType is CommandType.StoredProcedure this
 instrumentation will set the `db.statement` attribute to the stored procedure
@@ -77,17 +77,11 @@ using Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### SetTextCommandContent
+### SetTextCommandContent (.NET Core)
 
 By default, when CommandType is CommandType.Text, this instrumentation will not
 set the `db.statement` attribute. This behavior can be enabled by setting
 `SetTextCommandContent` to true.
-
-For .NET Framework, `SetTextCommandContent` is unavailable when using
-System.Data.SqlClient. It is only available when using
-[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/).
-`SetTextCommandContent` is fully functional in .NET Core when using either
-System.Data.SqlClient or Microsoft.Data.SqlClient.
 
 The following example shows how to use `SetTextCommandContent`.
 
@@ -99,7 +93,33 @@ using Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### EnableConnectionLevelAttributes
+## SetStatementText (.NET Framework)
+
+For .NET Framework, `SetTextCommandContent` and `SetStoredProcedureCommandName`
+are not available. Instead, `SetStatementText` should be used to control whether
+this instrumentation should set the `db.statement` attribute to the text of the
+`SqlCommand` being executed.
+
+Text capturing is _disabled_ by default. If enabled, the instrumentation will
+capture both `CommandType.Text` and `CommandType.StoredProcedure` when using
+[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/),
+and only `CommandType.StoredProcedure` when using `System.Data.SqlClient`.
+
+To turn statement capturing on, use the options like in below example. Be
+aware that `CommandType.Text` SQL might contain sensitive data.
+On [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+only set this to `true` if you are absolutely sure that you are using
+exclusively stored procedures, or have no sensitive data in your `sqlCommand.CommandText`.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(
+        options => options.SetStatementText = true)
+    .AddConsoleExporter()
+    .Build();
+```
+
+## EnableConnectionLevelAttributes
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
 instrumentation sets the `peer.service` attribute to the
@@ -119,6 +139,41 @@ using Sdk.CreateTracerProviderBuilder()
     .AddConsoleExporter()
     .Build();
 ```
+
+### Enrich
+
+This option, available on .NET Core only, allows one to enrich the activity
+with additional information from the raw `SqlCommand` object. The `Enrich`
+action is called only when `activity.IsAllDataRequested` is `true`. It contains
+the activity itself (which can be enriched), the name of the event, and the
+actual raw object.
+
+Currently there is only one event name reported, "OnCustom". The actual object
+is `Microsoft.Data.SqlClient.SqlCommand` for `Microsoft.Data.SqlClient` and
+`System.Data.SqlClient.SqlCommand` for `System.Data.SqlClient`.
+
+The following code snippet shows how to add additional tags using `Enrich`.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(opt => opt.Enrich
+        = (activity, eventName, rawObject) =>
+    {
+        if (eventName.Equals("OnCustom"))
+        {
+            if (rawObject is SqlCommand cmd)
+            {
+                activity.SetTag("db.commandTimeout", cmd.CommandTimeout);
+            }
+        };
+    })
+    .Build();
+```
+
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
+is the general extensibility point to add additional properties to any activity.
+The `Enrich` option is specific to this instrumentation, and is provided to
+get access to `SqlCommand` object.
 
 ## References
 

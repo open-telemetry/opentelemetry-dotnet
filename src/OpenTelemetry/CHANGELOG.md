@@ -7,6 +7,12 @@
   `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
   `AddTelemetrySdk`.
   ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+* Metrics API/SDK support is in an experimental state and is not recommended for
+  production use. All metric APIs have been marked with the `Obsolete`
+  attribute. See
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for more information.
+  ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
 
 ## 1.0.0-rc1.1
 
