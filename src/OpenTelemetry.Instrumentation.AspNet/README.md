@@ -76,29 +76,28 @@ This instrumentation can be configured to change the default behavior by using
 ### Filter
 
 This instrumentation by default collects all the incoming http requests. It allows
-filtering of requests by using `Filter` function in `AspNetInstrumentationOptions`.
-This can be used to filter out any requests based on some condition. The Filter
-receives the `HttpContext` of the incoming request, and filters out the request
-if the Filter returns false or throws exception.
+filtering of requests by using the `Filter` function in `AspNetInstrumentationOptions`.
+This defines the condition for allowable requests. The Filter
+receives the `HttpContext` of the incoming request, and does not collect telemetry
+ about the request if the Filter returns false or throws exception.
 
-The following shows an example of `Filter` being used to filter out all POST requests.
+The following code snippet shows how to use `Filter` to only allow GET
+requests.
 
 ```csharp
 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddAspNetInstrumentation(
-        (options) =>
-        {
-            options.Filter = (httpContext) =>
+        (options) => options.Filter =
+            (httpContext) =>
             {
-                // filter out all HTTP POST requests.
-                return !httpContext.Request.HttpMethod.Equals("POST");
-            };
-        })
+                // only collect telemetry about HTTP GET requests
+                return httpContext.Request.HttpMethod.Equals("GET");
+            })
     .Build();
 ```
 
 It is important to note that this `Filter` option is specific to this
-instrumentation. OpenTelemetry has a concept of
+instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
@@ -116,7 +115,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 
 ```csharp
 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddAspNetInstrumentation(opt => opt.Enrich
+    .AddAspNetInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))

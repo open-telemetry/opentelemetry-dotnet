@@ -259,14 +259,20 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                 if (key == SpanAttributeConstants.StatusCodeKey)
                 {
-                    if (jaegerTag.VStr == "Error")
+                    StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
+                    if (statusCode == StatusCode.Error)
                     {
+                        // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#error-flag
                         PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag("error", JaegerTagType.BOOL, vBool: true));
                     }
-                    else if (jaegerTag.VStr == "Unset")
+                    else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
                     {
+                        // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#status
                         return;
                     }
+
+                    // Normalize status since it is user-driven.
+                    jaegerTag = new JaegerTag(key, JaegerTagType.STRING, vStr: StatusHelper.GetTagValueForStatusCode(statusCode.Value));
                 }
             }
             else if (jaegerTag.VLong.HasValue)

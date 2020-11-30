@@ -137,8 +137,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [InlineData(false, false, false)]
         [InlineData(false, true, false)]
         [InlineData(false, false, true)]
-        public void IntegrationTest(bool useShortTraceIds, bool useTestResource, bool isRootSpan)
+        [InlineData(false, false, false, StatusCode.Ok)]
+        [InlineData(false, false, false, StatusCode.Error)]
+        public void IntegrationTest(bool useShortTraceIds, bool useTestResource, bool isRootSpan, StatusCode statusCode = StatusCode.Unset)
         {
+            var status = statusCode switch
+            {
+                StatusCode.Unset => Status.Unset,
+                StatusCode.Ok => Status.Ok,
+                StatusCode.Error => Status.Error,
+                _ => throw new InvalidOperationException(),
+            };
+
             Guid requestId = Guid.NewGuid();
 
             ZipkinExporter exporter = new ZipkinExporter(
@@ -150,7 +160,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var serviceName = ZipkinExporterOptions.DefaultServiceName;
             var resoureTags = string.Empty;
-            var activity = CreateTestActivity(isRootSpan: isRootSpan);
+            var activity = CreateTestActivity(isRootSpan: isRootSpan, status: status);
             if (useTestResource)
             {
                 serviceName = "MyService";
@@ -192,8 +202,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
+            var statusTag = statusCode switch
+            {
+                StatusCode.Ok => $@"""{SpanAttributeConstants.StatusCodeKey}"":""OK"",",
+                StatusCode.Error => $@"""error"":"""",""{SpanAttributeConstants.StatusCodeKey}"":""ERROR"",",
+                _ => string.Empty,
+            };
+
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",{statusTag}""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""}}}}]",
                 Responses[requestId]);
         }
 
