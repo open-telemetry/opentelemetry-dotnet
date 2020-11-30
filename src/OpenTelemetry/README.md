@@ -145,7 +145,8 @@ provider, unless the life cycle of the instrumentation must be managed by the
 provider. If the instrumentation must be activated/shutdown/disposed along with
 the provider, then the instrumentation must be added to the provider.
 
-Follow [this](../../docs/trace/extending-the-sdk#instrumentation-library)
+Follow
+[this](../../docs/trace/extending-the-sdk/README.md#instrumentation-library)
 document to learn about the instrumentation libraries shipped from this repo,
 and also to learn about writing own instrumentations.
 
@@ -200,8 +201,8 @@ purposes, the SDK provides the following built-in processors:
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
 
-Follow [this](../../docs/trace/extending-the-sdk#processor) document to learn about
-how to write own processors.
+Follow [this](../../docs/trace/extending-the-sdk/README.md#processor) document
+to learn about how to write own processors.
 
 *The processors shipped from this SDK are generics, and supports tracing and
 logging, by supporting `Activity` and `LogRecord` respectively.*
