@@ -70,7 +70,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(3, className, methodName);
         }
 
-        [Event(4, Message = "Unkown error in export method: {0}", Level = EventLevel.Error)]
+        [Event(4, Message = "Unknown error in export method: {0}", Level = EventLevel.Error)]
         public void ExportMethodException(string ex)
         {
             this.WriteEvent(4, ex);
