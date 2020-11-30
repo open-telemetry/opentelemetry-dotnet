@@ -6,6 +6,7 @@
 * [Installation](#installation)
 * [Introduction](#introduction)
   * [Tracing API](#tracing-api)
+  * [Logging API](#logging-api)
   * [Metrics API](#metrics-api)
 * [Introduction to OpenTelemetry .NET Tracing
   API](#introduction-to-opentelemetry-net-tracing-api)
