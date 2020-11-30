@@ -19,10 +19,10 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 `.NET Framework 3.5 SP1`. Any exceptions to this are noted in the individual
 `README.md` files.
 
-## OpenTelemetry .NET and relation with vs .NET Activity API
+## OpenTelemetry .NET and relation with .NET Activity API
 
 OpenTelemetry .NET is a somewhat unique implementation of the OpenTelemetry
-project, as parts of the tracing API are incorporated directly in the .NET
+project, as parts of the tracing API are incorporated directly into the .NET
 runtime itself. .NET runtime has provided a tracing API for a long time, via its
 `Activity` class, shipped as part of the nuget
 [System.Diagnostics.DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/).
