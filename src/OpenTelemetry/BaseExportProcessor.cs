@@ -49,14 +49,14 @@ namespace OpenTelemetry
             this.OnExport(data);
         }
 
-        protected abstract void OnExport(T data);
-
         internal override void SetParentProvider(BaseProvider parentProvider)
         {
             base.SetParentProvider(parentProvider);
 
             this.exporter.ParentProvider = parentProvider;
         }
+
+        protected abstract void OnExport(T data);
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)

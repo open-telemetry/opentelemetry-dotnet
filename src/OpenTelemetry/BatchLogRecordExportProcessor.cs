@@ -34,7 +34,6 @@ namespace OpenTelemetry
                 exporterTimeoutMilliseconds,
                 maxExportBatchSize)
         {
-
         }
     }
 }
