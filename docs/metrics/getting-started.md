@@ -7,7 +7,7 @@ any production use. Both the API, and SDK implementation is subject to
 significant changes.
 
 Please check the [Metric support
-plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
+plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 ## Sample usage
 
