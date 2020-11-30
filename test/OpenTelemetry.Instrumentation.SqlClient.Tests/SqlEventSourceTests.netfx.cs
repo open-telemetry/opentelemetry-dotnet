@@ -302,27 +302,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     var events = activity.Events.ToList();
                     Assert.Single(events);
 
-                    Assert.Equal("exception", events[0].Name);
-                    Assert.Equal(exceptionTypeName, GetEventTagValue(events[0], "exception.type"));
+                    Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[0].Name);
+                    Assert.Equal(exceptionTypeName, events[0].Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
                 }
                 else
                 {
                     Assert.Empty(activity.Events);
                 }
             }
-        }
-
-        private static object GetEventTagValue(ActivityEvent e, string tagKey)
-        {
-            foreach (var tag in e.Tags)
-            {
-                if (tag.Key == tagKey)
-                {
-                    return tag.Value;
-                }
-            }
-
-            return null;
         }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order

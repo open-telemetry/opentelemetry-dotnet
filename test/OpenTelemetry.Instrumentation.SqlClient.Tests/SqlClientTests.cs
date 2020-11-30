@@ -305,7 +305,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     var events = activity.Events.ToList();
                     Assert.Single(events);
 
-                    Assert.Equal("exception", events[0].Name);
+                    Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[0].Name);
                 }
                 else
                 {
