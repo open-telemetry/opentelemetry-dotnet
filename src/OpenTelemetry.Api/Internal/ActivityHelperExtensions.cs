@@ -188,7 +188,7 @@ namespace OpenTelemetry.Trace
                 switch (item.Key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = StatusHelper.GetStatusCodeForStringName(item.Value as string);
+                        this.StatusCode = StatusHelper.GetStatusCodeForTagValue(item.Value as string);
                         break;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = item.Value as string;

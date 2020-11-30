@@ -239,7 +239,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
         {
-            var status = StatusHelper.GetStatusCodeForStringName(otlpTags.StatusCode);
+            var status = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
 
             if (!status.HasValue)
             {

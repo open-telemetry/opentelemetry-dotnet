@@ -89,41 +89,37 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, false)]
-        [InlineData(StatusCode.Ok, false)]
-        [InlineData(StatusCode.Error, true)]
-        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode statusCode, bool hasErrorFlag)
+        [InlineData(StatusCode.Unset, "unset")]
+        [InlineData(StatusCode.Ok, "Ok")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        [InlineData(StatusCode.Unset, "iNvAlId")]
+        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
         {
-            var status = statusCode switch
-            {
-                StatusCode.Unset => Status.Unset,
-                StatusCode.Ok => Status.Ok,
-                StatusCode.Error => Status.Error,
-                _ => throw new InvalidOperationException(),
-            };
-
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(status: status);
+            var activity = ZipkinExporterTests.CreateTestActivity();
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
             // Act
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert
 
-            if (statusCode == StatusCode.Unset)
+            Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
+
+            if (expectedStatusCode == StatusCode.Unset)
             {
                 Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
             }
             else
             {
                 Assert.Equal(
-                    StatusHelper.GetStringNameForStatusCode(statusCode),
+                    StatusHelper.GetTagValueForStatusCode(expectedStatusCode),
                     zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             }
 
-            if (hasErrorFlag)
+            if (expectedStatusCode == StatusCode.Error)
             {
-                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == "true");
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
             }
             else
             {

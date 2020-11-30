@@ -5,9 +5,10 @@
 * In order to align with the
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
   the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`
-  extension) will now be set as the `Unset`, `Error`, or `Ok` string
+  extension) will now be set as the `UNSET`, `OK`, or `ERROR` string
   representation instead of the `0`, `1`, or `2` integer representation.
-  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579) &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
 * Metrics API/SDK support is in an experimental state and is not recommended for
   production use. All metric APIs have been marked with the `Obsolete`
   attribute. See

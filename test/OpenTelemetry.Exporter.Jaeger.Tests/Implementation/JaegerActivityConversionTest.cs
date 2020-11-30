@@ -436,39 +436,35 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, false)]
-        [InlineData(StatusCode.Ok, false)]
-        [InlineData(StatusCode.Error, true)]
-        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode statusCode, bool hasErrorFlag)
+        [InlineData(StatusCode.Unset, "unset")]
+        [InlineData(StatusCode.Ok, "Ok")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        [InlineData(StatusCode.Unset, "iNvAlId")]
+        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
         {
-            var status = statusCode switch
-            {
-                StatusCode.Unset => Status.Unset,
-                StatusCode.Ok => Status.Ok,
-                StatusCode.Error => Status.Error,
-                _ => throw new InvalidOperationException(),
-            };
-
             // Arrange
-            var activity = CreateTestActivity(status: status);
+            var activity = CreateTestActivity();
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
             // Act
             var jaegerSpan = activity.ToJaegerSpan();
 
             // Assert
 
-            if (statusCode == StatusCode.Unset)
+            Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
+
+            if (expectedStatusCode == StatusCode.Unset)
             {
                 Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
             }
             else
             {
                 Assert.Equal(
-                    StatusHelper.GetStringNameForStatusCode(statusCode),
+                    StatusHelper.GetTagValueForStatusCode(expectedStatusCode),
                     jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
             }
 
-            if (hasErrorFlag)
+            if (expectedStatusCode == StatusCode.Error)
             {
                 Assert.Contains(jaegerSpan.Tags, t => t.Key == "error" && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
             }
