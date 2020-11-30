@@ -70,5 +70,5 @@ from .NET runtime represent the OpenTelemetry concepts of
 and
 [Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracer)
 respectively. Read
-[this](../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
+[this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
 to learn more.
