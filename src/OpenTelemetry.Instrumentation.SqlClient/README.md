@@ -40,7 +40,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSqlClientInstrumentation()
             .AddConsoleExporter()
             .Build();
@@ -70,7 +70,7 @@ command name. This behavior can be disabled by setting the
 The following example shows how to use `SetStoredProcedureCommandName`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
         options => options.SetStoredProcedureCommandName = false)
     .AddConsoleExporter()
@@ -86,7 +86,7 @@ set the `db.statement` attribute. This behavior can be enabled by setting
 The following example shows how to use `SetTextCommandContent`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
         options => options.SetTextCommandContent = true)
     .AddConsoleExporter()
@@ -133,7 +133,7 @@ the `db.mssql.instance_name` attribute, and the port will be sent as the
 The following example shows how to use `EnableConnectionLevelAttributes`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
         options => options.EnableConnectionLevelAttributes = true)
     .AddConsoleExporter()

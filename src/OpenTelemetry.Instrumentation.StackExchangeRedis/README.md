@@ -41,7 +41,7 @@ public class Program
         // Connect to the server.
         using var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddRedisInstrumentation(connection)
             .AddConsoleExporter()
             .Build();
@@ -71,7 +71,7 @@ interval. The `FlushInterval` option can be used to adjust this internval.
 The following example shows how to use `FlushInterval`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddRedisInstrumentation(
         connection,
         options => options.FlushInterval = TimeSpan.FromSeconds(5))
