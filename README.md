@@ -21,9 +21,9 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 
 ## Getting Started
 
-If you are new here, please see getting started doc for
+If you are new here, please see getting started docs for
 [logs](./docs/logs/getting-started/README.md),
-[metrics](./docs/metrics/getting-started.md) and
+[metrics](./docs/metrics/getting-started.md), and
 [trace](./docs/trace/getting-started/README.md).
 
 This repository includes multiple installable components, available on
