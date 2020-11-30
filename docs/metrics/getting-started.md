@@ -6,6 +6,9 @@ Metrics API and SDK is in alpha/experimental stage, and are not recommended for
 any production use. Both the API, and SDK implementation is subject to
 significant changes.
 
+Please check the [Metric support
+plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
+
 ## Sample usage
 
 Check
