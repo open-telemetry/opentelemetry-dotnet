@@ -14,8 +14,8 @@ dotnet add package OpenTelemetry.Exporter.InMemory
 ## Configuration
 
 See the
-[`TestInMemoryExporter.cs`](../../examples/Console/TestInMemoryExporter.cs) for an
-example of how to use the exporter for exporting traces to a collection.
+[`TestInMemoryExporter.cs`](../../examples/Console/TestInMemoryExporter.cs) for
+an example of how to use the exporter for exporting traces to a collection.
 
 ## References
 
