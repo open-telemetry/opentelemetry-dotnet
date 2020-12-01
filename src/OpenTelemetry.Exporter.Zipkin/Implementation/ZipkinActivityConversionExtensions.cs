@@ -175,9 +175,22 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     PeerServiceResolver.InspectTag(ref this, key, strVal);
 
-                    if (key == SpanAttributeConstants.StatusCodeKey && strVal == "Error")
+                    if (key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", "true"));
+                        StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
+                        if (statusCode == StatusCode.Error)
+                        {
+                            // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#error-flag
+                            PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", string.Empty));
+                        }
+                        else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
+                        {
+                            // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                            return true;
+                        }
+
+                        // Normalize status since it is user-driven.
+                        activityTag = new KeyValuePair<string, object>(key, StatusHelper.GetTagValueForStatusCode(statusCode.Value));
                     }
                 }
                 else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)

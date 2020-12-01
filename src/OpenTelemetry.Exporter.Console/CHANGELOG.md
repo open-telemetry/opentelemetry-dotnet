@@ -6,6 +6,10 @@
   `OpenTelemetry.Trace` namespace to `OpenTelemetry.Logs` namespace.
   ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
 
+* Added `ConsoleActivityExporter` and `ConsoleLogExporter`. Refactored
+  `ConsoleExporter` to get rid of type specific check in the class
+  ([#1593](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1593))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

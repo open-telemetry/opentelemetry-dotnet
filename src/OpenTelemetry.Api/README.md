@@ -6,6 +6,7 @@
 * [Installation](#installation)
 * [Introduction](#introduction)
   * [Tracing API](#tracing-api)
+  * [Logging API](#logging-api)
   * [Metrics API](#metrics-api)
 * [Introduction to OpenTelemetry .NET Tracing
   API](#introduction-to-opentelemetry-net-tracing-api)
@@ -70,7 +71,7 @@ with the intent to produce continuous summaries of those measurements.
 
 _**Warning:** OpenTelemetry .NET has a prototype Metrics API implementation only
 and is not recommended for any production use. The API is expected to change
-heavily._
+heavily. Please check the [Metric support plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
 
 ## Introduction to OpenTelemetry .NET Tracing API
 
@@ -349,7 +350,7 @@ corresponding overloads of `ActivityEvent`.
 OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
 to be associated with `Activity`. There is no `Status` class in .NET, and hence
-`Status` is set to an `Activity` using the following special tags
+`Status` is set to an `Activity` using the following special tags:
 
 `otel.status_code` is the `Tag` name used to store the `StatusCode`, and
 `otel.status_description` is the `Tag` name used to store the optional
@@ -358,12 +359,13 @@ to be associated with `Activity`. There is no `Status` class in .NET, and hence
 Example:
 
 ```csharp
-activity?.SetTag("otel.status_code", 2);
+activity?.SetTag("otel.status_code", "ERROR");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-StatusCodes can be 0, 1, 2 which corresponds to `Unset`, `Ok` and `Error`
-respectively from [StatusCode.cs](./Trace/StatusCode.cs)
+Values for the StatusCode tag must be one of the strings "UNSET", "OK", or "ERROR",
+which correspond respectively to the enums `Unset`, `Ok`, and `Error` from
+[`StatusCode`](./Trace/StatusCode.cs).
 
 If using OpenTelemetry API
 [shim](#instrumenting-using-opentelemetryapi-shim), then you

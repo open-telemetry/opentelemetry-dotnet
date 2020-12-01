@@ -49,7 +49,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddGrpcClientInstrumentation()
             .AddHttpClientInstrumentaiton()
             .AddConsoleExporter()
@@ -80,7 +80,7 @@ context when `SuppressDownstreamInstrumentation` is enabled.
 The following example shows how to use `SuppressDownstreamInstrumentation`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddGrpcClientInstrumentation(
         opt => opt.SuppressDownstreamInstrumentation = true)
     .AddHttpClientInstrumentation()

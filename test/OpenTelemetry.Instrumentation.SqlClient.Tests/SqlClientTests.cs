@@ -87,8 +87,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
+#if !NETFRAMEWORK
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
+#else
+                    options.SetStatementText = captureStoredProcedureCommandName;
+#endif
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
@@ -124,6 +128,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, dataSource, activity);
         }
 
+        // DiagnosticListener-based instrumentation is only available on .NET Core
+#if !NETFRAMEWORK
         [Theory]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false)]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false, false)]
@@ -260,6 +266,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
+#endif
 
         private static void VerifyActivityData(
             CommandType commandType,
@@ -284,7 +291,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 Assert.NotNull(status.Description);
             }
 
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
 
             switch (commandType)
