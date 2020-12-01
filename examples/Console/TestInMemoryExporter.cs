@@ -49,10 +49,10 @@ namespace Examples.Console
         private static void RunWithActivitySource(ICollection<Activity> exportedItems)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use Console exporter.
+            // and use InMemory exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("inmemory-test"))
                     .AddInMemoryExporter(exportedItems)
                     .Build();
 
@@ -63,7 +63,7 @@ namespace Examples.Console
                 sample.Start();
 
                 System.Console.WriteLine("Traces are being created and exported " +
-                    "to Console in the background. " +
+                    "to the collection passed in the background. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }

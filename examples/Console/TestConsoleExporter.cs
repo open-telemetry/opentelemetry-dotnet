@@ -40,7 +40,7 @@ namespace Examples.Console
             // and use Console exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("console-test"))
                     .AddConsoleExporter()
                     .Build();
 
