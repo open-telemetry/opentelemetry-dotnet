@@ -35,99 +35,37 @@ namespace Examples.Console
             // List that will be populated with the traces by InMemoryExporter
             var exportedItems = new List<Activity>();
 
-            // Enable TracerProvider for the source "MyCompany.MyProduct.MyWebServer"
-            // and use a custom MyProcessor, along with InMemory Exporter.
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("MyCompany.MyProduct.MyWebServer")
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
-                .AddProcessor(new MyProcessor()) // This must be added before InMemoryExporter
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            // The above line is required only in applications
-            // which decide to use OpenTelemetry.
-
-            // Libraries would simply write the following lines of code to
-            // emit activities, which are the .NET representation of OpenTelemetry Spans.
-            var source = new ActivitySource("MyCompany.MyProduct.MyWebServer");
-
-            // The below commented out line shows more likely code in a real world webserver.
-            // using (var parent = source.StartActivity("HttpIn", ActivityKind.Server, HttpContext.Request.Headers["traceparent"] ))
-            using (var parent = source.StartActivity("HttpIn", ActivityKind.Server))
-            {
-                // TagNames can follow the OpenTelemetry guidelines
-                // from https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
-                parent?.SetTag("http.method", "GET");
-                parent?.SetTag("http.host", "MyHostName");
-                if (parent != null)
-                {
-                    parent.DisplayName = "HttpIn DisplayName";
-
-                    // IsAllDataRequested is the equivalent of Span.IsRecording
-                    if (parent.IsAllDataRequested)
-                    {
-                        parent.SetTag("expensive data", "This data is expensive to obtain. Avoid it if activity is not being recorded");
-                    }
-                }
-
-                try
-                {
-                    // Actual code to achieve the purpose of the library.
-                    // For websebserver example, this would be calling
-                    // user middlware pipeline.
-
-                    // There can be child activities.
-                    // In this example HttpOut is a child of HttpIn.
-                    using (var child = source.StartActivity("HttpOut", ActivityKind.Client))
-                    {
-                        child?.SetTag("http.url", "www.mydependencyapi.com");
-                        try
-                        {
-                            // do actual work.
-
-                            child?.AddEvent(new ActivityEvent("sample activity event."));
-                            child?.SetTag("http.status_code", "200");
-                        }
-                        catch (Exception)
-                        {
-                            child?.SetTag("http.status_code", "500");
-                        }
-                    }
-
-                    parent?.SetTag("http.status_code", "200");
-                }
-                catch (Exception)
-                {
-                    parent?.SetTag("http.status_code", "500");
-                }
-            }
+            RunWithActivitySource(exportedItems);
 
             // List exportedItems is populated with the Activity objects logged by TracerProvider
             foreach (var activity in exportedItems)
             {
-                System.Console.WriteLine(activity.DisplayName);
+                System.Console.WriteLine($"ActivitySource: {activity.Source.Name} logged the activity {activity.DisplayName}");
             }
-
-            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }
 
-        internal class MyProcessor : BaseProcessor<Activity>
+        private static void RunWithActivitySource(ICollection<Activity> exportedItems)
         {
-            public override void OnStart(Activity activity)
+            // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
+            // and use Console exporter.
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .AddSource("Samples.SampleClient", "Samples.SampleServer")
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
+                    .AddInMemoryExporter(exportedItems)
+                    .Build();
+
+            // The above line is required only in applications
+            // which decide to use OpenTelemetry.
+            using (var sample = new InstrumentationWithActivitySource())
             {
-                if (activity.IsAllDataRequested)
-                {
-                    if (activity.Kind == ActivityKind.Server)
-                    {
-                        activity.SetTag("customServerTag", "Custom Tag Value for server");
-                    }
-                    else if (activity.Kind == ActivityKind.Client)
-                    {
-                        activity.SetTag("customClientTag", "Custom Tag Value for Client");
-                    }
-                }
+                sample.Start();
+
+                System.Console.WriteLine("Traces are being created and exported " +
+                    "to Console in the background. " +
+                    "Press ENTER to stop.");
+                System.Console.ReadLine();
             }
         }
     }
