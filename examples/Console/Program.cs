@@ -51,7 +51,7 @@ namespace Examples.Console
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
-                    (OpenTracingShimOptions options) => TestOpenTracingWithConsoleExporter.Run(options),
+                    (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     errs => 1);
 
