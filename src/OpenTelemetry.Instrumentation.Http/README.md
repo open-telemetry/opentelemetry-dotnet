@@ -39,7 +39,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
             .AddConsoleExporter()
             .Build();
@@ -70,7 +70,7 @@ the `http.flavor` attribute.
 The following example shows how to use `SetHttpFlavor`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
         (options) => options.SetHttpFlavor = true)
     .AddConsoleExporter()
@@ -91,7 +91,7 @@ The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
         (options) => options.Filter =
             (httpRequestMessage) =>
