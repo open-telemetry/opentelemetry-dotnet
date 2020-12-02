@@ -43,6 +43,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
+        [NonEvent]
+        public void ExportMethodException(Exception ex)
+        {
+            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.ExportMethodException(ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Exporter failed to convert SpanData content into gRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
         public void FailedToConvertToProtoDefinitionError(string ex)
         {
@@ -59,6 +68,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void CouldNotTranslateActivity(string className, string methodName)
         {
             this.WriteEvent(3, className, methodName);
+        }
+
+        [Event(4, Message = "Unknown error in export method: {0}", Level = EventLevel.Error)]
+        public void ExportMethodException(string ex)
+        {
+            this.WriteEvent(4, ex);
         }
     }
 }

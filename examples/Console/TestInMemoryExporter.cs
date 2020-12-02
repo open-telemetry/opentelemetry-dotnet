@@ -1,4 +1,4 @@
-// <copyright file="TestConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestInMemoryExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
@@ -22,26 +23,37 @@ using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {
-    internal class TestConsoleExporter
+    internal class TestInMemoryExporter
     {
         // To run this example, run the following command from
         // the reporoot\examples\Console\.
         // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
         //
-        // dotnet run console
-        internal static object Run(ConsoleOptions options)
+        // dotnet run inmemory
+        internal static object Run(InMemoryOptions options)
         {
-            return RunWithActivitySource();
+            // List that will be populated with the traces by InMemoryExporter
+            var exportedItems = new List<Activity>();
+
+            RunWithActivitySource(exportedItems);
+
+            // List exportedItems is populated with the Activity objects logged by TracerProvider
+            foreach (var activity in exportedItems)
+            {
+                System.Console.WriteLine($"ActivitySource: {activity.Source.Name} logged the activity {activity.DisplayName}");
+            }
+
+            return null;
         }
 
-        private static object RunWithActivitySource()
+        private static void RunWithActivitySource(ICollection<Activity> exportedItems)
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
-            // and use Console exporter.
+            // and use InMemory exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("console-test"))
-                    .AddConsoleExporter()
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("inmemory-test"))
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
 
             // The above line is required only in applications
@@ -51,12 +63,10 @@ namespace Examples.Console
                 sample.Start();
 
                 System.Console.WriteLine("Traces are being created and exported " +
-                    "to Console in the background. " +
+                    "to the collection passed in the background. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }
-
-            return null;
         }
     }
 }
