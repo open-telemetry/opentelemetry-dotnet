@@ -26,7 +26,7 @@ using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
-    internal class JaegerExporter : BaseExporter<Activity>
+    public class JaegerExporter : BaseExporter<Activity>
     {
         private const string DefaultServiceName = "OpenTelemetry Exporter";
 
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
 
-        internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
+        public JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
             if (options is null)
             {
