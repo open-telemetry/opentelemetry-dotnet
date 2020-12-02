@@ -85,6 +85,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
                 return ExportResult.Failure;
             }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
+
+                return ExportResult.Failure;
+            }
             finally
             {
                 request.Return();
