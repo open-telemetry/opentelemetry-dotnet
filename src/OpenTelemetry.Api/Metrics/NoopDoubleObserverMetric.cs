@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
@@ -21,6 +22,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// A no-op observer instrument.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public sealed class NoopDoubleObserverMetric : DoubleObserverMetric
     {
         /// <summary>

@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    public sealed class SpanShim : global::OpenTracing.ISpan
+    internal sealed class SpanShim : global::OpenTracing.ISpan
     {
         /// <summary>
         /// The default event name if not specified.

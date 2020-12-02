@@ -132,7 +132,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
             Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
-            Assert.Equal(exception.GetType().Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal("System.ArgumentNullException", @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
         }
 
         [Fact]

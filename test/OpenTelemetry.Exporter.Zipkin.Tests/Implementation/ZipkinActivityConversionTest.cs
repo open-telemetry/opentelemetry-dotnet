@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -45,7 +46,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), zipkinSpan.Duration);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -70,12 +71,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             Assert.Equal(ZipkinSpanName, zipkinSpan.Name);
-            Assert.Empty(zipkinSpan.Annotations.Value);
+            Assert.Empty(zipkinSpan.Annotations);
             Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -88,33 +89,41 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, false)]
-        [InlineData(StatusCode.Ok, false)]
-        [InlineData(StatusCode.Error, true)]
-        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode statusCode, bool hasErrorFlag)
+        [InlineData(StatusCode.Unset, "unset")]
+        [InlineData(StatusCode.Ok, "Ok")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        [InlineData(StatusCode.Unset, "iNvAlId")]
+        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
         {
-            var status = statusCode switch
-            {
-                StatusCode.Unset => Status.Unset,
-                StatusCode.Ok => Status.Ok,
-                StatusCode.Error => Status.Error,
-                _ => throw new InvalidOperationException(),
-            };
-
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(status: status);
+            var activity = ZipkinExporterTests.CreateTestActivity();
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
             // Act
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert
-            if (hasErrorFlag)
+
+            Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
+
+            if (expectedStatusCode == StatusCode.Unset)
             {
-                Assert.Contains(zipkinSpan.Tags.Value, t => t.Key == "error" && (string)t.Value == "true");
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
             }
             else
             {
-                Assert.DoesNotContain(zipkinSpan.Tags.Value, t => t.Key == "error");
+                Assert.Equal(
+                    StatusHelper.GetTagValueForStatusCode(expectedStatusCode),
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            if (expectedStatusCode == StatusCode.Error)
+            {
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
             }
         }
     }

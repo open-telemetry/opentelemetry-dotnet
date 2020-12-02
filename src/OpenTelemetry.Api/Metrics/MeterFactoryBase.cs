@@ -22,6 +22,7 @@ namespace OpenTelemetry.Metrics
     /// Libraries should use this class as follows to obtain Meter instance.
     /// MeterFactoryBase.Default.GetMeter("libraryname", "version").
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class MeterFactoryBase
     {
         private static ProxyMeter proxyMeter = new ProxyMeter();

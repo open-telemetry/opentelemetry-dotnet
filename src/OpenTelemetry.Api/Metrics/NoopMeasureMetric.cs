@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
@@ -22,6 +23,7 @@ namespace OpenTelemetry.Metrics
     /// No op measure instrument.
     /// </summary>
     /// <typeparam name="T">The type of counter. Only long and double are supported now.</typeparam>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public sealed class NoopMeasureMetric<T> : MeasureMetric<T>
         where T : struct
     {

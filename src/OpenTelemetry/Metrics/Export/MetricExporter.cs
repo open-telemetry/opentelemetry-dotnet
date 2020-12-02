@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +24,7 @@ namespace OpenTelemetry.Metrics.Export
     /// <summary>
     /// MetricExporter base class.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public abstract class MetricExporter
     {
         /// <summary>
