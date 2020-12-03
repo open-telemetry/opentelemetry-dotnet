@@ -1,10 +1,5 @@
-abstract Thrift.Transport.TTransport.Close() -> void
-abstract Thrift.Transport.TTransport.Dispose(bool disposing) -> void
-abstract Thrift.Transport.TTransport.Flush() -> int
-abstract Thrift.Transport.TTransport.IsOpen.get -> bool
-abstract Thrift.Transport.TTransport.Write(byte[] buffer, int offset, int length) -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporter
-OpenTelemetry.Exporter.Jaeger.JaegerExporter.JaegerExporter(OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions options, Thrift.Transport.TTransport clientTransport = null) -> void
+OpenTelemetry.Exporter.Jaeger.JaegerExporter.JaegerExporter(OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions options) -> void
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.get -> string
 OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions.AgentHost.set -> void
@@ -23,7 +18,3 @@ OpenTelemetry.Trace.JaegerExporterHelperExtensions
 override OpenTelemetry.Exporter.Jaeger.JaegerExporter.Dispose(bool disposing) -> void
 override OpenTelemetry.Exporter.Jaeger.JaegerExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Jaeger.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
-Thrift.Transport.TTransport
-Thrift.Transport.TTransport.Dispose() -> void
-Thrift.Transport.TTransport.TTransport() -> void
-Thrift.Transport.TTransport.Write(byte[] buffer) -> void

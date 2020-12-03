@@ -22,7 +22,7 @@ using System;
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
-    public abstract class TTransport : IDisposable
+    internal abstract class TTransport : IDisposable
     {
         public abstract bool IsOpen { get; }
 

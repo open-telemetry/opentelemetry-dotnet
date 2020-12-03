@@ -40,7 +40,12 @@ namespace OpenTelemetry.Exporter.Jaeger
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
 
-        public JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
+        public JaegerExporter(JaegerExporterOptions options)
+            : this(options, null)
+        {
+        }
+
+        internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
             if (options is null)
             {
