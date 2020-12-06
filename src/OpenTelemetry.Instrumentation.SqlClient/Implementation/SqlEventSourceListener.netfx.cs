@@ -46,9 +46,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         internal const int BeginExecuteEventId = 1;
         internal const int EndExecuteEventId = 2;
 
-        private const string AdoNetExceptionName = "System.Data.SqlClient.SqlException";
-        private const string MdsExceptionName = "Microsoft.Data.SqlClient.SqlException";
-
         private readonly SqlClientInstrumentationOptions options;
         private EventSource adoNetEventSource;
         private EventSource mdsEventSource;
@@ -188,11 +185,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     {
                         var errorText = $"SqlExceptionNumber {eventData.Payload[2]} thrown.";
                         activity.SetStatus(Status.Error.WithDescription(errorText));
-
-                        if (this.options.RecordException)
-                        {
-                            this.RecordException(eventData.EventSource, activity, errorText);
-                        }
                     }
                     else
                     {
@@ -204,29 +196,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             {
                 activity.Stop();
             }
-        }
-
-        private void RecordException(EventSource eventSource, Activity activity, string errorText)
-        {
-            var tagsCollection = new ActivityTagsCollection
-            {
-                // The real exception object is unavailable via the EventSource but we
-                // know that it must be of type "SqlException".
-                {
-                    SemanticConventions.AttributeExceptionType,
-
-                    // The new "Microsoft.Data.SqlClient.EventSource" for sure corresponds to "Microsoft.Data.SqlClient.SqlException".
-                    // The old "Microsoft-AdoNet-SystemData" could be either type, but most likely "System.Data.SqlClient.SqlException".
-                    eventSource == this.mdsEventSource ? MdsExceptionName : AdoNetExceptionName
-                },
-
-                // Not the message the real exception object would have, but at least we can
-                // report the SqlException.Number in the "exception.message" to have something
-                // useful.
-                { SemanticConventions.AttributeExceptionMessage, errorText },
-            };
-
-            activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
     }
 }

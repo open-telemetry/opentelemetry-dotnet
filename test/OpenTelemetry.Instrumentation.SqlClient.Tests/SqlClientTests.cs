@@ -93,16 +93,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 #if !NETFRAMEWORK
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
+                    options.RecordException = recordException;
 #else
                     options.SetStatementText = captureStoredProcedureCommandName;
 #endif
-                    options.RecordException = recordException;
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
                     }
                 })
                 .Build();
+
+#if NETFRAMEWORK
+            // RecordException not available on netfx
+            recordException = false;
+#endif
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 

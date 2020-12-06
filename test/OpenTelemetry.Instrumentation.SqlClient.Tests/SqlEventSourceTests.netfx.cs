@@ -46,10 +46,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/0", false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, true, true)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false, bool recordException = false)
+        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
@@ -57,7 +56,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.SetStatementText = captureText;
-                    options.RecordException = recordException;
                 })
                 .Build();
 
@@ -86,28 +84,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            string exceptionTypeName = typeof(SqlException).FullName;
-            VerifyActivityData(commandText, captureText, isFailure, recordException, exceptionTypeName, dataSource, activity);
+            VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
         }
 
         [Theory]
         [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/1", false)]
         [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/0", false, true)]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/0", false, true, true, 123)]
         [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, false, 0, true)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/1", false)]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, true)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, true, true, 123)]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, false, 0, true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
         public void EventSourceFakeTests(
             Type eventSourceType,
             CommandType commandType,
             string commandText,
             bool captureText,
             bool isFailure = false,
-            bool recordException = false,
             int sqlExceptionNumber = 0,
             bool enableConnectionLevelAttributes = false)
         {
@@ -120,7 +114,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 {
                     options.SetStatementText = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
-                    options.RecordException = recordException;
                 })
                 .Build();
 
@@ -145,11 +138,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            // Instrumentation won't record SqlException if EventSource didn't set isSqlException flag
-            bool willRecordSqlException = recordException && isSqlExceptionFlag == 0b010;
-
-            string exceptionTypeName = fakeSqlEventSource.SqlExceptionTypeName;
-            VerifyActivityData(commandText, captureText, isFailure, willRecordSqlException, exceptionTypeName, "127.0.0.1", activity, enableConnectionLevelAttributes);
+            VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
         }
 
         [Theory]
@@ -229,15 +218,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             const bool captureText = false;
-            VerifyActivityData(commandText, captureText, false, false, null, "127.0.0.1", activity, false);
+            VerifyActivityData(commandText, captureText, false, "127.0.0.1", activity, false);
         }
 
         private static void VerifyActivityData(
             string commandText,
             bool captureText,
             bool isFailure,
-            bool recordException,
-            string exceptionTypeName,
             string dataSource,
             Activity activity,
             bool enableConnectionLevelAttributes = false)
@@ -296,19 +283,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 var status = activity.GetStatus();
                 Assert.Equal(Status.Error.StatusCode, status.StatusCode);
                 Assert.NotNull(status.Description);
-
-                if (recordException)
-                {
-                    var events = activity.Events.ToList();
-                    Assert.Single(events);
-
-                    Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[0].Name);
-                    Assert.Equal(exceptionTypeName, events[0].Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
-                }
-                else
-                {
-                    Assert.Empty(activity.Events);
-                }
             }
         }
 
@@ -318,8 +292,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         private interface IFakeBehavingSqlEventSource : IDisposable
 #pragma warning restore SA1201 // Elements should appear in the correct order
         {
-            string SqlExceptionTypeName { get; }
-
             void WriteBeginExecuteEvent(int objectId, string dataSource, string databaseName, string commandText);
 
             void WriteEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber);
@@ -337,8 +309,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [EventSource(Name = SqlEventSourceListener.AdoNetEventSourceName + "-FakeFriendly")]
         private class FakeBehavingAdoNetSqlEventSource : EventSource, IFakeBehavingSqlEventSource
         {
-            public string SqlExceptionTypeName => "System.Data.SqlClient.SqlException";
-
             [Event(SqlEventSourceListener.BeginExecuteEventId)]
             public void WriteBeginExecuteEvent(int objectId, string dataSource, string databaseName, string commandText)
             {
@@ -355,8 +325,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [EventSource(Name = SqlEventSourceListener.MdsEventSourceName + "-FakeFriendly")]
         private class FakeBehavingMdsSqlEventSource : EventSource, IFakeBehavingSqlEventSource
         {
-            public string SqlExceptionTypeName => "Microsoft.Data.SqlClient.SqlException";
-
             [Event(SqlEventSourceListener.BeginExecuteEventId)]
             public void WriteBeginExecuteEvent(int objectId, string dataSource, string databaseName, string commandText)
             {
