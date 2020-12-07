@@ -125,8 +125,9 @@ namespace OpenTelemetry.Trace
             {
                 foreach (var traceVersion in sources)
                 {
-                    listener.ShouldListenTo =
-                        (activitySource) => VersionHelper.Compare(activitySource.Version, traceVersion.MinVersion, traceVersion.MaxVersion);
+                    listener.ShouldListenTo = (activitySource) =>
+                        activitySource.Name.Equals(traceVersion.Name, StringComparison.OrdinalIgnoreCase)
+                        && VersionHelper.Compare(activitySource.Version, traceVersion.MinVersion, traceVersion.MaxVersion);
                 }
             }
 
