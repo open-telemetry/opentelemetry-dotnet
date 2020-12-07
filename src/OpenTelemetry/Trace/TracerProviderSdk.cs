@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk(
             Resource resource,
-            IEnumerable<string> sources,
+            IEnumerable<TraceVersion> sources,
             IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
@@ -123,42 +123,10 @@ namespace OpenTelemetry.Trace
 
             if (sources.Any())
             {
-                // Sources can be null. This happens when user
-                // is only interested in InstrumentationLibraries
-                // which do not depend on ActivitySources.
-
-                var wildcardMode = false;
-
-                // Validation of source name is already done in builder.
-                foreach (var name in sources)
+                foreach (var traceVersion in sources)
                 {
-                    if (name.Contains('*'))
-                    {
-                        wildcardMode = true;
-                    }
-                }
-
-                if (wildcardMode)
-                {
-                    var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                    // or not.
-                    listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
-                }
-                else
-                {
-                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var name in sources)
-                    {
-                        activitySources[name] = true;
-                    }
-
-                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                    // or not.
-                    listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                    listener.ShouldListenTo =
+                        (activitySource) => VersionHelper.Compare(activitySource.Version, traceVersion.MinVersion, traceVersion.MaxVersion);
                 }
             }
 
