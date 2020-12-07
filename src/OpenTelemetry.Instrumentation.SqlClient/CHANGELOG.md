@@ -10,6 +10,10 @@
   Framework they are replaced by a single `SetStatementText` property.
 * On .NET Framework, "db.statement_type" attribute is no longer set for
   activities created by the instrumentation.
+* New setting on SqlClientInstrumentationOptions on .NET Core: `RecordException`
+  can be set to instruct the instrumentation to record SqlExceptions as Activity
+  [events](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md).
+  ([#1592](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1592))
 
 ## 1.0.0-rc1.1
 
