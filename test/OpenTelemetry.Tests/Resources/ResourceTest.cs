@@ -151,6 +151,24 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void CreateResource_NotSupportedAttributeTypes()
+        {
+            var attributes = new Dictionary<string, object>
+            {
+                { "dynamic", new { } },
+                { "array", new int[1] },
+                { "complex", this },
+            };
+
+            var resource = new Resource(attributes);
+
+            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
+        }
+
+        [Fact]
         public void MergeResource_EmptyAttributeSource_MultiAttributeTarget()
         {
             // Arrange

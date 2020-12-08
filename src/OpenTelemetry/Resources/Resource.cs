@@ -101,28 +101,33 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
-            object sanitizedValue;
-            if (!IsValidValue(attribute.Value))
-            {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be non-null.");
-                sanitizedValue = string.Empty;
-            }
-            else
-            {
-                sanitizedValue = attribute.Value;
-            }
+            object sanitizedValue = SanitizeValue(attribute.Value);
 
             return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
 
-        private static bool IsValidValue(object value)
+        private static object SanitizeValue(object value)
         {
             if (value != null)
             {
-                return true;
+                if (value is string || value is bool || value is long || value is double)
+                {
+                    return value;
+                }
+
+                if (value is int)
+                {
+                    return System.Convert.ToInt64(value);
+                }
+
+                if (value is float)
+                {
+                    return System.Convert.ToDouble(value);
+                }
             }
 
-            return false;
+            OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null primitive or homogeneous array of primitives.");
+            return string.Empty;
         }
     }
 }
