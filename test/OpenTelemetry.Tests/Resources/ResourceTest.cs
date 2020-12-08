@@ -162,7 +162,7 @@ namespace OpenTelemetry.Resources.Tests
 
             var resource = new Resource(attributes);
 
-            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Equal(3, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
