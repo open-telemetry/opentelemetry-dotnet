@@ -109,8 +109,7 @@ namespace OpenTelemetry.Internal
                     this.writeBuffer.Value = buffer;
                 }
 
-                var timestamp = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
-                var pos = Encoding.UTF8.GetBytes(timestamp, 0, timestamp.Length, buffer, 0);
+                var pos = DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
                 buffer[pos++] = (byte)':';
                 pos = EncodeInBuffer(eventMessage, false, buffer, pos);
                 if (payload != null)
@@ -178,5 +177,94 @@ namespace OpenTelemetry.Internal
             // TODO: retrieve the file stream object from configRefresher and write to it
             this.WriteEvent(eventData.Message, eventData.Payload);
         }
+
+        /// <summary>
+        /// Write the formatted dateTime into a bytes array starting at position byteIndex.  The output format is "yyyy-MM-ddTHH:mm:SS.fffffffK".
+        /// The bytes array must be large enough to write 28 charaters from the byteIndex starting position.
+        /// </summary>
+        /// <param name="dateTime">DateTime</param>
+        /// <param name="bytes">Array of bytes to write</param>
+        /// <param name="byteIndex">Starting index into bytes array</param>
+        /// <returns>The number of bytes written.</returns>
+        private int DateTimeGetBytes(DateTime dateTime, byte[] bytes, int byteIndex)
+        {
+            int pos = byteIndex;
+
+            int num = dateTime.Year;
+            bytes[pos++] = (byte) (48 + num / 1000 % 10);
+            bytes[pos++] = (byte) (48 + num / 100 % 10);
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) '-';
+
+            num = dateTime.Month;
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) '-';
+
+            num = dateTime.Day;
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) 'T';
+
+            num = dateTime.Hour;
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) ':';
+
+            num = dateTime.Minute;
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) ':';
+
+            num = dateTime.Second;
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            bytes[pos++] = (byte) '.';
+
+            num = (int)((dateTime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
+            bytes[pos++] = (byte) (48 + num / 1000000 % 10);
+            bytes[pos++] = (byte) (48 + num / 100000 % 10);
+            bytes[pos++] = (byte) (48 + num / 10000 % 10);
+            bytes[pos++] = (byte) (48 + num / 1000 % 10);
+            bytes[pos++] = (byte) (48 + num / 100 % 10);
+            bytes[pos++] = (byte) (48 + num / 10 % 10);
+            bytes[pos++] = (byte) (48 + num % 10);
+
+            switch (dateTime.Kind)
+            {
+                case DateTimeKind.Utc:
+                    bytes[pos++] = (byte) 'Z';
+                    break;
+
+                case DateTimeKind.Local:
+                    TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(dateTime);
+
+                    bytes[pos++] = ts.Hours >= 0 ? (byte) '+' : (byte) '-';
+
+                    num = Math.Abs(ts.Hours);
+                    bytes[pos++] = (byte) (48 + num / 10 % 10);
+                    bytes[pos++] = (byte) (48 + num % 10);
+
+                    bytes[pos++] = (byte) ':';
+
+                    num = ts.Minutes;
+                    bytes[pos++] = (byte) (48 + num / 10 % 10);
+                    bytes[pos++] = (byte) (48 + num % 10);
+                    break;
+
+                case DateTimeKind.Unspecified:
+                    // Skip
+                    break;
+            }
+
+            return pos - byteIndex;
+        }        
     }
 }
