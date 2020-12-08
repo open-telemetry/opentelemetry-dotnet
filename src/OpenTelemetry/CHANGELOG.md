@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Resource Attributes fixed to allow the values of key-value pairs to be of any
+  object type, matching the behavior of Activity's SetTag method.
 * The following extension methods on `ResourceBuilder` has been moved from the
   `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
   `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
