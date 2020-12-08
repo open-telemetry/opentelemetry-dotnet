@@ -1,3 +1,5 @@
+OpenTelemetry.Exporter.Zipkin.ZipkinExporter
+OpenTelemetry.Exporter.Zipkin.ZipkinExporter.ZipkinExporter(OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions options, System.Net.Http.HttpClient client = null) -> void
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.BatchExportProcessorOptions.set -> void
@@ -11,4 +13,5 @@ OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.UseShortTraceIds.get -> bool
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.UseShortTraceIds.set -> void
 OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions.ZipkinExporterOptions() -> void
 OpenTelemetry.Trace.ZipkinExporterHelperExtensions
+override OpenTelemetry.Exporter.Zipkin.ZipkinExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> batch) -> OpenTelemetry.ExportResult
 static OpenTelemetry.Trace.ZipkinExporterHelperExtensions.AddZipkinExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Zipkin.ZipkinExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
