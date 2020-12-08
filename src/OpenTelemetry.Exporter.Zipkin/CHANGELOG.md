@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Changed `ZipkinExporter` class and constructor from internal to public.
+  ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
+
 * Zipkin will now set the `error` tag when `otel.status_code` is set to `ERROR`.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579) &
   [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))

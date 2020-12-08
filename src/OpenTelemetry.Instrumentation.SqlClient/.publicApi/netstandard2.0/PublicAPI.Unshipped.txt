@@ -3,6 +3,8 @@ OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.EnableCo
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.EnableConnectionLevelAttributes.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.set -> void
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.RecordException.get -> bool
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.RecordException.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.get -> bool
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetTextCommandContent.get -> bool
