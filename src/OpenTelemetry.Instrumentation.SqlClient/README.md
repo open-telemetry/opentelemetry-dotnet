@@ -175,6 +175,21 @@ is the general extensibility point to add additional properties to any activity.
 The `Enrich` option is specific to this instrumentation, and is provided to
 get access to `SqlCommand` object.
 
+### RecordException
+
+This option, available on .NET Core only, can be set to instruct the instrumentation
+to record SqlExceptions as Activity [events](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md).
+
+The default value is `false` and can be changed by the code like below.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(
+        options => options.RecordException = true)
+    .AddConsoleExporter()
+    .Build();
+```
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
