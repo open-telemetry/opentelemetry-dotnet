@@ -104,7 +104,7 @@ namespace OpenTelemetry.Resources
             object sanitizedValue;
             if (!IsValidValue(attribute.Value))
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null string, long, bool or double.");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be non-null.");
                 sanitizedValue = string.Empty;
             }
             else
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Resources
 
         private static bool IsValidValue(object value)
         {
-            if (value != null && (value is string || value is bool || value is long || value is double))
+            if (value != null)
             {
                 return true;
             }
