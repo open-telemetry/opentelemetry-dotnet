@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-* Resource Attributes fixed to allow the values of key-value pairs to be of any
-  object type, matching the behavior of Activity's SetTag method.
 * The following extension methods on `ResourceBuilder` has been moved from the
   `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
   `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
@@ -15,6 +13,9 @@
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for more information.
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
+* Resource Attributes now accept int or float as values, converting them to
+  supported data types (long and double respectively).
+  ([#1647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1647))
 
 ## 1.0.0-rc1.1
 
