@@ -16,8 +16,9 @@ first.
 
 ## Pre-releases
 
-Pre-release packages are identified by identifies such as -Alpha, -Beta, -RC
-etc. There is no API guarantees in pre-releases. In general, an RC pre-release
+Pre-release packages are denoted by appending identifiers such as
+-Alpha, -Beta, -RC
+etc. There are no API guarantees in pre-releases. In general, an RC pre-release
 is more stable than a Beta release, which is more stable than an Alpha release.
 
 ### Public API change detection
