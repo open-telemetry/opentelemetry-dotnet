@@ -122,7 +122,7 @@ namespace OpenTelemetry.Resources
 
                 if (value is float)
                 {
-                    return System.Convert.ToDouble(value);
+                    return System.Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
                 }
             }
 
