@@ -102,6 +102,10 @@ namespace OpenTelemetry.Resources
             }
 
             object sanitizedValue = SanitizeValue(attribute.Value);
+            if (sanitizedValue == null)
+            {
+                throw new System.ArgumentException("Attribute value should be a non-null primitive", sanitizedKey);
+            }
 
             return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
@@ -126,8 +130,7 @@ namespace OpenTelemetry.Resources
                 }
             }
 
-            OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null primitive or homogeneous array of primitives.");
-            return string.Empty;
+            return null;
         }
     }
 }
