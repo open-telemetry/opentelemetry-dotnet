@@ -46,15 +46,8 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var attributes = new Dictionary<string, object> { { "NullValue", null } };
 
-            // Act
-            var resource = new Resource(attributes);
-
-            // Assert
-            Assert.Single(resource.Attributes);
-
-            var attribute = resource.Attributes.Single();
-            Assert.Equal("NullValue", attribute.Key);
-            Assert.Empty((string)attribute.Value);
+            // Act and Assert
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
@@ -168,12 +161,7 @@ namespace OpenTelemetry.Resources.Tests
                 { "complex", this },
             };
 
-            var resource = new Resource(attributes);
-
-            Assert.Equal(3, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
