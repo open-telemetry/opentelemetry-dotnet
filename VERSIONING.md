@@ -40,7 +40,7 @@ file.
 ## Packaging
 
 OpenTelemetry is structured around signals like Traces, Metrics, Logs, Baggage
-etc. OpenTelemetry .NET does not ship separate package per signal. There is a
+etc. OpenTelemetry .NET does not ship separate packages per signal. There is a
 single package which includes all the signals. i.e `OpenTelemetry.API` package
 will consist of API components from *all* the signals. `OpenTelemetry` package
 will consist of SDK components from *all* the signals. Instrumentations also
