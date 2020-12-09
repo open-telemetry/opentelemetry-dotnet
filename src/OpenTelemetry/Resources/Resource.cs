@@ -119,7 +119,7 @@ namespace OpenTelemetry.Resources
                     return value;
                 }
 
-                if (value is int)
+                if (value is int || value is short)
                 {
                     return System.Convert.ToInt64(value);
                 }

@@ -13,8 +13,8 @@
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for more information.
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
-* Resource Attributes now accept int or float as values, converting them to
-  supported data types (long and double respectively).
+* Resource Attributes now accept int, short, and float as values, converting
+  them to supported data types (long for int/short, double for float).
   ([#1647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1647))
 
 ## 1.0.0-rc1.1

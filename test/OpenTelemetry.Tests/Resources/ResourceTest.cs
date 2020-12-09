@@ -135,17 +135,19 @@ namespace OpenTelemetry.Resources.Tests
 
                 // int and float supported by conversion to long and double
                 { "int", 1 },
+                { "short", (short)1 },
                 { "float", 0.1f },
             };
 
             var resource = new Resource(attributes);
 
-            Assert.Equal(6, resource.Attributes.Count());
+            Assert.Equal(7, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
 
             double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
             Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
