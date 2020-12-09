@@ -1,16 +1,18 @@
 # Versioning details
 
-This follows : https://github.com/open-telemetry/oteps/pull/143/files
+This follows the [OpenTelemetry versioning proposal](https://github.com/open-telemetry/oteps/pull/143/files)
 
 OpenTelemetry .NET follows [SemVer V2](https://semver.org/spec/v2.0.0.html)
-guidelines. This means that, for any packages released from this repo, all public APIs will
-remain backward compatible, unless a major version bump occurs. This applies to
-the API, SDK, as well as Exporters, Instrumentation etc. shipped from this repo.
+guidelines. This means that, for any packages released from this repo, all
+public APIs will remain backward compatible, unless a major version bump occurs.
+This applies to the API, SDK, as well as Exporters, Instrumentation etc. shipped
+from this repo.
 
 For example, users can take a dependency on 1.0.0 version of any package, with
 the assurance that all future releases until 2.0.0 will be backward compatible.
 Any method/function which are planned to be removed in 2.0, will be marked
-[Obsolete](https://docs.microsoft.com/dotnet/api/system.obsoleteattribute) first.
+[Obsolete](https://docs.microsoft.com/dotnet/api/system.obsoleteattribute)
+first.
 
 ## Pre-releases
 
@@ -37,8 +39,8 @@ Since no stable version has been released so far, every API is listed in the "Un
 
 OpenTelemetry is structured around signals like Traces, Metrics, Logs, Baggage
 etc. OpenTelemetry .NET does not ship separate package per signal. There is a
-single package which includes all the signals. i.e OpenTelemetry.API package
-will consist of API components from *all* the signals. OpenTelemetry package
+single package which includes all the signals. i.e `OpenTelemetry.API` package
+will consist of API components from *all* the signals. `OpenTelemetry` package
 will consist of SDK components from *all* the signals. Instrumentations also
 follow the same model - for example, There will be a single package
 `OpenTelemetry.Instrumentation.AspNetCore` for ASP.NET Core instrumentation,
@@ -94,3 +96,4 @@ Following shows an example on how the `OpenTelemetry` package versioning works:
 `OpenTelemetry` 1.3.0 release : More features.
 
 `OpenTelemetry` 2.0.0 release : Remove all Obsolete methods from 1.* releases.
+
