@@ -179,92 +179,108 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Write the formatted dateTime into a bytes array starting at position byteIndex.  The output format is "yyyy-MM-ddTHH:mm:SS.fffffffK".
-        /// The bytes array must be large enough to write 28 charaters from the byteIndex starting position.
+        /// Write the <c>datetime</c> formatted string into <c>bytes</c> byte-array starting at <c>byteIndex</c> position.
+        /// <para>
+        /// [DateTimeKind.Utc]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff Z (i.e.: 2020-12-09T10:20:50.4659412Z)
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Local]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff +|- HH : mm (i.e.: 2020-12-09T10:20:50.4659412-08:00)
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Unspecified]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff (i.e.: 2020-12-09T10:20:50.4659412)
+        /// </para>
         /// </summary>
-        /// <param name="dateTime">DateTime</param>
+        /// <remarks>
+        /// The bytes array must be large enough to write 27-33 charaters from the byteIndex starting position.
+        /// </remarks>
+        /// <param name="datetime">DateTime</param>
         /// <param name="bytes">Array of bytes to write</param>
         /// <param name="byteIndex">Starting index into bytes array</param>
         /// <returns>The number of bytes written.</returns>
-        private int DateTimeGetBytes(DateTime dateTime, byte[] bytes, int byteIndex)
+        int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
         {
+            int num;
             int pos = byteIndex;
 
-            int num = dateTime.Year;
-            bytes[pos++] = (byte) (48 + num / 1000 % 10);
-            bytes[pos++] = (byte) (48 + num / 100 % 10);
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Year;
+            bytes[pos++] = (byte) ('0' + num / 1000 % 10);
+            bytes[pos++] = (byte) ('0' + num / 100 % 10);
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) '-';
 
-            num = dateTime.Month;
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Month;
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) '-';
 
-            num = dateTime.Day;
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Day;
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) 'T';
 
-            num = dateTime.Hour;
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Hour;
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) ':';
 
-            num = dateTime.Minute;
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Minute;
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) ':';
 
-            num = dateTime.Second;
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = datetime.Second;
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
             bytes[pos++] = (byte) '.';
 
-            num = (int)((dateTime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
-            bytes[pos++] = (byte) (48 + num / 1000000 % 10);
-            bytes[pos++] = (byte) (48 + num / 100000 % 10);
-            bytes[pos++] = (byte) (48 + num / 10000 % 10);
-            bytes[pos++] = (byte) (48 + num / 1000 % 10);
-            bytes[pos++] = (byte) (48 + num / 100 % 10);
-            bytes[pos++] = (byte) (48 + num / 10 % 10);
-            bytes[pos++] = (byte) (48 + num % 10);
+            num = (int) (Math.Round(datetime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
+            bytes[pos++] = (byte) ('0' + num / 1000000 % 10);
+            bytes[pos++] = (byte) ('0' + num / 100000 % 10);
+            bytes[pos++] = (byte) ('0' + num / 10000 % 10);
+            bytes[pos++] = (byte) ('0' + num / 1000 % 10);
+            bytes[pos++] = (byte) ('0' + num / 100 % 10);
+            bytes[pos++] = (byte) ('0' + num / 10 % 10);
+            bytes[pos++] = (byte) ('0' + num % 10);
 
-            switch (dateTime.Kind)
+            switch (datetime.Kind)
             {
                 case DateTimeKind.Utc:
                     bytes[pos++] = (byte) 'Z';
                     break;
 
                 case DateTimeKind.Local:
-                    TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(dateTime);
+                    TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
 
-                    bytes[pos++] = ts.Hours >= 0 ? (byte) '+' : (byte) '-';
+                    bytes[pos++] = (byte) (ts.Hours >= 0 ? '+' : '-');
 
                     num = Math.Abs(ts.Hours);
-                    bytes[pos++] = (byte) (48 + num / 10 % 10);
-                    bytes[pos++] = (byte) (48 + num % 10);
+                    bytes[pos++] = (byte) ('0' + num / 10 % 10);
+                    bytes[pos++] = (byte) ('0' + num % 10);
 
                     bytes[pos++] = (byte) ':';
 
                     num = ts.Minutes;
-                    bytes[pos++] = (byte) (48 + num / 10 % 10);
-                    bytes[pos++] = (byte) (48 + num % 10);
+                    bytes[pos++] = (byte) ('0' + num / 10 % 10);
+                    bytes[pos++] = (byte) ('0' + num % 10);
                     break;
 
                 case DateTimeKind.Unspecified:
+                default:
                     // Skip
                     break;
             }
 
             return pos - byteIndex;
-        }        
+        }
     }
 }
