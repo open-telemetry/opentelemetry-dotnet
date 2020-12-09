@@ -33,7 +33,9 @@ changes. For example,
 shows the public per target framework for the
 `OpenTelemetry.Instrumentation.AspNetCore` package.
 
-Since no stable version has been released so far, every API is listed in the "Unshipped.txt" file. Once 1.0.0 is shipped, it'll be moved to "Shipped.txt" file.
+Since no stable version has been released so far, every API is listed in the
+"Unshipped.txt" file. Once 1.0.0 is shipped, it'll be moved to "Shipped.txt"
+file.
 
 ## Packaging
 
@@ -69,13 +71,13 @@ removed with a major version bump.
 
 ### Alternate option
 
-An alternate option to deal with experimental signal is to
-remove the signal from the common packages, and ship as separate package. For
-example, OpenTelemetry 1.0.0 will only contain Traces, and there will be a
-separate package OpenTelemetry.Metrics.Experimental, which contains the metric
-signal. Once the signal achieve stable quality, it'll be made part of the main
-package and released as a minor version update. i.e OpenTelemetry 1.2.0 will
-contain Traces and Metrics.
+An alternate option to deal with experimental signal is to remove the signal
+from the common packages, and ship as separate package. For example,
+OpenTelemetry 1.0.0 will only contain Traces, and there will be a separate
+package OpenTelemetry.Metrics.Experimental, which contains the metric signal.
+Once the signal achieve stable quality, it'll be made part of the main package
+and released as a minor version update. i.e OpenTelemetry 1.2.0 will contain
+Traces and Metrics.
 
 ## Examples
 
@@ -83,9 +85,12 @@ Following shows an example on how the `OpenTelemetry` package versioning works:
 
 `OpenTelemetry` 0.7.0-beta1 release : Pre-release, no API guarantees.
 
-`OpenTelemetry` 1.0.0-RC1 release : Pre-release, no API guarantees, but more stable than beta.
+`OpenTelemetry` 1.0.0-RC1 release : Pre-release, no API guarantees, but more
+stable than beta.
 
-`OpenTelemetry` 1.0.0 release : Stable release consisting of Traces, Propagators and Metrics. Metrics will be marked "Obsolete", to warn users that Metrics is not Stable.
+`OpenTelemetry` 1.0.0 release : Stable release consisting of Traces, Propagators
+and Metrics. Metrics will be marked "Obsolete", to warn users that Metrics is
+not Stable.
 
 `OpenTelemetry` 1.0.1 release : Bug fixes.
 
@@ -96,4 +101,3 @@ Following shows an example on how the `OpenTelemetry` package versioning works:
 `OpenTelemetry` 1.3.0 release : More features.
 
 `OpenTelemetry` 2.0.0 release : Remove all Obsolete methods from 1.* releases.
-
