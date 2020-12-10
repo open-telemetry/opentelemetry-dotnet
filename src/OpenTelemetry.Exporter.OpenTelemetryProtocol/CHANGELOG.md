@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Changed `OltpExporter` class and constructor from internal to public.
+  ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
+
 * In `OtlpExporterOptions.cs`: Exporter options now include a switch for
   Batch vs Simple exporter, and settings for batch exporting properties.
 
