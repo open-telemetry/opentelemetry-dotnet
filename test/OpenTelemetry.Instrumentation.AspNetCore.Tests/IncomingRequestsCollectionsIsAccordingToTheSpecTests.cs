@@ -59,6 +59,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool recordException = false)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
+            TracerProvider tracerProvider = null;
 
             // Arrange
             using (var client = this.factory
@@ -66,8 +67,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                        .AddProcessor(processor.Object));
+                        tracerProvider = Sdk.CreateTracerProviderBuilder()
+                            .AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
+                            .AddProcessor(processor.Object)
+                            .Build();
                     }))
                 .CreateClient())
             {
@@ -140,6 +143,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             activity.Dispose();
             processor.Object.Dispose();
+            tracerProvider?.Dispose();
         }
 
         private void ValidateTagValue(Activity activity, string attribute, string expectedValue)

@@ -171,15 +171,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-#if !NETCOREAPP2_1
-            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
-            // must be used.
-            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-#else
             // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
             // is always ignored and new one is created by the Instrumentation
             Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
-#endif
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
             Assert.Equal("/api/values/2", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);

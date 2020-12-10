@@ -45,14 +45,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
         private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
             : base(name)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
@@ -81,36 +79,37 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
+            ActivityContext activityContext = default;
+            Activity originalActivityCurrent = Activity.Current;
+            if (activity.ParentSpanId == default)
+            {
+                Activity.Current = null;
+            }
+            else
+            {
+                activityContext = new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true);
+            }
+
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
             {
                 var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
-
-                if (ctx.ActivityContext.IsValid()
-                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
-                {
-                    // Create a new activity with its parent set from the extracted context.
-                    // This makes the new activity as a "sibling" of the activity created by
-                    // Asp.Net Core.
-                    Activity newOne = new Activity(ActivityNameByHttpInListener);
-                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
-                    newOne.TraceStateString = ctx.ActivityContext.TraceState;
-
-                    // Starting the new activity make it the Activity.Current one.
-                    newOne.Start();
-                    activity = newOne;
-                }
-
+                activityContext = ctx.ActivityContext;
                 if (ctx.Baggage != default)
                 {
                     Baggage.Current = ctx.Baggage;
                 }
             }
 
-            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
+            activity = ActivitySource.StartActivity(ActivityNameByHttpInListener, ActivityKind.Server, activityContext);
 
-            if (activity.IsAllDataRequested)
+            if (activity == null)
+            {
+                Activity.Current = originalActivityCurrent;
+            }
+
+            if (activity?.IsAllDataRequested ?? false)
             {
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
@@ -208,8 +207,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
             }
-
-            this.activitySource.Stop(activity);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
