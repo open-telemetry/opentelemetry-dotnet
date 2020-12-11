@@ -80,7 +80,7 @@ namespace OpenTelemetry.Internal.Tests
             };
 
             // Expect to match output string from DateTime.ToString("O")
-            String[] expected = new string[datetimes.Length];
+            string[] expected = new string[datetimes.Length];
             for (int i = 0; i < datetimes.Length; i++)
             {
                 expected[i] = datetimes[i].ToString("O");
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Internal.Tests
             int pos = 0;
 
             // Get string after DateTimeGetBytes() write into a buffer
-            String[] results = new string[datetimes.Length];
+            string[] results = new string[datetimes.Length];
             for (int i = 0; i < datetimes.Length; i++)
             {
                 int len = listener.DateTimeGetBytes(datetimes[i], buffer, pos);
