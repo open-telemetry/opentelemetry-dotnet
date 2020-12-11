@@ -15,6 +15,9 @@
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for more information.
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
+* `Status.WithDescription` will now ignore the provided description if the
+  `Status.StatusCode` is anything other than `ERROR`.
+  ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
 
 ## 1.0.0-rc1.1
 
