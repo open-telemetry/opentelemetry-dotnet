@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
     public partial class GrpcTests : IDisposable
     {
-        private const string OperationNameHttpRequestIn = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+        private const string OperationNameHttpRequestIn = "ActivityCreatedByHttpInListener";
         private const string OperationNameGrpcOut = "Grpc.Net.Client.GrpcOut";
 
         private readonly GrpcServer<GreeterService> server;
