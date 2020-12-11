@@ -152,32 +152,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        protected override void OnEventSourceCreated(EventSource eventSource)
-        {
-            if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
-            {
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
-                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
-            }
-
-            base.OnEventSourceCreated(eventSource);
-        }
-
-        /// <summary>
-        /// This method records the events from event sources to a local file, which is provided as a stream object by
-        /// SelfDiagnosticsConfigRefresher class. The file size is bound to a upper limit. Once the write position
-        /// reaches the end, it will be reset to the beginning of the file.
-        /// </summary>
-        /// <param name="eventData">Data of the EventSource event.</param>
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
-        {
-            // TODO: retrieve the file stream object from configRefresher and write to it
-            this.WriteEvent(eventData.Message, eventData.Payload);
-        }
-
         /// <summary>
         /// Write the <c>datetime</c> formatted string into <c>bytes</c> byte-array starting at <c>byteIndex</c> position.
         /// <para>
@@ -281,6 +255,32 @@ namespace OpenTelemetry.Internal
             }
 
             return pos - byteIndex;
+        }
+
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
+            {
+#if NET452
+                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
+#else
+                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
+#endif
+            }
+
+            base.OnEventSourceCreated(eventSource);
+        }
+
+        /// <summary>
+        /// This method records the events from event sources to a local file, which is provided as a stream object by
+        /// SelfDiagnosticsConfigRefresher class. The file size is bound to a upper limit. Once the write position
+        /// reaches the end, it will be reset to the beginning of the file.
+        /// </summary>
+        /// <param name="eventData">Data of the EventSource event.</param>
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            // TODO: retrieve the file stream object from configRefresher and write to it
+            this.WriteEvent(eventData.Message, eventData.Payload);
         }
     }
 }
