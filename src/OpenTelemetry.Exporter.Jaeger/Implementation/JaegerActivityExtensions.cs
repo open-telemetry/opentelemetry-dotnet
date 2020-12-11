@@ -25,6 +25,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal static class JaegerActivityExtensions
     {
+        internal const string JaegerErrorFlagTagName = "error";
+
         private const int DaysPerYear = 365;
 
         // Number of days in 4 years
@@ -263,7 +265,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     if (statusCode == StatusCode.Error)
                     {
                         // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#error-flag
-                        PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag("error", JaegerTagType.BOOL, vBool: true));
+                        PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
                     }
                     else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
                     {
@@ -273,6 +275,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
                     // Normalize status since it is user-driven.
                     jaegerTag = new JaegerTag(key, JaegerTagType.STRING, vStr: StatusHelper.GetTagValueForStatusCode(statusCode.Value));
+                }
+                else if (key == JaegerErrorFlagTagName)
+                {
+                    // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
+                    return;
                 }
             }
             else if (jaegerTag.VLong.HasValue)
