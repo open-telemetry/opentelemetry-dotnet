@@ -200,7 +200,7 @@ namespace OpenTelemetry.Internal
         /// <param name="bytes">Array of bytes to write.</param>
         /// <param name="byteIndex">Starting index into bytes array.</param>
         /// <returns>The number of bytes written.</returns>
-        private int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
+        internal int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
         {
             int num;
             int pos = byteIndex;
