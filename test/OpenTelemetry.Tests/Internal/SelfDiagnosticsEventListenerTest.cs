@@ -95,7 +95,7 @@ namespace OpenTelemetry.Internal.Tests
             {
                 int len = listener.DateTimeGetBytes(datetimes[i], buffer, pos);
                 results[i] = Encoding.Default.GetString(buffer, pos, len);
-                pos+= len;
+                pos += len;
             }
 
             Assert.Equal(expected, results);
