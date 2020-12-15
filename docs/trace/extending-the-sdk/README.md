@@ -221,7 +221,7 @@ register the exporter, they must be registered manually as shown below:
         .SetSampler(new MySampler())
         .AddSource("OTel.Demo")
         .AddProcessor(new MyFilteringProcessor(
-            new SimpleExportProcessor<Activity>(new MyExporter("ExporterX")),
+            new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
             (act) => true))
         .Build();
 ```
