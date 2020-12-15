@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpExporter : BaseExporter<Activity>
+    public class OtlpExporter : BaseExporter<Activity>
     {
         private const string DefaultServiceName = "OpenTelemetry Exporter";
 
@@ -40,6 +40,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         private readonly Channel channel;
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
+        /// </summary>
+        /// <param name="options">Configuration options for the exporter.</param>
+        public OtlpExporter(OtlpExporterOptions options)
+            : this(options, null)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.

@@ -466,11 +466,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
 
             if (expectedStatusCode == StatusCode.Error)
             {
-                Assert.Contains(jaegerSpan.Tags, t => t.Key == "error" && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+                Assert.Contains(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
             }
             else
             {
-                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "error");
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
             }
         }
 
