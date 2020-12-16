@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
@@ -37,18 +36,17 @@ namespace OpenTelemetry.Trace
     /// following this doc:
     /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md.
     /// </remarks>
-    public class ActivitySourceAdapter
+    internal class ActivitySourceAdapter
     {
         private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
+        private static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
         private readonly Sampler sampler;
-        private readonly Resource resource;
         private readonly Action<Activity> getRequestedDataAction;
         private BaseProcessor<Activity> activityProcessor;
 
-        internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor, Resource resource)
+        internal ActivitySourceAdapter(Sampler sampler, BaseProcessor<Activity> activityProcessor)
         {
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
-            this.resource = resource ?? throw new ArgumentNullException(nameof(resource));
             if (this.sampler is AlwaysOnSampler)
             {
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
@@ -74,16 +72,17 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity"><see cref="Activity"/> to be started.</param>
         /// <param name="kind">ActivityKind to be set of the activity.</param>
+        /// <param name="source">ActivitySource to be set of the activity.</param>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public void Start(Activity activity, ActivityKind kind)
+        public void Start(Activity activity, ActivityKind kind, ActivitySource source)
         {
             OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
+            SetActivitySourceProperty(activity, source);
             SetKindProperty(activity, kind);
             this.getRequestedDataAction(activity);
             if (activity.IsAllDataRequested)
             {
-                activity.SetResource(this.resource);
                 this.activityProcessor?.OnStart(activity);
             }
         }
@@ -105,6 +104,14 @@ namespace OpenTelemetry.Trace
         internal void UpdateProcessor(BaseProcessor<Activity> processor)
         {
             this.activityProcessor = processor;
+        }
+
+        private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
+        {
+            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
+            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivitySource), "propertyValue");
+            var body = Expression.Assign(Expression.Property(instance, "Source"), propertyValue);
+            return Expression.Lambda<Action<Activity, ActivitySource>>(body, instance, propertyValue).Compile();
         }
 
         private static Action<Activity, ActivityKind> CreateActivityKindSetter()

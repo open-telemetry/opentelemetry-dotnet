@@ -38,7 +38,7 @@ namespace OpenTelemetry
         }
 
         /// <inheritdoc />
-        public override void OnEnd(T data)
+        public override void OnExport(T data)
         {
             lock (this.syncObject)
             {
@@ -48,7 +48,7 @@ namespace OpenTelemetry
                 }
                 catch (Exception ex)
                 {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnEnd), ex);
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.OnExport), ex);
                 }
             }
         }

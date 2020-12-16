@@ -73,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             // Disposing SDK should flush the Redis profiling session immediately.
 
-            Assert.Equal(6, activityProcessor.Invocations.Count);
+            Assert.Equal(7, activityProcessor.Invocations.Count);
 
             VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0]);
             VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0]);
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
                 Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
             }
 
-            Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.Equal(Status.Unset, activity.GetStatus());
             Assert.Equal("redis", activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal(0, activity.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisDatabaseIndexKeyName));
 

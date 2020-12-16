@@ -21,8 +21,10 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 
 ## Getting Started
 
-If you are new here, please see [get started in 5
-minutes](./docs/trace/getting-started/README.md).
+If you are new here, please see getting started docs for
+[logs](./docs/logs/getting-started/README.md),
+[metrics](./docs/metrics/getting-started.md), and
+[trace](./docs/trace/getting-started/README.md).
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
@@ -70,7 +72,6 @@ most common customization and extension scenarios:
   exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
 * [Building a custom trace
   exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
-* [Correlating logs with traces](./docs/logs/correlation/README.md)
 
 ## Contributing
 
@@ -92,6 +93,7 @@ For edit access, get in touch on
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
+* [Alan West](https://github.com/alanwest), NewRelic
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk

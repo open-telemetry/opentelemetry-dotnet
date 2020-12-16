@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// <summary>
     /// Basic aggregator which calculates a Sum from individual measurements.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class DoubleCounterSumAggregator : Aggregator<double>
     {
         private double sum;
@@ -32,6 +33,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         public override void Checkpoint()
         {
             // checkpoints the current running sum into checkpoint, and starts counting again.
+            base.Checkpoint();
             this.checkPoint = Interlocked.Exchange(ref this.sum, 0.0);
         }
 
@@ -40,8 +42,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new DoubleSumData
             {
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkPoint,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

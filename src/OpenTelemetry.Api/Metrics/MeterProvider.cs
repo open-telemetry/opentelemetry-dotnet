@@ -21,7 +21,8 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// MeterProvider is the entry point of the OpenTelemetry Metrics API. It provides access to Meters.
     /// </summary>
-    public class MeterProvider : IDisposable
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
+    public class MeterProvider : BaseProvider
     {
         private static ProxyMeter proxyMeter = new ProxyMeter();
         private static bool isInitialized;
@@ -71,13 +72,6 @@ namespace OpenTelemetry.Metrics
             isInitialized = true;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         /// <summary>
         /// Returns a Meter for a given name and version.
         /// </summary>
@@ -95,14 +89,6 @@ namespace OpenTelemetry.Metrics
             proxyMeter = new ProxyMeter();
             isInitialized = false;
             defaultProvider = new MeterProvider();
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
         }
     }
 }

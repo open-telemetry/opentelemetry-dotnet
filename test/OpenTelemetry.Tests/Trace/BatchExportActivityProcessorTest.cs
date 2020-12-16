@@ -34,25 +34,29 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckConstructorWithInvalidValues()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxExportBatchSize: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), maxQueueSize: 1, maxExportBatchSize: 2049));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), scheduledDelayMilliseconds: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(), exporterTimeoutMilliseconds: -1));
+            var exportedItems = new List<Activity>();
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxExportBatchSize: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 1, maxExportBatchSize: 2049));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), scheduledDelayMilliseconds: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BatchExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems), exporterTimeoutMilliseconds: -1));
         }
 
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 1,
                 maxExportBatchSize: 1,
                 scheduledDelayMilliseconds: 100_000);
 
-            processor.OnEnd(new Activity("start"));
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
 
             for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
             {
@@ -69,7 +73,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckForceFlushWithInvalidTimeout()
         {
-            using var exporter = new InMemoryExporter<Activity>();
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
             Assert.Throws<ArgumentOutOfRangeException>(() => processor.ForceFlush(-2));
         }
@@ -80,16 +85,22 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckForceFlushExport(int timeout)
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnEnd(new Activity("start1"));
-            processor.OnEnd(new Activity("start2"));
+            var activity1 = new Activity("start1");
+            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            var activity2 = new Activity("start2");
+            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity1);
+            processor.OnEnd(activity2);
 
             Assert.Equal(0, processor.ProcessedCount);
 
@@ -119,20 +130,23 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(1)]
         public void CheckShutdownExport(int timeout)
         {
-            var exportedItems = new List<object>();
-            using var exporter = new InMemoryExporter<Activity>(new InMemoryExporterOptions { ExportedItems = exportedItems });
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new BatchExportProcessor<Activity>(
                 exporter,
                 maxQueueSize: 3,
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            processor.OnEnd(new Activity("start"));
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
             processor.Shutdown(timeout);
 
             if (timeout == 0)
             {
-                // ForceFlush(0) will trigger flush and return immediately, so let's sleep for a while
+                // Shutdown(0) will trigger flush and return immediately, so let's sleep for a while
                 Thread.Sleep(1_000);
             }
 
@@ -141,6 +155,26 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(1, processor.ProcessedCount);
             Assert.Equal(1, processor.ReceivedCount);
             Assert.Equal(0, processor.DroppedCount);
+        }
+
+        [Fact]
+        public void CheckExportForRecordingButNotSampledActivity()
+        {
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
+            using var processor = new BatchExportProcessor<Activity>(
+                exporter,
+                maxQueueSize: 1,
+                maxExportBatchSize: 1);
+
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            processor.OnEnd(activity);
+            processor.Shutdown();
+
+            Assert.Empty(exportedItems);
+            Assert.Equal(0, processor.ProcessedCount);
         }
     }
 }

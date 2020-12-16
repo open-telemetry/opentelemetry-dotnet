@@ -27,7 +27,7 @@ namespace OpenTelemetry.Shims.OpenTracing
     /// </summary>
     /// <remarks>Instances of this class are not thread-safe.</remarks>
     /// <seealso cref="ISpanBuilder" />
-    public sealed class SpanBuilderShim : ISpanBuilder
+    internal sealed class SpanBuilderShim : ISpanBuilder
     {
         /// <summary>
         /// The tracer.

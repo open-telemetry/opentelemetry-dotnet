@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -27,9 +28,10 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderSdk : TracerProvider
     {
+        internal int ShutdownCount;
+
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
-        private readonly Resource resource;
         private readonly Sampler sampler;
         private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
@@ -37,11 +39,12 @@ namespace OpenTelemetry.Trace
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilder.InstrumentationFactory> instrumentationFactories,
+            IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
+            IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors)
         {
-            this.resource = resource;
+            this.Resource = resource;
             this.sampler = sampler;
 
             foreach (var processor in processors)
@@ -49,12 +52,20 @@ namespace OpenTelemetry.Trace
                 this.AddProcessor(processor);
             }
 
-            if (instrumentationFactories.Any())
+            if (diagnosticSourceInstrumentationFactories.Any())
             {
-                this.adapter = new ActivitySourceAdapter(sampler, this.processor, resource);
-                foreach (var instrumentationFactory in instrumentationFactories)
+                this.adapter = new ActivitySourceAdapter(sampler, this.processor);
+                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
+                }
+            }
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 
@@ -72,7 +83,6 @@ namespace OpenTelemetry.Trace
 
                     if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                     {
-                        activity.SetResource(this.resource);
                         this.processor?.OnStart(activity);
                     }
                 },
@@ -156,12 +166,16 @@ namespace OpenTelemetry.Trace
             this.listener = listener;
         }
 
+        internal Resource Resource { get; }
+
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
             {
                 throw new ArgumentNullException(nameof(processor));
             }
+
+            processor.SetParentProvider(this);
 
             if (this.processor == null)
             {
@@ -183,6 +197,41 @@ namespace OpenTelemetry.Trace
             this.adapter?.UpdateProcessor(this.processor);
 
             return this;
+        }
+
+        /// <summary>
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnShutdown(int timeoutMilliseconds)
+        {
+            // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
+            bool? result;
+            if (this.instrumentations != null)
+            {
+                foreach (var item in this.instrumentations)
+                {
+                    (item as IDisposable)?.Dispose();
+                }
+
+                this.instrumentations.Clear();
+            }
+
+            result = this.processor?.Shutdown(timeoutMilliseconds);
+            this.listener?.Dispose();
+            return result ?? true;
         }
 
         protected override void Dispose(bool disposing)

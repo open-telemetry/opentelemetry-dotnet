@@ -39,6 +39,27 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         private static readonly Regex DataSourceRegex = new Regex("^(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
+        // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
+        // StoredProcedures from regular Text sql commands.
+#if NETFRAMEWORK
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should
+        /// add the text of the executed Sql commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
+        /// Default value: False.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// WARNING: potential sensitive data capture! If you use <c>Microsoft.Data.SqlClient</c>, the instrumentation will capture <c>sqlCommand.CommandText</c>
+        /// for <see cref="CommandType.StoredProcedure"/> and <see cref="CommandType.Text"/>. Make sure your <c>CommandText</c> property never contains
+        /// any sensitive data for <see cref="CommandType.Text"/> commands.
+        /// </para>
+        /// <para>
+        /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
+        /// </para>
+        /// </remarks>
+        public bool SetStatementText { get; set; }
+#else
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
         /// </summary>
@@ -48,6 +69,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
         public bool SetTextCommandContent { get; set; }
+#endif
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
@@ -63,10 +85,37 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
         /// <para>string: the name of the event.</para>
-        /// <para>object: the raw object from which additional information can be extracted to enrich the activity.
-        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// <para>object: the raw <c>SqlCommand</c> object from which additional information can be extracted to enrich the activity.</para>
+        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
         /// </remarks>
+        /// <example>
+        /// <code>
+        /// using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        ///     .AddSqlClientInstrumentation(opt => opt.Enrich
+        ///         = (activity, eventName, rawObject) =>
+        ///      {
+        ///         if (eventName.Equals("OnCustom"))
+        ///         {
+        ///             if (rawObject is SqlCommand cmd)
+        ///             {
+        ///                 activity.SetTag("db.commandTimeout", cmd.CommandTimeout);
+        ///             }
+        ///         }
+        ///      })
+        ///     .Build();
+        /// </code>
+        /// </example>
         public Action<Activity, string, object> Enrich { get; set; }
+
+#if !NETFRAMEWORK
+        /// <summary>
+        /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
+        /// </remarks>
+        public bool RecordException { get; set; }
+#endif
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {

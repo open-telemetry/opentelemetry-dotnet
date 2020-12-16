@@ -78,8 +78,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using var response = await request.GetResponseAsync();
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
             Assert.Equal(parent.SpanId, activity.ParentSpanId);
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // By default parentbasedsampler is used.
             // In this case, the parent is the manually created parentactivity, which will have TraceFlags as None.
             // This causes child to be not created.
-            Assert.Empty(activityProcessor.Invocations);
+            Assert.Equal(1, activityProcessor.Invocations.Count);
 
             Assert.Equal(parent.TraceId, contentFromPropagator.TraceId);
             Assert.Equal(parent.SpanId, contentFromPropagator.SpanId);
@@ -172,9 +172,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using var response = await request.GetResponseAsync();
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
+            Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
 
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
             Assert.Equal(parent.SpanId, activity.ParentSpanId);
@@ -215,7 +215,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             await c.SendAsync(request);
 
-            Assert.Equal(0, activityProcessor.Invocations.Count);
+            Assert.Equal(1, activityProcessor.Invocations.Count);
         }
 
         [Fact]
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             await c.GetAsync(this.url);
 
-            Assert.Equal(0, activityProcessor.Invocations.Count);
+            Assert.Equal(1, activityProcessor.Invocations.Count);
         }
 
         [Fact]

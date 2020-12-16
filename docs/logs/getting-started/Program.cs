@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 public class Program
 {

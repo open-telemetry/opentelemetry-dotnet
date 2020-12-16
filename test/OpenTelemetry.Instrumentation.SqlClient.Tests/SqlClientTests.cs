@@ -17,6 +17,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 #if NET452
 using System.Data.SqlClient;
 #else
@@ -71,7 +72,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.Text, "select 1/1", false, true)]
 #endif
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true, false)]
+        [InlineData(CommandType.Text, "select 1/0", false, false, true, false, false)]
+        [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
         public void SuccessfulCommandTest(
@@ -80,6 +82,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent = false,
             bool isFailure = false,
+            bool recordException = false,
             bool shouldEnrich = true)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
@@ -87,14 +90,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
+#if !NETFRAMEWORK
                     options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
                     options.SetTextCommandContent = captureTextCommandContent;
+                    options.RecordException = recordException;
+#else
+                    options.SetStatementText = captureStoredProcedureCommandName;
+#endif
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
                     }
                 })
                 .Build();
+
+#if NETFRAMEWORK
+            // RecordException not available on netfx
+            recordException = false;
+#endif
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
@@ -117,13 +130,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count);
+            Assert.Equal(3, activityProcessor.Invocations.Count);
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, dataSource, activity);
+            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, dataSource, activity);
         }
 
+        // DiagnosticListener-based instrumentation is only available on .NET Core
+#if !NETFRAMEWORK
         [Theory]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false)]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", true, false, false)]
@@ -187,7 +202,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -195,16 +210,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 captureStoredProcedureCommandName,
                 captureTextCommandContent,
                 false,
+                false,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[1].Arguments[0]);
+                (Activity)processor.Invocations[2].Arguments[0]);
         }
 
         [Theory]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataWriteCommandError)]
         [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataWriteCommandError, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand, SqlClientDiagnosticListener.SqlDataWriteCommandError, false, true)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError, false)]
-        public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand, bool shouldEnrich = true)
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftWriteCommandError, false, true)]
+        public void SqlClientErrorsAreCollectedSuccessfully(string beforeCommand, string errorCommand, bool shouldEnrich = true, bool recordException = false)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -213,6 +231,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {
+                    options.RecordException = recordException;
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
@@ -249,7 +268,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -257,9 +276,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 true,
                 false,
                 true,
+                recordException,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[1].Arguments[0]);
+                (Activity)processor.Invocations[2].Arguments[0]);
         }
+#endif
 
         private static void VerifyActivityData(
             CommandType commandType,
@@ -267,6 +288,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent,
             bool isFailure,
+            bool recordException,
             string dataSource,
             Activity activity)
         {
@@ -275,16 +297,28 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal((int)StatusCode.Unset, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-                Assert.Null(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+                Assert.Equal(Status.Unset, activity.GetStatus());
             }
             else
             {
-                Assert.Equal((int)StatusCode.Error, activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-                Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+                var status = activity.GetStatus();
+                Assert.Equal(Status.Error.StatusCode, status.StatusCode);
+                Assert.NotNull(status.Description);
+
+                if (recordException)
+                {
+                    var events = activity.Events.ToList();
+                    Assert.Single(events);
+
+                    Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[0].Name);
+                }
+                else
+                {
+                    Assert.Empty(activity.Events);
+                }
             }
 
-            Assert.Equal(SqlClientDiagnosticListener.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
+            Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
 
             switch (commandType)

@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics.Aggregators
     /// <summary>
     /// Simple aggregator that only keeps the last value.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class DoubleLastValueAggregator : Aggregator<double>
     {
         private double value;
@@ -31,6 +32,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override void Checkpoint()
         {
+            base.Checkpoint();
             Interlocked.Exchange(ref this.checkpoint, this.value);
         }
 
@@ -39,8 +41,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             return new DoubleSumData
             {
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
                 Sum = this.checkpoint,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
             };
         }
 

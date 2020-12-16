@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using Grpc.Core;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
@@ -24,13 +25,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
-
-        /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
-        /// </summary>
-        public string ServiceName { get; set; } = DefaultServiceName;
-
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
         /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
@@ -52,5 +46,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// Gets or sets the gRPC channel options.
         /// </summary>
         public IEnumerable<ChannelOption> ChannelOptions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
+        /// </summary>
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+
+        /// <summary>
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
+        /// </summary>
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }

@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
@@ -43,7 +46,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), zipkinSpan.Duration);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -68,12 +71,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             Assert.Equal(ZipkinSpanName, zipkinSpan.Name);
-            Assert.Empty(zipkinSpan.Annotations.Value);
+            Assert.Empty(zipkinSpan.Annotations);
             Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
             Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
 
             int counter = 0;
-            var tagsArray = zipkinSpan.Tags.Value.ToArray();
+            var tagsArray = zipkinSpan.Tags.ToArray();
 
             foreach (var tags in activity.TagObjects)
             {
@@ -83,6 +86,45 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), zipkinSpan.Timestamp);
             Assert.Equal((long)activity.Duration.TotalMilliseconds * 1000, zipkinSpan.Duration);
+        }
+
+        [Theory]
+        [InlineData(StatusCode.Unset, "unset")]
+        [InlineData(StatusCode.Ok, "Ok")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        [InlineData(StatusCode.Unset, "iNvAlId")]
+        public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+        {
+            // Arrange
+            var activity = ZipkinExporterTests.CreateTestActivity();
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+
+            // Act
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert
+
+            Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
+
+            if (expectedStatusCode == StatusCode.Unset)
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else
+            {
+                Assert.Equal(
+                    StatusHelper.GetTagValueForStatusCode(expectedStatusCode),
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            if (expectedStatusCode == StatusCode.Error)
+            {
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
+            }
         }
     }
 }

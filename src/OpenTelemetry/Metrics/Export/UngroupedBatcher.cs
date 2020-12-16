@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
 
@@ -22,6 +23,7 @@ namespace OpenTelemetry.Metrics.Export
     /// <summary>
     /// Batcher which retains all dimensions/labels.
     /// </summary>
+    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class UngroupedBatcher : MetricProcessor
     {
         private List<Metric> metrics;

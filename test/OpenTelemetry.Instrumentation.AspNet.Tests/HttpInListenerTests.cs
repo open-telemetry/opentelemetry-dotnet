@@ -47,6 +47,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         [Theory]
         [InlineData("http://localhost/", 0, null, "TraceContext")]
+        [InlineData("http://localhost/", 0, null, "TraceContext", true)]
         [InlineData("https://localhost/", 0, null, "TraceContext")]
         [InlineData("http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
         [InlineData("https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
@@ -54,21 +55,20 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
         [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
         [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
         [InlineData("http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
         [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", null, true)]
+        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
             string routeTemplate,
             string carrierFormat,
+            bool setStatusToErrorInEnrich = false,
             string filter = null,
             bool restoreCurrentActivity = false)
         {
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
-
             IDisposable openTelemetry = null;
             RouteData routeData;
             switch (routeType)
@@ -164,9 +164,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                         return httpContext.Request.Path != filter;
                     };
 
-                    options.Enrich = ActivityEnrichment;
+                    if (setStatusToErrorInEnrich)
+                    {
+                        options.Enrich = GetEnrichmentAction(Status.Error);
+                    }
+                    else
+                    {
+                        options.Enrich = GetEnrichmentAction(default);
+                    }
                 })
-            .SetResource(expectedResource)
             .AddProcessor(activityProcessor.Object).Build())
             {
                 activity.Start();
@@ -196,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only Shutdown/Dispose are called because request was filtered.
-                Assert.Equal(2, activityProcessor.Invocations.Count);
+                // only SetParentProvider/Shutdown/Dispose are called because request was filtered.
+                Assert.Equal(3, activityProcessor.Invocations.Count);
                 return;
             }
 
@@ -205,8 +211,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(4, activityProcessor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            span = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            span = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(
                 carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent"
@@ -222,11 +228,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-            Assert.Equal(Status.Unset, span.GetStatus());
 
-            // Instrumentation is not expected to set status description
-            // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-            Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            if (setStatusToErrorInEnrich)
+            {
+                // This validates that users can override the
+                // status in Enrich.
+                Assert.Equal(Status.Error, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
+            else
+            {
+                Assert.Equal(Status.Unset, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
 
             var expectedUri = new Uri(url);
             var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
@@ -260,25 +280,35 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
             Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
-
-            Assert.Equal(expectedResource, span.GetResource());
         }
 
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        private static Action<Activity, string, object> GetEnrichmentAction(Status statusToBeSet)
         {
-            switch (method)
+            Action<Activity, string, object> enrichAction;
+
+            enrichAction = (activity, method, obj) =>
             {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequest);
-                    break;
+                switch (method)
+                {
+                    case "OnStartActivity":
+                        Assert.True(obj is HttpRequest);
+                        break;
 
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponse);
-                    break;
+                    case "OnStopActivity":
+                        Assert.True(obj is HttpResponse);
+                        if (statusToBeSet != default)
+                        {
+                            activity.SetStatus(statusToBeSet);
+                        }
 
-                default:
-                    break;
-            }
+                        break;
+
+                    default:
+                        break;
+                }
+            };
+
+            return enrichAction;
         }
 
         private class FakeAspNetDiagnosticSource : IDisposable

@@ -25,6 +25,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal static class JaegerActivityExtensions
     {
+        internal const string JaegerErrorFlagTagName = "error";
+
         private const int DaysPerYear = 365;
 
         // Number of days in 4 years
@@ -95,10 +97,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var activitySource = activity.Source;
             if (!string.IsNullOrEmpty(activitySource.Name))
             {
-                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.name", JaegerTagType.STRING, vStr: activitySource.Name));
+                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("otel.library.name", JaegerTagType.STRING, vStr: activitySource.Name));
                 if (!string.IsNullOrEmpty(activitySource.Version))
                 {
-                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("library.version", JaegerTagType.STRING, vStr: activitySource.Version));
+                    PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("otel.library.version", JaegerTagType.STRING, vStr: activitySource.Version));
                 }
             }
 
@@ -162,10 +164,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             timedEvent.EnumerateTags(ref jaegerTags);
 
-            // Matches what OpenTracing and OpenTelemetry defines as the event name.
-            // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
-            // https://github.com/open-telemetry/opentelemetry-specification/pull/397/files
-            PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("message", JaegerTagType.STRING, vStr: timedEvent.Name));
+            if (!jaegerTags.HasEvent)
+            {
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#events
+                PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("event", JaegerTagType.STRING, vStr: timedEvent.Name));
+            }
 
             // TODO: Use the same function as JaegerConversionExtensions or check that the perf here is acceptable.
             return new JaegerLog(timedEvent.Timestamp.ToEpochMicroseconds(), jaegerTags.Tags);
@@ -255,6 +258,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             if (jaegerTag.VStr != null)
             {
                 PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VStr);
+
+                if (key == SpanAttributeConstants.StatusCodeKey)
+                {
+                    StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
+                    if (statusCode == StatusCode.Error)
+                    {
+                        // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#error-flag
+                        PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
+                    }
+                    else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
+                    {
+                        // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#status
+                        return;
+                    }
+
+                    // Normalize status since it is user-driven.
+                    jaegerTag = new JaegerTag(key, JaegerTagType.STRING, vStr: StatusHelper.GetTagValueForStatusCode(statusCode.Value));
+                }
+                else if (key == JaegerErrorFlagTagName)
+                {
+                    // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
+                    return;
+                }
             }
             else if (jaegerTag.VLong.HasValue)
             {
@@ -337,6 +363,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             public PooledList<JaegerTag> Tags;
 
+            public bool HasEvent;
+
             public bool ForEach(KeyValuePair<string, object> tag)
             {
                 if (tag.Value is Array)
@@ -346,6 +374,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 else if (tag.Value != null)
                 {
                     PooledList<JaegerTag>.Add(ref this.Tags, tag.ToJaegerTag());
+                }
+
+                if (tag.Key == "event")
+                {
+                    this.HasEvent = true;
                 }
 
                 return true;
