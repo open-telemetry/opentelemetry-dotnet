@@ -86,7 +86,7 @@ namespace Examples.AspNetCore
                         .AddHttpClientInstrumentation()
                         .AddOtlpExporter(otlpOptions =>
                         {
-                            otlpOptions.Endpoint = this.Configuration.GetValue<string>("Otlp:Endpoint");
+                            otlpOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Otlp:Endpoint"));
                         }));
                     break;
                 default:
