@@ -54,7 +54,9 @@ namespace Examples.Console
 
         private static object RunWithActivitySource(string endpoint)
         {
-            // Enable support for unencrypted HTTP2
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
