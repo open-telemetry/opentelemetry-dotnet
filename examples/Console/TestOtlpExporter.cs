@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -53,12 +54,15 @@ namespace Examples.Console
 
         private static object RunWithActivitySource(string endpoint)
         {
+            // Enable support for unencrypted HTTP2
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
-                    .AddOtlpExporter(opt => opt.Endpoint = endpoint)
+                    .AddOtlpExporter(opt => opt.Endpoint = new Uri(endpoint))
                     .Build();
 
             // The above line is required only in Applications

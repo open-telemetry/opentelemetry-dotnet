@@ -20,6 +20,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -37,7 +40,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         private const string DefaultServiceName = "OpenTelemetry Exporter";
 
         private readonly OtlpExporterOptions options;
+#if NETSTANDARD2_1
+        private readonly GrpcChannel channel;
+#else
         private readonly Channel channel;
+#endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
 
@@ -65,7 +72,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
             else
             {
+#if NETSTANDARD2_1
+                this.channel = options.GrpcChannelOptions == default
+                    ? GrpcChannel.ForAddress(options.Endpoint)
+                    : GrpcChannel.ForAddress(options.Endpoint, options.GrpcChannelOptions);
+#else
                 this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+#endif
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
             }
         }

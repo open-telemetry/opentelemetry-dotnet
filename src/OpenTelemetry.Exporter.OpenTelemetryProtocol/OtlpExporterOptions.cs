@@ -14,9 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
@@ -25,12 +29,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpExporterOptions
     {
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Gets or sets the target to which the exporter is going to send traces or metrics.
+        /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
+        /// </summary>
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:55680");
+#else
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
         /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
         /// </summary>
         public string Endpoint { get; set; } = "localhost:55680";
+#endif
 
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Gets or sets the gRPC channel options.
+        /// </summary>
+        public GrpcChannelOptions GrpcChannelOptions { get; set; }
+#else
         /// <summary>
         /// Gets or sets the client-side channel credentials. Used for creation of a secure channel.
         /// The default is "insecure". See detais at https://grpc.io/docs/guides/auth/#credential-types.
@@ -38,14 +56,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         public ChannelCredentials Credentials { get; set; } = ChannelCredentials.Insecure;
 
         /// <summary>
-        /// Gets or sets optional headers for the connection.
-        /// </summary>
-        public Metadata Headers { get; set; } = new Metadata();
-
-        /// <summary>
         /// Gets or sets the gRPC channel options.
         /// </summary>
         public IEnumerable<ChannelOption> ChannelOptions { get; set; }
+#endif
+
+        /// <summary>
+        /// Gets or sets optional headers for the connection.
+        /// </summary>
+        public Metadata Headers { get; set; } = new Metadata();
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
