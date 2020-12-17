@@ -108,7 +108,7 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             string serviceName = null;
-            Dictionary<string, object> tags = null;
+            Dictionary<string, object> tags = new Dictionary<string, object>();
             foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
@@ -119,13 +119,6 @@ namespace OpenTelemetry.Exporter.Zipkin
                         serviceName = label.Value as string;
                         continue;
                 }
-
-                if (tags == null)
-                {
-                    tags = new Dictionary<string, object>();
-                }
-
-                tags[key] = label.Value;
             }
 
             if (string.IsNullOrEmpty(serviceName))
