@@ -93,6 +93,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 this.SetResource(this.ParentProvider.GetResource());
             }
 
+            // Prevents the exporter's gRPC and HTTP operations from being instrumented.
+            using var scope = SuppressInstrumentationScope.Begin();
+
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
