@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-            using var exporter = new OtlpExporter(
+            using var exporter = new OtlpTraceExporter(
                 new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
 

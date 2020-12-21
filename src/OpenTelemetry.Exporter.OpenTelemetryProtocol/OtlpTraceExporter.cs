@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpTraceExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpExporter : BaseExporter<Activity>
+    public class OtlpTraceExporter : BaseExporter<Activity>
     {
         private const string DefaultServiceName = "OpenTelemetry Exporter";
 
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpExporter(OtlpExporterOptions options)
+        public OtlpTraceExporter(OtlpExporterOptions options)
             : this(options, null)
         {
         }
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
-        internal OtlpExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
+        internal OtlpTraceExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.headers = options.Headers ?? throw new ArgumentException("Headers were not provided on options.", nameof(options));
