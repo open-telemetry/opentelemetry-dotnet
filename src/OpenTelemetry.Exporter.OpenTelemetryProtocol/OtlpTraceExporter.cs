@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         private readonly Metadata headers;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         public OtlpTraceExporter(OtlpExporterOptions options)
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
