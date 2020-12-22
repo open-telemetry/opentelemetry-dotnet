@@ -230,18 +230,69 @@ namespace OpenTelemetry.Context.Propagation
 
             if (tracestateCollection != null)
             {
-                var result = new StringBuilder();
-
-                // Iterate in reverse order because when call builder set the elements is added in the
-                // front of the list.
-                for (int i = tracestateCollection.Length - 1; i >= 0; i--)
+                List<string> listMembers = new List<string>();
+                for (int i = 0; i < tracestateCollection.Length; ++i)
                 {
-                    if (string.IsNullOrEmpty(tracestateCollection[i]))
+                    // test_tracestate_multiple_headers_different_keys
+                    listMembers.AddRange(tracestateCollection[i].Split(','));
+                }
+
+                if (listMembers.Count > 32)
+                {
+                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
+                    // test_tracestate_member_count_limit
+                    return false;
+                }
+
+                var keySet = new HashSet<string>();
+                var result = new StringBuilder();
+                for (int i = 0; i < listMembers.Count; ++i)
+                {
+                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
+                    if (string.IsNullOrEmpty(listMembers[i]))
                     {
+                        // Empty and whitespace - only list members are allowed.
+                        // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
+                        continue;
+                    }
+
+                    // Spaces and horizontal tabs surrounding list-members are ignored.
+                    var listMember = listMembers[i].Trim(new char[] { ' ', '\t' });
+                    int keyLength = listMember.IndexOf('=');
+                    if (keyLength == listMember.Length || keyLength == -1)
+                    {
+                        // Missing key or value in tracestate
                         return false;
                     }
 
-                    result.Append(tracestateCollection[i]);
+                    var key = listMember.Substring(0, keyLength);
+                    if (!ValidateKey(key))
+                    {
+                        // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
+                        return false;
+                    }
+
+                    var value = listMember.Substring(keyLength + 1);
+                    if (!ValidateValue(value))
+                    {
+                        // test_tracestate_value_illegal_characters
+                        return false;
+                    }
+
+                    if (keySet.Contains(key))
+                    {
+                        // test_tracestate_duplicated_keys
+                        return false;
+                    }
+
+                    keySet.Add(key);
+
+                    if (result.Length > 0)
+                    {
+                        result.Append(',');
+                    }
+
+                    result.Append(listMember);
                 }
 
                 tracestateResult = result.ToString();
@@ -260,6 +311,58 @@ namespace OpenTelemetry.Context.Propagation
             }
 
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
+        }
+
+        private static bool ValidateKey(string key)
+        {
+            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#key
+            if (key.Length <= 0 || key.Length > 256)
+            {
+                return false;
+            }
+
+            char c = key[0];
+            if (!(((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'z'))))
+            {
+                return false;
+            }
+
+            for (int i = 1; i < key.Length; ++i)
+            {
+                char ch = key[i];
+                if (!((ch >= '0' && ch <= '9')
+                    || (ch >= 'a' && ch <= 'z')
+                    || ch == '_'
+                    || ch == '-'
+                    || ch == '*'
+                    || ch == '/'
+                    || ch == '@'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ValidateValue(string value)
+        {
+            if (value.Length <= 0 || value.Length > 256)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < value.Length - 1; ++i)
+            {
+                char c = value[i];
+                if (!(c >= 0x20 && c <= 0x7E && c != 0x2C && c != 0x3D))
+                {
+                    return false;
+                }
+            }
+
+            char last = value[value.Length - 1];
+            return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
         }
     }
 }
