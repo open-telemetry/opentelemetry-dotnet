@@ -135,7 +135,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true, false, false)]
         [InlineData(false, false, false)]
-        [InlineData(false, true, false)]
         [InlineData(false, false, true)]
         [InlineData(false, false, false, StatusCode.Ok)]
         [InlineData(false, false, false, StatusCode.Ok, null, true)]
