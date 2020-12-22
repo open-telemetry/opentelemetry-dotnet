@@ -183,7 +183,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
-                        activity.SetStatus(Status.Error.WithDescription($"SqlExceptionNumber {eventData.Payload[2]} thrown."));
+                        var errorText = $"SqlExceptionNumber {eventData.Payload[2]} thrown.";
+                        activity.SetStatus(Status.Error.WithDescription(errorText));
                     }
                     else
                     {

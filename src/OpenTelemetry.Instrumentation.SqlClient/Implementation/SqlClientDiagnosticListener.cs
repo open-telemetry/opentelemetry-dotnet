@@ -176,6 +176,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                 if (this.exceptionFetcher.TryFetch(payload, out Exception exception) && exception != null)
                                 {
                                     activity.SetStatus(Status.Error.WithDescription(exception.Message));
+
+                                    if (this.options.RecordException)
+                                    {
+                                        activity.RecordException(exception);
+                                    }
                                 }
                                 else
                                 {

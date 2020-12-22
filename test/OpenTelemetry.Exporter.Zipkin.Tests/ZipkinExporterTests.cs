@@ -138,8 +138,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [InlineData(false, true, false)]
         [InlineData(false, false, true)]
         [InlineData(false, false, false, StatusCode.Ok)]
+        [InlineData(false, false, false, StatusCode.Ok, null, true)]
         [InlineData(false, false, false, StatusCode.Error)]
-        public void IntegrationTest(bool useShortTraceIds, bool useTestResource, bool isRootSpan, StatusCode statusCode = StatusCode.Unset)
+        [InlineData(false, false, false, StatusCode.Error, "Error description")]
+        public void IntegrationTest(
+            bool useShortTraceIds,
+            bool useTestResource,
+            bool isRootSpan,
+            StatusCode statusCode = StatusCode.Unset,
+            string statusDescription = null,
+            bool addErrorTag = false)
         {
             var status = statusCode switch
             {
@@ -148,6 +156,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 StatusCode.Error => Status.Error,
                 _ => throw new InvalidOperationException(),
             };
+
+            if (!string.IsNullOrEmpty(statusDescription))
+            {
+                status = status.WithDescription(statusDescription);
+            }
 
             Guid requestId = Guid.NewGuid();
 
@@ -178,6 +191,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 exporter.SetLocalEndpointFromResource(Resource.Empty);
             }
 
+            if (addErrorTag)
+            {
+                activity.SetTag(ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName, "This should be removed.");
+            }
+
             var processor = new SimpleExportProcessor<Activity>(exporter);
 
             processor.OnEnd(activity);
@@ -202,15 +220,26 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
-            var statusTag = statusCode switch
+            string statusTag;
+            string errorTag = string.Empty;
+            switch (statusCode)
             {
-                StatusCode.Ok => $@"""{SpanAttributeConstants.StatusCodeKey}"":""OK"",",
-                StatusCode.Error => $@"""error"":"""",""{SpanAttributeConstants.StatusCodeKey}"":""ERROR"",",
-                _ => string.Empty,
-            };
+                case StatusCode.Ok:
+                    statusTag = $@"""{SpanAttributeConstants.StatusCodeKey}"":""OK"",";
+                    break;
+                case StatusCode.Unset:
+                    statusTag = string.Empty;
+                    break;
+                case StatusCode.Error:
+                    statusTag = $@"""{SpanAttributeConstants.StatusCodeKey}"":""ERROR"",";
+                    errorTag = $@",""{ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName}"":""{statusDescription}""";
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
 
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",{statusTag}""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",{statusTag}""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""{errorTag}}}}}]",
                 Responses[requestId]);
         }
 

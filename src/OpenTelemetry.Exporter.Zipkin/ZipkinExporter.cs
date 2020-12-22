@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// <summary>
     /// Zipkin exporter.
     /// </summary>
-    internal class ZipkinExporter : BaseExporter<Activity>
+    public class ZipkinExporter : BaseExporter<Activity>
     {
         private readonly ZipkinExporterOptions options;
 #if !NET452
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.Zipkin
         /// </summary>
         /// <param name="options">Configuration options.</param>
         /// <param name="client">Http client to use to upload telemetry.</param>
-        internal ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
+        public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
 #if !NET452
