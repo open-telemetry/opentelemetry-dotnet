@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -42,6 +44,24 @@ namespace Examples.Console
                     {
                         o.AgentHost = host;
                         o.AgentPort = port;
+
+                        // Examples for the rest of the options, defaults unless otherwise specified
+                        o.MaxPayloadSizeInBytes = 4096;
+                        o.ProcessTags = new Dictionary<string, object>
+                        {
+                            { "myKey1", "myVal1" }, { "myKey2", "myVal2" },
+                        };
+
+                        // Using Batch Exporter (which is default)
+                        // The other option is ExportProcessorType.Simple
+                        o.ExportProcessorType = ExportProcessorType.Batch;
+                        o.BatchExportProcessorOptions = new BatchExportProcessorOptions<Activity>()
+                        {
+                            MaxQueueSize = 2048,
+                            ScheduledDelayMilliseconds = 5000,
+                            ExporterTimeoutMilliseconds = 30000,
+                            MaxExportBatchSize = 512,
+                        };
                     })
                     .Build();
 
