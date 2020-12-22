@@ -36,7 +36,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
          *  serverName[ ]\\[ ]instanceName[ ],[ ]port
          * [ ] can be any number of white-space, SQL allows it for some reason.
          */
-        private static readonly Regex DataSourceRegex = new Regex("^(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
+        private static readonly Regex DataSourceRegex = new Regex("^(.*\\s*:\\s*\\\\{0,2})?(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
+
+        private static readonly Regex NamedPipeRegex = new Regex("pipe\\\\MSSQL\\$(.*?)\\\\", RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
         // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
@@ -121,8 +123,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         {
             Match match = DataSourceRegex.Match(dataSource);
 
-            string serverHostName = match.Groups[1].Value;
+            string serverHostName = match.Groups[2].Value;
             string serverIpAddress = null;
+
+            string instanceName;
 
             var uriHostNameType = Uri.CheckHostName(serverHostName);
             if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
@@ -131,25 +135,56 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                 serverHostName = null;
             }
 
-            string instanceName;
-            string port;
-            if (match.Groups[3].Length > 0)
+            string maybeProtocol = match.Groups[1].Value;
+            bool isNamedPipe = maybeProtocol.Length > 0 &&
+                               maybeProtocol.StartsWith("np", StringComparison.OrdinalIgnoreCase);
+
+            if (isNamedPipe)
             {
-                instanceName = match.Groups[2].Value;
-                port = match.Groups[3].Value;
+                string pipeName = match.Groups[3].Value;
+                if (pipeName.Length > 0)
+                {
+                    var namedInstancePipeMatch = NamedPipeRegex.Match(pipeName);
+                    if (namedInstancePipeMatch.Success)
+                    {
+                        instanceName = namedInstancePipeMatch.Groups[1].Value;
+                        return new SqlConnectionDetails
+                        {
+                            ServerHostName = serverHostName,
+                            ServerIpAddress = serverIpAddress,
+                            InstanceName = instanceName,
+                            Port = null,
+                        };
+                    }
+                }
+
+                return new SqlConnectionDetails
+                {
+                    ServerHostName = serverHostName,
+                    ServerIpAddress = serverIpAddress,
+                    InstanceName = null,
+                    Port = null,
+                };
+            }
+
+            string port;
+            if (match.Groups[4].Length > 0)
+            {
+                instanceName = match.Groups[3].Value;
+                port = match.Groups[4].Value;
                 if (port == "1433")
                 {
                     port = null;
                 }
             }
-            else if (int.TryParse(match.Groups[2].Value, out int parsedPort))
+            else if (int.TryParse(match.Groups[3].Value, out int parsedPort))
             {
-                port = parsedPort == 1433 ? null : match.Groups[2].Value;
+                port = parsedPort == 1433 ? null : match.Groups[3].Value;
                 instanceName = null;
             }
             else
             {
-                instanceName = match.Groups[2].Value;
+                instanceName = match.Groups[3].Value;
 
                 if (string.IsNullOrEmpty(instanceName))
                 {
