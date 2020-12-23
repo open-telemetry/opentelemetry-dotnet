@@ -49,11 +49,11 @@ namespace OpenTelemetry.Metrics.Aggregators
             return new Int64SummaryData
             {
                 Count = this.checkPoint.Count,
-                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks),
+                StartTimestamp = new DateTime(this.GetLastStartTimestamp().Ticks, DateTimeKind.Utc),
                 Sum = this.checkPoint.Sum,
                 Min = this.checkPoint.Min,
                 Max = this.checkPoint.Max,
-                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks),
+                Timestamp = new DateTime(this.GetLastEndTimestamp().Ticks, DateTimeKind.Utc),
             };
         }
 

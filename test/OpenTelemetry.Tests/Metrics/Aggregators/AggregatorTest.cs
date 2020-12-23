@@ -43,6 +43,9 @@ namespace OpenTelemetry.Metrics.Tests
                     metricData.Timestamp.Add(TimeSpan.FromTicks(1)),
                     otherMetricData.StartTimestamp) == 0);
             Assert.True(DateTime.Compare(otherMetricData.StartTimestamp, otherMetricData.Timestamp) < 0);
+
+            Assert.Equal(DateTimeKind.Utc, metricData.Timestamp.Kind);
+            Assert.Equal(DateTimeKind.Utc, otherMetricData.Timestamp.Kind);
         }
     }
 }
