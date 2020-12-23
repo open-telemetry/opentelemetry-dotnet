@@ -53,4 +53,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run OTLP Exporter docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetry.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
