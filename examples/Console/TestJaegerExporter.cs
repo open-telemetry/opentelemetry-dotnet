@@ -49,7 +49,8 @@ namespace Examples.Console
                         o.MaxPayloadSizeInBytes = 4096;
                         o.ProcessTags = new Dictionary<string, object>
                         {
-                            { "myKey1", "myVal1" }, { "myKey2", "myVal2" },
+                            ["myKey1"] = "myVal1",
+                            ["myKey2"] = "myVal2",
                         };
 
                         // Using Batch Exporter (which is default)
