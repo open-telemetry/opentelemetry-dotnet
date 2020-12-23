@@ -73,12 +73,30 @@ namespace OpenTelemetry.Metrics.Aggregators
         }
 
         /// <summary>
+        /// Get the last interval end time before <see cref="Checkpoint"/> was called.
+        /// </summary>
+        /// <returns>The end timestamp of the last aggregated checkpoint as DateTime.</returns>
+        protected DateTime GetLastEndTimestampAsDateTime()
+        {
+            return new DateTime(this.GetLastEndTimestamp().Ticks, DateTimeKind.Utc);
+        }
+
+        /// <summary>
         /// Get the last interval start time before <see cref="Checkpoint"/> was called.
         /// </summary>
         /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
         protected DateTimeOffset GetLastStartTimestamp()
         {
             return new DateTimeOffset(this.checkpointStartTimeTicks, TimeSpan.Zero);
+        }
+
+        /// <summary>
+        /// Get the last interval start time before <see cref="Checkpoint"/> was called.
+        /// </summary>
+        /// <returns>The start timestamp of the last aggregated checkpoint as DateTime.</returns>
+        protected DateTime GetLastStartTimestampAsDateTime()
+        {
+            return new DateTime(this.GetLastStartTimestamp().Ticks, DateTimeKind.Utc);
         }
     }
 }

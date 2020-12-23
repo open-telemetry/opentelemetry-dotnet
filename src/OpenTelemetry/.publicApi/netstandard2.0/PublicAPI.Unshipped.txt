@@ -63,7 +63,9 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Micro
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Aggregator() -> void
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastEndTimestamp() -> System.DateTimeOffset
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastEndTimestampAsDateTime() -> System.DateTime
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastStartTimestamp() -> System.DateTimeOffset
+OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastStartTimestampAsDateTime() -> System.DateTime
 OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator
 OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.DoubleCounterSumAggregator() -> void
 OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator
