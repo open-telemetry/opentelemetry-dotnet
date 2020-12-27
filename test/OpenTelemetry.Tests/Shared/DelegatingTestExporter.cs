@@ -14,12 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
+namespace OpenTelemetry.Tests
 {
     public class DelegatingTestExporter<T> : BaseExporter<T>
         where T : class
