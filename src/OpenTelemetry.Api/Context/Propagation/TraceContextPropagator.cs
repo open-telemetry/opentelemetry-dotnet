@@ -38,6 +38,10 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
+        private static readonly int TraceStateKeyMaxLength = 256;
+        private static readonly int TraceStateKeyTenentMaxLength = 241;
+        private static readonly int TraceStateKeyVendorMaxLength = 14;
+        private static readonly int TraceStateValueMaxLength = 256;
 
         /// <inheritdoc/>
         public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
@@ -266,9 +270,11 @@ namespace OpenTelemetry.Context.Propagation
                     }
 
                     var key = listMember.Substring(0, keyLength);
-                    if (!ValidateKey(key))
+                    if (!ValidateKey(key) || !ValidateVendorFormatInKey(key))
                     {
                         // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
+                        // test_tracestate_key_length_limit
+                        // test_tracestate_key_illegal_vendor_format
                         return false;
                     }
 
@@ -316,7 +322,7 @@ namespace OpenTelemetry.Context.Propagation
         private static bool ValidateKey(string key)
         {
             // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#key
-            if (key.Length <= 0 || key.Length > 256)
+            if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
             {
                 return false;
             }
@@ -347,7 +353,7 @@ namespace OpenTelemetry.Context.Propagation
 
         private static bool ValidateValue(string value)
         {
-            if (value.Length <= 0 || value.Length > 256)
+            if (value.Length <= 0 || value.Length > TraceStateValueMaxLength)
             {
                 return false;
             }
@@ -363,6 +369,34 @@ namespace OpenTelemetry.Context.Propagation
 
             char last = value[value.Length - 1];
             return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
+        }
+
+        private static bool ValidateVendorFormatInKey(string key)
+        {
+            int tenentLength = key.IndexOf('@');
+            if (tenentLength == -1)
+            {
+                return true;
+            }
+
+            if (tenentLength == 0 || tenentLength > TraceStateKeyTenentMaxLength)
+            {
+                return false;
+            }
+
+            int vendorLength = key.Length - tenentLength - 1;
+            if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
+            {
+                return false;
+            }
+
+            if (key.IndexOf('@', tenentLength + 1) != -1)
+            {
+                // Multiple @ in vendor is invalid.
+                return false;
+            }
+
+            return true;
         }
     }
 }

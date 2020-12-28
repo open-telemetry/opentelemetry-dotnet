@@ -207,6 +207,16 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
+        public void Key_IllegalVendorFormat()
+        {
+            // test_tracestate_key_illegal_vendor_format
+            Assert.Empty(CallTraceContextPropagator("foo@=1,bar=2"));
+            Assert.Empty(CallTraceContextPropagator("@foo=1,bar=2"));
+            Assert.Empty(CallTraceContextPropagator("foo@@bar=1,bar=2"));
+            Assert.Empty(CallTraceContextPropagator("foo@bar@baz=1,bar=2"));
+        }
+
+        [Fact]
         public void MemberCountLimit()
         {
             // test_tracestate_member_count_limit
@@ -232,6 +242,19 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 "bar31=31,bar32=32,bar33=33",
             });
             Assert.Empty(output2);
+        }
+
+        [Fact]
+        public void Key_KeyLengthLimit()
+        {
+            // test_tracestate_key_length_limit
+            string input1 = new string('z', 256) + "=1";
+            Assert.Equal(input1, CallTraceContextPropagator(input1));
+            Assert.Empty(CallTraceContextPropagator(new string('z', 257) + "=1"));
+            string input2 = new string('t', 241) + "@" + new string('v', 14) + "=1";
+            Assert.Equal(input2, CallTraceContextPropagator(input2));
+            Assert.Empty(CallTraceContextPropagator(new string('t', 242) + "@v=1"));
+            Assert.Empty(CallTraceContextPropagator("t@" + new string('v', 15) + "=1"));
         }
 
         [Fact]
