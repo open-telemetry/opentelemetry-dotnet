@@ -270,7 +270,7 @@ namespace OpenTelemetry.Context.Propagation
                     }
 
                     var key = listMember.Substring(0, keyLength);
-                    if (!ValidateKey(key) || !ValidateVendorFormatInKey(key))
+                    if (!ValidateKey(key))
                     {
                         // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
                         // test_tracestate_key_length_limit
@@ -329,18 +329,26 @@ namespace OpenTelemetry.Context.Propagation
 
         private static bool ValidateKey(string key)
         {
-            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#key
+            // This implementation follows Trace Context v1 which has W3C Recommendation.
+            // It will be slightly differently from the next version of specification in GitHub repository.
+            // https://www.w3.org/TR/trace-context-1/#key
+            // key = lcalpha 0*255( lcalpha / DIGIT / "_" / "-"/ "*" / "/" )
+            // lcalpha = % x61 - 7A; a - z
             if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
             {
                 return false;
             }
 
-            char c = key[0];
-            if (!(((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'z'))))
+            // There is an inconsistency in the expression above and the description in note.
+            // Here is following the description in note:
+            // Identifiers MUST begin with a lowercase letter or a digit.
+            char first = key[0];
+            if (!((first >= '0' && first <= '9') || (first >= 'a' && first <= 'z')))
             {
                 return false;
             }
 
+            int tenentLength = -1;
             for (int i = 1; i < key.Length; ++i)
             {
                 char ch = key[i];
@@ -349,8 +357,39 @@ namespace OpenTelemetry.Context.Propagation
                     || ch == '_'
                     || ch == '-'
                     || ch == '*'
-                    || ch == '/'
-                    || ch == '@'))
+                    || ch == '/'))
+                {
+                    return false;
+                }
+
+                if (ch == '@')
+                {
+                    tenentLength = i;
+                    break;
+                }
+            }
+
+            if (tenentLength == -1)
+            {
+                return true;
+            }
+
+            // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
+            if (tenentLength == 0 || tenentLength > TraceStateKeyTenentMaxLength)
+            {
+                return false;
+            }
+
+            int vendorLength = key.Length - tenentLength - 1;
+            if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
+            {
+                return false;
+            }
+
+            for (int i = tenentLength + 1; i < key.Length; ++i)
+            {
+                char ch = key[i];
+                if (!(ch >= 'a' && ch <= 'z'))
                 {
                     return false;
                 }
@@ -361,6 +400,10 @@ namespace OpenTelemetry.Context.Propagation
 
         private static bool ValidateValue(string value)
         {
+            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#value
+            // value      = 0*255(chr) nblk-chr
+            // nblk - chr = % x21 - 2B / % x2D - 3C / % x3E - 7E
+            // chr        = % x20 / nblk - chr
             if (value.Length <= 0 || value.Length > TraceStateValueMaxLength)
             {
                 return false;
@@ -377,34 +420,6 @@ namespace OpenTelemetry.Context.Propagation
 
             char last = value[value.Length - 1];
             return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
-        }
-
-        private static bool ValidateVendorFormatInKey(string key)
-        {
-            int tenentLength = key.IndexOf('@');
-            if (tenentLength == -1)
-            {
-                return true;
-            }
-
-            if (tenentLength == 0 || tenentLength > TraceStateKeyTenentMaxLength)
-            {
-                return false;
-            }
-
-            int vendorLength = key.Length - tenentLength - 1;
-            if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
-            {
-                return false;
-            }
-
-            if (key.IndexOf('@', tenentLength + 1) != -1)
-            {
-                // Multiple @ in vendor is invalid.
-                return false;
-            }
-
-            return true;
         }
     }
 }
