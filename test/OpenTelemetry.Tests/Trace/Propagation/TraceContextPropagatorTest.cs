@@ -265,6 +265,45 @@ namespace OpenTelemetry.Context.Propagation.Tests
             Assert.Empty(CallTraceContextPropagator("foo=,bar=3"));
         }
 
+        [Fact]
+        public void Traceparent_Version()
+        {
+            // test_traceparent_version_0x00
+            Assert.NotEqual(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("00-12345678901234567890123456789012-1234567890123456-01."));
+            Assert.NotEqual(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("00-12345678901234567890123456789012-1234567890123456-01-what-the-future-will-be-like"));
+
+            // test_traceparent_version_0xcc
+            Assert.Equal(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("cc-12345678901234567890123456789012-1234567890123456-01"));
+            Assert.Equal(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("cc-12345678901234567890123456789012-1234567890123456-01-what-the-future-will-be-like"));
+            Assert.NotEqual(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("cc-12345678901234567890123456789012-1234567890123456-01.what-the-future-will-be-like"));
+
+            // test_traceparent_version_0xff
+            Assert.NotEqual(
+                "12345678901234567890123456789012",
+                CallTraceContextPropagatorWithTraceParent("ff-12345678901234567890123456789012-1234567890123456-01"));
+        }
+
+        private static string CallTraceContextPropagatorWithTraceParent(string traceparent)
+        {
+            var headers = new Dictionary<string, string>
+            {
+                { TraceParent, traceparent },
+            };
+            var f = new TraceContextPropagator();
+            var ctx = f.Extract(default, headers, Getter);
+            return ctx.ActivityContext.TraceId.ToString();
+        }
+
         private static string CallTraceContextPropagator(string tracestate)
         {
             var headers = new Dictionary<string, string>

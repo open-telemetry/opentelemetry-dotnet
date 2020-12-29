@@ -309,11 +309,19 @@ namespace OpenTelemetry.Context.Propagation
 
         private static byte HexCharToByte(char c)
         {
-            if (((c >= '0') && (c <= '9'))
-                || ((c >= 'a') && (c <= 'f'))
-                || ((c >= 'A') && (c <= 'F')))
+            if ((c >= '0') && (c <= '9'))
             {
-                return Convert.ToByte(c);
+                return (byte)(c - '0');
+            }
+
+            if ((c >= 'a') && (c <= 'f'))
+            {
+                return (byte)(c - 'a' + 10);
+            }
+
+            if ((c >= 'A') && (c <= 'F'))
+            {
+                return (byte)(c - 'A' + 10);
             }
 
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
