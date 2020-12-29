@@ -39,8 +39,10 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
+
+        // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
         private static readonly int TraceStateKeyMaxLength = 256;
-        private static readonly int TraceStateKeyTenentMaxLength = 241;
+        private static readonly int TraceStateKeyTenantMaxLength = 241;
         private static readonly int TraceStateKeyVendorMaxLength = 14;
         private static readonly int TraceStateValueMaxLength = 256;
 
@@ -348,13 +350,13 @@ namespace OpenTelemetry.Context.Propagation
                 return false;
             }
 
-            int tenentLength = -1;
+            int tenantLength = -1;
             for (int i = 1; i < key.Length; ++i)
             {
                 char ch = key[i];
                 if (ch == '@')
                 {
-                    tenentLength = i;
+                    tenantLength = i;
                     break;
                 }
 
@@ -368,24 +370,24 @@ namespace OpenTelemetry.Context.Propagation
                 }
             }
 
-            if (tenentLength == -1)
+            if (tenantLength == -1)
             {
                 return true;
             }
 
             // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
-            if (tenentLength == 0 || tenentLength > TraceStateKeyTenentMaxLength)
+            if (tenantLength == 0 || tenantLength > TraceStateKeyTenantMaxLength)
             {
                 return false;
             }
 
-            int vendorLength = key.Length - tenentLength - 1;
+            int vendorLength = key.Length - tenantLength - 1;
             if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
             {
                 return false;
             }
 
-            for (int i = tenentLength + 1; i < key.Length; ++i)
+            for (int i = tenantLength + 1; i < key.Length; ++i)
             {
                 char ch = key[i];
                 if (!(IsLowerAlphaDigit(ch)
