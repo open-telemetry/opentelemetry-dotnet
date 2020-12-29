@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Internal;
 
@@ -342,8 +343,7 @@ namespace OpenTelemetry.Context.Propagation
             // There is an inconsistency in the expression above and the description in note.
             // Here is following the description in note:
             // Identifiers MUST begin with a lowercase letter or a digit.
-            char first = key[0];
-            if (!((first >= '0' && first <= '9') || (first >= 'a' && first <= 'z')))
+            if (!IsLowerAlphaDigit(key[0]))
             {
                 return false;
             }
@@ -352,8 +352,7 @@ namespace OpenTelemetry.Context.Propagation
             for (int i = 1; i < key.Length; ++i)
             {
                 char ch = key[i];
-                if (!((ch >= '0' && ch <= '9')
-                    || (ch >= 'a' && ch <= 'z')
+                if (!(IsLowerAlphaDigit(ch)
                     || ch == '_'
                     || ch == '-'
                     || ch == '*'
@@ -420,6 +419,12 @@ namespace OpenTelemetry.Context.Propagation
 
             char last = value[value.Length - 1];
             return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsLowerAlphaDigit(char c)
+        {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z');
         }
     }
 }
