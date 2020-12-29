@@ -352,6 +352,12 @@ namespace OpenTelemetry.Context.Propagation
             for (int i = 1; i < key.Length; ++i)
             {
                 char ch = key[i];
+                if (ch == '@')
+                {
+                    tenentLength = i;
+                    break;
+                }
+
                 if (!(IsLowerAlphaDigit(ch)
                     || ch == '_'
                     || ch == '-'
@@ -359,12 +365,6 @@ namespace OpenTelemetry.Context.Propagation
                     || ch == '/'))
                 {
                     return false;
-                }
-
-                if (ch == '@')
-                {
-                    tenentLength = i;
-                    break;
                 }
             }
 
@@ -388,7 +388,11 @@ namespace OpenTelemetry.Context.Propagation
             for (int i = tenentLength + 1; i < key.Length; ++i)
             {
                 char ch = key[i];
-                if (!(ch >= 'a' && ch <= 'z'))
+                if (!(IsLowerAlphaDigit(ch)
+                    || ch == '_'
+                    || ch == '-'
+                    || ch == '*'
+                    || ch == '/'))
                 {
                     return false;
                 }
