@@ -288,6 +288,7 @@ namespace OpenTelemetry.Context.Propagation
                         return false;
                     }
 
+                    // ValidateKey() call above has ensured the key does not contain upper case letters.
                     if (keySet.Contains(key))
                     {
                         // test_tracestate_duplicated_keys
@@ -335,16 +336,19 @@ namespace OpenTelemetry.Context.Propagation
             // This implementation follows Trace Context v1 which has W3C Recommendation.
             // It will be slightly differently from the next version of specification in GitHub repository.
             // https://www.w3.org/TR/trace-context-1/#key
-            // key = lcalpha 0*255( lcalpha / DIGIT / "_" / "-"/ "*" / "/" )
-            // lcalpha = % x61 - 7A; a - z
+
+            // There are two format for the key. The length rule applies to both.
             if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
             {
                 return false;
             }
 
-            // There is an inconsistency in the expression above and the description in note.
+            // The first format:
+            // key = lcalpha 0*255( lcalpha / DIGIT / "_" / "-"/ "*" / "/" )
+            // lcalpha = % x61 - 7A; a - z
+            // (There is an inconsistency in the expression above and the description in note.
             // Here is following the description in note:
-            // Identifiers MUST begin with a lowercase letter or a digit.
+            // "Identifiers MUST begin with a lowercase letter or a digit.")
             if (!IsLowerAlphaDigit(key[0]))
             {
                 return false;
@@ -372,9 +376,11 @@ namespace OpenTelemetry.Context.Propagation
 
             if (tenantLength == -1)
             {
+                // There is no "@" sign. The key follow the first format.
                 return true;
             }
 
+            // The second format:
             // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
             if (tenantLength == 0 || tenantLength > TraceStateKeyTenantMaxLength)
             {
