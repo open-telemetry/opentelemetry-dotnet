@@ -63,9 +63,7 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Micro
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Aggregator() -> void
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastEndTimestamp() -> System.DateTimeOffset
-OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastEndTimestampAsDateTime() -> System.DateTime
 OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastStartTimestamp() -> System.DateTimeOffset
-OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetLastStartTimestampAsDateTime() -> System.DateTime
 OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator
 OpenTelemetry.Metrics.Aggregators.DoubleCounterSumAggregator.DoubleCounterSumAggregator() -> void
 OpenTelemetry.Metrics.Aggregators.DoubleLastValueAggregator
@@ -85,13 +83,13 @@ OpenTelemetry.Metrics.Export.AggregationType.DoubleSummary = 2 -> OpenTelemetry.
 OpenTelemetry.Metrics.Export.AggregationType.Int64Summary = 3 -> OpenTelemetry.Metrics.Export.AggregationType
 OpenTelemetry.Metrics.Export.AggregationType.LongSum = 1 -> OpenTelemetry.Metrics.Export.AggregationType
 OpenTelemetry.Metrics.Export.DoubleSumData
-OpenTelemetry.Metrics.Export.DoubleSumData.DoubleSumData() -> void
+OpenTelemetry.Metrics.Export.DoubleSumData.DoubleSumData(System.DateTimeOffset startTimestamp, System.DateTimeOffset timestamp) -> void
 OpenTelemetry.Metrics.Export.DoubleSumData.Sum.get -> double
 OpenTelemetry.Metrics.Export.DoubleSumData.Sum.set -> void
 OpenTelemetry.Metrics.Export.DoubleSummaryData
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Count.get -> long
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Count.set -> void
-OpenTelemetry.Metrics.Export.DoubleSummaryData.DoubleSummaryData() -> void
+OpenTelemetry.Metrics.Export.DoubleSummaryData.DoubleSummaryData(System.DateTimeOffset startTimestamp, System.DateTimeOffset timestamp) -> void
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Max.get -> double
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Max.set -> void
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Min.get -> double
@@ -99,13 +97,13 @@ OpenTelemetry.Metrics.Export.DoubleSummaryData.Min.set -> void
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Sum.get -> double
 OpenTelemetry.Metrics.Export.DoubleSummaryData.Sum.set -> void
 OpenTelemetry.Metrics.Export.Int64SumData
-OpenTelemetry.Metrics.Export.Int64SumData.Int64SumData() -> void
+OpenTelemetry.Metrics.Export.Int64SumData.Int64SumData(System.DateTimeOffset startTimestamp, System.DateTimeOffset timestamp) -> void
 OpenTelemetry.Metrics.Export.Int64SumData.Sum.get -> long
 OpenTelemetry.Metrics.Export.Int64SumData.Sum.set -> void
 OpenTelemetry.Metrics.Export.Int64SummaryData
 OpenTelemetry.Metrics.Export.Int64SummaryData.Count.get -> long
 OpenTelemetry.Metrics.Export.Int64SummaryData.Count.set -> void
-OpenTelemetry.Metrics.Export.Int64SummaryData.Int64SummaryData() -> void
+OpenTelemetry.Metrics.Export.Int64SummaryData.Int64SummaryData(System.DateTimeOffset startTimestamp, System.DateTimeOffset timestamp) -> void
 OpenTelemetry.Metrics.Export.Int64SummaryData.Max.get -> long
 OpenTelemetry.Metrics.Export.Int64SummaryData.Max.set -> void
 OpenTelemetry.Metrics.Export.Int64SummaryData.Min.get -> long
@@ -122,7 +120,7 @@ OpenTelemetry.Metrics.Export.Metric.MetricNamespace.get -> string
 OpenTelemetry.Metrics.Export.MetricData
 OpenTelemetry.Metrics.Export.MetricData.Labels.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
 OpenTelemetry.Metrics.Export.MetricData.Labels.set -> void
-OpenTelemetry.Metrics.Export.MetricData.MetricData() -> void
+OpenTelemetry.Metrics.Export.MetricData.MetricData(System.DateTimeOffset startTimestamp, System.DateTimeOffset timestamp) -> void
 OpenTelemetry.Metrics.Export.MetricData.StartTimestamp.get -> System.DateTime
 OpenTelemetry.Metrics.Export.MetricData.StartTimestamp.set -> void
 OpenTelemetry.Metrics.Export.MetricData.Timestamp.get -> System.DateTime

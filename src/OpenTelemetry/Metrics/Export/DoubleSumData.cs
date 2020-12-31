@@ -21,6 +21,11 @@ namespace OpenTelemetry.Metrics.Export
     [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public class DoubleSumData : MetricData
     {
+        public DoubleSumData(DateTimeOffset startTimestamp, DateTimeOffset timestamp)
+            : base(startTimestamp, timestamp)
+        {
+        }
+
         public double Sum { get; set; }
     }
 }

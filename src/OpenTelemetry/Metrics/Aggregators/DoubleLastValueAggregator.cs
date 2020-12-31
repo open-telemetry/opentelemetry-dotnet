@@ -39,11 +39,9 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override MetricData ToMetricData()
         {
-            return new DoubleSumData
+            return new DoubleSumData(this.GetLastStartTimestamp(), this.GetLastEndTimestamp())
             {
-                StartTimestamp = this.GetLastStartTimestampAsDateTime(),
                 Sum = this.checkpoint,
-                Timestamp = this.GetLastEndTimestampAsDateTime(),
             };
         }
 
