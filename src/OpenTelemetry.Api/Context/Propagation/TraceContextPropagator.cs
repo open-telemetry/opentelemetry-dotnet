@@ -334,8 +334,8 @@ namespace OpenTelemetry.Context.Propagation
         private static bool ValidateKey(string key)
         {
             // This implementation follows Trace Context v1 which has W3C Recommendation.
-            // It will be slightly differently from the next version of specification in GitHub repository.
             // https://www.w3.org/TR/trace-context-1/#key
+            // It will be slightly differently from the next version of specification in GitHub repository.
 
             // There are two format for the key. The length rule applies to both.
             if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
