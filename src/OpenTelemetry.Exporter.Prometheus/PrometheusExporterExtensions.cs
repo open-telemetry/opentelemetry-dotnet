@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Export;
@@ -42,7 +43,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metric in exporter.GetAndClearMetrics())
+            var metrics = exporter.GetAndClearMetrics();
+            foreach (var metric in metrics)
             {
                 var builder = new PrometheusMetricBuilder()
                     .WithName(metric.MetricName)
@@ -57,7 +59,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             {
                                 var sum = metricData as DoubleSumData;
                                 var sumValue = sum.Sum;
-                                WriteSum(writer, builder, labels, sumValue);
+                                BuildSum(builder, labels, sumValue);
                                 break;
                             }
 
@@ -65,7 +67,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             {
                                 var sum = metricData as Int64SumData;
                                 var sumValue = sum.Sum;
-                                WriteSum(writer, builder, labels, sumValue);
+                                BuildSum(builder, labels, sumValue);
                                 break;
                             }
 
@@ -76,7 +78,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 var sum = summary.Sum;
                                 var min = summary.Min;
                                 var max = summary.Max;
-                                WriteSummary(writer, builder, labels, metric.MetricName, sum, count, min, max);
+                                BuildSummary(builder, labels, metric.MetricName, sum, count, min, max);
                                 break;
                             }
 
@@ -87,11 +89,14 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 var sum = summary.Sum;
                                 var min = summary.Min;
                                 var max = summary.Max;
-                                WriteSummary(writer, builder, labels, metric.MetricName, sum, count, min, max);
+                                BuildSummary(builder, labels, metric.MetricName, sum, count, min, max);
                                 break;
                             }
                     }
+
                 }
+
+                builder.Write(writer);
             }
         }
 
@@ -110,7 +115,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
         }
 
-        private static void WriteSum(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, string>> labels, double doubleValue)
+        private static void BuildSum(PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, string>> labels, double doubleValue)
         {
             builder = builder.WithType(PrometheusCounterType);
 
@@ -121,13 +126,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 metricValueBuilder.WithLabel(label.Key, label.Value);
             }
-
-            builder.Write(writer);
         }
 
-        private static void WriteSummary(
-            StreamWriter writer,
-            PrometheusMetricBuilder builder,
+        private static void BuildSummary(
+            PrometheusMetricBuilderTemp builder,
             IEnumerable<KeyValuePair<string, string>> labels,
             string metricName,
             double sum,
@@ -135,11 +137,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             double min,
             double max)
         {
-            builder = builder.WithType(PrometheusSummaryType);
 
-            foreach (var label in labels)
-            {
-                /* For Summary we emit one row for Sum, Count, Min, Max.
+            /* For Summary we emit one row for Sum, Count, Min, Max.
                 Min,Max exports as quantile 0 and 1.
                 In future, when OpenTelemetry implements more aggregation
                 algorithms, this section will need to be revisited.
@@ -148,28 +147,41 @@ namespace OpenTelemetry.Exporter.Prometheus
                 MyMeasure_count{dim1="value1"} 5 1587013352982
                 MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
                 MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
-                */
-                builder.AddValue()
-                    .WithName(metricName + PrometheusSummarySumPostFix)
-                    .WithLabel(label.Key, label.Value)
-                    .WithValue(sum);
-                builder.AddValue()
-                    .WithName(metricName + PrometheusSummaryCountPostFix)
-                    .WithLabel(label.Key, label.Value)
-                    .WithValue(count);
-                builder.AddValue()
-                    .WithName(metricName)
-                    .WithLabel(label.Key, label.Value)
-                    .WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMin)
-                    .WithValue(min);
-                builder.AddValue()
-                    .WithName(metricName)
-                    .WithLabel(label.Key, label.Value)
-                    .WithLabel(PrometheusSummaryQuantileLabelName, PrometheusSummaryQuantileLabelValueForMax)
-                    .WithValue(max);
+            */
+            
+            builder = builder.WithType(PrometheusSummaryType);
+
+            var sumMetricValueBuilder = builder.AddValue();
+            sumMetricValueBuilder = minMetricValueBuilder.WithValue(sum);
+            
+            var countMetricValueBuilder = builder.AddValue();
+            countMetricValueBuilder = minMetricValueBuilder.WithValue(count);
+            
+            var minMetricValueBuilder = builder.AddValue();
+            minMetricValueBuilder = minMetricValueBuilder.WithValue(min);
+
+            var maxMetricValueBuilder = builder.AddValue();
+            maxMetricValueBuilder = maxMetricValueBuilder.WithValue(max);
+
+            foreach (var label in labels)
+            {
+                sumMetricValueBuilder.WithLabel(label.Key, label.Value);
+                countMetricValueBuilder.WithLabel(label.Key, label.Value);
+                minMetricValueBuilder.WithLabel(label.Key, label.Value);
+                maxMetricValueBuilder.WithLabel(label.Key, label.Value);
             }
 
-            builder.Write(writer);
+            sumMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
+                PrometheusSummaryQuantileLabelValueForMin);
+            
+            countMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
+                PrometheusSummaryQuantileLabelValueForMin);
+            
+            minMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
+                PrometheusSummaryQuantileLabelValueForMin);
+
+            maxMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
+                PrometheusSummaryQuantileLabelValueForMax);
         }
     }
 }
