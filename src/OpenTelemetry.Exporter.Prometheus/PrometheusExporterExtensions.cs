@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics.Export;
 
 namespace OpenTelemetry.Exporter.Prometheus
@@ -137,7 +136,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             double min,
             double max)
         {
-
+            
             /* For Summary we emit one row for Sum, Count, Min, Max.
                 Min,Max exports as quantile 0 and 1.
                 In future, when OpenTelemetry implements more aggregation
@@ -148,20 +147,26 @@ namespace OpenTelemetry.Exporter.Prometheus
                 MyMeasure{dim1="value2",quantile="0"} 150 1587013352982
                 MyMeasure{dim1="value2",quantile="1"} 150 1587013352982
             */
-            
+
             builder = builder.WithType(PrometheusSummaryType);
 
-            var sumMetricValueBuilder = builder.AddValue();
-            sumMetricValueBuilder = sumMetricValueBuilder.WithValue(sum);
-            
-            var countMetricValueBuilder = builder.AddValue();
-            countMetricValueBuilder = countMetricValueBuilder.WithValue(count);
-            
-            var minMetricValueBuilder = builder.AddValue();
-            minMetricValueBuilder = minMetricValueBuilder.WithValue(min);
+            var sumMetricValueBuilder = builder
+                .AddValue()
+                .WithName(metricName + PrometheusSummarySumPostFix)
+                .WithValue(sum);
 
-            var maxMetricValueBuilder = builder.AddValue();
-            maxMetricValueBuilder = maxMetricValueBuilder.WithValue(max);
+            var countMetricValueBuilder = builder
+                .AddValue()
+                .WithName(metricName + PrometheusSummaryCountPostFix)
+                .WithValue(count);
+
+            var minMetricValueBuilder = builder
+                .AddValue()
+                .WithValue(min);
+
+            var maxMetricValueBuilder = builder
+                .AddValue()
+                .WithValue(max);
 
             foreach (var label in labels)
             {
@@ -171,12 +176,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                 maxMetricValueBuilder.WithLabel(label.Key, label.Value);
             }
 
-            sumMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
-                PrometheusSummaryQuantileLabelValueForMin);
-            
-            countMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
-                PrometheusSummaryQuantileLabelValueForMin);
-            
             minMetricValueBuilder.WithLabel(PrometheusSummaryQuantileLabelName,
                 PrometheusSummaryQuantileLabelValueForMin);
 
