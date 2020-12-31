@@ -152,10 +152,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             builder = builder.WithType(PrometheusSummaryType);
 
             var sumMetricValueBuilder = builder.AddValue();
-            sumMetricValueBuilder = minMetricValueBuilder.WithValue(sum);
+            sumMetricValueBuilder = sumMetricValueBuilder.WithValue(sum);
             
             var countMetricValueBuilder = builder.AddValue();
-            countMetricValueBuilder = minMetricValueBuilder.WithValue(count);
+            countMetricValueBuilder = countMetricValueBuilder.WithValue(count);
             
             var minMetricValueBuilder = builder.AddValue();
             minMetricValueBuilder = minMetricValueBuilder.WithValue(min);
