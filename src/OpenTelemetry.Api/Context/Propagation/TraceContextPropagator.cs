@@ -39,6 +39,7 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
+        private static readonly char[] OptionalWhiteSpaceCharacters = new char[] { ' ', '\t' };
 
         // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
         private static readonly int TraceStateKeyMaxLength = 256;
@@ -264,7 +265,7 @@ namespace OpenTelemetry.Context.Propagation
                     }
 
                     // Spaces and horizontal tabs surrounding list-members are ignored.
-                    var listMember = listMembers[i].Trim(new char[] { ' ', '\t' });
+                    var listMember = listMembers[i].Trim(OptionalWhiteSpaceCharacters);
                     int keyLength = listMember.IndexOf('=');
                     if (keyLength == listMember.Length || keyLength == -1)
                     {
@@ -289,13 +290,11 @@ namespace OpenTelemetry.Context.Propagation
                     }
 
                     // ValidateKey() call above has ensured the key does not contain upper case letters.
-                    if (keySet.Contains(key))
+                    if (!keySet.Add(key))
                     {
                         // test_tracestate_duplicated_keys
                         return false;
                     }
-
-                    keySet.Add(key);
 
                     if (result.Length > 0)
                     {
@@ -321,11 +320,6 @@ namespace OpenTelemetry.Context.Propagation
             if ((c >= 'a') && (c <= 'f'))
             {
                 return (byte)(c - 'a' + 10);
-            }
-
-            if ((c >= 'A') && (c <= 'F'))
-            {
-                return (byte)(c - 'A' + 10);
             }
 
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
