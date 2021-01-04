@@ -244,34 +244,34 @@ namespace OpenTelemetry.Metrics
 
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            return this.longCounters.GetOrAdd(name, new Int64CounterMetricSdk(name));
+            return this.longCounters.GetOrAdd(name, (k) => new Int64CounterMetricSdk(k));
         }
 
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            return this.doubleCounters.GetOrAdd(name, new DoubleCounterMetricSdk(name));
+            return this.doubleCounters.GetOrAdd(name, (k) => new DoubleCounterMetricSdk(k));
         }
 
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            return this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name));
+            return this.doubleMeasures.GetOrAdd(name, (k) => new DoubleMeasureMetricSdk(k));
         }
 
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            return this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name));
+            return this.longMeasures.GetOrAdd(name, (k) => new Int64MeasureMetricSdk(k));
         }
 
         /// <inheritdoc/>
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
-            return this.longObservers.GetOrAdd(name, new Int64ObserverMetricSdk(name, callback));
+            return this.longObservers.GetOrAdd(name, (k) => new Int64ObserverMetricSdk(k, callback));
         }
 
         /// <inheritdoc/>
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
-            return this.doubleObservers.GetOrAdd(name, new DoubleObserverMetricSdk(name, callback));
+            return this.doubleObservers.GetOrAdd(name, (k) => new DoubleObserverMetricSdk(k, callback));
         }
     }
 }

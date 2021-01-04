@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics
             lock (this.bindUnbindLock)
             {
                 var recStatus = isShortLived ? RecordStatus.UpdatePending : RecordStatus.Bound;
-                boundInstrument = this.counterBoundInstruments.GetOrAdd(labelset, this.CreateMetric(recStatus));
+                boundInstrument = this.counterBoundInstruments.GetOrAdd(labelset, (_) => this.CreateMetric(recStatus));
             }
 
             switch (boundInstrument.Status)
