@@ -30,15 +30,35 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     {
         /*
          * Match...
+         *  protocol[ ]:[ ]serverName
          *  serverName
-         *  serverName[ ]\\[ ]instanceName
+         *  serverName[ ]\[ ]instanceName
          *  serverName[ ],[ ]port
-         *  serverName[ ]\\[ ]instanceName[ ],[ ]port
+         *  serverName[ ]\[ ]instanceName[ ],[ ]port
+         *
          * [ ] can be any number of white-space, SQL allows it for some reason.
+         *
+         * Optional "protocol" can be "tcp", "lpc" (shared memory), or "np" (named pipes). See:
+         *  https://docs.microsoft.com/troubleshoot/sql/connect/use-server-name-parameter-connection-string, and
+         *  https://docs.microsoft.com/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring?view=dotnet-plat-ext-5.0
+         *
+         * In case of named pipes the Data Source string can take form of:
+         *  np:serverName\instanceName, or
+         *  np:\\serverName\pipe\pipeName, or
+         *  np:\\serverName\pipe\MSSQL$instanceName\pipeName - in this case a separate regex (see NamedPipeRegex below)
+         *  is used to extract instanceName
          */
         private static readonly Regex DataSourceRegex = new Regex("^(.*\\s*:\\s*\\\\{0,2})?(.*?)\\s*(?:[\\\\,]|$)\\s*(.*?)\\s*(?:,|$)\\s*(.*)$", RegexOptions.Compiled);
 
+        /// <summary>
+        /// In a Data Source string like "np:\\serverName\pipe\MSSQL$instanceName\pipeName" match the
+        /// "pipe\MSSQL$instanceName" segment to extract instanceName if it is available.
+        /// </summary>
+        /// <see>
+        /// <a href="https://docs.microsoft.com/previous-versions/sql/sql-server-2016/ms189307(v=sql.130)"/>
+        /// </see>
         private static readonly Regex NamedPipeRegex = new Regex("pipe\\\\MSSQL\\$(.*?)\\\\", RegexOptions.Compiled);
+
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new ConcurrentDictionary<string, SqlConnectionDetails>(StringComparer.OrdinalIgnoreCase);
 
         // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
