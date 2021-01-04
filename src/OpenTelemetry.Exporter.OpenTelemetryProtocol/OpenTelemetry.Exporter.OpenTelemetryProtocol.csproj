@@ -1,14 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net452;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.1'">
+    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
-    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
 
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
