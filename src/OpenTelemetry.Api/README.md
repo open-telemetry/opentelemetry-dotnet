@@ -148,12 +148,12 @@ here as well.
     ```
 
 2. Create an `ActivitySource`, providing the name and version of the
-   library/application being instrumented. `ActivitySource` instance is
+   library/application doing the instrumentation. `ActivitySource` instance is
    typically created once and is reused throughout the application/library.
 
     ```csharp
     static ActivitySource activitySource = new ActivitySource(
-        "companyname.product.library",
+        "companyname.product.instrumentationlibrary",
         "semver1.0.0");
     ```
 
