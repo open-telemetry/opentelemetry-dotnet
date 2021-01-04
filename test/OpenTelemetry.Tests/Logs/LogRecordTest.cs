@@ -27,6 +27,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Xunit;
+using System.Globalization;
 
 namespace OpenTelemetry.Tests.Logs
 {
@@ -213,7 +214,16 @@ namespace OpenTelemetry.Tests.Logs
             Assert.Contains(state, item => item.Key == "{OriginalFormat}");
             Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
+            var prevCulture = CultureInfo.CurrentCulture;
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+            try
+            {
+                Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = prevCulture;
+            }
         }
 
         [Fact]
