@@ -24,6 +24,7 @@
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.23.0,3.0)</GrpcPkgVer>
+    <GrpcNetClientPkgVer>[2.32.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
