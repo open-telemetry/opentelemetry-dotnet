@@ -28,7 +28,6 @@
     <GoogleProtobufPkgVer>[3.13.0,4.0)</GoogleProtobufPkgVer>
     <GrpcAspNetCorePkgVer>[2.27.0,3.0)</GrpcAspNetCorePkgVer>
     <GrpcAspNetCoreServerPkgVer>[2.30.0, 3.0)</GrpcAspNetCoreServerPkgVer>
-    <GrpcNetClientPkgVer>[2.32.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetMvcPkgVer>[5.2.7,6.0)</MicrosoftAspNetMvcPkgVer>
     <MicrosoftAspNetWebApiWebHostPkgVer>[5.2.7,6.0)</MicrosoftAspNetWebApiWebHostPkgVer>
