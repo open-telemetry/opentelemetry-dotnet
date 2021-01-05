@@ -8,6 +8,13 @@
 * In `OtlpExporterOptions.cs`: Exporter options now include a switch for
   Batch vs Simple exporter, and settings for batch exporting properties.
 
+* Introduce a `netstandard2.1` build enabling the exporter to use the
+  [gRPC for .NET](https://github.com/grpc/grpc-dotnet) library instead of the
+  [gRPC for C#](https://github.com/grpc/grpc/tree/master/src/csharp) library
+  for .NET Core 3.0+ applications. This required some breaking changes to the
+  `OtlpExporterOptions`.
+  ([#1662](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1662))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
