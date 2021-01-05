@@ -135,6 +135,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Theory]
         [InlineData(true, false, false)]
         [InlineData(false, false, false)]
+        [InlineData(false, true, false)]
         [InlineData(false, false, true)]
         [InlineData(false, false, false, StatusCode.Ok)]
         [InlineData(false, false, false, StatusCode.Ok, null, true)]
@@ -182,8 +183,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     [ResourceSemanticConventions.AttributeServiceName] = serviceName,
                     ["service.tag"] = "hello world",
                 }).Build());
-
-                resoureTags = "\"service.tag\":\"hello world\",";
             }
             else
             {
