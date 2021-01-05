@@ -133,7 +133,7 @@ namespace Examples.Console
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
     internal class OtlpOptions
     {
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:55680")]
         public string Endpoint { get; set; }
     }
 
