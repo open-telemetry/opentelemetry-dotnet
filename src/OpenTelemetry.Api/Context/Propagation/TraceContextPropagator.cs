@@ -39,7 +39,6 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
-        private static readonly char[] OptionalWhiteSpaceCharacters = new char[] { ' ', '\t' };
 
         // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
         private static readonly int TraceStateKeyMaxLength = 256;
