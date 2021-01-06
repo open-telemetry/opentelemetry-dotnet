@@ -238,70 +238,79 @@ namespace OpenTelemetry.Context.Propagation
 
             if (tracestateCollection != null)
             {
-                List<string> listMembers = new List<string>();
-                for (int i = 0; i < tracestateCollection.Length; ++i)
-                {
-                    // test_tracestate_multiple_headers_different_keys
-                    listMembers.AddRange(tracestateCollection[i].Split(','));
-                }
-
-                if (listMembers.Count > 32)
-                {
-                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
-                    // test_tracestate_member_count_limit
-                    return false;
-                }
-
                 var keySet = new HashSet<string>();
                 var result = new StringBuilder();
-                for (int i = 0; i < listMembers.Count; ++i)
+                for (int i = 0; i < tracestateCollection.Length; ++i)
                 {
-                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
-                    if (string.IsNullOrEmpty(listMembers[i]))
+                    var tracestate = tracestateCollection[i].AsSpan();
+                    int begin = 0;
+                    while (begin < tracestate.Length)
                     {
-                        // Empty and whitespace - only list members are allowed.
-                        // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
-                        continue;
-                    }
+                        int length = tracestate.Slice(begin).IndexOf(',');
+                        ReadOnlySpan<char> listMember;
+                        if (length != -1)
+                        {
+                            listMember = tracestate.Slice(begin, length).Trim();
+                            begin += length + 1;
+                        }
+                        else
+                        {
+                            listMember = tracestate.Slice(begin).Trim();
+                            begin = tracestate.Length;
+                        }
 
-                    // Spaces and horizontal tabs surrounding list-members are ignored.
-                    var listMember = listMembers[i].Trim(OptionalWhiteSpaceCharacters);
-                    int keyLength = listMember.IndexOf('=');
-                    if (keyLength == listMember.Length || keyLength == -1)
-                    {
-                        // Missing key or value in tracestate
-                        return false;
-                    }
+                        // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
+                        if (listMember.IsEmpty)
+                        {
+                            // Empty and whitespace - only list members are allowed.
+                            // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
+                            continue;
+                        }
 
-                    var key = listMember.Substring(0, keyLength);
-                    if (!ValidateKey(key))
-                    {
-                        // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
-                        // test_tracestate_key_length_limit
-                        // test_tracestate_key_illegal_vendor_format
-                        return false;
-                    }
+                        if (keySet.Count >= 32)
+                        {
+                            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
+                            // test_tracestate_member_count_limit
+                            return false;
+                        }
 
-                    var value = listMember.Substring(keyLength + 1);
-                    if (!ValidateValue(value))
-                    {
-                        // test_tracestate_value_illegal_characters
-                        return false;
-                    }
+                        int keyLength = listMember.IndexOf('=');
+                        if (keyLength == listMember.Length || keyLength == -1)
+                        {
+                            // Missing key or value in tracestate
+                            return false;
+                        }
 
-                    // ValidateKey() call above has ensured the key does not contain upper case letters.
-                    if (!keySet.Add(key))
-                    {
-                        // test_tracestate_duplicated_keys
-                        return false;
-                    }
+                        var key = listMember.Slice(0, keyLength);
+                        if (!ValidateKey(key))
+                        {
+                            // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
+                            // test_tracestate_key_length_limit
+                            // test_tracestate_key_illegal_vendor_format
+                            return false;
+                        }
 
-                    if (result.Length > 0)
-                    {
-                        result.Append(',');
-                    }
+                        var value = listMember.Slice(keyLength + 1);
+                        if (!ValidateValue(value))
+                        {
+                            // test_tracestate_value_illegal_characters
+                            return false;
+                        }
 
-                    result.Append(listMember);
+                        // ValidateKey() call above has ensured the key does not contain upper case letters.
+                        if (!keySet.Add(key.ToString()))
+                        {
+                            // test_tracestate_duplicated_keys
+                            return false;
+                        }
+
+                        if (result.Length > 0)
+                        {
+                            result.Append(',');
+                        }
+
+                        result.Append(listMember.ToString());
+                    }
                 }
 
                 tracestateResult = result.ToString();
@@ -325,7 +334,7 @@ namespace OpenTelemetry.Context.Propagation
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
         }
 
-        private static bool ValidateKey(string key)
+        private static bool ValidateKey(ReadOnlySpan<char> key)
         {
             // This implementation follows Trace Context v1 which has W3C Recommendation.
             // https://www.w3.org/TR/trace-context-1/#key
@@ -403,7 +412,7 @@ namespace OpenTelemetry.Context.Propagation
             return true;
         }
 
-        private static bool ValidateValue(string value)
+        private static bool ValidateValue(ReadOnlySpan<char> value)
         {
             // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#value
             // value      = 0*255(chr) nblk-chr
