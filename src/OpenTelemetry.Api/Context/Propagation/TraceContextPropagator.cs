@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Internal;
 
@@ -38,6 +39,12 @@ namespace OpenTelemetry.Context.Propagation
         private static readonly int VersionAndTraceIdAndSpanIdLength = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-".Length;
         private static readonly int OptionsLength = "00".Length;
         private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
+
+        // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
+        private static readonly int TraceStateKeyMaxLength = 256;
+        private static readonly int TraceStateKeyTenantMaxLength = 241;
+        private static readonly int TraceStateKeyVendorMaxLength = 14;
+        private static readonly int TraceStateValueMaxLength = 256;
 
         /// <inheritdoc/>
         public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
@@ -230,18 +237,79 @@ namespace OpenTelemetry.Context.Propagation
 
             if (tracestateCollection != null)
             {
+                var keySet = new HashSet<string>();
                 var result = new StringBuilder();
-
-                // Iterate in reverse order because when call builder set the elements is added in the
-                // front of the list.
-                for (int i = tracestateCollection.Length - 1; i >= 0; i--)
+                for (int i = 0; i < tracestateCollection.Length; ++i)
                 {
-                    if (string.IsNullOrEmpty(tracestateCollection[i]))
+                    var tracestate = tracestateCollection[i].AsSpan();
+                    int begin = 0;
+                    while (begin < tracestate.Length)
                     {
-                        return false;
-                    }
+                        int length = tracestate.Slice(begin).IndexOf(',');
+                        ReadOnlySpan<char> listMember;
+                        if (length != -1)
+                        {
+                            listMember = tracestate.Slice(begin, length).Trim();
+                            begin += length + 1;
+                        }
+                        else
+                        {
+                            listMember = tracestate.Slice(begin).Trim();
+                            begin = tracestate.Length;
+                        }
 
-                    result.Append(tracestateCollection[i]);
+                        // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
+                        if (listMember.IsEmpty)
+                        {
+                            // Empty and whitespace - only list members are allowed.
+                            // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
+                            continue;
+                        }
+
+                        if (keySet.Count >= 32)
+                        {
+                            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
+                            // test_tracestate_member_count_limit
+                            return false;
+                        }
+
+                        int keyLength = listMember.IndexOf('=');
+                        if (keyLength == listMember.Length || keyLength == -1)
+                        {
+                            // Missing key or value in tracestate
+                            return false;
+                        }
+
+                        var key = listMember.Slice(0, keyLength);
+                        if (!ValidateKey(key))
+                        {
+                            // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
+                            // test_tracestate_key_length_limit
+                            // test_tracestate_key_illegal_vendor_format
+                            return false;
+                        }
+
+                        var value = listMember.Slice(keyLength + 1);
+                        if (!ValidateValue(value))
+                        {
+                            // test_tracestate_value_illegal_characters
+                            return false;
+                        }
+
+                        // ValidateKey() call above has ensured the key does not contain upper case letters.
+                        if (!keySet.Add(key.ToString()))
+                        {
+                            // test_tracestate_duplicated_keys
+                            return false;
+                        }
+
+                        if (result.Length > 0)
+                        {
+                            result.Append(',');
+                        }
+
+                        result.Append(listMember.ToString());
+                    }
                 }
 
                 tracestateResult = result.ToString();
@@ -252,14 +320,125 @@ namespace OpenTelemetry.Context.Propagation
 
         private static byte HexCharToByte(char c)
         {
-            if (((c >= '0') && (c <= '9'))
-                || ((c >= 'a') && (c <= 'f'))
-                || ((c >= 'A') && (c <= 'F')))
+            if ((c >= '0') && (c <= '9'))
             {
-                return Convert.ToByte(c);
+                return (byte)(c - '0');
+            }
+
+            if ((c >= 'a') && (c <= 'f'))
+            {
+                return (byte)(c - 'a' + 10);
             }
 
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
+        }
+
+        private static bool ValidateKey(ReadOnlySpan<char> key)
+        {
+            // This implementation follows Trace Context v1 which has W3C Recommendation.
+            // https://www.w3.org/TR/trace-context-1/#key
+            // It will be slightly differently from the next version of specification in GitHub repository.
+
+            // There are two format for the key. The length rule applies to both.
+            if (key.Length <= 0 || key.Length > TraceStateKeyMaxLength)
+            {
+                return false;
+            }
+
+            // The first format:
+            // key = lcalpha 0*255( lcalpha / DIGIT / "_" / "-"/ "*" / "/" )
+            // lcalpha = % x61 - 7A; a - z
+            // (There is an inconsistency in the expression above and the description in note.
+            // Here is following the description in note:
+            // "Identifiers MUST begin with a lowercase letter or a digit.")
+            if (!IsLowerAlphaDigit(key[0]))
+            {
+                return false;
+            }
+
+            int tenantLength = -1;
+            for (int i = 1; i < key.Length; ++i)
+            {
+                char ch = key[i];
+                if (ch == '@')
+                {
+                    tenantLength = i;
+                    break;
+                }
+
+                if (!(IsLowerAlphaDigit(ch)
+                    || ch == '_'
+                    || ch == '-'
+                    || ch == '*'
+                    || ch == '/'))
+                {
+                    return false;
+                }
+            }
+
+            if (tenantLength == -1)
+            {
+                // There is no "@" sign. The key follow the first format.
+                return true;
+            }
+
+            // The second format:
+            // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
+            if (tenantLength == 0 || tenantLength > TraceStateKeyTenantMaxLength)
+            {
+                return false;
+            }
+
+            int vendorLength = key.Length - tenantLength - 1;
+            if (vendorLength == 0 || vendorLength > TraceStateKeyVendorMaxLength)
+            {
+                return false;
+            }
+
+            for (int i = tenantLength + 1; i < key.Length; ++i)
+            {
+                char ch = key[i];
+                if (!(IsLowerAlphaDigit(ch)
+                    || ch == '_'
+                    || ch == '-'
+                    || ch == '*'
+                    || ch == '/'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ValidateValue(ReadOnlySpan<char> value)
+        {
+            // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#value
+            // value      = 0*255(chr) nblk-chr
+            // nblk - chr = % x21 - 2B / % x2D - 3C / % x3E - 7E
+            // chr        = % x20 / nblk - chr
+            if (value.Length <= 0 || value.Length > TraceStateValueMaxLength)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < value.Length - 1; ++i)
+            {
+                char c = value[i];
+                if (!(c >= 0x20 && c <= 0x7E && c != 0x2C && c != 0x3D))
+                {
+                    return false;
+                }
+            }
+
+            char last = value[value.Length - 1];
+            return last >= 0x21 && last <= 0x7E && last != 0x2C && last != 0x3D;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsLowerAlphaDigit(char c)
+        {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z');
         }
     }
 }
