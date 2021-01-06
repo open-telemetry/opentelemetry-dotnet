@@ -15,7 +15,9 @@
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
 * Modified SimpleExportProcessor and BatchExportProcessor to abstract classes;
   Added SimpleActivityExportProcessor, SimpleLogRecordExportProcessor,
-  BatchActivityExportProcessor, BatchLogRecordExportProcessor
+  BatchActivityExportProcessor, BatchLogRecordExportProcessor; Added the check
+  for Activity.Recorded in SimpleActivityExportProcessor and
+  BatchActivityExportProcessor
   ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
 
 ## 1.0.0-rc1.1
