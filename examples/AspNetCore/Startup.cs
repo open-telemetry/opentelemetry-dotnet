@@ -23,6 +23,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNetCore
@@ -58,11 +60,11 @@ namespace Examples.AspNetCore
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
                         {
-                            jaegerOptions.ServiceName = this.Configuration.GetValue<string>("Jaeger:ServiceName");
                             jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
                             jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
                         }));
@@ -75,6 +77,21 @@ namespace Examples.AspNetCore
                         {
                             zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
                             zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                        }));
+                    break;
+                case "otlp":
+                    // Adding the OtlpExporter creates a GrpcChannel.
+                    // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                    // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                    AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otlp:ServiceName")))
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Otlp:Endpoint"));
                         }));
                     break;
                 default:

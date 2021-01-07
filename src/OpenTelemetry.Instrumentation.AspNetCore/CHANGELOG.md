@@ -2,9 +2,38 @@
 
 ## Unreleased
 
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
+* AspNetCoreInstrumentation sets ActivitySource to activities created outside
+  ActivitySource.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+* For gRPC invocations, leading forward slash is trimmed from span name in order
+  to conform to the specification.
+  ([#1551](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1551))
+
+## 0.8.0-beta.1
+
+Released 2020-Nov-5
+
 * Record `Exception` in AspNetCore instrumentation based on `RecordException` in
   `AspNetCoreInstrumentationOptions`
   ([#1408](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1408))
+* Added configuration option `EnableGrpcAspNetCoreSupport` to enable or disable
+  support for adding OpenTelemetry RPC attributes when using
+  [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore/). This
+  option is enabled by default.
+  ([#1423](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1423))
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+  CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
+  changed from interface to abstract class.
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
+* Propagators.DefaultTextMapPropagator will be used as the default Propagator
+  ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
+* Removed Propagator from Instrumentation Options. Instrumentation now always
+  respect the Propagator.DefaultTextMapPropagator.
+  ([#1448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1448))
 
 ## 0.7.0-beta.1
 

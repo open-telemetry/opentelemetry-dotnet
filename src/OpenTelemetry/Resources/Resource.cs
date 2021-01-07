@@ -22,24 +22,18 @@ namespace OpenTelemetry.Resources
 {
     /// <summary>
     /// <see cref="Resource"/> represents a resource, which captures identifying information about the entities
-    /// for which signals (stats or traces) are reported.
+    /// for which telemetry is reported.
+    /// Use <see cref="ResourceBuilder"/> to construct resource instances.
     /// </summary>
     public class Resource
     {
-        public const string ServiceNameKey = "service.name";
-        public const string ServiceNamespaceKey = "service.namespace";
-        public const string ServiceInstanceIdKey = "service.instance.id";
-        public const string ServiceVersionKey = "service.version";
-        public const string LibraryNameKey = "name";
-        public const string LibraryVersionKey = "version";
-
-        // this implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
+        // This implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
-        /// <param name="attributes">An <see cref="IDictionary{String, Object}"/> of attributes that describe the resource.</param>
-        public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
+        /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
+        internal Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
             {
@@ -96,9 +90,7 @@ namespace OpenTelemetry.Resources
 
         private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)
         {
-            string sanitizedKey = null;
-            object sanitizedValue = null;
-
+            string sanitizedKey;
             if (attribute.Key == null)
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute key", "Attribute key should be non-null string.");
@@ -109,6 +101,7 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
+            object sanitizedValue;
             if (!IsValidValue(attribute.Value))
             {
                 OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute value", "Attribute value should be a non-null string, long, bool or double.");

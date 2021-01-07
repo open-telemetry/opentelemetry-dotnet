@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Trace;
@@ -35,17 +36,16 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
             return activity.GetTagValue(GrpcMethodTagName) as string;
         }
 
-        public static Status GetGrpcStatusCodeFromActivity(Activity activity)
+        public static bool TryGetGrpcStatusCodeFromActivity(Activity activity, out int statusCode)
         {
-            var status = Status.Unset;
-
+            statusCode = -1;
             var grpcStatusCodeTag = activity.GetTagValue(GrpcStatusCodeTagName);
-            if (int.TryParse(grpcStatusCodeTag as string, out var statusCode))
+            if (grpcStatusCodeTag == null)
             {
-                status = SpanHelper.ResolveSpanStatusForGrpcStatusCode(statusCode);
+                return false;
             }
 
-            return status;
+            return int.TryParse(grpcStatusCodeTag as string, out statusCode);
         }
 
         public static bool TryParseRpcServiceAndRpcMethod(string grpcMethod, out string rpcService, out string rpcMethod)
@@ -63,6 +63,28 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
                 rpcMethod = string.Empty;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Helper method that populates span properties from RPC status code according
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#status.
+        /// </summary>
+        /// <param name="statusCode">RPC status code.</param>
+        /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>
+        public static Status ResolveSpanStatusForGrpcStatusCode(int statusCode)
+        {
+            var status = Status.Error;
+
+            if (typeof(StatusCanonicalCode).IsEnumDefined(statusCode))
+            {
+                status = ((StatusCanonicalCode)statusCode) switch
+                {
+                    StatusCanonicalCode.Ok => Status.Unset,
+                    _ => Status.Error,
+                };
+            }
+
+            return status;
         }
     }
 }

@@ -74,9 +74,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            // Ensure that the header value func does not throw if the header key can't be found
-            var mockPropagator = new Mock<IPropagator>();
-
             // var isInjectedHeaderValueGetterThrows = false;
             // mockTextFormat
             //     .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
@@ -97,7 +94,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation(o =>
                         {
-                            o.Propagator = mockPropagator.Object;
                             if (shouldEnrich)
                             {
                                 o.Enrich = ActivityEnrichment;
@@ -110,8 +106,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -133,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
@@ -155,10 +151,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation((opt) =>
                    {
-                       opt.Propagator = propagator.Object;
                        if (shouldEnrich)
                        {
                            opt.Enrich = ActivityEnrichment;
@@ -171,8 +168,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -187,29 +184,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
-        {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
-            {
-                using var c = new HttpClient();
-                await c.GetAsync(this.url);
-            }
-
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
-        }
-
-        [Fact]
-        public async Task HttpClientInstrumentation_AddViaFactory_DependencyInstrumentation_CollectsSpans()
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -249,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -266,7 +249,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -287,7 +270,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(2, processor.Invocations.Count); // OnShutdown/Dispose called.
+            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
         }
 
         [Fact]
@@ -312,7 +295,53 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
             }
 
-            Assert.Equal(4, activityProcessor.Invocations.Count);
+            Assert.Equal(5, activityProcessor.Invocations.Count);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationContextPropagation()
+        {
+            var processor = new Mock<BaseProcessor<Activity>>();
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(this.url),
+                Method = new HttpMethod("GET"),
+            };
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            Baggage.Current.SetBaggage("b1", "v1");
+            using (Sdk.CreateTracerProviderBuilder()
+                        .AddHttpClientInstrumentation()
+                        .AddProcessor(processor.Object)
+                        .Build())
+            {
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+            }
+
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[1].Arguments[0];
+
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
+            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
+            Assert.True(request.Headers.TryGetValues("Baggage", out var baggages));
+            Assert.Single(traceparents);
+            Assert.Single(tracestates);
+            Assert.Single(baggages);
+
+            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+            Assert.Equal("b1=v1", baggages.Single());
         }
 
         public void Dispose()

@@ -13,13 +13,9 @@ dotnet add package OpenTelemetry.Exporter.InMemory
 
 ## Configuration
 
-```csharp
-var list = new List<object>();
-var activityExporter = new InMemoryExporter<Activity>(
-    new InMemoryExporterOptions { ExportedItems = list });
-var logExporter = new InMemoryExporter<LogRecord>(
-    new InMemoryExporterOptions { ExportedItems = list });
-```
+See the
+[`TestInMemoryExporter.cs`](../../examples/Console/TestInMemoryExporter.cs) for
+an example of how to use the exporter for exporting traces to a collection.
 
 ## References
 

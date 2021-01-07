@@ -23,15 +23,20 @@ namespace Examples.Console
 {
     internal class TestHttpClient
     {
+        // To run this example, run the following command from
+        // the reporoot\examples\Console\.
+        // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+        //
+        // dotnet run httpclient
         internal static object Run()
         {
             System.Console.WriteLine("Hello World!");
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .SetResource(Resources.CreateServiceResource("http-service-example"))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("http-service-example"))
                 .AddSource("http-client-test")
-                .AddConsoleExporter(opt => opt.DisplayAsJson = false)
+                .AddConsoleExporter()
                 .Build();
 
             var source = new ActivitySource("http-client-test");
@@ -41,7 +46,7 @@ namespace Examples.Console
                 client.GetStringAsync("http://bing.com").GetAwaiter().GetResult();
             }
 
-            System.Console.ReadLine();
+            System.Console.WriteLine("Press Enter key to exit.");
 
             return null;
         }

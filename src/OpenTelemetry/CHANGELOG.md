@@ -2,6 +2,72 @@
 
 ## Unreleased
 
+* The following extension methods on `ResourceBuilder` has been moved from the
+  `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
+  `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
+  `AddTelemetrySdk`.
+  ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
+* Metrics API/SDK support is in an experimental state and is not recommended for
+  production use. All metric APIs have been marked with the `Obsolete`
+  attribute. See
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for more information.
+  ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
+* Modified SimpleExportProcessor and BatchExportProcessor to abstract classes;
+  Added SimpleActivityExportProcessor, SimpleLogRecordExportProcessor,
+  BatchActivityExportProcessor, BatchLogRecordExportProcessor; Added the check
+  for Activity.Recorded in SimpleActivityExportProcessor and
+  BatchActivityExportProcessor
+  ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
+* Removed `GetResource` and `SetResource` `Activity` extension methods. Added
+  `GetResource` extension method on `BaseProvider`
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+* Added `ParentProvider` property on `BaseProcessor` and `BaseExporter` classes.
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+* `Resource` is no longer added to observed `Activity` objects as a
+  `CustomProperty`.
+  ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
+* Removed `RentrantExportProcessor` as it is not required by spec.
+* `ActivitySourceAdapter` supports setting `ActivitySource` for Activities
+  created without `ActivitySource`.
+  ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+* Implemented `Shutdown` for `TracerProvider`.
+  ([#1489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1489))
+* `Resources.CreateServiceResource` has been removed in favor of the
+  `ResourceBuilder` API.
+  ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
+* `TracerProviderBuilder.SetResource` has been changed to
+  `TracerProviderBuilder.SetResourceBuilder`.
+  ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
+* By default `TracerProvider` will set a `Resource` containing [Telemetry
+    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)
+    details
+    ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533)):
+  * `telemetry.sdk.name` = `opentelemetry`
+  * `telemetry.sdk.language` = `dotnet`
+  * `telemetry.sdk.version` = [SDK version]
+* `Resource` constructor marked as internal, as `ResourceBuilder` is the
+  recommended API to build resources.
+  ([#1566](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1566))
+* Changed BaseExportProcessor to have it override OnExport instead of OnEnd;
+  Added check for ActivityTraceFlags to BaseExportProcessor OnEnd
+  ([#1574](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1574))
+
+## 0.8.0-beta.1
+
+Released 2020-Nov-5
+
+* TracerProviderBuilder API changes Renamed AddInstrumentation to
+  AddDiagnosticSourceInstrumentation and made internal. Added AddInstrumentation
+  ([#1454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1454))
+* DiagnosticSource subscription helper classes (DiagnosticSourceSubscriber,
+  ListenerHandler,PropertyFetcher) are made internal.
+
 ## 0.7.0-beta.1
 
 Released 2020-Oct-16

@@ -94,10 +94,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            InstrumentRequest(request, activity);
-
             if (activity.IsAllDataRequested)
             {
+                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
+                if (Options.SetHttpFlavor)
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                }
+
                 try
                 {
                     Options.Enrich?.Invoke(activity, "OnStartActivity", request);
@@ -105,14 +111,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 catch (Exception ex)
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
-                if (Options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 }
             }
         }
@@ -122,6 +120,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+
+                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode));
+
                 try
                 {
                     Options.Enrich?.Invoke(activity, "OnStopActivity", response);
@@ -130,13 +132,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
-
-                activity.SetStatus(
-                    SpanHelper
-                        .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
-                        .WithDescription(response.StatusDescription));
             }
         }
 
@@ -148,15 +143,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            try
-            {
-                Options.Enrich?.Invoke(activity, "OnException", exception);
-            }
-            catch (Exception ex)
-            {
-                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
-            }
-
             Status status;
             if (exception is WebException wexc)
             {
@@ -164,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode).WithDescription(response.StatusDescription);
+                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
                 }
                 else
                 {
@@ -194,27 +180,52 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             activity.SetStatus(status);
+
+            try
+            {
+                Options.Enrich?.Invoke(activity, "OnException", exception);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InstrumentRequest(HttpWebRequest request, Activity activity)
-            => Options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
+        private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
+            => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Options.Propagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
         private static void ProcessRequest(HttpWebRequest request)
         {
-            if (!WebRequestActivitySource.HasListeners() || IsRequestInstrumented(request) || !Options.EventFilter(request))
+            if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
             {
-                // No subscribers to the ActivitySource or this request was instrumented by previous
+                // No subscribers to the ActivitySource or User provider Filter is
+                // filtering this request.
+                // Propagation must still be done in such cases, to allow
+                // downstream services to continue from parent context, if any.
+                // Eg: Parent could be the Asp.Net activity.
+                InstrumentRequest(request, Activity.Current?.Context ?? default);
+                return;
+            }
+
+            if (IsRequestInstrumented(request))
+            {
+                // This request was instrumented by previous
                 // ProcessRequest, such is the case with redirect responses where the same request is sent again.
                 return;
             }
 
             var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            var activityContext = Activity.Current?.Context ?? default;
 
+            // Propagation must still be done in all cases, to allow
+            // downstream services to continue from parent context, if any.
+            // Eg: Parent could be the Asp.Net activity.
+            InstrumentRequest(request, activityContext);
             if (activity == null)
             {
                 // There is a listener but it decided not to sample the current request.

@@ -25,7 +25,6 @@ using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -39,30 +38,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans>();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
         private static readonly Func<byte[], ByteString> ByteStringCtorFunc = CreateByteStringCtorFunc();
-        private static OtlpResource.Resource processResource;
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
+            OtlpResource.Resource processResource,
             in Batch<Activity> activityBatch)
         {
             Dictionary<string, OtlpTrace.InstrumentationLibrarySpans> spansByLibrary = new Dictionary<string, OtlpTrace.InstrumentationLibrarySpans>();
-            OtlpTrace.ResourceSpans resourceSpans = null;
+            OtlpTrace.ResourceSpans resourceSpans = new OtlpTrace.ResourceSpans
+            {
+                Resource = processResource,
+            };
+            request.ResourceSpans.Add(resourceSpans);
 
             foreach (var activity in activityBatch)
             {
-                if (resourceSpans == null)
-                {
-                    resourceSpans = new OtlpTrace.ResourceSpans();
-
-                    if (processResource == null)
-                    {
-                        BuildProcessResource(activity.GetResource());
-                    }
-
-                    resourceSpans.Resource = processResource;
-                    request.ResourceSpans.Add(resourceSpans);
-                }
-
                 OtlpTrace.Span span = activity.ToOtlpSpan();
                 if (span == null)
                 {
@@ -99,22 +89,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 RepeatedFieldOfSpanSetCountAction(librarySpans.Spans, 0);
                 SpanListPool.Add(librarySpans);
             }
-        }
-
-        internal static void BuildProcessResource(Resource resource)
-        {
-            OtlpResource.Resource processResource = new OtlpResource.Resource();
-
-            foreach (KeyValuePair<string, object> attribute in resource.Attributes)
-            {
-                var oltpAttribute = ToOtlpAttribute(attribute);
-                if (oltpAttribute != null)
-                {
-                    processResource.Attributes.Add(oltpAttribute);
-                }
-            }
-
-            ActivityExtensions.processResource = processResource;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -228,9 +202,46 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
+        {
+            if (kvp.Value == null)
+            {
+                return null;
+            }
+
+            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+
+            switch (kvp.Value)
+            {
+                case string s:
+                    attrib.Value.StringValue = s;
+                    break;
+                case bool b:
+                    attrib.Value.BoolValue = b;
+                    break;
+                case int i:
+                    attrib.Value.IntValue = i;
+                    break;
+                case long l:
+                    attrib.Value.IntValue = l;
+                    break;
+                case double d:
+                    attrib.Value.DoubleValue = d;
+                    break;
+                default:
+                    attrib.Value.StringValue = kvp.Value.ToString();
+                    break;
+            }
+
+            return attrib;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
         {
-            if (!otlpTags.StatusCode.HasValue)
+            var status = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+
+            if (!status.HasValue)
             {
                 return null;
             }
@@ -238,7 +249,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpStatus = new OtlpTrace.Status
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)otlpTags.StatusCode,
+                Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
             };
 
             if (otlpStatus.Code != OtlpTrace.Status.Types.StatusCode.Error)
@@ -308,116 +319,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpEvent;
         }
 
-        private static OtlpCommon.KeyValue ToOtlpAttribute(KeyValuePair<string, object> kvp)
-        {
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-
-            switch (kvp.Value)
-            {
-                case string s:
-                    attrib.Value.StringValue = s;
-                    break;
-                case bool b:
-                    attrib.Value.BoolValue = b;
-                    break;
-                case int i:
-                    attrib.Value.IntValue = i;
-                    break;
-                case long l:
-                    attrib.Value.IntValue = l;
-                    break;
-                case double d:
-                    attrib.Value.DoubleValue = d;
-                    break;
-                default:
-                    attrib.Value.StringValue = kvp.Value.ToString();
-                    break;
-            }
-
-            return attrib;
-        }
-
-        private static List<OtlpCommon.KeyValue> ToOtlpAttributes(KeyValuePair<string, object> kvp)
-        {
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var attributes = new List<OtlpCommon.KeyValue>();
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-            switch (kvp.Value)
-            {
-                case string s:
-                    attrib.Value.StringValue = s;
-                    attributes.Add(attrib);
-                    break;
-                case bool b:
-                    attrib.Value.BoolValue = b;
-                    attributes.Add(attrib);
-                    break;
-                case int i:
-                    attrib.Value.IntValue = i;
-                    attributes.Add(attrib);
-                    break;
-                case long l:
-                    attrib.Value.IntValue = l;
-                    attributes.Add(attrib);
-                    break;
-                case double d:
-                    attrib.Value.DoubleValue = d;
-                    attributes.Add(attrib);
-                    break;
-                case int[] intArray:
-                    foreach (var item in intArray)
-                    {
-                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-                        attrib.Value.IntValue = item;
-                        attributes.Add(attrib);
-                    }
-
-                    break;
-                case double[] doubleArray:
-                    foreach (var item in doubleArray)
-                    {
-                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-                        attrib.Value.DoubleValue = item;
-                        attributes.Add(attrib);
-                    }
-
-                    break;
-                case bool[] boolArray:
-                    foreach (var item in boolArray)
-                    {
-                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-                        attrib.Value.BoolValue = item;
-                        attributes.Add(attrib);
-                    }
-
-                    break;
-                case string[] stringArray:
-                    foreach (var item in stringArray)
-                    {
-                        attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-                        attrib.Value.StringValue = item;
-                        attributes.Add(attrib);
-                    }
-
-                    break;
-                default:
-                    attrib.Value.StringValue = kvp.Value.ToString();
-                    attributes.Add(attrib);
-                    break;
-            }
-
-            return attributes;
-        }
-
         private static Action<RepeatedField<OtlpTrace.Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
         {
             FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<OtlpTrace.Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -471,7 +372,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             public PooledList<OtlpCommon.KeyValue> Tags;
 
-            public int? StatusCode;
+            public string StatusCode;
 
             public string StatusDescription;
 
@@ -497,7 +398,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 switch (key)
                 {
                     case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = activityTag.Value as int?;
+                        this.StatusCode = activityTag.Value as string;
                         return true;
                     case SpanAttributeConstants.StatusDescriptionKey:
                         this.StatusDescription = activityTag.Value as string;

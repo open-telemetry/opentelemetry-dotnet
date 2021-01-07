@@ -14,117 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleExporter : BaseExporter<Activity>
+    public abstract class ConsoleExporter<T> : BaseExporter<T>
+        where T : class
     {
-        private readonly JsonSerializerOptions serializerOptions;
-        private readonly bool displayAsJson;
+        private readonly ConsoleExporterOptions options;
 
-        public ConsoleExporter(ConsoleExporterOptions options)
+        protected ConsoleExporter(ConsoleExporterOptions options)
         {
-            this.serializerOptions = new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            };
-
-            this.displayAsJson = options?.DisplayAsJson ?? false;
-
-            this.serializerOptions.Converters.Add(new JsonStringEnumConverter());
-            this.serializerOptions.Converters.Add(new ActivitySpanIdConverter());
-            this.serializerOptions.Converters.Add(new ActivityTraceIdConverter());
+            this.options = options ?? new ConsoleExporterOptions();
         }
 
-        public override ExportResult Export(in Batch<Activity> batch)
+        protected void WriteLine(string message)
         {
-            foreach (var activity in batch)
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
             {
-                if (this.displayAsJson)
-                {
-                    Console.WriteLine(JsonSerializer.Serialize(activity, this.serializerOptions));
-                }
-                else
-                {
-                    Console.WriteLine($"Activity.Id:          {activity.Id}");
-                    if (!string.IsNullOrEmpty(activity.ParentId))
-                    {
-                        Console.WriteLine($"Activity.ParentId:    {activity.ParentId}");
-                    }
-
-                    Console.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
-                    Console.WriteLine($"Activity.Kind:        {activity.Kind}");
-                    Console.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                    Console.WriteLine($"Activity.Duration:    {activity.Duration}");
-                    if (activity.TagObjects.Any())
-                    {
-                        Console.WriteLine("Activity.TagObjects:");
-                        foreach (var tag in activity.TagObjects)
-                        {
-                            var array = tag.Value as Array;
-
-                            if (array == null)
-                            {
-                                Console.WriteLine($"    {tag.Key}: {tag.Value}");
-                                continue;
-                            }
-
-                            Console.Write($"    {tag.Key}: [");
-
-                            for (int i = 0; i < array.Length; i++)
-                            {
-                                Console.Write(i != 0 ? ", " : string.Empty);
-                                Console.Write($"{array.GetValue(i)}");
-                            }
-
-                            Console.WriteLine($"]");
-                        }
-                    }
-
-                    if (activity.Events.Any())
-                    {
-                        Console.WriteLine("Activity.Events:");
-                        foreach (var activityEvent in activity.Events)
-                        {
-                            Console.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
-                            foreach (var attribute in activityEvent.Tags)
-                            {
-                                Console.WriteLine($"        {attribute.Key}: {attribute.Value}");
-                            }
-                        }
-                    }
-
-                    if (activity.Baggage.Any())
-                    {
-                        Console.WriteLine("Activity.Baggage:");
-                        foreach (var baggage in activity.Baggage)
-                        {
-                            Console.WriteLine($"    {baggage.Key}: {baggage.Value}");
-                        }
-                    }
-
-                    var resource = activity.GetResource();
-                    if (resource != Resource.Empty)
-                    {
-                        Console.WriteLine("Resource associated with Activity:");
-                        foreach (var resourceAttribute in resource.Attributes)
-                        {
-                            Console.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
-                        }
-                    }
-
-                    Console.WriteLine();
-                }
+                System.Console.WriteLine(message);
             }
 
-            return ExportResult.Success;
+            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
+            {
+                Debug.WriteLine(message);
+            }
         }
     }
 }

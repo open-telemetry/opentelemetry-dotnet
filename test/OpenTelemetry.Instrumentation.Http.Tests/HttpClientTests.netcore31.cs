@@ -50,7 +50,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var host,
                 out var port);
 
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
@@ -63,7 +62,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                    opt.Enrich = ActivityEnrichment;
                                })
                                .AddProcessor(processor.Object)
-                               .SetResource(expectedResource)
                                .Build())
             {
                 try
@@ -92,23 +90,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
-            var d = new Dictionary<int, string>()
-            {
-                { (int)StatusCode.Ok, "OK" },
-                { (int)StatusCode.Error, "ERROR" },
-                { (int)StatusCode.Unset, "UNSET" },
-            };
-
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(
                     tc.SpanStatus,
-                    d[(int)activity.GetTagValue(SpanAttributeConstants.StatusCodeKey)]);
+                    activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string);
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
@@ -125,8 +116,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
             }
-
-            Assert.Equal(expectedResource, activity.GetResource());
         }
 
         [Fact]

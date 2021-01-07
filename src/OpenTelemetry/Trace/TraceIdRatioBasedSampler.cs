@@ -38,7 +38,7 @@ namespace OpenTelemetry.Trace
         {
             if (probability < 0.0 || probability > 1.0)
             {
-                throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), probability, "Probability must be in range [0.0, 1.0]");
             }
 
             this.probability = probability;

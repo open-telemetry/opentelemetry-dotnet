@@ -25,9 +25,14 @@ namespace OpenTelemetry
     /// Implements processor that batches telemetry objects before calling exporter.
     /// </summary>
     /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
-    public class BatchExportProcessor<T> : BaseExportProcessor<T>
+    public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         where T : class
     {
+        internal const int DefaultMaxQueueSize = 2048;
+        internal const int DefaultScheduledDelayMilliseconds = 5000;
+        internal const int DefaultExporterTimeoutMilliseconds = 30000;
+        internal const int DefaultMaxExportBatchSize = 512;
+
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -47,32 +52,32 @@ namespace OpenTelemetry
         /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
         /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
-        public BatchExportProcessor(
+        protected BatchExportProcessor(
             BaseExporter<T> exporter,
-            int maxQueueSize = 2048,
-            int scheduledDelayMilliseconds = 5000,
-            int exporterTimeoutMilliseconds = 30000,
-            int maxExportBatchSize = 512)
+            int maxQueueSize = DefaultMaxQueueSize,
+            int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
+            int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
+            int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
             if (maxQueueSize <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxQueueSize));
+                throw new ArgumentOutOfRangeException(nameof(maxQueueSize), maxQueueSize, "maxQueueSize should be greater than zero.");
             }
 
             if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize));
+                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, "maxExportBatchSize should be greater than zero and less than maxQueueSize.");
             }
 
             if (scheduledDelayMilliseconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds), scheduledDelayMilliseconds, "scheduledDelayMilliseconds should be greater than zero.");
             }
 
             if (exporterTimeoutMilliseconds < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds), exporterTimeoutMilliseconds, "exporterTimeoutMilliseconds should be non-negative.");
             }
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
@@ -103,7 +108,7 @@ namespace OpenTelemetry
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
         /// <inheritdoc/>
-        public override void OnEnd(T data)
+        protected override void OnExport(T data)
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {

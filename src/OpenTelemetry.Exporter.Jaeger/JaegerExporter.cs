@@ -20,14 +20,16 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Thrift.Protocol;
 using Thrift.Transport;
+using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter.Jaeger
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         private readonly int maxPayloadSizeInBytes;
         private readonly TProtocolFactory protocolFactory;
         private readonly TTransport clientTransport;
@@ -37,6 +39,11 @@ namespace OpenTelemetry.Exporter.Jaeger
         private Dictionary<string, Process> processCache;
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
+
+        public JaegerExporter(JaegerExporterOptions options)
+            : this(options, null)
+        {
+        }
 
         internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
@@ -52,10 +59,10 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
 
-            this.Process = new Process(options.ServiceName, options.ProcessTags);
+            this.Process = new Process(DefaultServiceName, options.ProcessTags);
         }
 
-        public Process Process { get; internal set; }
+        internal Process Process { get; set; }
 
         internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
 
@@ -64,13 +71,13 @@ namespace OpenTelemetry.Exporter.Jaeger
         {
             try
             {
+                if (this.processCache == null)
+                {
+                    this.SetResource(this.ParentProvider.GetResource());
+                }
+
                 foreach (var activity in activityBatch)
                 {
-                    if (this.processCache == null)
-                    {
-                        this.ApplyLibraryResource(activity.GetResource());
-                    }
-
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
@@ -86,18 +93,18 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        internal void ApplyLibraryResource(Resource libraryResource)
+        internal void SetResource(Resource resource)
         {
-            if (libraryResource is null)
+            if (resource is null)
             {
-                throw new ArgumentNullException(nameof(libraryResource));
+                throw new ArgumentNullException(nameof(resource));
             }
 
             var process = this.Process;
 
             string serviceName = null;
             string serviceNamespace = null;
-            foreach (var label in libraryResource.Attributes)
+            foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
 
@@ -105,14 +112,11 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     switch (key)
                     {
-                        case Resource.ServiceNameKey:
+                        case ResourceSemanticConventions.AttributeServiceName:
                             serviceName = strVal;
                             continue;
-                        case Resource.ServiceNamespaceKey:
+                        case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
-                            continue;
-                        case Resource.LibraryNameKey:
-                        case Resource.LibraryVersionKey:
                             continue;
                     }
                 }
@@ -134,7 +138,7 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (string.IsNullOrEmpty(process.ServiceName))
             {
-                process.ServiceName = JaegerExporterOptions.DefaultServiceName;
+                process.ServiceName = DefaultServiceName;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();

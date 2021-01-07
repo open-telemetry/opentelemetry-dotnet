@@ -10,6 +10,7 @@
 OpenTelemetry .NET SDK has provided the following built-in log exporters:
 
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 
 Custom exporters can be implemented to send telemetry data to places which are
 not covered by the built-in exporters:
@@ -59,7 +60,6 @@ OpenTelemetry .NET SDK has provided the following built-in processors:
 
 * [BatchExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/BatchExportProcessor.cs)
 * [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
-* [ReentrantExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/ReentrantExportProcessor.cs)
 * [SimpleExportProcessor&lt;T&gt;](../../../src/OpenTelemetry/SimpleExportProcessor.cs)
 
 Custom processors can be implemented to cover more scenarios:

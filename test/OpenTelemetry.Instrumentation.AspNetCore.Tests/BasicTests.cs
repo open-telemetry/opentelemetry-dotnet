@@ -32,8 +32,10 @@ using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
-#else
+#elif NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
+#else
+using TestApp.AspNetCore._5._0;
 #endif
 using Xunit;
 
@@ -82,11 +84,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
@@ -99,7 +101,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [InlineData(false)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
-            var expectedResource = Resources.Resources.CreateServiceResource("test-service");
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -111,7 +112,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             options.Enrich = ActivityEnrichment;
                         }
                     })
-                    .SetResource(expectedResource)
                     .AddProcessor(activityProcessor.Object)
                     .Build();
             }
@@ -128,13 +128,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            ValidateAspNetCoreActivity(activity, "/api/values", expectedResource);
+            ValidateAspNetCoreActivity(activity, "/api/values");
         }
 
         [Fact]
@@ -165,11 +165,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
 #if !NETCOREAPP2_1
             // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new Mock<IPropagator>();
+            var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
                 new PropagationContext(
                     new ActivityContext(
@@ -210,8 +210,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
+                        Sdk.SetDefaultTextMapPropagator(propagator.Object);
                         this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation((opt) => opt.Propagator = propagator.Object)
+                            .AddAspNetCoreInstrumentation()
                             .AddProcessor(activityProcessor.Object)
                             .Build();
                     })))
@@ -220,12 +221,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
             // begin and end was called once each.
-            Assert.Equal(2, activityProcessor.Invocations.Count);
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count);
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
             Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
@@ -235,6 +236,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         [Fact]
@@ -265,12 +271,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
                 response2.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
             // we should only create one span and never call processor with another
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
@@ -317,13 +323,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
                 }
 
-                WaitForProcessorInvocations(activityProcessor, 2);
+                WaitForProcessorInvocations(activityProcessor, 3);
             }
 
             // As InstrumentationFilter threw, we continue as if the
             // InstrumentationFilter did not exist.
-            Assert.Equal(2, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
@@ -348,11 +354,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 TimeSpan.FromSeconds(1)));
         }
 
-        private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath, Resources.Resource expectedResource)
+        private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
-            Assert.Equal(expectedResource, activityToValidate.GetResource());
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

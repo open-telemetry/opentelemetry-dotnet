@@ -18,6 +18,7 @@
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 public class Program
 {
@@ -30,7 +31,7 @@ public class Program
 #endif
         {
             builder.AddOpenTelemetry(options => options
-                .AddInMemoryExporter()); // TODO: change to console output
+                .AddConsoleExporter());
         });
 
 #if NETCOREAPP2_1

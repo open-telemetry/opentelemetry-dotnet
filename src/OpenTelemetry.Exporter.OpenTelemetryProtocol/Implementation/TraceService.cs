@@ -23,7 +23,7 @@ namespace Opentelemetry.Proto.Collector.Trace.V1
     /// <summary>
     /// TraceService extensions.
     /// </summary>
-    public static partial class TraceService
+    internal static partial class TraceService
     {
         /// <summary>Interface for TraceService.</summary>
         public interface ITraceServiceClient

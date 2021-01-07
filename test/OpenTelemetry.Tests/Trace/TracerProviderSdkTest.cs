@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -273,7 +275,7 @@ namespace OpenTelemetry.Trace.Tests
             TestInstrumentation testInstrumentation = null;
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;
@@ -283,7 +285,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity, ActivityKind.Internal);
+            adapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
             adapter.Stop(activity);
             activity.Stop();
 
@@ -313,7 +315,7 @@ namespace OpenTelemetry.Trace.Tests
             tracerProvider.AddProcessor(testActivityProcessorNew);
             Activity activityNew = new Activity("test");
             activityNew.Start();
-            adapter.Start(activityNew, ActivityKind.Internal);
+            adapter.Start(activityNew, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
             adapter.Stop(activityNew);
             activityNew.Stop();
 
@@ -326,7 +328,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             TestInstrumentation testInstrumentation = null;
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;
@@ -336,7 +338,7 @@ namespace OpenTelemetry.Trace.Tests
             var adapter = testInstrumentation.Adapter;
             Activity activity = new Activity("test");
             activity.Start();
-            adapter.Start(activity, ActivityKind.Internal);
+            adapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
             adapter.Stop(activity);
             activity.Stop();
 
@@ -351,7 +353,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             TestInstrumentation testInstrumentation = null;
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddInstrumentation((adapter) =>
+                        .AddDiagnosticSourceInstrumentation((adapter) =>
                         {
                             testInstrumentation = new TestInstrumentation(adapter);
                             return testInstrumentation;
@@ -364,6 +366,21 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(testInstrumentation.IsDisposed);
             tracerProvider.Dispose();
             Assert.True(testInstrumentation.IsDisposed);
+        }
+
+        [Fact]
+        public void TracerProviderSdkBuildsWithDefaultResource()
+        {
+            var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
+            var resource = tracerProvider.GetResource();
+            var attributes = resource.Attributes;
+
+            Assert.NotNull(resource);
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+            var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+            Assert.Single(versionAttribute);
         }
 
         public void Dispose()

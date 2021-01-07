@@ -18,9 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -29,6 +30,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
         private const string UnknownHostName = "UNKNOWN-HOST";
         private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -77,9 +82,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var request = context.Request;
-            if (!this.hostingSupportsW3C || !(this.options.Propagator is TextMapPropagator))
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+            if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
             {
-                var ctx = this.options.Propagator.Extract(default, request, HttpRequestHeaderValuesGetter);
+                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
                 if (ctx.ActivityContext.IsValid()
                     && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
@@ -102,19 +108,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            this.activitySource.Start(activity, ActivityKind.Server);
+            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
@@ -138,6 +135,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -154,6 +160,27 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+
+#if NETSTANDARD2_1
+                if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+                {
+                    AddGrpcAttributes(activity, grpcMethod, context);
+                }
+                else
+                {
+                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    {
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    }
+                }
+#else
+                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                }
+#endif
+
                 try
                 {
                     this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
@@ -161,18 +188,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 catch (Exception ex)
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
-
-                if (TryGetGrpcMethod(activity, out var grpcMethod))
-                {
-                    AddGrpcAttributes(activity, grpcMethod, context);
-                }
-                else
-                {
-                    Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                    activity.SetStatus(status);
                 }
             }
 
@@ -236,6 +251,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+
                 try
                 {
                     this.options.Enrich?.Invoke(activity, "OnException", exc);
@@ -244,13 +266,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                if (this.options.RecordException)
-                {
-                    activity.RecordException(exc);
-                }
-
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 
@@ -289,15 +304,31 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
+#if NETSTANDARD2_1
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
             grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
             return !string.IsNullOrEmpty(grpcMethod);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
+            // The RPC semantic conventions indicate the span name
+            // should not have a leading forward slash.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            activity.DisplayName = grpcMethod.TrimStart('/');
+
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+
+            bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+            if (validConversion)
+            {
+                activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
+            }
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
@@ -306,11 +337,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // Remove the grpc.method tag added by the gRPC .NET library
                 activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
-            }
 
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
-            activity.SetStatus(GrpcTagHelper.GetGrpcStatusCodeFromActivity(activity));
+                // Remove the grpc.status_code tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
+
+                if (validConversion)
+                {
+                    // setting rpc.grpc.status_code
+                    activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
+                }
+            }
         }
+#endif
     }
 }

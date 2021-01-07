@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http;
@@ -31,17 +30,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerDiagnosticListener : ListenerHandler
     {
-        private static readonly Func<HttpRequestMessage, string, IEnumerable<string>> HttpRequestMessageHeaderValuesGetter = (request, name) =>
-        {
-            if (request.Headers.TryGetValues(name, out var values))
-            {
-                return values;
-            }
-
-            return null;
-        };
-
-        private static readonly Action<HttpRequestMessage, string, string> HttpRequestMessageHeaderValueSetter = (request, name, value) => request.Headers.Add(name, value);
+        internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -83,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (this.options.Propagator.Extract(default, request, HttpRequestMessageHeaderValuesGetter) != default)
+            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
@@ -92,19 +84,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity, ActivityKind.Client);
+            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
 
             if (activity.IsAllDataRequested)
             {
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
-                }
-                catch (Exception ex)
-                {
-                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
@@ -113,11 +96,22 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
 
-            if (!(this.httpClientSupportsW3C && this.options.Propagator is TextMapPropagator))
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+
+            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
             {
-                this.options.Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageHeaderValueSetter);
+                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
         }
 
@@ -129,21 +123,35 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // requestTaskStatus is not null
                 _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
+                StatusCode currentStatusCode = activity.GetStatus().StatusCode;
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        activity.SetStatus(Status.Error);
+                        if (currentStatusCode == StatusCode.Unset)
+                        {
+                            activity.SetStatus(Status.Error);
+                        }
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
-                        // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
-                        activity.SetStatus(Status.Error);
+                        if (currentStatusCode == StatusCode.Unset)
+                        {
+                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            activity.SetStatus(Status.Error);
+                        }
                     }
                 }
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+
+                    if (currentStatusCode == StatusCode.Unset)
+                    {
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode));
+                    }
+
                     try
                     {
                         this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
@@ -152,13 +160,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                     }
-
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
-
-                    activity.SetStatus(
-                        SpanHelper
-                            .ResolveSpanStatusForHttpStatusCode((int)response.StatusCode)
-                            .WithDescription(response.ReasonPhrase));
                 }
             }
 
@@ -173,15 +174,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
-                }
-
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
-                }
-                catch (Exception ex)
-                {
-                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
 
                 if (exc is HttpRequestException)
@@ -200,6 +192,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
+                }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
             }
         }

@@ -29,6 +29,11 @@ namespace OpenTelemetry
         private int shutdownCount;
 
         /// <summary>
+        /// Gets the parent <see cref="BaseProvider"/>.
+        /// </summary>
+        public BaseProvider ParentProvider { get; private set; }
+
+        /// <summary>
         /// Called synchronously when a telemetry object is started.
         /// </summary>
         /// <param name="data">
@@ -79,7 +84,7 @@ namespace OpenTelemetry
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
             }
 
             try
@@ -115,7 +120,7 @@ namespace OpenTelemetry
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds));
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
             }
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
@@ -139,6 +144,11 @@ namespace OpenTelemetry
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        internal virtual void SetParentProvider(BaseProvider parentProvider)
+        {
+            this.ParentProvider = parentProvider;
         }
 
         /// <summary>

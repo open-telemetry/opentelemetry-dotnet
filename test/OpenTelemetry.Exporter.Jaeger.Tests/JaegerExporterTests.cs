@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
+        private const string DefaultServiceName = "OpenTelemetry Exporter";
+
         [Fact]
         public void JaegerExporter_BadArgs()
         {
@@ -38,44 +40,41 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerTraceExporter_ctor_NullServiceNameAllowed()
         {
-            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions
-            {
-                ServiceName = null,
-            });
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             Assert.NotNull(jaegerTraceExporter);
         }
 
         [Fact]
-        public void JaegerTraceExporter_ApplyLibraryResource_UpdatesServiceName()
+        public void JaegerTraceExporter_SetResource_UpdatesServiceName()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
             process.ServiceName = "TestService";
 
-            jaegerTraceExporter.ApplyLibraryResource(Resource.Empty);
+            jaegerTraceExporter.SetResource(Resource.Empty);
 
             Assert.Equal("TestService", process.ServiceName);
 
-            jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
             Assert.Equal("MyService", process.ServiceName);
 
-            jaegerTraceExporter.ApplyLibraryResource(Resources.Resources.CreateServiceResource("MyService", serviceNamespace: "MyNamespace"));
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
 
             Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
 
         [Fact]
-        public void JaegerTraceExporter_ApplyLibraryResource_CreatesTags()
+        public void JaegerTraceExporter_SetResource_CreatesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag"] = "value",
-            }));
+            }).Build());
 
             Assert.NotNull(process.Tags);
             Assert.Single(process.Tags);
@@ -83,17 +82,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerTraceExporter_ApplyLibraryResource_CombinesTags()
+        public void JaegerTraceExporter_SetResource_CombinesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
 
-            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag2"] = "value2",
-            }));
+            }).Build());
 
             Assert.NotNull(process.Tags);
             Assert.Equal(2, process.Tags.Count);
@@ -102,16 +101,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerTraceExporter_ApplyLibraryResource_IgnoreLibraryResources()
+        public void JaegerTraceExporter_SetResource_IgnoreServiceResources()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.ApplyLibraryResource(new Resource(new Dictionary<string, object>
+            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
-                [Resource.LibraryNameKey] = "libname",
-                [Resource.LibraryVersionKey] = "libversion",
-            }));
+                [ResourceSemanticConventions.AttributeServiceName] = "servicename",
+                [ResourceSemanticConventions.AttributeServiceNamespace] = "servicenamespace",
+            }).Build());
 
             Assert.Null(process.Tags);
         }
@@ -120,8 +119,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_DefaultBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
-            jaegerExporter.ApplyLibraryResource(Resource.Empty);
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
+            jaegerExporter.SetResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
@@ -132,7 +131,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             // Assert
             Assert.Single(batches);
-            Assert.Equal("TestService", batches.First().Process.ServiceName);
+            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
             Assert.Equal(3, batches.First().Count);
         }
 
@@ -140,8 +139,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_MultipleBatches()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService" });
-            jaegerExporter.ApplyLibraryResource(Resource.Empty);
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
+            jaegerExporter.SetResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
@@ -158,7 +157,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             // Assert
             Assert.Equal(2, batches.Count());
 
-            var primaryBatch = batches.Where(b => b.Process.ServiceName == "TestService");
+            var primaryBatch = batches.Where(b => b.Process.ServiceName == DefaultServiceName);
             Assert.Single(primaryBatch);
             Assert.Equal(2, primaryBatch.First().Count);
 
@@ -171,8 +170,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void JaegerTraceExporter_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { ServiceName = "TestService", MaxPayloadSizeInBytes = 1500 });
-            jaegerExporter.ApplyLibraryResource(Resource.Empty);
+            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 });
+            jaegerExporter.SetResource(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
@@ -183,7 +182,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             // Assert
             Assert.Single(batches);
-            Assert.Equal("TestService", batches.First().Process.ServiceName);
+            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
             Assert.Equal(1, batches.First().Count);
         }
 

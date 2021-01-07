@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
         /// </summary>
-        /// <param name="builder">OpenTelemetry builder to use.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
@@ -43,8 +43,19 @@ namespace OpenTelemetry.Trace
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpExporter(exporterOptions);
 
-            // TODO: Pick Simple vs Batching based on OtlpExporterOptions
-            return builder.AddProcessor(new BatchExportProcessor<Activity>(otlpExporter));
+            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            {
+                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
+            }
+            else
+            {
+                return builder.AddProcessor(new BatchActivityExportProcessor(
+                    otlpExporter,
+                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+            }
         }
     }
 }

@@ -49,13 +49,13 @@ namespace OpenTelemetry.Context.Propagation.Tests
         [Fact]
         public void CompositePropagator_NullTextFormatList()
         {
-            Assert.Throws<ArgumentNullException>(() => new CompositePropagator(null));
+            Assert.Throws<ArgumentNullException>(() => new CompositeTextMapPropagator(null));
         }
 
         [Fact]
         public void CompositePropagator_TestPropagator()
         {
-            var compositePropagator = new CompositePropagator(new List<IPropagator>
+            var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
             {
                 new TestPropagator("custom-traceparent-1", "custom-tracestate-1"),
                 new TestPropagator("custom-traceparent-2", "custom-tracestate-2"),
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             const string header01 = "custom-tracestate-01";
             const string header02 = "custom-tracestate-02";
 
-            var compositePropagator = new CompositePropagator(new List<IPropagator>
+            var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
             {
                 new TestPropagator("custom-traceparent", header01, true),
                 new TestPropagator("custom-traceparent", header02),
@@ -106,9 +106,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
         [Fact]
         public void CompositePropagator_ActivityContext_Baggage()
         {
-            var compositePropagator = new CompositePropagator(new List<IPropagator>
+            var compositePropagator = new CompositeTextMapPropagator(new List<TextMapPropagator>
             {
-                new TextMapPropagator(),
+                new TraceContextPropagator(),
                 new BaggagePropagator(),
             });
 

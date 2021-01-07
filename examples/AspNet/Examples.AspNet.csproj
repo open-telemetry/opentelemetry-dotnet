@@ -44,6 +44,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
@@ -75,9 +76,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.WebApi.WebHost" Version="5.2.7" />
-    <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.2.7" />
-    <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.2.7" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.WebHost" Version="$(MicrosoftAspNetWebApiWebHostPkgVer)" />
+    <PackageReference Include="Microsoft.AspNet.Mvc" Version="$(MicrosoftAspNetMvcPkgVer)" />
+    <PackageReference Include="Microsoft.AspNet.WebPages" Version="$(MicrosoftAspNetWebPagesPkgVer)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj">
@@ -99,6 +100,14 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj">
       <Project>{ae3e3df5-4083-4c6e-a840-8271b0acde7e}</Project>
       <Name>OpenTelemetry</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj">
+      <Project>{1afff251-3b0c-47ca-be94-937083732c0a}</Project>
+      <Name>OpenTelemetry.Exporter.Console</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj">
+      <Project>{7edae7fa-b44e-42ca-80fa-7df2faa2c5dd}</Project>
+      <Name>OpenTelemetry.Exporter.Zipkin</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
