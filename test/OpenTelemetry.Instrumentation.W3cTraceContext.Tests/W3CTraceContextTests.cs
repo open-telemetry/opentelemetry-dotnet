@@ -73,45 +73,28 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         {
             string[] unsuccessfulTestcaseNames = ExtractUnsuccessfulTestcaseNames(output);
 
-            // TODO: fix and remove from this failure list except for known failures with external dependencies. #1219
-            // See failures with external dependencies in https://github.com/open-telemetry/opentelemetry-dotnet/issues/404
+            // Tracking failures with external dependencies. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1219
 #if NETCOREAPP2_1
             string[] existingFailures = new string[]
             {
-                // Errors:
-                "test_tracestate_duplicated_keys",
-                "test_tracestate_key_illegal_characters",
-                "test_tracestate_key_illegal_vendor_format",
-                "test_tracestate_key_length_limit",
-                "test_tracestate_member_count_limit",
-                "test_tracestate_multiple_headers_different_keys",
-                "test_tracestate_value_illegal_characters",
-
                 // Failures:
                 "test_traceparent_trace_flags_illegal_characters",  // External dependency. See issue #404
-                "test_traceparent_version_0x00",
-                "test_traceparent_version_0xff",
-                "test_tracestate_empty_header",
             };
 #elif NETCOREAPP3_1
             string[] existingFailures = new string[]
             {
-                // Errors:
-                "test_tracestate_duplicated_keys",
-                "test_tracestate_key_illegal_characters",
-                "test_tracestate_key_illegal_vendor_format",
-                "test_tracestate_key_length_limit",
-                "test_tracestate_member_count_limit",
-                "test_tracestate_multiple_headers_different_keys",
-                "test_tracestate_value_illegal_characters",
-
                 // Failures:
                 "test_traceparent_parent_id_all_zero",  // External dependency. See issue #404
                 "test_traceparent_parent_id_illegal_characters",  // External dependency. See issue #404
                 "test_traceparent_trace_flags_illegal_characters",  // External dependency. See issue #404
-                "test_traceparent_version_0x00",
-                "test_traceparent_version_0xff",
-                "test_tracestate_empty_header",
+            };
+#elif NET5_0
+            string[] existingFailures = new string[]
+            {
+                // Failures:
+                "test_traceparent_parent_id_all_zero",  // External dependency. See issue #404
+                "test_traceparent_parent_id_illegal_characters",  // External dependency. See issue #404
+                "test_traceparent_trace_flags_illegal_characters",  // External dependency. See issue #404
             };
 #endif
             Assert.Equal(existingFailures.Length, unsuccessfulTestcaseNames.Length);
@@ -147,8 +130,6 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             };
             proc.Start();
 
-            // TODO: after W3C Trace Context test suite passes, check whether it's still in stderr.
-            // var results = proc.StandardOutput.ReadToEnd();
             var results = proc.StandardError.ReadToEnd();
             proc.WaitForExit();
             return results;
