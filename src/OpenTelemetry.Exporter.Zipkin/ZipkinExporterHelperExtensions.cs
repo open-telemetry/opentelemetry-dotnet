@@ -45,11 +45,11 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleExportProcessor<Activity>(zipkinExporter));
+                return builder.AddProcessor(new SimpleActivityExportProcessor(zipkinExporter));
             }
             else
             {
-                return builder.AddProcessor(new BatchExportProcessor<Activity>(
+                return builder.AddProcessor(new BatchActivityExportProcessor(
                     zipkinExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,

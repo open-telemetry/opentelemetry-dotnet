@@ -1,3 +1,5 @@
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter
+OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter.OtlpExporter(OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions options) -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
@@ -13,4 +15,6 @@ OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.get -> 
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.OtlpExporterOptions() -> void
 OpenTelemetry.Trace.OtlpExporterHelperExtensions
+override OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporter.OnShutdown(int timeoutMilliseconds) -> bool
 static OpenTelemetry.Trace.OtlpExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

@@ -20,6 +20,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -32,14 +35,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpExporter : BaseExporter<Activity>
+    public class OtlpExporter : BaseExporter<Activity>
     {
         private const string DefaultServiceName = "OpenTelemetry Exporter";
 
         private readonly OtlpExporterOptions options;
+#if NETSTANDARD2_1
+        private readonly GrpcChannel channel;
+#else
         private readonly Channel channel;
+#endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
+        /// </summary>
+        /// <param name="options">Configuration options for the exporter.</param>
+        public OtlpExporter(OtlpExporterOptions options)
+            : this(options, null)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporter"/> class.
@@ -56,7 +72,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
             else
             {
+#if NETSTANDARD2_1
+                this.channel = options.GrpcChannelOptions == default
+                    ? GrpcChannel.ForAddress(options.Endpoint)
+                    : GrpcChannel.ForAddress(options.Endpoint, options.GrpcChannelOptions);
+#else
                 this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+#endif
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
             }
         }
@@ -70,6 +92,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             {
                 this.SetResource(this.ParentProvider.GetResource());
             }
+
+            // Prevents the exporter's gRPC and HTTP operations from being instrumented.
+            using var scope = SuppressInstrumentationScope.Begin();
 
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 

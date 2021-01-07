@@ -20,6 +20,8 @@ OpenTelemetry.Batch<T>.Enumerator.Enumerator() -> void
 OpenTelemetry.Batch<T>.Enumerator.MoveNext() -> bool
 OpenTelemetry.Batch<T>.Enumerator.Reset() -> void
 OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
+OpenTelemetry.BatchActivityExportProcessor
+OpenTelemetry.BatchActivityExportProcessor.BatchActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessor<T>
 OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessorOptions<T>
@@ -130,6 +132,8 @@ OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resou
 OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilderExtensions
 OpenTelemetry.Sdk
+OpenTelemetry.SimpleActivityExportProcessor
+OpenTelemetry.SimpleActivityExportProcessor.SimpleActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter) -> void
 OpenTelemetry.SimpleExportProcessor<T>
 OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
 OpenTelemetry.SuppressInstrumentationScope
@@ -179,7 +183,9 @@ abstract OpenTelemetry.Metrics.Export.MetricProcessor.FinishCollectionCycle(out 
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.BaseExportProcessor<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 override OpenTelemetry.BatchExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
@@ -214,6 +220,7 @@ override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.
 override OpenTelemetry.Metrics.Aggregators.Int64MeasureMinMaxSumCountAggregator.Update(long value) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
 override OpenTelemetry.Metrics.Export.UngroupedBatcher.Process(OpenTelemetry.Metrics.Export.Metric metric) -> void
+override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T data) -> void
 override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
@@ -222,7 +229,6 @@ override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
 override OpenTelemetry.Trace.SamplingResult.GetHashCode() -> int
 override OpenTelemetry.Trace.TraceIdRatioBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T data) -> void
-override sealed OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
