@@ -45,7 +45,7 @@ namespace OpenTelemetry.Tests.Logs
         public LogRecordTest()
         {
             this.exporter = new InMemoryExporter<LogRecord>(this.exportedItems);
-            this.processor = new SimpleExportProcessor<LogRecord>(this.exporter);
+            this.processor = new SimpleLogRecordExportProcessor(this.exporter);
 #if NETCOREAPP2_1
             var serviceCollection = new ServiceCollection().AddLogging(builder =>
 #else
