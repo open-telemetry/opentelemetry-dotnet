@@ -35,8 +35,11 @@ namespace OpenTelemetry.Metrics
         public override void Observe(long value, LabelSet labelset)
         {
             // TODO cleanup of handle/aggregator.   Issue #530
-            var boundInstrument =
-                this.observerHandles.GetOrAdd(labelset, (_) => new Int64ObserverMetricHandleSdk());
+            Int64ObserverMetricHandleSdk boundInstrument;
+            if (!this.observerHandles.TryGetValue(labelset, out boundInstrument))
+            {
+                boundInstrument = this.observerHandles.GetOrAdd(labelset, new Int64ObserverMetricHandleSdk());
+            }
 
             boundInstrument.Observe(value);
         }

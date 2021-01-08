@@ -32,7 +32,13 @@ namespace OpenTelemetry.Metrics
 
         public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {
-            return this.measureBoundInstruments.GetOrAdd(labelset, (_) => this.CreateMetric());
+            BoundMeasureMetricSdkBase<T> boundMeasure;
+            if (!this.measureBoundInstruments.TryGetValue(labelset, out boundMeasure))
+            {
+                boundMeasure = this.measureBoundInstruments.GetOrAdd(labelset, this.CreateMetric());
+            }
+
+            return boundMeasure;
         }
 
         public override BoundMeasureMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)

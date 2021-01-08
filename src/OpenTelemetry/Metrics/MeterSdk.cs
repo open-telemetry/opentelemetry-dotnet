@@ -244,34 +244,70 @@ namespace OpenTelemetry.Metrics
 
         public override CounterMetric<long> CreateInt64Counter(string name, bool monotonic = true)
         {
-            return this.longCounters.GetOrAdd(name, (k) => new Int64CounterMetricSdk(k));
+            Int64CounterMetricSdk metric;
+            if (!this.longCounters.TryGetValue(name, out metric))
+            {
+                metric = this.longCounters.GetOrAdd(name, new Int64CounterMetricSdk(name));
+            }
+
+            return metric;
         }
 
         public override CounterMetric<double> CreateDoubleCounter(string name, bool monotonic = true)
         {
-            return this.doubleCounters.GetOrAdd(name, (k) => new DoubleCounterMetricSdk(k));
+            DoubleCounterMetricSdk metric;
+            if (!this.doubleCounters.TryGetValue(name, out metric))
+            {
+                metric = this.doubleCounters.GetOrAdd(name, new DoubleCounterMetricSdk(name));
+            }
+
+            return metric;
         }
 
         public override MeasureMetric<double> CreateDoubleMeasure(string name, bool absolute = true)
         {
-            return this.doubleMeasures.GetOrAdd(name, (k) => new DoubleMeasureMetricSdk(k));
+            DoubleMeasureMetricSdk metric;
+            if (!this.doubleMeasures.TryGetValue(name, out metric))
+            {
+                metric = this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name));
+            }
+
+            return metric;
         }
 
         public override MeasureMetric<long> CreateInt64Measure(string name, bool absolute = true)
         {
-            return this.longMeasures.GetOrAdd(name, (k) => new Int64MeasureMetricSdk(k));
+            Int64MeasureMetricSdk metric;
+            if (!this.longMeasures.TryGetValue(name, out metric))
+            {
+                metric = this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name));
+            }
+
+            return metric;
         }
 
         /// <inheritdoc/>
         public override Int64ObserverMetric CreateInt64Observer(string name, Action<Int64ObserverMetric> callback, bool absolute = true)
         {
-            return this.longObservers.GetOrAdd(name, (k) => new Int64ObserverMetricSdk(k, callback));
+            Int64ObserverMetricSdk metric;
+            if (!this.longObservers.TryGetValue(name, out metric))
+            {
+                metric = this.longObservers.GetOrAdd(name, new Int64ObserverMetricSdk(name, callback));
+            }
+
+            return metric;
         }
 
         /// <inheritdoc/>
         public override DoubleObserverMetric CreateDoubleObserver(string name, Action<DoubleObserverMetric> callback, bool absolute = true)
         {
-            return this.doubleObservers.GetOrAdd(name, (k) => new DoubleObserverMetricSdk(k, callback));
+            DoubleObserverMetricSdk metric;
+            if (!this.doubleObservers.TryGetValue(name, out metric))
+            {
+                metric = this.doubleObservers.GetOrAdd(name, new DoubleObserverMetricSdk(name, callback));
+            }
+
+            return metric;
         }
     }
 }
