@@ -55,8 +55,8 @@ Due to the fact that OpenTelemetry .NET relies on .NET runtime to provide many
 instrumentation API, API package is naturally split into multiple. i.e
 `System.Diagnostics.DiagnosticSource` provides the Tracing API and
 `Microsoft.Extensions.Logging.Abstractions` provide the Logging API. In the
-future, APIs for Metrics, Propagators etc. will also come from .NET
-runtime itself.
+future, APIs for Metrics, Propagators etc. will also come from .NET runtime
+itself.
 
 ## Experimental Signals
 
@@ -156,25 +156,34 @@ with this approach:
 `OpenTelemetry` 1.0.0-RC1 release : Pre-release, no API guarantees, but more
 stable than beta.
 
-`OpenTelemetry` 1.0.0 release : Stable release consisting of only stable signals - Traces, Propagators, Baggage.
+`OpenTelemetry` 1.0.0 release : Stable release consisting of only stable signals
+: Traces, Propagators, Baggage.
 
-`OpenTelemetry.Metrics` 1.0.0-alpha release : Pre-release consisting of Metric SDK. Alpha indicates early stages of development.
-Metrics entry point will be contained in this package. (eg: new MeterProviderBuild().Build())
+`OpenTelemetry.Metrics` 1.0.0-alpha release : Pre-release consisting of Metric
+SDK. Alpha indicates early stages of development. Metrics entry point will be
+contained in this package. (eg: new MeterProviderBuild().Build())
 
 `OpenTelemetry` 1.0.1 release : Bug fixes.
 
 `OpenTelemetry` 1.1.0 release : New features added. No metric code yet.
 
-`OpenTelemetry.Metrics` 1.0.0-beta release : Metric evolves to beta status. Still a pre-release.
+`OpenTelemetry.Metrics` 1.0.0-beta release : Metric evolves to beta status.
+Still a pre-release.
 
-`OpenTelemetry.Metrics` 1.0.0-RC release : Metric evolves to RC status. Still a pre-release, but a final RC release will be done when Metrics is declared stable.
+`OpenTelemetry.Metrics` 1.0.0-RC release : Metric evolves to RC status. Still a
+pre-release, but a final RC release will be done when Metrics is declared
+stable.
 
-`OpenTelemetry` 1.2.0 release : Add metric support. This will be additive changes.
-Metrics entry point will be added the main package (just like Traces.) (eg: Sdk.CreateMeterProviderBuilder().Build())
-User who were previously using the *final* RC package of `OpenTelemetry.Metrics`, will need to change the Metric entry point code.
-Apart from that, they'll simply remove `OpenTelemetry.Metrics` and update `OpenTelemetry` to 1.2.0, with no *other* code changes.
+`OpenTelemetry` 1.2.0 release : Add metric support. This will be additive
+changes. Metrics entry point will be added the main package (just like Traces.)
+(eg: Sdk.CreateMeterProviderBuilder().Build()) User who were previously using
+the *final* RC package of `OpenTelemetry.Metrics`, will need to change the
+Metric entry point code. Apart from that, they'll simply remove
+`OpenTelemetry.Metrics` and update `OpenTelemetry` to 1.2.0, with no *other*
+code changes.
 
-In the case of `OpenTelemetry.API.Metrics` package, users will require code changes, as the plan for Metrics API is to have it come from the .NET Runtime.
+In the case of `OpenTelemetry.API.Metrics` package, users will require code
+changes, as the plan for Metrics API is to have it come from the .NET Runtime.
 
 `OpenTelemetry` 1.3.0 release : More features.
 
@@ -182,15 +191,17 @@ In the case of `OpenTelemetry.API.Metrics` package, users will require code chan
 
 ### Approach 3 - Same package name, but version differently
 
-The approach keeps the same amount of packages, but release (multiple) versions of the same, with
-experimental signals part of non-stable versions.
+The approach keeps the same amount of packages, but release (multiple) versions
+of the same, with experimental signals part of non-stable versions.
 
-This involves managing more than one branch in Github - master for regular work, and a
-separate experimental branch for experimental features. There can be 'n' experimental branches, if there
-is a need. The immediate future will have metrics only as separate branch.
+This involves managing more than one branch in Github - master for regular work,
+and a separate experimental branch for experimental features. There can be 'n'
+experimental branches, if there is a need. The immediate future will have
+metrics only as separate branch.
 
-Release stable features as stable packages (OpenTelemetry 1.0.0, 1.1.0 etc.), from master branch.
-Release experimental features as different versions of the same package (OpenTelemetry 1.5.0-alpha.1), from experimental branch.
+Release stable features as stable packages (OpenTelemetry 1.0.0, 1.1.0 etc.),
+from master branch. Release experimental features as different versions of the
+same package (OpenTelemetry 1.5.0-alpha.1), from experimental branch.
 
 ### Downsides with Approach 3
 
@@ -207,8 +218,8 @@ with this approach:
 `OpenTelemetry` 1.0.0-RC1 release : Pre-release, no API guarantees, but more
 stable than beta.
 
-`OpenTelemetry` 1.0.0 release : Stable release consisting of only stable
-signals :- Traces, Propagators, Baggage. This is released from master branch.
+`OpenTelemetry` 1.0.0 release : Stable release consisting of only stable signals
+:- Traces, Propagators, Baggage. This is released from master branch.
 
 `OpenTelemetry` 1.5.0-alpha release : Pre-release consisting of Metric SDK.
 Alpha indicates early stages of development. Metric entry points are from the
