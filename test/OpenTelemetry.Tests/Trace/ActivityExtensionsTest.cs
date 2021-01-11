@@ -78,6 +78,23 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void SetStatusWithIgnoredDescription()
+        {
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .Build();
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetStatus(Status.Ok.WithDescription("This should be ignored."));
+            activity?.Stop();
+
+            var status = activity.GetStatus();
+            Assert.Equal(StatusCode.Ok, status.StatusCode);
+            Assert.Null(status.Description);
+        }
+
+        [Fact]
         public void SetCancelledStatus()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()

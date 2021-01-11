@@ -1,4 +1,4 @@
-// <copyright file="TestOpenTracingWithConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestOpenTracingShim.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ using OpenTracing;
 
 namespace Examples.Console
 {
-    internal class TestOpenTracingWithConsoleExporter
+    internal class TestOpenTracingShim
     {
         internal static object Run(OpenTracingShimOptions options)
         {
@@ -35,13 +35,18 @@ namespace Examples.Console
                     .AddConsoleExporter()
                     .Build();
 
-            // The above line is required only in applications
-            // which decide to use OpenTelemetry.
+            // Instantiate the OpenTracing shim. The underlying OpenTelemetry tracer will create
+            // spans using the "MyCompany.MyProduct.MyWebServer" source.
+            var tracer = new TracerShim(
+                TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"),
+                Propagators.DefaultTextMapPropagator);
 
-            // Following shows how to use the OpenTracing shim
+            // Not necessary for this example, though it is best practice per
+            // the OpenTracing project to register a GlobalTracer.
+            OpenTracing.Util.GlobalTracer.Register(tracer);
 
-            var tracer = new TracerShim(TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"), new TraceContextPropagator());
-
+            // The code below is meant to resemble application code that has been instrumented
+            // with the OpenTracing API.
             using (IScope parentScope = tracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
             {
                 parentScope.Span.SetTag("my", "value");

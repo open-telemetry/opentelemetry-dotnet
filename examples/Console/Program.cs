@@ -28,6 +28,7 @@ namespace Examples.Console
         /// For example:
         ///
         /// dotnet run -p Examples.Console.csproj console
+        /// dotnet run -p Examples.Console.csproj inmemory
         /// dotnet run -p Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
@@ -40,7 +41,7 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -51,8 +52,9 @@ namespace Examples.Console
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
-                    (OpenTracingShimOptions options) => TestOpenTracingWithConsoleExporter.Run(options),
+                    (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
+                    (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
 
             System.Console.ReadLine();
@@ -131,8 +133,13 @@ namespace Examples.Console
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
     internal class OtlpOptions
     {
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "localhost:55680")]
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:55680")]
         public string Endpoint { get; set; }
+    }
+
+    [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]
+    internal class InMemoryOptions
+    {
     }
 
 #pragma warning restore SA1402 // File may only contain a single type

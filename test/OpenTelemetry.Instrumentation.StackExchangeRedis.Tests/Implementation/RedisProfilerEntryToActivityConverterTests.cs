@@ -131,6 +131,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var activity = new Activity("redis-profiler");
             IPEndPoint ipLocalEndPoint = new IPEndPoint(address, port);
             var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(ipLocalEndPoint);
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
@@ -148,6 +149,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(dnsEndPoint);
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
@@ -165,6 +167,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var unixEndPoint = new UnixDomainSocketEndPoint("https://opentelemetry.io/");
             var activity = new Activity("redis-profiler");
             var profiledCommand = new Mock<IProfiledCommand>();
+            profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(unixEndPoint);
 
             var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);

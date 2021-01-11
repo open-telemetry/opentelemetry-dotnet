@@ -248,10 +248,21 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     var rs = client.SayHello(new HelloRequest());
                 }
 
-                WaitForProcessorInvocations(processor, 6);
+                WaitForProcessorInvocations(processor, 7);
             }
 
-            Assert.Equal(9, processor.Invocations.Count); // SetParentProcessor/OnStart/OnEnd * 3 (parent + gRPC client and server) + OnShutdown/Dispose called.
+            Assert.Equal(9, processor.Invocations.Count); // SetParentProvider + (OnStart + OnEnd) * 3 (parent, gRPC client, and server) + Shutdown + Dispose called.
+
+            Assert.Contains(processor.Invocations, invo => invo.Method.Name == "SetParentProvider");
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), "parent"));
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameGrpcOut));
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameHttpRequestIn));
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameHttpRequestIn));
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameGrpcOut));
+            Assert.Contains(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), "parent"));
+            Assert.Contains(processor.Invocations, invo => invo.Method.Name == "OnShutdown");
+            Assert.Contains(processor.Invocations, invo => invo.Method.Name == nameof(processor.Object.Dispose));
+
             var serverActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
             var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
 
@@ -289,6 +300,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 default:
                     break;
             }
+        }
+
+        private static Predicate<IInvocation> GeneratePredicateForMoqProcessorActivity(string methodName, string activityOperationName)
+        {
+            return invo => invo.Method.Name == methodName && (invo.Arguments[0] as Activity)?.OperationName == activityOperationName;
         }
     }
 }

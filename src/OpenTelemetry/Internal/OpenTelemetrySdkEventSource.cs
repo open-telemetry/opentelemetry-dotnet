@@ -38,7 +38,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void SpanProcessorException(string evnt, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
                 this.SpanProcessorException(evnt, ex.ToInvariantString());
             }
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracerProviderException(string evnt, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
             {
                 this.TracerProviderException(evnt, ex.ToInvariantString());
             }
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(3, exportResult.ToString());
         }
 
-        [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Warning)]
+        [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
         public void SpanProcessorException(string evnt, string ex)
         {
             this.WriteEvent(4, evnt, ex);
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(27, resourceDetector, issue);
         }
 
-        [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Warning)]
+        [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
         public void TracerProviderException(string evnt, string ex)
         {
             this.WriteEvent(28, evnt, ex);

@@ -43,6 +43,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData("127.0.0.1, 1818", null, "127.0.0.1", null, "1818")]
         [InlineData("127.0.0.1  \\  instanceName", null, "127.0.0.1", "instanceName", null)]
         [InlineData("127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
+        [InlineData("tcp:127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
+        [InlineData("tcp:localhost", "localhost", null, null, null)]
+        [InlineData("tcp : localhost", "localhost", null, null, null)]
+        [InlineData("np : localhost", "localhost", null, null, null)]
+        [InlineData("lpc:localhost", "localhost", null, null, null)]
+        [InlineData("np:\\\\localhost\\pipe\\sql\\query", "localhost", null, null, null)]
+        [InlineData("np : \\\\localhost\\pipe\\sql\\query", "localhost", null, null, null)]
+        [InlineData("np:\\\\localhost\\pipe\\MSSQL$instanceName\\sql\\query", "localhost", null, "instanceName", null)]
         public void ParseDataSourceTests(
             string dataSource,
             string expectedServerHostName,
