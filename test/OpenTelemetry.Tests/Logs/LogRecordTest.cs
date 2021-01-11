@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
@@ -213,7 +214,16 @@ namespace OpenTelemetry.Tests.Logs
             Assert.Contains(state, item => item.Key == "{OriginalFormat}");
             Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
+            var prevCulture = CultureInfo.CurrentCulture;
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+            try
+            {
+                Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = prevCulture;
+            }
         }
 
         [Fact]
