@@ -1,4 +1,4 @@
-// <copyright file="LoggerExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="SimpleActivityExportProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using OpenTelemetry;
-using OpenTelemetry.Logs;
+using System.Diagnostics;
 
-internal static class LoggerExtensions
+namespace OpenTelemetry
 {
-    public static OpenTelemetryLoggerOptions AddMyExporter(this OpenTelemetryLoggerOptions options)
+    public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
     {
-        if (options == null)
+        public SimpleActivityExportProcessor(BaseExporter<Activity> exporter)
+            : base(exporter)
         {
-            throw new ArgumentNullException(nameof(options));
         }
 
-        return options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter()));
+        /// <inheritdoc />
+        public override void OnEnd(Activity data)
+        {
+            if (!data.Recorded)
+            {
+                return;
+            }
+
+            this.OnExport(data);
+        }
     }
 }

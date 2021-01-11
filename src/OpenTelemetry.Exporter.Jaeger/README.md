@@ -33,7 +33,7 @@ properties:
 * `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default
   `6831`).
 * `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
-  sent to the agent. (default `65000`).
+  sent to the agent. (default `4096`).
 * `ProcessTags`: Which tags should be sent with telemetry.
 * `ExportProcessorType`: Whether the exporter should use
   [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
