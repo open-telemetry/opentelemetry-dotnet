@@ -29,7 +29,7 @@ public class Program
             .AddSource("OTel.Demo")
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
-            .AddProcessor(new SimpleExportProcessor<Activity>(new MyExporter("ExporterX")))
+            .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))
             .AddMyExporter()
             .Build();
 

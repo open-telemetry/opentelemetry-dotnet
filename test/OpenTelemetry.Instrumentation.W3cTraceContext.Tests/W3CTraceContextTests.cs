@@ -52,8 +52,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 // Assert
                 // Assert on the last line
                 // TODO: fix W3C Trace Context test suite
-                // ASP NET Core 2.1: FAILED (failures=4, errors=7)
-                // ASP NET Core 3.1: FAILED (failures=6, errors=7)
+                // ASP NET Core 2.1: FAILED (failures=1)
+                // ASP NET Core 3.1: FAILED (failures=3)
+                // ASP NET Core 5.0: FAILED (failures=3)
                 string lastLine = ParseLastLine(result);
                 this.output.WriteLine("result:" + result);
                 Assert.StartsWith("FAILED", lastLine);

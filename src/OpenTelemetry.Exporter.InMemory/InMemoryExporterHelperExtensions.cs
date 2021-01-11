@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(exportedItems));
             }
 
-            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems)));
+            return builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
         }
     }
 }
