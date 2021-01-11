@@ -1,4 +1,4 @@
-// <copyright file="TestExportProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="SimpleLogRecordExportProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+#if NET461 || NETSTANDARD2_0
+using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry
 {
-    internal class TestExportProcessor<T> : BaseExportProcessor<T>
-        where T : class
+    public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     {
-        public List<T> ExportedItems = new List<T>();
-
-        public TestExportProcessor(BaseExporter<T> exporter)
+        public SimpleLogRecordExportProcessor(BaseExporter<LogRecord> exporter)
             : base(exporter)
         {
         }
-
-        public override void OnExport(T data)
-        {
-            this.ExportedItems.Add(data);
-        }
     }
 }
+#endif
