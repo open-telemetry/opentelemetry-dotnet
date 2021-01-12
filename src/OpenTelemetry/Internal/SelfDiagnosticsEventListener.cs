@@ -15,11 +15,11 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -37,11 +37,28 @@ namespace OpenTelemetry.Internal
         private readonly EventLevel logLevel;
         private readonly SelfDiagnosticsConfigRefresher configRefresher;
         private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
+        private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
 
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
             this.configRefresher = configRefresher ?? throw new ArgumentNullException(nameof(configRefresher));
+
+            List<EventSource> eventSources;
+            lock (this.eventSourcesBeforeConstructor)
+            {
+                eventSources = this.eventSourcesBeforeConstructor;
+                this.eventSourcesBeforeConstructor = null;
+            }
+
+            foreach (var eventSource in eventSources)
+            {
+#if NET452
+                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
+#else
+                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
+#endif
+            }
         }
 
         /// <summary>
@@ -118,7 +135,7 @@ namespace OpenTelemetry.Internal
                     // Not using foreach because it can cause allocations
                     for (int i = 0; i < payload.Count; ++i)
                     {
-                        object obj = payload.ElementAt(i);
+                        object obj = payload[i];
                         if (obj != null)
                         {
                             pos = EncodeInBuffer(obj.ToString(), true, buffer, pos);
@@ -157,6 +174,22 @@ namespace OpenTelemetry.Internal
         {
             if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
             {
+                // If there are EventSource classes already initialized as of now, this method would be called from
+                // the base class constructor before the first line of code in SelfDiagnosticsEventListener constructor.
+                // In this case logLevel is always its default value, "LogAlways".
+                // Thus we should save the event source and enable them later, when code runs in constructor.
+                if (this.eventSourcesBeforeConstructor != null)
+                {
+                    lock (this.eventSourcesBeforeConstructor)
+                    {
+                        if (this.eventSourcesBeforeConstructor != null)
+                        {
+                            this.eventSourcesBeforeConstructor.Add(eventSource);
+                            return;
+                        }
+                    }
+                }
+
 #if NET452
                 this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
 #else
