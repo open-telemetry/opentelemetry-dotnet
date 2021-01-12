@@ -43,10 +43,11 @@ namespace OpenTelemetry.Metrics
         public override MeasureMetric<double> CreateDoubleMeasure(
             string name,
             AggregationType aggregationType,
+            AggregationOptions aggregationOptions,
             bool absolute = true)
         {
             return this.realMeter != null
-                ? this.realMeter.CreateDoubleMeasure(name, aggregationType, absolute)
+                ? this.realMeter.CreateDoubleMeasure(name, aggregationType, aggregationOptions, absolute)
                 : NoopMeasureMetric<double>.Instance;
         }
 
@@ -68,10 +69,11 @@ namespace OpenTelemetry.Metrics
         public override MeasureMetric<long> CreateInt64Measure(
             string name,
             AggregationType aggregationType,
+            AggregationOptions aggregationOptions,
             bool absolute = true)
         {
             return this.realMeter != null
-                ? this.realMeter.CreateInt64Measure(name, aggregationType, absolute)
+                ? this.realMeter.CreateInt64Measure(name, aggregationType, aggregationOptions, absolute)
                 : NoopMeasureMetric<long>.Instance;
         }
 

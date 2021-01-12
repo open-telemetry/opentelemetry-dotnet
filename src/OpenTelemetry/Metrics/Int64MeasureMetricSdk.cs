@@ -19,20 +19,18 @@ namespace OpenTelemetry.Metrics
     internal class Int64MeasureMetricSdk : MeasureMetricSdk<long>
     {
         public Int64MeasureMetricSdk(string name)
-            : base(name)
+            : base(name, AggregationType.Int64Summary)
         {
-            this.MetricAggregationType = AggregationType.Int64Summary;
         }
 
-        public Int64MeasureMetricSdk(string name, AggregationType aggregationType)
-            : base(name)
+        public Int64MeasureMetricSdk(string name, AggregationType aggregationType, AggregationOptions aggregationOptions)
+            : base(name, aggregationType, aggregationOptions)
         {
-            this.MetricAggregationType = aggregationType;
         }
 
         protected override BoundMeasureMetricSdkBase<long> CreateMetric()
         {
-            return new Int64BoundMeasureMetricSdk(this.MetricAggregationType);
+            return new Int64BoundMeasureMetricSdk(this.MetricAggregationType, this.aggregationOptions);
         }
     }
 }

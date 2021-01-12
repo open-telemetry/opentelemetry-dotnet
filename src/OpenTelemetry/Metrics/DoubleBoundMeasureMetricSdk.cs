@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Aggregator<double> measureAggregator;
 
-        internal DoubleBoundMeasureMetricSdk(AggregationType aggregationType)
+        internal DoubleBoundMeasureMetricSdk(AggregationType aggregationType, AggregationOptions aggregationOptions)
         {
             switch (aggregationType)
             {
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
                     this.measureAggregator = new DoubleMeasureMinMaxSumCountAggregator();
                     break;
                 case AggregationType.DoubleDistribution:
-                    this.measureAggregator = new DoubleMeasureDistributionAggregator();
+                    this.measureAggregator = new DoubleMeasureDistributionAggregator(aggregationOptions);
                     break;
                 default:
                     throw new NotSupportedException("Unrecognized AggregationType");

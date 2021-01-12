@@ -54,11 +54,13 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="aggregationType">The type of aggregation.</param>
+        /// <param name="aggregationOptions">The aggregation options for the specified aggregation type.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
         /// <returns>The measure instance.</returns>
         public abstract MeasureMetric<long> CreateInt64Measure(
             string name,
             AggregationType aggregationType,
+            AggregationOptions aggregationOptions,
             bool absolute = true);
 
         /// <summary>
@@ -74,11 +76,13 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="name">The name of the measure.</param>
         /// <param name="aggregationType">The type of aggregation.</param>
+        /// <param name="aggregationOptions">The aggregation options for the specified aggregation type.</param>
         /// <param name="absolute">indicates if only positive values are expected.</param>
         /// <returns>The measure instance.</returns>
         public abstract MeasureMetric<double> CreateDoubleMeasure(
             string name,
             AggregationType aggregationType,
+            AggregationOptions aggregationOptions,
             bool absolute = true);
 
         /// <summary>
