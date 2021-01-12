@@ -124,7 +124,7 @@ and `System.Data.SqlClient` are limited:
 
 Since `CommandType.Text` might contain sensitive data, all SQL capturing is
 _disabled_ by default to protect against accidentally sending full query text
-to a telemetry backend. If you are only using stored procedures or have no 
+to a telemetry backend. If you are only using stored procedures or have no
 sensitive data in your `sqlCommand.CommandText`, you can enable SQL capturing
 using the options like below:
 
