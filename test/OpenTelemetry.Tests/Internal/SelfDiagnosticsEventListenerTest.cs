@@ -64,6 +64,32 @@ namespace OpenTelemetry.Internal.Tests
 
         [Fact]
         [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
+        {
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
+            OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny), Times.Never());
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EventSourceSetup_HigherSeverity()
+        {
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny))
+                            .Returns(true);
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Emitting an Error event. Or any EventSource event with higher than or equal to to Error severity.
+            OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny));
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_Empty()
         {
             byte[] buffer = new byte[20];
