@@ -108,18 +108,25 @@ For .NET Framework, `SetDbStatementForStoredProcedure` and
 `SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
 property should be used to control whether this instrumentation should set the
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
-attribute to the text of the `SqlCommand` being executed.
+attribute to the text of the `SqlCommand` being executed. This could either be
+a name of a stored procedure or a full text of a `CommandType.Text` query.
 
-Text capturing is _disabled_ by default. If enabled, the instrumentation will
-capture both `CommandType.Text` and `CommandType.StoredProcedure` when using
-[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/),
-and only `CommandType.StoredProcedure` when using `System.Data.SqlClient`.
+On .NET Framwork, unlike .NET Core, the instrumentation capabilities for both
+[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+and `System.Data.SqlClient` are limited:
 
-To turn statement capturing on, use the options like in below example. Be
-aware that `CommandType.Text` SQL might contain sensitive data.
-On [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
-only set this to `true` if you are absolutely sure that you are using
-exclusively stored procedures, or have no sensitive data in your `sqlCommand.CommandText`.
+* [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+  always exposes both the stored procedure name and the full query text but
+  doesn't allow for more granular control to turn either on/off depending on
+  `CommandType`.
+* `System.Data.SqlClient` only exposes stored procedure names and not the full
+  query text.
+
+Since `CommandType.Text` might contain sensitive data, all SQL capturing is
+_disabled_ by default to protect against accidentally sending full query text
+to a telemetry backend. If you are only using stored procedures or have no 
+sensitive data in your `sqlCommand.CommandText`, you can enable SQL capturing
+using the options like below:
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
