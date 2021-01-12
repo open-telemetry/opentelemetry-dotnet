@@ -208,7 +208,6 @@ namespace OpenTelemetry.Internal
         /// <param name="eventData">Data of the EventSource event.</param>
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            // TODO: retrieve the file stream object from configRefresher and write to it
             this.WriteEvent(eventData.Message, eventData.Payload);
         }
     }
