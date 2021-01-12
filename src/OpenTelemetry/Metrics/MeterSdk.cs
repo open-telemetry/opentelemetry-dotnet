@@ -159,8 +159,18 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+
+                        var haveData = true;
+                        if (metricData is Int64SummaryData summary)
+                        {
+                            haveData = summary.Count > 0;
+                        }
+
+                        if (haveData)
+                        {
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
                     }
 
                     this.metricProcessor.Process(metric);
@@ -177,8 +187,18 @@ namespace OpenTelemetry.Metrics
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
                         var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+
+                        var haveData = true;
+                        if (metricData is DoubleSummaryData summary)
+                        {
+                            haveData = summary.Count > 0;
+                        }
+
+                        if (haveData)
+                        {
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
                     }
 
                     this.metricProcessor.Process(metric);
