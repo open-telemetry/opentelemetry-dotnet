@@ -35,7 +35,7 @@ namespace OpenTelemetry.Logs
                 throw new ArgumentNullException(nameof(exportedItems));
             }
 
-            return loggerOptions.AddProcessor(new SimpleExportProcessor<LogRecord>(new InMemoryExporter<LogRecord>(exportedItems)));
+            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
         }
     }
 }

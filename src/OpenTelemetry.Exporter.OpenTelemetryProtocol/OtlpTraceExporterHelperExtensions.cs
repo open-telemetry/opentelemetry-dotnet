@@ -45,11 +45,11 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleExportProcessor<Activity>(otlpExporter));
+                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
             }
             else
             {
-                return builder.AddProcessor(new BatchExportProcessor<Activity>(
+                return builder.AddProcessor(new BatchActivityExportProcessor(
                     otlpExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
