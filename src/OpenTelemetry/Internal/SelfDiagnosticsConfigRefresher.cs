@@ -194,6 +194,12 @@ namespace OpenTelemetry.Internal
 
                 mmf.Dispose();
             }
+
+            FileStream fs = Interlocked.CompareExchange(
+                ref this.underlyingFileStreamForMemoryMappedFile,
+                null,
+                this.underlyingFileStreamForMemoryMappedFile);
+            fs?.Dispose();
         }
 
         private void OpenLogFile(string newLogDirectory, int newFileSize)
