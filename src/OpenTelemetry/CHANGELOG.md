@@ -19,8 +19,8 @@
   for Activity.Recorded in SimpleActivityExportProcessor and
   BatchActivityExportProcessor
   ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
-* Added check in `ActivitySourceAdapter` class for root activity if traceid is 
-  overriden by calling `SetParentId`
+* Added check in `ActivitySourceAdapter` class for root activity if traceid is
+  overridden by calling `SetParentId`
   ([#1355](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1355))
 
 ## 1.0.0-rc1.1
