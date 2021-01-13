@@ -32,12 +32,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var exporterOptions = new OtlpExporterOptions
             {
+#if NETCOREAPP3_1 || NET5_0
+                Endpoint = new System.Uri($"http://{CollectorEndpoint}"),
+#else
                 Endpoint = CollectorEndpoint,
+#endif
             };
 
             var otlpExporter = new OtlpExporter(exporterOptions);
             var delegatingExporter = new DelegatingTestExporter<Activity>(otlpExporter);
-            var exportActivityProcessor = new SimpleExportProcessor<Activity>(delegatingExporter);
+            var exportActivityProcessor = new SimpleActivityExportProcessor(delegatingExporter);
 
             var activitySourceName = "otlp.collector.test";
 
