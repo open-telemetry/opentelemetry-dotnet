@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -30,6 +31,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [SkipUnlessEnvVarFoundFact(CollectorEndpointEnvVarName)]
         public void ExportResultIsSuccess()
         {
+#if NETCOREAPP3_1
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+#endif
+
             var exporterOptions = new OtlpExporterOptions
             {
 #if NETCOREAPP3_1 || NET5_0
