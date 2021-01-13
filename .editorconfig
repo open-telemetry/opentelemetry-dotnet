@@ -11,9 +11,6 @@ insert_final_newline = true
 indent_size = 4 
 trim_trailing_whitespace = true 
 charset = utf-8 
-# maintain DOS/Windows style line endings in md files
-[*.md]
-end_of_line = crlf
 ############################### 
 # .NET Coding Conventions     # 
 ############################### 

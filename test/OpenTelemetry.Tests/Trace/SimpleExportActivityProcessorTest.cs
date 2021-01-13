@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckNullExporter()
         {
-            Assert.Throws<ArgumentNullException>(() => new SimpleExportProcessor<Activity>(null));
+            Assert.Throws<ArgumentNullException>(() => new SimpleActivityExportProcessor(null));
         }
 
         [Fact]
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
             var activity1 = new Activity("start1");
             activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
             var activity1 = new Activity("start1");
             activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
             var activity = new Activity("start");
             activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
             var activity = new Activity("start");
             activity.ActivityTraceFlags = ActivityTraceFlags.None;
