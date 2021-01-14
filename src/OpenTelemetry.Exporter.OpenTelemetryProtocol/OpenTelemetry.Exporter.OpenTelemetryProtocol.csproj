@@ -1,6 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
+
+    <!--
+        There is an integration test for the OTLP exporter that runs a test targeting netcoreapp2.1, netcoreapp3.1 and net5.0.
+        The .NET Core 2.1 SDK cannot handle the presence of a netstandard2.1 target, so this project fails to build for the
+        netcoreapp2.1 test with the following error:
+
+            /usr/share/dotnet/sdk/2.1.811/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.TargetFrameworkInference.targets(150,5):
+            error NETSDK1045: The current .NET SDK does not support targeting .NET Standard 2.1.
+            Either target .NET Standard 2.0 or lower, or use a version of the .NET SDK that supports .NET Standard 2.1.
+            [/repo/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj]
+
+        When the CI runs the integration test, the TARGET_FRAMEWORK variable is set. The presence of this variable is used
+        to determine whether to include the netstandard2.1 target.
+
+        Ideally, this would check the version of the SDK used to build the project rather than a check that is dependent on
+        how the integration test works. I have yet to find an available MSBuild property for checking SDK version.
+    -->
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">$(TargetFrameworks);netstandard2.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != '' AND $(TARGET_FRAMEWORK) != 'netcoreapp2.1'">netstandard2.1</TargetFrameworks>
+
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
   </PropertyGroup>
