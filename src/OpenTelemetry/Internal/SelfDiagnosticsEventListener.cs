@@ -34,6 +34,7 @@ namespace OpenTelemetry.Internal
         // Buffer size of the log line. A UTF-16 encoded character in C# can take up to 4 bytes if encoded in UTF-8.
         private const int BUFFERSIZE = 4 * 5120;
         private const string EventSourceNamePrefix = "OpenTelemetry-";
+        private readonly object lockObj = new object();
         private readonly EventLevel logLevel;
         private readonly SelfDiagnosticsConfigRefresher configRefresher;
         private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
@@ -45,7 +46,7 @@ namespace OpenTelemetry.Internal
             this.configRefresher = configRefresher ?? throw new ArgumentNullException(nameof(configRefresher));
 
             List<EventSource> eventSources;
-            lock (this.eventSourcesBeforeConstructor)
+            lock (this.lockObj)
             {
                 eventSources = this.eventSourcesBeforeConstructor;
                 this.eventSourcesBeforeConstructor = null;
@@ -180,7 +181,7 @@ namespace OpenTelemetry.Internal
                 // Thus we should save the event source and enable them later, when code runs in constructor.
                 if (this.eventSourcesBeforeConstructor != null)
                 {
-                    lock (this.eventSourcesBeforeConstructor)
+                    lock (this.lockObj)
                     {
                         if (this.eventSourcesBeforeConstructor != null)
                         {
