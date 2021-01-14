@@ -64,7 +64,8 @@ namespace OpenTelemetry.Metrics
 
             lock (this.bindUnbindLock)
             {
-                boundInstrument = this.counterBoundInstruments.GetOrAdd(labelset,
+                boundInstrument = this.counterBoundInstruments.GetOrAdd(
+                    labelset,
                     isShortLived ? this.createShortLivedMetricFunc : this.createBoundMetricFunc);
             }
 
