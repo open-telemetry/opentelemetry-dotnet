@@ -139,7 +139,7 @@ namespace OpenTelemetry.Trace
 
             // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
             // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
-            if (string.IsNullOrEmpty(activity.ParentId) || this.IsParentSpanIdEmpty(activity))
+            if (string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000")
             {
                 parentContext = default;
             }
@@ -188,11 +188,6 @@ namespace OpenTelemetry.Trace
                     activity.SetTag(att.Key, att.Value);
                 }
             }
-        }
-
-        private bool IsParentSpanIdEmpty(Activity activity)
-        {
-            return activity.ParentSpanId.ToHexString() == "0000000000000000";
         }
     }
 }
