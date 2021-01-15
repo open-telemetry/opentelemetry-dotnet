@@ -57,6 +57,8 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override void Update(double value)
         {
+            base.Update(value);
+
             // Adds value to the running total in a thread safe manner.
             double initialTotal, computedTotal;
             do
