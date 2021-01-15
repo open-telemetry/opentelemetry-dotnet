@@ -82,7 +82,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
         protected DateTimeOffset GetLastEndTimestamp()
         {
-            return new DateTimeOffset(this.checkpoint.StartTimeTicks, TimeSpan.Zero).Subtract(TimeSpan.FromTicks(1));
+            return new DateTimeOffset(this.active.StartTimeTicks, TimeSpan.Zero).Subtract(TimeSpan.FromTicks(1));
         }
 
         /// <summary>

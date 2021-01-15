@@ -64,9 +64,12 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+                        if (aggregator.HasData())
+                        {
+                            var metricData = aggregator.ToMetricData();
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
@@ -111,9 +114,12 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+                        if (aggregator.HasData())
+                        {
+                            var metricData = aggregator.ToMetricData();
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
 
                         // Updates so far are pushed to Processor/Exporter.
                         // Adjust status accordinly.
@@ -158,16 +164,9 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-
-                        var haveData = true;
-                        if (metricData is Int64SummaryData summary)
+                        if (aggregator.HasData())
                         {
-                            haveData = summary.Count > 0;
-                        }
-
-                        if (haveData)
-                        {
+                            var metricData = aggregator.ToMetricData();
                             metricData.Labels = labelSet.Labels;
                             metric.Data.Add(metricData);
                         }
@@ -186,16 +185,9 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-
-                        var haveData = true;
-                        if (metricData is DoubleSummaryData summary)
+                        if (aggregator.HasData())
                         {
-                            haveData = summary.Count > 0;
-                        }
-
-                        if (haveData)
-                        {
+                            var metricData = aggregator.ToMetricData();
                             metricData.Labels = labelSet.Labels;
                             metric.Data.Add(metricData);
                         }
@@ -224,9 +216,12 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+                        if (aggregator.HasData())
+                        {
+                            var metricData = aggregator.ToMetricData();
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
                     }
 
                     this.metricProcessor.Process(metric);
@@ -252,9 +247,12 @@ namespace OpenTelemetry.Metrics
                         var labelSet = handle.Key;
                         var aggregator = handle.Value.GetAggregator();
                         aggregator.Checkpoint();
-                        var metricData = aggregator.ToMetricData();
-                        metricData.Labels = labelSet.Labels;
-                        metric.Data.Add(metricData);
+                        if (aggregator.HasData())
+                        {
+                            var metricData = aggregator.ToMetricData();
+                            metricData.Labels = labelSet.Labels;
+                            metric.Data.Add(metricData);
+                        }
                     }
 
                     this.metricProcessor.Process(metric);
