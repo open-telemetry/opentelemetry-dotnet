@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
 {
     internal class SelfDiagnosticsConfigParser
     {
-        private const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
+        public const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
         private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
         private const int FileSizeUpperLimit = 128 * 1024;  // Upper limit for log file size in KB: 128MB
 
