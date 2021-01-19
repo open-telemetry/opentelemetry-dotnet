@@ -129,17 +129,17 @@ namespace OpenTelemetry.Internal.Tests
             Stream stream = memoryMappedFile.CreateViewStream();
             configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny))
                 .Returns(true);
-            var listener = new SelfDiagnosticsEventListener(EventLevel.Verbose, configRefresherMock.Object);
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
 
             // Act: emit an event with severity equal to configured
-            OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
+            OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
 
             // Assert
             configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny));
             stream.Dispose();
             memoryMappedFile.Dispose();
 
-            var expectedLog = "Activity started. OperationName = '{0}', Id = '{1}'.{ActivityStart}";
+            var expectedLog = "Unknown error in TracerProvider '{0}': '{1}'.{TestEvent}{Exception Details}";
             AssertFileOutput(LOGFILEPATH, expectedLog);
         }
 
