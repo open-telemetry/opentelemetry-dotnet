@@ -60,61 +60,78 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
-### SetStoredProcedureCommandName (.NET Core)
+### Capturing 'db.statement'
 
-By default, when CommandType is CommandType.StoredProcedure this
-instrumentation will set the `db.statement` attribute to the stored procedure
-command name. This behavior can be disabled by setting the
-`SetStoredProcedureCommandName` to false.
+The `SqlClientInstrumentationOptions` class exposes several properties that can be
+used to configure how the [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+attribute is captured upon execution of a query.
 
-The following example shows how to use `SetStoredProcedureCommandName`.
+#### .NET Core - SetDbStatementForStoredProcedure and SetDbStatementForText
+
+On .NET Core, two properties are available: `SetDbStatementForStoredProcedure`
+and `SetDbStatementForText`. These properties control capturing of
+`CommandType.StoredProcedure` and `CommandType.Text` respectively.
+
+`SetDbStatementForStoredProcedure` is _true_ by default and will set
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+attribute to the stored procedure command name.
+
+`SetDbStatementForText` is _false_ by default (to prevent accidental capture of
+sensitive data that might be part of the SQL statement text). When set to
+`true`, the instrumentation will set [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+attribute to the text of the SQL command being executed.
+
+To disable capturing stored procedure commands use configuration like below.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetStoredProcedureCommandName = false)
+        options => options.SetDbStatementForStoredProcedure = false)
     .AddConsoleExporter()
     .Build();
 ```
 
-### SetTextCommandContent (.NET Core)
-
-By default, when CommandType is CommandType.Text, this instrumentation will not
-set the `db.statement` attribute. This behavior can be enabled by setting
-`SetTextCommandContent` to true.
-
-The following example shows how to use `SetTextCommandContent`.
+To enable capturing of `sqlCommand.CommandText` for `CommandType.Text` use the
+following configuration.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetTextCommandContent = true)
+        options => options.SetDbStatementForText = true)
     .AddConsoleExporter()
     .Build();
 ```
 
-## SetStatementText (.NET Framework)
+#### .NET Framework - SetDbStatement
 
-For .NET Framework, `SetTextCommandContent` and `SetStoredProcedureCommandName`
-are not available. Instead, `SetStatementText` should be used to control whether
-this instrumentation should set the `db.statement` attribute to the text of the
-`SqlCommand` being executed.
+For .NET Framework, `SetDbStatementForStoredProcedure` and
+`SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
+property should be used to control whether this instrumentation should set the
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+attribute to the text of the `SqlCommand` being executed. This could either be
+a name of a stored procedure or a full text of a `CommandType.Text` query.
 
-Text capturing is _disabled_ by default. If enabled, the instrumentation will
-capture both `CommandType.Text` and `CommandType.StoredProcedure` when using
-[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/),
-and only `CommandType.StoredProcedure` when using `System.Data.SqlClient`.
+On .NET Framwork, unlike .NET Core, the instrumentation capabilities for both
+[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+and `System.Data.SqlClient` are limited:
 
-To turn statement capturing on, use the options like in below example. Be
-aware that `CommandType.Text` SQL might contain sensitive data.
-On [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
-only set this to `true` if you are absolutely sure that you are using
-exclusively stored procedures, or have no sensitive data in your `sqlCommand.CommandText`.
+* [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+  always exposes both the stored procedure name and the full query text but
+  doesn't allow for more granular control to turn either on/off depending on
+  `CommandType`.
+* `System.Data.SqlClient` only exposes stored procedure names and not the full
+  query text.
+
+Since `CommandType.Text` might contain sensitive data, all SQL capturing is
+_disabled_ by default to protect against accidentally sending full query text
+to a telemetry backend. If you are only using stored procedures or have no
+sensitive data in your `sqlCommand.CommandText`, you can enable SQL capturing
+using the options like below:
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetStatementText = true)
+        options => options.SetDbStatement = true)
     .AddConsoleExporter()
     .Build();
 ```
@@ -140,7 +157,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### Enrich
+## Enrich
 
 This option, available on .NET Core only, allows one to enrich the activity
 with additional information from the raw `SqlCommand` object. The `Enrich`
@@ -193,3 +210,5 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
+
+* [OpenTelemetry semantic conventions for database calls](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md)
