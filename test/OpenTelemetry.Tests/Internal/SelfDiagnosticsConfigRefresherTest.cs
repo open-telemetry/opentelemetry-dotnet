@@ -49,7 +49,9 @@ namespace OpenTelemetry.Internal.Tests
                 {
                     File.Delete(ConfigFilePath);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
