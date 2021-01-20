@@ -101,16 +101,11 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
-            object sanitizedValue = SanitizeValue(attribute.Value);
-            if (sanitizedValue == null)
-            {
-                throw new System.ArgumentException("Attribute value should be a non-null primitive", sanitizedKey);
-            }
-
+            object sanitizedValue = SanitizeValue(attribute.Value, sanitizedKey);
             return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
 
-        private static object SanitizeValue(object value)
+        private static object SanitizeValue(object value, string keyName)
         {
             if (value != null)
             {
@@ -128,9 +123,11 @@ namespace OpenTelemetry.Resources
                 {
                     return System.Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
                 }
+
+                throw new System.ArgumentException("Attribute value type is not an accepted primitive", keyName);
             }
 
-            return null;
+            throw new System.ArgumentException("Attribute value is null", keyName);
         }
     }
 }
