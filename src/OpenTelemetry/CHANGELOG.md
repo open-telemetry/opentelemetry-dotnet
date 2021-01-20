@@ -14,7 +14,8 @@
   for more information.
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
 * Resource Attributes now accept int, short, and float as values, converting
-  them to supported data types (long for int/short, double for float).
+  them to supported data types (long for int/short, double for float). For
+  invalid attributes we now throw an exception instead of logging an error.
   ([#1647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1647))
 
 ## 1.0.0-rc1.1
