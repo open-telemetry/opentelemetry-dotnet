@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Internal.Tests
 {
@@ -26,6 +27,13 @@ namespace OpenTelemetry.Internal.Tests
         private static readonly string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
         private static readonly byte[] MessageOnNewFile = SelfDiagnosticsConfigRefresher.MessageOnNewFile;
         private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
+
+        private readonly ITestOutputHelper output;
+
+        public SelfDiagnosticsConfigRefresherTest(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
 
         [Fact]
         [Trait("Platform", "Any")]
@@ -40,6 +48,7 @@ namespace OpenTelemetry.Internal.Tests
             int bufferSize = 512;
             byte[] actualBytes = ReadFile(bufferSize);
             string logText = Encoding.UTF8.GetString(actualBytes);
+            this.output.WriteLine(logText);  // for debugging in case the test fails
             Assert.StartsWith(MessageOnNewFileString, logText);
 
             // The event was omitted
