@@ -23,7 +23,6 @@
     <PropertyGroup>
       <RevisionNumber>0</RevisionNumber>
       <RevisionNumber Condition="$(MinVerVersion.Split(`.`).Length) == 4">$(MinVerVersion.Split(`.`)[3])</RevisionNumber>
-      <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</AssemblyVersion>
       <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</Version>
       <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(RevisionNumber)</FileVersion>
     </PropertyGroup>
