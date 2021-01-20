@@ -25,6 +25,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal static class ZipkinActivityConversionExtensions
     {
+        internal const string ZipkinErrorFlagTagName = "error";
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
@@ -77,6 +78,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>(SemanticConventions.AttributePeerService, peerServiceName));
                     }
                 }
+            }
+
+            if (tagState.StatusCode == StatusCode.Error)
+            {
+                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                PooledList<KeyValuePair<string, object>>.Add(
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        ZipkinErrorFlagTagName,
+                        tagState.StatusDescription ?? string.Empty));
             }
 
             EventEnumerationState eventState = default;
@@ -162,6 +173,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             public long Port { get; set; }
 
+            public StatusCode? StatusCode { get; set; }
+
+            public string StatusDescription { get; set; }
+
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
                 if (activityTag.Value == null)
@@ -177,20 +192,27 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                     if (key == SpanAttributeConstants.StatusCodeKey)
                     {
-                        StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
-                        if (statusCode == StatusCode.Error)
-                        {
-                            // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#error-flag
-                            PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, new KeyValuePair<string, object>("error", string.Empty));
-                        }
-                        else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
+                        this.StatusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
+
+                        if (!this.StatusCode.HasValue || this.StatusCode == Trace.StatusCode.Unset)
                         {
                             // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
                             return true;
                         }
 
                         // Normalize status since it is user-driven.
-                        activityTag = new KeyValuePair<string, object>(key, StatusHelper.GetTagValueForStatusCode(statusCode.Value));
+                        activityTag = new KeyValuePair<string, object>(key, StatusHelper.GetTagValueForStatusCode(this.StatusCode.Value));
+                    }
+                    else if (key == SpanAttributeConstants.StatusDescriptionKey)
+                    {
+                        // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                        this.StatusDescription = strVal;
+                        return true;
+                    }
+                    else if (key == ZipkinErrorFlagTagName)
+                    {
+                        // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
+                        return true;
                     }
                 }
                 else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)

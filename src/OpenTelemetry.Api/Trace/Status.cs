@@ -69,11 +69,18 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Returns a new instance of a status with the description populated.
         /// </summary>
+        /// <remarks>
+        /// Note: Status Description is only valid for <see
+        /// cref="StatusCode.Error"/> Status and will be ignored for all other
+        /// <see cref="Trace.StatusCode"/> values. See the <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status">Status
+        /// API</a> for details.
+        /// </remarks>
         /// <param name="description">Description of the status.</param>
         /// <returns>New instance of the status class with the description populated.</returns>
         public Status WithDescription(string description)
         {
-            if (this.Description == description)
+            if (this.StatusCode != StatusCode.Error || this.Description == description)
             {
                 return this;
             }
