@@ -30,16 +30,27 @@ namespace OpenTelemetry.Internal.Tests
         [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigRefresher_FileShare()
         {
-            CreateConfigFile();
-            using var configRefresher = new SelfDiagnosticsConfigRefresher();
+            try
+            {
+                CreateConfigFile();
+                using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
-            var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
-                    + Process.GetCurrentProcess().Id + ".log";
-            var outputFilePath = Path.Combine(".", outputFileName);
-            using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            byte[] actualBytes = new byte[MessageOnNewFile.Length];
-            file.Read(actualBytes, 0, actualBytes.Length);
-            Assert.Equal(MessageOnNewFile, actualBytes);
+                var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
+                        + Process.GetCurrentProcess().Id + ".log";
+                var outputFilePath = Path.Combine(".", outputFileName);
+                using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                byte[] actualBytes = new byte[MessageOnNewFile.Length];
+                file.Read(actualBytes, 0, actualBytes.Length);
+                Assert.Equal(MessageOnNewFile, actualBytes);
+            }
+            finally
+            {
+                try
+                {
+                    File.Delete(ConfigFilePath);
+                }
+                catch { }
+            }
         }
 
         private static void CreateConfigFile()

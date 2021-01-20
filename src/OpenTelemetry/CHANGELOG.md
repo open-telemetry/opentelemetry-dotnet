@@ -19,6 +19,9 @@
   for Activity.Recorded in SimpleActivityExportProcessor and
   BatchActivityExportProcessor
   ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
+* Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
+  by another process in read-only mode for .NET Framework. See
+  [#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693)
 
 ## 1.0.0-rc1.1
 
