@@ -123,7 +123,7 @@ namespace OpenTelemetry.Internal
                 var buffer = this.writeBuffer.Value;
                 if (buffer == null)
                 {
-                    buffer = new byte[BUFFERSIZE];  // TODO: handle OOM
+                    buffer = new byte[BUFFERSIZE];
                     this.writeBuffer.Value = buffer;
                 }
 
@@ -166,7 +166,8 @@ namespace OpenTelemetry.Internal
             }
             catch (Exception)
             {
-                // One concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
+                // Fail to allocate memory for buffer, or
+                // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
                 // In this case, silently fail.
             }
         }
