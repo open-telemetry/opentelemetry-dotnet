@@ -39,42 +39,56 @@ namespace OpenTelemetry.Internal.Tests
         [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
         {
-            CreateConfigFile();
-            using var configRefresher = new SelfDiagnosticsConfigRefresher();
+            try
+            {
+                CreateConfigFile();
+                using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
-            // Emitting event of EventLevel.Warning
-            OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
+                // Emitting event of EventLevel.Warning
+                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
 
-            int bufferSize = 512;
-            byte[] actualBytes = ReadFile(bufferSize);
-            string logText = Encoding.UTF8.GetString(actualBytes);
-            this.output.WriteLine(logText);  // for debugging in case the test fails
-            Assert.StartsWith(MessageOnNewFileString, logText);
+                int bufferSize = 512;
+                byte[] actualBytes = ReadFile(bufferSize);
+                string logText = Encoding.UTF8.GetString(actualBytes);
+                this.output.WriteLine(logText);  // for debugging in case the test fails
+                Assert.StartsWith(MessageOnNewFileString, logText);
 
-            // The event was omitted
-            Assert.Equal('\0', (char)actualBytes[MessageOnNewFile.Length]);
+                // The event was omitted
+                Assert.Equal('\0', (char)actualBytes[MessageOnNewFile.Length]);
+            }
+            finally
+            {
+                CleanupConfigFile();
+            }
         }
 
         [Fact]
         [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
         {
-            CreateConfigFile();
-            using var configRefresher = new SelfDiagnosticsConfigRefresher();
+            try
+            {
+                CreateConfigFile();
+                using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
-            // Emitting event of EventLevel.Error
-            OpenTelemetrySdkEventSource.Log.SpanProcessorException("Event string sample", "Exception string sample");
+                // Emitting event of EventLevel.Error
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException("Event string sample", "Exception string sample");
 
-            int bufferSize = 512;
-            byte[] actualBytes = ReadFile(bufferSize);
-            string logText = Encoding.UTF8.GetString(actualBytes);
-            Assert.StartsWith(MessageOnNewFileString, logText);
+                int bufferSize = 512;
+                byte[] actualBytes = ReadFile(bufferSize);
+                string logText = Encoding.UTF8.GetString(actualBytes);
+                Assert.StartsWith(MessageOnNewFileString, logText);
 
-            // The event was captured
-            string logLine = logText.Substring(MessageOnNewFileString.Length);
-            string logMessage = ParseLogMessage(logLine);
-            string expectedMessage = "Unknown error in SpanProcessor event '{0}': '{1}'.{Event string sample}{Exception string sample}";
-            Assert.StartsWith(expectedMessage, logMessage);
+                // The event was captured
+                string logLine = logText.Substring(MessageOnNewFileString.Length);
+                string logMessage = ParseLogMessage(logLine);
+                string expectedMessage = "Unknown error in SpanProcessor event '{0}': '{1}'.{Event string sample}{Exception string sample}";
+                Assert.StartsWith(expectedMessage, logMessage);
+            }
+            finally
+            {
+                CleanupConfigFile();
+            }
         }
 
         private static string ParseLogMessage(string logLine)
@@ -105,6 +119,17 @@ namespace OpenTelemetry.Internal.Tests
             using FileStream file = File.Open(ConfigFilePath, FileMode.Create, FileAccess.Write);
             byte[] configBytes = Encoding.UTF8.GetBytes(configJson);
             file.Write(configBytes, 0, configBytes.Length);
+        }
+
+        private static void CleanupConfigFile()
+        {
+            try
+            {
+                File.Delete(ConfigFilePath);
+            }
+            catch
+            {
+            }
         }
     }
 }
