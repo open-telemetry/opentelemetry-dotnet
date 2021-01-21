@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// AggregationOptions for distribution aggregation types
     /// </summary>
-    public abstract class AggregationOptions
+    public interface AggregationOptions<T>
     {
     }
 }

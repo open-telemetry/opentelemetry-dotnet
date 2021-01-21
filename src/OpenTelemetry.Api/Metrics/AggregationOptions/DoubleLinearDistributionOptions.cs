@@ -19,21 +19,28 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// TODO.
     /// </summary>
-    public class DoubleLinearDistributionOptions : AggregationOptions
+    public class DoubleLinearDistributionOptions : AggregationOptions<double>
     {
-        /// <summary>
-        /// Gets or sets TODO.
-        /// </summary>
-        public double Offset { get; set; }
+        public DoubleLinearDistributionOptions(double offset, double width, int numberOfFiniteBuckets)
+        {
+            Offset = offset;
+            Width = width;
+            NumberOfFiniteBuckets = numberOfFiniteBuckets;
+        }
 
         /// <summary>
         /// Gets or sets TODO.
         /// </summary>
-        public double Width { get; set; }
+        public double Offset { get; }
 
         /// <summary>
         /// Gets or sets TODO.
         /// </summary>
-        public int NumberOfFiniteBuckets { get; set; }
+        public double Width { get; }
+
+        /// <summary>
+        /// Gets or sets TODO.
+        /// </summary>
+        public int NumberOfFiniteBuckets { get; }
     }
 }

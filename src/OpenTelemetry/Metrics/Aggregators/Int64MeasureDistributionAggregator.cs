@@ -23,13 +23,13 @@ namespace OpenTelemetry.Metrics.Aggregators
 {
     public class Int64MeasureDistributionAggregator : Aggregator<long>
     {
-        private readonly AggregationOptions aggregationOptions;
+        private readonly AggregationOptions<long> aggregationOptions;
         private readonly Histogram<long> histogram;
         private readonly long[] minValue = { long.MaxValue };
         private readonly long[] maxValue = { long.MinValue };
-        private Int64DistributionData int64DistributionData = new Int64DistributionData();
+        private DistributionData<long> int64DistributionData = new DistributionData<long>();
 
-        public Int64MeasureDistributionAggregator(AggregationOptions aggregationOptions)
+        public Int64MeasureDistributionAggregator(AggregationOptions<long> aggregationOptions)
         {
             this.aggregationOptions = aggregationOptions;
             switch (aggregationOptions)
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             lock (this.int64DistributionData) lock (this.minValue) lock (this.maxValue)
             {
                 var distributionData = this.histogram.GetDistributionAndClear();
-                this.int64DistributionData = new Int64DistributionData
+                this.int64DistributionData = new DistributionData<long>
                 {
                     BucketCounts = distributionData.BucketCounts,
                     Count = distributionData.Count,

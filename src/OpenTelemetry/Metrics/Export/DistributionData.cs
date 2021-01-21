@@ -16,13 +16,17 @@
 
 namespace OpenTelemetry.Metrics.Export
 {
-    public class DistributionData : MetricData
+    public class DistributionData<T> : MetricData
     {
-        public AggregationOptions AggregationOptions { get; set; }
+        public AggregationOptions<T> AggregationOptions { get; set; }
 
         public long Count { get; set; }
 
         public double Mean { get; set; }
+
+        public T Min { get; set; }
+
+        public T Max { get; set; }
 
         public double SumOfSquaredDeviation { get; set; }
 

@@ -19,11 +19,16 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// TODO.
     /// </summary>
-    public class DoubleExplicitDistributionOptions : AggregationOptions
+    public class DoubleExplicitDistributionOptions : AggregationOptions<double>
     {
+        public DoubleExplicitDistributionOptions(double[] bounds)
+        {
+            Bounds = bounds;
+        }
+
         /// <summary>
         /// Gets or sets TODO.
         /// </summary>
-        public double[] Bounds { get; set; }
+        public double[] Bounds { get; }
     }
 }

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public Int64MeasureMetricSdk(string name, AggregationType aggregationType, AggregationOptions aggregationOptions)
+        public Int64MeasureMetricSdk(string name, AggregationType aggregationType, AggregationOptions<long> aggregationOptions)
             : base(name, aggregationType, aggregationOptions)
         {
         }

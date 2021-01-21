@@ -25,11 +25,11 @@ namespace OpenTelemetry.Metrics.Histogram
         {
         }
 
-        protected override DistributionData GetDistributionData()
+        protected override DistributionData<long> GetDistributionData()
         {
             var mean = this.Values.Average();
 
-            return new DistributionData
+            return new DistributionData<long>
             {
                 BucketCounts = this.GetBucketCounts(),
                 Count = this.Values.Count,

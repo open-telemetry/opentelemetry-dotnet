@@ -23,13 +23,13 @@ namespace OpenTelemetry.Metrics.Aggregators
 {
     public class DoubleMeasureDistributionAggregator : Aggregator<double>
     {
-        private readonly AggregationOptions aggregationOptions;
+        private readonly AggregationOptions<double> aggregationOptions;
         private readonly double[] maxValue = { double.MinValue };
         private readonly double[] minValue = { double.MaxValue };
         private readonly Histogram<double> histogram;
-        private DoubleDistributionData doubleDistributionData = new DoubleDistributionData();
+        private DistributionData<double> doubleDistributionData = new DistributionData<double>();
 
-        public DoubleMeasureDistributionAggregator(AggregationOptions aggregationOptions)
+        public DoubleMeasureDistributionAggregator(AggregationOptions<double> aggregationOptions)
         {
             this.aggregationOptions = aggregationOptions;
             switch (aggregationOptions)
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics.Aggregators
             {
                 var distributionData = this.histogram.GetDistributionAndClear();
 
-                this.doubleDistributionData = new DoubleDistributionData
+                this.doubleDistributionData = new DistributionData<double>()
                 {
                     BucketCounts = distributionData.BucketCounts,
                     Count = distributionData.Count,

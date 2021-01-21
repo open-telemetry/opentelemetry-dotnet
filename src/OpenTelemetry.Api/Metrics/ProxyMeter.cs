@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
         public override MeasureMetric<double> CreateDoubleMeasure(
             string name,
             AggregationType aggregationType,
-            AggregationOptions aggregationOptions,
+            AggregationOptions<double> aggregationOptions,
             bool absolute = true)
         {
             return this.realMeter != null
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Metrics
         public override MeasureMetric<long> CreateInt64Measure(
             string name,
             AggregationType aggregationType,
-            AggregationOptions aggregationOptions,
+            AggregationOptions<long> aggregationOptions,
             bool absolute = true)
         {
             return this.realMeter != null

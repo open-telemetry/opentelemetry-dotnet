@@ -51,7 +51,7 @@ namespace OpenTelemetry.Metrics.Histogram
         /// Atomically gets the histogram bucket counts (including overflow and underflow) and clears the buckets.
         /// </summary>
         /// <returns><see cref="DistributionData"/> representing the data collected in the histogram.</returns>
-        public DistributionData GetDistributionAndClear()
+        public DistributionData<T> GetDistributionAndClear()
         {
             lock (this.counts)
             lock (this.overflowBucket)
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Metrics.Histogram
             {
                 var distribution = this.Values.Count > 0
                     ? this.GetDistributionData()
-                    : new DistributionData
+                    : new DistributionData<T>
                         {
                             BucketCounts = this.GetBucketCounts(),
                             Count = this.Values.Count,
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Metrics.Histogram
 
         protected abstract int GetBucketIndex(T valueToAdd);
 
-        protected abstract DistributionData GetDistributionData();
+        protected abstract DistributionData<T> GetDistributionData();
 
         protected abstract T GetLowestBound();
 

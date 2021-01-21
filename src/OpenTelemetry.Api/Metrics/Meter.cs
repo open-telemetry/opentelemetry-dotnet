@@ -60,7 +60,7 @@ namespace OpenTelemetry.Metrics
         public abstract MeasureMetric<long> CreateInt64Measure(
             string name,
             AggregationType aggregationType,
-            AggregationOptions aggregationOptions,
+            AggregationOptions<long> aggregationOptions,
             bool absolute = true);
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Metrics
         public abstract MeasureMetric<double> CreateDoubleMeasure(
             string name,
             AggregationType aggregationType,
-            AggregationOptions aggregationOptions,
+            AggregationOptions<double> aggregationOptions,
             bool absolute = true);
 
         /// <summary>

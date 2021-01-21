@@ -28,11 +28,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void Int64MeasureDistributionAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdate()
         {
             // create an aggregator
-            var aggregator = new Int64MeasureDistributionAggregator(new Int64ExplicitDistributionOptions
-            {
-                Bounds = new long[] { 0, 1 }
-            });
-            var distributionData = aggregator.ToMetricData() as Int64DistributionData;
+            var aggregator = new Int64MeasureDistributionAggregator(
+                new Int64ExplicitDistributionOptions(new long[] { 0, 1 }));
+            var distributionData = aggregator.ToMetricData() as DistributionData<long>;
 
             // we start with 0.
             Assert.Equal(0, distributionData.Count);
@@ -71,7 +69,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // check point.
             aggregator.Checkpoint();
-            distributionData = aggregator.ToMetricData() as Int64DistributionData;
+            distributionData = aggregator.ToMetricData() as DistributionData<long>;
 
             Assert.Equal(10000000, distributionData.Count);
             Assert.Equal(-1, distributionData.Min);
@@ -82,11 +80,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void DoubleMeasureDistributionAggregatorAggregatesCorrectlyWhenMultipleThreadsUpdate()
         {
             // create an aggregator
-            var aggregator = new DoubleMeasureDistributionAggregator(new DoubleExplicitDistributionOptions
-            {
-                Bounds = new double[] { 0, 1 },
-            });
-            var distributionData = aggregator.ToMetricData() as DoubleDistributionData;
+            var aggregator = new DoubleMeasureDistributionAggregator(
+                new DoubleExplicitDistributionOptions(new double[] { 0, 1 }));
+            var distributionData = aggregator.ToMetricData() as DistributionData<double>;
 
             // we start with 0.
             Assert.Equal(0, distributionData.Count);
@@ -125,7 +121,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // check point.
             aggregator.Checkpoint();
-            distributionData = aggregator.ToMetricData() as DoubleDistributionData;
+            distributionData = aggregator.ToMetricData() as DistributionData<double>;
 
             Assert.Equal(10000000, distributionData.Count);
             Assert.Equal(-1, distributionData.Min);

@@ -16,7 +16,6 @@
 
 using System;
 using OpenTelemetry.Metrics.Aggregators;
-using OpenTelemetry.Metrics.Export;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
@@ -25,7 +24,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Aggregator<double> measureAggregator;
 
-        internal DoubleBoundMeasureMetricSdk(AggregationType aggregationType, AggregationOptions aggregationOptions)
+        internal DoubleBoundMeasureMetricSdk(AggregationType aggregationType, AggregationOptions<double> aggregationOptions)
         {
             switch (aggregationType)
             {

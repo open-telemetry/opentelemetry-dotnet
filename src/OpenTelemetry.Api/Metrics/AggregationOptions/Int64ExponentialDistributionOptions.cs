@@ -22,22 +22,29 @@ namespace OpenTelemetry.Metrics
     /// Boundaries are determined by the following formula where n = NumberOfFiniteBuckets and i = 0,1,2,...,n:
     /// b = Scale * GrowthFactor ^ i.
     /// </summary>
-    public class Int64ExponentialDistributionOptions : AggregationOptions
+    public class Int64ExponentialDistributionOptions : AggregationOptions<long>
     {
+        public Int64ExponentialDistributionOptions(long growthFactor, long scale, int numberOfFiniteBuckets)
+        {
+            GrowthFactor = growthFactor;
+            Scale = scale;
+            NumberOfFiniteBuckets = numberOfFiniteBuckets;
+        }
+
         /// <summary>
         /// Gets or sets the growth factor.
         /// </summary>
-        public long GrowthFactor { get; set; }
+        public long GrowthFactor { get; }
 
         /// <summary>
         /// Gets or sets the scale.
         /// </summary>
-        public long Scale { get; set; }
+        public long Scale { get; }
 
         /// <summary>
         /// Gets or sets the number of finite buckets. The true number of buckets will be this value + 2 accounting for
         /// the underflow and overflow buckets.
         /// </summary>
-        public int NumberOfFiniteBuckets { get; set; }
+        public int NumberOfFiniteBuckets { get; }
     }
 }

@@ -260,7 +260,7 @@ namespace OpenTelemetry.Metrics
 
         /// <inheritdoc/>
         public override MeasureMetric<double> CreateDoubleMeasure(
-            string name, AggregationType aggregationType, AggregationOptions aggregationOptions, bool absolute = true)
+            string name, AggregationType aggregationType, AggregationOptions<double> aggregationOptions, bool absolute = true)
         {
             return this.doubleMeasures.GetOrAdd(name, new DoubleMeasureMetricSdk(name, aggregationType, aggregationOptions));
         }
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Metrics
 
         /// <inheritdoc/>
         public override MeasureMetric<long> CreateInt64Measure(
-            string name, AggregationType aggregationType, AggregationOptions aggregationOptions, bool absolute = true)
+            string name, AggregationType aggregationType, AggregationOptions<long> aggregationOptions, bool absolute = true)
         {
             return this.longMeasures.GetOrAdd(name, new Int64MeasureMetricSdk(name, aggregationType, aggregationOptions));
         }

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        public DoubleMeasureMetricSdk(string name, AggregationType aggregationType, AggregationOptions aggregationOptions)
+        public DoubleMeasureMetricSdk(string name, AggregationType aggregationType, AggregationOptions<double> aggregationOptions)
             : base(name, aggregationType, aggregationOptions)
         {
         }

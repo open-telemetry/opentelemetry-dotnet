@@ -19,21 +19,28 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// TODO.
     /// </summary>
-    public class Int64LinearDistributionOptions : AggregationOptions
+    public class Int64LinearDistributionOptions : AggregationOptions<long>
     {
-        /// <summary>
-        /// Gets or sets TODO.
-        /// </summary>
-        public long Offset { get; set; }
+        public Int64LinearDistributionOptions(long offset, long width, int numberOfFiniteBuckets)
+        {
+            Offset = offset;
+            Width = width;
+            NumberOfFiniteBuckets = numberOfFiniteBuckets;
+        }
 
         /// <summary>
         /// Gets or sets TODO.
         /// </summary>
-        public long Width { get; set; }
+        public long Offset { get; }
 
         /// <summary>
         /// Gets or sets TODO.
         /// </summary>
-        public int NumberOfFiniteBuckets { get; set; }
+        public long Width { get; }
+
+        /// <summary>
+        /// Gets or sets TODO.
+        /// </summary>
+        public int NumberOfFiniteBuckets { get; }
     }
 }
