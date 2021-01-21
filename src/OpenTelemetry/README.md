@@ -297,9 +297,6 @@ To enable self diagnostics, go to the current directory of your process and
 create a configuration file named `OTEL_DIAGNOSTICS.json` with the following
 content:
 
-// TODO: Provide explicit example of current directory for Asp.Net, Asp.Net
-Core, Console.
-
 ```json
 {
     "LogDirectory": ".",
@@ -307,6 +304,21 @@ Core, Console.
     "LogLevel": "Error"
 }
 ```
+
+Note: "Current directory" of your process is the working directory of your
+process. It might be different depending on how you run the program.
+
+For example, for [AspNetCore example project](../../examples/AspNetCore), if
+you go in directory `examples/AspNetCore` and run
+`dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`,
+or if you run the
+[AspNetCore example project](../../examples/AspNetCore/Examples.AspNetCore.csproj)
+in Visual Studio, the `OTEL_DIAGNOSTICS.json` file needs to be placed in
+directory `examples/AspNetCore`.
+
+But if you build the project and run the executable in
+`examples/AspNetCore/bin/Debug/netcoreapp3.1` directory, you then have to place
+the config file in that directory.
 
 ### Configuration Parameters
 
