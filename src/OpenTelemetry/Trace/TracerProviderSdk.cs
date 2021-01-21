@@ -112,7 +112,7 @@ namespace OpenTelemetry.Trace
             else if (sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ActivitySamplingResult.PropagationData : ActivitySamplingResult.None;
             }
             else
             {
@@ -287,23 +287,9 @@ namespace OpenTelemetry.Trace
                 {
                     options.SamplingTags.Add(att.Key, att.Value);
                 }
-
-                return activitySamplingResult;
             }
 
-            return PropagateOrIgnoreData(options.Parent.TraceId);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ActivitySamplingResult PropagateOrIgnoreData(ActivityTraceId traceId)
-        {
-            var isRootSpan = traceId == default;
-
-            // If it is the root span select PropagationData so the trace ID is preserved
-            // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-            return isRootSpan
-                ? ActivitySamplingResult.PropagationData
-                : ActivitySamplingResult.None;
+            return activitySamplingResult;
         }
     }
 }
