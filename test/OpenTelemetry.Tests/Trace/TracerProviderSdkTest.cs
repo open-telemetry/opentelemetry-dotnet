@@ -162,8 +162,6 @@ namespace OpenTelemetry.Trace.Tests
 
             using (var activity = activitySource.StartActivity("root"))
             {
-                // Even if sampling returns false, for root activities,
-                // activity is still created with PropagationOnly.
                 Assert.NotNull(activity);
                 Assert.True(activity.IsAllDataRequested);
                 Assert.False(activity.Recorded);
@@ -176,7 +174,7 @@ namespace OpenTelemetry.Trace.Tests
 
             using (var activity = activitySource.StartActivity("root"))
             {
-                // Even if sampling returns false, for root activities,
+                // Even if sampling returns false,
                 // activity is still created with PropagationOnly.
                 Assert.NotNull(activity);
                 Assert.False(activity.IsAllDataRequested);
@@ -184,9 +182,11 @@ namespace OpenTelemetry.Trace.Tests
 
                 using (var innerActivity = activitySource.StartActivity("inner"))
                 {
-                    // This is not a root activity.
-                    // If sampling returns false, no activity is created at all.
-                    Assert.Null(innerActivity);
+                    // If sampling returns false, activity is created with PropagationOnly regardless
+                    // of whether the activity is root or not.
+                    Assert.NotNull(activity);
+                    Assert.False(activity.IsAllDataRequested);
+                    Assert.False(activity.Recorded);
                 }
             }
         }
