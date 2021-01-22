@@ -34,7 +34,7 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.");
+        public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
 
         private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
