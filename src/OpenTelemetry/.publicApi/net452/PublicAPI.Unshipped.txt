@@ -260,5 +260,5 @@ virtual OpenTelemetry.BaseProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> 
 virtual OpenTelemetry.BaseProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
 virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Checkpoint() -> void
-virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.HasData() -> bool
+virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.HasCheckpointData() -> bool
 virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Update(T value) -> void
