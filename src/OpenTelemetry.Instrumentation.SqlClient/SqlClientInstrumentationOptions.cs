@@ -80,17 +80,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
         /// </para>
         /// </remarks>
-        public bool SetStatementText { get; set; }
+        public bool SetDbStatement { get; set; }
 #else
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
         /// </summary>
-        public bool SetStoredProcedureCommandName { get; set; } = true;
+        public bool SetDbStatementForStoredProcedure { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
-        public bool SetTextCommandContent { get; set; }
+        public bool SetDbStatementForText { get; set; }
 #endif
 
         /// <summary>
