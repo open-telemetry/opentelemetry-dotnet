@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// Check if checkpoint has any aggregated data.
         /// </summary>
         /// <returns>true if data was presented to aggregator.</returns>
-        public virtual bool HasData()
+        public virtual bool HasCheckpointData()
         {
             return this.checkpoint.Count > 0;
         }
