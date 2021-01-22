@@ -46,8 +46,15 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var attributes = new Dictionary<string, object> { { "NullValue", null } };
 
-            // Act and Assert
-            Assert.Throws<ArgumentException>(() => new Resource(attributes));
+            // Act
+            var resource = new Resource(attributes);
+
+            // Assert
+            Assert.Single(resource.Attributes);
+
+            var attribute = resource.Attributes.Single();
+            Assert.Equal("NullValue", attribute.Key);
+            Assert.Empty((string)attribute.Value);
         }
 
         [Fact]
@@ -132,25 +139,15 @@ namespace OpenTelemetry.Resources.Tests
                 { "long", 1L },
                 { "bool", true },
                 { "double", 0.1d },
-
-                // int and float supported by conversion to long and double
-                { "int", 1 },
-                { "short", (short)1 },
-                { "float", 0.1f },
             };
 
             var resource = new Resource(attributes);
 
-            Assert.Equal(7, resource.Attributes.Count());
+            Assert.Equal(4, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
-
-            double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
-            Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
         }
 
         [Fact]
@@ -161,9 +158,16 @@ namespace OpenTelemetry.Resources.Tests
                 { "dynamic", new { } },
                 { "array", new int[1] },
                 { "complex", this },
+                { "float", 0.1f },
             };
 
-            Assert.Throws<ArgumentException>(() => new Resource(attributes));
+            var resource = new Resource(attributes);
+
+            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("float", string.Empty), resource.Attributes);
         }
 
         [Fact]

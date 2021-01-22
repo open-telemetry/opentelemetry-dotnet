@@ -34,7 +34,7 @@ namespace OpenTelemetry
         /// Initializes a new instance of the <see cref="BaseExportProcessor{T}"/> class.
         /// </summary>
         /// <param name="exporter">Exporter instance.</param>
-        public BaseExportProcessor(BaseExporter<T> exporter)
+        protected BaseExportProcessor(BaseExporter<T> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
@@ -44,18 +44,10 @@ namespace OpenTelemetry
         {
         }
 
-        /// <inheritdoc />
-        public sealed override void OnEnd(T data)
+        public override void OnEnd(T data)
         {
-            if (data is Activity activity && activity.ActivityTraceFlags == ActivityTraceFlags.None)
-            {
-                return;
-            }
-
             this.OnExport(data);
         }
-
-        public abstract void OnExport(T data);
 
         internal override void SetParentProvider(BaseProvider parentProvider)
         {
@@ -63,6 +55,8 @@ namespace OpenTelemetry
 
             this.exporter.ParentProvider = parentProvider;
         }
+
+        protected abstract void OnExport(T data);
 
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)

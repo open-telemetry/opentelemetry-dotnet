@@ -93,7 +93,6 @@ For edit access, get in touch on
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-* [Alan West](https://github.com/alanwest), NewRelic
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
@@ -105,6 +104,7 @@ repository](https://github.com/open-telemetry/community/blob/master/community-me
 Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
+* [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group

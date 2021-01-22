@@ -108,13 +108,24 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             string serviceName = null;
+            Dictionary<string, object> tags = null;
             foreach (var label in resource.Attributes)
             {
-                if (label.Key == ResourceSemanticConventions.AttributeServiceName)
+                string key = label.Key;
+
+                switch (key)
                 {
-                    serviceName = label.Value as string;
-                    break;
+                    case ResourceSemanticConventions.AttributeServiceName:
+                        serviceName = label.Value as string;
+                        continue;
                 }
+
+                if (tags == null)
+                {
+                    tags = new Dictionary<string, object>();
+                }
+
+                tags[key] = label.Value;
             }
 
             if (string.IsNullOrEmpty(serviceName))
@@ -127,7 +138,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 ipv4,
                 ipv6,
                 port: null,
-                tags: null);
+                tags);
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)

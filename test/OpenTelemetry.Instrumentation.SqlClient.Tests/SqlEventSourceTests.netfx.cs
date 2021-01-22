@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetStatementText = captureText;
+                    options.SetDbStatement = captureText;
                 })
                 .Build();
 
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetStatementText = captureText;
+                    options.SetDbStatement = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 })
                 .Build();

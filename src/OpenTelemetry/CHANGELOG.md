@@ -13,10 +13,15 @@
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for more information.
   ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
-* Resource Attributes now accept int, short, and float as values, converting
-  them to supported data types (long for int/short, double for float). For
-  invalid attributes we now throw an exception instead of logging an error.
-  ([#1647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1647))
+* Modified SimpleExportProcessor and BatchExportProcessor to abstract classes;
+  Added SimpleActivityExportProcessor, SimpleLogRecordExportProcessor,
+  BatchActivityExportProcessor, BatchLogRecordExportProcessor; Added the check
+  for Activity.Recorded in SimpleActivityExportProcessor and
+  BatchActivityExportProcessor
+  ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
+* Added check in `ActivitySourceAdapter` class for root activity if traceid is
+  overridden by calling `SetParentId`
+  ([#1355](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1355))
 
 ## 1.0.0-rc1.1
 
