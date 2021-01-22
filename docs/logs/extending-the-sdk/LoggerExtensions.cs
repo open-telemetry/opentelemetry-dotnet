@@ -27,6 +27,6 @@ internal static class LoggerExtensions
             throw new ArgumentNullException(nameof(options));
         }
 
-        return options.AddProcessor(new BatchExportProcessor<LogRecord>(new MyExporter()));
+        return options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter()));
     }
 }
