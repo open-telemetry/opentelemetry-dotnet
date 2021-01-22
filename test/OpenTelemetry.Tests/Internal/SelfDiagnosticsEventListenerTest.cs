@@ -132,6 +132,8 @@ namespace OpenTelemetry.Internal.Tests
             Assert.Equal(expected, results);
         }
 
+        [Fact]
+        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
         {
             // Arrange
