@@ -107,6 +107,17 @@ public class Program
                     labels.Add(new KeyValuePair<string, string>("http.status_code", httpStatusCode.ToString(CultureInfo.InvariantCulture)));
 
                     httpClientDuration.Record(default(SpanContext), latencyMilliseconds, meter.GetLabelSet(labels));
+
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md#recordbatch-calling-convention
+                    // if multiple measurements are reported using the same labels, a batch API would give better performance
+                    // it is also possible to make atomic/transactional updates
+
+                    /*
+                    meter.RecordBatch(default(SpanContext), labels)
+                         .Put(httpClientDuration, latencyMilliseconds)
+                         .Put(httpClientError, 1)
+                         .Record();
+                    */
                 }
                 catch (Exception ex)
                 {
