@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpTraceExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
-    public static class OtlpExporterHelperExtensions
+    public static class OtlpTraceExporterHelperExtensions
     {
         /// <summary>
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
 
             var exporterOptions = new OtlpExporterOptions();
             configure?.Invoke(exporterOptions);
-            var otlpExporter = new OtlpExporter(exporterOptions);
+            var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
