@@ -183,8 +183,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     [ResourceSemanticConventions.AttributeServiceName] = serviceName,
                     ["service.tag"] = "hello world",
                 }).Build());
-
-                resoureTags = "\"service.tag\":\"hello world\",";
             }
             else
             {
