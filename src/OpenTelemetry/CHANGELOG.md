@@ -26,9 +26,9 @@
   them to supported data types (long for int/short, double for float). For
   invalid attributes we now throw an exception instead of logging an error.
   ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
-* Merging "this" resource with another previously kept "this" resource's
-  attributes in the event of a conflict. We've rectified to follow a recent
-  change to the spec, where we now prioritize the incoming resource's tags.
+* Merging "this" resource with an "other" resource now prioritizes the "other"
+  resource's attributes in a conflict. We've rectified to follow a recent
+  change to the spec. We previously prioritized "this" resource's tags.
   ([#1728](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1728))
 
 ## 1.0.0-rc1.1
