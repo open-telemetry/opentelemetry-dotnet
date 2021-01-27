@@ -19,9 +19,14 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which will take a sample if parent Activity or any linked Activity is sampled.
+    /// Sampler implementation which by default will take a sample if parent Activity or any linked Activity is sampled.
     /// Otherwise, samples root traces according to the specified root sampler.
     /// </summary>
+    /// <remarks>
+    /// The default behavior can be customized by providing additional samplers to be invoked for different
+    /// combinations of local/remote parent and its sampling decision.
+    /// See <see cref="ParentBasedSampler(Sampler, Sampler, Sampler, Sampler, Sampler)"/>.
+    /// </remarks>
     public sealed class ParentBasedSampler : Sampler
     {
         private readonly Sampler rootSampler;
@@ -35,8 +40,6 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="ParentBasedSampler"/> class.
         /// </summary>
         /// <remarks>
-        /// The created sampler will either delegate sampling decision to the provided
-        /// <c>rootSampler</c> in... tbd.
         /// <see cref="ParentBasedSampler(Sampler, Sampler, Sampler, Sampler, Sampler)"/>.
         /// </remarks>
         /// <param name="rootSampler">The <see cref="Sampler"/> to be called for root span/activity.</param>

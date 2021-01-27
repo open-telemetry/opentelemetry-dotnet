@@ -144,6 +144,7 @@ OpenTelemetry.Trace.AlwaysOnSampler
 OpenTelemetry.Trace.AlwaysOnSampler.AlwaysOnSampler() -> void
 OpenTelemetry.Trace.ParentBasedSampler
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler) -> void
+OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled, OpenTelemetry.Trace.Sampler remoteParentNotSampled, OpenTelemetry.Trace.Sampler localParentSampled, OpenTelemetry.Trace.Sampler localParentNotSampled) -> void
 OpenTelemetry.Trace.Sampler
 OpenTelemetry.Trace.Sampler.Description.get -> string
 OpenTelemetry.Trace.Sampler.Description.set -> void

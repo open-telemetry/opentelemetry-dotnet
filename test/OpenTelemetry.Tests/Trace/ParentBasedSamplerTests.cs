@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Diagnostics;
 using Moq;
 using Xunit;
@@ -161,6 +163,40 @@ namespace OpenTelemetry.Trace.Tests
             mockRepository.VerifyAll();
             Assert.Equal(expectedResult, actualResult);
             mockRepository.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public void DisallowNullSamplersInConstructor()
+        {
+            Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null));
+            Assert.Throws<ArgumentNullException>(
+                () => new ParentBasedSampler(
+                    new AlwaysOnSampler(),
+                    null,
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler()));
+            Assert.Throws<ArgumentNullException>(
+                () => new ParentBasedSampler(
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    null,
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler()));
+            Assert.Throws<ArgumentNullException>(
+                () => new ParentBasedSampler(
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    null,
+                    new AlwaysOnSampler()));
+            Assert.Throws<ArgumentNullException>(
+                () => new ParentBasedSampler(
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    new AlwaysOnSampler(),
+                    null));
         }
 
         private SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
