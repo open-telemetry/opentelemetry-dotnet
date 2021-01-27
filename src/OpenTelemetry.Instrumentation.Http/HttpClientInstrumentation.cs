@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <param name="options">Configuration options for HTTP client instrumentation.</param>
         public HttpClientInstrumentation(ActivitySourceAdapter activitySourceAdapter, HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySourceAdapter), (activityName, arg1, arg2) => options?.EventFilter(activityName, arg1) ?? true);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options, activitySourceAdapter), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

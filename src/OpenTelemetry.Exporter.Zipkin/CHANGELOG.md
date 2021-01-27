@@ -20,6 +20,9 @@
   `True`/`False`.
   ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
 
+* Span tags will no longer be populated with Resource Attributes.
+  ([#1663](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1663))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

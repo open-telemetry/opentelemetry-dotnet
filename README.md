@@ -84,6 +84,7 @@ calendar](https://calendar.google.com/calendar/embed?src=google.com_b79e3e90j7bb
 for specific dates.
 
 Meetings take place via [Zoom video conference](https://zoom.us/j/8287234601).
+The passcode is `77777`.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).

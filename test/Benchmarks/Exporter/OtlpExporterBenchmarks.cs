@@ -30,7 +30,7 @@ namespace Benchmarks.Exporter
     [MemoryDiagnoser]
     public class OtlpExporterBenchmarks
     {
-        private OtlpExporter exporter;
+        private OtlpTraceExporter exporter;
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
 
@@ -43,7 +43,7 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.exporter = new OtlpExporter(
+            this.exporter = new OtlpTraceExporter(
                 new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
             this.activity = ActivityHelper.CreateTestActivity();
