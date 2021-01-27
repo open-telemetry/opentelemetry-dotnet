@@ -58,9 +58,9 @@ namespace OpenTelemetry.Resources
 
         /// <summary>
         /// Returns a new, merged <see cref="Resource"/> by merging the old <see cref="Resource"/> with the
-        /// <code>other</code> <see cref="Resource"/>. In case of a collision the other <see cref="Resource"/> takes precedence.
+        /// <c>other</c> <see cref="Resource"/>. In case of a collision the other <see cref="Resource"/> takes precedence.
         /// </summary>
-        /// <param name="other">The <see cref="Resource"/> that will be merged with. <code>this</code>.</param>
+        /// <param name="other">The <see cref="Resource"/> that will be merged with <c>this</c>.</param>
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
