@@ -72,13 +72,14 @@ namespace OpenTelemetry.Exporter.Zipkin
             // Prevent Zipkin's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
+            using var content = new JsonContent(this, batch);
             try
             {
                 var requestUri = this.options.Endpoint;
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new JsonContent(this, batch),
+                    Content = content,
                 };
 
                 using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
@@ -89,6 +90,14 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
             catch (Exception ex)
             {
+                if (!content.BatchFlushed)
+                {
+                    foreach (Activity activity in batch)
+                    {
+                        // Drain the batch in the event of a connection failure.
+                    }
+                }
+
                 ZipkinExporterEventSource.Log.FailedExport(ex);
 
                 return ExportResult.Failure;
@@ -221,6 +230,8 @@ namespace OpenTelemetry.Exporter.Zipkin
                 this.Headers.ContentType = JsonHeader;
             }
 
+            public bool BatchFlushed { get; private set; }
+
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
             {
 #if NET452
@@ -239,19 +250,40 @@ namespace OpenTelemetry.Exporter.Zipkin
 
                 this.writer.WriteStartArray();
 
+                Exception writeException = null;
+
                 foreach (var activity in this.batch)
                 {
-                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+                    if (writeException != null)
+                    {
+                        continue;
+                    }
 
-                    zipkinSpan.Write(this.writer);
+                    try
+                    {
+                        var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
-                    zipkinSpan.Return();
+                        zipkinSpan.Write(this.writer);
+
+                        zipkinSpan.Return();
 #if !NET452
                     if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
                     {
                         this.writer.Flush();
                     }
 #endif
+                    }
+                    catch (Exception exception)
+                    {
+                        writeException = exception;
+                    }
+                }
+
+                this.BatchFlushed = true;
+
+                if (writeException != null)
+                {
+                    throw writeException;
                 }
 
                 this.writer.WriteEndArray();

@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            if (!this.handler.SupportsNullActivity && Activity.Current == null)
+            if (!this.handler.SupportsNullActivity && Activity.Current == null && !Sdk.SuppressInstrumentation)
             {
                 InstrumentationEventSource.Log.NullActivity(value.Key);
                 return;
