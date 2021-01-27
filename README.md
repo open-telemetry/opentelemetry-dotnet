@@ -84,6 +84,7 @@ calendar](https://calendar.google.com/calendar/embed?src=google.com_b79e3e90j7bb
 for specific dates.
 
 Meetings take place via [Zoom video conference](https://zoom.us/j/8287234601).
+The passcode is `77777`.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).
@@ -93,7 +94,6 @@ For edit access, get in touch on
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-* [Alan West](https://github.com/alanwest), NewRelic
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
@@ -105,6 +105,7 @@ repository](https://github.com/open-telemetry/community/blob/master/community-me
 Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
+* [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
