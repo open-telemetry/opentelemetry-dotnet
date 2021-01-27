@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Exporter
 {
     public abstract class ConsoleExporter<T> : BaseExporter<T>
@@ -37,7 +35,7 @@ namespace OpenTelemetry.Exporter
 
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
             {
-                Debug.WriteLine(message);
+                System.Diagnostics.Trace.WriteLine(message);
             }
         }
     }

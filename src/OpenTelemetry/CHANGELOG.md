@@ -22,6 +22,10 @@
 * Added check in `ActivitySourceAdapter` class for root activity if traceid is
   overridden by calling `SetParentId`
   ([#1355](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1355))
+* Resource Attributes now accept int, short, and float as values, converting
+  them to supported data types (long for int/short, double for float). For
+  invalid attributes we now throw an exception instead of logging an error.
+  ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
 * Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
   by another process in read-only mode for .NET Framework.
   ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
