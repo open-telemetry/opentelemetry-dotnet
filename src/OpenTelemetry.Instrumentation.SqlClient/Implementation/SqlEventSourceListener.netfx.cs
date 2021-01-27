@@ -144,7 +144,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
                 string commandText = (string)eventData.Payload[3];
-                if (!string.IsNullOrEmpty(commandText) && this.options.SetStatementText)
+                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatement)
                 {
                     activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }
