@@ -36,7 +36,7 @@ namespace OpenTelemetry.Internal
     {
         private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
-        private static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.");
+        private static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
