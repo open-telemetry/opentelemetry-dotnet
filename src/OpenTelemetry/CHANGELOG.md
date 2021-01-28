@@ -30,6 +30,9 @@
   resource's attributes in a conflict. We've rectified to follow a recent
   change to the spec. We previously prioritized "this" resource's tags.
   ([#1728](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1728))
+* `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
+  after the export operation has completed.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
 
 ## 1.0.0-rc1.1
 
