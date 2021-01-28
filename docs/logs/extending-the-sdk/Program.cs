@@ -35,7 +35,7 @@ public class Program
             builder.AddOpenTelemetry(options => options
                 .AddProcessor(new MyProcessor("ProcessorA"))
                 .AddProcessor(new MyProcessor("ProcessorB"))
-                .AddProcessor(new SimpleExportProcessor<LogRecord>(new MyExporter("ExporterX")))
+                .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
                 .AddMyExporter());
         });
 

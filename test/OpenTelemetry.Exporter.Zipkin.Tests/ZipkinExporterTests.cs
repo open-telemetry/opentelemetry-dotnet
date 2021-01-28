@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
             };
             var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchExportProcessor<Activity>(zipkinExporter);
+            var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
             var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -183,8 +183,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     [ResourceSemanticConventions.AttributeServiceName] = serviceName,
                     ["service.tag"] = "hello world",
                 }).Build());
-
-                resoureTags = "\"service.tag\":\"hello world\",";
             }
             else
             {
@@ -196,7 +194,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 activity.SetTag(ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName, "This should be removed.");
             }
 
-            var processor = new SimpleExportProcessor<Activity>(exporter);
+            var processor = new SimpleActivityExportProcessor(exporter);
 
             processor.OnEnd(activity);
 

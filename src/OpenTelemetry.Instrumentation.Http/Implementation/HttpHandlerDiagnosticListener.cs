@@ -82,6 +82,29 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+
+            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
+            {
+                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
+            }
+
+            try
+            {
+                if (this.options.EventFilter(activity.OperationName, request) == false)
+                {
+                    HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                activity.IsAllDataRequested = false;
+                return;
+            }
+
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
             this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
@@ -105,13 +128,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-            }
-
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-
-            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
-            {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
         }
 
