@@ -62,6 +62,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         {
             lock (this.updateLock)
             {
+                base.Update(value);
                 this.summary.Count++;
                 this.summary.Sum += value;
                 this.summary.Max = Math.Max(this.summary.Max, value);
