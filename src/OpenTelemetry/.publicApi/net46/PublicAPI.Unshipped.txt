@@ -176,7 +176,6 @@ OpenTelemetry.Trace.TracerProviderExtensions
 abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
 abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.GetAggregationType() -> OpenTelemetry.Metrics.Export.AggregationType
 abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.ToMetricData() -> OpenTelemetry.Metrics.Export.MetricData
-abstract OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Update(T value) -> void
 abstract OpenTelemetry.Metrics.BoundCounterMetricSdkBase<T>.GetAggregator() -> OpenTelemetry.Metrics.Aggregators.Aggregator<T>
 abstract OpenTelemetry.Metrics.Export.MetricExporter.ExportAsync(System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<OpenTelemetry.Metrics.Export.MetricExporter.ExportResult>
 abstract OpenTelemetry.Metrics.Export.MetricProcessor.FinishCollectionCycle(out System.Collections.Generic.IEnumerable<OpenTelemetry.Metrics.Export.Metric> metrics) -> void
@@ -261,3 +260,5 @@ virtual OpenTelemetry.BaseProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> 
 virtual OpenTelemetry.BaseProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
 virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Checkpoint() -> void
+virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.HasCheckpointData() -> bool
+virtual OpenTelemetry.Metrics.Aggregators.Aggregator<T>.Update(T value) -> void
