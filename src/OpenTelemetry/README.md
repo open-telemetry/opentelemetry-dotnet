@@ -306,6 +306,17 @@ the following content:
 }
 ```
 
+Tip: You can find the "current working directory" by calling
+[GetCurrentDirectory](https://docs.microsoft.com/dotnet/api/system.io.directory.getcurrentdirectory)
+method from your code.
+
+As an example, for [AspNetCore example project](../../examples/AspNetCore/Examples.AspNetCore.csproj)
+| Running method  | Path |
+| ------------- | ------------- |
+| Running the project with `dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`  | `examples/AspNetCore`  |
+| Running the project with Visual Studio  | `examples/AspNetCore`  |
+| Running the executable `Examples.AspNetCore.exe` in `examples/AspNetCore/bin/Debug/netcoreapp3.1` directory  | `examples/AspNetCore/bin/Debug/netcoreapp3.1`  |
+
 ### Configuration Parameters
 
 1. `LogDirectory` is the directory where the output log file will be stored. It
