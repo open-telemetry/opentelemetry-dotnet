@@ -93,5 +93,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             this.WriteEvent(5, exception);
         }
+
+        [Event(6, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
+        public void RequestIsFilteredOut(string eventName)
+        {
+            this.WriteEvent(6, eventName);
+        }
     }
 }

@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 #endif
             };
 
-            var otlpExporter = new OtlpExporter(exporterOptions);
+            var otlpExporter = new OtlpTraceExporter(exporterOptions);
             var delegatingExporter = new DelegatingTestExporter<Activity>(otlpExporter);
             var exportActivityProcessor = new SimpleActivityExportProcessor(delegatingExporter);
 

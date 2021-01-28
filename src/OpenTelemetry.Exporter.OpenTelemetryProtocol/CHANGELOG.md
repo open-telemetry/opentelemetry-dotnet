@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Changed `OltpExporter` class and constructor from internal to public.
+* Changed `OltpTraceExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
 * In `OtlpExporterOptions.cs`: Exporter options now include a switch for
