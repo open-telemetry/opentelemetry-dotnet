@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics.Tests
             int dataCount = testExporter.Metrics.Select(k => k.Data.Count).Sum();
             long measureCount = testExporter.Metrics.Select(k => k.Data.Select(j => ((Int64SummaryData)j).Count).Sum()).Sum();
 
-            Assert.True(recordCount > 1);
+            Assert.True(recordCount >= 1);
             Assert.Equal(1, dataCount);
             Assert.Equal(2, measureCount);
         }
@@ -243,7 +243,7 @@ namespace OpenTelemetry.Metrics.Tests
             int dataCount = testExporter.Metrics.Select(k => k.Data.Count).Sum();
             long measureCount = testExporter.Metrics.Select(k => k.Data.Select(j => ((DoubleSummaryData)j).Count).Sum()).Sum();
 
-            Assert.True(recordCount > 1);
+            Assert.True(recordCount >= 1);
             Assert.Equal(1, dataCount);
             Assert.Equal(2, measureCount);
         }
