@@ -31,14 +31,12 @@ namespace OpenTelemetry
     {
         private readonly T item;
         private readonly CircularBuffer<T> circularBuffer;
-        private readonly long addedCount;
         private readonly long targetCount;
 
         internal Batch(T item)
         {
             this.item = item ?? throw new ArgumentNullException(nameof(item));
             this.circularBuffer = null;
-            this.addedCount = -1;
             this.targetCount = 1;
         }
 
@@ -48,10 +46,10 @@ namespace OpenTelemetry
 
             this.item = null;
             this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
-            this.addedCount = circularBuffer.AddedCount;
 
+            long addedCount = circularBuffer.AddedCount;
             long removedCount = circularBuffer.RemovedCount;
-            this.targetCount = removedCount + Math.Min(maxSize, this.addedCount - removedCount);
+            this.targetCount = removedCount + Math.Min(maxSize, addedCount - removedCount);
         }
 
         /// <inheritdoc/>
@@ -60,7 +58,7 @@ namespace OpenTelemetry
             if (this.circularBuffer != null)
             {
                 // Drain anything left in the batch.
-                while (this.circularBuffer.RemovedCount < this.addedCount)
+                while (this.circularBuffer.RemovedCount < this.targetCount)
                 {
                     this.circularBuffer.Read();
                 }

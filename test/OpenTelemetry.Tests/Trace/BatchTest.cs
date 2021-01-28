@@ -59,7 +59,7 @@ namespace OpenTelemetry.Trace.Tests
             circularBuffer.Add(value);
             circularBuffer.Add(value);
             circularBuffer.Add(value);
-            batch = new Batch<string>(circularBuffer, 10);
+            batch = new Batch<string>(circularBuffer, 10); // Max size = 10
             batch.GetEnumerator().MoveNext();
             Assert.Equal(3, circularBuffer.AddedCount);
             Assert.Equal(1, circularBuffer.RemovedCount);
@@ -67,6 +67,17 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(3, circularBuffer.AddedCount);
             Assert.Equal(3, circularBuffer.RemovedCount);
             batch.Dispose(); // Verify we don't go into an infinite loop or thrown when empty.
+
+            circularBuffer = new CircularBuffer<string>(10);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            batch = new Batch<string>(circularBuffer, 2); // Max size = 2
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(0, circularBuffer.RemovedCount);
+            batch.Dispose(); // Test the batch is drained up to max size.
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(2, circularBuffer.RemovedCount);
         }
 
         [Fact]
