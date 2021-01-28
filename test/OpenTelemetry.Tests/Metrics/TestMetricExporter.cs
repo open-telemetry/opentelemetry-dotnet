@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Tests
 {
     internal class TestMetricExporter : MetricExporter
     {
-        public ConcurrentBag<Metric> Metrics = new ConcurrentBag<Metric>();
+        public ConcurrentQueue<Metric> Metrics = new ConcurrentQueue<Metric>();
         private readonly Action onExport;
 
         public TestMetricExporter(Action onExport)
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics.Tests
             this.onExport?.Invoke();
             foreach (var metric in metrics)
             {
-                this.Metrics.Add(metric);
+                this.Metrics.Enqueue(metric);
             }
 
             return Task.FromResult(ExportResult.Success);
