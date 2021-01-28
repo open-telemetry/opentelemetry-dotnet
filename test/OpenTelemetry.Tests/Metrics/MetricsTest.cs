@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Metrics.Export;
@@ -181,6 +182,70 @@ namespace OpenTelemetry.Metrics.Tests
             metricSeries = metric.Data.Single(data => data.Labels.Any(l => l.Key == "dim1" && l.Value == "value2"));
             metricLong = metricSeries as DoubleSumData;
             Assert.Equal(300.5, metricLong.Sum);
+        }
+
+        [Fact]
+        public void ExportNonEmptyLongMeasure()
+        {
+            var testProcessor = new TestMetricProcessor();
+            var testExporter = new TestMetricExporter(null);
+            var meter = Sdk.CreateMeterProviderBuilder()
+                .SetProcessor(testProcessor)
+                .SetExporter(testExporter)
+                .SetPushInterval(TimeSpan.FromMilliseconds(100))
+                .Build()
+                .GetMeter("library1") as MeterSdk;
+            var testMeasure = meter.CreateInt64Measure("testMeasure");
+            var context = default(SpanContext);
+
+            // These 2 measures should be summed into 1 record.
+
+            testMeasure.Record(context, 100, LabelSet.BlankLabelSet);
+            testMeasure.Record(context, 200, LabelSet.BlankLabelSet);
+
+            // Let collect/export run multiple time.  Including when no measures are recorded.
+
+            System.Threading.Thread.Sleep(1000);
+
+            int recordCount = testExporter.Metrics.Count;
+            int dataCount = testExporter.Metrics.Select(k => k.Data.Count).Sum();
+            long measureCount = testExporter.Metrics.Select(k => k.Data.Select(j => ((Int64SummaryData)j).Count).Sum()).Sum();
+
+            Assert.True(recordCount >= 1);
+            Assert.Equal(1, dataCount);
+            Assert.Equal(2, measureCount);
+        }
+
+        [Fact]
+        public void ExportNonEmptyDoubleMeasure()
+        {
+            var testProcessor = new TestMetricProcessor();
+            var testExporter = new TestMetricExporter(null);
+            var meter = Sdk.CreateMeterProviderBuilder()
+                .SetProcessor(testProcessor)
+                .SetExporter(testExporter)
+                .SetPushInterval(TimeSpan.FromMilliseconds(100))
+                .Build()
+                .GetMeter("library1") as MeterSdk;
+            var testMeasure = meter.CreateDoubleMeasure("testMeasure");
+            var context = default(SpanContext);
+
+            // These 2 measures should be summed into 1 record.
+
+            testMeasure.Record(context, 100.1, LabelSet.BlankLabelSet);
+            testMeasure.Record(context, 200.2, LabelSet.BlankLabelSet);
+
+            // Let collect/export run multiple time.  Including when no measures are recorded.
+
+            System.Threading.Thread.Sleep(1000);
+
+            int recordCount = testExporter.Metrics.Count;
+            int dataCount = testExporter.Metrics.Select(k => k.Data.Count).Sum();
+            long measureCount = testExporter.Metrics.Select(k => k.Data.Select(j => ((DoubleSummaryData)j).Count).Sum()).Sum();
+
+            Assert.True(recordCount >= 1);
+            Assert.Equal(1, dataCount);
+            Assert.Equal(2, measureCount);
         }
 
         private void TestCallbackLong(Int64ObserverMetric observerMetric)

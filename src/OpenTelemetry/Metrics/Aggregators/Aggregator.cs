@@ -28,19 +28,23 @@ namespace OpenTelemetry.Metrics.Aggregators
     public abstract class Aggregator<T>
         where T : struct
     {
-        private long startTimeTicks;
-        private long checkpointStartTimeTicks;
+        private AggState active;
+        private AggState checkpoint;
 
         protected Aggregator()
         {
-            this.startTimeTicks = DateTimeOffset.UtcNow.Ticks;
+            this.checkpoint = new AggState();
+            this.active = new AggState();
         }
 
         /// <summary>
         /// Adds value to the running total in a thread safe manner.
         /// </summary>
         /// <param name="value">Value to be aggregated.</param>
-        public abstract void Update(T value);
+        public virtual void Update(T value)
+        {
+            this.active.Increment();
+        }
 
         /// <summary>
         /// Checkpoints the current aggregate data, and resets the state.
@@ -48,11 +52,20 @@ namespace OpenTelemetry.Metrics.Aggregators
         public virtual void Checkpoint()
         {
             // checkpoints the start time for the current aggregation, and sets the new start time.
-            this.checkpointStartTimeTicks = Interlocked.Exchange(ref this.startTimeTicks, DateTimeOffset.UtcNow.Ticks);
+            this.checkpoint = Interlocked.Exchange(ref this.active, new AggState());
         }
 
         /// <summary>
-        /// Convert Aggregator data to MetricData.
+        /// Check if checkpoint has any aggregated data.
+        /// </summary>
+        /// <returns>true if data was presented to aggregator.</returns>
+        public virtual bool HasCheckpointData()
+        {
+            return this.checkpoint.Count > 0;
+        }
+
+        /// <summary>
+        /// Convert checkpoint aggregator data to MetricData.
         /// </summary>
         /// <returns>An instance of <see cref="MetricData"/> representing the currently aggregated value.</returns>
         public abstract MetricData ToMetricData();
@@ -69,7 +82,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <returns>The end timestamp of the last aggregated checkpoint.</returns>
         protected DateTimeOffset GetLastEndTimestamp()
         {
-            return new DateTimeOffset(this.startTimeTicks, TimeSpan.Zero).Subtract(TimeSpan.FromTicks(1));
+            return new DateTimeOffset(this.active.StartTimeTicks, TimeSpan.Zero).Subtract(TimeSpan.FromTicks(1));
         }
 
         /// <summary>
@@ -78,7 +91,26 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <returns>The start timestamp of the last aggregated checkpoint.</returns>
         protected DateTimeOffset GetLastStartTimestamp()
         {
-            return new DateTimeOffset(this.checkpointStartTimeTicks, TimeSpan.Zero);
+            return new DateTimeOffset(this.checkpoint.StartTimeTicks, TimeSpan.Zero);
+        }
+
+        private class AggState
+        {
+            private long count = 0;
+
+            public AggState()
+            {
+                this.StartTimeTicks = DateTimeOffset.UtcNow.Ticks;
+            }
+
+            public long Count { get => this.count; }
+
+            public long StartTimeTicks { get; }
+
+            public void Increment()
+            {
+                Interlocked.Increment(ref this.count);
+            }
         }
     }
 }
