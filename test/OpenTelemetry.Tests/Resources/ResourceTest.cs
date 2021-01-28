@@ -315,19 +315,19 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void MergeResource_SecondaryCanOverridePrimaryEmptyAttributeValue()
+        public void MergeResource_UpdatingResourceOverridesCurrentResource()
         {
             // Arrange
-            var primaryAttributes = new Dictionary<string, object> { { "value", string.Empty } };
-            var secondaryAttributes = new Dictionary<string, object> { { "value", "not empty" } };
-            var primaryResource = new Resource(primaryAttributes);
-            var secondaryResource = new Resource(secondaryAttributes);
+            var currentAttributes = new Dictionary<string, object> { { "value", "currentValue" } };
+            var updatingAttributes = new Dictionary<string, object> { { "value", "updatedValue" } };
+            var currentResource = new Resource(currentAttributes);
+            var updatingResource = new Resource(updatingAttributes);
 
-            var newResource = primaryResource.Merge(secondaryResource);
+            var newResource = currentResource.Merge(updatingResource);
 
             // Assert
             Assert.Single(newResource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("value", "updatedValue"), newResource.Attributes);
         }
 
         [Fact]

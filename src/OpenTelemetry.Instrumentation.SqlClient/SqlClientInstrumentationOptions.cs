@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
         /// <para>string: the name of the event.</para>
         /// <para>object: the raw <c>SqlCommand</c> object from which additional information can be extracted to enrich the activity.</para>
-        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
+        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
         /// </remarks>
         /// <example>
         /// <code>
