@@ -40,6 +40,7 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 this.Metrics.Add(metric);
             }
+
             return Task.FromResult(ExportResult.Success);
         }
     }
