@@ -2,7 +2,7 @@ name: Windows
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-       
+
     - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
       with:

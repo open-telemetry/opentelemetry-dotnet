@@ -6,6 +6,12 @@
   description/reason phrase for outgoing http spans.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
 
+* Moved the DiagnosticListener filtering logic from HttpClientInstrumentation
+  ctor to OnStartActivity method of HttpHandlerDiagnosticListener.cs; Updated
+  the logic of OnStartActivity to inject propagation data into Headers for
+  filtered out events as well.
+  ([#1707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1707))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
