@@ -46,10 +46,7 @@ namespace OpenTelemetry
 
             this.item = null;
             this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
-
-            long addedCount = circularBuffer.AddedCount;
-            long removedCount = circularBuffer.RemovedCount;
-            this.targetCount = removedCount + Math.Min(maxSize, addedCount - removedCount);
+            this.targetCount = circularBuffer.RemovedCount + Math.Min(maxSize, circularBuffer.Count);
         }
 
         /// <inheritdoc/>
