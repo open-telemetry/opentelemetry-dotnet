@@ -26,6 +26,9 @@
   them to supported data types (long for int/short, double for float). For
   invalid attributes we now throw an exception instead of logging an error.
   ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
+* `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
+  after the export operation has completed.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
 
 ## 1.0.0-rc1.1
 

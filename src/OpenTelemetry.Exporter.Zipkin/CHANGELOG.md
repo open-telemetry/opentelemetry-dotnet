@@ -23,6 +23,10 @@
 * Span tags will no longer be populated with Resource Attributes.
   ([#1663](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1663))
 
+* Spans will no longer be held in memory indefinitely when `ZipkinExporter`
+  cannot connect to the configured endpoint.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
