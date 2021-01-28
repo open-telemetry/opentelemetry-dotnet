@@ -57,31 +57,31 @@ namespace OpenTelemetry.Resources
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
 
         /// <summary>
-        /// Returns a new, merged <see cref="Resource"/> by merging the current <see cref="Resource"/> with the.
-        /// <code>other</code> <see cref="Resource"/>. In case of a collision the current <see cref="Resource"/> takes precedence.
+        /// Returns a new, merged <see cref="Resource"/> by merging the old <see cref="Resource"/> with the
+        /// <c>other</c> <see cref="Resource"/>. In case of a collision the other <see cref="Resource"/> takes precedence.
         /// </summary>
-        /// <param name="other">The <see cref="Resource"/> that will be merged with. <code>this</code>.</param>
+        /// <param name="other">The <see cref="Resource"/> that will be merged with <c>this</c>.</param>
         /// <returns><see cref="Resource"/>.</returns>
         public Resource Merge(Resource other)
         {
             var newAttributes = new Dictionary<string, object>();
 
-            foreach (var attribute in this.Attributes)
-            {
-                if (!newAttributes.TryGetValue(attribute.Key, out var value) || (value is string strValue && string.IsNullOrEmpty(strValue)))
-                {
-                    newAttributes[attribute.Key] = attribute.Value;
-                }
-            }
-
             if (other != null)
             {
                 foreach (var attribute in other.Attributes)
                 {
-                    if (!newAttributes.TryGetValue(attribute.Key, out var value) || (value is string strValue && string.IsNullOrEmpty(strValue)))
+                    if (!newAttributes.TryGetValue(attribute.Key, out var value))
                     {
                         newAttributes[attribute.Key] = attribute.Value;
                     }
+                }
+            }
+
+            foreach (var attribute in this.Attributes)
+            {
+                if (!newAttributes.TryGetValue(attribute.Key, out var value))
+                {
+                    newAttributes[attribute.Key] = attribute.Value;
                 }
             }
 
