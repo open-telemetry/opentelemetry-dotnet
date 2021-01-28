@@ -91,11 +91,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddSqlClientInstrumentation(options =>
                 {
 #if !NETFRAMEWORK
-                    options.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
-                    options.SetTextCommandContent = captureTextCommandContent;
+                    options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
+                    options.SetDbStatementForText = captureTextCommandContent;
                     options.RecordException = recordException;
 #else
-                    options.SetStatementText = captureStoredProcedureCommandName;
+                    options.SetDbStatement = captureStoredProcedureCommandName;
 #endif
                     if (shouldEnrich)
                     {
@@ -165,8 +165,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     .AddSqlClientInstrumentation(
                         (opt) =>
                         {
-                            opt.SetTextCommandContent = captureTextCommandContent;
-                            opt.SetStoredProcedureCommandName = captureStoredProcedureCommandName;
+                            opt.SetDbStatementForText = captureTextCommandContent;
+                            opt.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
                             if (shouldEnrich)
                             {
                                 opt.Enrich = ActivityEnrichment;

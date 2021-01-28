@@ -46,15 +46,8 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var attributes = new Dictionary<string, object> { { "NullValue", null } };
 
-            // Act
-            var resource = new Resource(attributes);
-
-            // Assert
-            Assert.Single(resource.Attributes);
-
-            var attribute = resource.Attributes.Single();
-            Assert.Equal("NullValue", attribute.Key);
-            Assert.Empty((string)attribute.Value);
+            // Act and Assert
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
@@ -139,15 +132,25 @@ namespace OpenTelemetry.Resources.Tests
                 { "long", 1L },
                 { "bool", true },
                 { "double", 0.1d },
+
+                // int and float supported by conversion to long and double
+                { "int", 1 },
+                { "short", (short)1 },
+                { "float", 0.1f },
             };
 
             var resource = new Resource(attributes);
 
-            Assert.Equal(4, resource.Attributes.Count());
+            Assert.Equal(7, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
+
+            double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
         }
 
         [Fact]
@@ -158,16 +161,9 @@ namespace OpenTelemetry.Resources.Tests
                 { "dynamic", new { } },
                 { "array", new int[1] },
                 { "complex", this },
-                { "float", 0.1f },
             };
 
-            var resource = new Resource(attributes);
-
-            Assert.Equal(4, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("float", string.Empty), resource.Attributes);
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
@@ -319,19 +315,19 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void MergeResource_SecondaryCanOverridePrimaryEmptyAttributeValue()
+        public void MergeResource_UpdatingResourceOverridesCurrentResource()
         {
             // Arrange
-            var primaryAttributes = new Dictionary<string, object> { { "value", string.Empty } };
-            var secondaryAttributes = new Dictionary<string, object> { { "value", "not empty" } };
-            var primaryResource = new Resource(primaryAttributes);
-            var secondaryResource = new Resource(secondaryAttributes);
+            var currentAttributes = new Dictionary<string, object> { { "value", "currentValue" } };
+            var updatingAttributes = new Dictionary<string, object> { { "value", "updatedValue" } };
+            var currentResource = new Resource(currentAttributes);
+            var updatingResource = new Resource(updatingAttributes);
 
-            var newResource = primaryResource.Merge(secondaryResource);
+            var newResource = currentResource.Merge(updatingResource);
 
             // Assert
             Assert.Single(newResource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("value", "updatedValue"), newResource.Attributes);
         }
 
         [Fact]

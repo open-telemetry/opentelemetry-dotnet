@@ -5,10 +5,10 @@ OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.g
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.Enrich.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.RecordException.set -> void
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.get -> bool
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetStoredProcedureCommandName.set -> void
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetTextCommandContent.get -> bool
-OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetTextCommandContent.set -> void
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForStoredProcedure.get -> bool
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForStoredProcedure.set -> void
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForText.get -> bool
+OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForText.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SqlClientInstrumentationOptions() -> void
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddSqlClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

@@ -82,17 +82,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
         /// </para>
         /// </remarks>
-        public bool SetStatementText { get; set; }
+        public bool SetDbStatement { get; set; }
 #else
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
         /// </summary>
-        public bool SetStoredProcedureCommandName { get; set; } = true;
+        public bool SetDbStatementForStoredProcedure { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
-        public bool SetTextCommandContent { get; set; }
+        public bool SetDbStatementForText { get; set; }
 #endif
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
         /// <para>string: the name of the event.</para>
         /// <para>object: the raw <c>SqlCommand</c> object from which additional information can be extracted to enrich the activity.</para>
-        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
+        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
         /// </remarks>
         /// <example>
         /// <code>

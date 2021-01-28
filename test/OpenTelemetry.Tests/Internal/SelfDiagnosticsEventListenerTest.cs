@@ -43,8 +43,35 @@ namespace OpenTelemetry.Internal.Tests
 
         [Fact]
         [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
+        {
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
+            OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny), Times.Never());
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EventSourceSetup_HigherSeverity()
+        {
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny))
+                            .Returns(true);
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Emitting an Error event. Or any EventSource event with higher than or equal to to Error severity.
+            OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny));
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_WriteEvent()
         {
+            // Arrange
             var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
             var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
             Stream stream = memoryMappedFile.CreateViewStream();
@@ -55,11 +82,65 @@ namespace OpenTelemetry.Internal.Tests
             configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(timestampPrefixLength + bytes.Length + 1, out stream, out availableByteCount))
                 .Returns(true);
             var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Act: call WriteEvent method directly
             listener.WriteEvent(eventMessage, null);
+
+            // Assert
             configRefresherMock.Verify(refresher => refresher.TryGetLogStream(timestampPrefixLength + bytes.Length + 1, out stream, out availableByteCount));
             stream.Dispose();
             memoryMappedFile.Dispose();
             AssertFileOutput(LOGFILEPATH, eventMessage);
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
+        {
+            // Arrange
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
+            Stream stream = memoryMappedFile.CreateViewStream();
+            configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny))
+                .Returns(true);
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Act: emit an event with severity lower than configured
+            OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
+
+            // Assert
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny), Times.Never());
+            stream.Dispose();
+            memoryMappedFile.Dispose();
+
+            using FileStream file = File.Open(LOGFILEPATH, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var buffer = new byte[256];
+            file.Read(buffer, 0, buffer.Length);
+            Assert.Equal('\0', (char)buffer[0]);
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_EmitEvent_CaptureAsConfigured()
+        {
+            // Arrange
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
+            Stream stream = memoryMappedFile.CreateViewStream();
+            configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny))
+                .Returns(true);
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Act: emit an event with severity equal to configured
+            OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
+
+            // Assert
+            configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny));
+            stream.Dispose();
+            memoryMappedFile.Dispose();
+
+            var expectedLog = "Unknown error in TracerProvider '{0}': '{1}'.{TestEvent}{Exception Details}";
+            AssertFileOutput(LOGFILEPATH, expectedLog);
         }
 
         [Fact]
@@ -170,11 +251,16 @@ namespace OpenTelemetry.Internal.Tests
             using FileStream file = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             var buffer = new byte[256];
             file.Read(buffer, 0, buffer.Length);
-            string logMessage = Encoding.UTF8.GetString(buffer);
+            string logLine = Encoding.UTF8.GetString(buffer);
+            string logMessage = ParseLogMessage(logLine);
+            Assert.StartsWith(eventMessage, logMessage);
+        }
+
+        private static string ParseLogMessage(string logLine)
+        {
             int timestampPrefixLength = "2020-08-14T20:33:24.4788109Z:".Length;
-            string parsedEventMessage = logMessage.Substring(timestampPrefixLength);
-            Assert.StartsWith(eventMessage, parsedEventMessage);
-            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logMessage.Substring(0, timestampPrefixLength));
+            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logLine.Substring(0, timestampPrefixLength));
+            return logLine.Substring(timestampPrefixLength);
         }
 
         private static void AssertBufferOutput(byte[] expected, byte[] buffer, int startPos, int endPos)
