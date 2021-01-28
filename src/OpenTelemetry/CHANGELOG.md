@@ -33,6 +33,9 @@
 * `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
   after the export operation has completed.
   ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
+* Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
+  by another process in read-only mode for .NET Framework.
+  ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
 
 ## 1.0.0-rc1.1
 
