@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +25,7 @@ namespace OpenTelemetry.Metrics.Tests
 {
     internal class TestMetricExporter : MetricExporter
     {
-        public List<Metric> Metrics = new List<Metric>();
+        public ConcurrentQueue<Metric> Metrics = new ConcurrentQueue<Metric>();
         private readonly Action onExport;
 
         public TestMetricExporter(Action onExport)
@@ -35,7 +36,11 @@ namespace OpenTelemetry.Metrics.Tests
         public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
         {
             this.onExport?.Invoke();
-            this.Metrics.AddRange(metrics);
+            foreach (var metric in metrics)
+            {
+                this.Metrics.Enqueue(metric);
+            }
+
             return Task.FromResult(ExportResult.Success);
         }
     }
