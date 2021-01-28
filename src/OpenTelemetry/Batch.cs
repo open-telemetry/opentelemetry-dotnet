@@ -26,18 +26,20 @@ namespace OpenTelemetry
     /// Stores a batch of completed <typeparamref name="T"/> objects to be exported.
     /// </summary>
     /// <typeparam name="T">The type of object in the <see cref="Batch{T}"/>.</typeparam>
-    public readonly struct Batch<T>
+    public readonly struct Batch<T> : IDisposable
         where T : class
     {
         private readonly T item;
         private readonly CircularBuffer<T> circularBuffer;
-        private readonly int maxSize;
+        private readonly long addedCount;
+        private readonly long targetCount;
 
         internal Batch(T item)
         {
             this.item = item ?? throw new ArgumentNullException(nameof(item));
             this.circularBuffer = null;
-            this.maxSize = 1;
+            this.addedCount = -1;
+            this.targetCount = 1;
         }
 
         internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
@@ -46,7 +48,23 @@ namespace OpenTelemetry
 
             this.item = null;
             this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
-            this.maxSize = maxSize;
+            this.addedCount = circularBuffer.AddedCount;
+
+            long removedCount = circularBuffer.RemovedCount;
+            this.targetCount = removedCount + Math.Min(maxSize, this.addedCount - removedCount);
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (this.circularBuffer != null)
+            {
+                // Drain anything left in the batch.
+                while (this.circularBuffer.RemovedCount < this.addedCount)
+                {
+                    this.circularBuffer.Read();
+                }
+            }
         }
 
         /// <summary>
@@ -56,7 +74,7 @@ namespace OpenTelemetry
         public Enumerator GetEnumerator()
         {
             return this.circularBuffer != null
-                ? new Enumerator(this.circularBuffer, this.maxSize)
+                ? new Enumerator(this.circularBuffer, this.targetCount)
                 : new Enumerator(this.item);
         }
 
@@ -66,20 +84,20 @@ namespace OpenTelemetry
         public struct Enumerator : IEnumerator<T>
         {
             private readonly CircularBuffer<T> circularBuffer;
-            private int count;
+            private long targetCount;
 
             internal Enumerator(T item)
             {
                 this.Current = item;
                 this.circularBuffer = null;
-                this.count = -1;
+                this.targetCount = -1;
             }
 
-            internal Enumerator(CircularBuffer<T> circularBuffer, int maxSize)
+            internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
             {
                 this.Current = null;
                 this.circularBuffer = circularBuffer;
-                this.count = Math.Min(maxSize, circularBuffer.Count);
+                this.targetCount = targetCount;
             }
 
             /// <inheritdoc/>
@@ -100,20 +118,19 @@ namespace OpenTelemetry
 
                 if (circularBuffer == null)
                 {
-                    if (this.count >= 0)
+                    if (this.targetCount >= 0)
                     {
                         this.Current = null;
                         return false;
                     }
 
-                    this.count++;
+                    this.targetCount++;
                     return true;
                 }
 
-                if (this.count > 0)
+                if (circularBuffer.RemovedCount < this.targetCount)
                 {
                     this.Current = circularBuffer.Read();
-                    this.count--;
                     return true;
                 }
 

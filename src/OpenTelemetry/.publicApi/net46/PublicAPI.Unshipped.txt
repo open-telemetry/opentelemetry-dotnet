@@ -13,6 +13,7 @@ OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
 OpenTelemetry.BaseProcessor<T>.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>
 OpenTelemetry.Batch<T>.Batch() -> void
+OpenTelemetry.Batch<T>.Dispose() -> void
 OpenTelemetry.Batch<T>.Enumerator
 OpenTelemetry.Batch<T>.Enumerator.Current.get -> T
 OpenTelemetry.Batch<T>.Enumerator.Dispose() -> void
