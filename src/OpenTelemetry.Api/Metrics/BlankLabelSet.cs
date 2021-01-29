@@ -19,7 +19,7 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Blank or No-op labelset.
+    /// Blank or No-op LabelSet.
     /// </summary>
     public sealed class BlankLabelSet : LabelSet
     {
