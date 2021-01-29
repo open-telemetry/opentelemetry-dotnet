@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -23,16 +24,18 @@ namespace OpenTelemetry.Metrics
         where T : struct
     {
         private readonly ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>> measureBoundInstruments = new ConcurrentDictionary<LabelSet, BoundMeasureMetricSdkBase<T>>();
+        private readonly Func<LabelSet, BoundMeasureMetricSdkBase<T>> createMetricFunc;
         private string metricName;
 
         public MeasureMetricSdk(string name)
         {
             this.metricName = name;
+            this.createMetricFunc = (_) => this.CreateMetric();
         }
 
         public override BoundMeasureMetric<T> Bind(LabelSet labelset)
         {
-            return this.measureBoundInstruments.GetOrAdd(labelset, this.CreateMetric());
+            return this.measureBoundInstruments.GetOrAdd(labelset, this.createMetricFunc);
         }
 
         public override BoundMeasureMetric<T> Bind(IEnumerable<KeyValuePair<string, string>> labels)
