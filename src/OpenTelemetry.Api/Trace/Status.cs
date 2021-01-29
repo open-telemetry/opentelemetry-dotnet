@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace
         /// Note: Status Description is only valid for <see
         /// cref="StatusCode.Error"/> Status and will be ignored for all other
         /// <see cref="Trace.StatusCode"/> values. See the <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status">Status
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status">Status
         /// API</a> for details.
         /// </remarks>
         /// <param name="description">Description of the status.</param>

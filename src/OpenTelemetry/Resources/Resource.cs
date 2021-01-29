@@ -27,7 +27,7 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class Resource
     {
-        // This implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md
+        // This implementation follows https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Resource"/> class.
