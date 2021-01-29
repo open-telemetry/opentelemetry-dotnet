@@ -3,7 +3,7 @@
 ## Unreleased
 
 * In order to align with the
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
   the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`
   extension) will now be set as the `UNSET`, `OK`, or `ERROR` string
   representation instead of the `0`, `1`, or `2` integer representation.
@@ -142,7 +142,7 @@ Released 2020-08-28
   5.0.0-preview.8.20407.11.
 * Removed `CorrelationContext` and added `Baggage`, an implementation of the
   [`Baggage
-  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
+  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
   spec
   ([#1106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1106))
 * Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to

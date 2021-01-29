@@ -113,7 +113,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Adds resource attributes parsed from an environment variable to a
         /// <see cref="ResourceBuilder"/> following the <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
         /// SDK</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
