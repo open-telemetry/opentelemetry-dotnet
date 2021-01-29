@@ -40,6 +40,9 @@ namespace OpenTelemetry.Resources
         public static ResourceBuilder CreateDefault()
             => new ResourceBuilder().AddTelemetrySdk(); // TODO: Seek spec clarify on whether or not OtelEnvResourceDetector should be added by default.
 
+        public static ResourceBuilder CreateSDK()
+            => new ResourceBuilder().AddTelemetrySdk();
+
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.
         /// </summary>
