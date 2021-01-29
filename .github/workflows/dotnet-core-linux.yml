@@ -2,7 +2,9 @@ name: Linux
 
 on:
   pull_request:
-    branches: [ main, metrics ]
+    branches:
+      - main
+      - metrics
     paths-ignore:
     - '**.md'
 
