@@ -33,7 +33,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with SDK defaults
         /// added. See <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/semantic_conventions/">resource
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/">resource
         /// semantic conventions</a> for details.
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>

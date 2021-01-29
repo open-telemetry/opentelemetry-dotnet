@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.SqlClient.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient)
 
 This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 and
@@ -63,7 +63,7 @@ This instrumentation can be configured to change the default behavior by using
 ### Capturing 'db.statement'
 
 The `SqlClientInstrumentationOptions` class exposes several properties that can be
-used to configure how the [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+used to configure how the [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute is captured upon execution of a query.
 
 #### .NET Core - SetDbStatementForStoredProcedure and SetDbStatementForText
@@ -73,12 +73,12 @@ and `SetDbStatementForText`. These properties control capturing of
 `CommandType.StoredProcedure` and `CommandType.Text` respectively.
 
 `SetDbStatementForStoredProcedure` is _true_ by default and will set
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute to the stored procedure command name.
 
 `SetDbStatementForText` is _false_ by default (to prevent accidental capture of
 sensitive data that might be part of the SQL statement text). When set to
-`true`, the instrumentation will set [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+`true`, the instrumentation will set [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute to the text of the SQL command being executed.
 
 To disable capturing stored procedure commands use configuration like below.
@@ -107,7 +107,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 For .NET Framework, `SetDbStatementForStoredProcedure` and
 `SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
 property should be used to control whether this instrumentation should set the
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute to the text of the `SqlCommand` being executed. This could either be
 a name of a stored procedure or a full text of a `CommandType.Text` query.
 
@@ -195,7 +195,7 @@ get access to `SqlCommand` object.
 ### RecordException
 
 This option, available on .NET Core only, can be set to instruct the instrumentation
-to record SqlExceptions as Activity [events](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md).
+to record SqlExceptions as Activity [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
 
 The default value is `false` and can be changed by the code like below.
 
@@ -211,4 +211,4 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
 
-* [OpenTelemetry semantic conventions for database calls](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md)
+* [OpenTelemetry semantic conventions for database calls](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md)

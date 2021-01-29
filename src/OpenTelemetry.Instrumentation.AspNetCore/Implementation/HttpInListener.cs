@@ -115,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
 
                 if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
@@ -317,7 +317,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             // The RPC semantic conventions indicate the span name
             // should not have a leading forward slash.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#span-name
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#span-name
             activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
