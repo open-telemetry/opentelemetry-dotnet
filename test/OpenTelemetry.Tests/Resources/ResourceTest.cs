@@ -334,11 +334,11 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithTelemetrySDKAttributes()
         {
             // Arrange
-            var resource = ResourceBuilder.CreateSDK().AddEnvironmentVariableDetector().Build();
+            var resource = ResourceBuilder.CreateDefault().AddTelemetrySdk().AddEnvironmentVariableDetector().Build();
 
             // Assert
             var attributes = resource.Attributes;
-            Assert.Equal(3, attributes.Count());
+            Assert.Equal(4, attributes.Count());
             ValidateTelemetrySdkAttributes(attributes);
         }
 
