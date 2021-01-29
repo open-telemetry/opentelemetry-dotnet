@@ -2,7 +2,7 @@ name: Windows
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, metrics ]
     paths-ignore:
     - '**.md'
 
