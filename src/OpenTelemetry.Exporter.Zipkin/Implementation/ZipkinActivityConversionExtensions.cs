@@ -82,7 +82,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (tagState.StatusCode == StatusCode.Error)
             {
-                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
                 PooledList<KeyValuePair<string, object>>.Add(
                     ref tagState.Tags,
                     new KeyValuePair<string, object>(
@@ -196,7 +196,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                         if (!this.StatusCode.HasValue || this.StatusCode == Trace.StatusCode.Unset)
                         {
-                            // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                            // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
                             return true;
                         }
 
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     }
                     else if (key == SpanAttributeConstants.StatusDescriptionKey)
                     {
-                        // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#status
+                        // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
                         this.StatusDescription = strVal;
                         return true;
                     }
