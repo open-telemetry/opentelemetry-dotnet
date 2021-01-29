@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       logLevel:
-        description: 'Log level'     
+        description: 'Log level'
         required: true
         default: 'warning'
   schedule:
-    - cron: '0 0 * * *' # once in a day at 00:00  
+    - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
   build-pack:
@@ -17,12 +17,14 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        branches: [master,metrics]
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
-        
+        ref: ${{ matrix.branches }}
+
     - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
       with:
