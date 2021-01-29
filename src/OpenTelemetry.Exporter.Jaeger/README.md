@@ -36,7 +36,7 @@ properties:
   sent to the agent. (default `4096`).
 * `ProcessTags`: Which tags should be sent with telemetry.
 * `ExportProcessorType`: Whether the exporter should use
-  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#built-in-span-processors)
+  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
   .
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.

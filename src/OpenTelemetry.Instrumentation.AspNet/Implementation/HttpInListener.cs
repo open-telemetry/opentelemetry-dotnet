@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
             var path = requestValues.Path;
             activity.DisplayName = path;
 
