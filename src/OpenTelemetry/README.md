@@ -310,7 +310,7 @@ Tip: You can find the "current working directory" by calling
 [GetCurrentDirectory](https://docs.microsoft.com/dotnet/api/system.io.directory.getcurrentdirectory)
 method from your code.
 
-As an example, for [AspNetCore example project](../../examples/AspNetCore/Examples.AspNetCore.csproj)
+As an example, for [AspNetCore example project](../../examples/AspNetCore/Program.cs)
 
 * Running the project with with Visual Studio, the "current working directory"
   is `examples/AspNetCore`.
