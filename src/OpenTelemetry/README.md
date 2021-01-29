@@ -213,7 +213,7 @@ logging, by supporting `Activity` and `LogRecord` respectively.*
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the default is to use a resource indicating
 this [Telemetry
-SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk).
+SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
 `SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
 `ResourceBuilder` on the provider. When the provider is built, it automatically
 builds the final `Resource` from the configured `ResourceBuilder`. As with
