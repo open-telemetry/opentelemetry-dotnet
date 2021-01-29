@@ -39,6 +39,7 @@
 * Metrics removed as it is not part 1.0.0 release. See issue
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
   for details on Metric release plans.
+* Fix Resource attribute telemetry.sdk.version to have correct file version.
 
 ## 1.0.0-rc1.1
 
