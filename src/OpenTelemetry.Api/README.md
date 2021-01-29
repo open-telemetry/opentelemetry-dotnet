@@ -39,9 +39,9 @@ API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spe
 [Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md),
 [Context and Propagation
-API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/context),
+API](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/context),
 and a set of [semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
+conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
 
 ### Tracing API
 
@@ -174,7 +174,7 @@ here as well.
     this activity are protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
-   conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
+   conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
    It is highly recommended to check `activity.IsAllDataRequested`, before
    populating any tags which are not readily available. `IsAllDataRequested` is
    the same as
