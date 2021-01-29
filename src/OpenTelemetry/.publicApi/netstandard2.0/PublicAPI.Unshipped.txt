@@ -256,8 +256,6 @@ override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions> configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
-static OpenTelemetry.Resources.ResourceBuilder.CreateSDK() -> OpenTelemetry.Resources.ResourceBuilder
-static OpenTelemetry.Resources.ResourceBuilderExtensions.AddDefault(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> OpenTelemetry.Resources.ResourceBuilder
