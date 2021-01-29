@@ -18,6 +18,9 @@
 * `Status.WithDescription` will now ignore the provided description if the
   `Status.StatusCode` is anything other than `ERROR`.
   ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
+* Relax System.Diagnostics.DiagnosticSource version requirement to allow
+  versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
+  allowed.
 
 ## 1.0.0-rc1.1
 
