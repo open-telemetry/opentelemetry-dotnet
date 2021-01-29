@@ -95,6 +95,45 @@ namespace OpenTelemetry.Internal.Tests
 
         [Fact]
         [Trait("Platform", "Any")]
+        public void SelfDiagnosticsEventListener_DateTimeGetBytes()
+        {
+            var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+            var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+
+            // Check DateTimeKind of Utc, Local, and Unspecified
+            DateTime[] datetimes = new DateTime[]
+            {
+                DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Utc),
+                DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Local),
+                DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Unspecified),
+                DateTime.UtcNow,
+                DateTime.Now,
+            };
+
+            // Expect to match output string from DateTime.ToString("O")
+            string[] expected = new string[datetimes.Length];
+            for (int i = 0; i < datetimes.Length; i++)
+            {
+                expected[i] = datetimes[i].ToString("O");
+            }
+
+            byte[] buffer = new byte[40 * datetimes.Length];
+            int pos = 0;
+
+            // Get string after DateTimeGetBytes() write into a buffer
+            string[] results = new string[datetimes.Length];
+            for (int i = 0; i < datetimes.Length; i++)
+            {
+                int len = listener.DateTimeGetBytes(datetimes[i], buffer, pos);
+                results[i] = Encoding.Default.GetString(buffer, pos, len);
+                pos += len;
+            }
+
+            Assert.Equal(expected, results);
+        }
+
+        [Fact]
+        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
         {
             // Arrange
