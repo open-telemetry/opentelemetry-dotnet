@@ -26,6 +26,19 @@
   them to supported data types (long for int/short, double for float). For
   invalid attributes we now throw an exception instead of logging an error.
   ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
+* Merging "this" resource with an "other" resource now prioritizes the "other"
+  resource's attributes in a conflict. We've rectified to follow a recent
+  change to the spec. We previously prioritized "this" resource's tags.
+  ([#1728](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1728))
+* `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
+  after the export operation has completed.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
+* Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
+  by another process in read-only mode for .NET Framework.
+  ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 
@@ -52,7 +65,7 @@ Released 2020-Nov-17
   `TracerProviderBuilder.SetResourceBuilder`.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
 * By default `TracerProvider` will set a `Resource` containing [Telemetry
-    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)
+    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk)
     details
     ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533)):
   * `telemetry.sdk.name` = `opentelemetry`
