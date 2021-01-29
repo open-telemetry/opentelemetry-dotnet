@@ -21,6 +21,9 @@
 * Metrics removed as it is not part 1.0.0 release. See issue
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
   for details on Metric release plans.
+* Relax System.Diagnostics.DiagnosticSource version requirement to allow
+  versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
+  allowed.
 
 ## 1.0.0-rc1.1
 
