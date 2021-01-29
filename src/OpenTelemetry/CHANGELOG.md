@@ -36,6 +36,9 @@
 * Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
   by another process in read-only mode for .NET Framework.
   ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 
