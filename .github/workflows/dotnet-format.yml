@@ -2,7 +2,7 @@ name: dotnet format
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, metrics ]
     paths:
     - '**.cs'
     - '.editorconfig'

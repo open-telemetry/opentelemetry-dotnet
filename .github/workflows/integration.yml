@@ -2,11 +2,11 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, metrics ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main ]
+    branches: [ main, metrics ]
     paths-ignore:
     - '**.md'
 
