@@ -30,14 +30,20 @@ namespace OpenTelemetry.Resources
         {
         }
 
-
+        /// <summary>
+        /// Creates a <see cref="ResourceBuilder"/> instance with Default
+        /// service.name added. See <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#service/">resource
+        /// semantic conventions</a> for details.
+        /// </summary>
+        /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
             => new ResourceBuilder().AddDefault();
 
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Telemetry
         /// SDK added. See <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/semantic_conventions#telemetry-sdk/">resource
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk/">resource
         /// semantic conventions</a> for details.
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
