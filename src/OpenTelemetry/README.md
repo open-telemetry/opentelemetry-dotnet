@@ -311,11 +311,15 @@ Tip: You can find the "current working directory" by calling
 method from your code.
 
 As an example, for [AspNetCore example project](../../examples/AspNetCore/Examples.AspNetCore.csproj)
-| Running method  | Path |
-| ------------- | ------------- |
-| Running the project with `dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`  | `examples/AspNetCore`  |
-| Running the project with Visual Studio  | `examples/AspNetCore`  |
-| Running the executable `Examples.AspNetCore.exe` in `examples/AspNetCore/bin/Debug/netcoreapp3.1` directory  | `examples/AspNetCore/bin/Debug/netcoreapp3.1`  |
+
+* Running the project with with Visual Studio, the "current working directory"
+  is `examples/AspNetCore`.
+* Running the project with
+  `dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`,
+  the "current working directory" is `examples/AspNetCore`.
+* Running the executable `Examples.AspNetCore.exe` in
+  `examples/AspNetCore/bin/Debug/netcoreapp3.1` directory, the "current working
+  directory" is `examples/AspNetCore/bin/Debug/netcoreapp3.1`.
 
 ### Configuration Parameters
 
