@@ -41,7 +41,7 @@
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>[1.4.0,6.0)</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>[5.0.0,6.0)</SystemDiagnosticSourcePkgVer>
+    <SystemDiagnosticSourcePkgVer>5.0.0</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>[4.7.0,6.0)</SystemReflectionEmitLightweightPkgVer>
     <SystemTextJsonPkgVer>[4.7.0,6.0)</SystemTextJsonPkgVer>
     <SystemThreadingTasksExtensionsPkgVer>[4.5.3,6.0)</SystemThreadingTasksExtensionsPkgVer>

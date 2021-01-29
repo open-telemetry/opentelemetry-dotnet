@@ -31,7 +31,7 @@ Released 2020-Nov-17
   ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
 * Removed `ServiceName` from options available on the `AddJaegerExporter`
   extension. It is not required by the
-  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md).
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
   ([#1572](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1572))
 
 ## 0.8.0-beta.1
