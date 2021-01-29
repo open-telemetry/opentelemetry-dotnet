@@ -10,6 +10,10 @@
   `ConsoleExporter` to get rid of type specific check in the class
   ([#1593](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1593))
 
+* Replaced Debug.WriteLine with Trace.WriteLine to display the logs to the Debug
+  window with Release configuration
+  ([#1719](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1719))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

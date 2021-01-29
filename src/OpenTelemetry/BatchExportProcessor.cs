@@ -217,7 +217,10 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    this.exporter.Export(new Batch<T>(this.circularBuffer, this.maxExportBatchSize));
+                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
+                    {
+                        this.exporter.Export(batch);
+                    }
 
                     this.dataExportedNotification.Set();
                     this.dataExportedNotification.Reset();

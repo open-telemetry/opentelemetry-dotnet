@@ -62,7 +62,7 @@ namespace Utils.Messaging
             Baggage.Current = parentContext.Baggage;
 
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#span-name
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/messaging.md#span-name
             var activityName = $"{ea.RoutingKey} receive";
 
             using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext.ActivityContext))

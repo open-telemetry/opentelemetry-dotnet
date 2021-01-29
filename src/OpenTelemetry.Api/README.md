@@ -33,22 +33,22 @@ their application/library. The API only surfaces necessary abstractions to
 instrument an application/library. It does not address concerns like how
 telemetry is exported to a specific telemetry backend, how to sample the
 telemetry, etc. The API consists of [Tracing
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md),
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md),
 [Logging
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md),
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md),
 [Metrics
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md),
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md),
 [Context and Propagation
-API](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/context),
+API](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/context),
 and a set of [semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
+conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
 
 ### Tracing API
 
 [Tracing
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md)
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md)
 allows users to generate
-[Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span),
+[Spans](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span),
 which represent a single operation within a trace. Spans can be nested to form a
 trace tree. Each trace contains a root span, which typically describes the
 entire operation and, optionally one or more child-spans for its
@@ -64,7 +64,7 @@ API](https://docs.microsoft.com/dotnet/core/extensions/logging).
 ### Metrics API
 
 [Metrics
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/metrics/api.md)
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md)
 allows users to capture measurements about the execution of a computer program
 at runtime. The Metrics API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
@@ -77,7 +77,7 @@ heavily. Please check the [Metric support plan](https://github.com/open-telemetr
 
 .NET runtime had `Activity` class for a long time, which was meant to be used
 for tracing purposes and represents the equivalent of the OpenTelemetry
-[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span).
+[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
 OpenTelemetry .NET is reusing the existing `Activity` and associated classes to
 represent the OpenTelemetry `Span`. This means, users can instrument their
 applications/libraries to emit OpenTelemetry compatible traces by using just the
@@ -87,7 +87,7 @@ The `Activity` and associated classes are shipped as part of
 `System.Diagnostics.DiagnosticSource` nuget package. Version 5.0.0 of this
 package contains improvements to `Activity` class which makes it more closely
 aligned with OpenTelemetry [API
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md).
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
 
 Even though `Activity` enables all the scenarios OpenTelemetry supports, users
 who are already familiar with OpenTelemetry terminology may find it easy to
@@ -116,7 +116,7 @@ required only for the following scenarios:
    you want to compare the differences.
 2. Your library performs communication with other libraries/components, and want
    to access
-   [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md),
+   [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md),
    to inject and extract context data. Some of the most common libraries
    requiring this include
    [HttpClient](../OpenTelemetry.Instrumentation.Http/README.md),
@@ -174,11 +174,11 @@ here as well.
     this activity are protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
-   conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions).
+   conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
    It is highly recommended to check `activity.IsAllDataRequested`, before
    populating any tags which are not readily available. `IsAllDataRequested` is
    the same as
-   [Span.IsRecording](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#isrecording)
+   [Span.IsRecording](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording)
    and will be false when samplers decide to not record the activity, and this
    can be used to avoid any expensive operation to retrieve tags.
 
@@ -227,7 +227,7 @@ chose not to sample this activity.
 
     `Activity` has a property called `ActivityKind` which represents
     OpenTelemetry
-    [SpanKind](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#spankind).
+    [SpanKind](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#spankind).
     The default value will be `Internal`. `StartActivity` allows passing the
     `ActivityKind` while starting an `Activity`.
 
@@ -238,7 +238,7 @@ chose not to sample this activity.
 2. Parent using `ActivityContext`
 
     `ActivityContext` represents the OpenTelemetry
-    [SpanContext](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#spancontext).
+    [SpanContext](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#spancontext).
     While starting a new `Activity`, the currently active `Activity` is
     automatically taken as the parent of the new activity being created.
     `StartActivity` allows passing explicit `ActivityContext` to override this
@@ -271,14 +271,14 @@ chose not to sample this activity.
 3. Initial Tags
 
    `Tags` in `Activity` represents the OpenTelemetry [Span
-   Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-attributes).
+   Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes).
    Earlier sample showed the usage of `SetTag` method of `Activity` to add tags.
    Refer to the
-   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/common/common.md#attribute-and-label-naming)
+   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attribute-and-label-naming)
    for best practices on naming tags. It is also possible to provide an initial
    set of tags during activity creation, as shown below. Tags provided at
    activity creation are accessible for
-   [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler),
+   [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler),
    whereas any tags added using `SetTag` are not available for samplers.
 
     ```csharp
@@ -300,7 +300,7 @@ chose not to sample this activity.
 
    Apart from the parent-child relation, activities can be linked using
    `ActivityLinks` which represent the OpenTelemetry
-   [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#links-between-spans).
+   [Links](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans).
    The linked activities must be provided during the creation time, as shown
    below.
 
@@ -335,7 +335,7 @@ chose not to sample this activity.
 ### Adding Events
 
 It is possible to [add
-events](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#add-events)
+events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#add-events)
 to `Activity` using the `AddEvent` method as shown below.
 
 ```csharp
@@ -348,7 +348,7 @@ corresponding overloads of `ActivityEvent`.
 ### Setting Status
 
 OpenTelemetry defines a concept called
-[Status](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status)
+[Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
 to be associated with `Activity`. There is no `Status` class in .NET, and hence
 `Status` is set to an `Activity` using the following special tags:
 
@@ -384,7 +384,7 @@ example usage of this shim.
 
 [OpenTelemetry.API](https://www.nuget.org/packages/opentelemetry.api) must be
 used to access [Propagators
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md)
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md)
 which defines how to extract and inject context across process boundaries. This
 is typically required if you are not using any of the .NET communication
 libraries which has instrumentations already available which does the

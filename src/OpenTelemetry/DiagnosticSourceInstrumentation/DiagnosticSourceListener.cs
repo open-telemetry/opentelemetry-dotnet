@@ -41,7 +41,11 @@ namespace OpenTelemetry.Instrumentation
         {
             if (!this.handler.SupportsNullActivity && Activity.Current == null)
             {
-                InstrumentationEventSource.Log.NullActivity(value.Key);
+                if (!Sdk.SuppressInstrumentation)
+                {
+                    InstrumentationEventSource.Log.NullActivity(value.Key);
+                }
+
                 return;
             }
 
