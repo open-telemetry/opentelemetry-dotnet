@@ -98,7 +98,7 @@ Approvers
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*
 
 Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
@@ -110,7 +110,7 @@ Maintainers
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
 
 ### Thanks to all the people who have contributed
 
