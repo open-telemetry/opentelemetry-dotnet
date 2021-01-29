@@ -312,10 +312,7 @@ method from your code.
 
 As an example, for [AspNetCore example project](../../examples/AspNetCore/README.md),
 
-* Running the project from Visual Studio (F5) or running the project with 
-`dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`, the "current working directory"
-  is `examples/AspNetCore`.
-* Running the project with
+* Running the project from Visual Studio (F5) or running the project with
   `dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`,
   the "current working directory" is `examples/AspNetCore`.
 * Running the executable `Examples.AspNetCore.exe` in
