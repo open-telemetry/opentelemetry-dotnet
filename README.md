@@ -21,9 +21,12 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 
 ## Getting Started
 
-If you are new here, please see getting started docs for
-[logs](./docs/logs/getting-started/README.md),
-[trace](./docs/trace/getting-started/README.md).
+If you are new here, please read the getting started docs:
+
+* [logs](./docs/logs/getting-started/README.md)
+* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started.md)
+  (experimental)
+* [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
