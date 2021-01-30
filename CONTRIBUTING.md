@@ -114,6 +114,14 @@ Add your fork as an origin:
 git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
 ```
 
+By default your work will be targeting the `main` branch. If you want to work on
+the experimental metrics feature, please switch to the `metrics` feature branch:
+
+```sh
+# only do this when you want to work on the experimental metrics feature
+git checkout metrics
+```
+
 Run tests:
 
 ```sh
