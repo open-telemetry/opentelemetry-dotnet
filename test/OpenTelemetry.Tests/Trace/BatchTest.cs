@@ -49,6 +49,38 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void CheckDispose()
+        {
+            var value = "a";
+            var batch = new Batch<string>(value);
+            batch.Dispose(); // A test to make sure it doesn't bomb on a null CircularBuffer.
+
+            var circularBuffer = new CircularBuffer<string>(10);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            batch = new Batch<string>(circularBuffer, 10); // Max size = 10
+            batch.GetEnumerator().MoveNext();
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(1, circularBuffer.RemovedCount);
+            batch.Dispose(); // Test anything remaining in the batch is drained when disposed.
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(3, circularBuffer.RemovedCount);
+            batch.Dispose(); // Verify we don't go into an infinite loop or thrown when empty.
+
+            circularBuffer = new CircularBuffer<string>(10);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            batch = new Batch<string>(circularBuffer, 2); // Max size = 2
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(0, circularBuffer.RemovedCount);
+            batch.Dispose(); // Test the batch is drained up to max size.
+            Assert.Equal(3, circularBuffer.AddedCount);
+            Assert.Equal(2, circularBuffer.RemovedCount);
+        }
+
+        [Fact]
         public void CheckEnumerator()
         {
             var value = "a";
@@ -61,6 +93,33 @@ namespace OpenTelemetry.Trace.Tests
             batch = new Batch<string>(circularBuffer, 1);
             enumerator = batch.GetEnumerator();
             this.ValidateEnumerator(enumerator, value);
+        }
+
+        [Fact]
+        public void CheckMultipleEnumerator()
+        {
+            var value = "a";
+            var circularBuffer = new CircularBuffer<string>(10);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            circularBuffer.Add(value);
+            var batch = new Batch<string>(circularBuffer, 10);
+
+            int itemsProcessed = 0;
+            foreach (var item in batch)
+            {
+                itemsProcessed++;
+            }
+
+            Assert.Equal(3, itemsProcessed);
+
+            itemsProcessed = 0;
+            foreach (var item in batch)
+            {
+                itemsProcessed++;
+            }
+
+            Assert.Equal(0, itemsProcessed);
         }
 
         [Fact]

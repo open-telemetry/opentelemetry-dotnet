@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
         /// Sets the status of activity execution.
         /// Activity class in .NET does not support 'Status'.
         /// This extension provides a workaround to store Status as special tags with key name of otel.status_code and otel.status_description.
-        /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status.
+        /// Read more about SetStatus here https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>

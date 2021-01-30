@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             if (activity.IsAllDataRequested == true)
             {
-                // see https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
+                // see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
 
                 // Timing example:
                 // command.CommandCreated; //2019-01-10 22:18:28Z

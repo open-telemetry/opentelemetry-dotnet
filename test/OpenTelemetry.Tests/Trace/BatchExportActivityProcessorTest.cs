@@ -176,5 +176,25 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Empty(exportedItems);
             Assert.Equal(0, processor.ProcessedCount);
         }
+
+        [Fact]
+        public void CheckExportDrainsBatchOnFailure()
+        {
+            using var exporter = new InMemoryExporter<Activity>(null);
+            using var processor = new BatchActivityExportProcessor(
+                exporter,
+                maxQueueSize: 3,
+                maxExportBatchSize: 3);
+
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
+            processor.OnEnd(activity);
+            processor.OnEnd(activity);
+            processor.Shutdown();
+
+            Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+        }
     }
 }
