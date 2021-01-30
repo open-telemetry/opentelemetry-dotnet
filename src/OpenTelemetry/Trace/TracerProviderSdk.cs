@@ -97,6 +97,10 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
+                    // Spec says IsRecording must be true once span ends.
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+                    activity.IsAllDataRequested = true;
+
                     if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                     {
                         this.processor?.OnEnd(activity);
