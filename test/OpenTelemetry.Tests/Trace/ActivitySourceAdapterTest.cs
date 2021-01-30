@@ -24,6 +24,8 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class ActivitySourceAdapterTest : IDisposable
     {
+        private ActivitySource activitySource;
+        private TracerProvider tracerProvider;
         private TestSampler testSampler;
         private TestActivityProcessor testProcessor;
         private ActivitySourceAdapter activitySourceAdapter;
@@ -38,7 +40,14 @@ namespace OpenTelemetry.Trace.Tests
         {
             this.testSampler = new TestSampler();
             this.testProcessor = new TestActivityProcessor();
+            this.activitySource = new ActivitySource("testSource", "1.0.0");
             this.activitySourceAdapter = new ActivitySourceAdapter(this.testSampler, this.testProcessor);
+
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(this.testSampler)
+                .AddProcessor(this.testProcessor)
+                .AddSource("testSource")
+                .Build();
         }
 
         [Fact]
@@ -62,7 +71,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, kind, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, kind, this.activitySource);
 
             Assert.Equal(kind, activity.Kind);
         }
@@ -100,7 +109,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Producer, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Producer, this.activitySource);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
@@ -141,7 +150,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, this.activitySource);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
@@ -164,7 +173,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, this.activitySource);
             if (sampling != SamplingDecision.Drop)
             {
                 Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
@@ -186,7 +195,7 @@ namespace OpenTelemetry.Trace.Tests
             // and becomes root activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, this.activitySource);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -217,7 +226,7 @@ namespace OpenTelemetry.Trace.Tests
             var activity = new Activity("test").SetParentId(remoteParentId);
             activity.TraceStateString = tracestate;
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, this.activitySource);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
         }
@@ -250,16 +259,41 @@ namespace OpenTelemetry.Trace.Tests
             // i.e of the parent Activity
             var activity = new Activity("test");
             activity.Start();
-            this.activitySourceAdapter.Start(activity, ActivityKind.Client, new ActivitySource("test", "1.0.0"));
+            this.activitySourceAdapter.Start(activity, ActivityKind.Client, this.activitySource);
             activity.Stop();
             this.activitySourceAdapter.Stop(activity);
 
             activityLocalParent.Stop();
         }
 
+        [Fact]
+        public void ActivitySourceAdapter_ExternalActivityListener_Test()
+        {
+            using var activityListener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == this.activitySource.Name,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+            };
+
+            ActivitySource.AddActivityListener(activityListener);
+
+            this.testSampler.SamplingAction = (samplingParams) =>
+                new SamplingResult(SamplingDecision.Drop, null);
+
+            var activity = new Activity("test");
+            activity.Start();
+            this.activitySourceAdapter.Start(activity, ActivityKind.Internal, this.activitySource);
+
+            activity.Stop();
+
+            Assert.True(activity.IsAllDataRequested);
+        }
+
         public void Dispose()
         {
             Activity.Current = null;
+            this.tracerProvider.Dispose();
+            this.activitySource.Dispose();
             this.testProcessor.Dispose();
             GC.SuppressFinalize(this);
         }
