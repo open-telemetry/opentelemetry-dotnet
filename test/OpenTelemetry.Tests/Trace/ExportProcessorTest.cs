@@ -25,18 +25,12 @@ namespace OpenTelemetry.Trace.Tests
     public class ExportProcessorTest
     {
         private const string ActivitySourceName = "ActivityExportProcessorTest";
-        private List<Activity> exportedActivities;
-
-        public ExportProcessorTest()
-        {
-            this.exportedActivities = new List<Activity>();
-        }
 
         [Fact]
         public void ExportProcessorIgnoresActivityWhenDropped()
         {
             var sampler = new AlwaysOffSampler();
-            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(this.exportedActivities));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -57,7 +51,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ExportProcessorIgnoresActivityMarkedAsRecordOnly()
         {
             var sampler = new RecordOnlySampler();
-            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(this.exportedActivities));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -78,7 +72,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ExportProcessorExportsActivityMarkedAsRecordAndSample()
         {
             var sampler = new AlwaysOnSampler();
-            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(this.exportedActivities));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
