@@ -46,25 +46,26 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         }
 
         [Theory]
-        [InlineData("http://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost/", 0, null, "TraceContext", true)]
-        [InlineData("https://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
-        [InlineData("https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
-        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
-        [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
-        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
-        [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
+        [InlineData("http://localhost/", 0, null, "TraceContext", "/")]
+        [InlineData("http://localhost/", 0, null, "TraceContext", "/", true)]
+        [InlineData("https://localhost/", 0, null, "TraceContext", "/")]
+        [InlineData("http://localhost:443/", 0, null, "TraceContext", "/")] // Test http over 443
+        [InlineData("https://localhost:80/", 0, null, "TraceContext", "/")] // Test https over 80
+        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext", "Index")]
+        [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext", "about_attr_route/{customerId}")]
+        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext", "api/weatherforecast")]
+        [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext", "subroute/{customerId}")]
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", false, "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextMatchParent", "api/value/{id}")]
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}")]
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}", false, null, true)]
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
             string routeTemplate,
             string carrierFormat,
+            string expectedDisplayName,
             bool setStatusToErrorInEnrich = false,
             string filter = null,
             bool restoreCurrentActivity = false)
@@ -223,7 +224,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(expectedTraceId, span.TraceId);
             Assert.Equal(expectedSpanId, span.ParentSpanId);
 
-            Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
+            //Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
+            Assert.Equal(expectedDisplayName, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
 

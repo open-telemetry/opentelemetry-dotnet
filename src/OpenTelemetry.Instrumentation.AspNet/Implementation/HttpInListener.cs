@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Web.Routing;
@@ -183,6 +184,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activityToEnrich.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 
+                var request = context.Request;
                 var routeData = context.Request.RequestContext.RouteData;
 
                 string template = null;
@@ -206,9 +208,36 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 if (!string.IsNullOrEmpty(template))
                 {
-                    // Override the name that was previously set to the path part of URL.
-                    activityToEnrich.DisplayName = template;
-                    activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, template);
+                    bool isRootPath = request.Path == "/";
+                    bool isIdOptional = false;
+
+                    // For urls without ID, for e.g. GET all resources of a kind (/api/Values/), we don't need to use template information
+                    if (!isRootPath && request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length <
+                        template.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length)
+                    {
+                        isIdOptional = true;
+                        activityToEnrich.DisplayName = activity.DisplayName.Substring(1); // Remove '/' from beginning of the activity name for consistency
+                    }
+
+                    // Override the name that was previously set to the path part of URL. If it is a root path or if Id is optional, activity DisplayName
+                    // is already set correctly in OnStartActivity method
+                    if (!isRootPath && !isIdOptional)
+                    {
+                        if (routeData.Values.TryGetValue("controller", out object controller))
+                        {
+                            activityToEnrich.DisplayName = template.Replace("{controller}", controller.ToString());
+                            if (routeData.Values.TryGetValue("action", out object action))
+                            {
+                                activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{action}", action.ToString());
+                            }
+                        }
+                        else
+                        {
+                            activityToEnrich.DisplayName = template;
+                        }
+                    }
+
+                    activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, activityToEnrich.DisplayName);
                 }
 
                 try
