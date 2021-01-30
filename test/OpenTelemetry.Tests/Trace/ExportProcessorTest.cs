@@ -17,15 +17,20 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class ExportProcessorTest
     {
         private const string ActivitySourceName = "ActivityExportProcessorTest";
-        private List<Activity> exportedActivities = new List<Activity>();
+        private List<Activity> exportedActivities;
+
+        public ExportProcessorTest()
+        {
+            this.exportedActivities = new List<Activity>();
+        }
 
         [Fact]
         public void ExportProcessorIgnoresActivityWhenDropped()
