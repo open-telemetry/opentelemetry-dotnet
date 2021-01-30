@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-## 1.0.0-RC2
-
-Released 2021-Jan-29
-
 * The following extension methods on `ResourceBuilder` has been moved from the
   `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
   `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
