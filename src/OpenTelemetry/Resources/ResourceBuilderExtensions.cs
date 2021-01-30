@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Resources
 {
@@ -24,19 +25,19 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public static class ResourceBuilderExtensions
     {
-        private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
+        private static readonly string FileVersion = FileVersionInfo.GetVersionInfo(typeof(Resource).Assembly.Location).FileVersion;
 
         private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
             [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Version.ToString(),
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = FileVersion,
         });
 
         /// <summary>
         /// Adds service information to a <see cref="ResourceBuilder"/>
         /// following <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#service">semantic
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#service">semantic
         /// conventions</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
@@ -89,7 +90,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Adds service information to a <see cref="ResourceBuilder"/>
         /// following <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk">semantic
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk">semantic
         /// conventions</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
@@ -113,7 +114,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Adds resource attributes parsed from an environment variable to a
         /// <see cref="ResourceBuilder"/> following the <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
         /// SDK</a>.
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>

@@ -41,6 +41,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("console-test"))
+                    .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
                     .AddConsoleExporter()
                     .Build();
 
@@ -57,6 +58,28 @@ namespace Examples.Console
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// An example of custom processor which
+        /// can be used to add more tags to an activity.
+        /// </summary>
+        internal class MyProcessor : BaseProcessor<Activity>
+        {
+            public override void OnStart(Activity activity)
+            {
+                if (activity.IsAllDataRequested)
+                {
+                    if (activity.Kind == ActivityKind.Server)
+                    {
+                        activity.SetTag("customServerTag", "Custom Tag Value for server");
+                    }
+                    else if (activity.Kind == ActivityKind.Client)
+                    {
+                        activity.SetTag("customClientTag", "Custom Tag Value for Client");
+                    }
+                }
+            }
         }
     }
 }
