@@ -244,7 +244,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(expectedTraceId, span.TraceId);
             Assert.Equal(expectedSpanId, span.ParentSpanId);
 
-            // Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(expectedDisplayName, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
