@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Microsoft.Data.SqlClient v2.0.0 and higher is now properly instrumented
   on .NET Framework.
   ([#1599](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1599))
