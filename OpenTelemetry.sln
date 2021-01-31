@@ -100,15 +100,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
 		.github\workflows\docfx.yml = .github\workflows\docfx.yml
-		.github\workflows\dotnet-core-cov.yml = .github\workflows\dotnet-core-cov.yml
-		.github\workflows\dotnet-core-linux.yml = .github\workflows\dotnet-core-linux.yml
-		.github\workflows\dotnet-core-win.yml = .github\workflows\dotnet-core-win.yml
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
 		.github\workflows\integration.yml = .github\workflows\integration.yml
+		.github\workflows\linux-ci.yml = .github\workflows\linux-ci.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\publish-myget.yml = .github\workflows\publish-myget.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
+		.github\workflows\windows-ci.yml = .github\workflows\windows-ci.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C1542297-8763-4DF4-957C-489ED771C21D}"
