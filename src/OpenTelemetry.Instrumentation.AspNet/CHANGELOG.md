@@ -9,6 +9,9 @@ Released 2020-Nov-17
 * AspNetInstrumentation sets ActivitySource to activities created outside
   ActivitySource.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
+* Updated the logic to set the Activity DisplayName correctly in the
+  OnStopActivity method of HttpInListener class.
+  ([#1764](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1764/))
 
 ## 0.8.0-beta.1
 
