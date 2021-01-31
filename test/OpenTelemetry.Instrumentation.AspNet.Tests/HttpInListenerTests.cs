@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Web.Routing;
+using System.Web.UI;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
@@ -34,10 +35,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
     public class HttpInListenerTests : IDisposable
     {
         private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
+        private Dictionary<string, object> routeDataValues;
 
         public HttpInListenerTests()
         {
             this.fakeAspNetDiagnosticSource = new FakeAspNetDiagnosticSource();
+            this.routeDataValues = new Dictionary<string, object>();
         }
 
         public void Dispose()
@@ -46,26 +49,29 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         }
 
         [Theory]
-        [InlineData("http://localhost/", 0, null, "TraceContext", "/")]
-        [InlineData("http://localhost/", 0, null, "TraceContext", "/", true)]
-        [InlineData("https://localhost/", 0, null, "TraceContext", "/")]
-        [InlineData("http://localhost:443/", 0, null, "TraceContext", "/")] // Test http over 443
-        [InlineData("https://localhost:80/", 0, null, "TraceContext", "/")] // Test https over 80
-        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext", "Index")]
-        [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext", "about_attr_route/{customerId}")]
-        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext", "api/weatherforecast")]
+        [InlineData("http://localhost/", 0, null, "TraceContext", "/", "Home", "Action", null)]
+        [InlineData("http://localhost/", 0, null, "TraceContext", "/", "Home", "Action", null, true)]
+        [InlineData("https://localhost/", 0, null, "TraceContext", "/", "Home", "Action", null)]
+        [InlineData("http://localhost:443/", 0, null, "TraceContext", "/", "Home", "Action", null)] // Test http over 443
+        [InlineData("https://localhost:80/", 0, null, "TraceContext", "/", "Home", "Action", null)] // Test https over 80
+        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext", "Index", "Index")]
+        [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext", "about_attr_route/{customerId}", "about_attr_route", null, "10")]
+        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext", "api/weatherforecast", "weatherforecast")]
         [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext", "subroute/{customerId}")]
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", false, "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", false, "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextMatchParent", "api/value/{id}")]
-        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}")]
-        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}", false, null, true)]
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", "value", null, null, false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", 0, null, "TraceContext", "api/value", "value", null, null, false, "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextMatchParent", "api/value/{id}", "value", null, "2")]
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}", "value", null, "2")]
+        [InlineData("http://localhost/api/value/2", 3, "api/{controller}/{id}", "CustomContextNonmatchParent", "api/value/{id}", "value", null, "2", false, null, true)]
         public void AspNetRequestsAreCollectedSuccessfully(
             string url,
             int routeType,
             string routeTemplate,
             string carrierFormat,
             string expectedDisplayName,
+            string controller = null,
+            string action = null,
+            string id = null,
             bool setStatusToErrorInEnrich = false,
             string filter = null,
             bool restoreCurrentActivity = false)
@@ -84,6 +90,21 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     {
                         Route = new Route(routeTemplate, null),
                     };
+                    if (!string.IsNullOrEmpty(controller))
+                    {
+                        routeData.Values.Add("controller", controller);
+                    }
+
+                    if (!string.IsNullOrEmpty(action))
+                    {
+                        routeData.Values.Add("action", action);
+                    }
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        routeData.Values.Add("id", id);
+                    }
+
                     break;
                 case 4: // Attribute routing WebAPI.
                     routeData = new RouteData();
@@ -224,7 +245,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(expectedTraceId, span.TraceId);
             Assert.Equal(expectedSpanId, span.ParentSpanId);
 
-            //Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
+            // Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(expectedDisplayName, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
