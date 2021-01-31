@@ -34,12 +34,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
     public class HttpInListenerTests : IDisposable
     {
         private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
-        private Dictionary<string, object> routeDataValues;
 
         public HttpInListenerTests()
         {
             this.fakeAspNetDiagnosticSource = new FakeAspNetDiagnosticSource();
-            this.routeDataValues = new Dictionary<string, object>();
         }
 
         public void Dispose()
