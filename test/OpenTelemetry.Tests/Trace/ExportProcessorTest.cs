@@ -14,14 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.Console;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class ExportProcessorTest
     {
@@ -31,7 +28,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorIgnoresActivityWhenDropped()
         {
             var sampler = new AlwaysOffSampler();
-            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -52,7 +49,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorIgnoresActivityMarkedAsRecordOnly()
         {
             var sampler = new RecordOnlySampler();
-            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -73,7 +70,7 @@ namespace OpenTelemetry.Tests.Trace
         public void ExportProcessorExportsActivityMarkedAsRecordAndSample()
         {
             var sampler = new AlwaysOnSampler();
-            var processor = new TestActivityExportProcessor(new ConsoleActivityExporter(null));
+            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var sdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
