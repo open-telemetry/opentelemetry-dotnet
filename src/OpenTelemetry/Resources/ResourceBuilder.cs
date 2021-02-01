@@ -34,7 +34,8 @@ namespace OpenTelemetry.Resources
         {
             [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
                 + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
-                ? ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName : string.Empty),
+                ? string.Empty :
+                ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
         });
 
         /// <summary>
