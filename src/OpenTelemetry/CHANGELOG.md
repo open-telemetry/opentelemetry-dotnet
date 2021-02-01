@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 * Default `Resource` will now contain service.name instead of Telemetry SDK.
   [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
 
