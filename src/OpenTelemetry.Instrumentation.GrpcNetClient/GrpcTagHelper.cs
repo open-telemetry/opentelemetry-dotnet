@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
 
         /// <summary>
         /// Helper method that populates span properties from RPC status code according
-        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md#status.
+        /// to https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#status.
         /// </summary>
         /// <param name="statusCode">RPC status code.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>

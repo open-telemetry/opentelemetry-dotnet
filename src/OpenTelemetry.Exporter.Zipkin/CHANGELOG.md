@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `ZipkinExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
@@ -22,6 +26,10 @@
 
 * Span tags will no longer be populated with Resource Attributes.
   ([#1663](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1663))
+
+* Spans will no longer be held in memory indefinitely when `ZipkinExporter`
+  cannot connect to the configured endpoint.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
 
 ## 1.0.0-rc1.1
 

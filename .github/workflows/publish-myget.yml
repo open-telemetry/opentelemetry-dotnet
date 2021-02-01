@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       logLevel:
-        description: 'Log level'     
+        description: 'Log level'
         required: true
         default: 'warning'
   schedule:
-    - cron: '0 0 * * *' # once in a day at 00:00  
+    - cron: '0 0 * * *' # once in a day at 00:00
 
 jobs:
   build-pack:
@@ -17,26 +17,13 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        branches: [main,metrics]
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
-        
-    - name: Setup .NET Core 2.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.1.x
-
-    - name: Setup .NET Core 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.x
-
-    - name: Setup .NET 5
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '5.0.x'
+        ref: ${{ matrix.branches }}
 
     - name: Install dependencies
       run: dotnet restore

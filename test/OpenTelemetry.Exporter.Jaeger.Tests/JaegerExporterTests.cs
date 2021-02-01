@@ -52,15 +52,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             process.ServiceName = "TestService";
 
-            jaegerTraceExporter.SetResource(Resource.Empty);
+            jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
             Assert.Equal("TestService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
             Assert.Equal("MyService", process.ServiceName);
 
-            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService", "MyNamespace").Build());
 
             Assert.Equal("MyNamespace.MyService", process.ServiceName);
         }
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag"] = "value",
             }).Build());
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
 
-            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 ["Tag2"] = "value2",
             }).Build());
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            jaegerTraceExporter.SetResource(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {
                 [ResourceSemanticConventions.AttributeServiceName] = "servicename",
                 [ResourceSemanticConventions.AttributeServiceNamespace] = "servicenamespace",
@@ -116,74 +116,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerTraceExporter_BuildBatchesToTransmit_DefaultBatch()
-        {
-            // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
-            jaegerExporter.SetResource(Resource.Empty);
-
-            // Act
-            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
-            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
-            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
-
-            var batches = jaegerExporter.CurrentBatches.Values;
-
-            // Assert
-            Assert.Single(batches);
-            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
-            Assert.Equal(3, batches.First().Count);
-        }
-
-        [Fact]
-        public void JaegerTraceExporter_BuildBatchesToTransmit_MultipleBatches()
-        {
-            // Arrange
-            using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions());
-            jaegerExporter.SetResource(Resource.Empty);
-
-            // Act
-            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
-            jaegerExporter.AppendSpan(
-                CreateTestJaegerSpan(
-                    additionalAttributes: new Dictionary<string, object>
-                    {
-                        ["peer.service"] = "MySQL",
-                    }));
-            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
-
-            var batches = jaegerExporter.CurrentBatches.Values;
-
-            // Assert
-            Assert.Equal(2, batches.Count());
-
-            var primaryBatch = batches.Where(b => b.Process.ServiceName == DefaultServiceName);
-            Assert.Single(primaryBatch);
-            Assert.Equal(2, primaryBatch.First().Count);
-
-            var mySQLBatch = batches.Where(b => b.Process.ServiceName == "MySQL");
-            Assert.Single(mySQLBatch);
-            Assert.Equal(1, mySQLBatch.First().Count);
-        }
-
-        [Fact]
         public void JaegerTraceExporter_BuildBatchesToTransmit_FlushedBatch()
         {
             // Arrange
             using var jaegerExporter = new JaegerExporter(new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 });
-            jaegerExporter.SetResource(Resource.Empty);
+            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
             // Act
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
 
-            var batches = jaegerExporter.CurrentBatches.Values;
-
             // Assert
-            Assert.Single(batches);
-            Assert.Equal(DefaultServiceName, batches.First().Process.ServiceName);
-            Assert.Equal(1, batches.First().Count);
+            Assert.Equal(1, jaegerExporter.Batch.Count);
         }
 
         internal static JaegerSpan CreateTestJaegerSpan(

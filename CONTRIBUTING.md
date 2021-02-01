@@ -12,12 +12,12 @@ meeting or get in touch on
 
 Even though, anybody can contribute, there are benefits of being a member of our
 community. See to the [community membership
-document](https://github.com/open-telemetry/community/blob/master/community-membership.md)
+document](https://github.com/open-telemetry/community/blob/main/community-membership.md)
 on how to become a
-[**Member**](https://github.com/open-telemetry/community/blob/master/community-membership.md#member),
-[**Approver**](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver)
+[**Member**](https://github.com/open-telemetry/community/blob/main/community-membership.md#member),
+[**Approver**](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 and
-[**Maintainer**](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
+[**Maintainer**](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 
 ## Find a Buddy and Get Started Quickly
 
@@ -114,6 +114,14 @@ Add your fork as an origin:
 git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
 ```
 
+By default your work will be targeting the `main` branch. If you want to work on
+the experimental metrics feature, please switch to the `metrics` feature branch:
+
+```sh
+# only do this when you want to work on the experimental metrics feature
+git checkout metrics
+```
+
 Run tests:
 
 ```sh
@@ -149,9 +157,9 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 A PR is considered to be **ready to merge** when:
 
 * It has received approval from
-  [Approvers](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).
+  [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
   /
-  [Maintainers](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
+  [Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 * Major feedbacks are resolved.
 * It has been open for review for at least one working day. This gives people
   reasonable time to review.
@@ -168,7 +176,7 @@ As with other OpenTelemetry clients, opentelemetry-dotnet follows the
 [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification).
 
 It's especially valuable to read through the [library
-guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/library-guidelines.md).
+guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/library-guidelines.md).
 
 ### Focus on Capabilities, Not Structure Compliance
 

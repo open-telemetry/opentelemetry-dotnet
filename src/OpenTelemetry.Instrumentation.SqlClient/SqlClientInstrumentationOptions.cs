@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
 #endif
