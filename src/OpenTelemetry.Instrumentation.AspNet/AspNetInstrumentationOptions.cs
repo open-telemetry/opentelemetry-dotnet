@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Web;
-using OpenTelemetry.Instrumentation.AspNet.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
