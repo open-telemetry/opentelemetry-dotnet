@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Default `Resource` will now contain service.name instead of Telemetry SDK.
+  [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
