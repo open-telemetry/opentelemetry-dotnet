@@ -57,7 +57,8 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
 
-            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault().Value;
+            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             this.Process = new Process(serviceName, options.ProcessTags);
         }
 
@@ -130,7 +131,8 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (string.IsNullOrEmpty(process.ServiceName))
             {
-                process.ServiceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault().Value;
+                process.ServiceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
