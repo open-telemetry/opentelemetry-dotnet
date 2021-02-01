@@ -379,7 +379,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.NotEqual(Resource.Empty, resource);
             Assert.Single(resource.Attributes);
             Assert.Equal(resource.Attributes.FirstOrDefault().Key, ResourceSemanticConventions.AttributeServiceName);
-            Assert.Contains("unknown_service:", (string)resource.Attributes.FirstOrDefault().Value);
+            Assert.Contains("unknown_service", (string)resource.Attributes.FirstOrDefault().Value);
         }
 
         [Fact]
