@@ -120,7 +120,6 @@ abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T data) -> void
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
 static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
-static OpenTelemetry.Resources.ResourceBuilderExtensions.AddDefault(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> OpenTelemetry.Resources.ResourceBuilder
