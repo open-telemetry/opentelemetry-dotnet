@@ -4,6 +4,9 @@
 
 * Default `Resource` will now contain service.name instead of Telemetry SDK.
   [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
+* Exporters fall back to the default `Resource`'s `service.name` value instead
+  of their own presets. Providers extended to access the default `Resource`.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
 
 ## 1.0.0-rc2
 
