@@ -3,7 +3,8 @@
 ## Unreleased
 
 * Updated the logic to set the Activity DisplayName correctly in the
-  OnStopActivity method of HttpInListener class.
+  OnStopActivity method of HttpInListener class. Added a new option to provide
+  custom logic for setting activity DisplayName
   ([#1764](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1764/))
 
 ## 1.0.0-rc2
