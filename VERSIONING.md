@@ -33,7 +33,7 @@ specification. These exporters are OTLP, Jaeger, Zipkin, Console and InMemory.
 The core components are always versioned and released together. For example, if
 Zipkin exporter has a bug fix and is released as 1.0.1, then all other core
 components are also released as 1.0.1, even if there is no code change in other
-components. 
+components.
 
 ## Pre-releases
 
