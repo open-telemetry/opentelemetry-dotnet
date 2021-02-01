@@ -26,8 +26,6 @@ namespace OpenTelemetry.Exporter.Zipkin
     /// </summary>
     public sealed class ZipkinExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
-
 #if !NET452
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 #endif
