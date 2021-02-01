@@ -129,6 +129,13 @@ namespace OpenTelemetry.Exporter.Jaeger
                 process.Tags[key] = label.ToJaegerTag();
             }
 
+            if (serviceName != null)
+            {
+                process.ServiceName = serviceNamespace != null
+                    ? serviceNamespace + "." + serviceName
+                    : serviceName;
+            }
+
             if (string.IsNullOrEmpty(process.ServiceName))
             {
                 process.ServiceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
