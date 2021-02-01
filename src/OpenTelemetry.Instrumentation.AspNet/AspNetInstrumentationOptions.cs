@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Web;
+using OpenTelemetry.Instrumentation.AspNet.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -43,5 +44,14 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// The type of this object depends on the event, which is given by the above parameter.</para>
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action that uses HttpContext information to set the appropriate activity DisplayName.
+        /// </summary>
+        /// <remarks>
+        /// <para>HttContext: the current HttpContext.</para>
+        /// <para><see cref="Activity"/>: the activity for which DisplayName has to be set.</para>
+        /// </remarks>
+        public Action<HttpContext, Activity> SetActivityDisplayName { get; set; }
     }
 }

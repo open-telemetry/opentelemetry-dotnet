@@ -4,5 +4,7 @@ OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Enrich.get -> 
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Enrich.set -> void
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.get -> System.Func<System.Web.HttpContext, bool>
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.set -> void
+OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.SetActivityDisplayName.get -> System.Action<System.Web.HttpContext, System.Diagnostics.Activity>
+OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.SetActivityDisplayName.set -> void
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddAspNetInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

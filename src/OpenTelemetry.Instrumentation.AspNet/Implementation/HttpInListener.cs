@@ -183,59 +183,23 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activityToEnrich.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 
-                var request = context.Request;
-                var routeData = context.Request.RequestContext.RouteData;
-
-                string template = null;
-                if (routeData.Values.TryGetValue("MS_SubRoutes", out object msSubRoutes))
+                if (this.options.SetActivityDisplayName == null)
                 {
-                    // WebAPI attribute routing flows here. Use reflection to not take a dependency on microsoft.aspnet.webapi.core\[version]\lib\[framework]\System.Web.Http.
-
-                    if (msSubRoutes is Array attributeRouting && attributeRouting.Length == 1)
+                    this.DefaultActivityNameSetter(context, activityToEnrich);
+                }
+                else
+                {
+                    try
                     {
-                        var subRouteData = attributeRouting.GetValue(0);
-
-                        _ = this.routeFetcher.TryFetch(subRouteData, out var route);
-                        _ = this.routeTemplateFetcher.TryFetch(route, out template);
+                        this.options.SetActivityDisplayName.Invoke(context, activityToEnrich);
+                    }
+                    catch (Exception ex)
+                    {
+                        AspNetInstrumentationEventSource.Log.SetActivityDisplayNameException(ex);
                     }
                 }
-                else if (routeData.Route is Route route)
-                {
-                    // MVC + WebAPI traditional routing & MVC attribute routing flow here.
-                    template = route.Url;
-                }
 
-                if (!string.IsNullOrEmpty(template))
-                {
-                    bool isRootPath = request.Path == "/";
-                    bool isIdOptional = false;
-
-                    // For urls without ID, for e.g. GET all resources of a kind (/api/Values/), we don't need to use template information
-                    if (!isRootPath && request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length <
-                        template.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length)
-                    {
-                        isIdOptional = true;
-                        activityToEnrich.DisplayName = activity.DisplayName.Substring(1); // Remove '/' from beginning of the activity name for consistency
-                    }
-
-                    // Override the name that was previously set to the path part of URL. If it is a root path or if Id is optional, activity DisplayName
-                    // is already set correctly in OnStartActivity method
-                    if (!isRootPath && !isIdOptional)
-                    {
-                        activityToEnrich.DisplayName = template;
-                        if (routeData.Values.TryGetValue("controller", out object controller))
-                        {
-                            activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{controller}", controller.ToString());
-                        }
-
-                        if (routeData.Values.TryGetValue("action", out object action))
-                        {
-                            activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{action}", action.ToString());
-                        }
-                    }
-
-                    activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, activityToEnrich.DisplayName);
-                }
+                activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, activityToEnrich.DisplayName);
 
                 try
                 {
@@ -272,6 +236,60 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             }
 
             this.activitySource.Stop(activityToEnrich);
+        }
+
+        private void DefaultActivityNameSetter(HttpContext context, Activity activity)
+        {
+            var request = context.Request;
+            var routeData = context.Request.RequestContext.RouteData;
+
+            string template = null;
+            if (routeData.Values.TryGetValue("MS_SubRoutes", out object msSubRoutes))
+            {
+                // WebAPI attribute routing flows here. Use reflection to not take a dependency on microsoft.aspnet.webapi.core\[version]\lib\[framework]\System.Web.Http.
+
+                if (msSubRoutes is Array attributeRouting && attributeRouting.Length == 1)
+                {
+                    var subRouteData = attributeRouting.GetValue(0);
+                    _ = this.routeFetcher.TryFetch(subRouteData, out var route);
+                    _ = this.routeTemplateFetcher.TryFetch(route, out template);
+                }
+            }
+            else if (routeData.Route is Route route)
+            {
+                // MVC + WebAPI traditional routing & MVC attribute routing flow here.
+                template = route.Url;
+            }
+
+            if (!string.IsNullOrEmpty(template))
+            {
+                bool isRootPath = request.Path == "/";
+                bool isIdOptional = false;
+
+                // For urls without ID, for e.g. GET all resources of a kind (/api/Values/), we don't need to use template information
+                if (!isRootPath && request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length <
+                    template.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length)
+                {
+                    isIdOptional = true;
+                    activity.DisplayName = activity.DisplayName.Substring(1); // Remove '/' from beginning of the activity name for consistency
+                }
+
+                // Override the name that was previously set to the path part of URL. If it is a root path or if Id is optional, activity DisplayName
+                // is already set correctly in OnStartActivity method
+                if (!isRootPath && !isIdOptional)
+                {
+                    activity.DisplayName = template;
+                    if (routeData.Values.TryGetValue("controller", out object controller))
+                    {
+                        activity.DisplayName = activity.DisplayName.Replace("{controller}", controller.ToString());
+                    }
+
+                    if (routeData.Values.TryGetValue("action", out object action))
+                    {
+                        activity.DisplayName = activity.DisplayName.Replace("{action}", action.ToString());
+                    }
+                }
+            }
         }
     }
 }

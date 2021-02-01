@@ -37,6 +37,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             }
         }
 
+        [NonEvent]
+        public void SetActivityDisplayNameException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.SetActivityDisplayNameException(ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
         public void NullPayload(string handlerName, string eventName)
         {
@@ -68,6 +77,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public void EnrichmentException(string exception)
         {
             this.WriteEvent(4, exception);
+        }
+
+        [Event(5, Message = "SetActivityDisplayName threw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void SetActivityDisplayNameException(string exception)
+        {
+            this.WriteEvent(5, exception);
         }
     }
 }
