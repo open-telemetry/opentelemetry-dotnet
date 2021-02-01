@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * The following extension methods on `ResourceBuilder` has been moved from the
   `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
   `AddEnvironmentVariableDetector`, `AddAttributes`, `AddService`, and
@@ -39,6 +43,7 @@
 * Metrics removed as it is not part 1.0.0 release. See issue
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
   for details on Metric release plans.
+* Fix Resource attribute telemetry.sdk.version to have correct file version.
 * Default `Resource` has been updated. No longer linked to Telemetry SDK,
   but that enabled through .AddTelemetrySDK() extensions. Instead provides
   default service.name attribute composed of local service and process name.

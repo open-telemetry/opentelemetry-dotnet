@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Resources
 {
@@ -24,7 +25,7 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public static class ResourceBuilderExtensions
     {
-        private static readonly Version Version = typeof(Resource).Assembly.GetName().Version;
+        private static readonly string FileVersion = FileVersionInfo.GetVersionInfo(typeof(Resource).Assembly.Location).FileVersion;
 
         private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
         {
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Resources
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
             [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Version.ToString(),
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = FileVersion,
         });
 
         /// <summary>
