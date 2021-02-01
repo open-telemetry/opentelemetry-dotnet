@@ -20,18 +20,20 @@ first.
 ## API and SDK compatibility
 
 API packages are supported with an SDK version that has same MAJOR version and
-equal or greater MINOR or PATCH version. For example, application/library that is instrumented
-with OpenTelemetry.API 1.1.0, will be compatible with SDK version 1.1.0 or higher.
+equal or greater MINOR or PATCH version. For example, application/library that
+is instrumented with OpenTelemetry.API 1.1.0, will be compatible with SDK
+version 1.1.0 or higher.
 
 ## Core components
 
-Core components refer to the set of components which are required as per the spec.
-This includes API, SDK, and exporters which are required by the specification. These
-exporters are OTLP, Jaeger, Zipkin, Console and InMemory.
+Core components refer to the set of components which are required as per the
+spec. This includes API, SDK, and exporters which are required by the
+specification. These exporters are OTLP, Jaeger, Zipkin, Console and InMemory.
 
-The core components are always versioned and released together. For example, if Zipkin
-exporter has a bug fix and is released as 1.0.1, then all other core components are
-also released as 1.0.1, even if there is no code change in other components. 
+The core components are always versioned and released together. For example, if
+Zipkin exporter has a bug fix and is released as 1.0.1, then all other core
+components are also released as 1.0.1, even if there is no code change in other
+components. 
 
 ## Pre-releases
 
