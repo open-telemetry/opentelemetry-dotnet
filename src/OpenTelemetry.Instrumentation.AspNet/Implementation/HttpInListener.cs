@@ -222,17 +222,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // is already set correctly in OnStartActivity method
                     if (!isRootPath && !isIdOptional)
                     {
+                        activityToEnrich.DisplayName = template;
                         if (routeData.Values.TryGetValue("controller", out object controller))
                         {
-                            activityToEnrich.DisplayName = template.Replace("{controller}", controller.ToString());
-                            if (routeData.Values.TryGetValue("action", out object action))
-                            {
-                                activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{action}", action.ToString());
-                            }
+                            activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{controller}", controller.ToString());
                         }
-                        else
+
+                        if (routeData.Values.TryGetValue("action", out object action))
                         {
-                            activityToEnrich.DisplayName = template;
+                            activityToEnrich.DisplayName = activityToEnrich.DisplayName.Replace("{action}", action.ToString());
                         }
                     }
 
