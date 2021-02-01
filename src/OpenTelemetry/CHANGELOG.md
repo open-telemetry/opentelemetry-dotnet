@@ -44,9 +44,7 @@ Released 2021-Jan-29
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
   for details on Metric release plans.
 * Fix Resource attribute telemetry.sdk.version to have correct file version.
-* Default `Resource` has been updated. No longer linked to Telemetry SDK,
-  but that enabled through .AddTelemetrySDK() extensions. Instead provides
-  default service.name attribute composed of local service and process name.
+* Default `Resource` will now contain service.name instead of Telemetry SDK.
   [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
 
 ## 1.0.0-rc1.1
