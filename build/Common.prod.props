@@ -19,7 +19,7 @@
     <!--<MinVerVerbosity>detailed</MinVerVerbosity>-->
   </PropertyGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!=''">
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
     <PropertyGroup>
       <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</FileVersion>
     </PropertyGroup>

@@ -17,17 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: echo run number
-      run: echo ${{ github.run_number }}
-
-    - name: echo run id
-      run: echo ${{ github.run_id }}
-
     - name: Install dependencies
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore -p:BuildNumber=$GITHUB_RUN_NUMBER
+      run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
