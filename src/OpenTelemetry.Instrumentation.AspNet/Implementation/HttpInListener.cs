@@ -271,7 +271,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     template.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length)
                 {
                     isIdOptional = true;
-                    activity.DisplayName = activity.DisplayName.Substring(1); // Remove '/' from beginning of the activity name for consistency
+
+                    // Remove '/' from beginning of the activity name for consistency
+                    activity.DisplayName = activity.DisplayName.StartsWith("/") ? activity.DisplayName.Substring(1) : activity.DisplayName;
                 }
 
                 // Override the name that was previously set to the path part of URL. If it is a root path or if Id is optional, activity DisplayName
