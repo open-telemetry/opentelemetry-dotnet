@@ -17,6 +17,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: echo
+      run: echo ${{ github.run_number }}
+
     - name: Install dependencies
       run: dotnet restore
 
