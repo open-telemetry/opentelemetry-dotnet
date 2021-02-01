@@ -27,12 +27,6 @@ namespace OpenTelemetry.Resources
     {
         private static readonly string FileVersion = FileVersionInfo.GetVersionInfo(typeof(Resource).Assembly.Location).FileVersion;
 
-        private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
-        {
-            [ResourceSemanticConventions.AttributeServiceName] = "unknown_service:"
-            + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName) ? System.Diagnostics.Process.GetCurrentProcess().ProcessName : string.Empty),
-        });
-
         private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
@@ -91,19 +85,6 @@ namespace OpenTelemetry.Resources
             }
 
             return resourceBuilder.AddResource(new Resource(resourceAttributes));
-        }
-
-        /// <summary>
-        /// Adds service information to a <see cref="ResourceBuilder"/>
-        /// following <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#service">semantic
-        /// conventions</a>.
-        /// </summary>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
-        /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
-        private static ResourceBuilder AddDefault(this ResourceBuilder resourceBuilder)
-        {
-            return resourceBuilder.AddResource(DefaultResource);
         }
 
         /// <summary>

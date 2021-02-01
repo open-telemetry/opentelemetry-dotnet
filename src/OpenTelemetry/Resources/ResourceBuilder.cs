@@ -30,6 +30,13 @@ namespace OpenTelemetry.Resources
         {
         }
 
+        private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
+        {
+            [ResourceSemanticConventions.AttributeServiceName] = "unknown_service:"
+                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
+                ? System.Diagnostics.Process.GetCurrentProcess().ProcessName : string.Empty),
+        });
+
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
         /// service.name added. See <a
@@ -38,7 +45,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddDefault();
+            => new ResourceBuilder().AddResource(DefaultResource);
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.
