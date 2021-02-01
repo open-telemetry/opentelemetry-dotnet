@@ -40,7 +40,7 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
         /// service.name added. See <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#service/">resource
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value">resource
         /// semantic conventions</a> for details.
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
