@@ -100,7 +100,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
         /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
-        public static ResourceBuilder AddDefault(this ResourceBuilder resourceBuilder)
+        private static ResourceBuilder AddDefault(this ResourceBuilder resourceBuilder)
         {
             return resourceBuilder.AddResource(DefaultResource);
         }

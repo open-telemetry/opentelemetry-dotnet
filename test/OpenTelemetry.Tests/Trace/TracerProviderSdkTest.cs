@@ -369,6 +369,21 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerProviderSdkBuildsWithDefaultResource()
+        {
+            var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
+            var resource = tracerProvider.GetResource();
+            var attributes = resource.Attributes;
+
+            Assert.NotNull(resource);
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Single(resource.Attributes);
+            Assert.Equal(resource.Attributes.FirstOrDefault().Key, ResourceSemanticConventions.AttributeServiceName);
+            Assert.Contains("unknown_service:", (string)resource.Attributes.FirstOrDefault().Value);
+
+        }
+
+        [Fact]
         public void TracerProviderSdkBuildsWithSDKResource()
         {
             var tracerProvider = Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
