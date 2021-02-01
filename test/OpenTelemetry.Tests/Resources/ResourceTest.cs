@@ -428,7 +428,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
             Assert.Single(serviceName);
-            Assert.Contains("unknown_service:", serviceName.FirstOrDefault().Value as string);
+            Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
         }
 
         private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
