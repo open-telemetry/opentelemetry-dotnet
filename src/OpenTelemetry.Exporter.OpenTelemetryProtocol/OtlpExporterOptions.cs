@@ -22,7 +22,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 #endif
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Configuration options for the OpenTelemetry Protocol (OTLP) exporter.

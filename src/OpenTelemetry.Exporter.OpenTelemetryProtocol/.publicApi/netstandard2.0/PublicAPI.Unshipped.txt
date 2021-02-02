@@ -1,20 +1,20 @@
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpTraceExporter
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpTraceExporter.OtlpTraceExporter(OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions options) -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.get -> System.Collections.Generic.IEnumerable<Grpc.Core.ChannelOption>
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ChannelOptions.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Credentials.get -> Grpc.Core.ChannelCredentials
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Credentials.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Endpoint.get -> string
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Endpoint.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.ExportProcessorType.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.get -> Grpc.Core.Metadata
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.Headers.set -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions.OtlpExporterOptions() -> void
+OpenTelemetry.Exporter.OtlpTraceExporter
+OpenTelemetry.Exporter.OtlpTraceExporter.OtlpTraceExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
+OpenTelemetry.Exporter.OtlpExporterOptions
+OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.ChannelOptions.get -> System.Collections.Generic.IEnumerable<Grpc.Core.ChannelOption>
+OpenTelemetry.Exporter.OtlpExporterOptions.ChannelOptions.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.Credentials.get -> Grpc.Core.ChannelCredentials
+OpenTelemetry.Exporter.OtlpExporterOptions.Credentials.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.get -> string
+OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> Grpc.Core.Metadata
+OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
 OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions
-override OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
-override OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
-static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OpenTelemetryProtocol.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
+override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
+static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

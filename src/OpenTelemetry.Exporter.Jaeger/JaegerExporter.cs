@@ -24,7 +24,7 @@ using Thrift.Protocol;
 using Thrift.Transport;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
