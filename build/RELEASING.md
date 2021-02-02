@@ -107,3 +107,4 @@ which produces version numbers based on git tags.
 15.Mark the Github release from draft to actual publish.
 
 TODO: Add tagging for Metrics release.
+TODO: Separate version for instrumention/hosting/OTshim package.
