@@ -31,6 +31,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
+using System.Linq;
 
 namespace OpenTelemetry.Exporter
 {
@@ -119,7 +120,8 @@ namespace OpenTelemetry.Exporter
 
             if (string.IsNullOrEmpty(serviceName))
             {
-                serviceName = this.options.ServiceName;
+                serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             }
 
             this.LocalEndpoint = new ZipkinEndpoint(

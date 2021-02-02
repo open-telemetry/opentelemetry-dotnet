@@ -105,7 +105,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var exporterOptions = new ZipkinExporterOptions
             {
-                ServiceName = "test-zipkin",
                 Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
             };
             var zipkinExporter = new ZipkinExporter(exporterOptions);

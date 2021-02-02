@@ -31,14 +31,6 @@ namespace OpenTelemetry.Exporter
 #endif
 
         /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. If the `Resource` associated with the telemetry
-        /// has "service.name" defined, then it'll be preferred over this option.
-        /// </summary>
-        public string ServiceName { get; set; } =
-            (string)ResourceBuilder.CreateDefault().Build().Attributes
-            .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
-
-        /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
