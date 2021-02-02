@@ -65,7 +65,7 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 5.Tag Git with version to be released e.g.:
 
    ```sh
-   git tag -a 1.0.0-rc2 -m "1.0.0-RC2"
+   git tag -a 1.0.0-rc2 -m "1.0.0-rc2"
    git push origin 1.0.0-rc2
    ```
 
