@@ -6,7 +6,7 @@
   `OpenTelemetry.Exporter` namespace.
   ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
 * Changed default port for OTLP Exporter from 55680 to 4317
-* Default ServiceName, if not found in Resource, is obtained from SDK 
+* Default ServiceName, if not found in Resource, is obtained from SDK
   using GetDefaultResource().
 
 ## 1.0.0-rc2
