@@ -18,7 +18,7 @@ using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using Thrift.Transport;
 

@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Zipkin
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Zipkin exporter.
