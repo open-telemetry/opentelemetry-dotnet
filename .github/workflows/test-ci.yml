@@ -1,0 +1,25 @@
+name: Windows
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        version: [net5.0]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: echo run number
+      run: echo ${{ github.run_number }}
+
+    - name: echo run number
+      run: echo ${{ github.run_number }}
+      
