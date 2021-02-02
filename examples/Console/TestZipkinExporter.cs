@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.Console
@@ -38,6 +39,7 @@ namespace Examples.Console
             // and use the Zipkin exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("zipkin-test"))
                     .AddZipkinExporter(o =>
                     {
                         o.Endpoint = new Uri(zipkinUri);
