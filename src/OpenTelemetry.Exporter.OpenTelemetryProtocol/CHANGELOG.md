@@ -5,6 +5,7 @@
 * Moved `OtlpTraceExporter` and `OtlpExporterOptions` classes to
   `OpenTelemetry.Exporter` namespace.
   ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Changed default port for OTLP Exporter from 55680 to 4317
 
 ## 1.0.0-rc2
 
