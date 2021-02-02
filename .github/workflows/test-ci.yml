@@ -1,4 +1,4 @@
-name: Windows
+name: RunNumber
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
+  run-number:
     runs-on: windows-latest
 
     strategy:
