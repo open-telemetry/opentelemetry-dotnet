@@ -1,4 +1,4 @@
-name: RunNumber
+name: RunNumber2
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
     - '**.md'
 
 jobs:
-  run-number:
+  run-number2:
     runs-on: windows-latest
 
     strategy:
