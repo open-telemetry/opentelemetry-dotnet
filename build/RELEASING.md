@@ -62,7 +62,7 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 
 4.Submit PR with the above changes, and get it merged.
 
-5. Tag Git with version to be released e.g.:
+5.Tag Git with version to be released e.g.:
 
    ```sh
    git tag -a 1.0.0-rc2 -m "1.0.0-RC2"
