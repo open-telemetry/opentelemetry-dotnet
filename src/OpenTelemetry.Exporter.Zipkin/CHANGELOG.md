@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Moved `ZipkinExporter` and `ZipkinExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `ZipkinExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 

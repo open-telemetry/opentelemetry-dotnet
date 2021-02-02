@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Relax System.* packages version requirement to remove upper bound.
+* Require System.Diagnostics.DiagnosticSource package 5.0.1.
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * In order to align with the
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
   the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`

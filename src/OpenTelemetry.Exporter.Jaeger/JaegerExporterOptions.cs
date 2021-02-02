@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter
 {
     public class JaegerExporterOptions
     {
