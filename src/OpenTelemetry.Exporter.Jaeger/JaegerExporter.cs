@@ -132,8 +132,8 @@ namespace OpenTelemetry.Exporter
             if (serviceName != null)
             {
                 serviceName = string.IsNullOrEmpty(serviceNamespace)
-                    ? serviceNamespace + "." + serviceName
-                    : serviceName;
+                    ? serviceName
+                    : serviceNamespace + "." + serviceName;
             }
 
             if (!string.IsNullOrEmpty(serviceName))
