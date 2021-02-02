@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -119,7 +120,8 @@ namespace OpenTelemetry.Exporter
 
             if (string.IsNullOrEmpty(serviceName))
             {
-                serviceName = this.options.ServiceName;
+                serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             }
 
             this.LocalEndpoint = new ZipkinEndpoint(

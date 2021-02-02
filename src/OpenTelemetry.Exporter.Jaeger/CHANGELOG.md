@@ -5,6 +5,9 @@
 * Moved `JaegerExporter` and `JaegerExporterOptions` classes to
   `OpenTelemetry.Exporter` namespace.
   ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Default `service.name` complies with OTel spec. Grabs default from
+  `ParentProvider` using GetDefaultResource() APIfrom SDK if not found.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
 
 ## 1.0.0-rc2
 

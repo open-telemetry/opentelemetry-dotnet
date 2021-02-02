@@ -4,6 +4,8 @@
 
 * Default `Resource` will now contain service.name instead of Telemetry SDK.
   [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
+* Added GetDefaultResource() method to `Provider`.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
 
 ## 1.0.0-rc2
 

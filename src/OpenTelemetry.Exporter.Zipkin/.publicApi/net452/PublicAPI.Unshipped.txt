@@ -7,8 +7,6 @@ OpenTelemetry.Exporter.ZipkinExporterOptions.Endpoint.get -> System.Uri
 OpenTelemetry.Exporter.ZipkinExporterOptions.Endpoint.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Exporter.ZipkinExporterOptions.ExportProcessorType.set -> void
-OpenTelemetry.Exporter.ZipkinExporterOptions.ServiceName.get -> string
-OpenTelemetry.Exporter.ZipkinExporterOptions.ServiceName.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.UseShortTraceIds.get -> bool
 OpenTelemetry.Exporter.ZipkinExporterOptions.UseShortTraceIds.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.ZipkinExporterOptions() -> void
