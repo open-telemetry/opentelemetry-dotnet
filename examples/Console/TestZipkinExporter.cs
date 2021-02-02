@@ -40,7 +40,6 @@ namespace Examples.Console
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .AddZipkinExporter(o =>
                     {
-                        o.ServiceName = "test-zipkin";
                         o.Endpoint = new Uri(zipkinUri);
                     })
                     .Build();

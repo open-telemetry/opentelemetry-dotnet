@@ -9,8 +9,6 @@ OpenTelemetry.Exporter.ZipkinExporterOptions.ExportProcessorType.get -> OpenTele
 OpenTelemetry.Exporter.ZipkinExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.MaxPayloadSizeInBytes.get -> int?
 OpenTelemetry.Exporter.ZipkinExporterOptions.MaxPayloadSizeInBytes.set -> void
-OpenTelemetry.Exporter.ZipkinExporterOptions.ServiceName.get -> string
-OpenTelemetry.Exporter.ZipkinExporterOptions.ServiceName.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.UseShortTraceIds.get -> bool
 OpenTelemetry.Exporter.ZipkinExporterOptions.UseShortTraceIds.set -> void
 OpenTelemetry.Exporter.ZipkinExporterOptions.ZipkinExporterOptions() -> void

@@ -27,8 +27,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
-        private const string DefaultServiceName = "OpenTelemetry Exporter";
-
         [Fact]
         public void JaegerExporter_BadArgs()
         {
