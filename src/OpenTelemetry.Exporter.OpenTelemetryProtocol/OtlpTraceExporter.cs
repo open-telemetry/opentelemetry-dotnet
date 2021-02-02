@@ -37,8 +37,6 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class OtlpTraceExporter : BaseExporter<Activity>
     {
-        private const string DefaultServiceName = "OpenTelemetry Exporter";
-
         private readonly OtlpExporterOptions options;
 #if NETSTANDARD2_1
         private readonly GrpcChannel channel;
@@ -139,10 +137,12 @@ namespace OpenTelemetry.Exporter
 
             if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
             {
+                var serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
                 processResource.Attributes.Add(new OtlpCommon.KeyValue
                 {
                     Key = ResourceSemanticConventions.AttributeServiceName,
-                    Value = new OtlpCommon.AnyValue { StringValue = DefaultServiceName },
+                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
                 });
             }
 
