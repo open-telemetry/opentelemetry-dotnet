@@ -56,6 +56,9 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+
+            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             this.Process = new Process(serviceName, options.ProcessTags);
         }
 
