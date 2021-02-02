@@ -5,6 +5,10 @@
 * Moved `ZipkinExporter` and `ZipkinExporterOptions` classes to
   `OpenTelemetry.Exporter` namespace.
   ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Removes ability to configure ServiceName for Zipkin. ServiceName must come
+  via Resource. If service name is not found in Resource, Zipkin uses
+  GetDefaultResource API from the SDK.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
 
 ## 1.0.0-rc2
 
