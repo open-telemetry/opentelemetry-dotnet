@@ -34,13 +34,13 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
         /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:55680");
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 #else
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
         /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
         /// </summary>
-        public string Endpoint { get; set; } = "localhost:55680";
+        public string Endpoint { get; set; } = "localhost:4317";
 #endif
 
 #if NETSTANDARD2_1
