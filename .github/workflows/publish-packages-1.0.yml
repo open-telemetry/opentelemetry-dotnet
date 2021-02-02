@@ -1,3 +1,10 @@
+#################################################
+################### IMPORTANT ###################
+# DON'T RENAME THIS FILE UNLESS WE START
+# RELEASING THE VERSION 2.*
+################### IMPORTANT ################### 
+#################################################
+
 name: Pack and publish to Myget
 
 on:
@@ -40,7 +47,7 @@ jobs:
         name: ${{ matrix.os }}-packages
         path: '**/bin/**/*.*nupkg'
 
-#    - name: Publish MyGet
-#      run: |
-#        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-#        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+    - name: Publish MyGet
+      run: |
+        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
