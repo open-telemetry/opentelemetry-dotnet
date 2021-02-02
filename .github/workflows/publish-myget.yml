@@ -29,7 +29,7 @@ jobs:
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore -p:Deterministic=true
+      run: dotnet build --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
 
     - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
@@ -40,7 +40,7 @@ jobs:
         name: ${{ matrix.os }}-packages
         path: '**/bin/**/*.*nupkg'
 
-    - name: Publish MyGet
-      run: |
-        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
-        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
+#    - name: Publish MyGet
+#      run: |
+#        nuget setApiKey ${{ secrets.MYGET_TOKEN }} -Source https://www.myget.org/F/opentelemetry/api/v2/package
+#        nuget push **/bin/**/*.nupkg -Source https://www.myget.org/F/opentelemetry/api/v2/package
