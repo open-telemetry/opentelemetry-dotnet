@@ -21,6 +21,7 @@ namespace OpenTelemetry.Resources
 {
     /// <summary>
     /// Contains methods for building <see cref="Resource"/> instances.
+    /// Thanks.
     /// </summary>
     public class ResourceBuilder
     {
