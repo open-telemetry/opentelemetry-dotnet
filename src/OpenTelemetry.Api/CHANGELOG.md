@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Relax System.* packages version requirement to remove upper bound.
+* Require System.Diagnostics.DiagnosticSource package 5.0.1.
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
