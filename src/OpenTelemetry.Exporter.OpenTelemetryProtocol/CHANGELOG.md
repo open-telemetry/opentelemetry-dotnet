@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Moved `OtlpTraceExporter` and `OtlpExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
@@ -9,13 +13,13 @@ Released 2021-Jan-29
 * Changed `OltpTraceExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
-* In `OtlpExporterOptions.cs`: Exporter options now include a switch for
-  Batch vs Simple exporter, and settings for batch exporting properties.
+* In `OtlpExporterOptions.cs`: Exporter options now include a switch for Batch
+  vs Simple exporter, and settings for batch exporting properties.
 
-* Introduce a `netstandard2.1` build enabling the exporter to use the
-  [gRPC for .NET](https://github.com/grpc/grpc-dotnet) library instead of the
-  [gRPC for C#](https://github.com/grpc/grpc/tree/master/src/csharp) library
-  for .NET Core 3.0+ applications. This required some breaking changes to the
+* Introduce a `netstandard2.1` build enabling the exporter to use the [gRPC for
+  .NET](https://github.com/grpc/grpc-dotnet) library instead of the [gRPC for
+  C#](https://github.com/grpc/grpc/tree/master/src/csharp) library for .NET Core
+  3.0+ applications. This required some breaking changes to the
   `OtlpExporterOptions`.
   ([#1662](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1662))
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Moved `JaegerExporter` and `JaegerExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
