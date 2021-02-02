@@ -131,15 +131,14 @@ namespace OpenTelemetry.Exporter
 
             if (serviceName != null)
             {
-                process.ServiceName = serviceNamespace != null
+                serviceName = string.IsNullOrEmpty(serviceNamespace)
                     ? serviceNamespace + "." + serviceName
                     : serviceName;
             }
 
-            if (string.IsNullOrEmpty(process.ServiceName))
+            if (!string.IsNullOrEmpty(serviceName))
             {
-                process.ServiceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+                process.ServiceName = serviceName;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
