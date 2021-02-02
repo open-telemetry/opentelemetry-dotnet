@@ -104,7 +104,8 @@ which produces version numbers based on git tags.
 
 14.Delete the API key generated in step 11.
 
-15.Mark the Github release from draft to actual publish.
+15.Make the Github release with tag from Step5
+and contents of combinedchangelog from Step2.
 
 TODO: Add tagging for Metrics release.
 TODO: Separate version for instrumention/hosting/OTshim package.
