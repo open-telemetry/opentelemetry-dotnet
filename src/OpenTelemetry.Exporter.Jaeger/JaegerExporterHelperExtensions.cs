@@ -15,8 +15,7 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace
 {
