@@ -17,7 +17,7 @@
 using System;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Exporter.Zipkin
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Zipkin trace exporter options.
