@@ -47,7 +47,7 @@ namespace Examples.Console
                         o.AgentPort = port;
 
                         // Examples for the rest of the options, defaults unless otherwise specified
-                        // Omitting Process Tags as Resource API is recommended for additional tags
+                        // Omitting Process Tags example as Resource API is recommended for additional tags
                         o.MaxPayloadSizeInBytes = 4096;
 
                         // Using Batch Exporter (which is default)
