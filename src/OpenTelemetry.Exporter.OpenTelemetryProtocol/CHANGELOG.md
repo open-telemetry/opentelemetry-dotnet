@@ -6,8 +6,13 @@
   `OpenTelemetry.Exporter` namespace.
   ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
 * Changed default port for OTLP Exporter from 55680 to 4317
-* Default ServiceName, if not found in Resource, is obtained from SDK
-  using GetDefaultResource().
+* Default ServiceName, if not found in Resource, is obtained from SDK using
+  GetDefaultResource().
+* Modified the data type of Headers option to string; Added a private method
+  GetMetadataFromHeaders to create a metadata object from the headers passed as
+  a string in the options; Added a new option called TimeOut for computing the
+  `deadline` to be used by gRPC client for `Export`
+  ([#1781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1781))
 
 ## 1.0.0-rc2
 
