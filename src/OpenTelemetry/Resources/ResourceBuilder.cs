@@ -30,15 +30,23 @@ namespace OpenTelemetry.Resources
         {
         }
 
+        private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
+        {
+            [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
+                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
+                ? string.Empty :
+                ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
+        });
+
         /// <summary>
-        /// Creates a <see cref="ResourceBuilder"/> instance with SDK defaults
-        /// added. See <a
-        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/semantic_conventions/">resource
+        /// Creates a <see cref="ResourceBuilder"/> instance with Default
+        /// service.name added. See <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value">resource
         /// semantic conventions</a> for details.
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddTelemetrySdk(); // TODO: Seek spec clarify on whether or not OtelEnvResourceDetector should be added by default.
+            => new ResourceBuilder().AddResource(DefaultResource);
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.

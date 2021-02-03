@@ -24,6 +24,7 @@
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.6.1,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.23.0,3.0)</GrpcPkgVer>
+    <GrpcNetClientPkgVer>[2.32.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
@@ -39,11 +40,11 @@
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
-    <SystemCollectionsImmutablePkgVer>[1.4.0,6.0)</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>[5.0.0,6.0)</SystemDiagnosticSourcePkgVer>
-    <SystemReflectionEmitLightweightPkgVer>[4.7.0,6.0)</SystemReflectionEmitLightweightPkgVer>
-    <SystemTextJsonPkgVer>[4.7.0,6.0)</SystemTextJsonPkgVer>
-    <SystemThreadingTasksExtensionsPkgVer>[4.5.3,6.0)</SystemThreadingTasksExtensionsPkgVer>
+    <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
+    <SystemDiagnosticSourcePkgVer>5.0.1</SystemDiagnosticSourcePkgVer>
+    <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
+    <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
+    <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,53 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
+  pull_request:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build-test-report:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+    env:
+      OS: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: dotnet build
+      run: dotnet build --configuration Release --no-restore
+
+#    - name: dotnet test
+#      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
+
+    - name: dotnet test
+      run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
+
+    - name: Process code coverage
+      run: .\build\process-codecoverage.ps1
+      shell: powershell
+
+    - name: Install report tool
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Merging test results
+      run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
+
+    - uses: codecov/codecov-action@v1.0.12
+      with:
+        file: TestResults/Cobertura.xml
+        env_vars: OS
+        name: Code Coverage for ${{ matrix.os }}

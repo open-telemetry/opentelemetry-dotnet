@@ -6,6 +6,7 @@
     TODO: Disable this exception, and actually do document all public API.
     -->
     <NoWarn>$(NoWarn),1591,CS0618</NoWarn>
+    <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
   <ItemGroup>

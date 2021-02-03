@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Moved `ZipkinExporter` and `ZipkinExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Removes ability to configure ServiceName for Zipkin. ServiceName must come
+  via Resource. If service name is not found in Resource, Zipkin uses
+  GetDefaultResource() from the SDK to obtain it.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `ZipkinExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
@@ -19,6 +31,13 @@
 * Zipkin bool tag values will now be sent as `true`/`false` instead of
   `True`/`False`.
   ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
+
+* Span tags will no longer be populated with Resource Attributes.
+  ([#1663](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1663))
+
+* Spans will no longer be held in memory indefinitely when `ZipkinExporter`
+  cannot connect to the configured endpoint.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
 
 ## 1.0.0-rc1.1
 

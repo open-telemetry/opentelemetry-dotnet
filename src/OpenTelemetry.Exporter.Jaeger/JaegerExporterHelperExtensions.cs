@@ -15,8 +15,7 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using OpenTelemetry.Exporter.Jaeger;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace
 {
@@ -45,11 +44,11 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleExportProcessor<Activity>(jaegerExporter));
+                return builder.AddProcessor(new SimpleActivityExportProcessor(jaegerExporter));
             }
             else
             {
-                return builder.AddProcessor(new BatchExportProcessor<Activity>(
+                return builder.AddProcessor(new BatchActivityExportProcessor(
                     jaegerExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,

@@ -21,7 +21,7 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using Grpc.Core;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -30,7 +30,7 @@ namespace Benchmarks.Exporter
     [MemoryDiagnoser]
     public class OtlpExporterBenchmarks
     {
-        private OtlpExporter exporter;
+        private OtlpTraceExporter exporter;
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
 
@@ -43,7 +43,7 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.exporter = new OtlpExporter(
+            this.exporter = new OtlpTraceExporter(
                 new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
             this.activity = ActivityHelper.CreateTestActivity();

@@ -31,7 +31,7 @@ implements the Tracing API, the Metrics API, and the Context API.  Once a valid
 SDK is installed and configured, all the OpenTelemetry API methods, which were
 no-ops without an SDK, will start emitting telemetry.
 This SDK also supports
-[Logging](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md)
+[Logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
 by integrating with
 [ILogger](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger).
 
@@ -42,7 +42,7 @@ and enable the SDK, when they install a particular exporter.
 ## Getting started with Logging
 
 If you are new to
-[logging](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md),
+[logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md),
 it is recommended to follow [get started in 5
 minutes](../../docs/logs/getting-started/README.md) to get up and running with
 logging integration with
@@ -51,14 +51,14 @@ logging integration with
 ## Getting started with Tracing
 
 If you are new to
-[traces](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md),
+[traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md),
 it is recommended to follow [get started in 5
 minutes](../../docs/trace/getting-started/README.md) to get up and running. The
 rest of this document explains various components of this OpenTelemetry SDK
 implementation.
 
 To start using OpenTelemetry for tracing, one must configure and build a valid
-[`TracerProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#tracer-provider).
+[`TracerProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#tracer-provider).
 
 Building a `TracerProvider` is done using `TracerProviderBuilder` which must be
 obtained by calling `Sdk.CreateTracerProviderBuilder()`. `TracerProviderBuilder`
@@ -89,21 +89,21 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
 1. The list of `ActivitySource`s (aka Tracer) from which traces are collected.
 2. The list of instrumentations enabled via
-   [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library).
+   [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
 3. The list of
-   [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
+   [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
 
 4. The
-   [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
+   [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
    associated with the traces.
 5. The
-   [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+   [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)
    to be used.
 
 ### Activity Source
 
 `ActivitySource` denotes a
-[`Tracer`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracer),
+[`Tracer`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer),
 which is used to start activities. The SDK follows an explicit opt-in model for
 listening to activity sources. i.e, by default, it listens to no sources. Every
 activity source which produce telemetry must be explicitly added to the tracer
@@ -137,7 +137,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 While the OpenTelemetry API can be used to instrument any library manually,
 [Instrumentation
-Libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#instrumentation-libraries)
+Libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#instrumentation-libraries)
 are available for a lot of commonly used libraries. Such instrumentations can be
 added the tracer provider, by using the `AddInstrumentation` on the
 `TracerProviderBuilder`. It is not required to attach the instrumentation to the
@@ -152,7 +152,7 @@ and also to learn about writing own instrumentations.
 
 ### Processor
 
-[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
+[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
 allows hooks for start and end of telemetry. If no processors are configured,
 then traces are simply dropped by the SDK. `AddProcessor` method on
 `TracerProviderBuilder` should be used to add a processor. There can be any
@@ -190,14 +190,14 @@ to an exporter. For enriching purposes, one must write a custom processor, and
 override the `OnStart` method with logic to enrich the telemetry. For exporting
 purposes, the SDK provides the following built-in processors:
 
-* [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#batching-processor)
+* [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#batching-processor)
   : This is an exporting processor which batches the telemetry before sending to
   the configured exporter.
 * [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
   : This is a processor which can be composed from multiple processors. This is
   typically used to construct multiple processing pipelines, each ending with
   its own exporter.
-* [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#simple-processor)
+* [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
 
@@ -209,11 +209,11 @@ logging, by supporting `Activity` and `LogRecord` respectively.*
 
 ### Resource
 
-[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/resource/sdk.md)
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the default is to use a resource indicating
 this [Telemetry
-SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk).
+SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
 `SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
 `ResourceBuilder` on the provider. When the provider is built, it automatically
 builds the final `Resource` from the configured `ResourceBuilder`. As with
@@ -238,7 +238,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ### Sampler
 
-[Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+[Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)
 are used to control the noise and overhead introduced by OpenTelemetry by
 reducing the number of samples of traces collected and sent to the processors.
 If no sampler is explicitly configured, the default is to use
@@ -275,7 +275,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 The OpenTelemetry API exposes a method to obtain the default propagator which is
 no-op, by default. This SDK replaces the no-op with a [composite
-propagator](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/context/api-propagators.md#composite-propagator)
+propagator](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md#composite-propagator)
 containing the Baggage Propagator and TraceContext propagator. This default
 propagator can be overridden with the below snippet.
 
@@ -348,5 +348,5 @@ content will be read.
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
-* [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md)
-* [OpenTelemetry Logging specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/logs/overview.md)
+* [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md)
+* [OpenTelemetry Logging specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)

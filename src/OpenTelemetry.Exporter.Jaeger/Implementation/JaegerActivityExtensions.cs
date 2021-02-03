@@ -166,7 +166,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             if (!jaegerTags.HasEvent)
             {
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#events
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#events
                 PooledList<JaegerTag>.Add(ref jaegerTags.Tags, new JaegerTag("event", JaegerTagType.STRING, vStr: timedEvent.Name));
             }
 
@@ -264,12 +264,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
                     if (statusCode == StatusCode.Error)
                     {
-                        // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#error-flag
+                        // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#error-flag
                         PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
                     }
                     else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
                     {
-                        // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md#status
+                        // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#status
                         return;
                     }
 

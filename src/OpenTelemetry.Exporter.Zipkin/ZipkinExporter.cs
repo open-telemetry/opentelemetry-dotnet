@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -32,7 +33,7 @@ using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Zipkin
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Zipkin exporter.
@@ -108,29 +109,19 @@ namespace OpenTelemetry.Exporter.Zipkin
             }
 
             string serviceName = null;
-            Dictionary<string, object> tags = null;
             foreach (var label in resource.Attributes)
             {
-                string key = label.Key;
-
-                switch (key)
+                if (label.Key == ResourceSemanticConventions.AttributeServiceName)
                 {
-                    case ResourceSemanticConventions.AttributeServiceName:
-                        serviceName = label.Value as string;
-                        continue;
+                    serviceName = label.Value as string;
+                    break;
                 }
-
-                if (tags == null)
-                {
-                    tags = new Dictionary<string, object>();
-                }
-
-                tags[key] = label.Value;
             }
 
             if (string.IsNullOrEmpty(serviceName))
             {
-                serviceName = this.options.ServiceName;
+                serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             }
 
             this.LocalEndpoint = new ZipkinEndpoint(
@@ -138,7 +129,7 @@ namespace OpenTelemetry.Exporter.Zipkin
                 ipv4,
                 ipv6,
                 port: null,
-                tags);
+                tags: null);
         }
 
         private static string ResolveHostAddress(string hostName, AddressFamily family)

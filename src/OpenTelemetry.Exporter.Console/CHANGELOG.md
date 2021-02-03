@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Moved `ConsoleActivityExporter` and `ConsoleLogRecordExporter` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * `AddConsoleExporter` extension method for logs moved from
   `OpenTelemetry.Trace` namespace to `OpenTelemetry.Logs` namespace.
   ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
@@ -9,6 +17,10 @@
 * Added `ConsoleActivityExporter` and `ConsoleLogExporter`. Refactored
   `ConsoleExporter` to get rid of type specific check in the class
   ([#1593](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1593))
+
+* Replaced Debug.WriteLine with Trace.WriteLine to display the logs to the Debug
+  window with Release configuration
+  ([#1719](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1719))
 
 ## 1.0.0-rc1.1
 

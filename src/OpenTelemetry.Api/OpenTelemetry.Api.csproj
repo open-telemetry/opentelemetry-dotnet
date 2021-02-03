@@ -5,6 +5,7 @@
     <RootNamespace>OpenTelemetry</RootNamespace>
 
     <NoWarn>$(NoWarn),CS0618</NoWarn>
+    <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
   <ItemGroup>

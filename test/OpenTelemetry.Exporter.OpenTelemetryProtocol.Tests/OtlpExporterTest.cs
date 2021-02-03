@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-            using var exporter = new OtlpExporter(
+            using var exporter = new OtlpTraceExporter(
                 new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
 
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var openTelemetrySdk = builder.Build();
 
-            var processor = new BatchExportProcessor<Activity>(new TestExporter<Activity>(RunTest));
+            var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "OpenTelemetry Exporter");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
