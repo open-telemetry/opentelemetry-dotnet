@@ -12,8 +12,8 @@ OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.TimeOut.get -> int?
-OpenTelemetry.Exporter.OtlpExporterOptions.TimeOut.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.get -> int?
+OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.set -> void
 OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions
 override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool

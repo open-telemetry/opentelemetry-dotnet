@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter
 #endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
-        private readonly DateTime? deadline;
+        private DateTime? deadline;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -65,19 +65,6 @@ namespace OpenTelemetry.Exporter
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.headers = GetMetadataFromHeaders(options.Headers);
-
-            if (options.TimeOut.HasValue)
-            {
-                if (options.TimeOut.Value <= 0)
-                {
-                    throw new ArgumentException("TimeOut vaue provided is not a positive numbe", nameof(options.TimeOut));
-                }
-                else
-                {
-                    this.deadline = DateTime.UtcNow.AddMilliseconds(options.TimeOut.Value);
-                }
-            }
-
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
@@ -111,6 +98,18 @@ namespace OpenTelemetry.Exporter
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
+
+            if (this.options.TimeoutMilliseconds.HasValue)
+            {
+                if (this.options.TimeoutMilliseconds.Value <= 0)
+                {
+                    throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.options.TimeoutMilliseconds));
+                }
+                else
+                {
+                    this.deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds.Value);
+                }
+            }
 
             try
             {
