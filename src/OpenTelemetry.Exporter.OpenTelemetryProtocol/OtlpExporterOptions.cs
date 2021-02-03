@@ -68,9 +68,9 @@ namespace OpenTelemetry.Exporter
         public string Headers { get; set; }
 
         /// <summary>
-        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span.
+        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span. The default value is 10000.
         /// </summary>
-        public int? TimeoutMilliseconds { get; set; }
+        public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
