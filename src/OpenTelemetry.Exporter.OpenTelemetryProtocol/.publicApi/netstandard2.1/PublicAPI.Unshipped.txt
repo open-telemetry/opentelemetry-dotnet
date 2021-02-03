@@ -9,9 +9,11 @@ OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.get -> System.Uri
 OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> Grpc.Core.Metadata
+OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.get -> int
+OpenTelemetry.Exporter.OtlpExporterOptions.TimeoutMilliseconds.set -> void
 OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions
 override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool

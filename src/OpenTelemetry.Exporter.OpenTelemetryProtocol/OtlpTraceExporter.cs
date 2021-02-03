@@ -45,6 +45,7 @@ namespace OpenTelemetry.Exporter
 #endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
+        private DateTime deadline;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -63,7 +64,12 @@ namespace OpenTelemetry.Exporter
         internal OtlpTraceExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.headers = options.Headers ?? throw new ArgumentException("Headers were not provided on options.", nameof(options));
+            this.headers = GetMetadataFromHeaders(options.Headers);
+            if (this.options.TimeoutMilliseconds <= 0)
+            {
+                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.options.TimeoutMilliseconds));
+            }
+
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
@@ -97,10 +103,11 @@ namespace OpenTelemetry.Exporter
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
+            this.deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.headers);
+                this.traceClient.Export(request, headers: this.headers, deadline: this.deadline);
             }
             catch (RpcException ex)
             {
@@ -158,6 +165,30 @@ namespace OpenTelemetry.Exporter
             }
 
             return Task.WaitAny(new Task[] { this.channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+        }
+
+        private static Metadata GetMetadataFromHeaders(string headers)
+        {
+            var metadata = new Metadata();
+            if (!string.IsNullOrEmpty(headers))
+            {
+                Array.ForEach(
+                    headers.Split(','),
+                    (pair) =>
+                    {
+                        var keyValueData = pair.Split('=');
+                        if (keyValueData.Length != 2)
+                        {
+                            throw new ArgumentException("Headers provided in an invalid format.");
+                        }
+
+                        var key = keyValueData[0].Trim();
+                        var value = keyValueData[1].Trim();
+                        metadata.Add(key, value);
+                    });
+            }
+
+            return metadata;
         }
     }
 }

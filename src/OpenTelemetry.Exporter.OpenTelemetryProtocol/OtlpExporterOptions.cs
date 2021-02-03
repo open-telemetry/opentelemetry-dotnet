@@ -62,9 +62,15 @@ namespace OpenTelemetry.Exporter
 #endif
 
         /// <summary>
-        /// Gets or sets optional headers for the connection.
+        /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
+        /// specification</a> for information on the expected format for Headers.
         /// </summary>
-        public Metadata Headers { get; set; } = new Metadata();
+        public string Headers { get; set; }
+
+        /// <summary>
+        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span batch. The default value is 10000.
+        /// </summary>
+        public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
