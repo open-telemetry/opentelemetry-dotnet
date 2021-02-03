@@ -39,11 +39,6 @@ namespace OpenTelemetry.Exporter
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
-        /// Gets or sets the tags that should be sent with telemetry.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
-
-        /// <summary>
         /// Gets or sets the export processor type to be used with Jaeger Exporter.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
