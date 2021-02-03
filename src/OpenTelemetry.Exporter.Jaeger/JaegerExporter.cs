@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter
 
             string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
                     pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
-            this.Process = new Process(serviceName, options.ProcessTags);
+            this.Process = new Process(serviceName);
         }
 
         internal Process Process { get; set; }

@@ -12,8 +12,6 @@ OpenTelemetry.Exporter.JaegerExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.JaegerExporterOptions.JaegerExporterOptions() -> void
 OpenTelemetry.Exporter.JaegerExporterOptions.MaxPayloadSizeInBytes.get -> int?
 OpenTelemetry.Exporter.JaegerExporterOptions.MaxPayloadSizeInBytes.set -> void
-OpenTelemetry.Exporter.JaegerExporterOptions.ProcessTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
-OpenTelemetry.Exporter.JaegerExporterOptions.ProcessTags.set -> void
 OpenTelemetry.Trace.JaegerExporterHelperExtensions
 override OpenTelemetry.Exporter.JaegerExporter.Dispose(bool disposing) -> void
 override OpenTelemetry.Exporter.JaegerExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult

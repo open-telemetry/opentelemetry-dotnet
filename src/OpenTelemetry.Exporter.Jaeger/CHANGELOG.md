@@ -8,6 +8,8 @@
 * Default ServiceName, if not found in Resource is obtained from SDK
   using GetDefaultResource().
   [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+* Removed ProcessTags from JaegerExporterOptions. The alternate option is
+  to use Resource attributes.
 
 ## 1.0.0-rc2
 
