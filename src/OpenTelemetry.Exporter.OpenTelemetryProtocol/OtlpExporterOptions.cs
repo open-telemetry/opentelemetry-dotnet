@@ -64,7 +64,12 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets optional headers for the connection.
         /// </summary>
-        public Metadata Headers { get; set; } = new Metadata();
+        public string Headers { get; set; }
+
+        /// <summary>
+        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span.
+        /// </summary>
+        public int? TimeOut { get; set; }
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
