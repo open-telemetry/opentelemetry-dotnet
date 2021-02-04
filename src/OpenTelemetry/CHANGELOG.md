@@ -46,7 +46,7 @@ Released 2021-Jan-29
   by another process in read-only mode for .NET Framework.
   ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
 * Metrics removed as it is not part 1.0.0 release. See issue
-  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for details on Metric release plans.
 * Fix Resource attribute telemetry.sdk.version to have correct file version.
 
