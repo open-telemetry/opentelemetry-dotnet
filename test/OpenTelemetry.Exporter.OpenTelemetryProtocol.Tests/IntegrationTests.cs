@@ -40,7 +40,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporterOptions = new OtlpExporterOptions
             {
+#if NETCOREAPP3_1 || NET5_0
+                Endpoint = $"http://{CollectorEndpoint}",
+#else
                 Endpoint = CollectorEndpoint,
+#endif
             };
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
