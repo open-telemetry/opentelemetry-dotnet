@@ -64,7 +64,7 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
-                    .AddOtlpExporter(opt => opt.Endpoint = new Uri(endpoint))
+                    .AddOtlpExporter(opt => opt.Endpoint = endpoint)
                     .Build();
 
             // The above line is required only in Applications
