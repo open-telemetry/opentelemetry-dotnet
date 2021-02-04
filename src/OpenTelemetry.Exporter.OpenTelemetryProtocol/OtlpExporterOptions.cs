@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter
 #if NETSTANDARD2_1
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces or metrics.
-        /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md. The endpoint value should starts with http or https.
+        /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md. The endpoint value should start with http or https.
         /// </summary>
         public string Endpoint { get; set; } = "http://localhost:4317";
 #else
