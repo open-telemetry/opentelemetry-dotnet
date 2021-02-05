@@ -113,6 +113,7 @@ required only for the following scenarios:
    users. Refer to the [comparison of Activity API and OpenTelemetry Tracing
    API](https://github.com/open-telemetry/opentelemetry-dotnet/issues/947) if
    you want to compare the differences.
+
 2. Your library performs communication with other libraries/components, and want
    to access
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md),
