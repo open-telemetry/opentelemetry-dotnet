@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -44,6 +45,8 @@ namespace Examples.Console
             // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
             //
             // dotnet run jaeger -h localhost -p 6831
+            // For non-Windows (e.g., MacOS)
+            // dotnet run jaeger -- -h localhost -p 6831
             return RunWithActivity(host, port);
         }
 
@@ -58,6 +61,21 @@ namespace Examples.Console
                     {
                         o.AgentHost = host;
                         o.AgentPort = port;
+
+                        // Examples for the rest of the options, defaults unless otherwise specified
+                        // Omitting Process Tags example as Resource API is recommended for additional tags
+                        o.MaxPayloadSizeInBytes = 4096;
+
+                        // Using Batch Exporter (which is default)
+                        // The other option is ExportProcessorType.Simple
+                        o.ExportProcessorType = ExportProcessorType.Batch;
+                        o.BatchExportProcessorOptions = new BatchExportProcessorOptions<Activity>()
+                        {
+                            MaxQueueSize = 2048,
+                            ScheduledDelayMilliseconds = 5000,
+                            ExporterTimeoutMilliseconds = 30000,
+                            MaxExportBatchSize = 512,
+                        };
                     })
                     .Build();
 

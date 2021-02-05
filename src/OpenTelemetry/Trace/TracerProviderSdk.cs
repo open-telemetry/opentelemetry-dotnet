@@ -97,6 +97,14 @@ namespace OpenTelemetry.Trace
                         return;
                     }
 
+                    // Spec says IsRecording must be false once span ends.
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+                    // However, Activity has slightly different semantic
+                    // than Span and we don't have strong reason to do this
+                    // now, as Activity anyway allows read/write always.
+                    // Intentionally commenting the following line.
+                    // activity.IsAllDataRequested = false;
+
                     if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                     {
                         this.processor?.OnEnd(activity);

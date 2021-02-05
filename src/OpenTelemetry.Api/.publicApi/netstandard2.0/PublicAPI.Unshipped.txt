@@ -47,52 +47,6 @@ OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string
 OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
-OpenTelemetry.Metrics.BlankLabelSet
-OpenTelemetry.Metrics.BlankLabelSet.BlankLabelSet() -> void
-OpenTelemetry.Metrics.BoundCounterMetric<T>
-OpenTelemetry.Metrics.BoundCounterMetric<T>.BoundCounterMetric() -> void
-OpenTelemetry.Metrics.BoundMeasureMetric<T>
-OpenTelemetry.Metrics.BoundMeasureMetric<T>.BoundMeasureMetric() -> void
-OpenTelemetry.Metrics.CounterMetric<T>
-OpenTelemetry.Metrics.CounterMetric<T>.CounterMetric() -> void
-OpenTelemetry.Metrics.DoubleObserverMetric
-OpenTelemetry.Metrics.DoubleObserverMetric.DoubleObserverMetric() -> void
-OpenTelemetry.Metrics.DoubleObserverMetricHandle
-OpenTelemetry.Metrics.DoubleObserverMetricHandle.DoubleObserverMetricHandle() -> void
-OpenTelemetry.Metrics.Int64ObserverMetric
-OpenTelemetry.Metrics.Int64ObserverMetric.Int64ObserverMetric() -> void
-OpenTelemetry.Metrics.Int64ObserverMetricHandle
-OpenTelemetry.Metrics.Int64ObserverMetricHandle.Int64ObserverMetricHandle() -> void
-OpenTelemetry.Metrics.LabelSet
-OpenTelemetry.Metrics.LabelSet.LabelSet() -> void
-OpenTelemetry.Metrics.MeasureMetric<T>
-OpenTelemetry.Metrics.MeasureMetric<T>.MeasureMetric() -> void
-OpenTelemetry.Metrics.MeasureMetric<T>.Record(in OpenTelemetry.Baggage context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-OpenTelemetry.Metrics.MeasureMetric<T>.Record(in OpenTelemetry.Baggage context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-OpenTelemetry.Metrics.MeasureMetric<T>.Record(in OpenTelemetry.Trace.SpanContext context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-OpenTelemetry.Metrics.MeasureMetric<T>.Record(in OpenTelemetry.Trace.SpanContext context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-OpenTelemetry.Metrics.Meter
-OpenTelemetry.Metrics.Meter.Meter() -> void
-OpenTelemetry.Metrics.MeterFactoryBase
-OpenTelemetry.Metrics.MeterFactoryBase.MeterFactoryBase() -> void
-OpenTelemetry.Metrics.MeterProvider
-OpenTelemetry.Metrics.MeterProvider.MeterProvider() -> void
-OpenTelemetry.Metrics.NoopBoundCounterMetric<T>
-OpenTelemetry.Metrics.NoopBoundCounterMetric<T>.NoopBoundCounterMetric() -> void
-OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>
-OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>.NoopBoundMeasureMetric() -> void
-OpenTelemetry.Metrics.NoopCounterMetric<T>
-OpenTelemetry.Metrics.NoopCounterMetric<T>.NoopCounterMetric() -> void
-OpenTelemetry.Metrics.NoopDoubleObserverMetric
-OpenTelemetry.Metrics.NoopDoubleObserverMetric.NoopDoubleObserverMetric() -> void
-OpenTelemetry.Metrics.NoopDoubleObserverMetricHandle
-OpenTelemetry.Metrics.NoopDoubleObserverMetricHandle.NoopDoubleObserverMetricHandle() -> void
-OpenTelemetry.Metrics.NoopInt64ObserverMetric
-OpenTelemetry.Metrics.NoopInt64ObserverMetric.NoopInt64ObserverMetric() -> void
-OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle
-OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle.NoopInt64ObserverMetricHandle() -> void
-OpenTelemetry.Metrics.NoopMeasureMetric<T>
-OpenTelemetry.Metrics.NoopMeasureMetric<T>.NoopMeasureMetric() -> void
 OpenTelemetry.Trace.ActivityExtensions
 OpenTelemetry.Trace.Link
 OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
@@ -172,31 +126,6 @@ OpenTelemetry.Trace.TracerProvider.GetTracer(string name, string version = null)
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
-abstract OpenTelemetry.Metrics.BoundCounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value) -> void
-abstract OpenTelemetry.Metrics.BoundCounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value) -> void
-abstract OpenTelemetry.Metrics.BoundMeasureMetric<T>.Record(in OpenTelemetry.Baggage context, T value) -> void
-abstract OpenTelemetry.Metrics.BoundMeasureMetric<T>.Record(in OpenTelemetry.Trace.SpanContext context, T value) -> void
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Bind(OpenTelemetry.Metrics.LabelSet labelset) -> OpenTelemetry.Metrics.BoundCounterMetric<T>
-abstract OpenTelemetry.Metrics.CounterMetric<T>.Bind(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.BoundCounterMetric<T>
-abstract OpenTelemetry.Metrics.DoubleObserverMetric.Observe(double value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-abstract OpenTelemetry.Metrics.DoubleObserverMetric.Observe(double value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-abstract OpenTelemetry.Metrics.DoubleObserverMetricHandle.Observe(double value) -> void
-abstract OpenTelemetry.Metrics.Int64ObserverMetric.Observe(long value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-abstract OpenTelemetry.Metrics.Int64ObserverMetric.Observe(long value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-abstract OpenTelemetry.Metrics.Int64ObserverMetricHandle.Observe(long value) -> void
-abstract OpenTelemetry.Metrics.MeasureMetric<T>.Bind(OpenTelemetry.Metrics.LabelSet labelset) -> OpenTelemetry.Metrics.BoundMeasureMetric<T>
-abstract OpenTelemetry.Metrics.MeasureMetric<T>.Bind(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.BoundMeasureMetric<T>
-abstract OpenTelemetry.Metrics.Meter.CreateDoubleCounter(string name, bool monotonic = true) -> OpenTelemetry.Metrics.CounterMetric<double>
-abstract OpenTelemetry.Metrics.Meter.CreateDoubleMeasure(string name, bool absolute = true) -> OpenTelemetry.Metrics.MeasureMetric<double>
-abstract OpenTelemetry.Metrics.Meter.CreateDoubleObserver(string name, System.Action<OpenTelemetry.Metrics.DoubleObserverMetric> callback, bool absolute = true) -> OpenTelemetry.Metrics.DoubleObserverMetric
-abstract OpenTelemetry.Metrics.Meter.CreateInt64Counter(string name, bool monotonic = true) -> OpenTelemetry.Metrics.CounterMetric<long>
-abstract OpenTelemetry.Metrics.Meter.CreateInt64Measure(string name, bool absolute = true) -> OpenTelemetry.Metrics.MeasureMetric<long>
-abstract OpenTelemetry.Metrics.Meter.CreateInt64Observer(string name, System.Action<OpenTelemetry.Metrics.Int64ObserverMetric> callback, bool absolute = true) -> OpenTelemetry.Metrics.Int64ObserverMetric
-abstract OpenTelemetry.Metrics.Meter.GetLabelSet(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.LabelSet
 override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
 OpenTelemetry.Trace.TracerProviderBuilder
@@ -219,24 +148,6 @@ override OpenTelemetry.Context.Propagation.TraceContextPropagator.Inject<T>(Open
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Set(T value) -> void
-override OpenTelemetry.Metrics.NoopBoundCounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value) -> void
-override OpenTelemetry.Metrics.NoopBoundCounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value) -> void
-override OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>.Record(in OpenTelemetry.Baggage context, T value) -> void
-override OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>.Record(in OpenTelemetry.Trace.SpanContext context, T value) -> void
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Add(in OpenTelemetry.Baggage context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Add(in OpenTelemetry.Trace.SpanContext context, T value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Bind(OpenTelemetry.Metrics.LabelSet labelset) -> OpenTelemetry.Metrics.BoundCounterMetric<T>
-override OpenTelemetry.Metrics.NoopCounterMetric<T>.Bind(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.BoundCounterMetric<T>
-override OpenTelemetry.Metrics.NoopDoubleObserverMetric.Observe(double value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-override OpenTelemetry.Metrics.NoopDoubleObserverMetric.Observe(double value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-override OpenTelemetry.Metrics.NoopDoubleObserverMetricHandle.Observe(double value) -> void
-override OpenTelemetry.Metrics.NoopInt64ObserverMetric.Observe(long value, OpenTelemetry.Metrics.LabelSet labelset) -> void
-override OpenTelemetry.Metrics.NoopInt64ObserverMetric.Observe(long value, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> void
-override OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle.Observe(long value) -> void
-override OpenTelemetry.Metrics.NoopMeasureMetric<T>.Bind(OpenTelemetry.Metrics.LabelSet labelset) -> OpenTelemetry.Metrics.BoundMeasureMetric<T>
-override OpenTelemetry.Metrics.NoopMeasureMetric<T>.Bind(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> labels) -> OpenTelemetry.Metrics.BoundMeasureMetric<T>
 override OpenTelemetry.Trace.Link.Equals(object obj) -> bool
 override OpenTelemetry.Trace.Link.GetHashCode() -> int
 override OpenTelemetry.Trace.SpanContext.Equals(object obj) -> bool
@@ -266,10 +177,6 @@ static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string slotName) -> OpenT
 static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string name) -> T
 static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
 static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string name, T value) -> void
-static OpenTelemetry.Metrics.MeterFactoryBase.Default.get -> OpenTelemetry.Metrics.MeterFactoryBase
-static OpenTelemetry.Metrics.MeterFactoryBase.SetDefault(OpenTelemetry.Metrics.MeterFactoryBase meterFactory) -> void
-static OpenTelemetry.Metrics.MeterProvider.Default.get -> OpenTelemetry.Metrics.MeterProvider
-static OpenTelemetry.Metrics.MeterProvider.SetDefault(OpenTelemetry.Metrics.MeterProvider meterProvider) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void
@@ -283,21 +190,8 @@ static OpenTelemetry.Trace.Status.operator ==(OpenTelemetry.Trace.Status status1
 static OpenTelemetry.Trace.Tracer.CurrentSpan.get -> OpenTelemetry.Trace.TelemetrySpan
 static OpenTelemetry.Trace.Tracer.WithSpan(OpenTelemetry.Trace.TelemetrySpan span) -> OpenTelemetry.Trace.TelemetrySpan
 static OpenTelemetry.Trace.TracerProvider.Default.get -> OpenTelemetry.Trace.TracerProvider
-static readonly OpenTelemetry.Metrics.LabelSet.BlankLabelSet -> OpenTelemetry.Metrics.LabelSet
-static readonly OpenTelemetry.Metrics.NoopBoundCounterMetric<T>.Instance -> OpenTelemetry.Metrics.NoopBoundCounterMetric<T>
-static readonly OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>.Instance -> OpenTelemetry.Metrics.NoopBoundMeasureMetric<T>
-static readonly OpenTelemetry.Metrics.NoopCounterMetric<T>.Instance -> OpenTelemetry.Metrics.NoopCounterMetric<T>
-static readonly OpenTelemetry.Metrics.NoopDoubleObserverMetric.Instance -> OpenTelemetry.Metrics.NoopDoubleObserverMetric
-static readonly OpenTelemetry.Metrics.NoopDoubleObserverMetricHandle.Instance -> OpenTelemetry.Metrics.NoopDoubleObserverMetricHandle
-static readonly OpenTelemetry.Metrics.NoopInt64ObserverMetric.Instance -> OpenTelemetry.Metrics.Int64ObserverMetric
-static readonly OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle.Instance -> OpenTelemetry.Metrics.NoopInt64ObserverMetricHandle
-static readonly OpenTelemetry.Metrics.NoopMeasureMetric<T>.Instance -> OpenTelemetry.Metrics.NoopMeasureMetric<T>
 static readonly OpenTelemetry.Trace.Status.Error -> OpenTelemetry.Trace.Status
 static readonly OpenTelemetry.Trace.Status.Ok -> OpenTelemetry.Trace.Status
 static readonly OpenTelemetry.Trace.Status.Unset -> OpenTelemetry.Trace.Status
 virtual OpenTelemetry.BaseProvider.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose(bool disposing) -> void
-virtual OpenTelemetry.Metrics.LabelSet.Labels.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
-virtual OpenTelemetry.Metrics.LabelSet.Labels.set -> void
-virtual OpenTelemetry.Metrics.MeterFactoryBase.GetMeter(string name, string version = null) -> OpenTelemetry.Metrics.Meter
-virtual OpenTelemetry.Metrics.MeterProvider.GetMeter(string name, string version = null) -> OpenTelemetry.Metrics.Meter

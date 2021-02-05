@@ -377,6 +377,21 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotNull(resource);
             Assert.NotEqual(Resource.Empty, resource);
+            Assert.Single(resource.Attributes);
+            Assert.Equal(resource.Attributes.FirstOrDefault().Key, ResourceSemanticConventions.AttributeServiceName);
+            Assert.Contains("unknown_service", (string)resource.Attributes.FirstOrDefault().Value);
+        }
+
+        [Fact]
+        public void TracerProviderSdkBuildsWithSDKResource()
+        {
+            var tracerProvider = Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build();
+            var resource = tracerProvider.GetResource();
+            var attributes = resource.Attributes;
+
+            Assert.NotNull(resource);
+            Assert.NotEqual(Resource.Empty, resource);
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
             var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
