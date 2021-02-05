@@ -25,7 +25,10 @@ namespace OpenTelemetry.Exporter
     public class OtlpExporterOptions
     {
         /// <summary>
-        /// Gets or sets the target to which the exporter is going to send traces or metrics.
+        /// Gets or sets the target to which the exporter is going to send traces.
+        /// Must be a valid Uri with scheme (http) and host, and
+        /// may contain a port and path. Secure connection(https) is not
+        /// supported.
         /// </summary>
         public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
