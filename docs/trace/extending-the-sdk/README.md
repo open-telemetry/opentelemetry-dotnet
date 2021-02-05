@@ -33,6 +33,10 @@ not covered by the built-in exporters:
   does not implement any retry logic.
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
+* Exporters should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags).
+* Exporters should use `ParentProvider.GetResource()` to get the `Resource`
+  associated with the provider.
 
 ```csharp
 class MyExporter : BaseExporter<Activity>
