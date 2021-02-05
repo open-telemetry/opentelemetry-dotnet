@@ -39,7 +39,7 @@ for an example of how to use the exporter.
 ## Special case when using insecure channel
 
 If your application is
-[NetStandard2.1](https://docs.microsoft.com/dotnet/standard/net-standard) or
+[.NET Standard 2.1](https://docs.microsoft.com/dotnet/standard/net-standard) or
 above, and you are using an insecure (http) endpoint, the following switch must
 be set before adding `OtlpExporter`.
 

@@ -194,9 +194,9 @@ here as well.
     }
     ```
 
-    The recommended way to [add
+    The recommended way to [set span
     attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
-    in `Activity` class is by using the `SetTag()`. OpenTelemetry users should
+    in `Activity` class is by using `SetTag()`. OpenTelemetry users should
     not use other methods like `AddTag`, `SetCustomProperty` on `Activity`.
 
 5. Perform application/library logic.
