@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
-                if (options.Endpoint.Scheme != Uri.UriSchemeHttp || options.Endpoint.Scheme != Uri.UriSchemeHttps)
+                if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
                 {
                     throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported.");
                 }
