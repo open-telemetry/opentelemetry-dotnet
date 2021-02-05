@@ -38,7 +38,7 @@ Here are the most commonly used components:
 * [OpenTelemetry .NET SDK](./src/OpenTelemetry/README.md)
 
 Here are the [instrumentation
-libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library):
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
 
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
@@ -48,7 +48,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter
-libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#exporter-library):
+libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
 
 * [Console](./src/OpenTelemetry.Exporter.Console/README.md)
 * [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
@@ -84,6 +84,7 @@ calendar](https://calendar.google.com/calendar/embed?src=google.com_b79e3e90j7bb
 for specific dates.
 
 Meetings take place via [Zoom video conference](https://zoom.us/j/8287234601).
+The passcode is `77777`.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).
@@ -93,25 +94,25 @@ For edit access, get in touch on
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-* [Alan West](https://github.com/alanwest), NewRelic
 * [Bruno Garcia](https://github.com/bruno-garcia), Sentry
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*
 
 Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
+* [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
 
 ### Thanks to all the people who have contributed
 

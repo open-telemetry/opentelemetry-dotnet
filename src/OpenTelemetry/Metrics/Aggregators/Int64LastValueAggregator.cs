@@ -54,6 +54,7 @@ namespace OpenTelemetry.Metrics.Aggregators
         /// <inheritdoc/>
         public override void Update(long newValue)
         {
+            base.Update(newValue);
             Interlocked.Exchange(ref this.value, newValue);
         }
     }

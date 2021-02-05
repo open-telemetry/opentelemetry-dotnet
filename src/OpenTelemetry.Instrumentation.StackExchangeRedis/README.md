@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.StackExchangeRedis.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.StackExchangeRedis)
 
 This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [StackExchange.Redis](https://www.nuget.org/packages/StackExchange.Redis/)
 and collects telemetry about outgoing calls to Redis.

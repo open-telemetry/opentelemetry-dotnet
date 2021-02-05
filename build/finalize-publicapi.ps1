@@ -1,6 +1,6 @@
 # After every stable release, all PublicApi text files (Shipped & Unshipped) should be merged.
 $path = "src\*\.publicApi\**\";
-$directory = $PSScriptRoot;
+$directory = Split-Path -Path $PSScriptRoot -Parent;
 
 $searchPath = Join-Path -Path $directory -ChildPath $path;
 Write-Host "Search Directory: $searchPath";

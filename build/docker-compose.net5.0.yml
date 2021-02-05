@@ -1,0 +1,8 @@
+﻿version: '3.7'
+
+services:
+  tests:
+    build:
+      args:
+        PUBLISH_FRAMEWORK: net5.0
+        SDK_VERSION: 5.0

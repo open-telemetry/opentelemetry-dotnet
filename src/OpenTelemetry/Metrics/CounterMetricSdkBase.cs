@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -28,11 +29,16 @@ namespace OpenTelemetry.Metrics
         private readonly ConcurrentDictionary<LabelSet, BoundCounterMetricSdkBase<T>> counterBoundInstruments =
             new ConcurrentDictionary<LabelSet, BoundCounterMetricSdkBase<T>>();
 
+        private readonly Func<LabelSet, BoundCounterMetricSdkBase<T>> createBoundMetricFunc;
+        private readonly Func<LabelSet, BoundCounterMetricSdkBase<T>> createShortLivedMetricFunc;
+
         private string metricName;
 
         protected CounterMetricSdkBase(string name)
         {
             this.metricName = name;
+            this.createBoundMetricFunc = (_) => this.CreateMetric(RecordStatus.Bound);
+            this.createShortLivedMetricFunc = (_) => this.CreateMetric(RecordStatus.UpdatePending);
         }
 
         public ConcurrentDictionary<LabelSet, BoundCounterMetricSdkBase<T>> GetAllBoundInstruments()
@@ -58,8 +64,9 @@ namespace OpenTelemetry.Metrics
 
             lock (this.bindUnbindLock)
             {
-                var recStatus = isShortLived ? RecordStatus.UpdatePending : RecordStatus.Bound;
-                boundInstrument = this.counterBoundInstruments.GetOrAdd(labelset, this.CreateMetric(recStatus));
+                boundInstrument = this.counterBoundInstruments.GetOrAdd(
+                    labelset,
+                    isShortLived ? this.createShortLivedMetricFunc : this.createBoundMetricFunc);
             }
 
             switch (boundInstrument.Status)
@@ -97,7 +104,7 @@ namespace OpenTelemetry.Metrics
                         {
                             boundInstrument.Status = RecordStatus.UpdatePending;
 
-                            this.counterBoundInstruments.GetOrAdd(labelset, boundInstrument);
+                            boundInstrument = this.counterBoundInstruments.GetOrAdd(labelset, boundInstrument);
                         }
 
                         break;
