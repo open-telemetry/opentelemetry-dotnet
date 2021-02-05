@@ -22,7 +22,7 @@ first.
 API packages are supported with an SDK version that has same MAJOR version and
 equal or greater MINOR or PATCH version. For example, application/library that
 is instrumented with OpenTelemetry.API 1.1.0, will be compatible with SDK
-version 1.1.0 or higher.
+versions [1.1.0, 2.0.0).
 
 ## Core components
 
