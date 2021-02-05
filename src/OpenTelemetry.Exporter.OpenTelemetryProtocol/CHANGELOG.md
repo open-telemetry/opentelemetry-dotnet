@@ -12,6 +12,10 @@
   TimeoutMilliseconds for computing the `deadline` to be used by gRPC client for
   `Export`
   ([#1781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1781))
+* Removes Grpc specific options from OTLPExporterOptions, which removes support
+  for secure connections. See [1778](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1778)
+  for details.
+* Endpoint is made Uri for all target frameworks.
 
 ## 1.0.0-rc2
 
