@@ -8,7 +8,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector
     volumes:
-      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests:/cfg
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/otel-collector-config:/cfg
     command: --config=/cfg/config.yaml
     ports:
       - "4317:4317"

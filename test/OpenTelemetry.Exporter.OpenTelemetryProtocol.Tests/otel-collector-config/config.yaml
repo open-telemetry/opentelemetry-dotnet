@@ -8,6 +8,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        tls_settings:
+          cert_file: /cfg/otel-collector.crt
+          key_file: /cfg/otel-collector.key
 
 exporters:
   logging:

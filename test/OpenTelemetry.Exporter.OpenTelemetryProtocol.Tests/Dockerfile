@@ -14,4 +14,9 @@ RUN dotnet publish "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" -
 FROM mcr.microsoft.com/dotnet/core/sdk:${SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
+
+RUN apt-get update && apt-get install ca-certificates
+COPY --from=build /repo/test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/otel-collector-config/otel-collector.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates --verbose
+
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.dll"]

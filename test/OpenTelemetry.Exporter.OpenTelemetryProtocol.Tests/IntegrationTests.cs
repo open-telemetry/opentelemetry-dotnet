@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporterOptions = new OtlpExporterOptions
             {
-                Endpoint = new System.Uri($"http://{CollectorEndpoint}"),
+                Endpoint = new System.Uri($"https://{CollectorEndpoint}"),
             };
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
