@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `ConsoleActivityExporter` and `ConsoleLogRecordExporter` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29

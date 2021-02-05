@@ -59,7 +59,6 @@ namespace Examples.GrpcService
                         .AddAspNetCoreInstrumentation()
                         .AddZipkinExporter(zipkinOptions =>
                         {
-                            zipkinOptions.ServiceName = this.Configuration.GetValue<string>("Zipkin:ServiceName");
                             zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
                         }));
                     break;

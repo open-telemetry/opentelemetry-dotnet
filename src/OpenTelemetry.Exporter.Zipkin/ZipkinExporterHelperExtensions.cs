@@ -15,8 +15,7 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
-using OpenTelemetry.Exporter.Zipkin;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace
 {

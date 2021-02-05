@@ -105,7 +105,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var exporterOptions = new ZipkinExporterOptions
             {
-                ServiceName = "test-zipkin",
                 Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
             };
             var zipkinExporter = new ZipkinExporter(exporterOptions);
@@ -171,8 +170,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     UseShortTraceIds = useShortTraceIds,
                 });
 
-            var serviceName = ZipkinExporterOptions.DefaultServiceName;
-            var resoureTags = string.Empty;
+            var serviceName = (string)exporter.ParentProvider.GetDefaultResource().Attributes
+                .Where(pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+            var resourceTags = string.Empty;
             var activity = CreateTestActivity(isRootSpan: isRootSpan, status: status);
             if (useTestResource)
             {
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             }
 
             Assert.Equal(
-                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resoureTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",{statusTag}""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""{errorTag}}}}}]",
+                $@"[{{""traceId"":""{traceId}"",""name"":""Name"",{parentId}""id"":""{ZipkinActivityConversionExtensions.EncodeSpanId(context.SpanId)}"",""kind"":""CLIENT"",""timestamp"":{timestamp},""duration"":60000000,""localEndpoint"":{{""serviceName"":""{serviceName}""{ipInformation}}},""remoteEndpoint"":{{""serviceName"":""http://localhost:44312/""}},""annotations"":[{{""timestamp"":{eventTimestamp},""value"":""Event1""}},{{""timestamp"":{eventTimestamp},""value"":""Event2""}}],""tags"":{{{resourceTags}""stringKey"":""value"",""longKey"":""1"",""longKey2"":""1"",""doubleKey"":""1"",""doubleKey2"":""1"",""longArrayKey"":""1,2"",""boolKey"":""true"",""boolArrayKey"":""true,false"",""http.host"":""http://localhost:44312/"",{statusTag}""otel.library.name"":""CreateTestActivity"",""peer.service"":""http://localhost:44312/""{errorTag}}}}}]",
                 Responses[requestId]);
         }
 

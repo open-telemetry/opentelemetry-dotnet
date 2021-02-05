@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `JaegerExporter` and `JaegerExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Default ServiceName, if not found in Resource is obtained from SDK
+  using GetDefaultResource().
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+* Removed ProcessTags from JaegerExporterOptions. The alternate option is
+  to use Resource attributes.
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
