@@ -12,12 +12,12 @@ meeting or get in touch on
 
 Even though, anybody can contribute, there are benefits of being a member of our
 community. See to the [community membership
-document](https://github.com/open-telemetry/community/blob/master/community-membership.md)
+document](https://github.com/open-telemetry/community/blob/main/community-membership.md)
 on how to become a
-[**Member**](https://github.com/open-telemetry/community/blob/master/community-membership.md#member),
-[**Approver**](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver)
+[**Member**](https://github.com/open-telemetry/community/blob/main/community-membership.md#member),
+[**Approver**](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 and
-[**Maintainer**](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
+[**Maintainer**](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 
 ## Find a Buddy and Get Started Quickly
 
@@ -149,9 +149,9 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 A PR is considered to be **ready to merge** when:
 
 * It has received approval from
-  [Approvers](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).
+  [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
   /
-  [Maintainers](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).
+  [Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
 * Major feedbacks are resolved.
 * It has been open for review for at least one working day. This gives people
   reasonable time to review.
@@ -168,7 +168,7 @@ As with other OpenTelemetry clients, opentelemetry-dotnet follows the
 [opentelemetry-specification](https://github.com/open-telemetry/opentelemetry-specification).
 
 It's especially valuable to read through the [library
-guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/library-guidelines.md).
+guidelines](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/library-guidelines.md).
 
 ### Focus on Capabilities, Not Structure Compliance
 
@@ -186,12 +186,10 @@ issue](https://github.com/open-telemetry/opentelemetry-specification/issues/165)
 
 ## Style Guide
 
-This project includes a
-[`.editorconfig`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/master/.editorconfig)
-file which is supported by all the IDEs/editor mentioned above. It works with
-the IDE/editor only and does not affect the actual build of the project.
+This project includes a [`.editorconfig`](./.editorconfig) file which is
+supported by all the IDEs/editor mentioned above. It works with the IDE/editor
+only and does not affect the actual build of the project.
 
-This repository also includes [stylecop ruleset
-files](https://github.com/open-telemetry/opentelemetry-dotnet/tree/master/build).
+This repository also includes stylecop ruleset files under the `./build` folder.
 These files are used to configure the _StyleCop.Analyzers_ which runs during
 build. Breaking the rules will result in a build failure.

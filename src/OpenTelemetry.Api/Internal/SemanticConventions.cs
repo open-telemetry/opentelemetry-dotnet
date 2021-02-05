@@ -18,13 +18,13 @@ namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Constants for semantic attribute names outlined by the OpenTelemetry specifications.
-    /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/README.md"/>.
+    /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/README.md"/>.
     /// </summary>
     internal static class SemanticConventions
     {
         // The set of constants matches the specification as of this commit.
-        // https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md
+        // https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string AttributeNetTransport = "net.transport";
         public const string AttributeNetPeerIp = "net.peer.ip";

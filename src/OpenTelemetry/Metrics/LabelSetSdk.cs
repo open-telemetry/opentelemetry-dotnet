@@ -62,31 +62,13 @@ namespace OpenTelemetry.Metrics
 
         private static IEnumerable<KeyValuePair<string, string>> SortAndDedup(IEnumerable<KeyValuePair<string, string>> labels)
         {
-            // TODO - could be optimized to avoid creating List twice.
-            var orderedList = labels.OrderBy(x => x.Key).ToList();
-            if (orderedList.Count == 1)
+            var dedupedList = new SortedDictionary<string, KeyValuePair<string, string>>(StringComparer.Ordinal);
+            foreach (var label in labels)
             {
-                return orderedList;
+                dedupedList[label.Key] = label;
             }
 
-            var dedupedList = new List<KeyValuePair<string, string>>();
-
-            int dedupedListIndex = 0;
-            dedupedList.Add(orderedList[dedupedListIndex]);
-            for (int i = 1; i < orderedList.Count; i++)
-            {
-                if (orderedList[i].Key.Equals(orderedList[i - 1].Key, StringComparison.Ordinal))
-                {
-                    dedupedList[dedupedListIndex] = orderedList[i];
-                }
-                else
-                {
-                    dedupedList.Add(orderedList[i]);
-                    dedupedListIndex++;
-                }
-            }
-
-            return dedupedList;
+            return dedupedList.Values;
         }
 
         private static string GetLabelSetEncoded(IEnumerable<KeyValuePair<string, string>> labels)

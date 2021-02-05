@@ -2,11 +2,18 @@
 
 ## Unreleased
 
-* Changed `OltpExporter` class and constructor from internal to public.
+* Changed `OltpTraceExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
 * In `OtlpExporterOptions.cs`: Exporter options now include a switch for
   Batch vs Simple exporter, and settings for batch exporting properties.
+
+* Introduce a `netstandard2.1` build enabling the exporter to use the
+  [gRPC for .NET](https://github.com/grpc/grpc-dotnet) library instead of the
+  [gRPC for C#](https://github.com/grpc/grpc/tree/master/src/csharp) library
+  for .NET Core 3.0+ applications. This required some breaking changes to the
+  `OtlpExporterOptions`.
+  ([#1662](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1662))
 
 ## 1.0.0-rc1.1
 
@@ -19,7 +26,7 @@ Released 2020-Nov-17
   ([#1528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1528))
 * Removed `ServiceName` from options available on the `AddOtlpExporter`
   extension. It is not required by the
-  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/protocol/exporter.md#configuration-options).
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options).
   ([#1557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1557))
 
 ## 0.8.0-beta.1
@@ -28,7 +35,7 @@ Released 2020-Nov-5
 
 * `peer.service` tag is now added to outgoing spans (went not already specified)
   following the [Zipkin remote endpoint
-  rules](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
+  rules](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
   ([#1392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1392))
 * Added `ServiceName` to options available on the `AddOtlpExporter` extension
   ([#1420](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1420))

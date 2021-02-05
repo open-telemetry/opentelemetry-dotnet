@@ -22,6 +22,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class Int64ObserverMetricSdk : Int64ObserverMetric
     {
+        private static readonly Func<LabelSet, Int64ObserverMetricHandleSdk> NewInt64ObserverMetricHandleSdkFunc = (_) => new Int64ObserverMetricHandleSdk();
+
         private readonly ConcurrentDictionary<LabelSet, Int64ObserverMetricHandleSdk> observerHandles = new ConcurrentDictionary<LabelSet, Int64ObserverMetricHandleSdk>();
         private readonly string metricName;
         private readonly Action<Int64ObserverMetric> callback;
@@ -35,9 +37,7 @@ namespace OpenTelemetry.Metrics
         public override void Observe(long value, LabelSet labelset)
         {
             // TODO cleanup of handle/aggregator.   Issue #530
-            var boundInstrument =
-                this.observerHandles.GetOrAdd(labelset, new Int64ObserverMetricHandleSdk());
-
+            var boundInstrument = this.observerHandles.GetOrAdd(labelset, NewInt64ObserverMetricHandleSdkFunc);
             boundInstrument.Observe(value);
         }
 

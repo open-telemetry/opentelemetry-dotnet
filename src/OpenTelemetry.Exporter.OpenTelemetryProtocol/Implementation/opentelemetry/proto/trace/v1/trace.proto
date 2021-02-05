@@ -299,7 +299,7 @@ message Status {
   string message = 2;
 
   // For the semantics of status codes see
-  // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status
+  // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status
   enum StatusCode {
     // The default status.
     STATUS_CODE_UNSET               = 0;
