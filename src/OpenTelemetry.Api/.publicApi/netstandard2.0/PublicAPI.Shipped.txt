@@ -1,0 +1,197 @@
+abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
+abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
+abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.ActivityContextExtensions
+OpenTelemetry.Baggage
+OpenTelemetry.Baggage.Baggage() -> void
+OpenTelemetry.Baggage.ClearBaggage() -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.Count.get -> int
+OpenTelemetry.Baggage.Equals(OpenTelemetry.Baggage other) -> bool
+OpenTelemetry.Baggage.GetBaggage() -> System.Collections.Generic.IReadOnlyDictionary<string, string>
+OpenTelemetry.Baggage.GetBaggage(string name) -> string
+OpenTelemetry.Baggage.GetEnumerator() -> System.Collections.Generic.Dictionary<string, string>.Enumerator
+OpenTelemetry.Baggage.RemoveBaggage(string name) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(params System.Collections.Generic.KeyValuePair<string, string>[] baggageItems) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(string name, string value) -> OpenTelemetry.Baggage
+OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> baggageItems) -> OpenTelemetry.Baggage
+OpenTelemetry.BaseProvider
+OpenTelemetry.BaseProvider.~BaseProvider() -> void
+OpenTelemetry.BaseProvider.BaseProvider() -> void
+OpenTelemetry.BaseProvider.Dispose() -> void
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.AsyncLocalRuntimeContextSlot(string name) -> void
+OpenTelemetry.Context.Propagation.B3Propagator
+OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
+OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
+OpenTelemetry.Context.Propagation.BaggagePropagator
+OpenTelemetry.Context.Propagation.BaggagePropagator.BaggagePropagator() -> void
+OpenTelemetry.Context.Propagation.CompositeTextMapPropagator
+OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.CompositeTextMapPropagator(System.Collections.Generic.IEnumerable<OpenTelemetry.Context.Propagation.TextMapPropagator> propagators) -> void
+OpenTelemetry.Context.Propagation.PropagationContext
+OpenTelemetry.Context.Propagation.PropagationContext.ActivityContext.get -> System.Diagnostics.ActivityContext
+OpenTelemetry.Context.Propagation.PropagationContext.Baggage.get -> OpenTelemetry.Baggage
+OpenTelemetry.Context.Propagation.PropagationContext.Equals(OpenTelemetry.Context.Propagation.PropagationContext value) -> bool
+OpenTelemetry.Context.Propagation.PropagationContext.PropagationContext() -> void
+OpenTelemetry.Context.Propagation.PropagationContext.PropagationContext(System.Diagnostics.ActivityContext activityContext, OpenTelemetry.Baggage baggage) -> void
+OpenTelemetry.Context.Propagation.Propagators
+OpenTelemetry.Context.Propagation.TextMapPropagator
+OpenTelemetry.Context.Propagation.TextMapPropagator.TextMapPropagator() -> void
+OpenTelemetry.Context.Propagation.TraceContextPropagator
+OpenTelemetry.Context.Propagation.TraceContextPropagator.TraceContextPropagator() -> void
+OpenTelemetry.Context.RuntimeContext
+OpenTelemetry.Context.RuntimeContextSlot<T>
+OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose() -> void
+OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string
+OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> void
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
+OpenTelemetry.Trace.ActivityExtensions
+OpenTelemetry.Trace.Link
+OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
+OpenTelemetry.Trace.Link.Context.get -> OpenTelemetry.Trace.SpanContext
+OpenTelemetry.Trace.Link.Equals(OpenTelemetry.Trace.Link other) -> bool
+OpenTelemetry.Trace.Link.Link() -> void
+OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext) -> void
+OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes attributes) -> void
+OpenTelemetry.Trace.SpanAttributes
+OpenTelemetry.Trace.SpanAttributes.Add(string key, bool value) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, bool[] values) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, double value) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, double[] values) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, long value) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, long[] values) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, string value) -> void
+OpenTelemetry.Trace.SpanAttributes.Add(string key, string[] values) -> void
+OpenTelemetry.Trace.SpanAttributes.SpanAttributes() -> void
+OpenTelemetry.Trace.SpanAttributes.SpanAttributes(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
+OpenTelemetry.Trace.SpanContext
+OpenTelemetry.Trace.SpanContext.Equals(OpenTelemetry.Trace.SpanContext other) -> bool
+OpenTelemetry.Trace.SpanContext.IsRemote.get -> bool
+OpenTelemetry.Trace.SpanContext.IsValid.get -> bool
+OpenTelemetry.Trace.SpanContext.SpanContext() -> void
+OpenTelemetry.Trace.SpanContext.SpanContext(in System.Diagnostics.ActivityContext activityContext) -> void
+OpenTelemetry.Trace.SpanContext.SpanContext(in System.Diagnostics.ActivityTraceId traceId, in System.Diagnostics.ActivitySpanId spanId, System.Diagnostics.ActivityTraceFlags traceFlags, bool isRemote = false, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> traceState = null) -> void
+OpenTelemetry.Trace.SpanContext.SpanId.get -> System.Diagnostics.ActivitySpanId
+OpenTelemetry.Trace.SpanContext.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
+OpenTelemetry.Trace.SpanContext.TraceId.get -> System.Diagnostics.ActivityTraceId
+OpenTelemetry.Trace.SpanContext.TraceState.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>
+OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.SpanKind.Client = 3 -> OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.SpanKind.Consumer = 5 -> OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.SpanKind.Internal = 1 -> OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.SpanKind.Producer = 4 -> OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.SpanKind.Server = 2 -> OpenTelemetry.Trace.SpanKind
+OpenTelemetry.Trace.Status
+OpenTelemetry.Trace.Status.Description.get -> string
+OpenTelemetry.Trace.Status.Equals(OpenTelemetry.Trace.Status other) -> bool
+OpenTelemetry.Trace.Status.Status() -> void
+OpenTelemetry.Trace.Status.StatusCode.get -> OpenTelemetry.Trace.StatusCode
+OpenTelemetry.Trace.Status.WithDescription(string description) -> OpenTelemetry.Trace.Status
+OpenTelemetry.Trace.StatusCode
+OpenTelemetry.Trace.StatusCode.Error = 2 -> OpenTelemetry.Trace.StatusCode
+OpenTelemetry.Trace.StatusCode.Ok = 1 -> OpenTelemetry.Trace.StatusCode
+OpenTelemetry.Trace.StatusCode.Unset = 0 -> OpenTelemetry.Trace.StatusCode
+OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string name) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string name, OpenTelemetry.Trace.SpanAttributes attributes) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string name, System.DateTimeOffset timestamp) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.AddEvent(string name, System.DateTimeOffset timestamp, OpenTelemetry.Trace.SpanAttributes attributes) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.Context.get -> OpenTelemetry.Trace.SpanContext
+OpenTelemetry.Trace.TelemetrySpan.Dispose() -> void
+OpenTelemetry.Trace.TelemetrySpan.End() -> void
+OpenTelemetry.Trace.TelemetrySpan.End(System.DateTimeOffset endTimestamp) -> void
+OpenTelemetry.Trace.TelemetrySpan.IsRecording.get -> bool
+OpenTelemetry.Trace.TelemetrySpan.RecordException(string type, string message, string stacktrace) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.RecordException(System.Exception ex) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, bool value) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, bool[] values) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, double value) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, double[] values) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, int value) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, int[] values) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, string value) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, string[] values) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TelemetrySpan.SetStatus(OpenTelemetry.Trace.Status value) -> void
+OpenTelemetry.Trace.TelemetrySpan.UpdateName(string name) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.Tracer
+OpenTelemetry.Trace.Tracer.StartActiveSpan(string name, OpenTelemetry.Trace.SpanKind kind = OpenTelemetry.Trace.SpanKind.Internal, in OpenTelemetry.Trace.SpanContext parentContext = default(OpenTelemetry.Trace.SpanContext), OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.Tracer.StartActiveSpan(string name, OpenTelemetry.Trace.SpanKind kind, in OpenTelemetry.Trace.TelemetrySpan parentSpan, OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.Tracer.StartRootSpan(string name, OpenTelemetry.Trace.SpanKind kind = OpenTelemetry.Trace.SpanKind.Internal, OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.Tracer.StartSpan(string name, OpenTelemetry.Trace.SpanKind kind = OpenTelemetry.Trace.SpanKind.Internal, in OpenTelemetry.Trace.SpanContext parentContext = default(OpenTelemetry.Trace.SpanContext), OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.Tracer.StartSpan(string name, OpenTelemetry.Trace.SpanKind kind, in OpenTelemetry.Trace.TelemetrySpan parentSpan, OpenTelemetry.Trace.SpanAttributes initialAttributes = null, System.Collections.Generic.IEnumerable<OpenTelemetry.Trace.Link> links = null, System.DateTimeOffset startTime = default(System.DateTimeOffset)) -> OpenTelemetry.Trace.TelemetrySpan
+OpenTelemetry.Trace.TracerProvider
+OpenTelemetry.Trace.TracerProvider.GetTracer(string name, string version = null) -> OpenTelemetry.Trace.Tracer
+OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
+OpenTelemetry.Trace.TracerProviderBuilder
+override OpenTelemetry.Baggage.Equals(object obj) -> bool
+override OpenTelemetry.Baggage.GetHashCode() -> int
+override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
+override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
+override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.B3Propagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.B3Propagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.BaggagePropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.BaggagePropagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.BaggagePropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.PropagationContext.Equals(object obj) -> bool
+override OpenTelemetry.Context.Propagation.PropagationContext.GetHashCode() -> int
+override OpenTelemetry.Context.Propagation.TraceContextPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.TraceContextPropagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.TraceContextPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Get() -> T
+override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Set(T value) -> void
+override OpenTelemetry.Trace.Link.Equals(object obj) -> bool
+override OpenTelemetry.Trace.Link.GetHashCode() -> int
+override OpenTelemetry.Trace.SpanContext.Equals(object obj) -> bool
+override OpenTelemetry.Trace.SpanContext.GetHashCode() -> int
+override OpenTelemetry.Trace.Status.Equals(object obj) -> bool
+override OpenTelemetry.Trace.Status.GetHashCode() -> int
+override OpenTelemetry.Trace.Status.ToString() -> string
+static OpenTelemetry.ActivityContextExtensions.IsValid(this System.Diagnostics.ActivityContext ctx) -> bool
+static OpenTelemetry.Baggage.ClearBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.Create(System.Collections.Generic.Dictionary<string, string> baggageItems = null) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.Current.get -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.Current.set -> void
+static OpenTelemetry.Baggage.GetBaggage(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.IReadOnlyDictionary<string, string>
+static OpenTelemetry.Baggage.GetBaggage(string name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> string
+static OpenTelemetry.Baggage.GetEnumerator(OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> System.Collections.Generic.Dictionary<string, string>.Enumerator
+static OpenTelemetry.Baggage.operator !=(OpenTelemetry.Baggage left, OpenTelemetry.Baggage right) -> bool
+static OpenTelemetry.Baggage.operator ==(OpenTelemetry.Baggage left, OpenTelemetry.Baggage right) -> bool
+static OpenTelemetry.Baggage.RemoveBaggage(string name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.SetBaggage(string name, string value, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> baggageItems, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Context.Propagation.PropagationContext.operator !=(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
+static OpenTelemetry.Context.Propagation.PropagationContext.operator ==(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
+static OpenTelemetry.Context.Propagation.Propagators.DefaultTextMapPropagator.get -> OpenTelemetry.Context.Propagation.TextMapPropagator
+static OpenTelemetry.Context.RuntimeContext.ContextSlotType.get -> System.Type
+static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
+static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
+static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string name) -> T
+static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
+static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string name, T value) -> void
+static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
+static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
+static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void
+static OpenTelemetry.Trace.Link.operator !=(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool
+static OpenTelemetry.Trace.Link.operator ==(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool
+static OpenTelemetry.Trace.SpanContext.implicit operator System.Diagnostics.ActivityContext(OpenTelemetry.Trace.SpanContext spanContext) -> System.Diagnostics.ActivityContext
+static OpenTelemetry.Trace.SpanContext.operator !=(OpenTelemetry.Trace.SpanContext spanContext1, OpenTelemetry.Trace.SpanContext spanContext2) -> bool
+static OpenTelemetry.Trace.SpanContext.operator ==(OpenTelemetry.Trace.SpanContext spanContext1, OpenTelemetry.Trace.SpanContext spanContext2) -> bool
+static OpenTelemetry.Trace.Status.operator !=(OpenTelemetry.Trace.Status status1, OpenTelemetry.Trace.Status status2) -> bool
+static OpenTelemetry.Trace.Status.operator ==(OpenTelemetry.Trace.Status status1, OpenTelemetry.Trace.Status status2) -> bool
+static OpenTelemetry.Trace.Tracer.CurrentSpan.get -> OpenTelemetry.Trace.TelemetrySpan
+static OpenTelemetry.Trace.Tracer.WithSpan(OpenTelemetry.Trace.TelemetrySpan span) -> OpenTelemetry.Trace.TelemetrySpan
+static OpenTelemetry.Trace.TracerProvider.Default.get -> OpenTelemetry.Trace.TracerProvider
+static readonly OpenTelemetry.Trace.Status.Error -> OpenTelemetry.Trace.Status
+static readonly OpenTelemetry.Trace.Status.Ok -> OpenTelemetry.Trace.Status
+static readonly OpenTelemetry.Trace.Status.Unset -> OpenTelemetry.Trace.Status
+virtual OpenTelemetry.BaseProvider.Dispose(bool disposing) -> void
+virtual OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose(bool disposing) -> void
