@@ -93,7 +93,7 @@ approach only.)
 
 `OpenTelemetry` 0.7.0-beta1 release : Pre-release, no API guarantees.
 
-`OpenTelemetry` 1.0.0-RC1 release : Pre-release, no API guarantees, but more
+`OpenTelemetry` 1.0.0-rc1 release : Pre-release, no API guarantees, but more
 stable than beta.
 
 `OpenTelemetry` 1.0.0 release : Stable release consisting of only stable signals
@@ -103,8 +103,7 @@ stable than beta.
 Alpha indicates early stages of development. Metric entry points are from the
 `Sdk` class. This could be released at the same time as `OpenTelemetry 1.0.0` or
 shortly after that. This may be released from an "experimental-metrics" branch
-which is in sync with master or using alternate techniques like conditional
-compilation.
+which is in sync with master.
 
 `OpenTelemetry` 1.0.1 release : Bug fixes to traces. Does not contain any
 metrics code.
@@ -115,9 +114,9 @@ any metrics code.
 `OpenTelemetry` 1.2.0-beta release : Metric evolves to beta status. Still a
 pre-release, so breaking changes can still occur.
 
-`OpenTelemetry` 1.2.0-RC release : Metric evolves to RC status. Still a
+`OpenTelemetry` 1.2.0-rc1 release : Metric evolves to RC status. Still a
 pre-release, but closer to stable.
 
 `OpenTelemetry` 1.2.0 release : Stable package consisting of Traces and Metrics.
-User who were consuming Metrics features from 1.2.0-RC requires *no* code
+User who were consuming Metrics features from 1.2.0-rc1 requires *no* code
 change.
