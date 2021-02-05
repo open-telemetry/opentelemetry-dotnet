@@ -45,7 +45,6 @@ namespace OpenTelemetry.Exporter
 #endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
         private readonly Metadata headers;
-        private DateTime deadline;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -76,12 +75,15 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
+                if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
+                {
+                    throw new NotSupportedException("Https Endpoint is not supported.");
+                }
+
 #if NETSTANDARD2_1
-                this.channel = options.GrpcChannelOptions == default
-                    ? GrpcChannel.ForAddress(options.Endpoint)
-                    : GrpcChannel.ForAddress(options.Endpoint, options.GrpcChannelOptions);
+                this.channel = GrpcChannel.ForAddress(options.Endpoint);
 #else
-                this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+                this.channel = new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
 #endif
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
             }
@@ -103,11 +105,11 @@ namespace OpenTelemetry.Exporter
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
-            this.deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.headers, deadline: this.deadline);
+                this.traceClient.Export(request, headers: this.headers, deadline: deadline);
             }
             catch (RpcException ex)
             {
