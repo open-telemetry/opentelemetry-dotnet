@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29
