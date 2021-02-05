@@ -19,4 +19,6 @@ RUN apt-get update && apt-get install ca-certificates
 COPY --from=build /repo/test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/otel-collector-config/otel-collector.crt /usr/local/share/ca-certificates/
 RUN update-ca-certificates --verbose
 
+ENV GRPC_DEFAULT_SSL_ROOTS_FILE_PATH /usr/local/share/ca-certificates/otel-collector.crt
+
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.dll"]
