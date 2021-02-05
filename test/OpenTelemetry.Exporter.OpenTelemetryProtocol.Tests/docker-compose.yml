@@ -11,7 +11,7 @@ services:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests:/cfg
     command: --config=/cfg/config.yaml
     ports:
-      - "55680:55680"
+      - "4317:4317"
 
   tests:
     build:
@@ -19,6 +19,6 @@ services:
       dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/Dockerfile
     command: --TestCaseFilter:CategoryName=CollectorIntegrationTests
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:55680
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
     depends_on:
       - otel-collector

@@ -2,16 +2,39 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `OtlpTraceExporter` and `OtlpExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Changed default port for OTLP Exporter from 55680 to 4317
+* Default ServiceName, if not found in Resource, is obtained from SDK using
+  GetDefaultResource().
+* Modified the data type of Headers option to string; Added a new option called
+  TimeoutMilliseconds for computing the `deadline` to be used by gRPC client for
+  `Export`
+  ([#1781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1781))
+* Removes Grpc specific options from OTLPExporterOptions, which removes support
+  for secure connections. See [1778](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1778)
+  for details.
+* Endpoint is made Uri for all target frameworks.
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `OltpTraceExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
-* In `OtlpExporterOptions.cs`: Exporter options now include a switch for
-  Batch vs Simple exporter, and settings for batch exporting properties.
+* In `OtlpExporterOptions.cs`: Exporter options now include a switch for Batch
+  vs Simple exporter, and settings for batch exporting properties.
 
-* Introduce a `netstandard2.1` build enabling the exporter to use the
-  [gRPC for .NET](https://github.com/grpc/grpc-dotnet) library instead of the
-  [gRPC for C#](https://github.com/grpc/grpc/tree/master/src/csharp) library
-  for .NET Core 3.0+ applications. This required some breaking changes to the
+* Introduce a `netstandard2.1` build enabling the exporter to use the [gRPC for
+  .NET](https://github.com/grpc/grpc-dotnet) library instead of the [gRPC for
+  C#](https://github.com/grpc/grpc/tree/master/src/csharp) library for .NET Core
+  3.0+ applications. This required some breaking changes to the
   `OtlpExporterOptions`.
   ([#1662](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1662))
 
@@ -26,7 +49,7 @@ Released 2020-Nov-17
   ([#1528](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1528))
 * Removed `ServiceName` from options available on the `AddOtlpExporter`
   extension. It is not required by the
-  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/protocol/exporter.md#configuration-options).
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options).
   ([#1557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1557))
 
 ## 0.8.0-beta.1
@@ -35,7 +58,7 @@ Released 2020-Nov-5
 
 * `peer.service` tag is now added to outgoing spans (went not already specified)
   following the [Zipkin remote endpoint
-  rules](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
+  rules](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#remote-endpoint)
   ([#1392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1392))
 * Added `ServiceName` to options available on the `AddOtlpExporter` extension
   ([#1420](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1420))

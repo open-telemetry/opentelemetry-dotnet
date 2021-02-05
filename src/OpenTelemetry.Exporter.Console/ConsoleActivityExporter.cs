@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     public class ConsoleActivityExporter : ConsoleExporter<Activity>
     {

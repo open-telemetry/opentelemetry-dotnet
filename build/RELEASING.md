@@ -2,16 +2,11 @@
 
 Only for Maintainers.
 
-1.Tag with version to be released e.g.:
+1.Decide the tag name (version name) to be released.
+  eg: 1.0.0-rc2, 1.0.0 etc.
 
-   ```sh
-   git tag -a 0.4.0-beta -m "0.4.0-beta"
-   git push origin 0.4.0-beta
-   ```
-
-2.Do Draft Github release (select the tag created above).
-  Then run the following PowerShell from the root of the
-   repo.
+2.Run the following PowerShell from the root of the
+   repo to get combined changelog (to be used later).
 
 ```powershell
     $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
@@ -44,15 +39,14 @@ Only for Maintainers.
 ```
 
    This generates combined changelog to be used in Github release.
-   Once contents of combined changelog is saved to Github release,
+   Once contents of combined changelog is saved somewhere,
    delete the file.
 
 3.Run the following PowerShell script from the root of the repo.
    This updates all the changelog to have release date for the
    current version being released.
    Replace the version with actual version.
-   The actual version would be the tag name from step1 appended with
-   ".1"
+   The actual version would be the tag name from step1.
 
 ```powershell
      $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
@@ -60,7 +54,7 @@ Only for Maintainers.
     {
      (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
 
-## 0.7.0-beta.1
+## 1.0.0-rc2
 
 Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
     }
@@ -68,25 +62,34 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 
 4.Submit PR with the above changes, and get it merged.
 
-5.Open [Pack and publish to MyGet
+5.Tag Git with version to be released e.g.:
+
+   ```sh
+   git tag -a 1.0.0-rc2 -m "1.0.0-rc2"
+   git push origin 1.0.0-rc2
+   ```
+
+We use [MinVer](https://github.com/adamralph/minver) to do versioning,
+which produces version numbers based on git tags.
+
+6.Open [Pack and publish to MyGet
    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22)
    and manually trigger a build. At the end of this, MyGet will have the
-   packages. The package name will be the tag name used in step1 appended with
-   ".1".
+   packages. The package name will be the tag name used in step 5.
 
-6.Validate using MyGet packages. Basic sanity checks :)
+7.Validate using MyGet packages. Basic sanity checks :)
 
-7.From the above build, get the artifacts from the drop, which has all the
+8.From the above build, get the artifacts from the drop, which has all the
    NuGet packages.
 
-8.Copy all the NuGet files and symbols into a local folder.
+9.Copy all the NuGet files and symbols into a local folder.
 
-9.Download latest [nuget.exe](https://www.nuget.org/downloads) into
-  the same folder from step 8.
+10.Download latest [nuget.exe](https://www.nuget.org/downloads) into
+  the same folder from step 9.
 
-10.Obtain the API key from nuget.org (Only maintainers have access)
+11.Obtain the API key from nuget.org (Only maintainers have access)
 
-11.Run the following commands from PowerShell from local folder used in step 8:
+12.Run the following commands from PowerShell from local folder used in step 9:
 
    ```powershell
    .\nuget.exe setApiKey <actual api key>
@@ -96,9 +99,13 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
    https://api.nuget.org/v3/index.json}
    ```
 
-12.Packages would be available in nuget.org in few minutes.
+13.Packages would be available in nuget.org in few minutes.
    Validate that the package is uploaded.
 
-13.Delete the API key generated in step 10.
+14.Delete the API key generated in step 11.
 
-14.Mark the Github release from draft to actual publish.
+15.Make the Github release with tag from Step5
+and contents of combinedchangelog from Step2.
+
+TODO: Add tagging for Metrics release.
+TODO: Separate version for instrumention/hosting/OTshim package.
