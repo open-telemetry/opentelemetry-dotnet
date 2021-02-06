@@ -120,10 +120,7 @@ repository](https://github.com/open-telemetry/community/blob/main/community-memb
 ## Release Schedule
 
 Only the [core components](./VERSIONING.md#core-components) of the repo has
-released a stable version. These components have a non pre-release version of
-1.0.0 or higher and implements the [v1.0 of OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/tree/v1.0.0/specification)
-. Components which are marked
+released a stable version. Components which are marked
 [pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
 are still work in progress and can undergo many breaking changes before stable
 release.
