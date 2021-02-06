@@ -40,6 +40,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporterOptions = new OtlpExporterOptions
             {
+                // TODO: Should test both http and https
                 Endpoint = new System.Uri($"https://{CollectorEndpoint}"),
             };
 
