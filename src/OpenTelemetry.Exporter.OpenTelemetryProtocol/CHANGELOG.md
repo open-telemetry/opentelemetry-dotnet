@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add back support for secure gRPC connections over https.
+  ([#1795](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1795))
+
 ## 1.0.0-rc3
 
 Released 2021-Feb-04
