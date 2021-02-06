@@ -119,7 +119,7 @@ repository](https://github.com/open-telemetry/community/blob/main/community-memb
 
 ## Release Schedule
 
-Only the [core components](./VERSIONING.md#core-components) of the repo has
+Only the [core components](./VERSIONING.md#core-components) of the repo have
 released a stable version. Components which are marked
 [pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
 are still work in progress and can undergo many breaking changes before stable
