@@ -56,9 +56,8 @@ child-operations.
 
 ### Logging API
 
-OpenTelemetry does not introduce its own API for logging. Instead it recommends
-to integrate with existing well-known logging libraries for each language. For
-.NET, the logging API is simply the [Microsoft.Extensions.Logging
+OpenTelemetry .NET does not introduce its own API for logging. Instead it
+provides an integration with the well known [Microsoft.Extensions.Logging
 API](https://docs.microsoft.com/dotnet/core/extensions/logging).
 
 ### Metrics API
@@ -114,6 +113,7 @@ required only for the following scenarios:
    users. Refer to the [comparison of Activity API and OpenTelemetry Tracing
    API](https://github.com/open-telemetry/opentelemetry-dotnet/issues/947) if
    you want to compare the differences.
+
 2. Your library performs communication with other libraries/components, and want
    to access
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md),
@@ -126,6 +126,10 @@ required only for the following scenarios:
    is not built on top of these, and want to leverage propagators, follow the
    [Context propagation](#context-propagation) section.
 
+3. You want to leverage
+   [Baggage](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
+   API.
+
 ## Instrumenting a library/application with .NET Activity API
 
 ### Basic usage
@@ -136,13 +140,13 @@ documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version
-   `5.0.0` or above to your application or library.
+   `5.0.1` or above to your application or library.
 
     ```xml
     <ItemGroup>
       <PackageReference
         Include="System.Diagnostics.DiagnosticSource"
-        Version="5.0.0"
+        Version="5.0.1"
       />
     </ItemGroup>
     ```
@@ -189,6 +193,11 @@ here as well.
         activity.SetTag("http.url", "http://www.mywebsite.com");
     }
     ```
+
+    The recommended way to [set span
+    attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
+    in `Activity` class is by using `SetTag()`. OpenTelemetry users should
+    not use other methods like `AddTag`, `SetCustomProperty` on `Activity`.
 
 5. Perform application/library logic.
 
