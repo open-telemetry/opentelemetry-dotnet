@@ -36,6 +36,22 @@ See the
 [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs)
 for an example of how to use the exporter.
 
+## Special case when using insecure channel
+
+If your application is
+[.NET Standard 2.1](https://docs.microsoft.com/dotnet/standard/net-standard) or
+above, and you are using an insecure (http) endpoint, the following switch must
+be set before adding `OtlpExporter`.
+
+```csharp
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport",
+ true);
+```
+
+See
+[this](https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client)
+for more information.
+
 ## References
 
 * [OpenTelemetry
