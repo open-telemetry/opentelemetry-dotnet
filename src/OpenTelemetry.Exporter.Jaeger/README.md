@@ -34,7 +34,6 @@ properties:
   `6831`).
 * `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
   sent to the agent. (default `4096`).
-* `ProcessTags`: Which tags should be sent with telemetry.
 * `ExportProcessorType`: Whether the exporter should use
   [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
   .
