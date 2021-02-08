@@ -54,13 +54,14 @@ exported span. The exception is the [required](https://github.com/open-telemetry
 
 Example configuration of resource attributes and attachment to `TracerProvider`
 with `JaegerExporter`:
+
 ```csharp
- List<KeyValuePair<string, object>> resourceAttrib = new List<KeyValuePair<string, object>>() { 
+ List<KeyValuePair<string, object>> resourceAttrib = new() {
     new KeyValuePair<string, object>("attribute1", "ABC"),
     new KeyValuePair<string, object>("attribute2", 123),
     new KeyValuePair<string, object>("service.name", ".NET OTel Service")
 };
-            
+
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(
         ResourceBuilder.CreateDefault().AddAttributes(resourceAttrib))
@@ -68,6 +69,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddJaegerExporter()
     .Build();
 ```
+
 When the source configured for above emits two generic, nested activities
 the resulting telemetry is captured on Jaeger as shown below. The
 `service.name` attribute is not shown with the rest of the attributes as
