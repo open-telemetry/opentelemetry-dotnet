@@ -1,0 +1,5 @@
+OpenTelemetry.Exporter.InMemoryExporter<T>
+OpenTelemetry.Exporter.InMemoryExporter<T>.InMemoryExporter(System.Collections.Generic.ICollection<T> exportedItems) -> void
+OpenTelemetry.Trace.InMemoryExporterHelperExtensions
+override OpenTelemetry.Exporter.InMemoryExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
+static OpenTelemetry.Trace.InMemoryExporterHelperExtensions.AddInMemoryExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Collections.Generic.ICollection<System.Diagnostics.Activity> exportedItems) -> OpenTelemetry.Trace.TracerProviderBuilder
