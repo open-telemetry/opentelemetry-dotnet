@@ -74,7 +74,7 @@ the resulting telemetry is captured on Jaeger as shown below. The
 `service.name` attribute is not shown with the rest of the attributes as
 `ProcessTags`, but rather separately as a header for each span representing the
 service it originated from.
-![Image of Jaeger UI showing presence of process tags](./jaeger-resource.PNG)
+![Image of Jaeger UI showing presence of process tags](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.Jaeger/jaeger-resource.PNG)
 
 ## References
 
