@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
     steps:
       - uses: actions/checkout@v2
       - name: Run OTLP Exporter docker-compose.integration
