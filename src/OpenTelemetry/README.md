@@ -30,10 +30,8 @@ OpenTelemetry SDK is a reference implementation of the OpenTelemetry API. It
 implements the Tracing API, the Metrics API, and the Context API.  Once a valid
 SDK is installed and configured, all the OpenTelemetry API methods, which were
 no-ops without an SDK, will start emitting telemetry.
-This SDK also supports
-[Logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
-by integrating with
-[ILogger](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger).
+This SDK also supports [ILogger](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
+integration.
 
 The SDK deals with concerns such as sampling, processing pipeline, exporting
 telemetry to a particular backend etc. In most cases, users indirectly install
@@ -41,12 +39,21 @@ and enable the SDK, when they install a particular exporter.
 
 ## Getting started with Logging
 
-If you are new to
-[logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md),
-it is recommended to follow [get started in 5
+If you are new to logging, it is recommended to follow [get started in 5
 minutes](../../docs/logs/getting-started/README.md) to get up and running with
 logging integration with
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger).
+
+While [OpenTelemetry
+logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
+specification is an experimental signal, `ILogger` is the de-facto logging API
+provided by the .NET runtime and is a stable API recommended for production use.
+This repo ships an OpenTelemetry
+[provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers),
+which provides the ability to enrich logs emitted with `ILogger` with
+`ActivityContext`, and export them to multiple destinations, similar to tracing.
+`ILogger` based API will become the OpenTelemetry .NET implementation of
+OpenTelemetry logging
 
 ## Getting started with Tracing
 
