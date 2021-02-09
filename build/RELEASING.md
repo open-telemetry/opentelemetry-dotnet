@@ -73,7 +73,7 @@ We use [MinVer](https://github.com/adamralph/minver) to do versioning,
 which produces version numbers based on git tags.
 
 Note: If releasing only core components, prefix the tag
-with "core-". For example 
+with "core-". For example:
 git tag -a core-1.0.0-rc4 -m "1.0.0-rc4 release of core"
 
 6.Open [Pack and publish to MyGet
