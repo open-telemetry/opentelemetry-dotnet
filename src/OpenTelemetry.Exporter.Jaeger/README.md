@@ -3,8 +3,11 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Jaeger.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Jaeger.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
 
-The Jaeger exporter communicates to a Jaeger Agent through the compact thrift
-protocol on the Compact Thrift API port.
+The Jaeger exporter converts OpenTelemetry traces into the Jaeger model
+following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
+
+The exporter communicates to a Jaeger Agent through the thrift protocol on
+the Compact Thrift API port, and as such only supports Thrift over UDP.
 
 ## Supported .NET Versions
 
