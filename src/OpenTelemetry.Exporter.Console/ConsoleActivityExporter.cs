@@ -72,15 +72,6 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                if (activity.Baggage.Any())
-                {
-                    this.WriteLine("Activity.Baggage:");
-                    foreach (var baggage in activity.Baggage)
-                    {
-                        this.WriteLine($"    {baggage.Key}: {baggage.Value}");
-                    }
-                }
-
                 var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)
                 {

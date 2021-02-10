@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Removed code that prints Baggage information
+  ([#1825](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1825))
+
 ## 1.0.1
 
 Released 2021-Feb-10
