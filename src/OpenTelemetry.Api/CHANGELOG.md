@@ -2,9 +2,6 @@
 
 ## Unreleased
 
-* Added a section on Baggage API to README.md.
-  [#1823](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1823)
-
 ## 1.0.0-rc4
 
 Released 2021-Feb-09

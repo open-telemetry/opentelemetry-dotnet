@@ -78,9 +78,10 @@ plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
 
 [Baggage
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
-allows users to add context to metric, traces, and logs. Baggage information is
-automatically propagated by [Propagators
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md).
+allows users to add context to metric, traces, and logs. Baggage can be
+propagated out of proc using
+[Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md).
+OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
 ```csharp
 // Use Baggage.Current to get all the key/value pairs present in Baggage
