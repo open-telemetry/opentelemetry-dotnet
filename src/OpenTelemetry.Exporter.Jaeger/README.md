@@ -54,30 +54,11 @@ The attributes of an attached [Resource](https://github.com/open-telemetry/opent
 are added to this process as tags, with the [required `service.name` attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
 used as the process's name.
 
-Example configuration of resource attributes and attachment to `TracerProvider`
-with `JaegerExporter`:
-
-```csharp
- List<KeyValuePair<string, object>> resourceAttrib = new() {
-    new KeyValuePair<string, object>("attribute1", "ABC"),
-    new KeyValuePair<string, object>("attribute2", 123),
-    new KeyValuePair<string, object>("service.name", ".NET OTel Service")
-};
-
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(
-        ResourceBuilder.CreateDefault().AddAttributes(resourceAttrib))
-    .AddSource("mysource")
-    .AddJaegerExporter()
-    .Build();
-```
-
-When the source configured for above emits two generic, nested activities
-the resulting telemetry is captured on Jaeger as shown below. The
-`service.name` attribute is not shown with the rest of the attributes as
-`ProcessTags`, but rather separately as a header for each span representing the
-service it originated from.
-![Image of Jaeger UI showing presence of process tags](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.Jaeger/jaeger-resource.PNG)
+An example configuration of resource attributes and attachment to `TracerProvider`
+with `JaegerExporter` can be found in [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs).
+The example highlights how a source emitting two generic, nested activities is
+captured by Jaeger and their `Resource` represented as a single originating
+Process.
 
 ## References
 
