@@ -119,13 +119,14 @@ repository](https://github.com/open-telemetry/community/blob/main/community-memb
 
 ## Release Schedule
 
-OpenTelemetry .NET is under active development.
+Only the [core components](./VERSIONING.md#core-components) of the repo have
+released a stable version. Components which are marked
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo many breaking changes before stable
+release.
 
-The library is not yet _generally available_, and releases aren't guaranteed to
-conform to a specific version of the specification. Future releases will not
-attempt to maintain backwards compatibility with previous releases. Each alpha
-and beta release includes significant changes to the API and SDK packages,
-making them incompatible with each other.
+See special note about [Metrics release
+plans](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
@@ -133,8 +134,8 @@ existing releases.
 
 See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues
-and milestones are estimates, and subject to change.
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
