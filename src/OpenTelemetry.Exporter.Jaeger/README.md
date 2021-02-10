@@ -46,10 +46,10 @@ for an example of how to use the exporter.
 
 ## Resources and Process Tags
 
-The attributes of a [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
- are represented in Jaeger as `ProcessTags` that associate with an
-exported span. The exception is the [required](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
-`service.name` attribute which accompanies each exported span as shown below.
+Jaeger sends information about the originating process once per exported batch.
+The attributes of an attached [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+are added to this process as tags, with the [required `service.name` attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+used as the process's name.
 
 Example configuration of resource attributes and attachment to `TracerProvider`
 with `JaegerExporter`:
