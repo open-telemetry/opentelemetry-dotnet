@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added a section on Baggage API to README.md.
+  [#1823](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1823)
+
 ## 1.0.0-rc4
 
 Released 2021-Feb-09
@@ -34,8 +37,8 @@ Released 2021-Jan-29
   `Status.StatusCode` is anything other than `ERROR`.
   ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
 * Metrics removed as it is not part 1.0.0 release. See issue
-  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
-  for details on Metric release plans.
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
+  details on Metric release plans.
 * Relax System.Diagnostics.DiagnosticSource version requirement to allow
   versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
   allowed.
