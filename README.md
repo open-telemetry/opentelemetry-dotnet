@@ -2,8 +2,6 @@
 
 [![Gitter
 chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
-[![Build
-Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 [![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
@@ -21,10 +19,12 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 
 ## Getting Started
 
-If you are new here, please see getting started docs for
-[logs](./docs/logs/getting-started/README.md),
-[metrics](./docs/metrics/getting-started.md), and
-[trace](./docs/trace/getting-started/README.md).
+If you are new here, please read the getting started docs:
+
+* [logs](./docs/logs/getting-started/README.md)
+* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started.md)
+  (experimental)
+* [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
@@ -42,7 +42,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+* [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 * [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
 * [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
@@ -100,7 +100,7 @@ Approvers
 * [Reiley Yang](https://github.com/reyang), Microsoft
 
 *Find more about the approver role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#approver).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*
 
 Maintainers
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
@@ -112,7 +112,7 @@ Maintainers
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
 *Find more about the maintainer role in [community
-repository](https://github.com/open-telemetry/community/blob/master/community-membership.md#maintainer).*
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
 
 ### Thanks to all the people who have contributed
 
@@ -120,13 +120,14 @@ repository](https://github.com/open-telemetry/community/blob/master/community-me
 
 ## Release Schedule
 
-OpenTelemetry .NET is under active development.
+Only the [core components](./VERSIONING.md#core-components) of the repo have
+released a stable version. Components which are marked
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo many breaking changes before stable
+release.
 
-The library is not yet _generally available_, and releases aren't guaranteed to
-conform to a specific version of the specification. Future releases will not
-attempt to maintain backwards compatibility with previous releases. Each alpha
-and beta release includes significant changes to the API and SDK packages,
-making them incompatible with each other.
+See special note about [Metrics release
+plans](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
@@ -134,8 +135,8 @@ existing releases.
 
 See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues
-and milestones are estimates, and subject to change.
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).

@@ -29,7 +29,7 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
@@ -37,8 +37,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
     /// </summary>
     public class OtlpTraceExporter : BaseExporter<Activity>
     {
-        private const string DefaultServiceName = "OpenTelemetry Exporter";
-
         private readonly OtlpExporterOptions options;
 #if NETSTANDARD2_1
         private readonly GrpcChannel channel;
@@ -65,19 +63,37 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         internal OtlpTraceExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.headers = options.Headers ?? throw new ArgumentException("Headers were not provided on options.", nameof(options));
+            this.headers = GetMetadataFromHeaders(options.Headers);
+            if (this.options.TimeoutMilliseconds <= 0)
+            {
+                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.options.TimeoutMilliseconds));
+            }
+
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
             }
             else
             {
+                if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
+                {
+                    throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
+                }
+
 #if NETSTANDARD2_1
-                this.channel = options.GrpcChannelOptions == default
-                    ? GrpcChannel.ForAddress(options.Endpoint)
-                    : GrpcChannel.ForAddress(options.Endpoint, options.GrpcChannelOptions);
+                this.channel = GrpcChannel.ForAddress(options.Endpoint);
 #else
-                this.channel = new Channel(options.Endpoint, options.Credentials, options.ChannelOptions);
+                ChannelCredentials channelCredentials;
+                if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
+                {
+                    channelCredentials = new SslCredentials();
+                }
+                else
+                {
+                    channelCredentials = ChannelCredentials.Insecure;
+                }
+
+                this.channel = new Channel(options.Endpoint.Authority, channelCredentials);
 #endif
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
             }
@@ -99,10 +115,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.headers);
+                this.traceClient.Export(request, headers: this.headers, deadline: deadline);
             }
             catch (RpcException ex)
             {
@@ -139,10 +156,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
             if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
             {
+                var serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
                 processResource.Attributes.Add(new OtlpCommon.KeyValue
                 {
                     Key = ResourceSemanticConventions.AttributeServiceName,
-                    Value = new OtlpCommon.AnyValue { StringValue = DefaultServiceName },
+                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
                 });
             }
 
@@ -158,6 +177,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             }
 
             return Task.WaitAny(new Task[] { this.channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+        }
+
+        private static Metadata GetMetadataFromHeaders(string headers)
+        {
+            var metadata = new Metadata();
+            if (!string.IsNullOrEmpty(headers))
+            {
+                Array.ForEach(
+                    headers.Split(','),
+                    (pair) =>
+                    {
+                        var keyValueData = pair.Split('=');
+                        if (keyValueData.Length != 2)
+                        {
+                            throw new ArgumentException("Headers provided in an invalid format.");
+                        }
+
+                        var key = keyValueData[0].Trim();
+                        var value = keyValueData[1].Trim();
+                        metadata.Add(key, value);
+                    });
+            }
+
+            return metadata;
         }
     }
 }

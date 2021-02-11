@@ -105,11 +105,5 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             PooledList<BufferWriterMemory>.Clear(ref this.spanMessages);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Return()
-        {
-            this.spanMessages.Return();
-        }
     }
 }
