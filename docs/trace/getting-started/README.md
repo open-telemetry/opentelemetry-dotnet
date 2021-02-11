@@ -40,6 +40,8 @@ Activity.TagObjects:
     foo: 1
     bar: Hello, World!
     baz: [1, 2, 3]
+Resource associated with Activity:
+    service.name: unknown_service:getting-started
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.
