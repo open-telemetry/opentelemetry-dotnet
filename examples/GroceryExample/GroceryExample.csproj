@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj">
+      <Project>{99f8a331-05e9-45a5-89ba-4c54e825e5b2}</Project>
+      <Name>OpenTelemetry.Api</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj">
+      <Project>{ae3e3df5-4083-4c6e-a840-8271b0acde7e}</Project>
+      <Name>OpenTelemetry</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
