@@ -72,6 +72,10 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 We use [MinVer](https://github.com/adamralph/minver) to do versioning,
 which produces version numbers based on git tags.
 
+Note: If releasing only core components, prefix the tag
+with "core-". For example:
+git tag -a core-1.0.0-rc4 -m "1.0.0-rc4 release of core"
+
 6.Open [Pack and publish to MyGet
    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22)
    and manually trigger a build. At the end of this, MyGet will have the
@@ -82,7 +86,8 @@ which produces version numbers based on git tags.
 8.From the above build, get the artifacts from the drop, which has all the
    NuGet packages.
 
-9.Copy all the NuGet files and symbols into a local folder.
+9.Copy all the NuGet files and symbols into a local folder. If only
+  releasing core packages, only copy them over.
 
 10.Download latest [nuget.exe](https://www.nuget.org/downloads) into
   the same folder from step 9.
