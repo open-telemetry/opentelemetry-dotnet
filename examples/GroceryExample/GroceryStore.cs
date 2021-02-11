@@ -1,4 +1,4 @@
-// <copyright file="Global.asax.cs" company="OpenTelemetry Authors">
+// <copyright file="GroceryStore.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ namespace GroceryExample
         private string storeName;
 
         private CounterMetric<long> itemCounter;
-        
+
         private CounterMetric<double> cashCounter;
 
         private BoundCounterMetric<double> boundCashCounter;
@@ -46,14 +46,14 @@ namespace GroceryExample
 
             Meter meter = MeterProvider.Default.GetMeter("GroceryStore", "1.0.0");
 
-            itemCounter = meter.CreateInt64Counter("item_counter");
+            this.itemCounter = meter.CreateInt64Counter("item_counter");
 
-            cashCounter = meter.CreateDoubleCounter("cash_counter");
+            this.cashCounter = meter.CreateDoubleCounter("cash_counter");
 
             var labels = new MyLabelSet(
                 new KeyValuePair<string, string>("Store", "Portland"));
 
-            boundCashCounter = cashCounter.Bind(labels);
+            this.boundCashCounter = this.cashCounter.Bind(labels);
         }
 
         public void ProcessOrder(string customer, params (string name, int qty)[] items)
@@ -71,7 +71,7 @@ namespace GroceryExample
                     new KeyValuePair<string, string>("Customer", customer),
                     new KeyValuePair<string, string>("Item", item.name));
 
-                itemCounter.Add(default(SpanContext), item.qty, labels);
+                this.itemCounter.Add(default(SpanContext), item.qty, labels);
             }
 
             // Record Metric
@@ -80,9 +80,9 @@ namespace GroceryExample
                 new KeyValuePair<string, string>("Store", "Portland"),
                 new KeyValuePair<string, string>("Customer", customer));
 
-            cashCounter.Add(default(SpanContext), totalPrice, labels2);
+            this.cashCounter.Add(default(SpanContext), totalPrice, labels2);
 
-            boundCashCounter.Add(default(SpanContext), totalPrice);
+            this.boundCashCounter.Add(default(SpanContext), totalPrice);
         }
     }
 }

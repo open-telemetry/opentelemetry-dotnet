@@ -1,4 +1,4 @@
-// <copyright file="Global.asax.cs" company="OpenTelemetry Authors">
+// <copyright file="MyMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,45 +19,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Export;
 
 #pragma warning disable CS0618
 
 namespace GroceryExample
 {
-    public class MyLabelSet : LabelSet
-    {
-        public MyLabelSet(params KeyValuePair<string,string>[] labels)
-        {
-            List<KeyValuePair<string,string>> list = new List<KeyValuePair<string, string>>();
-            foreach (var kv in labels)
-            {
-                list.Add(kv);
-            }
-
-            Labels = list;
-        }
-
-        public override IEnumerable<KeyValuePair<string, string>> Labels { get; set; } = System.Linq.Enumerable.Empty<KeyValuePair<string, string>>();
-    }
-
-    public class MyMetricProcessor : MetricProcessor
-    {
-        private List<Metric> items = new List<Metric>();
-
-        public override void FinishCollectionCycle(out IEnumerable<Metric> metrics)
-        {
-            metrics = Interlocked.Exchange(ref items, new List<Metric>());
-        }
-
-        public override void Process(Metric metric)
-        {
-            items.Add(metric);
-        }
-    }
-
-    public class MyMetricExporter: MetricExporter
+    public class MyMetricExporter : MetricExporter
     {
         public override Task<ExportResult> ExportAsync(IEnumerable<Metric> metrics, CancellationToken cancellationToken)
         {
@@ -87,5 +55,4 @@ namespace GroceryExample
             });
         }
     }
-
 }

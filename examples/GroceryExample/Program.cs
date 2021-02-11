@@ -1,4 +1,4 @@
-﻿// <copyright file="Global.asax.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="Program.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ namespace GroceryExample
                 ;
 
             var store = new GroceryStore("Portland");
+
             store.ProcessOrder("customerA", ("potato", 2), ("tomato", 3));
             store.ProcessOrder("customerB", ("tomato", 10));
             store.ProcessOrder("customerC", ("potato", 2));
@@ -44,7 +45,7 @@ namespace GroceryExample
             Task.Delay(5000).Wait();
 
             // Shutdown Metric Pipeline
-            // pipeline.Stop();
+            // sdk.Shutdown();
         }
     }
 }
