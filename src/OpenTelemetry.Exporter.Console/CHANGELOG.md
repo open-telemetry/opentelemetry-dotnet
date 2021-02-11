@@ -1,5 +1,12 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Exporter.Console/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
 
 * Removed code that prints Baggage information
