@@ -33,7 +33,10 @@ namespace GroceryExample
         private string storeName;
 
         private CounterMetric<long> itemCounter;
+        
         private CounterMetric<double> cashCounter;
+
+        private BoundCounterMetric<double> boundCashCounter;
 
         public GroceryStore(string storeName)
         {
@@ -46,31 +49,40 @@ namespace GroceryExample
             itemCounter = meter.CreateInt64Counter("item_counter");
 
             cashCounter = meter.CreateDoubleCounter("cash_counter");
+
+            var labels = new MyLabelSet(
+                new KeyValuePair<string, string>("Store", "Portland"));
+
+            boundCashCounter = cashCounter.Bind(labels);
         }
 
         public void ProcessOrder(string customer, params (string name, int qty)[] items)
         {
-            double total_price = 0;
+            double totalPrice = 0;
 
             foreach (var item in items)
             {
-                total_price += item.qty * priceList[item.name];
+                totalPrice += item.qty * priceList[item.name];
 
                 // Record Metric
 
                 var labels = new MyLabelSet(
+                    new KeyValuePair<string, string>("Store", "Portland"),
                     new KeyValuePair<string, string>("Customer", customer),
                     new KeyValuePair<string, string>("Item", item.name));
-                    
+
                 itemCounter.Add(default(SpanContext), item.qty, labels);
             }
 
             // Record Metric
 
             var labels2 = new MyLabelSet(
+                new KeyValuePair<string, string>("Store", "Portland"),
                 new KeyValuePair<string, string>("Customer", customer));
 
-            cashCounter.Add(default(SpanContext), total_price, labels2);
+            cashCounter.Add(default(SpanContext), totalPrice, labels2);
+
+            boundCashCounter.Add(default(SpanContext), totalPrice);
         }
     }
 }
