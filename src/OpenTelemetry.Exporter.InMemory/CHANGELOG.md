@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * `AddInMemoryExporter` extension method for traces moved from
   `OpenTelemetry` namespace to `OpenTelemetry.Trace` namespace.
   ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))

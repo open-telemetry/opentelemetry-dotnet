@@ -53,6 +53,12 @@ namespace Examples.AspNet
                         zipkinOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["ZipkinEndpoint"]);
                     });
                     break;
+                case "otlp":
+                    builder.AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["OtlpEndpoint"]);
+                        });
+                    break;
                 default:
                     builder.AddConsoleExporter(options => options.Targets = ConsoleExporterOutputTargets.Debug);
                     break;

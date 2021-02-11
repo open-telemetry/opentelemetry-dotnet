@@ -331,6 +331,18 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void GetResourceWithTelemetrySDKAttributes()
+        {
+            // Arrange
+            var resource = ResourceBuilder.CreateDefault().AddTelemetrySdk().AddEnvironmentVariableDetector().Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateTelemetrySdkAttributes(attributes);
+        }
+
+        [Fact]
         public void GetResourceWithDefaultAttributes_EmptyResource()
         {
             // Arrange
@@ -338,8 +350,8 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = resource.Attributes;
-            Assert.Equal(3, attributes.Count());
-            ValidateTelemetrySdkAttributes(attributes);
+            Assert.Single(attributes);
+            ValidateDefaultAttributes(attributes);
         }
 
         [Fact]
@@ -350,9 +362,9 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = resource.Attributes;
-            Assert.Equal(5, attributes.Count());
+            Assert.Equal(3, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
-            ValidateTelemetrySdkAttributes(attributes);
+            ValidateDefaultAttributes(attributes);
         }
 
         [Fact]
@@ -364,9 +376,9 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             var attributes = resource.Attributes;
-            Assert.Equal(7, attributes.Count());
+            Assert.Equal(5, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
-            ValidateTelemetrySdkAttributes(attributes);
+            ValidateDefaultAttributes(attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         }
@@ -410,6 +422,13 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
             var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
             Assert.Single(versionAttribute);
+        }
+
+        private static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        {
+            var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
+            Assert.Single(serviceName);
+            Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
         }
 
         private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)

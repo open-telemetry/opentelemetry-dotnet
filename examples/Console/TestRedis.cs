@@ -45,7 +45,6 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddZipkinExporter(o =>
                     {
-                        o.ServiceName = "redis-test";
                         o.Endpoint = new Uri(zipkinUri);
                     })
                     .AddRedisInstrumentation(connection, options =>
