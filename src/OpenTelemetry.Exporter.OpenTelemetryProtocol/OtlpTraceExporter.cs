@@ -75,15 +75,25 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
-                if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
+                if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
                 {
-                    throw new NotSupportedException("Https Endpoint is not supported.");
+                    throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
                 }
 
 #if NETSTANDARD2_1
                 this.channel = GrpcChannel.ForAddress(options.Endpoint);
 #else
-                this.channel = new Channel(options.Endpoint.Authority, ChannelCredentials.Insecure);
+                ChannelCredentials channelCredentials;
+                if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
+                {
+                    channelCredentials = new SslCredentials();
+                }
+                else
+                {
+                    channelCredentials = ChannelCredentials.Insecure;
+                }
+
+                this.channel = new Channel(options.Endpoint.Authority, channelCredentials);
 #endif
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
             }
