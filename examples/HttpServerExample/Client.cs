@@ -16,29 +16,52 @@
 
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HttpServerExample
 {
     public class Client
     {
-        private HttpClient client = new HttpClient();
-
-        public async Task SendRequest(string name)
+        public static Task StartClientTask(string url, int periodMilli, CancellationToken token)
         {
-            try
+            Task task = Task.Run(async () =>
             {
-                HttpResponseMessage response = await this.client.GetAsync($"http://127.0.0.1:3000/{name}");
+                Console.WriteLine("Client Started.");
 
-                response.EnsureSuccessStatusCode();
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        HttpClient client = new HttpClient();
 
-                string responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine(responseBody);
-            }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine("Exception: Message :{0} ", e.Message);
-            }
+                        HttpResponseMessage response = await client.GetAsync(url);
+
+                        response.EnsureSuccessStatusCode();
+
+                        string responseBody = await response.Content.ReadAsStringAsync();
+
+                        Console.WriteLine($"Client got \"{responseBody}\"");
+                    }
+                    catch (HttpRequestException e)
+                    {
+                        Console.WriteLine("Client Exception: {0}", e.Message);
+                    }
+
+                    try
+                    {
+                        await Task.Delay(periodMilli, token);
+                    }
+                    catch (Exception)
+                    {
+                        // Do Nothing
+                    }
+                }
+
+                Console.WriteLine("Client Stopped.");
+            });
+
+            return task;
         }
     }
 }

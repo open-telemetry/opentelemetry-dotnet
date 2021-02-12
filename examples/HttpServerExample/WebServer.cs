@@ -23,32 +23,41 @@ namespace HttpServerExample
 {
     public class WebServer
     {
-        private CancellationTokenSource tokenSrc = new CancellationTokenSource();
-
-        private Task serverTask;
-
-        private HttpListener listener = new HttpListener();
-
         public WebServer()
         {
-            this.listener.Prefixes.Add("http://127.0.0.1:3000/");
+            // Initialize Web Server
         }
 
-        public void Start()
+        public void Shutdown()
         {
-            var token = this.tokenSrc.Token;
+            // Shutdown            
+        }
 
-            this.serverTask = Task.Run(async () =>
-                {
+        public Task StartServerTask(string prefix, CancellationToken token)
+        {
+            HttpListener listener = new HttpListener();
+
+            listener.Prefixes.Add(prefix);
+
+            Task serverTask = Task.Run(async () =>
+            {
                 Console.WriteLine("Server Started.");
 
-                this.listener.Start();
+                listener.Start();
 
                 while (!token.IsCancellationRequested)
                 {
-                    var contextTask = this.listener.GetContextAsync();
+                    var contextTask = listener.GetContextAsync();
 
-                    Task.WaitAny(new Task[] { contextTask }, token);
+                    try
+                    {
+                        Task.WaitAny(new Task[] { contextTask }, token);
+                    }
+                    catch (Exception)
+                    {
+                        // Do Nothing
+                    }
+
                     if (contextTask.IsCompletedSuccessfully)
                     {
                         var context = await contextTask;
@@ -56,15 +65,20 @@ namespace HttpServerExample
 
                         // Parse request
 
-                        var url = request.Url;
-                        string responseString = $"<HTML><BODY>Hello world! {url.AbsolutePath}</BODY></HTML>";
-                        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                        var path = request.Url.AbsolutePath;
+
+                        Console.WriteLine($"Server request for {path}");
 
                         // Format output
+
+                        string responseString = $"<HTML><BODY>Hello world for {path}</BODY></HTML>";
+                        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
 
                         HttpListenerResponse response = context.Response;
                         response.ContentLength64 = buffer.Length;
                         response.StatusCode = 200;
+
+                        // Return Response
 
                         System.IO.Stream output = response.OutputStream;
                         output.Write(buffer, 0, buffer.Length);
@@ -72,24 +86,12 @@ namespace HttpServerExample
                     }
                 }
 
-                this.listener.Stop();
+                listener.Stop();
 
                 Console.WriteLine("Server Stopped.");
             });
-        }
 
-        public void Stop()
-        {
-            this.tokenSrc.Cancel();
-
-            try
-            {
-                this.serverTask.Wait();
-            }
-            catch (Exception)
-            {
-                // Do Nothing
-            }
+            return serverTask;
         }
     }
 }

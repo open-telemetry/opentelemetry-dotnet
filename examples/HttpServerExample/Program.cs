@@ -15,42 +15,30 @@
 // </copyright>
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HttpServerExample
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
+            CancellationTokenSource cancelSrc = new CancellationTokenSource();
+
+            var client1Task = Client.StartClientTask("http://127.0.0.1:3000/Test1", 1000, cancelSrc.Token);
+            var client2Task = Client.StartClientTask("http://127.0.0.1:3000/Test2", 5000, cancelSrc.Token);
+
+
             var webserver = new WebServer();
+            var webserverTask = webserver.StartServerTask("http://127.0.0.1:3000/", cancelSrc.Token);
 
-            webserver.Start();
+            Console.WriteLine("Press [ENTER] to exit.");
+            var cmdline = Console.ReadLine();
+            cancelSrc.Cancel();
 
-            var client = new Client();
-
-            Console.WriteLine("Type \"send {name}\" to send. Type \"exit\" to exit.");
-            while (true)
-            {
-                var cmdLine = Console.ReadLine();
-                if (cmdLine != null)
-                {
-                    var cmds = cmdLine.Split(" ");
-
-                    if (cmds[0] == "exit")
-                    {
-                        break;
-                    }
-                    else if (cmds[0] =="send")
-                    {
-                        var names = cmds.AsSpan<string>().Slice(1);
-                        var name = String.Join("/", names.ToArray());
-
-                        var t = client.SendRequest(name);
-                    }
-                }
-            }
-
-            webserver.Stop();
+            webserver.Shutdown();
+            await webserverTask;
         }
     }
 }
