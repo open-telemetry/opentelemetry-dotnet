@@ -1,0 +1,34 @@
+# Starts an OpenTelemetry Collector and then runs the OTLP exporter integration tests.
+# This should be run from the root of the repo:
+#    docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/integration-test/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
+
+version: '3.7'
+
+services:
+  create-cert:
+    image: mcr.microsoft.com/dotnet/sdk:5.0-focal
+    volumes:
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/integration-test:/cfg
+    command: /cfg/create-cert.sh
+
+  otel-collector:
+    image: otel/opentelemetry-collector
+    volumes:
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/integration-test:/cfg
+    command: --config=/cfg/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+    depends_on:
+      - create-cert
+
+  tests:
+    build:
+      context: .
+      dockerfile: ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/integration-test/Dockerfile
+    volumes:
+      - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/integration-test:/cfg
+    command: /cfg/run-test.sh
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
