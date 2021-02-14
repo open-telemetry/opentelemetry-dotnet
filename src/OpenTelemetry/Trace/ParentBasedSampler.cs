@@ -70,16 +70,16 @@ namespace OpenTelemetry.Trace
         /// </param>
         public ParentBasedSampler(
             Sampler rootSampler,
-            Sampler remoteParentSampled,
-            Sampler remoteParentNotSampled,
-            Sampler localParentSampled,
-            Sampler localParentNotSampled)
+            Sampler remoteParentSampled = null,
+            Sampler remoteParentNotSampled = null,
+            Sampler localParentSampled = null,
+            Sampler localParentNotSampled = null)
             : this(rootSampler)
         {
-            this.remoteParentSampled = remoteParentSampled ?? throw new ArgumentNullException(nameof(remoteParentSampled));
-            this.remoteParentNotSampled = remoteParentNotSampled ?? throw new ArgumentNullException(nameof(remoteParentNotSampled));
-            this.localParentSampled = localParentSampled ?? throw new ArgumentNullException(nameof(localParentSampled));
-            this.localParentNotSampled = localParentNotSampled ?? throw new ArgumentNullException(nameof(localParentNotSampled));
+            this.remoteParentSampled = remoteParentSampled;
+            this.remoteParentNotSampled = remoteParentNotSampled;
+            this.localParentSampled = localParentSampled;
+            this.localParentNotSampled = localParentNotSampled;
         }
 
         /// <inheritdoc />

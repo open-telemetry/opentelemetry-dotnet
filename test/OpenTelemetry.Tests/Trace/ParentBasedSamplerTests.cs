@@ -166,37 +166,9 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void DisallowNullSamplersInConstructor()
+        public void DisallowNullRootSampler()
         {
             Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null));
-            Assert.Throws<ArgumentNullException>(
-                () => new ParentBasedSampler(
-                    new AlwaysOnSampler(),
-                    null,
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler()));
-            Assert.Throws<ArgumentNullException>(
-                () => new ParentBasedSampler(
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    null,
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler()));
-            Assert.Throws<ArgumentNullException>(
-                () => new ParentBasedSampler(
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    null,
-                    new AlwaysOnSampler()));
-            Assert.Throws<ArgumentNullException>(
-                () => new ParentBasedSampler(
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    new AlwaysOnSampler(),
-                    null));
         }
 
         private SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
