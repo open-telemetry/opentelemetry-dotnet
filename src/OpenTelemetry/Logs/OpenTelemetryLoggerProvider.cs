@@ -26,8 +26,7 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
     {
         internal BaseProcessor<LogRecord> Processor;
-        private readonly OpenTelemetryLoggerOptions options;
-        private readonly IDictionary<string, ILogger> loggers;
+        private readonly IDictionary<string, OpenTelemetryLogger> loggers = new Dictionary<string, OpenTelemetryLogger>(StringComparer.Ordinal);
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
@@ -45,8 +44,10 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.loggers = new Dictionary<string, ILogger>(StringComparer.Ordinal);
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
 
             foreach (var processor in options.Processors)
             {
@@ -54,40 +55,34 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        internal IExternalScopeProvider ScopeProvider
-        {
-            get
-            {
-                if (this.scopeProvider == null)
-                {
-                    this.scopeProvider = new LoggerExternalScopeProvider();
-                }
-
-                return this.scopeProvider;
-            }
-        }
-
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
-            // TODO: set existing loggers
             this.scopeProvider = scopeProvider;
+
+            foreach (KeyValuePair<string, OpenTelemetryLogger> logger in this.loggers)
+            {
+                logger.Value.ScopeProvider = scopeProvider;
+            }
         }
 
         public ILogger CreateLogger(string categoryName)
         {
-            lock (this.loggers)
+            if (!this.loggers.TryGetValue(categoryName, out var logger))
             {
-                ILogger logger;
-
-                if (this.loggers.TryGetValue(categoryName, out logger))
+                lock (this.loggers)
                 {
-                    return logger;
+                    if (!this.loggers.TryGetValue(categoryName, out logger))
+                    {
+                        logger = new OpenTelemetryLogger(categoryName, this)
+                        {
+                            ScopeProvider = this.scopeProvider,
+                        };
+                        this.loggers.Add(categoryName, logger);
+                    }
                 }
-
-                logger = new OpenTelemetryLogger(categoryName, this);
-                this.loggers.Add(categoryName, logger);
-                return logger;
             }
+
+            return logger;
         }
 
         /// <inheritdoc/>

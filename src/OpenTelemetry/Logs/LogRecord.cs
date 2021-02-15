@@ -26,9 +26,19 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
-        internal LogRecord(DateTime timestamp, string categoryName, LogLevel logLevel, EventId eventId, object state, Exception exception)
+        private readonly IExternalScopeProvider scopeProvider;
+
+        internal LogRecord(
+            IExternalScopeProvider scopeProvider,
+            DateTime timestamp,
+            string categoryName,
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            object state,
+            Exception exception)
         {
-            this.Timestamp = timestamp;
+            this.scopeProvider = scopeProvider;
 
             var activity = Activity.Current;
             if (activity != null)
@@ -39,9 +49,11 @@ namespace OpenTelemetry.Logs
                 this.TraceFlags = activity.ActivityTraceFlags;
             }
 
+            this.Timestamp = timestamp;
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
+            this.Message = message;
             this.State = state;
             this.Exception = exception;
         }
@@ -62,9 +74,16 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
+        public string Message { get; }
+
         public object State { get; }
 
         public Exception Exception { get; }
+
+        internal void ForEachScope<TState>(Action<object, TState> callback, TState state)
+        {
+            this.scopeProvider?.ForEachScope(callback, state);
+        }
     }
 }
 #endif

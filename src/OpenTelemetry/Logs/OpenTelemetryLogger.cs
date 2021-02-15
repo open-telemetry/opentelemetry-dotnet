@@ -37,19 +37,26 @@ namespace OpenTelemetry.Logs
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!this.IsEnabled(logLevel))
+            if (!this.IsEnabled(logLevel) || Sdk.SuppressInstrumentation)
             {
                 return;
             }
 
-            if (Sdk.SuppressInstrumentation)
+            var processor = this.provider.Processor;
+            if (processor != null)
             {
-                return;
+                var record = new LogRecord(
+                    this.ScopeProvider,
+                    DateTime.UtcNow,
+                    this.categoryName,
+                    logLevel,
+                    eventId,
+                    formatter(state, exception),
+                    state,
+                    exception);
+
+                processor.OnEnd(record);
             }
-
-            var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
-
-            this.provider.Processor?.OnEnd(record);
         }
 
         public bool IsEnabled(LogLevel logLevel)

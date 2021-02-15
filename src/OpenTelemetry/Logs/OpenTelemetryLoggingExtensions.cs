@@ -16,11 +16,11 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace Microsoft.Extensions.Logging
@@ -43,6 +43,29 @@ namespace Microsoft.Extensions.Logging
             }
 
             return builder;
+        }
+
+        /// <summary>
+        /// Adds a LogRecord Processor to the OpenTelemetry ILoggingBuilder
+        /// which converts messages into <see cref="ActivityEvent"/>s on the
+        /// currently running <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="configure"><see cref="ActivityEventAttachingLogProcessorOptions"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="loggerOptions"/> is <c>null</c>.</exception>
+        public static OpenTelemetryLoggerOptions AddActivityEventAttachingLogProcessor(
+            this OpenTelemetryLoggerOptions loggerOptions,
+            Action<ActivityEventAttachingLogProcessorOptions> configure = null)
+        {
+            if (loggerOptions == null)
+            {
+                throw new ArgumentNullException(nameof(loggerOptions));
+            }
+
+            var options = new ActivityEventAttachingLogProcessorOptions();
+            configure?.Invoke(options);
+            return loggerOptions.AddProcessor(new ActivityEventAttachingLogProcessor(options));
         }
     }
 }

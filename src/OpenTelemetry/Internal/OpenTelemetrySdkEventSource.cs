@@ -90,6 +90,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void LogProcessorException(string @event, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.LogProcessorException(@event, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void ActivityStarted(Activity activity)
         {
             if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
@@ -285,6 +294,12 @@ namespace OpenTelemetry.Internal
         public void TracerProviderException(string evnt, string ex)
         {
             this.WriteEvent(28, evnt, ex);
+        }
+
+        [Event(29, Message = "Unknown error in LogProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void LogProcessorException(string @event, string exception)
+        {
+            this.WriteEvent(29, @event, exception);
         }
 
 #if DEBUG

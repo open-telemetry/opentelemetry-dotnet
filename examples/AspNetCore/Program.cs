@@ -15,7 +15,9 @@
 // </copyright>
 
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Examples.AspNetCore
 {
@@ -31,6 +33,19 @@ namespace Examples.AspNetCore
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureLogging((context, builder) =>
+                {
+                    var useLogging = context.Configuration.GetValue<bool>("UseLogging");
+                    if (useLogging)
+                    {
+                        builder.AddOpenTelemetry(options
+                            => options.AddActivityEventAttachingLogProcessor(logOptions =>
+                            {
+                                logOptions.IncludeScopes = true;
+                                logOptions.IncludeState = true;
+                            }));
+                    }
                 });
     }
 }
