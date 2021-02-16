@@ -18,14 +18,39 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
+#pragma warning disable CS0618
 
 namespace HttpServerExample
 {
     public class WebServer
     {
+        MyLibrary library;
+
+        MeasureMetric<long> duration;
+        CounterMetric<long> errorCount;
+        CounterMetric<long> incomingCount;
+        CounterMetric<long> outgoingCount;
+
         public WebServer()
         {
             // Initialize Web Server
+
+            library = new MyLibrary();
+
+            Meter meter = MeterProvider.Default.GetMeter("MyServer", "1.0.0");
+
+            duration = meter.CreateInt64Measure("Server.Duration", true);
+            // How to tell it what unit the measurements are in?
+
+            errorCount = meter.CreateInt64Counter("Server.Errors", true);
+
+            incomingCount = meter.CreateInt64Counter("Server.Request.Incoming", true);
+
+            outgoingCount = meter.CreateInt64Counter("Server.Request.Outgoing", true);
         }
 
         public void Shutdown()
@@ -45,6 +70,8 @@ namespace HttpServerExample
 
                 listener.Start();
 
+                Stopwatch sw = new Stopwatch();
+
                 while (!token.IsCancellationRequested)
                 {
                     var contextTask = listener.GetContextAsync();
@@ -58,10 +85,22 @@ namespace HttpServerExample
                         // Do Nothing
                     }
 
-                    if (contextTask.IsCompletedSuccessfully)
+                    if (contextTask.IsCompletedSuccessfully && !contextTask.IsFaulted)
                     {
+                        sw.Reset();
+
                         var context = await contextTask;
                         HttpListenerRequest request = context.Request;
+
+                        var requestLabels = new MyLabelSet(
+                            ("Host Name", library.GetHostName()),
+                            ("Process Id", library.GetProcessId().ToString()),
+                            ("Method", request.HttpMethod),
+                            ("Peer IP", request.RemoteEndPoint.Address.ToString()),
+                            ("Port", request.Url.Port.ToString())
+                        );
+
+                        incomingCount.Add(default(SpanContext), 1, requestLabels);
 
                         // Parse request
 
@@ -83,6 +122,33 @@ namespace HttpServerExample
                         System.IO.Stream output = response.OutputStream;
                         output.Write(buffer, 0, buffer.Length);
                         output.Close();
+
+                        // ========
+
+                        outgoingCount.Add(default(SpanContext), 1, requestLabels);
+
+                        var elapsed = sw.ElapsedMilliseconds;
+                        var labels = new MyLabelSet(
+                            ("Host Name", library.GetHostName()),
+                            ("Process Id", library.GetProcessId().ToString()),
+                            ("Method", request.HttpMethod),
+                            ("Peer IP", request.RemoteEndPoint.Address.ToString()),
+                            ("Port", request.Url.Port.ToString()),
+
+                            // Need to include Status Code
+                            ("Status Code", response.StatusCode.ToString())
+                        );
+                        duration.Record(default(SpanContext), elapsed, labels);
+                    }
+                    else
+                    {
+                        // Count # of errors we have
+                        
+                        var labels = new MyLabelSet(
+                            ("Host Name", library.GetHostName()),
+                            ("Process Id", library.GetProcessId().ToString())
+                        );
+                        errorCount.Add(default(SpanContext), 1, labels);
                     }
                 }
 
