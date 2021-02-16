@@ -24,7 +24,7 @@ namespace OpenTelemetry.Logs
 {
     internal class ActivityEventAttachingLogProcessor : BaseProcessor<LogRecord>
     {
-        private static readonly Action<object, (ActivityTagsCollection tags, ActivityEventAttachingLogProcessor processor)> ProcessScopeRef = ProcessScope;
+        private static readonly Action<object, State> ProcessScopeRef = ProcessScope;
 
         private readonly ActivityEventAttachingLogProcessorOptions options;
 
@@ -43,7 +43,6 @@ namespace OpenTelemetry.Logs
                 {
                     { nameof(data.CategoryName), data.CategoryName },
                     { nameof(data.LogLevel), data.LogLevel },
-                    { nameof(data.Message), data.Message },
                 };
 
                 if (data.EventId != 0)
@@ -55,18 +54,31 @@ namespace OpenTelemetry.Logs
 
                 if (this.options.IncludeScopes)
                 {
-                    data.ForEachScope(ProcessScopeRef, (tags, this));
+                    data.ForEachScope(
+                        ProcessScopeRef,
+                        new State
+                        {
+                            Tags = tags,
+                            Processor = this,
+                        });
                 }
 
-                if (this.options.IncludeState && data.State != null)
+                if (data.State != null)
                 {
-                    try
+                    if (this.options.IncludeState)
                     {
-                        this.options.StateConverter?.Invoke(tags, data.State);
+                        try
+                        {
+                            this.options.StateConverter?.Invoke(tags, data.State);
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.LogProcessorException($"Processing state of type [{data.State.GetType().FullName}]", ex);
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        OpenTelemetrySdkEventSource.Log.LogProcessorException($"Processing state of type [{data.State.GetType().FullName}]", ex);
+                        tags["Message"] = data.State.ToString();
                     }
                 }
 
@@ -79,19 +91,26 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        private static void ProcessScope(object scope, (ActivityTagsCollection tags, ActivityEventAttachingLogProcessor processor) state)
+        private static void ProcessScope(object scope, State state)
         {
             if (scope != null)
             {
                 try
                 {
-                    state.processor.options.StateConverter?.Invoke(state.tags, scope);
+                    state.Processor.options.ScopeConverter?.Invoke(state.Tags, state.Index++, scope);
                 }
                 catch (Exception ex)
                 {
                     OpenTelemetrySdkEventSource.Log.LogProcessorException($"Processing scope of type [{scope.GetType().FullName}]", ex);
                 }
             }
+        }
+
+        private class State
+        {
+            public ActivityTagsCollection Tags;
+            public int Index;
+            public ActivityEventAttachingLogProcessor Processor;
         }
     }
 }

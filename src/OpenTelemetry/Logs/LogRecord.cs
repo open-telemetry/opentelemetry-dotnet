@@ -34,7 +34,6 @@ namespace OpenTelemetry.Logs
             string categoryName,
             LogLevel logLevel,
             EventId eventId,
-            string message,
             object state,
             Exception exception)
         {
@@ -53,7 +52,6 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
-            this.Message = message;
             this.State = state;
             this.Exception = exception;
         }
@@ -73,8 +71,6 @@ namespace OpenTelemetry.Logs
         public LogLevel LogLevel { get; }
 
         public EventId EventId { get; }
-
-        public string Message { get; }
 
         public object State { get; }
 

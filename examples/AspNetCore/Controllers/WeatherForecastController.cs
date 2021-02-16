@@ -58,7 +58,10 @@ namespace Examples.AspNetCore.Controllers
             })
             .ToArray();
 
-            this.logger.LogInformation("WeatherForecast generated: {TemperaturesC}", string.Join(", ", forecast.Select(f => f.TemperatureC)));
+            this.logger.LogInformation(
+                "WeatherForecasts generated {count}: {forecasts}",
+                forecast.Length,
+                new { forecast });
 
             return forecast;
         }

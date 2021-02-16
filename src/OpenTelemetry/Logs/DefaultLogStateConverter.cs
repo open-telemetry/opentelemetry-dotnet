@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,56 +31,79 @@ namespace OpenTelemetry.Logs
 
         public static void ConvertState(ActivityTagsCollection tags, object state)
         {
+            ConvertState(tags, "state", state);
+        }
+
+        public static void ConvertScope(ActivityTagsCollection tags, int index, object scope)
+        {
+            ConvertState(tags, $"scope[{index}]", scope);
+        }
+
+        private static void ConvertState(ActivityTagsCollection tags, string keyPrefix, object state)
+        {
             if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
             {
                 for (int i = 0; i < stateList.Count; i++)
                 {
-                    AddStateItemToMessage(tags, stateList[i]);
+                    ConvertState(tags, $"{keyPrefix}.{stateList[i].Key}", stateList[i].Value);
                 }
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
             {
                 foreach (KeyValuePair<string, object> item in stateValues)
                 {
-                    AddStateItemToMessage(tags, item);
+                    ConvertState(tags, $"{keyPrefix}.{item.Key}", item.Value);
                 }
             }
-            else if (!(state is string))
+            else if (state != null)
             {
-                AddObjectPropertiesToMessageData(tags, state);
+                Type type = state.GetType();
+                if (type.IsValueType || type == typeof(string))
+                {
+                    if (keyPrefix == "state.{OriginalFormat}")
+                    {
+                        keyPrefix = "Format";
+                    }
+
+                    tags[keyPrefix] = state;
+                }
+                else if (state is IEnumerable enumerable)
+                {
+                    int index = 0;
+                    foreach (object stateItem in enumerable)
+                    {
+                        ConvertState(tags, $"{keyPrefix}[{index++}]", stateItem);
+                    }
+                }
+                else
+                {
+                    AddObjectToTags(tags, keyPrefix, state, type);
+                }
             }
         }
 
-        private static void AddStateItemToMessage(ActivityTagsCollection tags, KeyValuePair<string, object> item)
+        private static void AddObjectToTags(ActivityTagsCollection tags, string keyPrefix, object item, Type itemType)
         {
-            if (item.Key != "{OriginalFormat}")
+            if (!TypePropertyCache.TryGetValue(itemType, out List<PropertyGetter> propertyGetters))
             {
-                tags[item.Key] = item.Value;
-            }
-        }
-
-        private static void AddObjectPropertiesToMessageData(ActivityTagsCollection tags, object item)
-        {
-            Type type = item.GetType();
-            if (!TypePropertyCache.TryGetValue(type, out List<PropertyGetter> propertyGetters))
-            {
-                PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                PropertyInfo[] properties = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 propertyGetters = new List<PropertyGetter>(properties.Length);
 
                 foreach (PropertyInfo propertyInfo in properties)
                 {
                     if (propertyInfo.CanRead)
                     {
-                        propertyGetters.Add(new PropertyGetter(type, propertyInfo));
+                        propertyGetters.Add(new PropertyGetter(itemType, propertyInfo));
                     }
                 }
 
-                TypePropertyCache.TryAdd(type, propertyGetters);
+                TypePropertyCache.TryAdd(itemType, propertyGetters);
             }
 
             foreach (PropertyGetter propertyGetter in propertyGetters)
             {
-                tags[propertyGetter.PropertyName] = propertyGetter.GetPropertyFunc(item);
+                object propertyValue = propertyGetter.GetPropertyFunc(item);
+                ConvertState(tags, $"{keyPrefix}.{propertyGetter.PropertyName}", propertyValue);
             }
         }
 

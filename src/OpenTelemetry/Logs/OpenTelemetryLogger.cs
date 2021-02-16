@@ -16,8 +16,6 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
-using System.Runtime.InteropServices;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -51,7 +49,6 @@ namespace OpenTelemetry.Logs
                     this.categoryName,
                     logLevel,
                     eventId,
-                    formatter(state, exception),
                     state,
                     exception);
 

@@ -33,9 +33,14 @@ namespace OpenTelemetry.Logs
         public bool IncludeState { get; set; }
 
         /// <summary>
-        /// Gets or sets the callback action used to convert log state and scopes to tags.
+        /// Gets or sets the callback action used to convert log state to tags.
         /// </summary>
         public Action<ActivityTagsCollection, object> StateConverter { get; set; } = DefaultLogStateConverter.ConvertState;
+
+        /// <summary>
+        /// Gets or sets the callback action used to convert log scopes to tags.
+        /// </summary>
+        public Action<ActivityTagsCollection, int, object> ScopeConverter { get; set; } = DefaultLogStateConverter.ConvertScope;
     }
 }
 #endif

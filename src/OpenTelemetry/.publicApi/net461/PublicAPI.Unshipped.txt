@@ -4,7 +4,8 @@ OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.IncludeScopes.get -
 OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.IncludeScopes.set -> void
 OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.IncludeState.get -> bool
 OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.IncludeState.set -> void
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.ScopeConverter.get -> System.Action<System.Diagnostics.ActivityTagsCollection, int, object>
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.ScopeConverter.set -> void
 OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.StateConverter.get -> System.Action<System.Diagnostics.ActivityTagsCollection, object>
 OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.StateConverter.set -> void
-OpenTelemetry.Logs.LogRecord.Message.get -> string
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddActivityEventAttachingLogProcessor(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions> configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions

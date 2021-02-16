@@ -36,6 +36,9 @@ namespace Examples.AspNetCore
                 })
                 .ConfigureLogging((context, builder) =>
                 {
+                    builder.ClearProviders();
+                    builder.AddConsole();
+
                     var useLogging = context.Configuration.GetValue<bool>("UseLogging");
                     if (useLogging)
                     {

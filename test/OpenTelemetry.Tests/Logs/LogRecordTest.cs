@@ -224,6 +224,15 @@ namespace OpenTelemetry.Tests.Logs
             {
                 CultureInfo.CurrentCulture = prevCulture;
             }
+
+            // Check if state has food
+            Assert.Contains(state, item => item.Key == "food");
+
+            var foodParameterObj = state.First(item => item.Key == "food").Value;
+
+            // Once ToString is called, the value changes.
+            Assert.Null(foodParameterObj as Dictionary<string, object>);
+            Assert.Equal("[Name, truffle], [Price, 299.99]", foodParameterObj as string);
         }
 
         [Fact]
