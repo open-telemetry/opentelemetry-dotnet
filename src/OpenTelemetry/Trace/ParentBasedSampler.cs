@@ -45,6 +45,11 @@ namespace OpenTelemetry.Trace
             this.rootSampler = rootSampler ?? throw new ArgumentNullException(nameof(rootSampler));
 
             this.Description = $"ParentBased{{{rootSampler.Description}}}";
+
+            this.remoteParentSampled = new AlwaysOnSampler();
+            this.remoteParentNotSampled = new AlwaysOffSampler();
+            this.localParentSampled = new AlwaysOnSampler();
+            this.localParentNotSampled = new AlwaysOffSampler();
         }
 
         /// <summary>
@@ -76,10 +81,10 @@ namespace OpenTelemetry.Trace
             Sampler localParentNotSampled = null)
             : this(rootSampler)
         {
-            this.remoteParentSampled = remoteParentSampled;
-            this.remoteParentNotSampled = remoteParentNotSampled;
-            this.localParentSampled = localParentSampled;
-            this.localParentNotSampled = localParentNotSampled;
+            this.remoteParentSampled = remoteParentSampled ?? new AlwaysOnSampler();
+            this.remoteParentNotSampled = remoteParentNotSampled ?? new AlwaysOffSampler();
+            this.localParentSampled = localParentSampled ?? new AlwaysOnSampler();
+            this.localParentNotSampled = localParentNotSampled ?? new AlwaysOffSampler();
         }
 
         /// <inheritdoc />
@@ -95,33 +100,14 @@ namespace OpenTelemetry.Trace
             // Is parent sampled?
             if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
             {
-                // First, see if inner samplers were provided to delegate the decision to
-
-                if (parentContext.IsRemote && this.remoteParentSampled != null)
+                if (parentContext.IsRemote)
                 {
                     return this.remoteParentSampled.ShouldSample(samplingParameters);
                 }
-
-                if (!parentContext.IsRemote && this.localParentSampled != null)
+                else
                 {
                     return this.localParentSampled.ShouldSample(samplingParameters);
                 }
-
-                // No inner samplers provided => use parent's decision
-                return new SamplingResult(SamplingDecision.RecordAndSample);
-            }
-
-            // Here and below parent is not sampled.
-            // Do we have inner samplers to delegate to?
-
-            if (parentContext.IsRemote && this.remoteParentNotSampled != null)
-            {
-                return this.remoteParentNotSampled.ShouldSample(samplingParameters);
-            }
-
-            if (!parentContext.IsRemote && this.localParentNotSampled != null)
-            {
-                return this.localParentNotSampled.ShouldSample(samplingParameters);
             }
 
             if (samplingParameters.Links != null)
@@ -139,8 +125,16 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            // If parent was not sampled (and no inner samplers to delegate to) => we do not sample.
-            return new SamplingResult(SamplingDecision.Drop);
+            // If parent was not sampled (and no linked context exists) => delegate to the "not sampled"
+            // inner samplers.
+            if (parentContext.IsRemote)
+            {
+                return this.remoteParentNotSampled.ShouldSample(samplingParameters);
+            }
+            else
+            {
+                return this.localParentNotSampled.ShouldSample(samplingParameters);
+            }
         }
     }
 }
