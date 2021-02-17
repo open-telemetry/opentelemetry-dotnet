@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
             builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
-            builder.AddInstrumentationActivitySource(typeof(HttpClientInstrumentation).Assembly.GetName().Name);
+            builder.AddSource(typeof(HttpClientInstrumentation).Assembly.GetName().Name);
             builder.AddLegacyActivityOperationName("System.Net.Http.HttpRequestOut");
 
 #if NETFRAMEWORK

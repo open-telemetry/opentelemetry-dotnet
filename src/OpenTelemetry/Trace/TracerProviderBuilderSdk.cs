@@ -130,23 +130,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds the ActivitySource of an instrumentation to the provider.
-        /// </summary>
-        /// <param name="instrumentationActivitySource">ActivitySource to add.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddInstrumentationActivitySource(string instrumentationActivitySource)
-        {
-            if (string.IsNullOrEmpty(instrumentationActivitySource))
-            {
-                throw new ArgumentException(nameof(instrumentationActivitySource));
-            }
-
-            this.sources.Add(instrumentationActivitySource);
-
-            return this;
-        }
-
-        /// <summary>
         /// Adds the OperationName of an activity created by DiagnosticSource instrumentation to the provider.
         /// </summary>
         /// <param name="operationName">OperationName to add.</param>

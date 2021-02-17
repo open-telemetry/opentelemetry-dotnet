@@ -164,18 +164,23 @@ namespace OpenTelemetry.Trace
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
-                    listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name);
+                    listener.ShouldListenTo = (activitySource) =>
+                        (legacyActivityOperationNames.Count > 0) ?
+                        string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
+                        regex.IsMatch(activitySource.Name);
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
-                    {
-                        { string.Empty, true },
-                    };
+                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var name in sources)
                     {
                         activitySources[name] = true;
+                    }
+
+                    if (legacyActivityOperationNames.Count > 0)
+                    {
+                        activitySources[string.Empty] = true;
                     }
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -185,7 +190,10 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
+                if (legacyActivityOperationNames.Count > 0)
+                {
+                    listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
+                }
             }
 
             ActivitySource.AddActivityListener(listener);
