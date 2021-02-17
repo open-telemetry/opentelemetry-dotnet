@@ -33,13 +33,32 @@ namespace GroceryExample
             {
                 StringBuilder sb = new StringBuilder();
 
+                sb.AppendLine("Exporting...");
                 foreach (var m in metrics)
                 {
                     sb.AppendLine($"[{m.MetricNamespace}:{m.MetricName}]");
 
                     foreach (var data in m.Data)
                     {
-                        sb.Append("    Labels: ");
+                        sb.Append("    ");
+
+                        string val = "-";
+                        if (data is DoubleSumData doublesum)
+                        {
+                            val = $"Sum={doublesum.Sum}";
+                        }
+                        else if (data is Int64SumData int64sum)
+                        {
+                            val = $"Sum={int64sum.Sum}";
+                        }
+                        else
+                        {
+                            val = data.ToString();
+                        }
+
+                        sb.Append($"Data: {val}, ");
+
+                        sb.Append("Labels: ");
                         foreach (var l in data.Labels)
                         {
                             sb.Append($"{l.Key}={l.Value}, ");

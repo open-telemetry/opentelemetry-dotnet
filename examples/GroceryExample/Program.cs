@@ -16,6 +16,7 @@
 
 using System;
 using System.Threading.Tasks;
+using OpenTelemetry.Metrics;
 
 #pragma warning disable CS0618
 
@@ -29,10 +30,17 @@ namespace GroceryExample
 
             var sdk = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
                 .SetPushInterval(TimeSpan.FromMilliseconds(1000))
+
+                // Need to have a processor to move Metrics through pipeline
                 .SetProcessor(new MyMetricProcessor())
+
                 .SetExporter(new MyMetricExporter())
+
                 .Build()
                 ;
+
+            // Need to set for the Default provider
+            MeterProvider.SetDefault(sdk);
 
             var store = new GroceryStore("Portland");
 
