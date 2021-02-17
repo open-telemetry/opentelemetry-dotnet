@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -28,29 +28,29 @@ namespace HttpServerExample
 {
     public class WebServer
     {
-        MyLibrary library;
+        private MyLibrary library;
 
-        MeasureMetric<long> duration;
-        CounterMetric<long> errorCount;
-        CounterMetric<long> incomingCount;
-        CounterMetric<long> outgoingCount;
+        private MeasureMetric<long> duration;
+        private CounterMetric<long> errorCount;
+        private CounterMetric<long> incomingCount;
+        private CounterMetric<long> outgoingCount;
 
         public WebServer()
         {
             // Initialize Web Server
 
-            library = new MyLibrary();
+            this.library = new MyLibrary();
 
             Meter meter = MeterProvider.Default.GetMeter("MyServer", "1.0.0");
 
-            duration = meter.CreateInt64Measure("Server.Duration", true);
+            this.duration = meter.CreateInt64Measure("Server.Duration", true);
             // How to tell it what unit the measurements are in?
 
-            errorCount = meter.CreateInt64Counter("Server.Errors", true);
+            this.errorCount = meter.CreateInt64Counter("Server.Errors", true);
 
-            incomingCount = meter.CreateInt64Counter("Server.Request.Incoming", true);
+            this.incomingCount = meter.CreateInt64Counter("Server.Request.Incoming", true);
 
-            outgoingCount = meter.CreateInt64Counter("Server.Request.Outgoing", true);
+            this.outgoingCount = meter.CreateInt64Counter("Server.Request.Outgoing", true);
         }
 
         public void Shutdown()
@@ -93,14 +93,14 @@ namespace HttpServerExample
                         HttpListenerRequest request = context.Request;
 
                         var requestLabels = new MyLabelSet(
-                            ("Host Name", library.GetHostName()),
-                            ("Process Id", library.GetProcessId().ToString()),
+                            ("Host Name", this.library.GetHostName()),
+                            ("Process Id", this.library.GetProcessId().ToString()),
                             ("Method", request.HttpMethod),
                             ("Peer IP", request.RemoteEndPoint.Address.ToString()),
                             ("Port", request.Url.Port.ToString())
                         );
 
-                        incomingCount.Add(default(SpanContext), 1, requestLabels);
+                        this.incomingCount.Add(default(SpanContext), 1, requestLabels);
 
                         // Parse request
 
@@ -129,26 +129,25 @@ namespace HttpServerExample
 
                         var elapsed = sw.ElapsedMilliseconds;
                         var labels = new MyLabelSet(
-                            ("Host Name", library.GetHostName()),
-                            ("Process Id", library.GetProcessId().ToString()),
+                            ("Host Name", this.library.GetHostName()),
+                            ("Process Id", this.library.GetProcessId().ToString()),
                             ("Method", request.HttpMethod),
                             ("Peer IP", request.RemoteEndPoint.Address.ToString()),
                             ("Port", request.Url.Port.ToString()),
-
                             // Need to include Status Code
                             ("Status Code", response.StatusCode.ToString())
                         );
-                        duration.Record(default(SpanContext), elapsed, labels);
+                        this.duration.Record(default(SpanContext), elapsed, labels);
                     }
                     else
                     {
                         // Count # of errors we have
-                        
+
                         var labels = new MyLabelSet(
-                            ("Host Name", library.GetHostName()),
-                            ("Process Id", library.GetProcessId().ToString())
+                            ("Host Name", this.library.GetHostName()),
+                            ("Process Id", this.library.GetProcessId().ToString())
                         );
-                        errorCount.Add(default(SpanContext), 1, labels);
+                        this.errorCount.Add(default(SpanContext), 1, labels);
                     }
                 }
 

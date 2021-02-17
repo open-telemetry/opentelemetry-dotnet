@@ -31,32 +31,29 @@ namespace HttpServerExample
 
             var hostLabels = new MyLabelSet(("Host Name", GetHostName()));
 
-            meter.CreateDoubleObserver("ServerRoomTemp", (k) => 
+            meter.CreateDoubleObserver("ServerRoomTemp", (k) =>
                 {
-                    double temp = GetServerRoomTemperature();
+                    double temp = this.GetServerRoomTemperature();
                     k.Observe(temp, hostLabels);
-                },
-                true);
+                }, true);
 
-            meter.CreateDoubleObserver("SystemCpuUsage", (k) => 
+            meter.CreateDoubleObserver("SystemCpuUsage", (k) =>
                 {
-                    int cpu = GetSystemCpu();
+                    int cpu = this.GetSystemCpu();
                     k.Observe(cpu, hostLabels);
-                },
-                true);
+                }, true);
 
-            meter.CreateDoubleObserver("ProcessCpuUsage", (k) => 
+            meter.CreateDoubleObserver("ProcessCpuUsage", (k) =>
                 {
-                    int cpu = GetSystemCpu();
-                    int pid = GetProcessCpu();
+                    int cpu = this.GetSystemCpu();
+                    int pid = this.GetProcessCpu();
 
                     var processLabels = new MyLabelSet(
                         ("Host Name", GetHostName()),
                         ("Process Id", $"{GetProcessId()}")
                     );
                     k.Observe(cpu, processLabels);
-                },
-                true);
+                }, true);
         }
 
         public void Shutdown()

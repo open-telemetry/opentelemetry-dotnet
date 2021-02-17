@@ -29,13 +29,13 @@ namespace HttpServerExample
     {
         public MyLabelSet(params (string name, string value)[] labels)
         {
-            List<KeyValuePair<string,string>> list = new List<KeyValuePair<string, string>>();
+            List<KeyValuePair<string, string>> list = new List<KeyValuePair<string, string>>();
             foreach (var label in labels)
             {
                 list.Add(KeyValuePair.Create(label.name, label.value));
             }
 
-            Labels = list;
+            this.Labels = list;
         }
     }
 }
