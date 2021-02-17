@@ -42,7 +42,9 @@ namespace OpenTelemetry.Trace
 
             var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddDiagnosticSourceInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
+            builder.AddInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
+            builder.AddInstrumentationActivitySource(typeof(AspNetCoreInstrumentation).Assembly.GetName().Name);
+            builder.AddLegacyActivityOperationName("Microsoft.AspNetCore.Hosting.HttpRequestIn");
 
             return builder;
         }

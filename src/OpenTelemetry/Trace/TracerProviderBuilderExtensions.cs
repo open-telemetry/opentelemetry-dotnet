@@ -71,6 +71,38 @@ namespace OpenTelemetry.Trace
             return tracerProviderBuilder;
         }
 
+        /// <summary>
+        /// Adds the ActivitySource of an instrumentation to the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="instrumentationActivitySource">ActivitySource to add.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddInstrumentationActivitySource(this TracerProviderBuilder tracerProviderBuilder, string instrumentationActivitySource)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.AddInstrumentationActivitySource(instrumentationActivitySource);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds the OperationName of an activity created by DiagnosticSource instrumentation to the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="operationName">OperationName to add.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddLegacyActivityOperationName(this TracerProviderBuilder tracerProviderBuilder, string operationName)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.AddLegacyActivityOperationName(operationName);
+            }
+
+            return tracerProviderBuilder;
+        }
+
         public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
@@ -79,33 +111,6 @@ namespace OpenTelemetry.Trace
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Adds a DiagnosticSource based instrumentation.
-        /// This is required for libraries which is already instrumented with
-        /// DiagnosticSource and Activity, without using ActivitySource.
-        /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal static TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Func<TInstrumentation> instrumentationFactory)
-            where TInstrumentation : class
-        {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
-
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
-            {
-                tracerProviderBuilderSdk.AddDiagnosticSourceInstrumentation(instrumentationFactory);
-            }
-
-            return tracerProviderBuilder;
         }
     }
 }

@@ -33,31 +33,25 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
+        private readonly HashSet<string> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
         private Action<Activity> getRequestedDataAction;
 
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
-            List<BaseProcessor<Activity>> processors)
+            List<BaseProcessor<Activity>> processors,
+            HashSet<string> legacyActivityOperationNames)
         {
             this.Resource = resource;
             this.sampler = sampler;
+            this.legacyActivityOperationNames = legacyActivityOperationNames;
 
             foreach (var processor in processors)
             {
                 this.AddProcessor(processor);
-            }
-
-            if (diagnosticSourceInstrumentationFactories.Any())
-            {
-                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
-                {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
-                }
             }
 
             if (instrumentationFactories.Any())
@@ -75,7 +69,7 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-                    if (string.IsNullOrEmpty(activity.Source.Name))
+                    if (legacyActivityOperationNames.Contains(activity.OperationName))
                     {
                         if (this.sampler is AlwaysOnSampler)
                         {
