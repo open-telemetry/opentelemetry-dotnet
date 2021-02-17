@@ -55,7 +55,7 @@ namespace HttpServerExample
 
         public void Shutdown()
         {
-            // Shutdown            
+            // Shutdown
         }
 
         public Task StartServerTask(string prefix, CancellationToken token)
