@@ -149,7 +149,7 @@ namespace OpenTelemetry.Trace
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
             if (instrumentationFactory == null)
@@ -163,6 +163,8 @@ namespace OpenTelemetry.Trace
                     "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
                     instrumentationFactory));
 
+            this.sources.Add(typeof(TInstrumentation).Assembly.GetName().Name);
+
             return this;
         }
 
@@ -170,9 +172,9 @@ namespace OpenTelemetry.Trace
         {
             public readonly string Name;
             public readonly string Version;
-            public readonly Func<ActivitySourceAdapter, object> Factory;
+            public readonly Func<object> Factory;
 
-            internal DiagnosticSourceInstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
+            internal DiagnosticSourceInstrumentationFactory(string name, string version, Func<object> factory)
             {
                 this.Name = name;
                 this.Version = version;

@@ -92,7 +92,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal static TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
             this TracerProviderBuilder tracerProviderBuilder,
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
+            Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
             if (instrumentationFactory == null)

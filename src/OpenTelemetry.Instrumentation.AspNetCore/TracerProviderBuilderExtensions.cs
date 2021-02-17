@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore;
 
 namespace OpenTelemetry.Trace
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Trace
 
             var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddDiagnosticSourceInstrumentation((activitySource) => new AspNetCoreInstrumentation(activitySource, aspnetCoreOptions));
+            builder.AddDiagnosticSourceInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
 
             return builder;
         }

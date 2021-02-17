@@ -33,8 +33,8 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly ActivitySourceAdapter adapter;
         private BaseProcessor<Activity> processor;
+        private Action<Activity> getRequestedDataAction;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -54,10 +54,9 @@ namespace OpenTelemetry.Trace
 
             if (diagnosticSourceInstrumentationFactories.Any())
             {
-                this.adapter = new ActivitySourceAdapter(sampler, this.processor);
                 foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
+                    this.instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 
@@ -75,6 +74,24 @@ namespace OpenTelemetry.Trace
                 ActivityStarted = (activity) =>
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
+                    if (string.IsNullOrEmpty(activity.Source.Name))
+                    {
+                        if (this.sampler is AlwaysOnSampler)
+                        {
+                            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
+                        }
+                        else if (this.sampler is AlwaysOffSampler)
+                        {
+                            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
+                        }
+                        else
+                        {
+                            this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
+                        }
+
+                        this.getRequestedDataAction(activity);
+                    }
 
                     if (!activity.IsAllDataRequested)
                     {
@@ -153,11 +170,14 @@ namespace OpenTelemetry.Trace
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
-                    listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
+                    listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name);
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        { string.Empty, true },
+                    };
 
                     foreach (var name in sources)
                     {
@@ -168,6 +188,10 @@ namespace OpenTelemetry.Trace
                     // or not.
                     listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
                 }
+            }
+            else
+            {
+                listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
             }
 
             ActivitySource.AddActivityListener(listener);
@@ -201,8 +225,6 @@ namespace OpenTelemetry.Trace
                     processor,
                 });
             }
-
-            this.adapter?.UpdateProcessor(this.processor);
 
             return this;
         }
@@ -312,6 +334,74 @@ namespace OpenTelemetry.Trace
             return isRootSpan
                 ? ActivitySamplingResult.PropagationData
                 : ActivitySamplingResult.None;
+        }
+
+        private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = true;
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+        }
+
+        private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = false;
+        }
+
+        private void RunGetRequestedDataOtherSampler(Activity activity)
+        {
+            ActivityContext parentContext;
+
+            // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
+            // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
+            if (string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000")
+            {
+                parentContext = default;
+            }
+            else if (activity.Parent != null)
+            {
+                parentContext = activity.Parent.Context;
+            }
+            else
+            {
+                parentContext = new ActivityContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
+            }
+
+            var samplingParameters = new SamplingParameters(
+                parentContext,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.TagObjects,
+                activity.Links);
+
+            var samplingResult = this.sampler.ShouldSample(samplingParameters);
+
+            switch (samplingResult.Decision)
+            {
+                case SamplingDecision.Drop:
+                    activity.IsAllDataRequested = false;
+                    break;
+                case SamplingDecision.RecordOnly:
+                    activity.IsAllDataRequested = true;
+                    break;
+                case SamplingDecision.RecordAndSample:
+                    activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                    break;
+            }
+
+            if (samplingResult.Decision != SamplingDecision.Drop)
+            {
+                foreach (var att in samplingResult.Attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
+            }
         }
     }
 }

@@ -45,14 +45,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
         private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
             : base(name)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
@@ -108,7 +106,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {
@@ -208,8 +207,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
             }
-
-            this.activitySource.Stop(activity);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
