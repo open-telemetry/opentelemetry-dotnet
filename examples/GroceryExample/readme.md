@@ -16,7 +16,7 @@ unavailable from API side.
 about spans. Need additional prototypes to make SpanContext optional.
 
 - We create instrument with CreateInt64Counter() but it returns a generic
-Counter<long>. Seems like it should return a Int64Counter instead.
+Counter&lt;long&gt;. Seems like it should return a Int64Counter instead.
 
 - It's not allowed to new MeterProvider().  Thus, the only way to access is via
 the Default property. We can probably simplify MeterProvider.Default.GetMeter()
