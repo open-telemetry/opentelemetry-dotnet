@@ -1,0 +1,1 @@
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddLegacyActivityOperationName(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
