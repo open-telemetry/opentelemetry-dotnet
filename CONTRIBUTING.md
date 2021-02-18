@@ -8,7 +8,7 @@ See the [public meeting
 notes](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing)
 for a summary description of past meetings. To request edit access, join the
 meeting or get in touch on
-[Gitter](https://gitter.im/open-telemetry/opentelemetry-dotnet).
+[Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
 Even though, anybody can contribute, there are benefits of being a member of our
 community. See to the [community membership
@@ -22,10 +22,10 @@ and
 ## Find a Buddy and Get Started Quickly
 
 If you are looking for someone to help you find a starting point and be a
-resource for your first contribution, join our Gitter and find a buddy!
+resource for your first contribution, join our Slack channel and find a buddy!
 
-1. Join [Gitter.im](https://gitter.im) and join our [chat
-   room](https://gitter.im/open-telemetry/opentelemetry-dotnet).
+1. Create your [CNCF Slack account](http://slack.cncf.io/) and join the
+   [otel-dotnet](https://cloud-native.slack.com/archives/C01N3BC2W7Q) channel.
 2. Post in the room with an introduction to yourself, what area you are
    interested in (check issues marked with [help
    wanted](https://github.com/open-telemetry/opentelemetry-dotnet/labels/help%20wanted)),
