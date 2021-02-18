@@ -59,8 +59,7 @@ namespace OpenTelemetry.Trace
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
-        /// This function guarantees thread-safety. Only the first call will
-        /// win, subsequent calls will be no-op.
+        /// This function guarantees thread-safety.
         /// </remarks>
         public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
