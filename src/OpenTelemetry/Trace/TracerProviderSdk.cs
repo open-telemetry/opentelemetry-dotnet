@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         private readonly HashSet<string> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
         private Action<Activity> getRequestedDataAction;
-        private bool needInstrumentations;
+        private bool supportLegacyActivity;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
             this.Resource = resource;
             this.sampler = sampler;
             this.legacyActivityOperationNames = legacyActivityOperationNames;
-            this.needInstrumentations = legacyActivityOperationNames.Count > 0;
+            this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             foreach (var processor in processors)
             {
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-                    if (this.needInstrumentations && legacyActivityOperationNames.Contains(activity.OperationName))
+                    if (this.supportLegacyActivity && legacyActivityOperationNames.Contains(activity.OperationName) && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         this.getRequestedDataAction(activity);
                     }
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Trace
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
                     listener.ShouldListenTo = (activitySource) =>
-                        this.needInstrumentations ?
+                        this.supportLegacyActivity ?
                         string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
                         regex.IsMatch(activitySource.Name);
                 }
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Trace
                         activitySources[name] = true;
                     }
 
-                    if (this.needInstrumentations)
+                    if (this.supportLegacyActivity)
                     {
                         activitySources[string.Empty] = true;
                     }
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                if (this.needInstrumentations)
+                if (this.supportLegacyActivity)
                 {
                     listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
                 }
