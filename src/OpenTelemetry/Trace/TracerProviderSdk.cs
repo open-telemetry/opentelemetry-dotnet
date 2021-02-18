@@ -71,9 +71,18 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-                    if (this.supportLegacyActivity && legacyActivityOperationNames.Contains(activity.OperationName) && string.IsNullOrEmpty(activity.Source.Name))
+                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
-                        this.getRequestedDataAction(activity);
+                        // We have a legacy activity in hand now and it's name matches the one user is interested in
+                        if (legacyActivityOperationNames.Contains(activity.OperationName))
+                        {
+                            this.getRequestedDataAction(activity);
+                        }
+                        else
+                        {
+                            // Legacy activity doesn't match the user configured list. No need to proceed further.
+                            return;
+                        }
                     }
 
                     if (!activity.IsAllDataRequested)
@@ -91,6 +100,16 @@ namespace OpenTelemetry.Trace
                 ActivityStopped = (activity) =>
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
+                    {
+                        // We have a legacy activity in hand now but not something user expressed interest in.
+                        // Do not proceed any further.
+                        if (!legacyActivityOperationNames.Contains(activity.OperationName))
+                        {
+                            return;
+                        }
+                    }
 
                     if (!activity.IsAllDataRequested)
                     {
