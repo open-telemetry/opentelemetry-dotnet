@@ -37,13 +37,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
         private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpInListener(string name, AspNetInstrumentationOptions options)
             : base(name)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Activity is retrieved from Activity.Current later and disposed.")]
@@ -111,7 +109,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             var path = requestValues.Path;
             activity.DisplayName = path;
 
-            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
 
             if (activity.IsAllDataRequested)
             {
@@ -244,8 +243,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     Activity.Current = activity;
                 }
             }
-
-            this.activitySource.Stop(activityToEnrich);
         }
     }
 }

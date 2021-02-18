@@ -42,7 +42,9 @@ namespace OpenTelemetry.Trace
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
 
-            builder.AddDiagnosticSourceInstrumentation((activitySource) => new AspNetInstrumentation(activitySource, aspnetOptions));
+            builder.AddInstrumentation(() => new AspNetInstrumentation(aspnetOptions));
+            builder.AddSource(typeof(AspNetInstrumentation).Assembly.GetName().Name);
+            builder.AddLegacyActivityOperationName("Microsoft.AspNet.HttpReqIn");
 
             return builder;
         }
