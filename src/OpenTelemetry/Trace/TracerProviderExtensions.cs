@@ -44,8 +44,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Attempts to force flush the TracerProviderSdk, blocks the current thread until
-        /// force flush completed or timed out.
+        /// Flushes the all the processors at TracerProviderSdk, blocks the current thread until flush
+        /// completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="provider">TracerProviderSdk instance on which ForceFlush will be called.</param>
         /// <param name="timeoutMilliseconds">
