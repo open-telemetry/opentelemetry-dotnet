@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace
         private readonly HashSet<string> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
         private Action<Activity> getRequestedDataAction;
+        private bool needInstrumentations;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -48,6 +49,7 @@ namespace OpenTelemetry.Trace
             this.Resource = resource;
             this.sampler = sampler;
             this.legacyActivityOperationNames = legacyActivityOperationNames;
+            this.needInstrumentations = legacyActivityOperationNames.Count > 0;
 
             foreach (var processor in processors)
             {
@@ -69,21 +71,8 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-                    if (legacyActivityOperationNames.Contains(activity.OperationName))
+                    if (this.needInstrumentations && legacyActivityOperationNames.Contains(activity.OperationName))
                     {
-                        if (this.sampler is AlwaysOnSampler)
-                        {
-                            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
-                        }
-                        else if (this.sampler is AlwaysOffSampler)
-                        {
-                            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
-                        }
-                        else
-                        {
-                            this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
-                        }
-
                         this.getRequestedDataAction(activity);
                     }
 
@@ -127,17 +116,20 @@ namespace OpenTelemetry.Trace
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
             else if (sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
             }
             else
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
             if (sources.Any())
@@ -165,7 +157,7 @@ namespace OpenTelemetry.Trace
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
                     listener.ShouldListenTo = (activitySource) =>
-                        (legacyActivityOperationNames.Count > 0) ?
+                        this.needInstrumentations ?
                         string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
                         regex.IsMatch(activitySource.Name);
                 }
@@ -178,7 +170,7 @@ namespace OpenTelemetry.Trace
                         activitySources[name] = true;
                     }
 
-                    if (legacyActivityOperationNames.Count > 0)
+                    if (this.needInstrumentations)
                     {
                         activitySources[string.Empty] = true;
                     }
@@ -190,7 +182,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                if (legacyActivityOperationNames.Count > 0)
+                if (this.needInstrumentations)
                 {
                     listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
                 }
