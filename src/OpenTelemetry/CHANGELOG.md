@@ -9,6 +9,12 @@ please check the latest changes
 
 ## Unreleased
 
+* Added a TracerProvierBuilder extension method called
+  `AddLegacyActivityOperationName` which is used by instrumentation libraries
+  that use DiagnosticSource to get activities processed without
+  ActivitySourceAdapter.
+  [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
+
 ## 1.0.1
 
 Released 2021-Feb-10
@@ -55,8 +61,8 @@ Released 2021-Jan-29
   invalid attributes we now throw an exception instead of logging an error.
   ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
 * Merging "this" resource with an "other" resource now prioritizes the "other"
-  resource's attributes in a conflict. We've rectified to follow a recent
-  change to the spec. We previously prioritized "this" resource's tags.
+  resource's attributes in a conflict. We've rectified to follow a recent change
+  to the spec. We previously prioritized "this" resource's tags.
   ([#1728](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1728))
 * `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
   after the export operation has completed.
