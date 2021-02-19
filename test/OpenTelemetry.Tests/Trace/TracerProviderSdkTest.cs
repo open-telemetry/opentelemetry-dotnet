@@ -526,6 +526,65 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void SdkSamplesLegacyActivityWithAlwaysOnSampler()
+        {
+            var operationNameForLegacyActivity = "TestOperationName";
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(new AlwaysOnSampler())
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+
+            Assert.True(activity.IsAllDataRequested);
+            Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            activity.Stop();
+        }
+
+        [Fact]
+        public void SdkSamplesLegacyActivityWithAlwaysOffSampler()
+        {
+            var operationNameForLegacyActivity = "TestOperationName";
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(new AlwaysOffSampler())
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+
+            Assert.False(activity.IsAllDataRequested);
+            Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop, false, false)]
+        [InlineData(SamplingDecision.RecordOnly, true, false)]
+        [InlineData(SamplingDecision.RecordAndSample, true, true)]
+        public void SdkSamplesLegacyActivityWithCustomSampler(SamplingDecision samplingDecision, bool isAllDataRequested, bool hasRecordedFlag)
+        {
+            var operationNameForLegacyActivity = "TestOperationName";
+            var sampler = new TestSampler() { SamplingAction = (samplingParameters) => new SamplingResult(samplingDecision) };
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(sampler)
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+
+            Assert.Equal(isAllDataRequested, activity.IsAllDataRequested);
+            Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            activity.Stop();
+        }
+
+        [Fact]
         public void TracerProvideSdkCreatesAndDiposesInstrumentation()
         {
             TestInstrumentation testInstrumentation = null;
