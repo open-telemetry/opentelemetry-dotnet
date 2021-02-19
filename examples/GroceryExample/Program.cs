@@ -17,6 +17,7 @@
 using System;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Metrics.Export;
 
 #pragma warning disable CS0618
 
@@ -32,7 +33,7 @@ namespace GroceryExample
                 .SetPushInterval(TimeSpan.FromMilliseconds(1000))
 
                 // Need to have a processor to move Metrics through pipeline
-                .SetProcessor(new MyMetricProcessor())
+                .SetProcessor(new UngroupedBatcher())
 
                 .SetExporter(new MyMetricExporter())
 

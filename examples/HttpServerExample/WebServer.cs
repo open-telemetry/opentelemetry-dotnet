@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
@@ -30,6 +31,7 @@ namespace HttpServerExample
     {
         private MyLibrary library;
 
+        private Meter meter;
         private MeasureMetric<long> duration;
         private CounterMetric<long> errorCount;
         private CounterMetric<long> incomingCount;
@@ -41,16 +43,17 @@ namespace HttpServerExample
 
             this.library = new MyLibrary();
 
-            Meter meter = MeterProvider.Default.GetMeter("MyServer", "1.0.0");
+            this.meter = MeterProvider.Default.GetMeter("MyServer", "1.0.0");
 
-            this.duration = meter.CreateInt64Measure("Server.Duration", true);
             // How to tell it what unit the measurements are in?
+            // How to set the Description?
+            this.duration = this.meter.CreateInt64Measure("Server.Duration", true);
 
-            this.errorCount = meter.CreateInt64Counter("Server.Errors", true);
+            this.errorCount = this.meter.CreateInt64Counter("Server.Errors", true);
 
-            this.incomingCount = meter.CreateInt64Counter("Server.Request.Incoming", true);
+            this.incomingCount = this.meter.CreateInt64Counter("Server.Request.Incoming", true);
 
-            this.outgoingCount = meter.CreateInt64Counter("Server.Request.Outgoing", true);
+            this.outgoingCount = this.meter.CreateInt64Counter("Server.Request.Outgoing", true);
         }
 
         public void Shutdown()
@@ -92,13 +95,14 @@ namespace HttpServerExample
                         var context = await contextTask;
                         HttpListenerRequest request = context.Request;
 
-                        var requestLabels = new MyLabelSet(
-                            ("Host Name", this.library.GetHostName()),
-                            ("Process Id", this.library.GetProcessId().ToString()),
-                            ("Method", request.HttpMethod),
-                            ("Peer IP", request.RemoteEndPoint.Address.ToString()),
-                            ("Port", request.Url.Port.ToString())
-                        );
+                        var requestLabels = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+                        {
+                            KeyValuePair.Create("Host Name", this.library.GetHostName()),
+                            KeyValuePair.Create("Process Id", this.library.GetProcessId().ToString()),
+                            KeyValuePair.Create("Method", request.HttpMethod),
+                            KeyValuePair.Create("Peer IP", request.RemoteEndPoint.Address.ToString()),
+                            KeyValuePair.Create("Port", request.Url.Port.ToString()),
+                        });
 
                         this.incomingCount.Add(default(SpanContext), 1, requestLabels);
 
@@ -125,28 +129,31 @@ namespace HttpServerExample
 
                         // ========
 
-                        outgoingCount.Add(default(SpanContext), 1, requestLabels);
+                        this.outgoingCount.Add(default(SpanContext), 1, requestLabels);
 
                         var elapsed = sw.ElapsedMilliseconds;
-                        var labels = new MyLabelSet(
-                            ("Host Name", this.library.GetHostName()),
-                            ("Process Id", this.library.GetProcessId().ToString()),
-                            ("Method", request.HttpMethod),
-                            ("Peer IP", request.RemoteEndPoint.Address.ToString()),
-                            ("Port", request.Url.Port.ToString()),
+                        var labels = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+                        {
+                            KeyValuePair.Create("Host Name", this.library.GetHostName()),
+                            KeyValuePair.Create("Process Id", this.library.GetProcessId().ToString()),
+                            KeyValuePair.Create("Method", request.HttpMethod),
+                            KeyValuePair.Create("Peer IP", request.RemoteEndPoint.Address.ToString()),
+                            KeyValuePair.Create("Port", request.Url.Port.ToString()),
+
                             // Need to include Status Code
-                            ("Status Code", response.StatusCode.ToString())
-                        );
+                            KeyValuePair.Create("Status Code", response.StatusCode.ToString()),
+                        });
                         this.duration.Record(default(SpanContext), elapsed, labels);
                     }
                     else
                     {
                         // Count # of errors we have
 
-                        var labels = new MyLabelSet(
-                            ("Host Name", this.library.GetHostName()),
-                            ("Process Id", this.library.GetProcessId().ToString())
-                        );
+                        var labels = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+                        {
+                            KeyValuePair.Create("Host Name", this.library.GetHostName()),
+                            KeyValuePair.Create("Process Id", this.library.GetProcessId().ToString()),
+                        });
                         this.errorCount.Add(default(SpanContext), 1, labels);
                     }
                 }

@@ -38,14 +38,18 @@ namespace HttpServerExample
 
             var pipeFiveSeconds = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
                 .SetPushInterval(TimeSpan.FromSeconds(5))
+                .SetProcessor(new UngroupedBatcher())
+                .SetExporter(new MyMetricExporter())
                 .Build();
 
             var pipeOneMinute = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
                 .SetPushInterval(TimeSpan.FromSeconds(1))
 
-                // No way to specify which metrics I'm interested in!
+                // No way to select which metrics I'm interested in!
+                // How to add multiple processors?
                 .SetProcessor(new MyFilterProcessor("ServerRoomTemp"))
 
+                .SetExporter(new MyMetricExporter())
                 .Build();
 
             // How do I configure the Default provider?
@@ -73,7 +77,7 @@ namespace HttpServerExample
 
         public class MyFilterProcessor : MetricProcessor
         {
-            private static readonly object lockList = new object();
+            private static readonly object LockList = new object();
             private static List<Metric> list = new List<Metric>();
 
             private string[] filters;
@@ -97,7 +101,7 @@ namespace HttpServerExample
                 {
                     if (metric.MetricName.Contains(filter))
                     {
-                        lock (lockList)
+                        lock (LockList)
                         {
                             list.Add(metric);
                         }

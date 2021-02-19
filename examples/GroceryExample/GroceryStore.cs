@@ -32,6 +32,8 @@ namespace GroceryExample
 
         private string storeName;
 
+        private Meter meter;
+
         private CounterMetric<long> itemCounter;
 
         private CounterMetric<double> cashCounter;
@@ -44,14 +46,16 @@ namespace GroceryExample
 
             // Setup Metrics
 
-            Meter meter = MeterProvider.Default.GetMeter("GroceryStore", "1.0.0");
+            this.meter = MeterProvider.Default.GetMeter("GroceryStore", "1.0.0");
 
-            this.itemCounter = meter.CreateInt64Counter("item_counter");
+            this.itemCounter = this.meter.CreateInt64Counter("item_counter");
 
-            this.cashCounter = meter.CreateDoubleCounter("cash_counter");
+            this.cashCounter = this.meter.CreateDoubleCounter("cash_counter");
 
-            var labels = new MyLabelSet(
-                new KeyValuePair<string, string>("Store", "Portland"));
+            var labels = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+            {
+                KeyValuePair.Create("Store", "Portland"),
+            });
 
             this.boundCashCounter = this.cashCounter.Bind(labels);
         }
@@ -66,19 +70,23 @@ namespace GroceryExample
 
                 // Record Metric
 
-                var labels = new MyLabelSet(
-                    new KeyValuePair<string, string>("Store", "Portland"),
-                    new KeyValuePair<string, string>("Customer", customer),
-                    new KeyValuePair<string, string>("Item", item.name));
+                var labels = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+                {
+                    KeyValuePair.Create("Store", "Portland"),
+                    KeyValuePair.Create("Customer", customer),
+                    KeyValuePair.Create("Item", item.name),
+                });
 
                 this.itemCounter.Add(default(SpanContext), item.qty, labels);
             }
 
             // Record Metric
 
-            var labels2 = new MyLabelSet(
-                new KeyValuePair<string, string>("Store", "Portland"),
-                new KeyValuePair<string, string>("Customer", customer));
+            var labels2 = this.meter.GetLabelSet(new List<KeyValuePair<string, string>>()
+            {
+                KeyValuePair.Create("Store", "Portland"),
+                KeyValuePair.Create("Customer", customer),
+            });
 
             this.cashCounter.Add(default(SpanContext), totalPrice, labels2);
 
