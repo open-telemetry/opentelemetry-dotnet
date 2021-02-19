@@ -202,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only SetParentProvider/Shutdown/Dispose are called because request was filtered.
-                Assert.Equal(3, activityProcessor.Invocations.Count);
+                // only SetParentProvider/Shutdown/Dispose/OnStart are called because request was filtered.
+                Assert.Equal(4, activityProcessor.Invocations.Count);
                 return;
             }
 

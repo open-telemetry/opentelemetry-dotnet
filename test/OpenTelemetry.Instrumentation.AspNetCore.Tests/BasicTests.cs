@@ -88,7 +88,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            // we should only call Processor.OnEnd for the "/api/values" request
+            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
@@ -168,8 +171,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 WaitForProcessorInvocations(activityProcessor, 3);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            // List of invocations
+            // 1. SetParentProvider for TracerProviderSdk
+            // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+
+            // we should only call Processor.OnEnd once for the sibling activity with the OperationName ActivityCreatedByHttpInListener
+            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
 #if !NETCOREAPP2_1
             // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
@@ -221,12 +231,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForProcessorInvocations(activityProcessor, 4);
             }
 
-            // begin and end was called once each.
-            Assert.Equal(3, activityProcessor.Invocations.Count);
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            // List of invocations on the processor
+            // 1. SetParentProvider for TracerProviderSdk
+            // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+            Assert.Equal(4, activityProcessor.Invocations.Count);
+
+            // we should only call Processor.OnEnd once for the sibling activity with the OperationName ActivityCreatedByHttpInListener
+            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
             Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
@@ -271,12 +288,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
                 response2.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForProcessorInvocations(activityProcessor, 4);
             }
 
-            // we should only create one span and never call processor with another
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            // 1. SetParentProvider for TracerProviderSdk
+            // 2. OnStart for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 3. OnEnd for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 4. OnStart for the activity created by AspNetCore for "/api/values/2" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            Assert.Equal(4, activityProcessor.Invocations.Count);
+
+            // we should only call Processor.OnEnd for the "/api/values" request
+            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
@@ -328,8 +351,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // As InstrumentationFilter threw, we continue as if the
             // InstrumentationFilter did not exist.
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            // List of invocations on the processor
+            // 1. SetParentProvider for TracerProviderSdk
+            // 2. OnStart for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 3. OnEnd for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+            // 4. OnStart for the activity created by AspNetCore for "/api/values/2" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+
+            // we should only call Processor.OnEnd for the "/api/values" request
+            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("/api/values", activity.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);

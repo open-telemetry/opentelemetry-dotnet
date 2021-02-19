@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             activity.DisplayName = grpcMethod?.Trim('/');
 
             ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
