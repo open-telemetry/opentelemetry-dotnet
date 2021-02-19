@@ -254,7 +254,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         // Test to check that TracerProvider does not call Processor.Start or Processor.End for a legacy activity when no legacy OperationName is
-        // provided to TracerProviderBuilder.
+        // provided to TracerProviderBuilder and no additional Source is added to the TracerProviderBuilder.
         [Fact]
         public void SdkDoesNotProcessLegacyActivityWithNoAdditionalConfig()
         {
@@ -276,6 +276,7 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             // No AddLegacyOperationName chained to TracerProviderBuilder
+            // No AddSource chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
                         .Build();
@@ -284,8 +285,8 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             activity.Stop();
 
-            Assert.False(startCalled);
-            Assert.False(endCalled);
+            Assert.False(startCalled); // Processor.OnStart is not called since we did not add any legacy OperationName
+            Assert.False(endCalled); // Processor.OnEnd is not called since the ActivitySource is empty
         }
 
         // Test to check that TracerProvider does not call Processor.End for a legacy activity which did not have its ActivitySource updated before Activity.Stop
@@ -323,12 +324,12 @@ namespace OpenTelemetry.Trace.Tests
             // The legacy activity's ActivitySource is not set before activity.Stop. The activity will not be sent to Processor.OnEnd.
             activity.Stop();
 
-            Assert.True(startCalled);
-            Assert.False(endCalled);
+            Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
+            Assert.False(endCalled); // Processor.OnEnd is not called since the ActivitySource is empty
         }
 
         // Test to check that TracerProvider does not call Processor.End for a legacy activity which had its ActivitySource updated but the
-        // updated ActivitySource was not added to the TracerProvider
+        // updated ActivitySource Name was not added to the TracerProvider
         [Fact]
         public void SdkProcessLegacyActivityWithPartialConfig()
         {
@@ -352,7 +353,6 @@ namespace OpenTelemetry.Trace.Tests
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
             var operationNameForLegacyActivity = "TestOperationName";
 
-            // Only AddLegacyActivityOperationName is chained which ensures that a legacy activity with empty ActivitySource is sent to Processor.OnStart.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddLegacyActivityOperationName(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
@@ -360,11 +360,12 @@ namespace OpenTelemetry.Trace.Tests
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
-
-            // The legacy activity's ActivitySource is not set before activity.Stop. The activity should not be sent to Processor.OnEnd.
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActvity);
             activity.Stop();
 
-            Assert.True(startCalled);
+            Assert.True(startCalled);  // Processor.OnStart is called since we provided the legacy OperationName
+
+            // Processor.OnEnd is not called even though ActivitySource is not empty because we did not add the ActivitySource Name as a Source to the provider
             Assert.False(endCalled);
         }
 
@@ -405,8 +406,50 @@ namespace OpenTelemetry.Trace.Tests
             ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActvity);
             activity.Stop();
 
-            Assert.True(startCalled);
-            Assert.True(endCalled);
+            Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
+            Assert.True(endCalled); // Processor.OnEnd is called since the ActivitySource is not empty and its name is added as a Source to the provider
+        }
+
+        // Test to check that TracerProvider processes legacy activities when a legacy OperationName and the required Source is provided to the TracerProvider
+        [Fact]
+        public void SdkProcessesLegacyActivityWithRightConfigOnWildCardMode()
+        {
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
+            var operationNameForLegacyActivity = "TestOperationName";
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddSource("ABCCompany.XYZProduct.*") // Adding a willd card source
+                        .AddSource(activitySourceForLegacyActvity.Name)
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .AddProcessor(testActivityProcessor)
+                        .Build();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+
+            // Set legacy activity's ActvitySource before Activity.Stop
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActvity);
+            activity.Stop();
+
+            Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
+            Assert.True(endCalled); // Processor.OnEnd is called since the ActivitySource is not empty and its name is added as a Source to the provider
         }
 
         // Test to check that TracerProvider continues to process legacy activities even after a new Processor is added after the building the provider.
