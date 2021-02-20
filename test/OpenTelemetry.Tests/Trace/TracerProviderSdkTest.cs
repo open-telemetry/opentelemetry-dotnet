@@ -286,11 +286,16 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
+
             // No AddLegacyOperationName chained to TracerProviderBuilder
             // No AddSource chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
                         .Build();
+
+            Assert.False(emptyActivitySource.HasListeners()); // No listener for empty ActivitySource even after build
 
             Activity activity = new Activity("Test");
             activity.Start();
@@ -327,6 +332,9 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
+
             var operationNameForLegacyActivity = "TestOperationName";
 
             // Only AddLegacyActivityOperationName is chained which ensures that a legacy activity with empty ActivitySource is sent to Processor.OnStart.
@@ -334,6 +342,8 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacyActivityOperationName(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
+
+            Assert.True(emptyActivitySource.HasListeners()); // ActivityListener for empty ActivitySource added because of AddLegacyActivityOperationName
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
@@ -373,6 +383,9 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
+
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
             var operationNameForLegacyActivity = "TestOperationName";
 
@@ -380,6 +393,8 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacyActivityOperationName(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
+
+            Assert.True(emptyActivitySource.HasListeners()); // ActivityListener for empty ActivitySource added because of AddLegacyActivityOperationName
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
@@ -419,6 +434,9 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
+
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
             var operationNameForLegacyActivity = "TestOperationName";
 
@@ -427,6 +445,8 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacyActivityOperationName(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
+
+            Assert.True(emptyActivitySource.HasListeners()); // ActivityListener for empty ActivitySource added because of AddLegacyActivityOperationName
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
@@ -466,6 +486,9 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
+
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
             var operationNameForLegacyActivity = "TestOperationName";
 
@@ -475,6 +498,8 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacyActivityOperationName(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
+
+            Assert.True(emptyActivitySource.HasListeners()); // ActivityListener for empty ActivitySource added because of AddLegacyActivityOperationName
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
