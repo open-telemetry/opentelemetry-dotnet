@@ -52,34 +52,29 @@ namespace OpenTelemetry.Logs
 
                 var activityEvent = new ActivityEvent("log", data.Timestamp, tags);
 
-                if (this.options.IncludeScopes)
+                data.ForEachScope(
+                    ProcessScopeRef,
+                    new State
+                    {
+                        Tags = tags,
+                        Processor = this,
+                    });
+
+                if (data.StateValues != null)
                 {
-                    data.ForEachScope(
-                        ProcessScopeRef,
-                        new State
-                        {
-                            Tags = tags,
-                            Processor = this,
-                        });
+                    try
+                    {
+                        this.options.StateConverter?.Invoke(tags, data.StateValues);
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.LogProcessorException($"Processing state of type [{data.State.GetType().FullName}]", ex);
+                    }
                 }
 
-                if (data.State != null)
+                if (!string.IsNullOrEmpty(data.Message))
                 {
-                    if (this.options.IncludeState)
-                    {
-                        try
-                        {
-                            this.options.StateConverter?.Invoke(tags, data.State);
-                        }
-                        catch (Exception ex)
-                        {
-                            OpenTelemetrySdkEventSource.Log.LogProcessorException($"Processing state of type [{data.State.GetType().FullName}]", ex);
-                        }
-                    }
-                    else
-                    {
-                        tags["Message"] = data.State.ToString();
-                    }
+                    tags["Message"] = data.Message;
                 }
 
                 activity.AddEvent(activityEvent);

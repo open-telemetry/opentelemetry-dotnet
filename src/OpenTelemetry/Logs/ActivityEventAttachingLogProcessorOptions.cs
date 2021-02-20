@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Logs
@@ -23,19 +24,9 @@ namespace OpenTelemetry.Logs
     public class ActivityEventAttachingLogProcessorOptions
     {
         /// <summary>
-        /// Gets or sets a value indicating whether or not log scopes should be included on generated <see cref="ActivityEvent"/>s. Default value: False.
-        /// </summary>
-        public bool IncludeScopes { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether or not log state should be included on generated <see cref="ActivityEvent"/>s. Default value: False.
-        /// </summary>
-        public bool IncludeState { get; set; }
-
-        /// <summary>
         /// Gets or sets the callback action used to convert log state to tags.
         /// </summary>
-        public Action<ActivityTagsCollection, object> StateConverter { get; set; } = DefaultLogStateConverter.ConvertState;
+        public Action<ActivityTagsCollection, IReadOnlyList<KeyValuePair<string, object>>> StateConverter { get; set; } = DefaultLogStateConverter.ConvertState;
 
         /// <summary>
         /// Gets or sets the callback action used to convert log scopes to tags.

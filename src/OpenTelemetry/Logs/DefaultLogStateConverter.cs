@@ -29,9 +29,21 @@ namespace OpenTelemetry.Logs
     {
         private static readonly ConcurrentDictionary<Type, List<PropertyGetter>> TypePropertyCache = new ConcurrentDictionary<Type, List<PropertyGetter>>();
 
-        public static void ConvertState(ActivityTagsCollection tags, object state)
+        public static void ConvertState(ActivityTagsCollection tags, IReadOnlyList<KeyValuePair<string, object>> state)
         {
-            ConvertState(tags, "state", state);
+            for (int i = 0; i < state.Count; i++)
+            {
+                KeyValuePair<string, object> item = state[i];
+
+                if (!string.IsNullOrEmpty(item.Key))
+                {
+                    ConvertState(tags, $"state.{item.Key}", item.Value);
+                }
+                else
+                {
+                    ConvertState(tags, $"state", item.Value);
+                }
+            }
         }
 
         public static void ConvertScope(ActivityTagsCollection tags, int index, object scope)
@@ -45,7 +57,9 @@ namespace OpenTelemetry.Logs
             {
                 for (int i = 0; i < stateList.Count; i++)
                 {
-                    ConvertState(tags, $"{keyPrefix}.{stateList[i].Key}", stateList[i].Value);
+                    KeyValuePair<string, object> item = stateList[i];
+
+                    ConvertState(tags, $"{keyPrefix}.{item.Key}", item.Value);
                 }
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)

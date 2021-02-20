@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
@@ -34,8 +35,10 @@ namespace OpenTelemetry.Logs
             string categoryName,
             LogLevel logLevel,
             EventId eventId,
+            string message,
             object state,
-            Exception exception)
+            Exception exception,
+            IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
             this.scopeProvider = scopeProvider;
 
@@ -52,7 +55,9 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
+            this.Message = message;
             this.State = state;
+            this.StateValues = stateValues;
             this.Exception = exception;
         }
 
@@ -72,11 +77,23 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
+        public string Message { get; }
+
         public object State { get; }
+
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
 
         public Exception Exception { get; }
 
-        internal void ForEachScope<TState>(Action<object, TState> callback, TState state)
+        /// <summary>
+        /// Executes callback for each currently active scope objects in order
+        /// of creation. All callbacks are guaranteed to be called inline from
+        /// this method.
+        /// </summary>
+        /// <typeparam name="TState">State.</typeparam>
+        /// <param name="callback">The callback to be executed for every scope object.</param>
+        /// <param name="state">The state object to be passed into the callback.</param>
+        public void ForEachScope<TState>(Action<object, TState> callback, TState state)
         {
             this.scopeProvider?.ForEachScope(callback, state);
         }

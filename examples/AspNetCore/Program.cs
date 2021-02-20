@@ -39,15 +39,16 @@ namespace Examples.AspNetCore
                     builder.ClearProviders();
                     builder.AddConsole();
 
-                    var useLogging = context.Configuration.GetValue<bool>("UseLogging");
-                    if (useLogging)
+                    var attachLogsToActivity = context.Configuration.GetValue<bool>("AttachLogsToActivity");
+                    if (attachLogsToActivity)
                     {
-                        builder.AddOpenTelemetry(options
-                            => options.AddActivityEventAttachingLogProcessor(logOptions =>
-                            {
-                                logOptions.IncludeScopes = true;
-                                logOptions.IncludeState = true;
-                            }));
+                        builder.AddOpenTelemetry(options =>
+                        {
+                            options.IncludeScopes = true;
+                            options.ParseStateValues = true;
+                            options.IncludeMessage = true;
+                            options.AddActivityEventAttachingLogProcessor();
+                        });
                     }
                 });
     }

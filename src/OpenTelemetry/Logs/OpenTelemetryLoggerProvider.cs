@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,8 +26,9 @@ namespace OpenTelemetry.Logs
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
     {
+        internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
-        private readonly IDictionary<string, OpenTelemetryLogger> loggers = new Dictionary<string, OpenTelemetryLogger>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, OpenTelemetryLogger> loggers = new ConcurrentDictionary<string, OpenTelemetryLogger>(StringComparer.Ordinal);
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
@@ -44,10 +46,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
 
             foreach (var processor in options.Processors)
             {
@@ -67,22 +66,30 @@ namespace OpenTelemetry.Logs
 
         public ILogger CreateLogger(string categoryName)
         {
-            if (!this.loggers.TryGetValue(categoryName, out var logger))
+            while (true)
             {
-                lock (this.loggers)
+                if (this.loggers.TryGetValue(categoryName, out var logger))
                 {
-                    if (!this.loggers.TryGetValue(categoryName, out logger))
-                    {
-                        logger = new OpenTelemetryLogger(categoryName, this)
-                        {
-                            ScopeProvider = this.scopeProvider,
-                        };
-                        this.loggers.Add(categoryName, logger);
-                    }
+                    return logger;
                 }
-            }
 
-            return logger;
+                logger = new OpenTelemetryLogger(categoryName, this)
+                {
+                    ScopeProvider = this.scopeProvider,
+                };
+
+                if (this.loggers.TryAdd(categoryName, logger))
+                {
+                    return logger;
+                }
+
+                // Note: Not returning logger here because it didn't get into
+                // the dictionary. If we return it the caller could hold onto
+                // the ref, for example in a singleton service, and then
+                // SetScopeProvider wouldn't know about it if the scope provider
+                // needs to be set. Instead, loop back around to TryGetValue and
+                // return the one that made it into the dictionary.
+            }
         }
 
         /// <inheritdoc/>
