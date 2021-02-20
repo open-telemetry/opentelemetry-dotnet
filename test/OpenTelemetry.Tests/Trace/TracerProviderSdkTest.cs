@@ -29,6 +29,11 @@ namespace OpenTelemetry.Trace.Tests
     {
         private const string ActivitySourceName = "TraceSdkTest";
 
+        public TracerProviderSdkTest()
+        {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+        }
+
         [Fact]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
@@ -266,12 +271,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -301,12 +312,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -341,12 +358,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -381,12 +404,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -422,12 +451,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -464,12 +499,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
             testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
 
@@ -503,12 +544,18 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessorNew.StartAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.True(string.IsNullOrEmpty(a.Source.Name)); // Verify Processor.Start is called for a legacy activity
+                    Assert.True(a.IsAllDataRequested); // If Proccessor.Start is called, activity's IsAllDataRequested is set to true
                     startCalledNew = true;
                 };
 
-            testActivityProcessorNew.EndAction =
+            testActivityProcessor.EndAction =
                 (a) =>
                 {
+                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(string.IsNullOrEmpty(a.Source.Name)); // Verify that the legacy activity's source has been updated before Processor.End
+                    Assert.True(a.IsAllDataRequested); // If Processor.End is called, activity's IsAllDataRequested is set to true
                     endCalledNew = true;
                 };
 
@@ -581,6 +628,108 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(isAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
+            activity.Stop();
+        }
+
+        [Fact]
+        public void SdkPopulatesSamplingParamsCorrectlyForRootLegacyActivity()
+        {
+            var operationNameForLegacyActivity = "TestOperationName";
+            var sampler = new TestSampler()
+            {
+                SamplingAction = (samplingParameters) =>
+                {
+                    Assert.Equal(default, samplingParameters.ParentContext);
+                    return new SamplingResult(SamplingDecision.RecordAndSample);
+                },
+            };
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(sampler)
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            // Start activity without setting parent. i.e it'll have null parent
+            // and becomes root activity
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void SdkPopulatesSamplingParamsCorrectlyForLegacyActivityWithRemoteParent(ActivityTraceFlags traceFlags)
+        {
+            var parentTraceId = ActivityTraceId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
+            var parentTraceFlag = (traceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
+            string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+            string tracestate = "a=b;c=d";
+
+            var operationNameForLegacyActivity = "TestOperationName";
+            var sampler = new TestSampler()
+            {
+                SamplingAction = (samplingParameters) =>
+                {
+                    Assert.Equal(parentTraceId, samplingParameters.ParentContext.TraceId);
+                    Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
+                    Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
+                    Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
+                    return new SamplingResult(SamplingDecision.RecordAndSample);
+                },
+            };
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(sampler)
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            // Create an activity with remote parent id.
+            // The sampling parameters are expected to be that of the
+            // parent context i.e the remote parent.
+            Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+            activity.TraceStateString = tracestate;
+            activity.Start();
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void SdkPopulatesSamplingParamsCorrectlyForLegacyActivityWithInProcParent(ActivityTraceFlags traceFlags)
+        {
+            // Create some parent activity.
+            string tracestate = "a=b;c=d";
+            var activityLocalParent = new Activity("TestParent");
+            activityLocalParent.ActivityTraceFlags = traceFlags;
+            activityLocalParent.TraceStateString = tracestate;
+            activityLocalParent.Start();
+
+            var operationNameForLegacyActivity = "TestOperationName";
+            var sampler = new TestSampler()
+            {
+                SamplingAction = (samplingParameters) =>
+                {
+                    Assert.Equal(activityLocalParent.TraceId, samplingParameters.ParentContext.TraceId);
+                    Assert.Equal(activityLocalParent.SpanId, samplingParameters.ParentContext.SpanId);
+                    Assert.Equal(activityLocalParent.ActivityTraceFlags, samplingParameters.ParentContext.TraceFlags);
+                    Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
+                    return new SamplingResult(SamplingDecision.RecordAndSample);
+                },
+            };
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(sampler)
+                        .AddLegacyActivityOperationName(operationNameForLegacyActivity)
+                        .Build();
+
+            // This activity will have a inproc parent.
+            // activity.Parent will be equal to the activity created at the beginning of this test.
+            // Sampling parameters are expected to be that of the parentContext.
+            // i.e of the parent Activity
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
             activity.Stop();
         }
 
