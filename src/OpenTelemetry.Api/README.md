@@ -8,6 +8,7 @@
   * [Tracing API](#tracing-api)
   * [Logging API](#logging-api)
   * [Metrics API](#metrics-api)
+  * [Baggage API](#baggage-api)
 * [Introduction to OpenTelemetry .NET Tracing
   API](#introduction-to-opentelemetry-net-tracing-api)
 * [Instrumenting a library/application with .NET Activity
@@ -70,7 +71,40 @@ with the intent to produce continuous summaries of those measurements.
 
 _**Warning:** OpenTelemetry .NET has a prototype Metrics API implementation only
 and is not recommended for any production use. The API is expected to change
-heavily. Please check the [Metric support plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
+heavily. Please check the [Metric support
+plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
+
+### Baggage API
+
+[Baggage
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
+allows users to add context to metric, traces, and logs. Baggage can be
+propagated out of proc using
+[Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md).
+OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
+
+```csharp
+// Use Baggage.Current to get all the key/value pairs present in Baggage
+foreach (var item in Baggage.Current)
+{
+    Console.WriteLine(item.Key);
+    Console.WriteLine(item.Value);
+}
+
+// Use SetBaggage method to add a key/value pair in Baggage
+Baggage.Current.SetBaggage("AppName", "MyApp");
+Baggage.Current.SetBaggage("Region", "West US");
+
+// Use RemoveBaggage method to remove a key/value pair in Baggage
+Baggage.Current.RemoveBaggage("AppName");
+
+// Use ClearBaggage method to remove all the key/value pairs in Baggage
+Baggage.Current.ClearBaggage();
+```
+
+The recommended way to add Baggage is to use `SetBaggage()` on
+`Baggage.Current`. OpenTelemetry users should not use the method `AddBaggage` on
+`Activity`.
 
 ## Introduction to OpenTelemetry .NET Tracing API
 
@@ -92,8 +126,8 @@ Even though `Activity` enables all the scenarios OpenTelemetry supports, users
 who are already familiar with OpenTelemetry terminology may find it easy to
 operate with that terminology. For instance, `StartSpan` may be preferred over
 `StartActivity`. To help with this transition, the OpenTelemetry.API package has
-[shim](#instrumenting-using-opentelemetryapi-shim) classes
-to wrap around the .NET `Activity` classes.
+[shim](#instrumenting-using-opentelemetryapi-shim) classes to wrap around the
+.NET `Activity` classes.
 
 The shim exist only in the API. OpenTelemetry SDK for .NET will be operating
 entirely with `Activity` only. Irrespective of whether shim classes or
@@ -139,8 +173,8 @@ is the .NET `Activity` API. Guidance for instrumenting using this API is
 documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
-1. Install the `System.Diagnostics.DiagnosticSource` package version
-   `5.0.1` or above to your application or library.
+1. Install the `System.Diagnostics.DiagnosticSource` package version `5.0.1` or
+   above to your application or library.
 
     ```xml
     <ItemGroup>
@@ -196,8 +230,8 @@ here as well.
 
     The recommended way to [set span
     attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
-    in `Activity` class is by using `SetTag()`. OpenTelemetry users should
-    not use other methods like `AddTag`, `SetCustomProperty` on `Activity`.
+    in `Activity` class is by using `SetTag()`. OpenTelemetry users should not
+    use other methods like `AddTag`, `SetCustomProperty` on `Activity`.
 
 5. Perform application/library logic.
 
@@ -372,13 +406,12 @@ activity?.SetTag("otel.status_code", "ERROR");
 activity?.SetTag("otel.status_description", "error status description");
 ```
 
-Values for the StatusCode tag must be one of the strings "UNSET", "OK", or "ERROR",
-which correspond respectively to the enums `Unset`, `Ok`, and `Error` from
-[`StatusCode`](./Trace/StatusCode.cs).
+Values for the StatusCode tag must be one of the strings "UNSET", "OK", or
+"ERROR", which correspond respectively to the enums `Unset`, `Ok`, and `Error`
+from [`StatusCode`](./Trace/StatusCode.cs).
 
-If using OpenTelemetry API
-[shim](#instrumenting-using-opentelemetryapi-shim), then you
-can leverage the `SetStatus` extension method on `Activity` as well.
+If using OpenTelemetry API [shim](#instrumenting-using-opentelemetryapi-shim),
+then you can leverage the `SetStatus` extension method on `Activity` as well.
 
 ## Instrumenting using OpenTelemetry.API Shim
 
@@ -386,8 +419,8 @@ As mentioned in the introduction section, using OpenTelemetry.API Shim is only
 recommended if you want to use OpenTelemetry terminology like Tracer, Span
 instead of ActivitySource, Activity.
 
-Follow [this](../../examples/console/TestOTelShimWithConsoleExporter.cs) code for
-example usage of this shim.
+Follow [this](../../examples/console/TestOTelShimWithConsoleExporter.cs) code
+for example usage of this shim.
 
 ## Context propagation
 
@@ -400,9 +433,10 @@ libraries which has instrumentations already available which does the
 propagation (eg: Asp.Net Core or HttpClient). In such cases, context extraction
 and propagation is the responsibility of the library itself. An example would be
 a producer-consumer pattern using some queuing library like RabbitMQ. Follow the
-[messaging example](../../examples/MicroserviceExample/README.md) for examples on
-how to
-[inject](../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) and
+[messaging example](../../examples/MicroserviceExample/README.md) for examples
+on how to
+[inject](../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs)
+and
 [extract](../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
 context.
 
