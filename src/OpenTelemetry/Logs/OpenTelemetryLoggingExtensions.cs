@@ -48,7 +48,7 @@ namespace Microsoft.Extensions.Logging
         /// <summary>
         /// Adds a LogRecord Processor to the OpenTelemetry ILoggingBuilder
         /// which converts messages into <see cref="ActivityEvent"/>s on the
-        /// currently running <see cref="Activity"/>.
+        /// currently active <see cref="Activity"/>.
         /// </summary>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure"><see cref="ActivityEventAttachingLogProcessorOptions"/>.</param>
