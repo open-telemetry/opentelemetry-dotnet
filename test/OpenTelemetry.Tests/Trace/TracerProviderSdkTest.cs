@@ -407,10 +407,6 @@ namespace OpenTelemetry.Trace.Tests
                         .AddProcessor(testActivityProcessor)
                         .Build();
 
-            Activity activity = new Activity("test");
-            activity.Start();
-            activity.Stop();
-
             var isFlushed = tracerProvider.ForceFlush();
 
             Assert.True(isFlushed);
