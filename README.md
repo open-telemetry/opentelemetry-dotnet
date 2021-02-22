@@ -86,7 +86,7 @@ The passcode is `77777`.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).
-For edit access, get in touch on
+If you have trouble accessing the doc, please get in touch on
 [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
 Approvers
