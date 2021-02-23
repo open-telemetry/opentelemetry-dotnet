@@ -9,7 +9,7 @@ please check the latest changes
 
 ## Unreleased
 
-* Added `ForceFlush` method `TracerProviderExtensions`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+* Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
 
 ## 1.0.1
 
