@@ -72,8 +72,8 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds an activity listener for activities created the legacy way with the provided OperationName. The listener samples and processes these activites
-        /// using the Sampler and Processors provided to the TracerProvider
+        /// Adds an activity listener for activities created the legacy way with the provided OperationName. The listener samples and processes these activities
+        /// using the Sampler and Processors provided to the TracerProvider.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <param name="operationName">OperationName to add.</param>
