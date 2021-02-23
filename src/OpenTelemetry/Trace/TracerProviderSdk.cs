@@ -32,7 +32,7 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly HashSet<string> legacyActivityOperationNames;
+        private readonly Dictionary<string, bool> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
         private Action<Activity> getRequestedDataAction;
         private bool supportLegacyActivity;
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
-            HashSet<string> legacyActivityOperationNames)
+            Dictionary<string, bool> legacyActivityOperationNames)
         {
             this.Resource = resource;
             this.sampler = sampler;
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (legacyActivityOperationNames.Contains(activity.OperationName))
+                        if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
                             // Legacy activity matches the user configured list. Call sampler for the legacy activity
                             this.getRequestedDataAction(activity);
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (!legacyActivityOperationNames.Contains(activity.OperationName))
+                        if (!legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
                             // Legacy activity doesn't match the user configured list. No need to proceed further.
                             return;
