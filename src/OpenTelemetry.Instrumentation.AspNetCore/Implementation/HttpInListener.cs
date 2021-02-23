@@ -97,6 +97,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
+
+                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                    activity.IsAllDataRequested = false;
                     activity = newOne;
                 }
 

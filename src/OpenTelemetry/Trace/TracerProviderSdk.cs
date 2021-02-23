@@ -72,9 +72,10 @@ namespace OpenTelemetry.Trace
 
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
-                        // We have a legacy activity in hand now and it's name matches the one user is interested in
+                        // We have a legacy activity in hand now
                         if (legacyActivityOperationNames.Contains(activity.OperationName))
                         {
+                            // Legacy activity matches the user configured list. Call sampler for the legacy activity
                             this.getRequestedDataAction(activity);
                         }
                         else
@@ -100,11 +101,14 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
-                    if (string.IsNullOrEmpty(activity.Source.Name))
+                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
-                        // We have a legacy activity which was not picked up by the instrumentation library.
-                        // Most likely, the instrumentation library created a sibling activity and populated its ActivitySource correctly
-                        return;
+                        // We have a legacy activity in hand now
+                        if (!legacyActivityOperationNames.Contains(activity.OperationName))
+                        {
+                            // Legacy activity doesn't match the user configured list. No need to proceed further.
+                            return;
+                        }
                     }
 
                     if (!activity.IsAllDataRequested)

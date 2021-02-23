@@ -96,6 +96,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // correctly stop and restore Activity.Current.
                     newOne.SetCustomProperty("OTel.ActivityByAspNet", activity);
                     activity.SetCustomProperty("OTel.ActivityByHttpInListener", newOne);
+
+                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                    activity.IsAllDataRequested = false;
                     activity = newOne;
                 }
 
