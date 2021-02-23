@@ -73,26 +73,5 @@ namespace OpenTelemetry.Extensions.Storage.Tests
 
             testDirectory.Delete(true);
         }
-
-        [Fact]
-        public void OnMaintenanceEvent_Test()
-        {
-            var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
-            using var storage = new LocalFileStorage(testDirectory.FullName, 1000, 500, 500);
-
-            var data = Encoding.UTF8.GetBytes("Test");
-            IPersistentBlob blob1 = storage.CreateBlob(data);
-            IPersistentBlob blob2 = storage.CreateBlob(data);
-            IPersistentBlob blob3 = storage.CreateBlob(data);
-
-            Assert.Equal(3, storage.GetBlobs().Count());
-
-            // Sleep for 1 second, so that maintenance timer will remove all the files.
-            // RetentionPeriod is set to 500 ms.
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            Assert.Empty(storage.GetBlobs());
-
-            testDirectory.Delete(true);
-        }
     }
 }
