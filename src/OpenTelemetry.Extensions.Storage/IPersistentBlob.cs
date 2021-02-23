@@ -1,4 +1,4 @@
-// <copyright file="IPersistentStorage.cs" company="OpenTelemetry Authors">
+// <copyright file="IPersistentBlob.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,52 +14,61 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-
-namespace OpenTelemetry.Shared
+namespace OpenTelemetry.Extensions.Storage
 {
     /// <summary>
-    /// Persistent storage API.
+    /// Represents a persistent blob.
     /// </summary>
-    public interface IPersistentStorage
+    public interface IPersistentBlob
     {
         /// <summary>
-        /// Reads a sequence of blobs from storage.
+        /// Reads the content from the blob.
         /// </summary>
         /// <returns>
-        /// Sequence of blobs from storage.
+        /// The content of the blob if the operation succeeded, otherwise null.
         /// </returns>
         /// <remarks>
         /// This function should never throw exception.
         /// </remarks>
-        IEnumerable<IPersistentBlob> GetBlobs();
+        byte[] Read();
 
         /// <summary>
-        /// Attempts to get a blob from storage.
-        /// </summary>
-        /// <returns>
-        /// A blob if there is an available one, or null if there is no blob available.
-        /// </returns>
-        /// <remarks>
-        /// This function should never throw exception.
-        /// </remarks>
-        IPersistentBlob GetBlob();
-
-        /// <summary>
-        /// Creates a new blob with the provided data.
+        /// Writes the given content to the blob.
         /// </summary>
         /// <param name="buffer">
         /// The content to be written.
         /// </param>
         /// <param name="leasePeriodMilliseconds">
-        /// The number of milliseconds to lease after the blob is created.
+        /// The number of milliseconds to lease after the write operation finished.
         /// </param>
         /// <returns>
-        /// The created blob.
+        /// The same blob if the operation succeeded, otherwise null.
         /// </returns>
         /// <remarks>
         /// This function should never throw exception.
         /// </remarks>
-        IPersistentBlob CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0);
+        IPersistentBlob Write(byte[] buffer, int leasePeriodMilliseconds = 0);
+
+        /// <summary>
+        /// Creates a lease on the blob.
+        /// </summary>
+        /// <param name="leasePeriodMilliseconds">
+        /// The number of milliseconds to lease.
+        /// </param>
+        /// <returns>
+        /// The same blob if the lease operation succeeded, otherwise null.
+        /// </returns>
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        IPersistentBlob Lease(int leasePeriodMilliseconds);
+
+        /// <summary>
+        /// Attempts to delete the blob.
+        /// </summary>
+        /// <remarks>
+        /// This function should never throw exception.
+        /// </remarks>
+        void Delete();
     }
 }

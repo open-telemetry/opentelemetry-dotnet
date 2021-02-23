@@ -1,0 +1,23 @@
+﻿OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.IPersistentBlob.Delete() -> void
+OpenTelemetry.Extensions.Storage.IPersistentBlob.Lease(int leasePeriodMilliseconds) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.IPersistentBlob.Read() -> byte[]
+OpenTelemetry.Extensions.Storage.IPersistentBlob.Write(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.IPersistentStorage
+OpenTelemetry.Extensions.Storage.IPersistentStorage.CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.IPersistentStorage.GetBlob() -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.IPersistentStorage.GetBlobs() -> System.Collections.Generic.IEnumerable<OpenTelemetry.Extensions.Storage.IPersistentBlob>
+OpenTelemetry.Extensions.Storage.LocalFileBlob
+OpenTelemetry.Extensions.Storage.LocalFileBlob.Delete() -> void
+OpenTelemetry.Extensions.Storage.LocalFileBlob.FullPath.get -> string
+OpenTelemetry.Extensions.Storage.LocalFileBlob.Lease(int leasePeriodMilliseconds) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.LocalFileBlob.LocalFileBlob(string fullPath) -> void
+OpenTelemetry.Extensions.Storage.LocalFileBlob.Read() -> byte[]
+OpenTelemetry.Extensions.Storage.LocalFileBlob.Write(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.LocalFileStorage
+OpenTelemetry.Extensions.Storage.LocalFileStorage.CreateBlob(byte[] buffer, int leasePeriodMilliseconds = 0) -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.LocalFileStorage.Dispose() -> void
+OpenTelemetry.Extensions.Storage.LocalFileStorage.Dispose(bool disposing) -> void
+OpenTelemetry.Extensions.Storage.LocalFileStorage.GetBlob() -> OpenTelemetry.Extensions.Storage.IPersistentBlob
+OpenTelemetry.Extensions.Storage.LocalFileStorage.GetBlobs() -> System.Collections.Generic.IEnumerable<OpenTelemetry.Extensions.Storage.IPersistentBlob>
+OpenTelemetry.Extensions.Storage.LocalFileStorage.LocalFileStorage(string path, long maxSizeInBytes = 52428800, int maintenancePeriodInMilliseconds = 6000, long retentionPeriodInMilliseconds = 172800, int writeTimeoutInMilliseconds = 6000) -> void
