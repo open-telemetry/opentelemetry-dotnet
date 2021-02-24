@@ -43,11 +43,19 @@ namespace WebApi
             services.AddOpenTelemetryTracing((builder) => builder
                 .AddAspNetCoreInstrumentation()
                 .AddSource(nameof(MessageSender))
-                .AddZipkinExporter(b =>
+                .AddOtlpExporter(opt =>
                 {
-                    var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                    b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                }));
+                    opt.Endpoint = "ingest.lightstep.com:443";
+                    opt.Headers = new Metadata
+                    {
+                        { "lightstep-access-token", Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN")}
+                    };
+                    opt.Credentials = new SslCredentials();
+                })
+                .SetResource(
+                    Resources.CreateServiceResource(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"),
+                    serviceVersion: Environment.GetEnvironmentVariable("LS_SERVICE_VERSION")))
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

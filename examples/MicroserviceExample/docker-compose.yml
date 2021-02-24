@@ -1,10 +1,6 @@
 version: '3.8'
 
 services:
-  zipkin:
-    image: openzipkin/zipkin
-    ports:
-      - 9411:9411
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -25,12 +21,13 @@ services:
       - RABBITMQ_HOSTNAME=rabbitmq
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
-      - ZIPKIN_HOSTNAME=zipkin
+      - LS_ACCESS_TOKEN=PS4AExeR1V9kLHqtSIk6to3okwIEQ+4DZPEFmJAWQl+wMisnXWuYGAXjiERYT5pCIDV2nAY4eOYMau/r2iQ=
+      - LS_SERVICE_NAME=webapi
+      - LS_SERVICE_VERSION=1.1
     ports:
       - 5000:5000
     depends_on:
       - rabbitmq
-      - zipkin
 
   workerservice:
     build:
@@ -42,8 +39,9 @@ services:
       - RABBITMQ_HOSTNAME=rabbitmq
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
-      - ZIPKIN_HOSTNAME=zipkin
+      - LS_ACCESS_TOKEN=PS4AExeR1V9kLHqtSIk6to3okwIEQ+4DZPEFmJAWQl+wMisnXWuYGAXjiERYT5pCIDV2nAY4eOYMau/r2iQ=
+      - LS_SERVICE_NAME=workerservice
+      - LS_SERVICE_VERSION=1.1      
     restart: on-failure
     depends_on:
       - rabbitmq
-      - zipkin

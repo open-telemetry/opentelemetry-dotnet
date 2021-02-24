@@ -5,12 +5,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingPkgVer)" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.0.1" />
     <PackageReference Include="RabbitMQ.Client" Version="$(RabbitMQClientPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
   </ItemGroup>
 

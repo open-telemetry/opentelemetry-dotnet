@@ -18,6 +18,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 using Utils.Messaging;
 
 namespace WorkerService
@@ -37,16 +38,21 @@ namespace WorkerService
 
                     services.AddSingleton<MessageReceiver>();
 
-                    services.AddOpenTelemetryTracing((builder) =>
-                    {
-                        builder
-                            .AddSource(nameof(MessageReceiver))
-                            .AddZipkinExporter(b =>
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddOtlpExporter(opt =>
+                        {
+                            opt.Endpoint = "ingest.lightstep.com:443";
+                            opt.Headers = new Metadata
                             {
-                                var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                                b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                            });
-                    });
+                                { "lightstep-access-token", Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN")}
+                            };
+                            opt.Credentials = new SslCredentials();
+                        })
+                        .SetResource(
+                            Resources.CreateServiceResource(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"),
+                            serviceVersion: Environment.GetEnvironmentVariable("LS_SERVICE_VERSION")))
+                    );
                 });
     }
 }
