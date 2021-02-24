@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // No exception is thrown on executing this line
             builder.AddLegacyActivityOperationName("TestOperationName");
-            builder.Build();
+            using var provider = builder.Build();
 
             var emptyActivitySource = new ActivitySource(string.Empty);
             Assert.False(emptyActivitySource.HasListeners()); // Check if AddLegacyOperationName was noop after TracerProviderBuilder.Build
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Tests
             builder.AddLegacyActivityOperationName("TestOperationName");
 
             Assert.False(emptyActivitySource.HasListeners());
-            builder.Build();
+            using var provider = builder.Build();
             Assert.True(emptyActivitySource.HasListeners());
         }
     }
