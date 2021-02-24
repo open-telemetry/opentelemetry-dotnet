@@ -52,6 +52,7 @@ namespace OpenTelemetry.Logs
             this.provider.Processor?.OnEnd(record);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsEnabled(LogLevel logLevel)
         {
             return logLevel != LogLevel.None;
