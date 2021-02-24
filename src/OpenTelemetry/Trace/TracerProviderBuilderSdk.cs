@@ -136,9 +136,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddLegacyActivityOperationName(string operationName)
         {
-            if (string.IsNullOrEmpty(operationName))
+            if (string.IsNullOrWhiteSpace(operationName))
             {
-                throw new ArgumentException(nameof(operationName));
+                throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
             }
 
             this.legacyActivityOperationNames[operationName] = true;
