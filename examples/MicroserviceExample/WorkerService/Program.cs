@@ -17,8 +17,8 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Utils.Messaging;
 
 namespace WorkerService
@@ -39,20 +39,13 @@ namespace WorkerService
                     services.AddSingleton<MessageReceiver>();
 
                     services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
+                        .AddSource(nameof(MessageReceiver))
                         .AddOtlpExporter(opt =>
                         {
-                            opt.Endpoint = "ingest.lightstep.com:443";
-                            opt.Headers = new Metadata
-                            {
-                                { "lightstep-access-token", Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN")}
-                            };
-                            opt.Credentials = new SslCredentials();
+                            opt.Endpoint = new Uri("ingest.lightstep.com:443");
+                            opt.Headers = "lightstep-access-token=" + Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN");
                         })
-                        .SetResource(
-                            Resources.CreateServiceResource(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"),
-                            serviceVersion: Environment.GetEnvironmentVariable("LS_SERVICE_VERSION")))
-                    );
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"))));
                 });
     }
 }

@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -45,17 +47,10 @@ namespace WebApi
                 .AddSource(nameof(MessageSender))
                 .AddOtlpExporter(opt =>
                 {
-                    opt.Endpoint = "ingest.lightstep.com:443";
-                    opt.Headers = new Metadata
-                    {
-                        { "lightstep-access-token", Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN")}
-                    };
-                    opt.Credentials = new SslCredentials();
+                    opt.Endpoint = new Uri("https://ingest.lightstep.com:443");
+                    opt.Headers = "lightstep-access-token=" + Environment.GetEnvironmentVariable("LS_ACCESS_TOKEN");
                 })
-                .SetResource(
-                    Resources.CreateServiceResource(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"),
-                    serviceVersion: Environment.GetEnvironmentVariable("LS_SERVICE_VERSION")))
-            );
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(Environment.GetEnvironmentVariable("LS_SERVICE_NAME"))));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
