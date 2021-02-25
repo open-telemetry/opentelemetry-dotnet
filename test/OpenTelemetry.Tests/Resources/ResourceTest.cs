@@ -91,7 +91,7 @@ namespace OpenTelemetry.Resources.Tests
             var resource = new Resource(attributes);
 
             // Assert
-            Assert.Single(resource.Attributes);
+            Assert.Equal(2, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("EmptyValue", string.Empty), resource.Attributes);
         }
 
