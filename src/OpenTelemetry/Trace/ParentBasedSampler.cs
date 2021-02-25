@@ -60,18 +60,22 @@ namespace OpenTelemetry.Trace
         /// <param name="remoteParentSampled">
         /// A <see cref="Sampler"/> to delegate sampling decision to in case of
         /// remote parent (<see cref="ActivityContext.IsRemote"/> == true) with <see cref="ActivityTraceFlags.Recorded"/> flag == true.
+        /// Default: <see cref="AlwaysOnSampler"/>.
         /// </param>
         /// <param name="remoteParentNotSampled">
         /// A <see cref="Sampler"/> to delegate sampling decision to in case of
         /// remote parent (<see cref="ActivityContext.IsRemote"/> == true) with <see cref="ActivityTraceFlags.Recorded"/> flag == false.
+        /// Default: <see cref="AlwaysOffSampler"/>.
         /// </param>
         /// <param name="localParentSampled">
         /// A <see cref="Sampler"/> to delegate sampling decision to in case of
         /// local parent (<see cref="ActivityContext.IsRemote"/> == false) with <see cref="ActivityTraceFlags.Recorded"/> flag == true.
+        /// Default: <see cref="AlwaysOnSampler"/>.
         /// </param>
         /// <param name="localParentNotSampled">
         /// A <see cref="Sampler"/> to delegate sampling decision to in case of
         /// local parent (<see cref="ActivityContext.IsRemote"/> == false) with <see cref="ActivityTraceFlags.Recorded"/> flag == false.
+        /// Default: <see cref="AlwaysOffSampler"/>.
         /// </param>
         public ParentBasedSampler(
             Sampler rootSampler,
