@@ -241,11 +241,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
             Assert.Equal(4, activityProcessor.Invocations.Count);
 
-            // we should only call Processor.OnEnd once for the sibling activity with the OperationName ActivityCreatedByHttpInListener
-            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
-            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
+            var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
+            var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
+            Assert.Equal(2, startedActivities.Count());
+            Assert.Single(stoppedActivities);
 
+            // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
+            Assert.Contains(startedActivities, item =>
+            {
+                var startedActivity = item.Arguments[0] as Activity;
+                return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+            });
+
+            Assert.Contains(startedActivities, item =>
+            {
+                var startedActivity = item.Arguments[0] as Activity;
+                return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
+            });
+
+            // Only the sibling activity is sent to Processor.OnEnd
+            Assert.Contains(stoppedActivities, item =>
+            {
+                var stoppedActivity = item.Arguments[0] as Activity;
+                return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
+            });
+
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.True(activity.Duration != TimeSpan.Zero);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
