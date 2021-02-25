@@ -16,7 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
