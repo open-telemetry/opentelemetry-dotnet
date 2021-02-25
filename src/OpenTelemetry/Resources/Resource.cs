@@ -93,8 +93,7 @@ namespace OpenTelemetry.Resources
             string sanitizedKey;
             if (attribute.Key == null)
             {
-                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute key", "Attribute key should be non-null string.");
-                sanitizedKey = string.Empty;
+                throw new System.ArgumentException("Resource's attributes contains a null key");
             }
             else
             {
@@ -109,7 +108,12 @@ namespace OpenTelemetry.Resources
         {
             if (value != null)
             {
-                if (value is string || value is bool || value is long || value is double)
+                if (value is string || value is bool || value is double || value is long)
+                {
+                    return value;
+                }
+
+                if (value is string[] || value is bool[] || value is double[] || value is long[])
                 {
                     return value;
                 }

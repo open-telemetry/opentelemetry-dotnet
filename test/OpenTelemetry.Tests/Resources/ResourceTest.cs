@@ -51,6 +51,16 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void CreateResource_NullAttributeKey()
+        {
+            // Arrange
+            var attributes = new Dictionary<string, object> { { null, "NullKey" } };
+
+            // Act and Assert
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
+        }
+
+        [Fact]
         public void CreateResource_EmptyAttributeKey()
         {
             // Arrange
@@ -71,7 +81,11 @@ namespace OpenTelemetry.Resources.Tests
         public void CreateResource_EmptyAttributeValue()
         {
             // Arrange
-            var attributes = new Dictionary<string, object> { { "EmptyValue", string.Empty } };
+            var attributes = new Dictionary<string, object>
+            {
+                                                              { "EmptyValue", string.Empty },
+                                                              { "EmptyArray", new string[0] },
+            };
 
             // does not throw
             var resource = new Resource(attributes);
@@ -129,28 +143,40 @@ namespace OpenTelemetry.Resources.Tests
             var attributes = new Dictionary<string, object>
             {
                 { "string", "stringValue" },
-                { "long", 1L },
                 { "bool", true },
-                { "double", 0.1d },
+                { "double", 0.1d},
+                { "long", 1L },
 
                 // int and float supported by conversion to long and double
                 { "int", 1 },
                 { "short", (short)1 },
                 { "float", 0.1f },
+
+                // primitive array types supported
+                { "string arr", new string[] { "stringValue" } },
+                { "bool arr", new bool[] { true } },
+                { "double arr", new double[] { 0.1d } },
+                { "long arr", new long[] { 1L } },
             };
 
             var resource = new Resource(attributes);
 
-            Assert.Equal(7, resource.Attributes.Count());
+            Assert.Equal(11, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
+
             Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
 
             double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
             Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
+
+            Assert.Contains(new KeyValuePair<string, object>("string arr", new string[] { "stringValue" }), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("bool arr", new bool[] { true }), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("double arr", new double[] { 0.1d }), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("long arr", new long[] { 1L }), resource.Attributes);
         }
 
         [Fact]
