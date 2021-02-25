@@ -38,6 +38,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                 }
 
+                this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
                 this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
                 this.WriteLine($"Activity.Kind:        {activity.Kind}");
                 this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
