@@ -71,18 +71,28 @@ namespace OpenTelemetry.Resources.Tests
         public void CreateResource_EmptyAttributeValue()
         {
             // Arrange
-            var attributes = new Dictionary<string, object>
-            {
-                                                              { "EmptyValue", string.Empty },
-                                                              { "EmptyArray", new string[0] },
-            };
+            var attributes = new Dictionary<string, object> { { "EmptyValue", string.Empty } };
 
             // does not throw
             var resource = new Resource(attributes);
 
             // Assert
-            Assert.Equal(2, resource.Attributes.Count());
+            Assert.Single(resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("EmptyValue", string.Empty), resource.Attributes);
+        }
+
+        [Fact]
+        public void CreateResource_EmptyArray()
+        {
+            // Arrange
+            var attributes = new Dictionary<string, object> { { "EmptyArray", new string[0] } };
+
+            // does not throw
+            var resource = new Resource(attributes);
+
+            // Assert
+            Assert.Single(resource.Attributes);
+            Assert.Equal(new string[0], resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "EmptyArray").FirstOrDefault().Value);
         }
 
         [Fact]
