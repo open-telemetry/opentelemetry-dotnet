@@ -207,6 +207,11 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        internal bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.processor?.ForceFlush(timeoutMilliseconds) ?? true;
+        }
+
         /// <summary>
         /// Called by <c>Shutdown</c>. This function should block the current
         /// thread until shutdown completed or timed out.

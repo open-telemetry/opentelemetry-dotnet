@@ -398,6 +398,21 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Single(versionAttribute);
         }
 
+        [Fact]
+        public void TracerProviderSdkFlushesProcessorForcibly()
+        {
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddProcessor(testActivityProcessor)
+                        .Build();
+
+            var isFlushed = tracerProvider.ForceFlush();
+
+            Assert.True(isFlushed);
+            Assert.True(testActivityProcessor.ForceFlushCalled);
+        }
+
         public void Dispose()
         {
             GC.SuppressFinalize(this);
