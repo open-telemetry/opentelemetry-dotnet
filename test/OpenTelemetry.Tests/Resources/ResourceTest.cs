@@ -51,16 +51,6 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void CreateResource_NullAttributeKey()
-        {
-            // Arrange
-            var attributes = new Dictionary<string, object> { { null, "NullKey" } };
-
-            // Act and Assert
-            Assert.Throws<ArgumentException>(() => new Resource(attributes));
-        }
-
-        [Fact]
         public void CreateResource_EmptyAttributeKey()
         {
             // Arrange
