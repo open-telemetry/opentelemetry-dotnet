@@ -31,8 +31,8 @@ namespace Benchmarks.Trace
         private readonly ActivitySource sourceWithOneProcessor = new ActivitySource("Benchmark.OneProcessor");
         private readonly ActivitySource sourceWithTwoProcessors = new ActivitySource("Benchmark.TwoProcessors");
         private readonly ActivitySource sourceWithThreeProcessors = new ActivitySource("Benchmark.ThreeProcessors");
-        private readonly ActivitySource sourceWithOneInstrumentation = new ActivitySource("Benchmark.OneInstrumentation");
-        private readonly ActivitySource sourceWithTwoInstrumentations = new ActivitySource("Benchmark.TwoInstrumentations");
+        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new ActivitySource("Benchmark.OneInstrumentation");
+        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new ActivitySource("Benchmark.TwoInstrumentations");
 
         public TraceBenchmarks()
         {
@@ -85,16 +85,16 @@ namespace Benchmarks.Trace
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithOneInstrumentation.Name)
-                .AddAspNetCoreInstrumentation()
+                .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
+                .AddLegacyActivity("TestOperationName")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithTwoInstrumentations.Name)
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
+                .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
+                .AddLegacyActivity("TestOperationName1")
+                .AddLegacyActivity("TestOperationName2")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
         }
@@ -162,7 +162,7 @@ namespace Benchmarks.Trace
         [Benchmark]
         public void OneInstrumentation()
         {
-            using (var activity = this.sourceWithOneInstrumentation.StartActivity("Benchmark"))
+            using (var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark"))
             {
             }
         }
@@ -170,7 +170,7 @@ namespace Benchmarks.Trace
         [Benchmark]
         public void TwoInstrumentations()
         {
-            using (var activity = this.sourceWithTwoInstrumentations.StartActivity("Benchmark"))
+            using (var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark"))
             {
             }
         }

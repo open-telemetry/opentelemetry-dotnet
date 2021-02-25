@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Tests
             TracerProviderBuilder builder = null;
 
             // No exception is thrown on executing this line
-            builder.AddLegacyActivityOperationName("TestOperationName");
+            builder.AddLegacyActivity("TestOperationName");
             using var provider = builder.Build();
 
             var emptyActivitySource = new ActivitySource(string.Empty);
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace.Tests
         public void AddLegacyOperationName_BadArgs(string operationName)
         {
             var builder = Sdk.CreateTracerProviderBuilder();
-            Assert.Throws<ArgumentException>(() => builder.AddLegacyActivityOperationName(operationName));
+            Assert.Throws<ArgumentException>(() => builder.AddLegacyActivity(operationName));
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var emptyActivitySource = new ActivitySource(string.Empty);
             var builder = Sdk.CreateTracerProviderBuilder();
-            builder.AddLegacyActivityOperationName("TestOperationName");
+            builder.AddLegacyActivity("TestOperationName");
 
             Assert.False(emptyActivitySource.HasListeners());
             using var provider = builder.Build();

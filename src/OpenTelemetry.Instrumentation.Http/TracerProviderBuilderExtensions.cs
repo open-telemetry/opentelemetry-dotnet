@@ -16,9 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.Http;
-#if NETFRAMEWORK
 using OpenTelemetry.Instrumentation.Http.Implementation;
-#endif
 
 namespace OpenTelemetry.Trace
 {
@@ -61,8 +59,8 @@ namespace OpenTelemetry.Trace
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
 
             builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
-            builder.AddSource(typeof(HttpClientInstrumentation).Assembly.GetName().Name);
-            builder.AddLegacyActivityOperationName("System.Net.Http.HttpRequestOut");
+            builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
+            builder.AddLegacyActivity("System.Net.Http.HttpRequestOut");
 
 #if NETFRAMEWORK
             builder.AddHttpWebRequestInstrumentation(configureHttpWebRequestInstrumentationOptions);

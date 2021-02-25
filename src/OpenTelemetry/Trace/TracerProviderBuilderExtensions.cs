@@ -72,17 +72,16 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds an activity listener for activities created the legacy way with the provided OperationName. The listener samples and processes these activities
-        /// using the Sampler and Processors provided to the TracerProvider.
+        /// Adds activity with a given operation name to the list of subscribed activities. This is only for legacy activities (i.e. activities created without using ActivitySource API).
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <param name="operationName">OperationName to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddLegacyActivityOperationName(this TracerProviderBuilder tracerProviderBuilder, string operationName)
+        public static TracerProviderBuilder AddLegacyActivity(this TracerProviderBuilder tracerProviderBuilder, string operationName)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.AddLegacyActivityOperationName(operationName);
+                tracerProviderBuilderSdk.AddLegacyActivity(operationName);
             }
 
             return tracerProviderBuilder;
