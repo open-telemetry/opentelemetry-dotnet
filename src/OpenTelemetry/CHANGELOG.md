@@ -10,6 +10,7 @@ please check the latest changes
 ## Unreleased
 
 * Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+* Resource Attributes can take primitive arrays as values now ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
 
 ## 1.0.1
 

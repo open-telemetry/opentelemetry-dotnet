@@ -144,7 +144,7 @@ namespace OpenTelemetry.Resources.Tests
             {
                 { "string", "stringValue" },
                 { "bool", true },
-                { "double", 0.1d},
+                { "double", 0.1d },
                 { "long", 1L },
 
                 // int and float supported by conversion to long and double
