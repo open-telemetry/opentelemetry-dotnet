@@ -202,8 +202,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only SetParentProvider/Shutdown/Dispose are called because request was filtered.
-                Assert.Equal(3, activityProcessor.Invocations.Count);
+                // only SetParentProvider/Shutdown/Dispose/OnStart are called because request was filtered.
+                Assert.Equal(4, activityProcessor.Invocations.Count);
                 return;
             }
 
@@ -211,7 +211,60 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var currentActivity = Activity.Current;
 
             Activity span;
-            Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            if (carrierFormat == "CustomContextNonmatchParent")
+            {
+                Assert.Equal(6, activityProcessor.Invocations.Count); // SetParentProvider/OnStart(framework activity)/OnStart(sibling activity)/OnEnd(sibling activity)/OnShutdown/Dispose called.
+
+                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
+                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
+                Assert.Equal(2, startedActivities.Count());
+                Assert.Single(stoppedActivities);
+
+                // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
+                Assert.Contains(startedActivities, item =>
+                {
+                    var startedActivity = item.Arguments[0] as Activity;
+                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+                });
+
+                Assert.Contains(startedActivities, item =>
+                {
+                    var startedActivity = item.Arguments[0] as Activity;
+                    return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
+                });
+
+                // Only the sibling activity is sent to Processor.OnEnd
+                Assert.Contains(stoppedActivities, item =>
+                {
+                    var stoppedActivity = item.Arguments[0] as Activity;
+                    return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
+                });
+            }
+            else
+            {
+                Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+
+                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
+                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
+
+                // There is no sibling activity created
+                Assert.Single(startedActivities);
+                Assert.Single(stoppedActivities);
+
+                Assert.Contains(startedActivities, item =>
+                {
+                    var startedActivity = item.Arguments[0] as Activity;
+                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+                });
+
+                // Only the sibling activity is sent to Processor.OnEnd
+                Assert.Contains(stoppedActivities, item =>
+                {
+                    var stoppedActivity = item.Arguments[0] as Activity;
+                    return stoppedActivity.OperationName == HttpInListener.ActivityOperationName;
+                });
+            }
+
             span = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
             Assert.Equal(

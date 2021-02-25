@@ -32,20 +32,13 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private readonly GrpcClientInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
 
-        public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
+        public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
         {
-            if (activitySource == null)
-            {
-                throw new ArgumentNullException(nameof(activitySource));
-            }
-
             this.options = options;
-            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -89,7 +82,8 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
             activity.DisplayName = grpcMethod?.Trim('/');
 
-            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -158,8 +152,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     }
                 }
             }
-
-            this.activitySource.Stop(activity);
         }
     }
 }

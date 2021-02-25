@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 namespace OpenTelemetry.Trace
 {
@@ -41,7 +42,10 @@ namespace OpenTelemetry.Trace
 
             var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddDiagnosticSourceInstrumentation((activitySource) => new AspNetCoreInstrumentation(activitySource, aspnetCoreOptions));
+            builder.AddInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
+            builder.AddSource(HttpInListener.ActivitySourceName);
+            builder.AddLegacyActivity(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+            builder.AddLegacyActivity(HttpInListener.ActivityNameByHttpInListener); // for the sibling activities created by the instrumentation library
 
             return builder;
         }

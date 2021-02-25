@@ -31,6 +31,8 @@ namespace Benchmarks.Trace
         private readonly ActivitySource sourceWithOneProcessor = new ActivitySource("Benchmark.OneProcessor");
         private readonly ActivitySource sourceWithTwoProcessors = new ActivitySource("Benchmark.TwoProcessors");
         private readonly ActivitySource sourceWithThreeProcessors = new ActivitySource("Benchmark.ThreeProcessors");
+        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new ActivitySource("Benchmark.OneInstrumentation");
+        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new ActivitySource("Benchmark.TwoInstrumentations");
 
         public TraceBenchmarks()
         {
@@ -78,6 +80,21 @@ namespace Benchmarks.Trace
                 .AddSource(this.sourceWithThreeProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
+                .AddLegacyActivity("TestOperationName")
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
+                .AddLegacyActivity("TestOperationName1")
+                .AddLegacyActivity("TestOperationName2")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
         }
@@ -138,6 +155,22 @@ namespace Benchmarks.Trace
         public void ThreeProcessors()
         {
             using (var activity = this.sourceWithThreeProcessors.StartActivity("Benchmark"))
+            {
+            }
+        }
+
+        [Benchmark]
+        public void OneInstrumentation()
+        {
+            using (var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark"))
+            {
+            }
+        }
+
+        [Benchmark]
+        public void TwoInstrumentations()
+        {
+            using (var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark"))
             {
             }
         }
