@@ -92,7 +92,7 @@ namespace OpenTelemetry.Resources.Tests
 
             // Assert
             Assert.Single(resource.Attributes);
-            Assert.Equal(new string[0], resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "EmptyArray").FirstOrDefault().Value);
+            Assert.Equal(new string[0], resource.Attributes.Where(x => x.Key == "EmptyArray").FirstOrDefault().Value);
         }
 
         [Fact]
@@ -140,6 +140,7 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void CreateResource_SupportedAttributeTypes()
         {
+            // Arrange
             var attributes = new Dictionary<string, object>
             {
                 { "string", "stringValue" },
@@ -151,16 +152,12 @@ namespace OpenTelemetry.Resources.Tests
                 { "int", 1 },
                 { "short", (short)1 },
                 { "float", 0.1f },
-
-                // primitive array types supported
-                { "string arr", new string[] { "stringValue" } },
-                { "bool arr", new bool[] { true } },
-                { "double arr", new double[] { 0.1d } },
-                { "long arr", new long[] { 1L } },
             };
 
+            // Act
             var resource = new Resource(attributes);
 
+            // Assert
             Assert.Equal(11, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
@@ -172,12 +169,41 @@ namespace OpenTelemetry.Resources.Tests
 
             double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
             Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
+        }
 
-            var toCheckArray = new KeyValuePair<string, object>("string arr", new string[] { "stringValue" });
-            Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "string arr").FirstOrDefault().Value);
-            Assert.Equal(new bool[] { true }, resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "bool arr").FirstOrDefault().Value);
-            Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "double arr").FirstOrDefault().Value);
-            Assert.Equal(new long[] { 1L }, resource.Attributes.Where<KeyValuePair<string, object>>(x => x.Key == "long arr").FirstOrDefault().Value);
+        [Fact]
+        public void CreateResource_SupportedAttributeArrayTypes()
+        {
+            // Arrange
+            var attributes = new Dictionary<string, object>
+            {
+                // natively supported array types
+                { "string arr", new string[] { "stringValue" } },
+                { "bool arr", new bool[] { true } },
+                { "double arr", new double[] { 0.1d } },
+                { "long arr", new long[] { 1L } },
+
+                // have to convert to other primitive array types
+                { "int arr", new int[] { 1 } },
+                { "short arr", new short[] { (short)1 } },
+                { "float arr", new float[] { 0.1f } },
+            };
+
+            // Act
+            var resource = new Resource(attributes);
+
+            // Assert
+            Assert.Equal(7, resource.Attributes.Count());
+            Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where(x => x.Key == "string arr").FirstOrDefault().Value);
+            Assert.Equal(new bool[] { true }, resource.Attributes.Where(x => x.Key == "bool arr").FirstOrDefault().Value);
+            Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where(x => x.Key == "double arr").FirstOrDefault().Value);
+            Assert.Equal(new long[] { 1L }, resource.Attributes.Where(x => x.Key == "long arr").FirstOrDefault().Value);
+
+            var longArr = new long[] { 1 };
+            var doubleArr = new double[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture) };
+            Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "int arr").FirstOrDefault().Value);
+            Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "short arr").FirstOrDefault().Value);
+            Assert.Equal(doubleArr, resource.Attributes.Where(x => x.Key == "float arr").FirstOrDefault().Value);
         }
 
         [Fact]

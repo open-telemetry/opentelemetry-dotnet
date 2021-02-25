@@ -128,6 +128,32 @@ namespace OpenTelemetry.Resources
                     return System.Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
+                if (value is int[] || value is short[])
+                {
+                    long[] convertedArr = new long[((System.Array)value).Length];
+                    int i = 0;
+                    foreach (var val in (System.Array)value)
+                    {
+                        convertedArr[i] = System.Convert.ToInt64(val);
+                        i++;
+                    }
+
+                    return convertedArr;
+                }
+
+                if (value is float[])
+                {
+                    double[] convertedArr = new double[((float[])value).Length];
+                    int i = 0;
+                    foreach (float val in (float[])value)
+                    {
+                        convertedArr[i] = System.Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
+                        i++;
+                    }
+
+                    return convertedArr;
+                }
+
                 throw new System.ArgumentException("Attribute value type is not an accepted primitive", keyName);
             }
 
