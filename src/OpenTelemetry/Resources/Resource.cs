@@ -93,7 +93,8 @@ namespace OpenTelemetry.Resources
             string sanitizedKey;
             if (attribute.Key == null)
             {
-                throw new System.ArgumentException("Resource's attributes contains a null key");
+                OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attribute key", "Attribute key should be non-null string.");
+                sanitizedKey = string.Empty;
             }
             else
             {
