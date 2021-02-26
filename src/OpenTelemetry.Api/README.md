@@ -170,8 +170,9 @@ required only for the following scenarios:
 
 As mentioned in the introduction, the instrumentation API for OpenTelemetry .NET
 is the .NET `Activity` API. Guidance for instrumenting using this API is
-documented fully in the [activity user guide](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md), but is described
-here as well.
+documented fully in the 
+[activity user guide](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md), 
+but is described here as well.
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version `5.0.1` or
    above to your application or library.
