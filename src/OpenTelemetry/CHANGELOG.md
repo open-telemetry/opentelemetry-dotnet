@@ -90,7 +90,8 @@ Released 2020-Nov-17
 * `Resource` is no longer added to observed `Activity` objects as a
   `CustomProperty`.
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
-* Removed `RentrantExportProcessor` as it is not required by spec.
+* Removed `ReentrantExportProcessor` as it is not required by spec.
+  ([#1496](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1496))
 * `ActivitySourceAdapter` supports setting `ActivitySource` for Activities
   created without `ActivitySource`.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
