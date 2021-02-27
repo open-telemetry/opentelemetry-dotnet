@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Threading;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -33,32 +32,27 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly ActivitySourceAdapter adapter;
+        private readonly Dictionary<string, bool> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
+        private Action<Activity> getRequestedDataAction;
+        private bool supportLegacyActivity;
 
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderSdk.DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories,
             IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
-            List<BaseProcessor<Activity>> processors)
+            List<BaseProcessor<Activity>> processors,
+            Dictionary<string, bool> legacyActivityOperationNames)
         {
             this.Resource = resource;
             this.sampler = sampler;
+            this.legacyActivityOperationNames = legacyActivityOperationNames;
+            this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             foreach (var processor in processors)
             {
                 this.AddProcessor(processor);
-            }
-
-            if (diagnosticSourceInstrumentationFactories.Any())
-            {
-                this.adapter = new ActivitySourceAdapter(sampler, this.processor);
-                foreach (var instrumentationFactory in diagnosticSourceInstrumentationFactories)
-                {
-                    this.instrumentations.Add(instrumentationFactory.Factory(this.adapter));
-                }
             }
 
             if (instrumentationFactories.Any())
@@ -76,6 +70,21 @@ namespace OpenTelemetry.Trace
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
+                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
+                    {
+                        // We have a legacy activity in hand now
+                        if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        {
+                            // Legacy activity matches the user configured list. Call sampler for the legacy activity
+                            this.getRequestedDataAction(activity);
+                        }
+                        else
+                        {
+                            // Legacy activity doesn't match the user configured list. No need to proceed further.
+                            return;
+                        }
+                    }
+
                     if (!activity.IsAllDataRequested)
                     {
                         return;
@@ -91,6 +100,16 @@ namespace OpenTelemetry.Trace
                 ActivityStopped = (activity) =>
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
+                    {
+                        // We have a legacy activity in hand now
+                        if (!legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        {
+                            // Legacy activity doesn't match the user configured list. No need to proceed further.
+                            return;
+                        }
+                    }
 
                     if (!activity.IsAllDataRequested)
                     {
@@ -116,17 +135,20 @@ namespace OpenTelemetry.Trace
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
             else if (sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
             }
             else
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
             if (sources.Any())
@@ -153,7 +175,10 @@ namespace OpenTelemetry.Trace
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
-                    listener.ShouldListenTo = (activitySource) => regex.IsMatch(activitySource.Name);
+                    listener.ShouldListenTo = (activitySource) =>
+                        this.supportLegacyActivity ?
+                        string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
+                        regex.IsMatch(activitySource.Name);
                 }
                 else
                 {
@@ -164,9 +189,21 @@ namespace OpenTelemetry.Trace
                         activitySources[name] = true;
                     }
 
+                    if (this.supportLegacyActivity)
+                    {
+                        activitySources[string.Empty] = true;
+                    }
+
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
                     listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                }
+            }
+            else
+            {
+                if (this.supportLegacyActivity)
+                {
+                    listener.ShouldListenTo = (activitySource) => string.IsNullOrEmpty(activitySource.Name);
                 }
             }
 
@@ -201,8 +238,6 @@ namespace OpenTelemetry.Trace
                     processor,
                 });
             }
-
-            this.adapter?.UpdateProcessor(this.processor);
 
             return this;
         }
@@ -317,6 +352,74 @@ namespace OpenTelemetry.Trace
             return isRootSpan
                 ? ActivitySamplingResult.PropagationData
                 : ActivitySamplingResult.None;
+        }
+
+        private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = true;
+            activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+        }
+
+        private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
+        {
+            activity.IsAllDataRequested = false;
+        }
+
+        private void RunGetRequestedDataOtherSampler(Activity activity)
+        {
+            ActivityContext parentContext;
+
+            // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
+            // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
+            if (string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000")
+            {
+                parentContext = default;
+            }
+            else if (activity.Parent != null)
+            {
+                parentContext = activity.Parent.Context;
+            }
+            else
+            {
+                parentContext = new ActivityContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
+            }
+
+            var samplingParameters = new SamplingParameters(
+                parentContext,
+                activity.TraceId,
+                activity.DisplayName,
+                activity.Kind,
+                activity.TagObjects,
+                activity.Links);
+
+            var samplingResult = this.sampler.ShouldSample(samplingParameters);
+
+            switch (samplingResult.Decision)
+            {
+                case SamplingDecision.Drop:
+                    activity.IsAllDataRequested = false;
+                    break;
+                case SamplingDecision.RecordOnly:
+                    activity.IsAllDataRequested = true;
+                    break;
+                case SamplingDecision.RecordAndSample:
+                    activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                    break;
+            }
+
+            if (samplingResult.Decision != SamplingDecision.Drop)
+            {
+                foreach (var att in samplingResult.Attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
+            }
         }
     }
 }

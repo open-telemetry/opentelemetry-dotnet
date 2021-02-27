@@ -143,7 +143,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 Name = activity.DisplayName,
 
-                Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1), // TODO: there is an offset of 1 on the enum.
+                // There is an offset of 1 on the OTLP enum.
+                Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1),
 
                 TraceId = ByteStringCtorFunc(traceIdBytes),
                 SpanId = ByteStringCtorFunc(spanIdBytes),
