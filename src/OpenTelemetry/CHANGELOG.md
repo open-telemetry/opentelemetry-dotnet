@@ -9,14 +9,16 @@ please check the latest changes
 
 ## Unreleased
 
-* Added `ForceFlush` to `TracerProvider`.
-  ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+* Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
 
 * Added a TracerProvierBuilder extension method called
   `AddLegacyActivityOperationName` which is used by instrumentation libraries
   that use DiagnosticSource to get activities processed without
   ActivitySourceAdapter.
   [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
+
+* Added new constructor with optional parameters to allow customization of
+  `ParentBasedSampler` behavior. ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
 
 ## 1.0.1
 

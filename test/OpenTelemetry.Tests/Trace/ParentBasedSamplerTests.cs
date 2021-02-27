@@ -13,7 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+using System;
 using System.Diagnostics;
+using Moq;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -110,6 +113,76 @@ namespace OpenTelemetry.Trace.Tests
                         name: "Span",
                         kind: ActivityKind.Client,
                         links: sampledLink)));
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void CustomSamplers(bool parentIsRemote, bool parentIsSampled)
+        {
+            var mockRepository = new MockRepository(MockBehavior.Strict);
+            var remoteParentSampled = mockRepository.Create<Sampler>();
+            var remoteParentNotSampled = mockRepository.Create<Sampler>();
+            var localParentSampled = mockRepository.Create<Sampler>();
+            var localParentNotSampled = mockRepository.Create<Sampler>();
+
+            var samplerUnderTest = new ParentBasedSampler(
+                new AlwaysOnSampler(), // root
+                remoteParentSampled.Object,
+                remoteParentNotSampled.Object,
+                localParentSampled.Object,
+                localParentNotSampled.Object);
+
+            var samplingParams = this.MakeTestParameters(parentIsRemote, parentIsSampled);
+
+            Mock<Sampler> invokedSampler;
+            if (parentIsRemote && parentIsSampled)
+            {
+                invokedSampler = remoteParentSampled;
+            }
+            else if (parentIsRemote && !parentIsSampled)
+            {
+                invokedSampler = remoteParentNotSampled;
+            }
+            else if (!parentIsRemote && parentIsSampled)
+            {
+                invokedSampler = localParentSampled;
+            }
+            else
+            {
+                invokedSampler = localParentNotSampled;
+            }
+
+            var expectedResult = new SamplingResult(SamplingDecision.RecordAndSample);
+            invokedSampler.Setup(sampler => sampler.ShouldSample(samplingParams)).Returns(expectedResult);
+
+            var actualResult = samplerUnderTest.ShouldSample(samplingParams);
+
+            mockRepository.VerifyAll();
+            Assert.Equal(expectedResult, actualResult);
+            mockRepository.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public void DisallowNullRootSampler()
+        {
+            Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null));
+        }
+
+        private SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
+        {
+            return new SamplingParameters(
+                parentContext: new ActivityContext(
+                    ActivityTraceId.CreateRandom(),
+                    ActivitySpanId.CreateRandom(),
+                    parentIsSampled ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
+                    null,
+                    parentIsRemote),
+                traceId: default,
+                name: "Span",
+                kind: ActivityKind.Client);
         }
     }
 }
