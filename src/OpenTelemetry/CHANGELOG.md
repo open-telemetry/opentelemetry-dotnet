@@ -20,6 +20,9 @@ please check the latest changes
 * Added new constructor with optional parameters to allow customization of
   `ParentBasedSampler` behavior. ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
 
+* Fixed [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846): `ParentBasedSampler`
+  will no longer explicitly consider Activity links. ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
+
 ## 1.0.1
 
 Released 2021-Feb-10
