@@ -17,8 +17,8 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -63,6 +63,7 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsEnabled(LogLevel logLevel)
         {
             return logLevel != LogLevel.None;
