@@ -9,7 +9,11 @@ please check the latest changes
 
 ## Unreleased
 
-* Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+* Added `TracerProviderOptions` and `SetErrorStatusOnUnhandledException`.
+  ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858))
+
+* Added `ForceFlush` to `TracerProvider`.
+  ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
 
 * Added a TracerProvierBuilder extension method called
   `AddLegacyActivityOperationName` which is used by instrumentation libraries
