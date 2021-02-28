@@ -26,6 +26,8 @@ public class Program
 
     public static void Main()
     {
+        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+
         using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
             {
                 options.SetErrorStatusOnUnhandledException = true;
@@ -43,9 +45,11 @@ public class Program
         {
             // swallow the exception
         }
+
+        Func();
     }
 
-    public static void Func()
+    private static void Func()
     {
         using (MyActivitySource.StartActivity("Foo"))
         {
@@ -53,6 +57,17 @@ public class Program
             {
                 throw new Exception("Oops!");
             }
+        }
+    }
+
+    private static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
+    {
+        var activity = Activity.Current;
+
+        while (activity != null)
+        {
+            activity.Dispose();
+            activity = activity.Parent;
         }
     }
 }

@@ -86,3 +86,5 @@ static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs
 }
 ```
 <!-- markdownlint-enable MD013 -->
+
+A complete example can be found [here](./Program.cs).
