@@ -67,6 +67,7 @@ In a non-production environment, it might be useful to automatically capture the
 unhandled exceptions, travel through the unfinished activities and export them
 for troubleshooting. Here goes one possible way of doing this:
 
+<!-- markdownlint-disable MD013 -->
 ```csharp
 static void Main()
 {
@@ -84,3 +85,4 @@ static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs
     }
 }
 ```
+<!-- markdownlint-enable MD013 -->
