@@ -41,7 +41,7 @@ Sdk.CreateTracerProviderBuilder(options => {
 
 A complete example can be found [here](./Program.cs).
 
-Note: this feature is platform dependant as it relies on
+Note: this feature is platform dependent as it relies on
 [System.Runtime.InteropServices.Marshal.GetExceptionPointers](https://docs.microsoft.com/dotnet/api/system.runtime.interopservices.marshal.getexceptionpointers).
 
 ## Second Chance Exception
