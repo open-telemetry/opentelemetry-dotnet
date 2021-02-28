@@ -59,32 +59,13 @@ presence of a debugger:
 * In case a postmortem debugger is configured, the postmortem debugger will be
   activited and normally it will collect a crash dump.
 
-Handling _unhandled exception_ is a very dangerous thing since the handler
+It might be useful to automatically capture the unhandled exceptions, travel
+through the unfinished activities and export them for troubleshooting. One
+possible way of doing this by using
+[AppDomain.UnhandledException](https://docs.microsoft.com/dotnet/api/system.appdomain.unhandledexception)
+can be found [here](./Program.cs).
+
+Note: _handling unhandled exception is a very dangerous thing since the handler
 itself could introduce exception, which would result in an unrecoverable
-situation similar to [triple fault](https://en.wikipedia.org/wiki/Triple_fault).
-
-In a non-production environment, it might be useful to automatically capture the
-unhandled exceptions, travel through the unfinished activities and export them
-for troubleshooting. Here goes one possible way of doing this:
-
-<!-- markdownlint-disable MD013 -->
-```csharp
-static void Main()
-{
-    AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
-}
-
-static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
-{
-    var activity = Activity.Current;
-
-    while (activity != null)
-    {
-        activity.Dispose();
-        activity = activity.Parent;
-    }
-}
-```
-<!-- markdownlint-enable MD013 -->
-
-A complete example can be found [here](./Program.cs).
+situation similar to [triple
+fault](https://en.wikipedia.org/wiki/Triple_fault)_.

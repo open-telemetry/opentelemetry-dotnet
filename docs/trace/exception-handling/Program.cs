@@ -62,10 +62,14 @@ public class Program
 
     private static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
     {
+        var ex = (Exception)args.ExceptionObject;
+
         var activity = Activity.Current;
 
         while (activity != null)
         {
+            activity.SetTag("exception.type", $"UnhandledException<{ex.GetType().Name}>");
+            activity.SetTag("exception.message", ex.Message);
             activity.Dispose();
             activity = activity.Parent;
         }
