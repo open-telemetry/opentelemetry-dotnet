@@ -78,5 +78,5 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanHelper.cs" Link="Includes\SpanHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
   </ItemGroup>
-  
+
 </Project>
