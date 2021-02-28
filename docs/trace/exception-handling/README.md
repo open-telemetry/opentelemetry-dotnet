@@ -3,7 +3,7 @@
 ## First Chance Exception
 
 The term `First Chance Exception` is used to describe exceptions that are
-handled by the application, whether in the user code or the framework.
+handled by the application - whether in the user code or the framework.
 
 While using `Activity` API, the common pattern would be:
 
@@ -30,7 +30,8 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
 The above approach could become hard to manage if there are deeply nested
 `Activity` objects, or there are activities created in a 3rd party library.
 
-The following configuration will automatically detect first chance exception and automatically set the activity status to `Error`:
+The following configuration will automatically detect first chance exception and
+automatically set the activity status to `Error`:
 
 ```csharp
 Sdk.CreateTracerProviderBuilder(options => {
