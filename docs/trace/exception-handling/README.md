@@ -65,7 +65,6 @@ possible way of doing this by using
 [AppDomain.UnhandledException](https://docs.microsoft.com/dotnet/api/system.appdomain.unhandledexception)
 can be found [here](./Program.cs).
 
-Note: _handling unhandled exception is a very dangerous thing since the handler
-itself could introduce exception, which would result in an unrecoverable
-situation similar to [triple
-fault](https://en.wikipedia.org/wiki/Triple_fault)_.
+**WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
+handler puts the process into an unrecoverable state (a [triple
+fault](https://en.wikipedia.org/wiki/Triple_fault)).
