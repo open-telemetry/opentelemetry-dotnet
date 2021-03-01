@@ -32,8 +32,8 @@ public class Program
             {
                 options.SetErrorStatusOnException = true;
             })
-            .SetSampler(new AlwaysOnSampler())
             .AddSource("MyCompany.MyProduct.MyLibrary")
+            .SetSampler(new AlwaysOnSampler())
             .AddConsoleExporter()
             .Build();
 
@@ -68,8 +68,7 @@ public class Program
 
         while (activity != null)
         {
-            activity.SetTag("exception.type", $"UnhandledException<{ex.GetType().Name}>");
-            activity.SetTag("exception.message", ex.Message);
+            activity.RecordException(ex);
             activity.Dispose();
             activity = activity.Parent;
         }
