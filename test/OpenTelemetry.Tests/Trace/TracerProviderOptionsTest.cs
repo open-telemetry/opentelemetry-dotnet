@@ -26,12 +26,12 @@ namespace OpenTelemetry.Trace.Tests
         private const string ActivitySourceName = "TracerProviderOptionsTest";
 
         [Fact]
-        public void SetErrorStatusOnUnhandledExceptionEnabled()
+        public void SetErrorStatusOnExceptionEnabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
                 {
-                    options.SetErrorStatusOnUnhandledException = true;
+                    options.SetErrorStatusOnException = true;
                 })
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void SetErrorStatusOnUnhandledExceptionDefault()
+        public void SetErrorStatusOnExceptionDefault()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder(options => { })

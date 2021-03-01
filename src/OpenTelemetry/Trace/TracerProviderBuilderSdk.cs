@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
         {
             this.options = options ?? new TracerProviderOptions();
 
-            if (options.SetErrorStatusOnUnhandledException)
+            if (options.SetErrorStatusOnException)
             {
                 this.AddProcessor(new ExceptionProcessor());
             }

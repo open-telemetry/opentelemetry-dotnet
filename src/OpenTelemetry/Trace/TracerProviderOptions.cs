@@ -22,6 +22,6 @@ namespace OpenTelemetry.Trace
         /// Gets or sets a value indicating whether the status of <see cref="System.Diagnostics.Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
         /// </summary>
-        public bool SetErrorStatusOnUnhandledException { get; set; } = false;
+        public bool SetErrorStatusOnException { get; set; } = false;
     }
 }

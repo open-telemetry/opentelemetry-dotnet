@@ -30,7 +30,7 @@ public class Program
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
             {
-                options.SetErrorStatusOnUnhandledException = true;
+                options.SetErrorStatusOnException = true;
             })
             .SetSampler(new AlwaysOnSampler())
             .AddSource("MyCompany.MyProduct.MyLibrary")

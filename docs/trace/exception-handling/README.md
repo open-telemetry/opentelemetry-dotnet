@@ -35,7 +35,7 @@ automatically set the activity status to `Error`:
 
 ```csharp
 Sdk.CreateTracerProviderBuilder(options => {
-    options.SetErrorStatusOnUnhandledException = true;
+    options.SetErrorStatusOnException = true;
 });
 ```
 
