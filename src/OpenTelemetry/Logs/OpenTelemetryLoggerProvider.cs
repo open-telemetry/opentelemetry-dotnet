@@ -60,9 +60,12 @@ namespace OpenTelemetry.Logs
 
             lock (this.loggers)
             {
-                foreach (KeyValuePair<string, OpenTelemetryLogger> logger in this.loggers)
+                foreach (DictionaryEntry entry in this.loggers)
                 {
-                    logger.Value.ScopeProvider = scopeProvider;
+                    if (entry.Value is OpenTelemetryLogger logger)
+                    {
+                        logger.ScopeProvider = scopeProvider;
+                    }
                 }
             }
         }
