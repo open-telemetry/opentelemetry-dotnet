@@ -1,9 +1,9 @@
 # Exception Handling
 
-## First Chance Exception
+## User-handled Exception
 
-The term `First Chance Exception` is used to describe exceptions that are
-handled by the application - whether in the user code or the framework.
+The term `User-handled Exception` is used to describe exceptions that are
+handled by the application.
 
 While using `Activity` API, the common pattern would be:
 
@@ -30,8 +30,8 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
 The above approach could become hard to manage if there are deeply nested
 `Activity` objects, or there are activities created in a 3rd party library.
 
-The following configuration will automatically detect first chance exception and
-automatically set the activity status to `Error`:
+The following configuration will automatically detect exception and set the
+activity status to `Error`:
 
 ```csharp
 Sdk.CreateTracerProviderBuilder(options => {
@@ -44,18 +44,16 @@ A complete example can be found [here](./Program.cs).
 Note: this feature is platform dependent as it relies on
 [System.Runtime.InteropServices.Marshal.GetExceptionPointers](https://docs.microsoft.com/dotnet/api/system.runtime.interopservices.marshal.getexceptionpointers).
 
-## Second Chance Exception
+## Unhandled Exception
 
-The term `Second Chance Exception` is used to describe exceptions that are not
-handled by the application.
-
-When a second chance exception happened, the behavior will depend on the
-presence of a debugger:
+The term `Unhandled Exception` is used to describe exceptions that are not
+handled by the application. When an unhandled exception happened, the behavior
+will depend on the presence of a debugger:
 
 * If there is no debugger, the exception will normally crash the process or
   terminate the thread.
-* If a debugger is attached, the debugger will be notified that an "unhandled
-  exception" happened.
+* If a debugger is attached, the debugger will be notified that an unhandled
+  exception happened.
 * In case a postmortem debugger is configured, the postmortem debugger will be
   activited and normally it will collect a crash dump.
 
@@ -66,5 +64,4 @@ possible way of doing this by using
 can be found [here](./Program.cs).
 
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
-handler puts the process into an unrecoverable state (a [triple
-fault](https://en.wikipedia.org/wiki/Triple_fault)).
+handler puts the process into an unrecoverable state.
