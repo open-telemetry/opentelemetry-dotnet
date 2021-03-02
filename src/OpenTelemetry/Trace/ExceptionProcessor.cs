@@ -24,6 +24,8 @@ namespace OpenTelemetry.Trace
 {
     internal class ExceptionProcessor : BaseProcessor<Activity>
     {
+        private const string ExceptionPointersKey = "otel.exception_pointers";
+
         private readonly Func<IntPtr> fnGetExceptionPointers;
 
         public ExceptionProcessor()
@@ -42,9 +44,34 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
+        public override void OnStart(Activity activity)
+        {
+            var pointers = this.fnGetExceptionPointers();
+
+            if (pointers != IntPtr.Zero)
+            {
+                activity.SetTag(ExceptionPointersKey, pointers);
+            }
+        }
+
+        /// <inheritdoc />
         public override void OnEnd(Activity activity)
         {
-            if (this.fnGetExceptionPointers() != IntPtr.Zero)
+            var pointers = this.fnGetExceptionPointers();
+
+            if (pointers == IntPtr.Zero)
+            {
+                return;
+            }
+
+            var snapshot = activity.GetTagValue(ExceptionPointersKey) as IntPtr?;
+
+            if (snapshot != null)
+            {
+                activity.SetTag(ExceptionPointersKey, null);
+            }
+
+            if (snapshot != pointers)
             {
                 activity.SetStatus(Status.Error);
             }

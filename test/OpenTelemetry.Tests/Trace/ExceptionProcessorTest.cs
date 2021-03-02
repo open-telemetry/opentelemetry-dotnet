@@ -35,20 +35,38 @@ namespace OpenTelemetry.Trace.Tests
                 .AddProcessor(new ExceptionProcessor())
                 .Build();
 
-            var activity = activitySource.StartActivity("Activity");
+            Activity activity1 = null;
+            Activity activity2 = null;
+            Activity activity3 = null;
+            Activity activity4 = null;
 
             try
             {
-                using (activity)
+                using (activity1 = activitySource.StartActivity("Activity1"))
                 {
-                    throw new Exception("Oops!");
+                    using (activity2 = activitySource.StartActivity("Activity2"))
+                    {
+                        throw new Exception("Oops!");
+                    }
                 }
             }
             catch (Exception)
             {
+                using (activity3 = activitySource.StartActivity("Activity3"))
+                {
+                }
+            }
+            finally
+            {
+                using (activity4 = activitySource.StartActivity("Activity4"))
+                {
+                }
             }
 
-            Assert.Equal(StatusCode.Error, activity.GetStatus().StatusCode);
+            Assert.Equal(StatusCode.Error, activity1.GetStatus().StatusCode);
+            Assert.Equal(StatusCode.Error, activity2.GetStatus().StatusCode);
+            Assert.Equal(StatusCode.Unset, activity3.GetStatus().StatusCode);
+            Assert.Equal(StatusCode.Unset, activity4.GetStatus().StatusCode);
         }
 
         [Fact]
@@ -60,11 +78,11 @@ namespace OpenTelemetry.Trace.Tests
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
-            var activity = activitySource.StartActivity("Activity");
+            Activity activity = null;
 
             try
             {
-                using (activity)
+                using (activity = activitySource.StartActivity("Activity"))
                 {
                     throw new Exception("Oops!");
                 }
