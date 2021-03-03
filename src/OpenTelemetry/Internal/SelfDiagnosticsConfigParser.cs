@@ -54,12 +54,19 @@ namespace OpenTelemetry.Internal
             logLevel = EventLevel.LogAlways;
             try
             {
-                if (!File.Exists(ConfigFileName))
+#if NET452
+                var configFilePath = AppDomain.CurrentDomain.BaseDirectory;
+#else
+                var configFilePath = AppContext.BaseDirectory;
+#endif
+                configFilePath = Path.Combine(configFilePath, ConfigFileName);
+
+                if (!File.Exists(configFilePath))
                 {
                     return false;
                 }
 
-                using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using FileStream file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 var buffer = this.configBuffer;
                 if (buffer == null)
                 {
