@@ -64,7 +64,8 @@ namespace OpenTelemetry.Internal
 #else
                     configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
 #endif
-                    // second check using application base directory
+
+                    // Second check using application base directory
                     if (!File.Exists(configFilePath))
                     {
                         return false;
