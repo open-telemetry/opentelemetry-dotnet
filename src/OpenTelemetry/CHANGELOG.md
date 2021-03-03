@@ -25,7 +25,6 @@ please check the latest changes
   [self diagnostic configuration file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
   ([#1865](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1865))
 
-
 ## 1.0.1
 
 Released 2021-Feb-10
