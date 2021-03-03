@@ -34,9 +34,9 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
+        public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
 
-        private static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
+        private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Task worker;
@@ -53,6 +53,7 @@ namespace OpenTelemetry.Internal
         // Once the configuration file is valid, an eventListener object will be created.
         // Commented out for now to avoid the "field was never used" compiler error.
         private SelfDiagnosticsEventListener eventListener;
+        private volatile FileStream underlyingFileStreamForMemoryMappedFile;
         private volatile MemoryMappedFile memoryMappedFile;
         private string logDirectory;  // Log directory for log files
         private int logFileSize;  // Log file size in bytes
@@ -193,6 +194,12 @@ namespace OpenTelemetry.Internal
 
                 mmf.Dispose();
             }
+
+            FileStream fs = Interlocked.CompareExchange(
+                ref this.underlyingFileStreamForMemoryMappedFile,
+                null,
+                this.underlyingFileStreamForMemoryMappedFile);
+            fs?.Dispose();
         }
 
         private void OpenLogFile(string newLogDirectory, int newFileSize)
@@ -203,7 +210,40 @@ namespace OpenTelemetry.Internal
                 var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
                     + Process.GetCurrentProcess().Id + ".log";
                 var filePath = Path.Combine(newLogDirectory, fileName);
-                this.memoryMappedFile = MemoryMappedFile.CreateFromFile(filePath, FileMode.Create, null, newFileSize);
+
+                // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
+                // .NET Framework and .NET Core, here I am using the [FileStream version][2] of it.
+                // Taking the last four prameter values from [.NET Framework]
+                // (https://referencesource.microsoft.com/#system.core/System/IO/MemoryMappedFiles/MemoryMappedFile.cs,148)
+                // and [.NET Core]
+                // (https://github.com/dotnet/runtime/blob/master/src/libraries/System.IO.MemoryMappedFiles/src/System/IO/MemoryMappedFiles/MemoryMappedFile.cs#L152)
+                // The parameter for FileAccess is different in type but the same in rules, both are Read and Write.
+                // The parameter for FileShare is different in values and in behavior.
+                // .NET Framework doesn't allow sharing but .NET Core allows reading by other programs.
+                // The last two parameters are the same values for both frameworks.
+                // [1]: https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=net-5.0#System_IO_MemoryMappedFiles_MemoryMappedFile_CreateFromFile_System_String_System_IO_FileMode_System_String_System_Int64_
+                // [2]: https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=net-5.0#System_IO_MemoryMappedFiles_MemoryMappedFile_CreateFromFile_System_IO_FileStream_System_String_System_Int64_System_IO_MemoryMappedFiles_MemoryMappedFileAccess_System_IO_HandleInheritability_System_Boolean_
+                this.underlyingFileStreamForMemoryMappedFile =
+                    new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 0x1000, FileOptions.None);
+
+                // The parameter values for MemoryMappedFileSecurity, HandleInheritability and leaveOpen are the same
+                // values for .NET Framework and .NET Core:
+                // https://referencesource.microsoft.com/#system.core/System/IO/MemoryMappedFiles/MemoryMappedFile.cs,172
+                // https://github.com/dotnet/runtime/blob/master/src/libraries/System.IO.MemoryMappedFiles/src/System/IO/MemoryMappedFiles/MemoryMappedFile.cs#L168-L179
+                this.memoryMappedFile = MemoryMappedFile.CreateFromFile(
+                    this.underlyingFileStreamForMemoryMappedFile,
+                    null,
+                    newFileSize,
+                    MemoryMappedFileAccess.ReadWrite,
+#if NET452
+                    // Only .NET Framework 4.5.2 among all .NET Framework versions is lacking a method omitting this
+                    // default value for MemoryMappedFileSecurity.
+                    // https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=netframework-4.5.2
+                    // .NET Core simply doesn't support this parameter.
+                    null,
+#endif
+                    HandleInheritability.None,
+                    false);
                 this.logDirectory = newLogDirectory;
                 this.logFileSize = newFileSize;
                 this.logFilePosition = MessageOnNewFile.Length;

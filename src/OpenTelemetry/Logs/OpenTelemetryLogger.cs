@@ -16,7 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
@@ -52,6 +52,7 @@ namespace OpenTelemetry.Logs
             this.provider.Processor?.OnEnd(record);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsEnabled(LogLevel logLevel)
         {
             return logLevel != LogLevel.None;

@@ -33,6 +33,10 @@ not covered by the built-in exporters:
   does not implement any retry logic.
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
+* Exporters should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags).
+* Exporters should use `ParentProvider.GetResource()` to get the `Resource`
+  associated with the provider.
 
 ```csharp
 class MyExporter : BaseExporter<Activity>
@@ -61,7 +65,7 @@ Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
 ## Instrumentation Library
 
 The [inspiration of the OpenTelemetry
-project](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/overview.md#instrumentation-libraries)
+project](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#instrumentation-libraries)
 is to make every library observable out of the box by having
 them call OpenTelemetry API directly. However, many libraries will not have such
 integration, and as such there is a need for a separate library which would
@@ -71,9 +75,9 @@ model.
 
 A library which enables instrumentation for another library is called
 [Instrumentation
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library)
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
 and the library it instruments is called the [Instrumented
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumented-library).
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumented-library).
 If a given library has built-in instrumentation with OpenTelemetry, then
 instrumented library and instrumentation library will be the same.
 
@@ -262,8 +266,8 @@ A demo sampler is shown [here](./MySampler.cs).
 ## References
 
 * [Exporter
-  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-exporter)
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
 * [Processor
-  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#span-processor)
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
 * [Sampler
-  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampler)
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)

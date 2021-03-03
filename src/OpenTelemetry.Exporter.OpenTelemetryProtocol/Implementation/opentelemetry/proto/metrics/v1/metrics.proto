@@ -37,7 +37,8 @@ message ResourceMetrics {
 // A collection of Metrics produced by an InstrumentationLibrary.
 message InstrumentationLibraryMetrics {
   // The instrumentation library information for the metrics in this message.
-  // If this field is not set then no library info is known.
+  // Semantically when InstrumentationLibrary isn't set, it is equivalent with
+  // an empty instrumentation library name (unknown).
   opentelemetry.proto.common.v1.InstrumentationLibrary instrumentation_library = 1;
 
   // A list of metrics that originate from an instrumentation library.
@@ -61,11 +62,11 @@ message InstrumentationLibraryMetrics {
 //  +------------+
 //  |name        |
 //  |description |
-//  |unit        |     +---------------------------+
-//  |data        |---> |Gauge, Sum, Histogram, ... |
-//  +------------+     +---------------------------+ 
+//  |unit        |     +------------------------------------+
+//  |data        |---> |Gauge, Sum, Histogram, Summary, ... |
+//  +------------+     +------------------------------------+
 //
-//    Data [One of Gauge, Sum, Histogram, ...]
+//    Data [One of Gauge, Sum, Histogram, Summary, ...]
 //  +-----------+
 //  |...        |  // Metadata about the Data.
 //  |points     |--+
@@ -142,6 +143,7 @@ message Metric {
     DoubleSum double_sum = 7;
     IntHistogram int_histogram = 8;
     DoubleHistogram double_histogram = 9;
+    DoubleSummary double_summary = 11;
   }
 }
 
@@ -217,6 +219,16 @@ message DoubleHistogram {
   AggregationTemporality aggregation_temporality = 2;
 }
 
+// DoubleSummary metric data are used to convey quantile summaries,
+// a Prometheus (see: https://prometheus.io/docs/concepts/metric_types/#summary)
+// and OpenMetrics (see: https://github.com/OpenObservability/OpenMetrics/blob/4dbf6075567ab43296eed941037c12951faafb92/protos/prometheus.proto#L45)
+// data type. These data points cannot always be merged in a meaningful way.
+// While they can be useful in some applications, histogram data points are
+// recommended for new applications.
+message DoubleSummary {
+  repeated DoubleSummaryDataPoint data_points = 1;
+}
+
 // AggregationTemporality defines how a metric aggregator reports aggregated
 // values. It describes how those values relate to the time interval over
 // which they are aggregated.
@@ -250,7 +262,7 @@ enum AggregationTemporality {
   //      t_0+2 with a value of 2.
   AGGREGATION_TEMPORALITY_DELTA = 1;
 
-  // CUMULATIVE is an AggregationTemporality for a metic aggregator which
+  // CUMULATIVE is an AggregationTemporality for a metric aggregator which
   // reports changes since a fixed start time. This means that current values
   // of a CUMULATIVE metric depend on all previous measurements since the
   // start time. Because of this, the sender is required to retain this state
@@ -506,6 +518,61 @@ message DoubleHistogramDataPoint {
   // (Optional) List of exemplars collected from
   // measurements that were used to form the data point
   repeated DoubleExemplar exemplars = 8;
+}
+
+// DoubleSummaryDataPoint is a single data point in a timeseries that describes the
+// time-varying values of a Summary metric.
+message DoubleSummaryDataPoint {
+  // The set of labels that uniquely identify this timeseries.
+  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
+
+  // start_time_unix_nano is the last time when the aggregation value was reset
+  // to "zero". For some metric types this is ignored, see data types for more
+  // details.
+  //
+  // The aggregation value is over the time interval (start_time_unix_nano,
+  // time_unix_nano].
+  //
+  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
+  // 1970.
+  //
+  // Value of 0 indicates that the timestamp is unspecified. In that case the
+  // timestamp may be decided by the backend.
+  fixed64 start_time_unix_nano = 2;
+
+  // time_unix_nano is the moment when this aggregation value was reported.
+  //
+  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
+  // 1970.
+  fixed64 time_unix_nano = 3;
+
+  // count is the number of values in the population. Must be non-negative.
+  fixed64 count = 4;
+
+  // sum of the values in the population. If count is zero then this field
+  // must be zero.
+  double sum = 5;
+
+  // Represents the value at a given quantile of a distribution.
+  //
+  // To record Min and Max values following conventions are used:
+  // - The 1.0 quantile is equivalent to the maximum value observed.
+  // - The 0.0 quantile is equivalent to the minimum value observed.
+  //
+  // See the following issue for more context:
+  // https://github.com/open-telemetry/opentelemetry-proto/issues/125
+  message ValueAtQuantile {
+    // The quantile of a distribution. Must be in the interval
+    // [0.0, 1.0].
+    double quantile = 1;
+
+    // The value at the given quantile of a distribution.
+    double value = 2;
+  }
+
+  // (Optional) list of values at different quantiles of the distribution calculated
+  // from the current snapshot. The quantiles must be strictly increasing.
+  repeated ValueAtQuantile quantile_values = 6;
 }
 
 // A representation of an exemplar, which is a sample input int measurement.

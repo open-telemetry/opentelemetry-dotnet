@@ -25,7 +25,7 @@ namespace OpenTelemetry
     /// Baggage implementation.
     /// </summary>
     /// <remarks>
-    /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md">Baggage API</a>.
+    /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md">Baggage API</a>.
     /// </remarks>
     public readonly struct Baggage : IEquatable<Baggage>
     {

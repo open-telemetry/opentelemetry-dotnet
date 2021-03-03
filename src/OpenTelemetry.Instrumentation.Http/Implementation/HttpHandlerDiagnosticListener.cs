@@ -37,7 +37,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
@@ -45,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly bool httpClientSupportsW3C;
         private readonly HttpClientInstrumentationOptions options;
 
-        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
             : base("HttpHandlerDiagnosticListener")
         {
             var framework = Assembly
@@ -64,7 +63,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             this.options = options;
-            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
@@ -82,9 +80,33 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+
+            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
+            {
+                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
+            }
+
+            try
+            {
+                if (this.options.EventFilter(activity.OperationName, request) == false)
+                {
+                    HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                activity.IsAllDataRequested = false;
+                return;
+            }
+
             activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
 
             if (activity.IsAllDataRequested)
             {
@@ -105,13 +127,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-            }
-
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-
-            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
-            {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
         }
 
@@ -162,8 +177,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     }
                 }
             }
-
-            this.activitySource.Stop(activity);
         }
 
         public override void OnException(Activity activity, object payload)

@@ -1,6 +1,45 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
+
+* Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+
+* Added a TracerProvierBuilder extension method called
+  `AddLegacyActivityOperationName` which is used by instrumentation libraries
+  that use DiagnosticSource to get activities processed without
+  ActivitySourceAdapter.
+  [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
+
+* Added new constructor with optional parameters to allow customization of
+  `ParentBasedSampler` behavior. ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Default `Resource` will now contain service.name instead of Telemetry SDK.
+  [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
+* Added GetDefaultResource() method to `Provider`.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
 
 * The following extension methods on `ResourceBuilder` has been moved from the
   `OpenTelemetry` namespace to the `OpenTelemetry.Resources` namespace:
@@ -26,6 +65,20 @@
   them to supported data types (long for int/short, double for float). For
   invalid attributes we now throw an exception instead of logging an error.
   ([#1720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1720))
+* Merging "this" resource with an "other" resource now prioritizes the "other"
+  resource's attributes in a conflict. We've rectified to follow a recent change
+  to the spec. We previously prioritized "this" resource's tags.
+  ([#1728](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1728))
+* `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
+  after the export operation has completed.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
+* Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
+  by another process in read-only mode for .NET Framework.
+  ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for details on Metric release plans.
+* Fix Resource attribute telemetry.sdk.version to have correct file version.
 
 ## 1.0.0-rc1.1
 
@@ -39,7 +92,8 @@ Released 2020-Nov-17
 * `Resource` is no longer added to observed `Activity` objects as a
   `CustomProperty`.
   ([#1463](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1463))
-* Removed `RentrantExportProcessor` as it is not required by spec.
+* Removed `ReentrantExportProcessor` as it is not required by spec.
+  ([#1496](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1496))
 * `ActivitySourceAdapter` supports setting `ActivitySource` for Activities
   created without `ActivitySource`.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))
@@ -52,7 +106,7 @@ Released 2020-Nov-17
   `TracerProviderBuilder.SetResourceBuilder`.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
 * By default `TracerProvider` will set a `Resource` containing [Telemetry
-    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/resource/semantic_conventions#telemetry-sdk)
+    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk)
     details
     ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533)):
   * `telemetry.sdk.name` = `opentelemetry`

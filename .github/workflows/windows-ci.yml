@@ -1,0 +1,27 @@
+name: Windows
+
+on:
+  pull_request:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        version: [net452,net46,net461,netcoreapp2.1,netcoreapp3.1,net5.0]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test ${{ matrix.version }}
+      run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"

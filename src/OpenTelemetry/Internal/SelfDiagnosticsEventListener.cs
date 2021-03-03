@@ -127,8 +127,7 @@ namespace OpenTelemetry.Internal
                     this.writeBuffer.Value = buffer;
                 }
 
-                var timestamp = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
-                var pos = Encoding.UTF8.GetBytes(timestamp, 0, timestamp.Length, buffer, 0);
+                var pos = this.DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
                 buffer[pos++] = (byte)':';
                 pos = EncodeInBuffer(eventMessage, false, buffer, pos);
                 if (payload != null)
@@ -170,6 +169,111 @@ namespace OpenTelemetry.Internal
                 // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
                 // In this case, silently fail.
             }
+        }
+
+        /// <summary>
+        /// Write the <c>datetime</c> formatted string into <c>bytes</c> byte-array starting at <c>byteIndex</c> position.
+        /// <para>
+        /// [DateTimeKind.Utc]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff Z (i.e. 2020-12-09T10:20:50.4659412Z).
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Local]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff +|- HH : mm (i.e. 2020-12-09T10:20:50.4659412-08:00).
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Unspecified]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff (i.e. 2020-12-09T10:20:50.4659412).
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// The bytes array must be large enough to write 27-33 charaters from the byteIndex starting position.
+        /// </remarks>
+        /// <param name="datetime">DateTime.</param>
+        /// <param name="bytes">Array of bytes to write.</param>
+        /// <param name="byteIndex">Starting index into bytes array.</param>
+        /// <returns>The number of bytes written.</returns>
+        internal int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
+        {
+            int num;
+            int pos = byteIndex;
+
+            num = datetime.Year;
+            bytes[pos++] = (byte)('0' + ((num / 1000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'-';
+
+            num = datetime.Month;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'-';
+
+            num = datetime.Day;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'T';
+
+            num = datetime.Hour;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)':';
+
+            num = datetime.Minute;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)':';
+
+            num = datetime.Second;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'.';
+
+            num = (int)(Math.Round(datetime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
+            bytes[pos++] = (byte)('0' + ((num / 1000000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 1000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            switch (datetime.Kind)
+            {
+                case DateTimeKind.Utc:
+                    bytes[pos++] = (byte)'Z';
+                    break;
+
+                case DateTimeKind.Local:
+                    TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
+
+                    bytes[pos++] = (byte)(ts.Hours >= 0 ? '+' : '-');
+
+                    num = Math.Abs(ts.Hours);
+                    bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+                    bytes[pos++] = (byte)('0' + (num % 10));
+
+                    bytes[pos++] = (byte)':';
+
+                    num = ts.Minutes;
+                    bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+                    bytes[pos++] = (byte)('0' + (num % 10));
+                    break;
+
+                case DateTimeKind.Unspecified:
+                default:
+                    // Skip
+                    break;
+            }
+
+            return pos - byteIndex;
         }
 
         protected override void OnEventSourceCreated(EventSource eventSource)

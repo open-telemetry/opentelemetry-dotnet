@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">

@@ -18,7 +18,7 @@
 using System;
 using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {

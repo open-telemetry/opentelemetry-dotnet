@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNetCore)
 
 This is an [Instrumentation
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments [ASP.NET Core](https://docs.microsoft.com/aspnet/core) and
 collect telemetry about incoming web requests.
 This instrumentation also collects incoming gRPC requests using
@@ -85,7 +85,7 @@ services.AddOpenTelemetryTracing(
 
 It is important to note that this `Filter` option is specific to this
 instrumentation. OpenTelemetry has a concept of a
-[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
 ### Enrich

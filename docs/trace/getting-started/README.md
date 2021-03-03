@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console -v 1.0.0-rc1.1
+dotnet add package OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -40,6 +40,8 @@ Activity.TagObjects:
     foo: 1
     bar: Hello, World!
     baz: [1, 2, 3]
+Resource associated with Activity:
+    service.name: unknown_service:getting-started
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.
@@ -47,12 +49,12 @@ Congratulations! You are now collecting traces using OpenTelemetry.
 What does the above program do?
 
 The program creates an `ActivitySource` which represents an [OpenTelemetry
-Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracer).
+Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer).
 The `ActivitySource` instance is used to start an `Activity` which represents an
 [OpenTelemetry
-Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span).
+Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
 An OpenTelemetry
-[TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracerprovider)
+[TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracerprovider)
 is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
 `ConsoleExporter` simply displays it on the console.
@@ -66,9 +68,9 @@ is a somewhat unique implementation of the OpenTelemetry project, as parts of
 the tracing API are incorporated directly into the .NET runtime itself. From a
 high level, what this means is that the `Activity` and `ActivitySource` classes
 from .NET runtime represent the OpenTelemetry concepts of
-[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#span)
+[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
 and
-[Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#tracer)
+[Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer)
 respectively. Read
 [this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
 to learn more.
