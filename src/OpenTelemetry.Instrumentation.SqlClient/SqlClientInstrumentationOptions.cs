@@ -63,35 +63,27 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
         // StoredProcedures from regular Text sql commands.
-#if NETFRAMEWORK
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should
-        /// add the text of the executed Sql commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
-        /// Default value: False.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// WARNING: potential sensitive data capture! If you use <c>Microsoft.Data.SqlClient</c>, the instrumentation will capture <c>sqlCommand.CommandText</c>
-        /// for <see cref="CommandType.StoredProcedure"/> and <see cref="CommandType.Text"/>. Make sure your <c>CommandText</c> property never contains
-        /// any sensitive data for <see cref="CommandType.Text"/> commands.
-        /// </para>
-        /// <para>
-        /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
-        /// </para>
-        /// </remarks>
-        public bool SetDbStatement { get; set; }
-#else
-        /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
+        /// Has no effect when using <c>Microsoft.Data.SqlClient</c> under .NET Framework.
         /// </summary>
         public bool SetDbStatementForStoredProcedure { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// WARNING: potential sensitive data capture! Make sure your <c>CommandText</c> property never contains
+        /// any sensitive data for <see cref="CommandType.Text"/> commands.
+        /// </para>
+        /// <para>
+        /// Has no effect when using <c>System.Data.SqlClient</c> under .NET Framework.
+        /// Controls adding the text of <see cref="CommandType.Text"/> and <see cref="CommandType.StoredProcedure"/> commands when using <c>Microsoft.Data.SqlClient</c> under .NET Framework.
+        /// </para>
+        /// </remarks>
         public bool SetDbStatementForText { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
@@ -129,15 +121,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// </example>
         public Action<Activity, string, object> Enrich { get; set; }
 
-#if !NETFRAMEWORK
         /// <summary>
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
+        /// Has no effect when running under .NET Framework.
         /// </summary>
         /// <remarks>
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
-#endif
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {

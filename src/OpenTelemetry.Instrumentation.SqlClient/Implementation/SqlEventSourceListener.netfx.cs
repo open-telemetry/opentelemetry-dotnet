@@ -144,7 +144,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
                 string commandText = (string)eventData.Payload[3];
-                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatement)
+
+                // When using the adoNetEvent source we can only capture the statement text for CommandType.StoredProcedure anyway,
+                // so we check for `SetDbStatementForStoredProcedure`.
+                // Otherwise we cannot distinguish between CommandType.Text and CommandType.StoredProcedure, so we only set the tag if `SetDbStatementForText` is true.
+                if (!string.IsNullOrEmpty(commandText) &&
+                    (this.options.SetDbStatementForText || (eventData.EventSource == this.adoNetEventSource && this.options.SetDbStatementForStoredProcedure)))
                 {
                     activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }

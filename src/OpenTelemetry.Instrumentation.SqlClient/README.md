@@ -60,15 +60,13 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
-### Capturing 'db.statement'
+### Capturing 'db.statement' - SetDbStatementForStoredProcedure and SetDbStatementForText
 
 The `SqlClientInstrumentationOptions` class exposes several properties that can be
 used to configure how the [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute is captured upon execution of a query.
 
-#### .NET Core - SetDbStatementForStoredProcedure and SetDbStatementForText
-
-On .NET Core, two properties are available: `SetDbStatementForStoredProcedure`
+Two properties are available: `SetDbStatementForStoredProcedure`
 and `SetDbStatementForText`. These properties control capturing of
 `CommandType.StoredProcedure` and `CommandType.Text` respectively.
 
@@ -102,14 +100,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-#### .NET Framework - SetDbStatement
-
-For .NET Framework, `SetDbStatementForStoredProcedure` and
-`SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
-property should be used to control whether this instrumentation should set the
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
-attribute to the text of the `SqlCommand` being executed. This could either be
-a name of a stored procedure or a full text of a `CommandType.Text` query.
+#### .NET Framework
 
 On .NET Framwork, unlike .NET Core, the instrumentation capabilities for both
 [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
@@ -123,7 +114,8 @@ and `System.Data.SqlClient` are limited:
   query text.
 
 Since `CommandType.Text` might contain sensitive data, all SQL capturing is
-_disabled_ by default to protect against accidentally sending full query text
+_disabled_ by default when using [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+under .NET Framework to protect against accidentally sending full query text
 to a telemetry backend. If you are only using stored procedures or have no
 sensitive data in your `sqlCommand.CommandText`, you can enable SQL capturing
 using the options like below:
@@ -131,10 +123,13 @@ using the options like below:
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetDbStatement = true)
+        options => options.SetDbStatementForText = true)
     .AddConsoleExporter()
     .Build();
 ```
+
+The `SetDbStatementForText` setting has no effect when using [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
+under .NET Framework.
 
 ## EnableConnectionLevelAttributes
 

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* SqlClientInstrumentationOptions API changes: `SetDbStatementForStoredProcedure`,
+  `SetDbStatementForText` and `RecordException`
+  are available on all platforms. `SetDbStatement` has been removed.
+  On .NET Framework the following restrictions apply:
+  * `RecordException` has no effect
+  * `SetDbStatementForText` has no effect when using `System.Data.SqlClient`
+  * When using `Microsoft.Data.SqlClient`: `SetDbStatementForText` controls
+    logging of `CommandType.Text` and `CommandType.StoredProcedure` as it's
+    impossible to distinguish them.
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29

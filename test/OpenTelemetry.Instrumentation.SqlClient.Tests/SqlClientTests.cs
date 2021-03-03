@@ -90,13 +90,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-#if !NETFRAMEWORK
                     options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
                     options.SetDbStatementForText = captureTextCommandContent;
                     options.RecordException = recordException;
-#else
-                    options.SetDbStatement = captureStoredProcedureCommandName;
-#endif
+
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;

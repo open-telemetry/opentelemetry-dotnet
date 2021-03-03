@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetDbStatement = captureText;
+                    options.SetDbStatementForText = captureText;
                 })
                 .Build();
 
@@ -88,19 +88,23 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/1", false)]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/0", false, true)]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/1", false)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, true)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/1", false, false, false)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.Text, "select 1/0", false, false, false, true)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", false, false, false)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", false, true, true)]
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), CommandType.StoredProcedure, "sp_who", true, true, true, false, 0, true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/1", false, false, false)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, false, false, true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", false, false, false)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", false, true, false)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, true, true, false, 0, true)]
         public void EventSourceFakeTests(
             Type eventSourceType,
             CommandType commandType,
             string commandText,
             bool captureText,
+            bool captureStoredProcedure,
+            bool captureTextExpected,
             bool isFailure = false,
             int sqlExceptionNumber = 0,
             bool enableConnectionLevelAttributes = false)
@@ -112,7 +116,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetDbStatement = captureText;
+                    options.SetDbStatementForText = captureText;
+                    options.SetDbStatementForStoredProcedure = captureStoredProcedure;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 })
                 .Build();
@@ -138,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
+            VerifyActivityData(commandText, captureTextExpected, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
         }
 
         [Theory]
@@ -183,9 +188,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource))]
-        [InlineData(typeof(FakeBehavingMdsSqlEventSource))]
-        public void DefaultCaptureTextFalse(Type eventSourceType)
+        [InlineData(typeof(FakeBehavingAdoNetSqlEventSource), true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), false)]
+        public void TestDefaultCaptureSettings(Type eventSourceType, bool captureExpected)
         {
             using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
@@ -217,8 +222,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            const bool captureText = false;
-            VerifyActivityData(commandText, captureText, false, "127.0.0.1", activity, false);
+            VerifyActivityData(commandText, captureExpected, false, "127.0.0.1", activity, false);
         }
 
         private static void VerifyActivityData(
