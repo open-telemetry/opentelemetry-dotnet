@@ -313,18 +313,14 @@ the following content:
 }
 ```
 
-Tip: You can find the "current working directory" by calling
-[GetCurrentDirectory](https://docs.microsoft.com/dotnet/api/system.io.directory.getcurrentdirectory)
-method from your code.
-
-As an example, for [AspNetCore example project](../../examples/AspNetCore/README.md),
-
-* Running the project from Visual Studio (F5) or running the project with
-  `dotnet run --configuration Release --framework netcoreapp3.1 --project Examples.AspNetCore.csproj`,
-  the "current working directory" is `examples/AspNetCore`.
-* Running the executable `Examples.AspNetCore.exe` in
-  `examples/AspNetCore/bin/Debug/netcoreapp3.1` directory, the "current working
-  directory" is `examples/AspNetCore/bin/Debug/netcoreapp3.1`.
+Tip: In most cases, you could just drop the file along your application.
+On Windows, you can use [Process Explorer](https://docs.microsoft.com/sysinternals/downloads/process-explorer),
+double click on the process to pop up Properties dialog and find "Current
+directory" in "Image" tab.
+Internally, it looks for the configuration file located in
+[GetCurrentDirectory](https://docs.microsoft.com/dotnet/api/system.io.directory.getcurrentdirectory),
+and then [AppContext.BaseDirectory](https://docs.microsoft.com/dotnet/api/system.appcontext.basedirectory).
+You can also find the exact directory by calling these method from your code.
 
 ### Configuration Parameters
 
