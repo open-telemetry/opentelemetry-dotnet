@@ -5,6 +5,7 @@
 * SqlClientInstrumentationOptions API changes: `SetDbStatementForStoredProcedure`,
   `SetDbStatementForText` and `RecordException`
   are available on all platforms. `SetDbStatement` has been removed.
+  ([#1864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1864))
   On .NET Framework the following restrictions apply:
   * `RecordException` has no effect
   * `SetDbStatementForText` has no effect when using `System.Data.SqlClient`
