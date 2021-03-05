@@ -39,6 +39,7 @@ namespace OpenTelemetry.Trace.Tests
             Activity activity2 = null;
             Activity activity3 = null;
             Activity activity4 = null;
+            Activity activity5 = null;
 
             try
             {
@@ -55,18 +56,28 @@ namespace OpenTelemetry.Trace.Tests
                 using (activity3 = activitySource.StartActivity("Activity3"))
                 {
                 }
+
+                activity5 = activitySource.StartActivity("Activity5");
             }
             finally
             {
                 using (activity4 = activitySource.StartActivity("Activity4"))
                 {
                 }
+
+                activity5.Dispose();
             }
 
             Assert.Equal(StatusCode.Error, activity1.GetStatus().StatusCode);
+            Assert.Null(activity1.GetTagValue("otel.exception_pointers"));
             Assert.Equal(StatusCode.Error, activity2.GetStatus().StatusCode);
+            Assert.Null(activity2.GetTagValue("otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity3.GetStatus().StatusCode);
+            Assert.Null(activity3.GetTagValue("otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity4.GetStatus().StatusCode);
+            Assert.Null(activity4.GetTagValue("otel.exception_pointers"));
+            Assert.Equal(StatusCode.Unset, activity5.GetStatus().StatusCode);
+            Assert.NotNull(activity5.GetTagValue("otel.exception_pointers"));
         }
 
         [Fact]
