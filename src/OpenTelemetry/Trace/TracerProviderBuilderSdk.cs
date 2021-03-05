@@ -41,7 +41,14 @@ namespace OpenTelemetry.Trace
 
             if (options.SetErrorStatusOnException)
             {
-                this.AddProcessor(new ExceptionProcessor());
+                try
+                {
+                    this.AddProcessor(new ExceptionProcessor());
+                }
+                catch (Exception ex)
+                {
+                    throw new NotSupportedException($"{nameof(options.SetErrorStatusOnException)} is not supported on this platform.", ex);
+                }
             }
         }
 
