@@ -58,10 +58,58 @@ will depend on the presence of a debugger:
   activited and normally it will collect a crash dump.
 
 It might be useful to automatically capture the unhandled exceptions, travel
-through the unfinished activities and export them for troubleshooting. One
-possible way of doing this by using
-[AppDomain.UnhandledException](https://docs.microsoft.com/dotnet/api/system.appdomain.unhandledexception)
-can be found [here](./Program.cs).
+through the unfinished activities and export them for troubleshooting. Here goes
+one possible way of doing this:
 
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.
+
+<!-- markdownlint-disable MD013 -->
+```csharp
+using System;
+using System.Diagnostics;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+public class Program
+{
+    private static readonly ActivitySource MyActivitySource = new ActivitySource("MyCompany.MyProduct.MyLibrary");
+
+    public static void Main()
+    {
+        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
+            {
+                options.SetErrorStatusOnException = true;
+            })
+            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .SetSampler(new AlwaysOnSampler())
+            .AddConsoleExporter()
+            .Build();
+
+        using (MyActivitySource.StartActivity("Foo"))
+        {
+            using (MyActivitySource.StartActivity("Bar"))
+            {
+                throw new Exception("Oops!");
+            }
+        }
+    }
+
+    private static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
+    {
+        var ex = (Exception)args.ExceptionObject;
+
+        var activity = Activity.Current;
+
+        while (activity != null)
+        {
+            activity.RecordException(ex);
+            activity.Dispose();
+            activity = activity.Parent;
+        }
+    }
+}
+```
+<!-- markdownlint-enable MD013 -->

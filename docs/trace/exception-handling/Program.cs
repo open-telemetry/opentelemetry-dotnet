@@ -26,8 +26,6 @@ public class Program
 
     public static void Main()
     {
-        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
-
         using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
             {
                 options.SetErrorStatusOnException = true;
@@ -39,38 +37,17 @@ public class Program
 
         try
         {
-            Func();
+            using (MyActivitySource.StartActivity("Foo"))
+            {
+                using (MyActivitySource.StartActivity("Bar"))
+                {
+                    throw new Exception("Oops!");
+                }
+            }
         }
         catch (Exception)
         {
             // swallow the exception
-        }
-
-        Func();
-    }
-
-    private static void Func()
-    {
-        using (MyActivitySource.StartActivity("Foo"))
-        {
-            using (MyActivitySource.StartActivity("Bar"))
-            {
-                throw new Exception("Oops!");
-            }
-        }
-    }
-
-    private static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
-    {
-        var ex = (Exception)args.ExceptionObject;
-
-        var activity = Activity.Current;
-
-        while (activity != null)
-        {
-            activity.RecordException(ex);
-            activity.Dispose();
-            activity = activity.Parent;
         }
     }
 }
