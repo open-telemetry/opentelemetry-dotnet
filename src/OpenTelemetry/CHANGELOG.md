@@ -22,6 +22,14 @@ please check the latest changes
   `ParentBasedSampler` behavior.
   ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
 
+* The application base directory is now tested after the current directory when
+  searching for the
+  [self diagnostic configuration file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
+  ([#1865](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1865))
+
+* Resource Attributes now accept primitive arrays as values.
+  ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
+
 ## 1.0.1
 
 Released 2021-Feb-10
