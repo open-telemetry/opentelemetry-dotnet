@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -54,13 +55,24 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Creates TracerProviderBuilder which should be used to build
-        /// TracerProvider.
+        /// Creates TracerProviderBuilder which should be used to build TracerProvider.
         /// </summary>
         /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
-            return new TracerProviderBuilderSdk();
+            return CreateTracerProviderBuilder(null);
+        }
+
+        /// <summary>
+        /// Creates TracerProviderBuilder which should be used to build TracerProvider.
+        /// </summary>
+        /// <param name="configure">TracerProvider configuration options.</param>
+        /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
+        public static TracerProviderBuilder CreateTracerProviderBuilder(Action<TracerProviderOptions> configure = null)
+        {
+            var options = new TracerProviderOptions();
+            configure?.Invoke(options);
+            return new TracerProviderBuilderSdk(options);
         }
     }
 }
