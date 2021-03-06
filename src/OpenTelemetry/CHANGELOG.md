@@ -29,6 +29,10 @@ please check the latest changes
 * Resource Attributes now accept primitive arrays as values.
   ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
 
+* Fixed [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
+  `ParentBasedSampler` will no longer explicitly consider Activity links.
+  ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
+
 ## 1.0.1
 
 Released 2021-Feb-10
