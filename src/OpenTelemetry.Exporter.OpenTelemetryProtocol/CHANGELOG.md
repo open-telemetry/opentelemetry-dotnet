@@ -9,6 +9,12 @@ please check the latest changes
 
 ## Unreleased
 
+* Resolves `System.TypeInitializationException` exception when using the
+  exporter with an application that references Google.Protobuf 3.15. The OTLP
+  exporter now depends on Google.Protobuf 3.15.5 enabling the use of the new
+  `UnsafeByteOperations.UnsafeWrap` to avoid unnecessary allocations.
+  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+
 ## 1.0.1
 
 Released 2021-Feb-10

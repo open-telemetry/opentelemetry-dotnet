@@ -37,7 +37,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     {
         private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans>();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
-        private static readonly Func<byte[], ByteString> ByteStringCtorFunc = CreateByteStringCtorFunc();
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
@@ -135,7 +134,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 byte[] parentSpanIdBytes = new byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
-                parentSpanIdString = ByteStringCtorFunc(parentSpanIdBytes);
+                parentSpanIdString = UnsafeByteOperations.UnsafeWrap(parentSpanIdBytes);
             }
 
             var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
@@ -146,8 +145,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 // There is an offset of 1 on the OTLP enum.
                 Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1),
 
-                TraceId = ByteStringCtorFunc(traceIdBytes),
-                SpanId = ByteStringCtorFunc(spanIdBytes),
+                TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
+                SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
                 ParentSpanId = parentSpanIdString,
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
@@ -285,8 +284,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             var otlpLink = new OtlpTrace.Span.Types.Link
             {
-                TraceId = ByteStringCtorFunc(traceIdBytes),
-                SpanId = ByteStringCtorFunc(spanIdBytes),
+                TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
+                SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
             };
 
             TagEnumerationState otlpTags = default;
@@ -339,26 +338,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             generator.Emit(OpCodes.Ret);
 
             return (Action<RepeatedField<OtlpTrace.Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpTrace.Span>, int>));
-        }
-
-        private static Func<byte[], ByteString> CreateByteStringCtorFunc()
-        {
-            ConstructorInfo byteStringCtor = typeof(ByteString).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(byte[]) }, null);
-
-            DynamicMethod dynamicMethod = new DynamicMethod(
-                "ByteStringCtor",
-                typeof(ByteString),
-                new[] { typeof(byte[]) },
-                typeof(ActivityExtensions).Module,
-                skipVisibility: true);
-
-            var generator = dynamicMethod.GetILGenerator();
-
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Newobj, byteStringCtor);
-            generator.Emit(OpCodes.Ret);
-
-            return (Func<byte[], ByteString>)dynamicMethod.CreateDelegate(typeof(Func<byte[], ByteString>));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
