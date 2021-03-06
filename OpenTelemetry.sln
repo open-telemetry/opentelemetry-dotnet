@@ -197,6 +197,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shared", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.5.0", "test\TestApp.AspNetCore.5.0\TestApp.AspNetCore.5.0.csproj", "{972396A8-E35B-499C-9BA1-765E9B8822E1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-handling", "docs\trace\exception-handling\exception-handling.csproj", "{08D29501-F0A3-468F-B18D-BD1821A72383}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -387,6 +389,10 @@ Global
 		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08D29501-F0A3-468F-B18D-BD1821A72383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08D29501-F0A3-468F-B18D-BD1821A72383}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08D29501-F0A3-468F-B18D-BD1821A72383}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08D29501-F0A3-468F-B18D-BD1821A72383}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -416,6 +422,7 @@ Global
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{972396A8-E35B-499C-9BA1-765E9B8822E1} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
+		{08D29501-F0A3-468F-B18D-BD1821A72383} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

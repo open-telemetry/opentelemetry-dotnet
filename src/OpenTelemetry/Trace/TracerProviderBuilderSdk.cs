@@ -28,14 +28,28 @@ namespace OpenTelemetry.Trace
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
 
+        private readonly TracerProviderOptions options;
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
-        internal TracerProviderBuilderSdk()
+        internal TracerProviderBuilderSdk(TracerProviderOptions options)
         {
+            this.options = options ?? new TracerProviderOptions();
+
+            if (options.SetErrorStatusOnException)
+            {
+                try
+                {
+                    this.AddProcessor(new ExceptionProcessor());
+                }
+                catch (Exception ex)
+                {
+                    throw new NotSupportedException($"{nameof(options.SetErrorStatusOnException)} is not supported on this platform.", ex);
+                }
+            }
         }
 
         /// <summary>
