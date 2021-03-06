@@ -56,15 +56,24 @@ namespace OpenTelemetry.Trace.Tests
                 using (activity3 = activitySource.StartActivity("Activity3"))
                 {
                 }
-
-                activity5 = activitySource.StartActivity("Activity5");
             }
             finally
             {
                 using (activity4 = activitySource.StartActivity("Activity4"))
                 {
                 }
+            }
 
+            try
+            {
+                throw new Exception("Oops!");
+            }
+            catch (Exception)
+            {
+                activity5 = activitySource.StartActivity("Activity5");
+            }
+            finally
+            {
                 activity5.Dispose();
             }
 
@@ -77,7 +86,10 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(StatusCode.Unset, activity4.GetStatus().StatusCode);
             Assert.Null(activity4.GetTagValue("otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity5.GetStatus().StatusCode);
+#if !NETFRAMEWORK
+            // In this rare case, the following Activity tag will not get cleaned up due to perf consideration.
             Assert.NotNull(activity5.GetTagValue("otel.exception_pointers"));
+#endif
         }
 
         [Fact]
