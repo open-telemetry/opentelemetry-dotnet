@@ -80,36 +80,33 @@ namespace OpenTelemetry.Trace
 
                 switch (exceptionRecord.ExceptionCode)
                 {
-                case EXCEPTION_CODE.EXCEPTION_COMPLUS:
-                    if (exceptionRecord.NumberParameters != 5 /* INSTANCE_TAGGED_SEH_PARAM_ARRAY_SIZE */)
-                    {
+                    case EXCEPTION_CODE.EXCEPTION_COMPLUS:
+                        if (exceptionRecord.NumberParameters != 5 /* INSTANCE_TAGGED_SEH_PARAM_ARRAY_SIZE */)
+                        {
+                            break;
+                        }
+
+                        var hresult = (HRESULT)((ulong)exceptionRecord.ExceptionInformation[0] % 0x100000000UL);
+                        activity.SetTag("exceptionRecord.ExceptionInformation.HResult", hresult);
+
+                        // exceptionRecord.ExceptionInformation[1] == 0
+                        // exceptionRecord.ExceptionInformation[2] == 0
+                        // exceptionRecord.ExceptionInformation[3] == 0
+
+                        var pClrModuleBase = exceptionRecord.ExceptionInformation[4];
+                        activity.SetTag("exceptionRecord.ExceptionInformation.ClrModuleBase", pClrModuleBase);
+
                         break;
-                    }
-
-                    activity.SetTag("exceptionRecord.NumberParameters", exceptionRecord.NumberParameters);
-                    activity.SetTag("exceptionRecord.ExceptionInformation", exceptionRecord.ExceptionInformation);
-                    var hresult = (HRESULT)((ulong)exceptionRecord.ExceptionInformation[0] % 0x100000000UL);
-                    activity.SetTag("exceptionRecord.ExceptionInformation.HResult", hresult);
-
-                    // exceptionRecord.ExceptionInformation[1] == 0
-                    // exceptionRecord.ExceptionInformation[2] == 0
-                    // exceptionRecord.ExceptionInformation[3] == 0
-
-                    var pClrModuleBase = exceptionRecord.ExceptionInformation[4];
-                    activity.SetTag("exceptionRecord.ExceptionInformation.ClrModuleBase", pClrModuleBase);
-
-                    break;
-                default:
-                    break;
+                    default:
+                        break;
                 }
 
                 activity.SetStatus(Status.Error);
             }
         }
 
-// SA1201: A enum should not follow a method
-// SA1602: Enumeration items should be documented
-#pragma warning disable SA1201, SA1602
+#pragma warning disable SA1201 // A enum should not follow a method
+#pragma warning disable SA1602 // Enumeration items should be documented
 
         internal enum HRESULT : int
         {
@@ -268,8 +265,7 @@ namespace OpenTelemetry.Trace
             public UIntPtr[] ExceptionInformation;
         }
 
-// SA1201: A enum should not follow a method
-// SA1602: Enumeration items should be documented
-#pragma warning restore SA1201, SA1602
+#pragma warning restore SA1201 // A enum should not follow a method
+#pragma warning restore SA1602 // Enumeration items should be documented
     }
 }
