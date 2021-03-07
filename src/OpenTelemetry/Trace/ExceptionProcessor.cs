@@ -93,6 +93,7 @@ namespace OpenTelemetry.Trace
                         // exceptionRecord.ExceptionInformation[2] == 0
                         // exceptionRecord.ExceptionInformation[3] == 0
 
+                        // Depending on the runtime, it can be clr.dll or coreclr.dll
                         var pClrModuleBase = exceptionRecord.ExceptionInformation[4];
                         activity.SetTag("exceptionRecord.ExceptionInformation.ClrModuleBase", pClrModuleBase);
 
