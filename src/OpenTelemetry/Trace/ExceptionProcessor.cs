@@ -123,14 +123,15 @@ namespace OpenTelemetry.Trace
                 switch (exceptionRecord.ExceptionCode)
                 {
                 case EXCEPTION_CODE.EXCEPTION_COMPLUS:
-                    var cntParameters = exceptionRecord.NumberParameters;
+                    int cntParameters = (int)exceptionRecord.NumberParameters;
 
-                    if (cntParameters > 15 /* EXCEPTION_MAXIMUM_PARAMETERS */)
+                    if (cntParameters <= 0 || cntParameters > 15)
                     {
                         break;
                     }
 
                     activity.SetTag("exceptionRecord.NumberParameters", exceptionRecord.NumberParameters);
+                    activity.SetTag("exceptionRecord.ExceptionInformation", exceptionRecord.ExceptionInformation);
                     break;
                 default:
                     break;
@@ -171,7 +172,8 @@ namespace OpenTelemetry.Trace
             public IntPtr ExceptionRecord;
             public IntPtr ExceptionAddress;
             public uint NumberParameters;
-            public IntPtr ExceptionInformation;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15 /* EXCEPTION_MAXIMUM_PARAMETERS */)]
+            public IntPtr[] ExceptionInformation;
         }
     }
 }
