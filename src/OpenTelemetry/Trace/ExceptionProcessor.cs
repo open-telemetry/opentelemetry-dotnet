@@ -115,18 +115,29 @@ namespace OpenTelemetry.Trace
 
             if (snapshot != pointers)
             {
-                var exceptionPointers = this.PtrToStructure<EXCEPTION_POINTERS>(pointers);
-                activity.SetTag("exceptionPointers.ContextRecord", exceptionPointers.ContextRecord);
-                var exceptionRecord = this.PtrToStructure<EXCEPTION_RECORD>(exceptionPointers.ExceptionRecord);
+                var exceptionPointers = Marshal.PtrToStructure<EXCEPTION_POINTERS>(pointers);
+                var exceptionRecord = Marshal.PtrToStructure<EXCEPTION_RECORD>(exceptionPointers.ExceptionRecord);
                 activity.SetTag("exceptionRecord.ExceptionCode", exceptionRecord.ExceptionCode);
                 activity.SetTag("exceptionRecord.ExceptionFlags", exceptionRecord.ExceptionFlags);
+
+                switch (exceptionRecord.ExceptionCode)
+                {
+                case EXCEPTION_CODE.EXCEPTION_COMPLUS:
+                    var cntParameters = exceptionRecord.NumberParameters;
+
+                    if (cntParameters > 15 /* EXCEPTION_MAXIMUM_PARAMETERS */)
+                    {
+                        break;
+                    }
+
+                    activity.SetTag("exceptionRecord.NumberParameters", exceptionRecord.NumberParameters);
+                    break;
+                default:
+                    break;
+                }
+
                 activity.SetStatus(Status.Error);
             }
-        }
-
-        internal T PtrToStructure<T>(IntPtr p)
-        {
-            return (T)Marshal.PtrToStructure(p, typeof(T));
         }
 
         /*
