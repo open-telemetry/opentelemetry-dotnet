@@ -123,9 +123,7 @@ namespace OpenTelemetry.Trace
                 switch (exceptionRecord.ExceptionCode)
                 {
                 case EXCEPTION_CODE.EXCEPTION_COMPLUS:
-                    int cntParameters = (int)exceptionRecord.NumberParameters;
-
-                    if (cntParameters <= 0 || cntParameters > 15)
+                    if (exceptionRecord.NumberParameters != 5 /* INSTANCE_TAGGED_SEH_PARAM_ARRAY_SIZE */)
                     {
                         break;
                     }
