@@ -96,11 +96,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
-                    // Starting the new activity make it the Activity.Current one.
+                    // Start the new activity
                     newOne.Start();
+
+                    if (request.ContentType == "application/grpc" && request.Path.HasValue)
+                    {
+                        newOne.SetTag(GrpcTagHelper.GrpcMethodTagName, request.Path.Value);
+                    }
 
                     // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
                     activity.IsAllDataRequested = false;
+
+                    // Make the new one Activity.Current
                     activity = newOne;
                 }
 
@@ -162,6 +169,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 var response = context.Response;
+
+                // Add grpc.status_code tag to the activity here. The status code value could be retrieved from the payload using reflection.
+                // context.Response.HttpResponseFeature.ResponseTrailers has a key/value pair with the gRPC status code
+                // Is this the best way to obtain the gRPC status code?
+                if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+                {
+                    activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, "<<status_code>>");
+                }
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
