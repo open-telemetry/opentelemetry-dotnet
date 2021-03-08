@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("LogRecord.StateValues (Key:Value):");
                     for (int i = 0; i < logRecord.StateValues.Count; i++)
                     {
-                        this.WriteLine($"{logRecord.StateValues[i].Key.PadRight(rightPaddingLength)}:{logRecord.StateValues[i].Value}");
+                        this.WriteLine($"{logRecord.StateValues[i].Key.PadRight(rightPaddingLength)}{logRecord.StateValues[i].Value}");
                     }
                 }
 
