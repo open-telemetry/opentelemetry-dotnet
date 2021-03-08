@@ -31,7 +31,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
-        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -196,7 +195,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+            if (activity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation)
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
@@ -212,11 +211,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
-            }
-
-            if (activity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation)
-            {
-                activity.Stop();
             }
         }
 
