@@ -99,8 +99,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
 
-                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
-                    activity.IsAllDataRequested = false;
+                    if (request.ContentType == "application/grpc")
+                    {
+                        // Both new activity and old one store the other activity
+                        // inside them. This is required in the Stop step to
+                        // correctly stop and restore Activity.Current.
+                        newOne.SetCustomProperty("OTel.ActivityByGrpcAspNetCore", activity);
+                        activity.SetCustomProperty("OTel.ActivityByHttpInListener", newOne);
+                    }
+                    else
+                    {
+                        // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                        activity.IsAllDataRequested = false;
+                    }
+
+                    // Make the new activity as Activity.Current
                     activity = newOne;
                 }
 
@@ -147,11 +160,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
+
+                if (request.ContentType == "application/grpc" && activity.GetCustomProperty("OTel.ActivityByGrpcAspNetCore") is Activity activityCreatedByFramework)
+                {
+                    // At this point, the activity created by instrumentation has the OTel tags added
+                    // Change Activity.Current back to the activity created by framework to let the framework add grpc.method and grpc.status_code tags
+                    Activity.Current = activityCreatedByFramework;
+                }
             }
         }
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            Activity activityCreatedByInstrumentation = null;
             if (activity.IsAllDataRequested)
             {
                 _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
@@ -163,21 +184,58 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                if (response.ContentType == "application/grpc")
+                {
+                    activityCreatedByInstrumentation = activity.GetCustomProperty("OTel.ActivityByHttpInListener") as Activity;
+                }
 
 #if NETSTANDARD2_1
-                if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+                string grpcMethod;
+                _ = TryGetGrpcMethod(activity, out grpcMethod);
+                if (this.options.EnableGrpcAspNetCoreSupport)
                 {
-                    AddGrpcAttributes(activity, grpcMethod, context);
+                    if (!string.IsNullOrEmpty(grpcMethod))
+                    {
+                        if (activityCreatedByInstrumentation != null)
+                        {
+                            // Add gRPC attributes to the activity created by instrumentation
+                            AddGrpcAttributes(activity, activityCreatedByInstrumentation, grpcMethod, context);
+
+                            // Update Activity.Current to the activity created by instrumentation in the OnStartActivity method
+                            activity = activityCreatedByInstrumentation;
+                        }
+                        else
+                        {
+                            // Add gRPC attributes to the activity created by framework
+                            AddGrpcAttributes(activity, null, grpcMethod, context);
+                        }
+                    }
                 }
                 else
                 {
-                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    if (activityCreatedByInstrumentation != null)
                     {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                        activityCreatedByInstrumentation.SetTag(GrpcTagHelper.GrpcMethodTagName, grpcMethod);
+                        if (GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status))
+                        {
+                            activityCreatedByInstrumentation.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, status);
+                        }
+
+                        // Update Activity.Current to the activity created by instrumentation in the OnStartActivity method
+                        activity = activityCreatedByInstrumentation;
                     }
                 }
+
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+
+                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                }
 #else
+
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
@@ -206,10 +264,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // Currently Asp.Net core does not use Activity.Current, instead it stores a
                 // reference to its activity, and calls .Stop on it.
 
-                // TODO: Should we still restore Activity.Current here?
+                // TODO: Should we still restore Activity.Current here? We only do it for gRPC ASP.NET Core
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
+
+                if (activity.GetCustomProperty("OTel.ActivityByGrpcAspNetCore") is Activity activityCreatedByFramework)
+                {
+                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                    activityCreatedByFramework.IsAllDataRequested = false;
+
+                    // Change Activity.Current back to the activity created by framework to let the framework add grpc.method and grpc.status_code tags
+                    Activity.Current = activityCreatedByFramework;
+                }
             }
         }
 
@@ -314,38 +381,40 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        private static void AddGrpcAttributes(Activity activity, Activity activityCreatedByInstrumentation, string grpcMethod, HttpContext context)
         {
+            Activity activityToEnrich = activityCreatedByInstrumentation ?? activity;
+
             // The RPC semantic conventions indicate the span name
             // should not have a leading forward slash.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#span-name
-            activity.DisplayName = grpcMethod.TrimStart('/');
+            activityToEnrich.DisplayName = grpcMethod.TrimStart('/');
 
-            activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            activityToEnrich.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+            activityToEnrich.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            activityToEnrich.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
             if (validConversion)
             {
-                activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
+                activityToEnrich.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
             }
 
             if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
-                activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
-                activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+                activityToEnrich.SetTag(SemanticConventions.AttributeRpcService, rpcService);
+                activityToEnrich.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
 
                 // Remove the grpc.method tag added by the gRPC .NET library
-                activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
+                activityToEnrich.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
 
                 // Remove the grpc.status_code tag added by the gRPC .NET library
-                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
+                activityToEnrich.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
 
                 if (validConversion)
                 {
                     // setting rpc.grpc.status_code
-                    activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
+                    activityToEnrich.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
                 }
             }
         }
