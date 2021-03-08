@@ -92,12 +92,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
-                    Activity newOne = new Activity(ActivityNameByHttpInListener);
+                    Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
+
+                    newOne.SetCustomProperty("IsCreatedByInstrumentation", true);
 
                     // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
                     activity.IsAllDataRequested = false;
@@ -210,6 +212,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
+            }
+
+            if (activity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation)
+            {
+                activity.Stop();
             }
         }
 
