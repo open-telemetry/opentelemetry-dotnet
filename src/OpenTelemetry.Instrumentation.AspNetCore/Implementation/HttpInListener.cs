@@ -190,8 +190,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
 #if NETSTANDARD2_1
-                string grpcMethod;
-                _ = TryGetGrpcMethod(activity, out grpcMethod);
+                _ = TryGetGrpcMethod(activity, out var grpcMethod);
                 if (this.options.EnableGrpcAspNetCoreSupport)
                 {
                     if (!string.IsNullOrEmpty(grpcMethod))
