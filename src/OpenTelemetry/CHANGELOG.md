@@ -9,7 +9,8 @@ please check the latest changes
 
 ## Unreleased
 
-* Added `TracerProviderOptions` and `SetErrorStatusOnException`.
+* Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
+  sets the activity status to `Error` when exception happened.
   ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
   [#1875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1875))
 * Added `ForceFlush` to `TracerProvider`.
