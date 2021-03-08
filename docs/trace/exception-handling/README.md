@@ -34,9 +34,9 @@ The following configuration will automatically detect exception and set the
 activity status to `Error`:
 
 ```csharp
-Sdk.CreateTracerProviderBuilder(options => {
-    options.SetErrorStatusOnException = true;
-});
+Sdk.CreateTracerProviderBuilder()
+    .SetErrorStatusOnException()
+    // ...
 ```
 
 A complete example can be found [here](./Program.cs).
@@ -79,12 +79,10 @@ public class Program
     {
         AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
 
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder(options =>
-            {
-                options.SetErrorStatusOnException = true;
-            })
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .SetSampler(new AlwaysOnSampler())
+            .SetErrorStatusOnException()
             .AddConsoleExporter()
             .Build();
 

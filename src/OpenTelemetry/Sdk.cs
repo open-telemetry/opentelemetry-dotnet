@@ -60,19 +60,7 @@ namespace OpenTelemetry
         /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
-            return CreateTracerProviderBuilder(null);
-        }
-
-        /// <summary>
-        /// Creates TracerProviderBuilder which should be used to build TracerProvider.
-        /// </summary>
-        /// <param name="configure">TracerProvider configuration options.</param>
-        /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
-        public static TracerProviderBuilder CreateTracerProviderBuilder(Action<TracerProviderOptions> configure = null)
-        {
-            var options = new TracerProviderOptions();
-            configure?.Invoke(options);
-            return new TracerProviderBuilderSdk(options);
+            return new TracerProviderBuilderSdk();
         }
     }
 }
