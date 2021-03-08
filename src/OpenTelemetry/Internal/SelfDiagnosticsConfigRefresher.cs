@@ -58,7 +58,7 @@ namespace OpenTelemetry.Internal
         private string logDirectory;  // Log directory for log files
         private int logFileSize;  // Log file size in bytes
         private long logFilePosition;  // The logger will write into the byte at this position
-        private EventLevel logEventLevel;
+        private EventLevel logEventLevel = (EventLevel)(-1);
 
         public SelfDiagnosticsConfigRefresher()
         {
