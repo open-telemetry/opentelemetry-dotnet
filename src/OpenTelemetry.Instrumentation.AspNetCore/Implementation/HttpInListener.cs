@@ -96,7 +96,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
-                    // Start the new activity
+                    // Start the new activity make it Activity.Current.
                     newOne.Start();
 
                     if (request.ContentType == "application/grpc" && request.Path.HasValue)
@@ -107,7 +107,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
                     activity.IsAllDataRequested = false;
 
-                    // Make the new one Activity.Current
                     activity = newOne;
                 }
 
