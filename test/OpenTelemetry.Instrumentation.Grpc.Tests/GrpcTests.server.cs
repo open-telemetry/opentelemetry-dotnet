@@ -121,13 +121,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData(false)]
         public void GrpcAspNetCoreInstrumentationAddsCorrectAttributesWhenItCreatesNewActivity(bool? enableGrpcAspNetCoreSupport)
         {
-            // This CompositeTextMapPropagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new B3Propagator(),
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
+            // B3Propagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
+            Sdk.SetDefaultTextMapPropagator(new B3Propagator());
             var processor = new Mock<BaseProcessor<Activity>>();
             var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
