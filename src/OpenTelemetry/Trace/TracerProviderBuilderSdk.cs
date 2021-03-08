@@ -27,29 +27,14 @@ namespace OpenTelemetry.Trace
     internal class TracerProviderBuilderSdk : TracerProviderBuilder
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-
-        private readonly TracerProviderOptions options;
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
-        internal TracerProviderBuilderSdk(TracerProviderOptions options)
+        internal TracerProviderBuilderSdk()
         {
-            this.options = options ?? new TracerProviderOptions();
-
-            if (options.SetErrorStatusOnException)
-            {
-                try
-                {
-                    this.AddProcessor(new ExceptionProcessor());
-                }
-                catch (Exception ex)
-                {
-                    throw new NotSupportedException($"{nameof(options.SetErrorStatusOnException)} is not supported on this platform.", ex);
-                }
-            }
         }
 
         /// <summary>
@@ -98,6 +83,47 @@ namespace OpenTelemetry.Trace
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
                 this.sources.Add(name);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="enabled">Enabled or not.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder SetErrorStatusOnException(bool enabled)
+        {
+            ExceptionProcessor existingExceptionProcessor = null;
+
+            if (this.processors.Count > 0)
+            {
+                existingExceptionProcessor = this.processors[0] as ExceptionProcessor;
+            }
+
+            if (enabled)
+            {
+                if (existingExceptionProcessor == null)
+                {
+                    try
+                    {
+                        this.processors.Insert(0, new ExceptionProcessor());
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                    }
+                }
+            }
+            else
+            {
+                if (existingExceptionProcessor != null)
+                {
+                    this.processors.RemoveAt(0);
+                    existingExceptionProcessor.Dispose();
+                }
             }
 
             return this;

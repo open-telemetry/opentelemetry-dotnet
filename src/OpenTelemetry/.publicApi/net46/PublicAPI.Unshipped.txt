@@ -1,8 +1,4 @@
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
-OpenTelemetry.Trace.TracerProviderOptions
-OpenTelemetry.Trace.TracerProviderOptions.SetErrorStatusOnException.get -> bool
-OpenTelemetry.Trace.TracerProviderOptions.SetErrorStatusOnException.set -> void
-OpenTelemetry.Trace.TracerProviderOptions.TracerProviderOptions() -> void
-static OpenTelemetry.Sdk.CreateTracerProviderBuilder(System.Action<OpenTelemetry.Trace.TracerProviderOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddLegacyActivity(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
