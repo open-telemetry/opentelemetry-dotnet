@@ -194,15 +194,19 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             ValidateGrpcActivity(grpcSpan1);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
+            Assert.Equal(0, grpcSpan1.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
 
             ValidateGrpcActivity(grpcSpan2);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan2.DisplayName);
+            Assert.Equal(0, grpcSpan2.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
 
             ValidateGrpcActivity(grpcSpan3);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan3.DisplayName);
+            Assert.Equal(0, grpcSpan3.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
 
             ValidateGrpcActivity(grpcSpan4);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan4.DisplayName);
+            Assert.Equal(0, grpcSpan4.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
         [Fact]
