@@ -17,7 +17,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Trace;
 
@@ -35,8 +34,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         {
-            services.AddOpenTelemetryTracing(builder => { });
-            return services;
+            return services.AddOpenTelemetryTracing((sp, builder) => { });
         }
 
         /// <summary>
@@ -52,10 +50,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var builder = Sdk.CreateTracerProviderBuilder();
-            configure(builder);
-            services.AddOpenTelemetryTracing(() => builder.Build());
-            return services;
+            return services.AddOpenTelemetryTracing((sp, builder) => { configure(builder); });
         }
 
         /// <summary>
@@ -71,44 +66,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var builder = Sdk.CreateTracerProviderBuilder();
-            services.AddOpenTelemetryTracing((sp) =>
+            return services.AddOpenTelemetryTracing(sp =>
             {
+                var builder = new TracerProviderBuilderHosting(sp);
                 configure(sp, builder);
                 return builder.Build();
             });
-            return services;
-        }
-
-        /// <summary>
-        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="createTracerProvider">A delegate that provides the tracer provider to be registered.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<TracerProvider> createTracerProvider)
-        {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (createTracerProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createTracerProvider));
-            }
-
-            try
-            {
-                services.AddSingleton(s => createTracerProvider());
-                AddOpenTelemetryTracingInternal(services);
-            }
-            catch (Exception ex)
-            {
-                HostingExtensionsEventSource.Log.FailedInitialize(ex);
-            }
-
-            return services;
         }
 
         /// <summary>
@@ -131,8 +94,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
             try
             {
-                services.AddSingleton(s => createTracerProvider(s));
-                AddOpenTelemetryTracingInternal(services);
+                return services
+                    .AddSingleton(s => createTracerProvider(s))
+                    .AddOpenTelemetryTracingInternal();
             }
             catch (Exception ex)
             {
@@ -142,9 +106,10 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        private static void AddOpenTelemetryTracingInternal(IServiceCollection services)
+        private static IServiceCollection AddOpenTelemetryTracingInternal(this IServiceCollection services)
         {
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+            return services;
         }
     }
 }

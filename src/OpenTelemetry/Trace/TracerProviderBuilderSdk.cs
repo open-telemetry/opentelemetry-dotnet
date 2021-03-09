@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Build TracerProvider with Resource, Sampler, Processors and Instrumentation.
     /// </summary>
-    internal class TracerProviderBuilderSdk : TracerProviderBuilder
+    public class TracerProviderBuilderSdk : TracerProviderBuilder
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
@@ -32,10 +32,6 @@ namespace OpenTelemetry.Trace
         private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
-
-        internal TracerProviderBuilderSdk()
-        {
-        }
 
         /// <summary>
         /// Adds an instrumentation to the provider.

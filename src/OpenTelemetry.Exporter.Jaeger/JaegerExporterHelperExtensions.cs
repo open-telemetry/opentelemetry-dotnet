@@ -38,7 +38,16 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new JaegerExporterOptions();
+            JaegerExporterOptions exporterOptions;
+            if (builder is IResolvingTracerProviderBuilder resolvingTracerProviderBuilder)
+            {
+                exporterOptions = resolvingTracerProviderBuilder.ResolveOptions<JaegerExporterOptions>();
+            }
+            else
+            {
+                exporterOptions = new JaegerExporterOptions();
+            }
+
             configure?.Invoke(exporterOptions);
             var jaegerExporter = new JaegerExporter(exporterOptions);
 

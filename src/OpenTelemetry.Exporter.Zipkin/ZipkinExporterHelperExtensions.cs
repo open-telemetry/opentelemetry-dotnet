@@ -38,7 +38,16 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new ZipkinExporterOptions();
+            ZipkinExporterOptions exporterOptions;
+            if (builder is IResolvingTracerProviderBuilder resolvingTracerProviderBuilder)
+            {
+                exporterOptions = resolvingTracerProviderBuilder.ResolveOptions<ZipkinExporterOptions>();
+            }
+            else
+            {
+                exporterOptions = new ZipkinExporterOptions();
+            }
+
             configure?.Invoke(exporterOptions);
             var zipkinExporter = new ZipkinExporter(exporterOptions);
 
