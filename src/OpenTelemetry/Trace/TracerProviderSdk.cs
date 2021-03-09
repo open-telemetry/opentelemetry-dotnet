@@ -75,8 +75,17 @@ namespace OpenTelemetry.Trace
                         // We have a legacy activity in hand now
                         if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
-                            // Legacy activity matches the user configured list. Call sampler for the legacy activity
-                            this.getRequestedDataAction(activity);
+                            // Legacy activity matches the user configured list.
+                            // Call sampler for the legacy activity
+                            // unless suppressed.
+                            if (!Sdk.SuppressInstrumentation)
+                            {
+                                this.getRequestedDataAction(activity);
+                            }
+                            else
+                            {
+                                activity.IsAllDataRequested = false;
+                            }
                         }
                         else
                         {
