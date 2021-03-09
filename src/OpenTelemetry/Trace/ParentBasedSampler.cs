@@ -19,7 +19,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampler implementation which by default will take a sample if parent Activity or any linked Activity is sampled.
+    /// Sampler implementation which by default will take a sample if parent Activity is sampled.
     /// Otherwise, samples root traces according to the specified root sampler.
     /// </summary>
     /// <remarks>
@@ -114,23 +114,7 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            if (samplingParameters.Links != null)
-            {
-                // If any linked context is sampled keep the sampling decision.
-                // TODO: This is not mentioned in the spec.
-                // Follow up with spec to see if context from Links
-                // must be used in ParentBasedSampler.
-                foreach (var parentLink in samplingParameters.Links)
-                {
-                    if ((parentLink.Context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
-                    {
-                        return new SamplingResult(SamplingDecision.RecordAndSample);
-                    }
-                }
-            }
-
-            // If parent was not sampled (and no linked context exists) => delegate to the "not sampled"
-            // inner samplers.
+            // If parent is not sampled => delegate to the "not sampled" inner samplers.
             if (parentContext.IsRemote)
             {
                 return this.remoteParentNotSampled.ShouldSample(samplingParameters);

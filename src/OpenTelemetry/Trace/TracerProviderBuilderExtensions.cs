@@ -23,6 +23,23 @@ namespace OpenTelemetry.Trace
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.SetErrorStatusOnException(enabled);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets sampler.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
