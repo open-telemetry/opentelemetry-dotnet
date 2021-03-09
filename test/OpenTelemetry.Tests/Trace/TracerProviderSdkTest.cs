@@ -216,6 +216,42 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerSdkSetsActivityDataRequestedToFalseWhenSuppressInstrumentationIsTrueForLegacyActivity()
+        {
+            using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+
+            bool startCalled = false;
+            bool endCalled = false;
+
+            testActivityProcessor.StartAction =
+                (a) =>
+                {
+                    startCalled = true;
+                };
+
+            testActivityProcessor.EndAction =
+                (a) =>
+                {
+                    endCalled = true;
+                };
+
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                        .AddLegacySource("random")
+                        .AddProcessor(testActivityProcessor)
+                        .SetSampler(new AlwaysOnSampler())
+                        .Build();
+
+            using (SuppressInstrumentationScope.Begin(true))
+            {
+                using var activity = new Activity("random").Start();
+                Assert.False(activity.IsAllDataRequested);
+            }
+
+            Assert.False(startCalled);
+            Assert.False(endCalled);
+        }
+
+        [Fact]
         public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
         {
             var testSampler = new TestSampler();
