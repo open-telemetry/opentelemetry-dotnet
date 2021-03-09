@@ -20,6 +20,17 @@ namespace OpenTelemetry.Trace
 {
     public static class TracerProviderBuilderExtensions
     {
+        public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
+            where T : class
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
+            {
+                tracerProviderBuilderHosting.AddInstrumentation<T>();
+            }
+
+            return tracerProviderBuilder;
+        }
+
         public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : BaseProcessor<Activity>
         {

@@ -30,6 +30,14 @@ namespace OpenTelemetry.Trace
             this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
+        public TracerProviderBuilder AddInstrumentation<T>()
+            where T : class
+        {
+            this.AddInstrumentation(() => this.ResolveService<T>());
+
+            return this;
+        }
+
         public TracerProviderBuilder AddProcessor<T>()
             where T : BaseProcessor<Activity>
         {
