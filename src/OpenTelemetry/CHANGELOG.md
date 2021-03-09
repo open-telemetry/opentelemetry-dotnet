@@ -13,25 +13,30 @@ please check the latest changes
   sets the activity status to `Error` when exception happened.
   ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
   [#1875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1875))
+
 * Added `ForceFlush` to `TracerProvider`.
   ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
-* Added a TracerProvierBuilder extension method called
-  `AddLegacyActivityOperationName` which is used by instrumentation libraries
-  that use DiagnosticSource to get activities processed without
-  ActivitySourceAdapter.
-  ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
+
+* Added a TracerProviderBuilder extension method called `AddLegacySource` which
+  is used by instrumentation libraries that use DiagnosticSource to get
+  activities processed without ActivitySourceAdapter.
+  [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
+  [#1860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1860)
+
 * Added new constructor with optional parameters to allow customization of
-  `ParentBasedSampler` behavior. ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
+  `ParentBasedSampler` behavior.
+  ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
 
 * The application base directory is now tested after the current directory when
-  searching for the
-  [self diagnostic configuration file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
+  searching for the [self diagnostic configuration
+  file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
   ([#1865](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1865))
 
 * Resource Attributes now accept primitive arrays as values.
   ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
 
-* Fixed [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
+* Fixed
+  [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
   `ParentBasedSampler` will no longer explicitly consider Activity links.
   ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
 
