@@ -236,7 +236,7 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-                        .AddLegacyActivity("random")
+                        .AddLegacySource("random")
                         .AddProcessor(testActivityProcessor)
                         .SetSampler(new AlwaysOnSampler())
                         .Build();
