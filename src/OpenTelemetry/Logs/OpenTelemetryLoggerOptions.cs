@@ -25,18 +25,29 @@ namespace OpenTelemetry.Logs
         internal readonly List<BaseProcessor<LogRecord>> Processors = new List<BaseProcessor<LogRecord>>();
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not log scopes should be included on generated <see cref="LogRecord"/>s. Default value: False.
+        /// Gets or sets a value indicating whether or not log scopes should be
+        /// included on generated <see cref="LogRecord"/>s. Default value:
+        /// False.
         /// </summary>
         public bool IncludeScopes { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not log message should be included on generated <see cref="LogRecord"/>s. Default value: False.
+        /// Gets or sets a value indicating whether or not formatted log message
+        /// should be included on generated <see cref="LogRecord"/>s. Default
+        /// value: False.
         /// </summary>
-        public bool IncludeMessage { get; set; }
+        public bool IncludeFormattedMessage { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not log state should be parsed into <see cref="LogRecord.StateValues"/> on generated <see cref="LogRecord"/>s. Default value: False.
+        /// Gets or sets a value indicating whether or not log state should be
+        /// parsed into <see cref="LogRecord.StateValues"/> on generated <see
+        /// cref="LogRecord"/>s. Default value: False.
         /// </summary>
+        /// <remarks>
+        /// Note: When <see cref="ParseStateValues"/> is set to <see
+        /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
+        /// langword="null"/>.
+        /// </remarks>
         public bool ParseStateValues { get; set; }
 
         /// <summary>

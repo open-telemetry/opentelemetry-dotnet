@@ -33,6 +33,11 @@ please check the latest changes
   `ParentBasedSampler` will no longer explicitly consider Activity links.
   ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
 
+* Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
+  `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
+  `ForEachScope` on `LogRecord`.
+  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869))
+
 ## 1.0.1
 
 Released 2021-Feb-10
