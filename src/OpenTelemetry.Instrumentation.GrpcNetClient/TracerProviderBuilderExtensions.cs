@@ -46,7 +46,7 @@ namespace OpenTelemetry.Trace
 
             builder.AddInstrumentation(() => new GrpcClientInstrumentation(grpcOptions));
             builder.AddSource(GrpcClientDiagnosticListener.ActivitySourceName);
-            builder.AddLegacyActivity("Grpc.Net.Client.GrpcOut");
+            builder.AddLegacySource("Grpc.Net.Client.GrpcOut");
 
             return builder;
         }

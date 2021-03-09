@@ -86,15 +86,15 @@ namespace Benchmarks.Trace
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
-                .AddLegacyActivity("TestOperationName")
+                .AddLegacySource("TestOperationName")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
-                .AddLegacyActivity("TestOperationName1")
-                .AddLegacyActivity("TestOperationName2")
+                .AddLegacySource("TestOperationName1")
+                .AddLegacySource("TestOperationName2")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
         }

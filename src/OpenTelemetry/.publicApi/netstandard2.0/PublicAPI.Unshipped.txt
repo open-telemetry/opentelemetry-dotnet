@@ -8,6 +8,6 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.set -> void
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddLegacyActivity(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddLegacySource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
