@@ -44,8 +44,8 @@ namespace OpenTelemetry.Trace
             configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
             builder.AddInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
             builder.AddSource(HttpInListener.ActivitySourceName);
-            builder.AddLegacyActivity(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
-            builder.AddLegacyActivity(HttpInListener.ActivityNameByHttpInListener); // for the sibling activities created by the instrumentation library
+            builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+            builder.AddLegacySource(HttpInListener.ActivityNameByHttpInListener); // for the sibling activities created by the instrumentation library
 
             return builder;
         }
