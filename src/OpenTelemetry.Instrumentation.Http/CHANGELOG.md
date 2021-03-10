@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* HttpClient (.NET Core) instrumentation performance optimization
+  by leveraging sampling decision and short circuiting path.
+  ([#1894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
+
 ## 1.0.0-rc2
 
 Released 2021-Jan-29

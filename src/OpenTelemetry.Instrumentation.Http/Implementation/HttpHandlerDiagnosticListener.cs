@@ -67,12 +67,28 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what HttpClient library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
             }
 
+            // TODO: Investigate why this check is needed.
             if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
             {
                 // this request is already instrumented, we should back off
@@ -80,36 +96,38 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-
             if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
             {
                 textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
-            try
+            // enrich Activity from payload only if sampling decision
+            // is favorable.
+            if (activity.IsAllDataRequested)
             {
-                if (this.options.EventFilter(activity.OperationName, request) == false)
+                try
                 {
-                    HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                    if (this.options.EventFilter(activity.OperationName, request) == false)
+                    {
+                        HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        activity.IsAllDataRequested = false;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.RequestFilterException(ex);
                     activity.IsAllDataRequested = false;
                     return;
                 }
-            }
-            catch (Exception ex)
-            {
-                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
-                activity.IsAllDataRequested = false;
-                return;
-            }
 
-            activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+                activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
 
-            if (activity.IsAllDataRequested)
-            {
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
