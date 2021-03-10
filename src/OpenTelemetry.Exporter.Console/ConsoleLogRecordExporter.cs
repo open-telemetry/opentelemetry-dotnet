@@ -62,6 +62,13 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
                 }
 
+                logRecord.ForEachScope(
+                    (scope, state) =>
+                    {
+                        this.WriteLine($"{"LogRecord.Scope:".PadRight(rightPaddingLength)}{scope}");
+                    },
+                    logRecord.State);
+
                 this.WriteLine(string.Empty);
             }
 
