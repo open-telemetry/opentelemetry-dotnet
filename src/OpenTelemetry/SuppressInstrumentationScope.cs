@@ -86,8 +86,18 @@ namespace OpenTelemetry
             return value;
         }
 
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (!this.disposed)
+            {
+                Slot.Set(this.previousValue);
+                this.disposed = true;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int IncrementIfTriggered()
+        internal static int IncrementIfTriggered()
         {
             var value = Slot.Get();
 
@@ -100,7 +110,7 @@ namespace OpenTelemetry
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int DecrementIfTriggered()
+        internal static int DecrementIfTriggered()
         {
             var value = Slot.Get();
 
@@ -110,16 +120,6 @@ namespace OpenTelemetry
             }
 
             return value;
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (!this.disposed)
-            {
-                Slot.Set(this.previousValue);
-                this.disposed = true;
-            }
         }
     }
 }
