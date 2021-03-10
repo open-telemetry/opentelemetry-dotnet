@@ -43,7 +43,12 @@ internal class MyExporter : BaseExporter<LogRecord>
             }
 
             sb.Append($"{record}(");
-            record.ForEachScope((scope, _) => sb.Append($"{scope}"), (object)null);
+
+            record.ForEachScope(ProcessScope, sb);
+
+            static void ProcessScope(object scope, StringBuilder builder)
+                => builder.Append($"{scope}");
+
             sb.Append($")");
         }
 
