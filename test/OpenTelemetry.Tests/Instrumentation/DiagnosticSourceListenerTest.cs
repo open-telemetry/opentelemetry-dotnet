@@ -33,28 +33,5 @@ namespace OpenTelemetry.Instrumentation.Tests
             this.testDiagnosticSourceSubscriber = new DiagnosticSourceSubscriber(this.testListenerHandler, null);
             this.testDiagnosticSourceSubscriber.Subscribe();
         }
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void ListenerHandlerIsNotInvokedWhenSuppressInstrumentationTrue(bool suppressInstrumentation)
-        {
-            using var scope = SuppressInstrumentationScope.Begin(suppressInstrumentation);
-
-            var activity = new Activity("Main");
-            this.diagnosticSource.StartActivity(activity, null);
-            this.diagnosticSource.StopActivity(activity, null);
-
-            if (suppressInstrumentation)
-            {
-                Assert.Equal(0, this.testListenerHandler.OnStartInvokedCount);
-                Assert.Equal(0, this.testListenerHandler.OnStopInvokedCount);
-            }
-            else
-            {
-                Assert.Equal(1, this.testListenerHandler.OnStartInvokedCount);
-                Assert.Equal(1, this.testListenerHandler.OnStopInvokedCount);
-            }
-        }
     }
 }
