@@ -17,11 +17,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Context;
 
 namespace OpenTelemetry.Instrumentation
 {
     internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
+        private static readonly RuntimeContextSlot<int> Slot = RuntimeContext.RegisterSlot<int>("otel.suppress_instrumentation_1");
         private readonly ListenerHandler handler;
 
         public DiagnosticSourceListener(ListenerHandler handler)
@@ -53,16 +55,26 @@ namespace OpenTelemetry.Instrumentation
             {
                 if (value.Key.EndsWith("Start", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    if (!Sdk.SuppressInstrumentation)
                     {
                         this.handler.OnStartActivity(Activity.Current, value.Value);
+                    }
+                    else
+                    {
+                        var supressionCount = Slot.Get();
+                        Slot.Set(++supressionCount);
                     }
                 }
                 else if (value.Key.EndsWith("Stop", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    var supressionCount = Slot.Get();
+                    if (supressionCount <= 0)
                     {
                         this.handler.OnStopActivity(Activity.Current, value.Value);
+                    }
+                    else if (supressionCount > 0)
+                    {
+                        Slot.Set(--supressionCount);
                     }
                 }
                 else if (value.Key.EndsWith("Exception", StringComparison.Ordinal))
