@@ -34,11 +34,19 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void CreateStatus_WithDescription()
+        public void CreateStatus_Error_WithDescription()
         {
             var status = Status.Error.WithDescription("This is an error.");
             Assert.Equal(StatusCode.Error, status.StatusCode);
             Assert.Equal("This is an error.", status.Description);
+        }
+
+        [Fact]
+        public void CreateStatus_Ok_WithDescription()
+        {
+            var status = Status.Ok.WithDescription("This is will not be set.");
+            Assert.Equal(StatusCode.Ok, status.StatusCode);
+            Assert.Null(status.Description);
         }
 
         [Fact]
