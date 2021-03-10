@@ -33,9 +33,7 @@ namespace OpenTelemetry.Trace
         public TracerProviderBuilder AddInstrumentation<T>()
             where T : class
         {
-            this.AddInstrumentation(() => this.ResolveService<T>());
-
-            return this;
+            return this.AddInstrumentation(() => this.ResolveService<T>());
         }
 
         public TracerProviderBuilder AddProcessor<T>()

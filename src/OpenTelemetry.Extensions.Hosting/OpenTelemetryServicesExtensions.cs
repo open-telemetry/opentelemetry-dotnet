@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -69,9 +70,30 @@ namespace Microsoft.Extensions.DependencyInjection
             return services.AddOpenTelemetryTracing(sp =>
             {
                 var builder = new TracerProviderBuilderHosting(sp);
+
+                var tracerProviderBuilderConfigurationCallbacks = sp.GetService<IEnumerable<TracerProviderBuilderConfigurationCallback>>();
+                if (tracerProviderBuilderConfigurationCallbacks != null)
+                {
+                    foreach (var tracerProviderBuilderConfigurationCallback in tracerProviderBuilderConfigurationCallbacks)
+                    {
+                        tracerProviderBuilderConfigurationCallback.Configure(sp, builder);
+                    }
+                }
+
                 configure(sp, builder);
                 return builder.Build();
             });
+        }
+
+        /// <summary>
+        /// Register a callback to be called during the configuration of the OpenTelemetry <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <param name="services"><see cref="IServiceCollection"/>.</param>
+        /// <param name="configure">Configuration callback action.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            return services.AddSingleton(new TracerProviderBuilderConfigurationCallback { Configure = configure });
         }
 
         /// <summary>
@@ -110,6 +132,11 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
             return services;
+        }
+
+        private class TracerProviderBuilderConfigurationCallback
+        {
+            public Action<IServiceProvider, TracerProviderBuilder> Configure { get; set; }
         }
     }
 }
