@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Trace
 {
-    public interface IResolvingTracerProviderBuilder
+    public interface IResolvingTracerProviderBuilder : IServiceProvider
     {
-        T ResolveService<T>();
-
-        T ResolveOptions<T>()
+        T GetOptions<T>()
             where T : class, new();
     }
 }

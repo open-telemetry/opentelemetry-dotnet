@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace
         public TracerProviderBuilder AddInstrumentation<T>()
             where T : class
         {
-            return this.AddInstrumentation(() => this.ResolveService<T>());
+            return this.AddInstrumentation(() => this.serviceProvider.GetRequiredService<T>());
         }
 
         public TracerProviderBuilder AddProcessor<T>()
@@ -48,12 +48,12 @@ namespace OpenTelemetry.Trace
             return this.SetSampler(this.serviceProvider.GetRequiredService<T>());
         }
 
-        public T ResolveService<T>()
+        public object GetService(Type serviceType)
         {
-            return this.serviceProvider.GetRequiredService<T>();
+            return this.serviceProvider.GetService(serviceType);
         }
 
-        public T ResolveOptions<T>()
+        public T GetOptions<T>()
             where T : class, new()
         {
             return this.serviceProvider.GetRequiredService<IOptions<T>>().Value;
