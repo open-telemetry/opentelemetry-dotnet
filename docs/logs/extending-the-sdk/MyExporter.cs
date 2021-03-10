@@ -43,7 +43,7 @@ internal class MyExporter : BaseExporter<LogRecord>
             }
 
             sb.Append($"{record}(");
-            record.ForEachScope((scope, state) => sb.Append($"{scope}"), record.State);
+            record.ForEachScope((scope, _) => sb.Append($"{scope}"), (object)null);
             sb.Append($")");
         }
 
