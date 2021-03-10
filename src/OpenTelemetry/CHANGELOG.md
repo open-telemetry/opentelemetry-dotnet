@@ -9,6 +9,9 @@ please check the latest changes
 
 ## Unreleased
 
+* Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
+  ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
+
 * Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
   sets the activity status to `Error` when exception happened.
   ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
