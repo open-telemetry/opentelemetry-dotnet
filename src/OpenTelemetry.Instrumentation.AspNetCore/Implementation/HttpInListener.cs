@@ -99,7 +99,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     newOne.Start();
 
                     newOne.SetCustomProperty("IsCreatedByInstrumentation", true);
-                    newOne.SetTag("IsCreatedByInstrumentation", true);
 
                     // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
                     activity.IsAllDataRequested = false;
@@ -196,9 +195,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            var isCreatedByInstrumentationTag = activity.TagObjects.FirstOrDefault();
-            bool isCreatedByInstrumentation = !isCreatedByInstrumentationTag.Equals(default(KeyValuePair<string, object>)) && (bool)isCreatedByInstrumentationTag.Value;
-            if (isCreatedByInstrumentation)
+            if (activity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation)
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
