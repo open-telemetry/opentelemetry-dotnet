@@ -23,13 +23,15 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class TracerProviderBuilderExtensionsTest
     {
+        private const string ActivitySourceName = "TracerProviderBuilderExtensionsTest";
+
         [Fact]
         public void AddLegacyOperationName_NullBuilder_Noop()
         {
             TracerProviderBuilder builder = null;
 
             // No exception is thrown on executing this line
-            builder.AddLegacyActivity("TestOperationName");
+            builder.AddLegacySource("TestOperationName");
             using var provider = builder.Build();
 
             var emptyActivitySource = new ActivitySource(string.Empty);
@@ -43,7 +45,7 @@ namespace OpenTelemetry.Trace.Tests
         public void AddLegacyOperationName_BadArgs(string operationName)
         {
             var builder = Sdk.CreateTracerProviderBuilder();
-            Assert.Throws<ArgumentException>(() => builder.AddLegacyActivity(operationName));
+            Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
         }
 
         [Fact]
@@ -51,11 +53,94 @@ namespace OpenTelemetry.Trace.Tests
         {
             var emptyActivitySource = new ActivitySource(string.Empty);
             var builder = Sdk.CreateTracerProviderBuilder();
-            builder.AddLegacyActivity("TestOperationName");
+            builder.AddLegacySource("TestOperationName");
 
             Assert.False(emptyActivitySource.HasListeners());
             using var provider = builder.Build();
             Assert.True(emptyActivitySource.HasListeners());
+        }
+
+        [Fact]
+        public void SetErrorStatusOnExceptionEnabled()
+        {
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(new AlwaysOnSampler())
+                .SetErrorStatusOnException(false)
+                .SetErrorStatusOnException(false)
+                .SetErrorStatusOnException(true)
+                .SetErrorStatusOnException(true)
+                .SetErrorStatusOnException(false)
+                .SetErrorStatusOnException()
+                .Build();
+
+            Activity activity = null;
+
+            try
+            {
+                using (activity = activitySource.StartActivity("Activity"))
+                {
+                    throw new Exception("Oops!");
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            Assert.Equal(StatusCode.Error, activity.GetStatus().StatusCode);
+        }
+
+        [Fact]
+        public void SetErrorStatusOnExceptionDisabled()
+        {
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(new AlwaysOnSampler())
+                .SetErrorStatusOnException()
+                .SetErrorStatusOnException(false)
+                .Build();
+
+            Activity activity = null;
+
+            try
+            {
+                using (activity = activitySource.StartActivity("Activity"))
+                {
+                    throw new Exception("Oops!");
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
+        }
+
+        [Fact]
+        public void SetErrorStatusOnExceptionDefault()
+        {
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(new AlwaysOnSampler())
+                .Build();
+
+            Activity activity = null;
+
+            try
+            {
+                using (activity = activitySource.StartActivity("Activity"))
+                {
+                    throw new Exception("Oops!");
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
         }
     }
 }

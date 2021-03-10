@@ -23,6 +23,23 @@ namespace OpenTelemetry.Trace
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.SetErrorStatusOnException(enabled);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets sampler.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
@@ -72,16 +89,19 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds activity with a given operation name to the list of subscribed activities. This is only for legacy activities (i.e. activities created without using ActivitySource API).
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
-        /// <param name="operationName">OperationName to add.</param>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/> instance.</param>
+        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddLegacyActivity(this TracerProviderBuilder tracerProviderBuilder, string operationName)
+        public static TracerProviderBuilder AddLegacySource(this TracerProviderBuilder tracerProviderBuilder, string operationName)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.AddLegacyActivity(operationName);
+                tracerProviderBuilderSdk.AddLegacySource(operationName);
             }
 
             return tracerProviderBuilder;
