@@ -39,7 +39,6 @@ namespace TestApp.AspNetCore._2._1.Controllers
         [Route("api/GetChildActivityBaggageContext")]
         public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
         {
-            var activity = new Activity("ActivityInsideHttpRequest");
             var result = Baggage.Current.GetBaggage();
             return result;
         }
