@@ -15,11 +15,11 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -34,14 +34,32 @@ namespace OpenTelemetry.Internal
         // Buffer size of the log line. A UTF-16 encoded character in C# can take up to 4 bytes if encoded in UTF-8.
         private const int BUFFERSIZE = 4 * 5120;
         private const string EventSourceNamePrefix = "OpenTelemetry-";
+        private readonly object lockObj = new object();
         private readonly EventLevel logLevel;
         private readonly SelfDiagnosticsConfigRefresher configRefresher;
         private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
+        private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
 
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
             this.configRefresher = configRefresher ?? throw new ArgumentNullException(nameof(configRefresher));
+
+            List<EventSource> eventSources;
+            lock (this.lockObj)
+            {
+                eventSources = this.eventSourcesBeforeConstructor;
+                this.eventSourcesBeforeConstructor = null;
+            }
+
+            foreach (var eventSource in eventSources)
+            {
+#if NET452
+                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
+#else
+                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
+#endif
+            }
         }
 
         /// <summary>
@@ -105,12 +123,11 @@ namespace OpenTelemetry.Internal
                 var buffer = this.writeBuffer.Value;
                 if (buffer == null)
                 {
-                    buffer = new byte[BUFFERSIZE];  // TODO: handle OOM
+                    buffer = new byte[BUFFERSIZE];
                     this.writeBuffer.Value = buffer;
                 }
 
-                var timestamp = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
-                var pos = Encoding.UTF8.GetBytes(timestamp, 0, timestamp.Length, buffer, 0);
+                var pos = this.DateTimeGetBytes(DateTime.UtcNow, buffer, 0);
                 buffer[pos++] = (byte)':';
                 pos = EncodeInBuffer(eventMessage, false, buffer, pos);
                 if (payload != null)
@@ -118,7 +135,7 @@ namespace OpenTelemetry.Internal
                     // Not using foreach because it can cause allocations
                     for (int i = 0; i < payload.Count; ++i)
                     {
-                        object obj = payload.ElementAt(i);
+                        object obj = payload[i];
                         if (obj != null)
                         {
                             pos = EncodeInBuffer(obj.ToString(), true, buffer, pos);
@@ -148,15 +165,137 @@ namespace OpenTelemetry.Internal
             }
             catch (Exception)
             {
-                // One concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
+                // Fail to allocate memory for buffer, or
+                // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
                 // In this case, silently fail.
             }
+        }
+
+        /// <summary>
+        /// Write the <c>datetime</c> formatted string into <c>bytes</c> byte-array starting at <c>byteIndex</c> position.
+        /// <para>
+        /// [DateTimeKind.Utc]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff Z (i.e. 2020-12-09T10:20:50.4659412Z).
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Local]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff +|- HH : mm (i.e. 2020-12-09T10:20:50.4659412-08:00).
+        /// </para>
+        /// <para>
+        /// [DateTimeKind.Unspecified]
+        /// format: yyyy - MM - dd T HH : mm : ss . fffffff (i.e. 2020-12-09T10:20:50.4659412).
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// The bytes array must be large enough to write 27-33 charaters from the byteIndex starting position.
+        /// </remarks>
+        /// <param name="datetime">DateTime.</param>
+        /// <param name="bytes">Array of bytes to write.</param>
+        /// <param name="byteIndex">Starting index into bytes array.</param>
+        /// <returns>The number of bytes written.</returns>
+        internal int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
+        {
+            int num;
+            int pos = byteIndex;
+
+            num = datetime.Year;
+            bytes[pos++] = (byte)('0' + ((num / 1000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'-';
+
+            num = datetime.Month;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'-';
+
+            num = datetime.Day;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'T';
+
+            num = datetime.Hour;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)':';
+
+            num = datetime.Minute;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)':';
+
+            num = datetime.Second;
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            bytes[pos++] = (byte)'.';
+
+            num = (int)(Math.Round(datetime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
+            bytes[pos++] = (byte)('0' + ((num / 1000000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 1000) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 100) % 10));
+            bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+            bytes[pos++] = (byte)('0' + (num % 10));
+
+            switch (datetime.Kind)
+            {
+                case DateTimeKind.Utc:
+                    bytes[pos++] = (byte)'Z';
+                    break;
+
+                case DateTimeKind.Local:
+                    TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
+
+                    bytes[pos++] = (byte)(ts.Hours >= 0 ? '+' : '-');
+
+                    num = Math.Abs(ts.Hours);
+                    bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+                    bytes[pos++] = (byte)('0' + (num % 10));
+
+                    bytes[pos++] = (byte)':';
+
+                    num = ts.Minutes;
+                    bytes[pos++] = (byte)('0' + ((num / 10) % 10));
+                    bytes[pos++] = (byte)('0' + (num % 10));
+                    break;
+
+                case DateTimeKind.Unspecified:
+                default:
+                    // Skip
+                    break;
+            }
+
+            return pos - byteIndex;
         }
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
             {
+                // If there are EventSource classes already initialized as of now, this method would be called from
+                // the base class constructor before the first line of code in SelfDiagnosticsEventListener constructor.
+                // In this case logLevel is always its default value, "LogAlways".
+                // Thus we should save the event source and enable them later, when code runs in constructor.
+                if (this.eventSourcesBeforeConstructor != null)
+                {
+                    lock (this.lockObj)
+                    {
+                        if (this.eventSourcesBeforeConstructor != null)
+                        {
+                            this.eventSourcesBeforeConstructor.Add(eventSource);
+                            return;
+                        }
+                    }
+                }
+
 #if NET452
                 this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
 #else
@@ -175,7 +314,6 @@ namespace OpenTelemetry.Internal
         /// <param name="eventData">Data of the EventSource event.</param>
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            // TODO: retrieve the file stream object from configRefresher and write to it
             this.WriteEvent(eventData.Message, eventData.Payload);
         }
     }

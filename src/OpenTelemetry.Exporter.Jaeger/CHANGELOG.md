@@ -2,11 +2,36 @@
 
 ## Unreleased
 
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `JaegerExporter` and `JaegerExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Default ServiceName, if not found in Resource is obtained from SDK
+  using GetDefaultResource().
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+* Removed ProcessTags from JaegerExporterOptions. The alternate option is
+  to use Resource attributes.
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `JaegerExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 
-* In `JaegerExporterOptions`: Exporter options now include a switch for
-  Batch vs Simple exporter, and settings for batch exporting properties.
+* In `JaegerExporterOptions`: Exporter options now include a switch for Batch vs
+  Simple exporter, and settings for batch exporting properties.
 
 * Jaeger will now set the `error` tag when `otel.status_code` is set to `ERROR`.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579) &
@@ -20,6 +45,10 @@
   instead of `message`.
   ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
 
+* `JaegerExporter` batch format has changed to be compliant with the spec. This
+  may impact the way spans are displayed in Jaeger UI.
+  ([#1732](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1732))
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17
@@ -31,7 +60,7 @@ Released 2020-Nov-17
   ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
 * Removed `ServiceName` from options available on the `AddJaegerExporter`
   extension. It is not required by the
-  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk_exporters/jaeger.md).
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
   ([#1572](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1572))
 
 ## 0.8.0-beta.1

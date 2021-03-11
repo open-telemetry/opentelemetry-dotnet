@@ -46,7 +46,6 @@ namespace WebApi
                 .AddZipkinExporter(b =>
                 {
                     var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                    b.ServiceName = nameof(WebApi);
                     b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
                 }));
         }

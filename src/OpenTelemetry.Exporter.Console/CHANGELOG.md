@@ -1,6 +1,39 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Exporter.Console/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
+
+* Removed code that prints Baggage information
+  ([#1825](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1825))
+* LogRecordExporter exports Message, Scope, StateValues from LogRecord.
+  ([#1871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1871)
+  [#1895](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1895))
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `ConsoleActivityExporter` and `ConsoleLogRecordExporter` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
 
 * `AddConsoleExporter` extension method for logs moved from
   `OpenTelemetry.Trace` namespace to `OpenTelemetry.Logs` namespace.
@@ -9,6 +42,10 @@
 * Added `ConsoleActivityExporter` and `ConsoleLogExporter`. Refactored
   `ConsoleExporter` to get rid of type specific check in the class
   ([#1593](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1593))
+
+* Replaced Debug.WriteLine with Trace.WriteLine to display the logs to the Debug
+  window with Release configuration
+  ([#1719](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1719))
 
 ## 1.0.0-rc1.1
 

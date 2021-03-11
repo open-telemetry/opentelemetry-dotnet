@@ -2,11 +2,11 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, metrics ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ master ]
+    branches: [ main, metrics ]
     paths-ignore:
     - '**.md'
 
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
     steps:
       - uses: actions/checkout@v2
       - name: Run redis docker-compose.integration
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
     steps:
       - uses: actions/checkout@v2
       - name: Run sql docker-compose.integration
@@ -38,8 +38,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1]
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
     steps:
       - uses: actions/checkout@v2
       - name: Run W3C Trace Context docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+
+  otlp-exporter-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run OTLP Exporter docker-compose.integration
+        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build

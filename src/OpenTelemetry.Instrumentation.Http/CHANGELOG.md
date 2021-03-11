@@ -2,9 +2,23 @@
 
 ## Unreleased
 
+* HttpClient (.NET Core) instrumentation performance optimization
+  by leveraging sampling decision and short circuiting path.
+  ([#1894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * `otel.status_description` tag will no longer be set to the http status
   description/reason phrase for outgoing http spans.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579))
+
+* Moved the DiagnosticListener filtering logic from HttpClientInstrumentation
+  ctor to OnStartActivity method of HttpHandlerDiagnosticListener.cs; Updated
+  the logic of OnStartActivity to inject propagation data into Headers for
+  filtered out events as well.
+  ([#1707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1707))
 
 ## 1.0.0-rc1.1
 

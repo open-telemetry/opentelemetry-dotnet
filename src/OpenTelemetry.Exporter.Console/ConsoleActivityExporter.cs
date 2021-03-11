@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Console
+namespace OpenTelemetry.Exporter
 {
     public class ConsoleActivityExporter : ConsoleExporter<Activity>
     {
@@ -38,6 +38,7 @@ namespace OpenTelemetry.Exporter.Console
                     this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
                 }
 
+                this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
                 this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
                 this.WriteLine($"Activity.Kind:        {activity.Kind}");
                 this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
@@ -69,15 +70,6 @@ namespace OpenTelemetry.Exporter.Console
                         {
                             this.WriteLine($"        {attribute.Key}: {attribute.Value}");
                         }
-                    }
-                }
-
-                if (activity.Baggage.Any())
-                {
-                    this.WriteLine("Activity.Baggage:");
-                    foreach (var baggage in activity.Baggage)
-                    {
-                        this.WriteLine($"    {baggage.Key}: {baggage.Value}");
                     }
                 }
 

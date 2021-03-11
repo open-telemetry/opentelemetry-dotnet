@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
 {
     internal class SelfDiagnosticsConfigParser
     {
-        private const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
+        public const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
         private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
         private const int FileSizeUpperLimit = 128 * 1024;  // Upper limit for log file size in KB: 128MB
 
@@ -54,12 +54,25 @@ namespace OpenTelemetry.Internal
             logLevel = EventLevel.LogAlways;
             try
             {
-                if (!File.Exists(ConfigFileName))
+                var configFilePath = ConfigFileName;
+
+                // First check using current working directory
+                if (!File.Exists(configFilePath))
                 {
-                    return false;
+#if NET452
+                    configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
+#else
+                    configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
+#endif
+
+                    // Second check using application base directory
+                    if (!File.Exists(configFilePath))
+                    {
+                        return false;
+                    }
                 }
 
-                using FileStream file = File.Open(ConfigFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using FileStream file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 var buffer = this.configBuffer;
                 if (buffer == null)
                 {
