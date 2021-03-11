@@ -93,6 +93,11 @@ the library they instrument, and steps for enabling them.
   client](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](../../../src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
+More community contributed instrumentations are available in [OpenTelemetry .NET
+Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
+If you are writing an instrumentation library yourself, use the following
+guidelines.
+
 ### Writing own instrumentation library
 
 This section describes the steps required to write your own instrumentation
@@ -158,20 +163,29 @@ Writing an instrumentation library typically involves 3 steps.
        the instrumented library must be documented so that end users can enable
        it using `AddSource` method on `TracerProviderBuilder`.
 
-There is a special case for libraries which are already instrumented with
+### Special case : Instrumentation for libraries producing legacy Activity
+
+There is a special case for libraries which are already instrumented to produce
 [Activity](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md),
 but using the
 [DiagnosticSource](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md)
-method. These libraries already emit activities, but it may not conform to the
-OpenTelemetry semantic conventions. Also, as these libraries do not use
-ActivitySource to create Activity, they cannot be simply subscribed to. In such
-cases, the instrumentation library should subscribe to the DiagnosticSource
-events from the instrumented library, and in turn produce *new* activity using
-ActivitySource. This new activity must be created as a sibling of the activity
-already produced by the library. i.e the new activity must have the same parent
-as the original activity. Some common examples of such libraries include
-Asp.Net, Asp.Net Core, HttpClient (.NET Core). Instrumentation libraries for
-these are already provided in this repo.
+method. These are referred to as "legacy Activity" in this repo. These libraries
+already create activities but they do so by using the `Activity` constructor
+directly, rather than using `ActivitySource.StartActivity` method. These
+activities does not by default runs though the samplers, and will have their
+`Kind` set to internal and they'll have empty ActivitySource name associated
+with it.
+
+Some common examples of such libraries include ASP.NET, ASP.NET Core, HttpClient
+(.NET Core). Instrumentation libraries for these are already provided in this
+repo. The OpenTelemetry .NET Contrib Repo also has instrumentations for
+libraries like
+[ElasticSearch](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.Elasticsearch),
+[EntityFramework](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.EntityFrameworkCore)
+etc. which fall in this category.
+
+If you are writing instrumentation for such library, it is recommended to refer
+to one of the above as a reference.
 
 ## Processor
 
