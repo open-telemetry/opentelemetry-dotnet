@@ -40,9 +40,7 @@ namespace TestApp.AspNetCore._3._1.Controllers
         public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
         {
             var activity = new Activity("ActivityInsideHttpRequest");
-            activity.Start();
             var result = Baggage.Current.GetBaggage();
-            activity.Stop();
             return result;
         }
     }

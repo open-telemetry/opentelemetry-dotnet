@@ -394,59 +394,106 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
 
-        [Fact]
-        public async Task PropagateContextIrrespectiveOfSamplingDecision()
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
+        public async Task ExtractContextIrrespectiveOfSamplingDecision(SamplingDecision samplingDecision)
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedParentSpanId = ActivitySpanId.CreateRandom();
-
-            // Arrange
-            using (var testFactory = this.factory
-                .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(services =>
-                    {
-                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOffSampler())
-                        .AddAspNetCoreInstrumentation()
-                        .AddProcessor(activityProcessor.Object)
-                        .Build();
-                    })))
+            try
             {
-                using var client = testFactory.CreateClient();
-
-                // Test TraceContext Propagation
+                var expectedTraceId = ActivityTraceId.CreateRandom();
+                var expectedParentSpanId = ActivitySpanId.CreateRandom();
                 var expectedTraceState = "rojo=1,congo=2";
-                var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedParentSpanId}-01");
-                request.Headers.Add("tracestate", expectedTraceState);
+                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
+                var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
+                Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
-                var response = await client.SendAsync(request);
-                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                // Arrange
+                using (var testFactory = this.factory
+                    .WithWebHostBuilder(builder =>
+                        builder.ConfigureTestServices(services =>
+                        {
+                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            .SetSampler(new TestSampler(samplingDecision))
+                            .AddAspNetCoreInstrumentation()
+                            .Build();
+                        })))
+                {
+                    using var client = testFactory.CreateClient();
 
-                response.EnsureSuccessStatusCode();
+                    // Test TraceContext Propagation
+                    var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
+                    var response = await client.SendAsync(request);
+                    var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
-                Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
-                Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
+                    response.EnsureSuccessStatusCode();
 
-                // Test Baggage Context Propagation
-                request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
-                request.Headers.Add("Baggage", "key1=value1,key2=value2");
-                response = await client.SendAsync(request);
-                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                    Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
+                    Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
+                    Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
 
-                response.EnsureSuccessStatusCode();
+                    // Test Baggage Context Propagation
+                    request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
-                Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
+                    response = await client.SendAsync(request);
+                    var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                WaitForProcessorInvocations(activityProcessor, 1);
+                    response.EnsureSuccessStatusCode();
+
+                    Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
+                    Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
+                }
+            }
+            finally
+            {
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                {
+                    new TraceContextPropagator(),
+                    new BaggagePropagator(),
+                }));
+            }
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop, false, false)]
+        [InlineData(SamplingDecision.RecordOnly, true, true)]
+        [InlineData(SamplingDecision.RecordAndSample, true, true)]
+        public async Task FilterAndEnrichAreOnlyCalledWhenSampled(SamplingDecision samplingDecision, bool shouldFilterBeCalled, bool shouldEnrichBeCalled)
+        {
+            bool filterCalled = false;
+            bool enrichCalled = false;
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new TestSampler(samplingDecision))
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.Filter = (context) =>
+                        {
+                            filterCalled = true;
+                            return true;
+                        };
+                        options.Enrich = (activity, methodName, request) =>
+                        {
+                            enrichCalled = true;
+                        };
+                    })
+                    .Build();
             }
 
-            // Processor.OnStart and Processor.OnEnd are not called as activity.IsAllDataRequested is set to false
-            Assert.Equal(1, activityProcessor.Invocations.Count); // Only Processor.SetParentProvider is called
+            // Arrange
+            using var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient();
+
+            // Act
+            var response = await client.GetAsync("/api/values");
+
+            // Assert
+            Assert.Equal(shouldFilterBeCalled, filterCalled);
+            Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
         public void Dispose()
@@ -491,6 +538,45 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 default:
                     break;
+            }
+        }
+
+        private class ExtractOnlyPropagator : TextMapPropagator
+        {
+            private readonly ActivityContext activityContext;
+            private readonly Baggage baggage;
+
+            public ExtractOnlyPropagator(ActivityContext activityContext, Baggage baggage)
+            {
+                this.activityContext = activityContext;
+                this.baggage = baggage;
+            }
+
+            public override ISet<string> Fields => throw new NotImplementedException();
+
+            public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+            {
+                return new PropagationContext(this.activityContext, this.baggage);
+            }
+
+            public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class TestSampler : Sampler
+        {
+            private SamplingDecision samplingDecision;
+
+            public TestSampler(SamplingDecision samplingDecision)
+            {
+                this.samplingDecision = samplingDecision;
+            }
+
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return new SamplingResult(this.samplingDecision);
             }
         }
     }
