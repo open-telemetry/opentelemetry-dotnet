@@ -79,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            // Enusre context propagation irrespective of sampling decision
+            // Ensure context propagation irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
