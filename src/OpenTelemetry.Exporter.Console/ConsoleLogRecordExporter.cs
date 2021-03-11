@@ -22,6 +22,8 @@ namespace OpenTelemetry.Exporter
 {
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
+        private const int RightPaddingLength = 30;
+
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
         {
@@ -29,38 +31,42 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
-            var rightPaddingLength = 30;
             foreach (var logRecord in batch)
             {
-                this.WriteLine($"{"LogRecord.TraceId:".PadRight(rightPaddingLength)}{logRecord.TraceId}");
-                this.WriteLine($"{"LogRecord.SpanId:".PadRight(rightPaddingLength)}{logRecord.SpanId}");
-                this.WriteLine($"{"LogRecord.Timestamp:".PadRight(rightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                this.WriteLine($"{"LogRecord.EventId:".PadRight(rightPaddingLength)}{logRecord.EventId}");
-                this.WriteLine($"{"LogRecord.CategoryName:".PadRight(rightPaddingLength)}{logRecord.CategoryName}");
-                this.WriteLine($"{"LogRecord.LogLevel:".PadRight(rightPaddingLength)}{logRecord.LogLevel}");
-                this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(rightPaddingLength)}{logRecord.TraceFlags}");
+                this.WriteLine($"{"LogRecord.TraceId:".PadRight(RightPaddingLength)}{logRecord.TraceId}");
+                this.WriteLine($"{"LogRecord.SpanId:".PadRight(RightPaddingLength)}{logRecord.SpanId}");
+                this.WriteLine($"{"LogRecord.Timestamp:".PadRight(RightPaddingLength)}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                this.WriteLine($"{"LogRecord.EventId:".PadRight(RightPaddingLength)}{logRecord.EventId}");
+                this.WriteLine($"{"LogRecord.CategoryName:".PadRight(RightPaddingLength)}{logRecord.CategoryName}");
+                this.WriteLine($"{"LogRecord.LogLevel:".PadRight(RightPaddingLength)}{logRecord.LogLevel}");
+                this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(RightPaddingLength)}{logRecord.TraceFlags}");
                 if (logRecord.Message != null)
                 {
-                    this.WriteLine($"{"LogRecord.Message:".PadRight(rightPaddingLength)}{logRecord.Message}");
+                    this.WriteLine($"{"LogRecord.Message:".PadRight(RightPaddingLength)}{logRecord.Message}");
                 }
 
                 if (logRecord.State != null)
                 {
-                    this.WriteLine($"{"LogRecord.State:".PadRight(rightPaddingLength)}{logRecord.State}");
+                    this.WriteLine($"{"LogRecord.State:".PadRight(RightPaddingLength)}{logRecord.State}");
                 }
                 else if (logRecord.StateValues != null)
                 {
                     this.WriteLine("LogRecord.StateValues (Key:Value):");
                     for (int i = 0; i < logRecord.StateValues.Count; i++)
                     {
-                        this.WriteLine($"{logRecord.StateValues[i].Key.PadRight(rightPaddingLength)}{logRecord.StateValues[i].Value}");
+                        this.WriteLine($"{logRecord.StateValues[i].Key.PadRight(RightPaddingLength)}{logRecord.StateValues[i].Value}");
                     }
                 }
 
                 if (logRecord.Exception is { })
                 {
-                    this.WriteLine($"{"LogRecord.Exception:".PadRight(rightPaddingLength)}{logRecord.Exception?.Message}");
+                    this.WriteLine($"{"LogRecord.Exception:".PadRight(RightPaddingLength)}{logRecord.Exception?.Message}");
                 }
+
+                logRecord.ForEachScope(ProcessScope, this);
+
+                static void ProcessScope(object scope, ConsoleLogRecordExporter exporter)
+                    => exporter.WriteLine($"{"LogRecord.Scope:".PadRight(RightPaddingLength)}{scope}");
 
                 this.WriteLine(string.Empty);
             }
