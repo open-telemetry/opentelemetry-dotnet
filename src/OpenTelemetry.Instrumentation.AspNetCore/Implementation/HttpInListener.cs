@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
-            // The overall flow of what HttpClient library does is as below:
+            // The overall flow of what AspNetCore library does is as below:
             // Activity.Start()
             // DiagnosticSource.WriteEvent("Start", payload)
             // DiagnosticSource.WriteEvent("Stop", payload)
