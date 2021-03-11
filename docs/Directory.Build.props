@@ -15,7 +15,5 @@
       Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
     -->
     <MicrosoftExtensionsLoggingPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
-    <OpenTelemetryExporterConsolePkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryExporterConsolePkgVer>
-    <OpenTelemetryPkgVer>[0.4.0-beta.2,1.0)</OpenTelemetryPkgVer>
   </PropertyGroup>
 </Project>
