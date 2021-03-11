@@ -94,8 +94,7 @@ the library they instrument, and steps for enabling them.
 * [SQL client](../../../src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
-Contrib Github
-repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
+Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
 If you are writing an instrumentation library yourself, use the following
 guidelines.
 
