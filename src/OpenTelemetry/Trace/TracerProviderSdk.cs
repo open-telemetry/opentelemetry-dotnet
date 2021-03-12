@@ -32,32 +32,41 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly Dictionary<string, bool> legacyActivityOperationNames;
+        private readonly IDictionary<string, bool> legacyActivityOperationNames;
         private BaseProcessor<Activity> processor;
         private Action<Activity> getRequestedDataAction;
         private bool supportLegacyActivity;
 
-        internal TracerProviderSdk(
-            Resource resource,
-            IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            Sampler sampler,
-            List<BaseProcessor<Activity>> processors,
-            Dictionary<string, bool> legacyActivityOperationNames)
+        internal TracerProviderSdk(TracerProviderSdkOptions options)
         {
-            this.Resource = resource;
-            this.sampler = sampler;
-            this.legacyActivityOperationNames = legacyActivityOperationNames;
-            this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
+            this.Resource = options.ResourceFactory?.Invoke();
+            this.sampler = options.SamplerFactory?.Invoke();
+            this.legacyActivityOperationNames = options.LegacyActivityOperationNames;
+            this.supportLegacyActivity = this.legacyActivityOperationNames.Count > 0;
 
-            foreach (var processor in processors)
+            if (options.SetErrorStatusOnException)
             {
-                this.AddProcessor(processor);
+                try
+                {
+                    this.AddProcessor(new ExceptionProcessor());
+                }
+                catch (Exception ex)
+                {
+                    throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                }
             }
 
-            if (instrumentationFactories.Any())
+            if (options.ProcessorFactories.Any())
             {
-                foreach (var instrumentationFactory in instrumentationFactories)
+                foreach (var processor in options.ProcessorFactories)
+                {
+                    this.AddProcessor(processor?.Invoke());
+                }
+            }
+
+            if (options.InstrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in options.InstrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory());
                 }
@@ -73,19 +82,10 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        if (this.legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
-                            // Legacy activity matches the user configured list.
-                            // Call sampler for the legacy activity
-                            // unless suppressed.
-                            if (!Sdk.SuppressInstrumentation)
-                            {
-                                this.getRequestedDataAction(activity);
-                            }
-                            else
-                            {
-                                activity.IsAllDataRequested = false;
-                            }
+                            // Legacy activity matches the user configured list. Call sampler for the legacy activity
+                            this.getRequestedDataAction(activity);
                         }
                         else
                         {
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (!legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        if (!this.legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
                             // Legacy activity doesn't match the user configured list. No need to proceed further.
                             return;
@@ -140,13 +140,13 @@ namespace OpenTelemetry.Trace
                 },
             };
 
-            if (sampler is AlwaysOnSampler)
+            if (this.sampler is AlwaysOnSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
-            else if (sampler is AlwaysOffSampler)
+            else if (this.sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
-            if (sources.Any())
+            if (options.Sources.Any())
             {
                 // Sources can be null. This happens when user
                 // is only interested in InstrumentationLibraries
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Trace
                 var wildcardMode = false;
 
                 // Validation of source name is already done in builder.
-                foreach (var name in sources)
+                foreach (var name in options.Sources)
                 {
                     if (name.Contains('*'))
                     {
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Trace
 
                 if (wildcardMode)
                 {
-                    var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
+                    var pattern = "^(" + string.Join("|", from name in options.Sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Trace
                 {
                     var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
-                    foreach (var name in sources)
+                    foreach (var name in options.Sources)
                     {
                         activitySources[name] = true;
                     }

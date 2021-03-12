@@ -49,7 +49,23 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.SetSampler(sampler);
+                tracerProviderBuilderSdk.SetSampler(() => sampler);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets sampler.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="samplerFactory">Sampler instance.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetSampler(this TracerProviderBuilder tracerProviderBuilder, Func<Sampler> samplerFactory)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.SetSampler(samplerFactory);
             }
 
             return tracerProviderBuilder;
@@ -66,7 +82,24 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                tracerProviderBuilderSdk.SetResource(() => resourceBuilder.Build());
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="resourceFactory"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, Func<Resource> resourceFactory)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.SetResource(resourceFactory);
             }
 
             return tracerProviderBuilder;
@@ -76,13 +109,29 @@ namespace OpenTelemetry.Trace
         /// Adds processor to the provider.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
-        /// <param name="processor">Activity processor to add.</param>
+        /// <param name="processor"><see cref="BaseProcessor{Activity}"/> to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseProcessor<Activity> processor)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.AddProcessor(processor);
+                tracerProviderBuilderSdk.AddProcessor(() => processor);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds processor to the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="processorFactory">Function that builds a <see cref="BaseProcessor{Activity}"/> instance to add.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, Func<BaseProcessor<Activity>> processorFactory)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.AddProcessor(processorFactory);
             }
 
             return tracerProviderBuilder;

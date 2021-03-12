@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
 
@@ -24,18 +23,9 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Build TracerProvider with Resource, Sampler, Processors and Instrumentation.
     /// </summary>
-    internal class TracerProviderBuilderSdk : TracerProviderBuilder
+    public class TracerProviderBuilderSdk : TracerProviderBuilder
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<string> sources = new List<string>();
-        private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-        private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
-
-        internal TracerProviderBuilderSdk()
-        {
-        }
+        protected readonly TracerProviderSdkOptions options = new TracerProviderSdkOptions();
 
         /// <summary>
         /// Adds an instrumentation to the provider.
@@ -52,8 +42,8 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
-            this.instrumentationFactories.Add(
-                new InstrumentationFactory(
+            this.options.InstrumentationFactories.Add(
+                new TracerProviderSdkOptions.InstrumentationFactory(
                     typeof(TInstrumentation).Name,
                     "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
                     instrumentationFactory));
@@ -82,7 +72,7 @@ namespace OpenTelemetry.Trace
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
-                this.sources.Add(name);
+                this.options.Sources.Add(name);
             }
 
             return this;
@@ -96,35 +86,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetErrorStatusOnException(bool enabled)
         {
-            ExceptionProcessor existingExceptionProcessor = null;
-
-            if (this.processors.Count > 0)
-            {
-                existingExceptionProcessor = this.processors[0] as ExceptionProcessor;
-            }
-
-            if (enabled)
-            {
-                if (existingExceptionProcessor == null)
-                {
-                    try
-                    {
-                        this.processors.Insert(0, new ExceptionProcessor());
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
-                    }
-                }
-            }
-            else
-            {
-                if (existingExceptionProcessor != null)
-                {
-                    this.processors.RemoveAt(0);
-                    existingExceptionProcessor.Dispose();
-                }
-            }
+            this.options.SetErrorStatusOnException = enabled;
 
             return this;
         }
@@ -132,11 +94,16 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets sampler.
         /// </summary>
-        /// <param name="sampler">Sampler instance.</param>
+        /// <param name="samplerFactory">Function that builds a <see cref="Sampler"/> instance.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder SetSampler(Sampler sampler)
+        internal TracerProviderBuilder SetSampler(Func<Sampler> samplerFactory)
         {
-            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            if (samplerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(samplerFactory));
+            }
+
+            this.options.SamplerFactory = samplerFactory;
             return this;
         }
 
@@ -144,27 +111,32 @@ namespace OpenTelemetry.Trace
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// </summary>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <param name="resourceFactory">Function that builds a <see cref="Resource"/> instance.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
+        internal TracerProviderBuilder SetResource(Func<Resource> resourceFactory)
         {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            if (resourceFactory == null)
+            {
+                throw new ArgumentNullException(nameof(resourceFactory));
+            }
+
+            this.options.ResourceFactory = resourceFactory;
             return this;
         }
 
         /// <summary>
         /// Adds processor to the provider.
         /// </summary>
-        /// <param name="processor">Activity processor to add.</param>
+        /// <param name="processorFactory">Function that builds a <see cref="BaseProcessor{Activity}"/> instance to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
+        internal TracerProviderBuilder AddProcessor(Func<BaseProcessor<Activity>> processorFactory)
         {
-            if (processor == null)
+            if (processorFactory == null)
             {
-                throw new ArgumentNullException(nameof(processor));
+                throw new ArgumentNullException(nameof(processorFactory));
             }
 
-            this.processors.Add(processor);
+            this.options.ProcessorFactories.Add(processorFactory);
 
             return this;
         }
@@ -184,34 +156,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
             }
 
-            this.legacyActivityOperationNames[operationName] = true;
+            this.options.LegacyActivityOperationNames[operationName] = true;
 
             return this;
         }
 
         internal TracerProvider Build()
         {
-            return new TracerProviderSdk(
-                this.resourceBuilder.Build(),
-                this.sources,
-                this.instrumentationFactories,
-                this.sampler,
-                this.processors,
-                this.legacyActivityOperationNames);
-        }
-
-        internal readonly struct InstrumentationFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<object> Factory;
-
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
+            return new TracerProviderSdk(this.options);
         }
     }
 }

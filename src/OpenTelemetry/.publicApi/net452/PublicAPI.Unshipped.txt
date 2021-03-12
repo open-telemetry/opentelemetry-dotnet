@@ -1,4 +1,30 @@
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
+OpenTelemetry.Trace.TracerProviderBuilderSdk
+OpenTelemetry.Trace.TracerProviderBuilderSdk.TracerProviderBuilderSdk() -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions
+OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactories.get -> System.Collections.Generic.ICollection<OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory>
+OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory
+OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory.InstrumentationFactory() -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory.InstrumentationFactory(string name, string version, System.Func<object> factory) -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions.LegacyActivityOperationNames.get -> System.Collections.Generic.IDictionary<string, bool>
+OpenTelemetry.Trace.TracerProviderSdkOptions.ProcessorFactories.get -> System.Collections.Generic.ICollection<System.Func<OpenTelemetry.BaseProcessor<System.Diagnostics.Activity>>>
+OpenTelemetry.Trace.TracerProviderSdkOptions.ResourceFactory.get -> System.Func<OpenTelemetry.Resources.Resource>
+OpenTelemetry.Trace.TracerProviderSdkOptions.ResourceFactory.set -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions.SamplerFactory.get -> System.Func<OpenTelemetry.Trace.Sampler>
+OpenTelemetry.Trace.TracerProviderSdkOptions.SamplerFactory.set -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions.SetErrorStatusOnException.get -> bool
+OpenTelemetry.Trace.TracerProviderSdkOptions.SetErrorStatusOnException.set -> void
+OpenTelemetry.Trace.TracerProviderSdkOptions.Sources.get -> System.Collections.Generic.ICollection<string>
+OpenTelemetry.Trace.TracerProviderSdkOptions.TracerProviderSdkOptions() -> void
+override OpenTelemetry.Trace.TracerProviderBuilderSdk.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+override OpenTelemetry.Trace.TracerProviderBuilderSdk.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
+readonly OpenTelemetry.Trace.TracerProviderBuilderSdk.options -> OpenTelemetry.Trace.TracerProviderSdkOptions
+readonly OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory.Factory -> System.Func<object>
+readonly OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory.Name -> string
+readonly OpenTelemetry.Trace.TracerProviderSdkOptions.InstrumentationFactory.Version -> string
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddLegacySource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Func<OpenTelemetry.BaseProcessor<System.Diagnostics.Activity>> processorFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Func<OpenTelemetry.Resources.Resource> resourceFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Func<OpenTelemetry.Trace.Sampler> samplerFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
