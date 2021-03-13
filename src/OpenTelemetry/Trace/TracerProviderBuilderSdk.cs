@@ -196,6 +196,17 @@ namespace OpenTelemetry.Trace
                 this.legacyActivityOperationNames);
         }
 
+        protected TracerProviderBuilder AddInstrumentation(
+            string instrumentationName,
+            string instrumentationVersion,
+            Func<object> instrumentationFactory)
+        {
+            this.instrumentationFactories.Add(
+                new InstrumentationFactory(instrumentationName, instrumentationVersion, instrumentationFactory));
+
+            return this;
+        }
+
         internal readonly struct InstrumentationFactory
         {
             public readonly string Name;

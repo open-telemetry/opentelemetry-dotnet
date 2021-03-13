@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
@@ -48,6 +49,16 @@ namespace OpenTelemetry.Trace
             if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
                 tracerProviderBuilderHosting.SetSampler<T>();
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            if (tracerProviderBuilder is IDeferredTracerBuilder deferredTracerBuilder)
+            {
+                deferredTracerBuilder.Configure(configure);
             }
 
             return tracerProviderBuilder;

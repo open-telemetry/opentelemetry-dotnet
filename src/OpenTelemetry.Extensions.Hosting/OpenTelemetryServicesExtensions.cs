@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         {
-            return services.AddOpenTelemetryTracing((sp, builder) => { });
+            return services.AddOpenTelemetryTracing(builder => { });
         }
 
         /// <summary>
@@ -51,49 +51,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            return services.AddOpenTelemetryTracing((sp, builder) => { configure(builder); });
-        }
-
-        /// <summary>
-        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">The <see cref="TracerProviderBuilder"/> action to configure TracerProviderBuilder.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            if (configure is null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            return services.AddOpenTelemetryTracing(sp =>
-            {
-                var builder = new TracerProviderBuilderHosting(sp);
-
-                var tracerProviderBuilderConfigurationCallbacks = sp.GetService<IEnumerable<TracerProviderBuilderConfigurationCallback>>();
-                if (tracerProviderBuilderConfigurationCallbacks != null)
-                {
-                    foreach (var tracerProviderBuilderConfigurationCallback in tracerProviderBuilderConfigurationCallbacks)
-                    {
-                        tracerProviderBuilderConfigurationCallback.Configure(sp, builder);
-                    }
-                }
-
-                configure(sp, builder);
-                return builder.Build();
-            });
-        }
-
-        /// <summary>
-        /// Register a callback to be called during the configuration of the OpenTelemetry <see cref="TracerProviderBuilder"/>.
-        /// </summary>
-        /// <param name="services"><see cref="IServiceCollection"/>.</param>
-        /// <param name="configure">Configuration callback action.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            return services.AddSingleton(new TracerProviderBuilderConfigurationCallback { Configure = configure });
+            var builder = new TracerProviderBuilderHosting(services);
+            configure(builder);
+            return services.AddOpenTelemetryTracing(sp => builder.Build(sp));
         }
 
         /// <summary>
@@ -132,11 +92,6 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
             return services;
-        }
-
-        private class TracerProviderBuilderConfigurationCallback
-        {
-            public Action<IServiceProvider, TracerProviderBuilder> Configure { get; set; }
         }
     }
 }

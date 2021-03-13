@@ -15,48 +15,109 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace OpenTelemetry.Trace
 {
-    internal class TracerProviderBuilderHosting : TracerProviderBuilderSdk, IResolvingTracerProviderBuilder
+    public class TracerProviderBuilderHosting : TracerProviderBuilderSdk, IDeferredTracerBuilder
     {
-        private readonly IServiceProvider serviceProvider;
+        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
+        private readonly List<Type> processorTypes = new List<Type>();
+        private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
+        private Type samplerType;
 
-        public TracerProviderBuilderHosting(IServiceProvider serviceProvider)
+        internal TracerProviderBuilderHosting(IServiceCollection services)
         {
-            this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            this.Services = services ?? throw new ArgumentNullException(nameof(services));
         }
 
-        public TracerProviderBuilder AddInstrumentation<T>()
-            where T : class
+        public IServiceCollection Services { get; }
+
+        TracerProviderBuilder IDeferredTracerBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            return this.AddInstrumentation(() => this.serviceProvider.GetRequiredService<T>());
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            this.configurationActions.Add(configure);
+            return this;
         }
 
-        public TracerProviderBuilder AddProcessor<T>()
+        internal TracerProviderBuilder AddInstrumentation<TInstrumentation>(
+            Func<IServiceProvider, TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            this.instrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    typeof(TInstrumentation)));
+
+            return this;
+        }
+
+        internal TracerProviderBuilder AddProcessor<T>()
             where T : BaseProcessor<Activity>
         {
-            return this.AddProcessor(this.serviceProvider.GetRequiredService<T>());
+            this.processorTypes.Add(typeof(T));
+            return this;
         }
 
-        public TracerProviderBuilder SetSampler<T>()
+        internal TracerProviderBuilder SetSampler<T>()
             where T : Sampler
         {
-            return this.SetSampler(this.serviceProvider.GetRequiredService<T>());
+            this.samplerType = typeof(T);
+            return this;
         }
 
-        public object GetService(Type serviceType)
+        internal TracerProvider Build(IServiceProvider serviceProvider)
         {
-            return this.serviceProvider.GetService(serviceType);
+            foreach (InstrumentationFactory instrumentationFactory in this.instrumentationFactories)
+            {
+                this.AddInstrumentation(
+                    instrumentationFactory.Name,
+                    instrumentationFactory.Version,
+                    () => serviceProvider.GetRequiredService(instrumentationFactory.Type));
+            }
+
+            foreach (Type processorType in this.processorTypes)
+            {
+                this.AddProcessor((BaseProcessor<Activity>)serviceProvider.GetRequiredService(processorType));
+            }
+
+            if (this.samplerType != null)
+            {
+                this.SetSampler((Sampler)serviceProvider.GetRequiredService(this.samplerType));
+            }
+
+            foreach (Action<IServiceProvider, TracerProviderBuilder> configureAction in this.configurationActions)
+            {
+                configureAction(serviceProvider, this);
+            }
+
+            return ((TracerProviderBuilderSdk)this).Build();
         }
 
-        public T GetOptions<T>()
-            where T : class, new()
+        internal readonly struct InstrumentationFactory
         {
-            return this.serviceProvider.GetRequiredService<IOptions<T>>().Value;
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Type Type;
+
+            internal InstrumentationFactory(string name, string version, Type type)
+            {
+                this.Name = name;
+                this.Version = version;
+                this.Type = type;
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="IResolvingTracerProviderBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="IDeferredTracerBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,8 @@ using System;
 
 namespace OpenTelemetry.Trace
 {
-    public interface IResolvingTracerProviderBuilder : IServiceProvider
+    public interface IDeferredTracerBuilder
     {
-        T GetOptions<T>()
-            where T : class, new();
+        TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure);
     }
 }
