@@ -17,6 +17,10 @@ namespace OpenTelemetry
             Type optionsType = OptionsGeneircType.MakeGenericType(typeof(T));
 
             object options = serviceProvider.GetService(optionsType);
+            if (options == null)
+            {
+                return new T();
+            }
 
             return (T)optionsType.GetProperty("Value").GetMethod.Invoke(options, null);
         }
