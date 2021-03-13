@@ -213,6 +213,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
         {
+            // TODO: Investigate why this feature is required.
             var processor = new Mock<BaseProcessor<Activity>>();
 
             var request = new HttpRequestMessage
