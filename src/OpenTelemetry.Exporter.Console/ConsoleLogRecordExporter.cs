@@ -40,9 +40,9 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"{"LogRecord.CategoryName:".PadRight(RightPaddingLength)}{logRecord.CategoryName}");
                 this.WriteLine($"{"LogRecord.LogLevel:".PadRight(RightPaddingLength)}{logRecord.LogLevel}");
                 this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(RightPaddingLength)}{logRecord.TraceFlags}");
-                if (logRecord.Message != null)
+                if (logRecord.FormattedMessage != null)
                 {
-                    this.WriteLine($"{"LogRecord.Message:".PadRight(RightPaddingLength)}{logRecord.Message}");
+                    this.WriteLine($"{"LogRecord.FormattedMessage:".PadRight(RightPaddingLength)}{logRecord.FormattedMessage}");
                 }
 
                 if (logRecord.State != null)
