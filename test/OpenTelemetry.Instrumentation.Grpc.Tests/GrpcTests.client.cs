@@ -23,6 +23,7 @@ using Grpc.Net.Client;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
+using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -143,6 +144,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             ValidateGrpcActivity(grpcSpan);
             Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
+            Assert.Equal(0, grpcSpan.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
         }
@@ -274,6 +276,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
             Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
             Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
+            Assert.Equal(0, clientActivity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
             Assert.Contains("item1=value1", serverActivity.GetCustomProperty("BaggageString") as string);
         }
 
@@ -286,11 +289,14 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
         private static void ValidateGrpcActivity(Activity activityToValidate)
         {
+            Assert.Equal(GrpcClientDiagnosticListener.ActivitySourceName, activityToValidate.Source.Name);
+            Assert.Equal(GrpcClientDiagnosticListener.Version.ToString(), activityToValidate.Source.Version);
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
+            Assert.True(activity.IsAllDataRequested);
             switch (method)
             {
                 case "OnStartActivity":
