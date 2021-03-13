@@ -17,17 +17,13 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
     public class OpenTelemetryLoggerOptions
     {
         internal readonly List<BaseProcessor<LogRecord>> Processors = new List<BaseProcessor<LogRecord>>();
-
-        /// <summary>
-        /// Gets or sets a value indicating whether or not log scopes should be included on generated <see cref="LogRecord"/>s. Default value: False.
-        /// </summary>
-        public bool IncludeScopes { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log message should be included on generated <see cref="LogRecord"/>s. Default value: False.
@@ -38,6 +34,8 @@ namespace OpenTelemetry.Logs
         /// Gets or sets a value indicating whether or not log state should be parsed into <see cref="LogRecord.StateValues"/> on generated <see cref="LogRecord"/>s. Default value: False.
         /// </summary>
         public bool ParseStateValues { get; set; }
+
+        internal IExternalScopeProvider ScopeProvider { get; set; }
 
         /// <summary>
         /// Adds processor to the options.
@@ -54,6 +52,26 @@ namespace OpenTelemetry.Logs
             this.Processors.Add(processor);
 
             return this;
+        }
+
+        /// <summary>
+        /// Sets the scope provider to the options.
+        /// </summary>
+        /// <param name="scopeProvider">The scope provider to be used.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions SetScopeProvider(IExternalScopeProvider scopeProvider)
+        {
+            this.ScopeProvider = scopeProvider;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="Microsoft.Extensions.Logging.LoggerExternalScopeProvider"/> scope provider to the options.
+        /// </summary>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions SetScopeProvider()
+        {
+            return this.SetScopeProvider(new LoggerExternalScopeProvider());
         }
     }
 }

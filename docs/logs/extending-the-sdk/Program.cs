@@ -31,14 +31,12 @@ public class Program
 #else
         using var loggerFactory = LoggerFactory.Create(builder =>
 #endif
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.AddProcessor(new MyProcessor("ProcessorA"))
-                       .AddProcessor(new MyProcessor("ProcessorB"))
-                       .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                       .AddMyExporter();
-            }));
+            builder.AddOpenTelemetry(options => options
+                .SetScopeProvider(new MyScopeProvider())
+                .AddProcessor(new MyProcessor("ProcessorA"))
+                .AddProcessor(new MyProcessor("ProcessorB"))
+                .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
+                .AddMyExporter()));
 
 #if NETCOREAPP2_1
         using var serviceProvider = serviceCollection.BuildServiceProvider();

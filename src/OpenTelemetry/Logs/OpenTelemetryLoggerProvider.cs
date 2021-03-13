@@ -23,7 +23,7 @@ using Microsoft.Extensions.Options;
 namespace OpenTelemetry.Logs
 {
     [ProviderAlias("OpenTelemetry")]
-    public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
+    public class OpenTelemetryLoggerProvider : ILoggerProvider
     {
         internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
@@ -47,25 +47,11 @@ namespace OpenTelemetry.Logs
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
 
+            this.scopeProvider = options.ScopeProvider;
+
             foreach (var processor in options.Processors)
             {
                 this.AddProcessor(processor);
-            }
-        }
-
-        void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
-        {
-            this.scopeProvider = scopeProvider;
-
-            lock (this.loggers)
-            {
-                foreach (DictionaryEntry entry in this.loggers)
-                {
-                    if (entry.Value is OpenTelemetryLogger logger)
-                    {
-                        logger.ScopeProvider = scopeProvider;
-                    }
-                }
             }
         }
 

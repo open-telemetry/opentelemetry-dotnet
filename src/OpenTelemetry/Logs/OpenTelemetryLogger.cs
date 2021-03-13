@@ -49,7 +49,7 @@ namespace OpenTelemetry.Logs
                 var options = this.provider.Options;
 
                 var record = new LogRecord(
-                    options.IncludeScopes ? this.ScopeProvider : null,
+                    this.ScopeProvider,
                     DateTime.UtcNow,
                     this.categoryName,
                     logLevel,
