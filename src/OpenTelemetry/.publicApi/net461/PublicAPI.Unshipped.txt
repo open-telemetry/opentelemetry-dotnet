@@ -1,8 +1,8 @@
 OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<object, TState> callback, TState state) -> void
-OpenTelemetry.Logs.LogRecord.Message.get -> string
+OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeMessage.get -> bool
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeMessage.set -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.get -> bool
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.get -> bool
