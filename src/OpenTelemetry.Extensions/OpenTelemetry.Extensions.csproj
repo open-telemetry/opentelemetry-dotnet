@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(RepoRoot)\build\CodeAnalysis.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net452;net461;netstandard2.0;net5.0</TargetFrameworks>
+    <Description>OpenTelemetry .NET SDK Extensions</Description>
+    <MinVerTagPrefix>extensions-</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+  </ItemGroup>
+
+</Project>

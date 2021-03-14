@@ -1,0 +1,9 @@
+#nullable enable
+Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.ActivityEventAttachingLogProcessorOptions() -> void
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.ScopeConverter.get -> System.Action<System.Diagnostics.ActivityTagsCollection!, int, object!>!
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.ScopeConverter.set -> void
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.StateConverter.get -> System.Action<System.Diagnostics.ActivityTagsCollection!, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object!>>!>!
+OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions.StateConverter.set -> void
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddActivityEventAttachingLogProcessor(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! loggerOptions, System.Action<OpenTelemetry.Logs.ActivityEventAttachingLogProcessorOptions!>? configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
