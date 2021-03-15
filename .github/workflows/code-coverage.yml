@@ -1,6 +1,10 @@
 name: Code Coverage
 
 on:
+  push:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
   pull_request:
     branches: [ main, metrics ]
     paths-ignore:
@@ -19,6 +23,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # fetching all
 
     - name: Install dependencies
       run: dotnet restore
