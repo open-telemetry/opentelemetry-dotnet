@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Logs
     {
         internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
+        internal Resource Resource;
         private readonly Hashtable loggers = new Hashtable();
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
@@ -46,6 +48,8 @@ namespace OpenTelemetry.Logs
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
+
+            this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)
             {

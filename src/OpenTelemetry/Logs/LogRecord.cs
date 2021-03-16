@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Logs
             EventId eventId,
             string formattedMessage,
             object state,
+            Resource resource,
             Exception exception,
             IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
@@ -58,6 +60,7 @@ namespace OpenTelemetry.Logs
             this.FormattedMessage = formattedMessage;
             this.State = state;
             this.StateValues = stateValues;
+            this.Resource = resource;
             this.Exception = exception;
         }
 
@@ -78,6 +81,8 @@ namespace OpenTelemetry.Logs
         public EventId EventId { get; }
 
         public string FormattedMessage { get; }
+
+        public Resource Resource { get; }
 
         public object State { get; }
 
