@@ -330,6 +330,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
         [InlineData("key1=value1,key2=value2", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
         [InlineData("key1 = value1, key2=value2 ", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
+        [InlineData("key==value", new string[] { "key" }, new string[] { "=value" })]
+        [InlineData("access-token=abc=/123,timeout=1234", new string[] { "access-token", "timeout" }, new string[] { "abc=/123", "1234" })]
+        [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
         public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
         {
             var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());
@@ -348,8 +351,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("headers")]
         [InlineData("key,value")]
-        [InlineData("key==value")]
-        [InlineData("key1=value1;key2=value2")] // semicolon separated values are not supported (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
         public void GetMetadataFromHeadersThrowsExceptionOnOnvalidFormat(string headers)
         {
             var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());

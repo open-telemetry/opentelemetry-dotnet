@@ -188,7 +188,7 @@ namespace OpenTelemetry.Exporter
                     headers.Split(','),
                     (pair) =>
                     {
-                        var keyValueData = pair.Split('=');
+                        var keyValueData = pair.Split(new char[] { '=' }, 2);
                         if (keyValueData.Length != 2)
                         {
                             throw new ArgumentException("Headers provided in an invalid format.");
