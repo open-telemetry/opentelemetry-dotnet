@@ -33,6 +33,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
     {
         private const string OperationNameHttpRequestIn = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
         private const string OperationNameGrpcOut = "Grpc.Net.Client.GrpcOut";
+        private const string OperationNameHttpOut = "System.Net.Http.HttpRequestOut";
 
         private readonly GrpcServer<GreeterService> server;
 
