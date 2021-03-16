@@ -47,26 +47,26 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Activity is retrieved from Activity.Current later and disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what AspNet library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            // Ensure context extraction irrespective of sampling decision
             var context = HttpContext.Current;
             if (context == null)
             {
                 AspNetInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
-                return;
-            }
-
-            try
-            {
-                if (this.options.Filter?.Invoke(context) == false)
-                {
-                    AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
-                    activity.IsAllDataRequested = false;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
-                activity.IsAllDataRequested = false;
                 return;
             }
 
@@ -108,15 +108,31 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
-            var path = requestValues.Path;
-            activity.DisplayName = path;
-
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
-
             if (activity.IsAllDataRequested)
             {
+                try
+                {
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        activity.IsAllDataRequested = false;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
+                var path = requestValues.Path;
+                activity.DisplayName = path;
+
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Url.Host);

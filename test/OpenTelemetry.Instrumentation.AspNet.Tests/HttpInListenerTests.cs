@@ -151,6 +151,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 {
                     options.Filter = httpContext =>
                     {
+                        Assert.True(Activity.Current.IsAllDataRequested);
                         if (string.IsNullOrEmpty(filter))
                         {
                             return true;
@@ -341,6 +342,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             enrichAction = (activity, method, obj) =>
             {
+                Assert.True(activity.IsAllDataRequested);
                 switch (method)
                 {
                     case "OnStartActivity":
