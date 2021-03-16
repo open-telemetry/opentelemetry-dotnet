@@ -49,6 +49,9 @@ please check the latest changes
   ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
   [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
 
+* Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
+  ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
+
 ## 1.0.1
 
 Released 2021-Feb-10
