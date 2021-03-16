@@ -44,6 +44,52 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Flushes the all the processors at TracerProviderSdk, blocks the current thread until flush
+        /// completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="provider">TracerProviderSdk instance on which ForceFlush will be called.</param>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
+        {
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
+            if (provider is TracerProviderSdk tracerProviderSdk)
+            {
+                if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
+                }
+
+                try
+                {
+                    return tracerProviderSdk.OnForceFlush(timeoutMilliseconds);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(tracerProviderSdk.OnForceFlush), ex);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Attempts to shutdown the TracerProviderSdk, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>

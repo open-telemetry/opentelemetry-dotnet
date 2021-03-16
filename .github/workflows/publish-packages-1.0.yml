@@ -1,3 +1,10 @@
+#################################################
+################### IMPORTANT ###################
+# DON'T RENAME THIS FILE UNLESS WE START
+# RELEASING THE VERSION 2.*
+################### IMPORTANT ################### 
+#################################################
+
 name: Pack and publish to Myget
 
 on:
@@ -29,7 +36,7 @@ jobs:
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore -p:Deterministic=true
+      run: dotnet build --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
 
     - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build

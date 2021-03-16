@@ -17,7 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter
 {
     public class JaegerExporterOptions
     {
@@ -37,11 +37,6 @@ namespace OpenTelemetry.Exporter.Jaeger
         /// Gets or sets the maximum payload size in bytes. Default value: 4096.
         /// </summary>
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
-
-        /// <summary>
-        /// Gets or sets the tags that should be sent with telemetry.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
 
         /// <summary>
         /// Gets or sets the export processor type to be used with Jaeger Exporter.
