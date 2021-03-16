@@ -69,7 +69,7 @@ namespace OpenTelemetry.Exporter
                 static void ProcessScope(object scope, ConsoleLogRecordExporter exporter)
                     => exporter.WriteLine($"{"LogRecord.Scope:".PadRight(RightPaddingLength)}{scope}");
 
-                var resource = logRecord.Resource;
+                var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)
                 {
                     this.WriteLine("Resource associated with LogRecord:");

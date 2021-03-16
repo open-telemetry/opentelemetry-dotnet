@@ -56,7 +56,6 @@ namespace OpenTelemetry.Logs
                     eventId,
                     options.IncludeFormattedMessage ? formatter(state, exception) : null,
                     options.ParseStateValues ? null : (object)state,
-                    this.provider.Resource,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
 

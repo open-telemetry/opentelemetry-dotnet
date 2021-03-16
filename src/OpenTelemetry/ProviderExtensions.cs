@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -34,6 +35,10 @@ namespace OpenTelemetry
             if (baseProvider is TracerProviderSdk tracerProviderSdk)
             {
                 return tracerProviderSdk.Resource;
+            }
+            else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
+            {
+                return otelLoggerProvider.Resource;
             }
 
             return Resource.Empty;

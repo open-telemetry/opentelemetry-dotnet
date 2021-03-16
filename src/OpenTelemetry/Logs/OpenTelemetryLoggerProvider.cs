@@ -24,7 +24,7 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Logs
 {
     [ProviderAlias("OpenTelemetry")]
-    public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
+    public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
@@ -95,19 +95,14 @@ namespace OpenTelemetry.Logs
             return logger;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             if (processor == null)
             {
                 throw new ArgumentNullException(nameof(processor));
             }
+
+            processor.SetParentProvider(this);
 
             if (this.Processor == null)
             {
@@ -129,7 +124,7 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (this.disposed)
             {
