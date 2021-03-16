@@ -18,8 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Google.Protobuf.Collections;
+using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
 #if NET452
@@ -28,10 +30,12 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using Xunit.Sdk;
 using GrpcCore = Grpc.Core;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
+using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -320,6 +324,52 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.True(startCalled);
             Assert.True(endCalled);
+        }
+
+        [Theory]
+        [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
+        [InlineData("key1=value1,key2=value2", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
+        [InlineData("key1 = value1, key2=value2 ", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
+        [InlineData("key==value", new string[] { "key" }, new string[] { "=value" })]
+        [InlineData("access-token=abc=/123,timeout=1234", new string[] { "access-token", "timeout" }, new string[] { "abc=/123", "1234" })]
+        [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
+        public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
+        {
+            var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());
+            var metadata = typeof(OtlpTraceExporter)
+                    .GetMethod("GetMetadataFromHeaders", BindingFlags.NonPublic | BindingFlags.Static)
+                    .Invoke(otlpExporter, new object[] { headers }) as Metadata;
+
+            Assert.Equal(keys.Length, metadata.Count);
+
+            for (int i = 0; i < keys.Length; i++)
+            {
+                Assert.Contains(metadata, entry => entry.Key == keys[i] && entry.Value == values[i]);
+            }
+        }
+
+        [Theory]
+        [InlineData("headers")]
+        [InlineData("key,value")]
+        public void GetMetadataFromHeadersThrowsExceptionOnOnvalidFormat(string headers)
+        {
+            var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());
+            try
+            {
+                var metadata = typeof(OtlpTraceExporter)
+                            .GetMethod("GetMetadataFromHeaders", BindingFlags.NonPublic | BindingFlags.Static)
+                            .Invoke(otlpExporter, new object[] { headers }) as Metadata;
+            }
+            catch (Exception ex)
+            {
+                // The exception thrown here is System.Reflection.TargetInvocationException. The exception thrown by the method GetMetadataFromHeaders
+                // is captured in the inner exception
+                Assert.IsType<ArgumentException>(ex.InnerException);
+                Assert.Equal("Headers provided in an invalid format.", ex.InnerException.Message);
+                return;
+            }
+
+            throw new XunitException("GetMetadataFromHeaders did not throw an exception for invalid input headers");
         }
 
         private static void AssertOtlpAttributes(
