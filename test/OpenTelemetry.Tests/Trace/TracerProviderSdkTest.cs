@@ -766,35 +766,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Theory]
-        [InlineData(ActivityTraceFlags.None, false, false)]
-        [InlineData(ActivityTraceFlags.Recorded, true, true)]
-        public void SdkSamplesLegacyActivityWithRemoteParentWithDefaultSampler(ActivityTraceFlags parentTraceFlags, bool expectedIsAllDataRequested, bool hasRecordedFlag)
-        {
-            var parentTraceId = ActivityTraceId.CreateRandom();
-            var parentSpanId = ActivitySpanId.CreateRandom();
-            var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
-            string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
-
-            var operationNameForLegacyActivity = "TestOperationName";
-
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddLegacySource(operationNameForLegacyActivity)
-                        .Build();
-
-            // Create an activity with remote parent id.
-            // The sampling parameters are expected to be that of the
-            // parent context i.e the remote parent.
-
-            Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
-
-            // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
-            activity.Start();
-            Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
-            Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
-            activity.Stop();
-        }
-
-        [Theory]
         [InlineData(ActivityTraceFlags.None)]
         [InlineData(ActivityTraceFlags.Recorded)]
         public void SdkSamplesLegacyActivityWithRemoteParentWithAlwaysOnSampler(ActivityTraceFlags parentTraceFlags)
