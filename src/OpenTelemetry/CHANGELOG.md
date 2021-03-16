@@ -9,6 +9,9 @@ please check the latest changes
 
 ## Unreleased
 
+* Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
+  ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
+
 * Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
   sets the activity status to `Error` when exception happened.
   ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
@@ -39,6 +42,12 @@ please check the latest changes
   [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
   `ParentBasedSampler` will no longer explicitly consider Activity links.
   ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
+
+* Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
+  `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
+  `ForEachScope` on `LogRecord`.
+  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
+  [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
 
 ## 1.0.1
 

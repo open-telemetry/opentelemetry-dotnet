@@ -53,17 +53,11 @@ namespace OpenTelemetry.Instrumentation
             {
                 if (value.Key.EndsWith("Start", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
-                    {
-                        this.handler.OnStartActivity(Activity.Current, value.Value);
-                    }
+                    this.handler.OnStartActivity(Activity.Current, value.Value);
                 }
                 else if (value.Key.EndsWith("Stop", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
-                    {
-                        this.handler.OnStopActivity(Activity.Current, value.Value);
-                    }
+                    this.handler.OnStopActivity(Activity.Current, value.Value);
                 }
                 else if (value.Key.EndsWith("Exception", StringComparison.Ordinal))
                 {
