@@ -269,6 +269,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void ArrayWithNullSetTag()
+        {
+            var tracerProvider = Sdk.CreateTracerProviderBuilder().AddOtlpExporter().AddSource("testSource").Build();
+
+            var crashingArrayExample = new string[] { "first", null };
+            using (var activity = new ActivitySource("testSource").StartActivity("testActivity"))
+            {
+                activity?.SetTag("filterTables", crashingArrayExample);
+            }
+
+            tracerProvider.ForceFlush();
+        }
+
+        [Fact]
         public void ToOtlpSpanPeerServiceTest()
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
