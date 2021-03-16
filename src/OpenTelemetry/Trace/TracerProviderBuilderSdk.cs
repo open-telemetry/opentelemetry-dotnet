@@ -170,11 +170,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds activity with a given operation name to the list of subscribed activities. This is only for legacy activities (i.e. activities created without using ActivitySource API).
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
         /// </summary>
-        /// <param name="operationName">OperationName to add.</param>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddLegacyActivity(string operationName)
+        internal TracerProviderBuilder AddLegacySource(string operationName)
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {
