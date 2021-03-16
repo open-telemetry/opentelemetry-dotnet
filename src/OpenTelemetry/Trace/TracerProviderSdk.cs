@@ -372,6 +372,7 @@ namespace OpenTelemetry.Trace
         private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
         {
             activity.IsAllDataRequested = false;
+            activity.ActivityTraceFlags &= ActivityTraceFlags.None;
         }
 
         private void RunGetRequestedDataOtherSampler(Activity activity)
@@ -412,9 +413,11 @@ namespace OpenTelemetry.Trace
             {
                 case SamplingDecision.Drop:
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ActivityTraceFlags.None;
                     break;
                 case SamplingDecision.RecordOnly:
                     activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags &= ActivityTraceFlags.None;
                     break;
                 case SamplingDecision.RecordAndSample:
                     activity.IsAllDataRequested = true;
