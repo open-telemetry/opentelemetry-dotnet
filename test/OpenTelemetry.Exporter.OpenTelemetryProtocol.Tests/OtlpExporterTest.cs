@@ -279,11 +279,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             rootActivity.SetTag("stringArray", stringArr);
 
             var otlpSpan = rootActivity.ToOtlpSpan();
-
             Assert.NotNull(otlpSpan);
 
             var stringArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "stringArray").ToList();
-
             Assert.NotNull(stringArray);
             Assert.Equal(2, stringArray.Count());
             Assert.Equal("test", stringArray[0].Value.StringValue);
