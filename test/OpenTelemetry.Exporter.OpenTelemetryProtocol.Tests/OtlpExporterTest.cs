@@ -269,17 +269,28 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void ArrayWithNullSetTag()
+        public void ToOtlpSpanNullArraysTest()
         {
-            var tracerProvider = Sdk.CreateTracerProviderBuilder().AddOtlpExporter().AddSource("testSource").Build();
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
 
-            var crashingArrayExample = new string[] { "first", null };
-            using (var activity = new ActivitySource("testSource").StartActivity("testActivity"))
-            {
-                activity?.SetTag("filterTables", crashingArrayExample);
-            }
+            using var rootActivity = activitySource.StartActivity("root", ActivityKind.Client);
 
-            tracerProvider.ForceFlush();
+            var stringArr = new string[] { "test", null };
+            var longArr = new long?[] { 1, null };
+            rootActivity.SetTag("stringArray", stringArr);
+            rootActivity.SetTag("longArray", longArr);
+
+            var otlpSpan = rootActivity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan);
+
+            var stringArray = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "stringArray");
+
+            Assert.NotNull(stringArray);
+
+            var longArray = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "longArray");
+
+            Assert.NotNull(longArray);
         }
 
         [Fact]

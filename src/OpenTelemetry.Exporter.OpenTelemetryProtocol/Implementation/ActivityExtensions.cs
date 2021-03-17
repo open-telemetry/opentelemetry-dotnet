@@ -455,7 +455,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     case string[] stringArray:
                         foreach (var item in stringArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = item ?? string.Empty }));
                         }
 
                         break;
