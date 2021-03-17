@@ -89,20 +89,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
-        public void StringArrWithNullSetTag()
-        {
-            var tracerProvider = Sdk.CreateTracerProviderBuilder().AddZipkinExporter().AddSource("testSource").Build();
-
-            var crashingArrayExample = new string[1] { null };
-            using (var activity = new ActivitySource("testSource").StartActivity("testActivity"))
-            {
-                activity?.SetTag("filterTables", crashingArrayExample);
-            }
-
-            tracerProvider.ForceFlush();
-        }
-
-        [Fact]
         public void SuppresssesInstrumentation()
         {
             const string ActivitySourceName = "zipkin.test";
