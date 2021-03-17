@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET461 || NETSTANDARD2_0
+using OpenTelemetry.Logs;
+#endif
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -35,6 +38,12 @@ namespace OpenTelemetry
             {
                 return tracerProviderSdk.Resource;
             }
+#if NET461 || NETSTANDARD2_0
+            else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
+            {
+                return otelLoggerProvider.Resource;
+            }
+#endif
 
             return Resource.Empty;
         }

@@ -14,6 +14,8 @@ please check the latest changes
 * LogRecordExporter exports Message, Scope, StateValues from LogRecord.
   ([#1871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1871)
   [#1895](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1895))
+* Added Resource support.
+  ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
 
 ## 1.0.1
 
