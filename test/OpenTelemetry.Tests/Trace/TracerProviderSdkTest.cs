@@ -718,13 +718,17 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Theory]
-        [InlineData(ActivityTraceFlags.None)]
-        [InlineData(ActivityTraceFlags.Recorded)]
-        public void SdkPopulatesSamplingParamsCorrectlyForLegacyActivityWithRemoteParent(ActivityTraceFlags traceFlags)
+        [InlineData(SamplingDecision.Drop, ActivityTraceFlags.None, false, false)]
+        [InlineData(SamplingDecision.Drop, ActivityTraceFlags.Recorded, false, false)]
+        [InlineData(SamplingDecision.RecordOnly, ActivityTraceFlags.None, true, false)]
+        [InlineData(SamplingDecision.RecordOnly, ActivityTraceFlags.Recorded, true, false)]
+        [InlineData(SamplingDecision.RecordAndSample, ActivityTraceFlags.None, true, true)]
+        [InlineData(SamplingDecision.RecordAndSample, ActivityTraceFlags.Recorded, true, true)]
+        public void SdkSamplesLegacyActivityWithRemoteParentWithCustomSampler(SamplingDecision samplingDecision, ActivityTraceFlags parentTraceFlags, bool expectedIsAllDataRequested, bool hasRecordedFlag)
         {
             var parentTraceId = ActivityTraceId.CreateRandom();
             var parentSpanId = ActivitySpanId.CreateRandom();
-            var parentTraceFlag = (traceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
+            var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
             string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
             string tracestate = "a=b;c=d";
 
@@ -733,11 +737,12 @@ namespace OpenTelemetry.Trace.Tests
             {
                 SamplingAction = (samplingParameters) =>
                 {
+                    // Ensure that SDK populates the sampling parameters correctly
                     Assert.Equal(parentTraceId, samplingParameters.ParentContext.TraceId);
                     Assert.Equal(parentSpanId, samplingParameters.ParentContext.SpanId);
-                    Assert.Equal(traceFlags, samplingParameters.ParentContext.TraceFlags);
+                    Assert.Equal(parentTraceFlags, samplingParameters.ParentContext.TraceFlags);
                     Assert.Equal(tracestate, samplingParameters.ParentContext.TraceState);
-                    return new SamplingResult(SamplingDecision.RecordAndSample);
+                    return new SamplingResult(samplingDecision);
                 },
             };
 
@@ -749,9 +754,74 @@ namespace OpenTelemetry.Trace.Tests
             // Create an activity with remote parent id.
             // The sampling parameters are expected to be that of the
             // parent context i.e the remote parent.
+
             Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
             activity.TraceStateString = tracestate;
+
+            // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
             activity.Start();
+            Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
+            Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void SdkSamplesLegacyActivityWithRemoteParentWithAlwaysOnSampler(ActivityTraceFlags parentTraceFlags)
+        {
+            var parentTraceId = ActivityTraceId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
+            var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
+            string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+
+            var operationNameForLegacyActivity = "TestOperationName";
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(new AlwaysOnSampler())
+                        .AddLegacySource(operationNameForLegacyActivity)
+                        .Build();
+
+            // Create an activity with remote parent id.
+            // The sampling parameters are expected to be that of the
+            // parent context i.e the remote parent.
+
+            Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+
+            // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
+            activity.Start();
+            Assert.True(activity.IsAllDataRequested);
+            Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(ActivityTraceFlags.None)]
+        [InlineData(ActivityTraceFlags.Recorded)]
+        public void SdkSamplesLegacyActivityWithRemoteParentWithAlwaysOffSampler(ActivityTraceFlags parentTraceFlags)
+        {
+            var parentTraceId = ActivityTraceId.CreateRandom();
+            var parentSpanId = ActivitySpanId.CreateRandom();
+            var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
+            string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+
+            var operationNameForLegacyActivity = "TestOperationName";
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(new AlwaysOffSampler())
+                        .AddLegacySource(operationNameForLegacyActivity)
+                        .Build();
+
+            // Create an activity with remote parent id.
+            // The sampling parameters are expected to be that of the
+            // parent context i.e the remote parent.
+
+            Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+
+            // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
+            activity.Start();
+            Assert.False(activity.IsAllDataRequested);
+            Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
             activity.Stop();
         }
 
