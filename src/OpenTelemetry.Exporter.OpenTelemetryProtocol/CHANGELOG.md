@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+* Null values in string arrays are converted to empty strings according to
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919))
+
 ## 1.0.1
 
 Released 2021-Feb-10
