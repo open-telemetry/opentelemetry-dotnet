@@ -45,11 +45,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanShim(TelemetrySpan span)
         {
-            this.Span = span ?? throw new ArgumentNullException(nameof(span));
+            this.Span = span ?? throw new ArgumentNullException(nameof(span), "Parameter cannot be null");
 
             if (!this.Span.Context.IsValid)
             {
-                throw new ArgumentException(nameof(this.Span.Context));
+                throw new ArgumentException("Passed span's context is not valid", nameof(this.Span.Context));
             }
 
             this.spanContextShim = new SpanContextShim(this.Span.Context);
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (fields is null)
             {
-                throw new ArgumentNullException(nameof(fields));
+                throw new ArgumentNullException(nameof(fields), "Parameter cannot be null");
             }
 
             var payload = ConvertToEventPayload(fields);
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (@event is null)
             {
-                throw new ArgumentNullException(nameof(@event));
+                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
             }
 
             this.Span.AddEvent(@event);
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (@event is null)
             {
-                throw new ArgumentNullException(nameof(@event));
+                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
             }
 
             this.Span.AddEvent(@event, timestamp);
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (operationName is null)
             {
-                throw new ArgumentNullException(nameof(operationName));
+                throw new ArgumentNullException(nameof(operationName), "Parameter cannot be null");
             }
 
             this.Span.UpdateName(operationName);
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
             this.Span.SetAttribute(key, value);
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
             // Special case the OpenTracing Error Tag
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
             this.Span.SetAttribute(key, value);
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
             this.Span.SetAttribute(key, value);
