@@ -59,6 +59,47 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">The <see cref="TracerProviderBuilder"/> action to configure TracerProviderBuilder.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            if (configure is null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var builder = Sdk.CreateTracerProviderBuilder();
+            services.AddOpenTelemetryTracing((sp) =>
+            {
+                configure(sp, builder);
+                return builder.Build();
+            });
+            return services;
+        }
+
+        /// <summary>
+        /// Writes OpenTelemetry self diagnostics events to the logging system.
+        /// </summary>
+        /// <remarks>
+        /// This needs to be called before <see cref="AddOpenTelemetryTracing"/> in order to capture startup errors.
+        /// </remarks>        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetrySelfDiagnosticsLogging(this IServiceCollection services)
+        {
+            if (services is null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            services.AddHostedService<SelfDiagnosticsLoggingHostedService>();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="createTracerProvider">A delegate that provides the tracer provider to be registered.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)

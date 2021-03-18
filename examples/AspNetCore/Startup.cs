@@ -55,6 +55,10 @@ namespace Examples.AspNetCore
                 }
             });
 
+            // Writes OpenTelemetry self diagnostics events to the logging system
+            // needs to happen before AddOpenTelemetryTracing in order to capture startup issues
+            services.AddOpenTelemetrySelfDiagnosticsLogging();
+
             // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
             var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
             switch (exporter)
