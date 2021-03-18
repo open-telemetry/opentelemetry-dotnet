@@ -6,6 +6,9 @@
   and ActivityProcessors. Samplers, ActivityProcessor.OnStart will now get the
   Activity before any enrichment done by the instrumentation.
   ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
+* Performance optimization by leveraging sampling decision and short circuiting
+  activity enrichment.
+  ([#1899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1899))
 
 ## 1.0.0-rc2
 
