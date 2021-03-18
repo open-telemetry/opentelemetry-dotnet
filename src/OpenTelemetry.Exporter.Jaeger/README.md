@@ -47,16 +47,6 @@ See the
 [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.
 
-## Resources and Process Tags
-
-Jaeger sends information about the originating process alongside exported
-spans. The attributes of an attached [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
-are added to this process as tags, with the [required `service.name` attribute](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
-used as the process's name.
-
-An example configuration of resource attributes and attachment to `TracerProvider`
-with `JaegerExporter` can be found in [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs).
-
 ## References
 
 * [Jaeger](https://www.jaegertracing.io)
