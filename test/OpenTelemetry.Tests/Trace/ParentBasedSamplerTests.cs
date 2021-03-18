@@ -66,18 +66,12 @@ namespace OpenTelemetry.Trace.Tests
                         kind: ActivityKind.Client)));
         }
 
+        /// <summary>
+        /// Checks fix for https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846.
+        /// </summary>
         [Fact]
-        public void SampledParentLink()
+        public void DoNotExamineLinks()
         {
-            var notSampledLink = new ActivityLink[]
-            {
-                new ActivityLink(
-                    new ActivityContext(
-                        ActivityTraceId.CreateRandom(),
-                        ActivitySpanId.CreateRandom(),
-                        ActivityTraceFlags.None)),
-            };
-
             var sampledLink = new ActivityLink[]
             {
                 new ActivityLink(
@@ -92,20 +86,10 @@ namespace OpenTelemetry.Trace.Tests
                 ActivitySpanId.CreateRandom(),
                 ActivityTraceFlags.None);
 
-            // Not sampled link, don't sample.
+            // Parent is not sampled - default behavior should be to DROP,
+            // even if a sampled linked activity exists.
             Assert.Equal(
                 new SamplingResult(SamplingDecision.Drop),
-                this.parentBasedOnSampler.ShouldSample(
-                    new SamplingParameters(
-                        parentContext: notSampledParent,
-                        traceId: default,
-                        name: "Span",
-                        kind: ActivityKind.Client,
-                        links: notSampledLink)));
-
-            // Sampled link, sample.
-            Assert.Equal(
-                new SamplingResult(SamplingDecision.RecordAndSample),
                 this.parentBasedOffSampler.ShouldSample(
                     new SamplingParameters(
                         parentContext: notSampledParent,

@@ -27,7 +27,6 @@ namespace OpenTelemetry.Trace
     internal class TracerProviderBuilderSdk : TracerProviderBuilder
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
         private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
@@ -90,6 +89,47 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="enabled">Enabled or not.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder SetErrorStatusOnException(bool enabled)
+        {
+            ExceptionProcessor existingExceptionProcessor = null;
+
+            if (this.processors.Count > 0)
+            {
+                existingExceptionProcessor = this.processors[0] as ExceptionProcessor;
+            }
+
+            if (enabled)
+            {
+                if (existingExceptionProcessor == null)
+                {
+                    try
+                    {
+                        this.processors.Insert(0, new ExceptionProcessor());
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                    }
+                }
+            }
+            else
+            {
+                if (existingExceptionProcessor != null)
+                {
+                    this.processors.RemoveAt(0);
+                    existingExceptionProcessor.Dispose();
+                }
+            }
+
+            return this;
+        }
+
+        /// <summary>
         /// Sets sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
@@ -130,11 +170,14 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds activity with a given operation name to the list of subscribed activities. This is only for legacy activities (i.e. activities created without using ActivitySource API).
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
         /// </summary>
-        /// <param name="operationName">OperationName to add.</param>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddLegacyActivity(string operationName)
+        internal TracerProviderBuilder AddLegacySource(string operationName)
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {

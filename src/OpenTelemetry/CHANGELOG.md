@@ -9,16 +9,48 @@ please check the latest changes
 
 ## Unreleased
 
-* Added `ForceFlush` to `TracerProvider`. ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+* Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
+  ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
 
-* Added a TracerProvierBuilder extension method called
-  `AddLegacyActivityOperationName` which is used by instrumentation libraries
-  that use DiagnosticSource to get activities processed without
-  ActivitySourceAdapter.
+* Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
+  sets the activity status to `Error` when exception happened.
+  ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
+  [#1875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1875))
+
+* Added `ForceFlush` to `TracerProvider`.
+  ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
+
+* Added a TracerProviderBuilder extension method called `AddLegacySource` which
+  is used by instrumentation libraries that use DiagnosticSource to get
+  activities processed without ActivitySourceAdapter.
   [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
+  [#1860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1860)
 
 * Added new constructor with optional parameters to allow customization of
-  `ParentBasedSampler` behavior. ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
+  `ParentBasedSampler` behavior.
+  ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
+
+* The application base directory is now tested after the current directory when
+  searching for the [self diagnostic configuration
+  file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
+  ([#1865](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1865))
+
+* Resource Attributes now accept primitive arrays as values.
+  ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
+
+* Fixed
+  [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
+  `ParentBasedSampler` will no longer explicitly consider Activity links.
+  ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
+
+* Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
+  `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
+  `ForEachScope` on `LogRecord`.
+  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
+  [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
+
+* Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
+  ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
 
 ## 1.0.1
 
@@ -33,9 +65,9 @@ Released 2021-Feb-09
 Released 2021-Feb-04
 
 * Default `Resource` will now contain service.name instead of Telemetry SDK.
-  [#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744)
+  ([#1744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1744))
 * Added GetDefaultResource() method to `Provider`.
-  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+  ([#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768))
 
 ## 1.0.0-rc2
 
@@ -136,14 +168,14 @@ Released 2020-Oct-16
 * Changed `ActivityExporter.OnShutdown`, `ActivityExporter.Shutdown`,
   `ActivityProcessor.OnShutdown` and `ActivityProcessor.Shutdown` to return
   boolean value
-  ([#1282](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1282))
-  ([#1285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1285))
+  ([#1282](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1282)
+  [#1285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1285))
 * Renamed `SamplingDecision` options (`NotRecord` to `Drop`, `Record` to
   `RecordOnly`, and `RecordAndSampled` to `RecordAndSample`)
   ([#1297](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1297))
 * Added `ILogger`/`Microsoft.Extensions.Logging` integration
-  ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308))
-  ([#1315](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1315))
+  ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308)
+  [#1315](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1315))
 * Changed exporter and processor to generic types
   ([#1328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1328)):
   * `ActivityExporter` changed to `BaseExporter<Activity>`

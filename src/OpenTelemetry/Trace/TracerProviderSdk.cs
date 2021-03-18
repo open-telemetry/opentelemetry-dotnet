@@ -75,8 +75,17 @@ namespace OpenTelemetry.Trace
                         // We have a legacy activity in hand now
                         if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
                         {
-                            // Legacy activity matches the user configured list. Call sampler for the legacy activity
-                            this.getRequestedDataAction(activity);
+                            // Legacy activity matches the user configured list.
+                            // Call sampler for the legacy activity
+                            // unless suppressed.
+                            if (!Sdk.SuppressInstrumentation)
+                            {
+                                this.getRequestedDataAction(activity);
+                            }
+                            else
+                            {
+                                activity.IsAllDataRequested = false;
+                            }
                         }
                         else
                         {
@@ -363,6 +372,7 @@ namespace OpenTelemetry.Trace
         private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
         {
             activity.IsAllDataRequested = false;
+            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
 
         private void RunGetRequestedDataOtherSampler(Activity activity)
@@ -403,9 +413,11 @@ namespace OpenTelemetry.Trace
             {
                 case SamplingDecision.Drop:
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     break;
                 case SamplingDecision.RecordOnly:
                     activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     break;
                 case SamplingDecision.RecordAndSample:
                     activity.IsAllDataRequested = true;
