@@ -57,7 +57,6 @@ used as the process's name.
 An example configuration of resource attributes and attachment to `TracerProvider`
 with `JaegerExporter` can be found in [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs).
 
-
 ## References
 
 * [Jaeger](https://www.jaegertracing.io)
