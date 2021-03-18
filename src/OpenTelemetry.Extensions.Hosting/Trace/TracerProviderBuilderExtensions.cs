@@ -99,9 +99,9 @@ namespace OpenTelemetry.Trace
         /// <returns><see cref="TracerProvider"/>.</returns>
         public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder, IServiceProvider serviceProvider)
         {
-            if (tracerProviderBuilder is IDeferredTracerBuilder deferredTracerBuilder)
+            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
-                return deferredTracerBuilder.Build(serviceProvider);
+                return tracerProviderBuilderHosting.Build(serviceProvider);
             }
 
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)

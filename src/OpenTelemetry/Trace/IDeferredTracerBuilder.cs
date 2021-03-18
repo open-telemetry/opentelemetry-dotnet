@@ -29,12 +29,5 @@ namespace OpenTelemetry.Trace
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure);
-
-        /// <summary>
-        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
-        /// </summary>
-        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        /// <returns><see cref="TracerProvider"/>.</returns>
-        TracerProvider Build(IServiceProvider serviceProvider);
     }
 }
