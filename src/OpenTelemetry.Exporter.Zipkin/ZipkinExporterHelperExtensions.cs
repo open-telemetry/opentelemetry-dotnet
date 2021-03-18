@@ -38,9 +38,9 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (builder is IDeferredTracerBuilder deferredTracerBuilder)
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
-                return deferredTracerBuilder.Configure((sp, builder) =>
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
                     AddZipkinExporter(builder, sp.GetOptions<ZipkinExporterOptions>(), configure);
                 });

@@ -83,9 +83,9 @@ namespace OpenTelemetry.Trace
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            if (tracerProviderBuilder is IDeferredTracerBuilder deferredTracerBuilder)
+            if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
-                deferredTracerBuilder.Configure(configure);
+                deferredTracerProviderBuilder.Configure(configure);
             }
 
             return tracerProviderBuilder;

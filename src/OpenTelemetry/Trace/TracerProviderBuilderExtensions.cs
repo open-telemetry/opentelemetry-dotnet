@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace
         /// <returns><see cref="TracerProvider"/>.</returns>
         public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
         {
-            if (tracerProviderBuilder is IDeferredTracerBuilder)
+            if (tracerProviderBuilder is IDeferredTracerProviderBuilder)
             {
                 throw new NotSupportedException("DeferredTracerBuilder requires a ServiceProvider to build.");
             }

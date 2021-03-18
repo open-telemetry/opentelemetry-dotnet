@@ -1,4 +1,4 @@
-// <copyright file="IDeferredTracerBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="IDeferredTracerProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,11 @@ using System;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Describes a tracer builder tha support deferred initialization using a <see cref="IServiceProvider"/> to perform dependency injection.
+    /// Describes a tracer provider builder that supports deferred
+    /// initialization using an <see cref="IServiceProvider"/> to perform
+    /// dependency injection.
     /// </summary>
-    public interface IDeferredTracerBuilder
+    public interface IDeferredTracerProviderBuilder
     {
         /// <summary>
         /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
