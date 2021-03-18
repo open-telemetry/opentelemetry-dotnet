@@ -31,13 +31,14 @@ public class Program
 #else
         using var loggerFactory = LoggerFactory.Create(builder =>
 #endif
-        {
-            builder.AddOpenTelemetry(options => options
-                .AddProcessor(new MyProcessor("ProcessorA"))
-                .AddProcessor(new MyProcessor("ProcessorB"))
-                .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                .AddMyExporter());
-        });
+            builder.AddOpenTelemetry(options =>
+            {
+                options.IncludeScopes = true;
+                options.AddProcessor(new MyProcessor("ProcessorA"))
+                       .AddProcessor(new MyProcessor("ProcessorB"))
+                       .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
+                       .AddMyExporter();
+            }));
 
 #if NETCOREAPP2_1
         using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -67,6 +68,13 @@ public class Program
             ["Name"] = "truffle",
             ["Price"] = 299.99,
         });
+
+        // log with scopes
+        using (logger.BeginScope("[operation]"))
+        using (logger.BeginScope("[hardware]"))
+        {
+            logger.LogError("{name} is broken.", "refrigerator");
+        }
     }
 
     internal struct Food

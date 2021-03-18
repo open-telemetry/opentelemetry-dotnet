@@ -17,7 +17,6 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
@@ -38,7 +37,8 @@ namespace OpenTelemetry.Logs
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!this.IsEnabled(logLevel) || Sdk.SuppressInstrumentation)
+            if (!this.IsEnabled(logLevel)
+                || Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Logs
                     this.categoryName,
                     logLevel,
                     eventId,
-                    options.IncludeMessage ? formatter(state, exception) : null,
+                    options.IncludeFormattedMessage ? formatter(state, exception) : null,
                     options.ParseStateValues ? null : (object)state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
@@ -73,9 +73,9 @@ namespace OpenTelemetry.Logs
 
         private IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
         {
-            if (state is IReadOnlyList<KeyValuePair<string, object>>)
+            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
             {
-                return StateValueListParser<TState>.ParseStateFunc(state);
+                return stateList;
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
             {
@@ -88,107 +88,6 @@ namespace OpenTelemetry.Logs
                     new KeyValuePair<string, object>(string.Empty, state),
                 };
             }
-        }
-
-        private static class StateValueListParser<TState>
-        {
-            static StateValueListParser()
-            {
-                /* The code below is building a dynamic method to do this...
-
-                     int count = state.Count;
-
-                     List<KeyValuePair<string, object>> stateValues = new List<KeyValuePair<string, object>>(count);
-
-                     for (int i = 0; i < count; i++)
-                     {
-                         stateValues.Add(state[i]);
-                     }
-
-                     return stateValues;
-
-                  ...so we don't box structs or allocate an enumerator. */
-
-                var stateType = typeof(TState);
-                var listType = typeof(List<KeyValuePair<string, object>>);
-                var readOnlyListType = typeof(IReadOnlyList<KeyValuePair<string, object>>);
-
-                var dynamicMethod = new DynamicMethod(
-                    nameof(StateValueListParser<TState>),
-                    readOnlyListType,
-                    new[] { stateType },
-                    typeof(StateValueListParser<TState>).Module,
-                    skipVisibility: true);
-
-                var generator = dynamicMethod.GetILGenerator();
-
-                var testLabel = generator.DefineLabel();
-                var writeItemLabel = generator.DefineLabel();
-
-                generator.DeclareLocal(typeof(int)); // count
-                generator.DeclareLocal(listType); // list
-                generator.DeclareLocal(typeof(int)); // i
-
-                if (stateType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Ldarga_S, 0); // state
-                    generator.Emit(OpCodes.Call, stateType.GetProperty("Count").GetMethod);
-                }
-                else
-                {
-                    generator.Emit(OpCodes.Ldarg_0); // state
-                    generator.Emit(OpCodes.Callvirt, typeof(IReadOnlyCollection<KeyValuePair<string, object>>).GetProperty("Count").GetMethod);
-                }
-
-                generator.Emit(OpCodes.Stloc_0); // count = state.Count
-                generator.Emit(OpCodes.Ldloc_0);
-                generator.Emit(OpCodes.Newobj, listType.GetConstructor(new Type[] { typeof(int) }));
-                generator.Emit(OpCodes.Stloc_1); // list = new List(count)
-
-                generator.Emit(OpCodes.Ldc_I4_0);
-                generator.Emit(OpCodes.Stloc_2); // i = 0
-
-                generator.Emit(OpCodes.Br_S, testLabel);
-                generator.MarkLabel(writeItemLabel);
-                generator.Emit(OpCodes.Ldloc_1); // list
-                if (stateType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Ldarga_S, 0); // state
-                }
-                else
-                {
-                    generator.Emit(OpCodes.Ldarg_0); // state
-                }
-
-                generator.Emit(OpCodes.Ldloc_2); // i
-                if (stateType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Call, stateType.GetProperty("Item").GetMethod);
-                }
-                else
-                {
-                    generator.Emit(OpCodes.Callvirt, readOnlyListType.GetProperty("Item").GetMethod);
-                }
-
-                generator.Emit(OpCodes.Callvirt, listType.GetMethod("Add", new Type[] { typeof(KeyValuePair<string, object>) })); // list.Add(state[i])
-
-                generator.Emit(OpCodes.Ldloc_2); // i
-                generator.Emit(OpCodes.Ldc_I4_1);
-                generator.Emit(OpCodes.Add); // i++
-                generator.Emit(OpCodes.Stloc_2);
-
-                generator.MarkLabel(testLabel);
-                generator.Emit(OpCodes.Ldloc_2); // i
-                generator.Emit(OpCodes.Ldloc_0); // count
-                generator.Emit(OpCodes.Blt_S, writeItemLabel);
-
-                generator.Emit(OpCodes.Ldloc_1); // list
-                generator.Emit(OpCodes.Ret);
-
-                ParseStateFunc = (Func<TState, IReadOnlyList<KeyValuePair<string, object>>>)dynamicMethod.CreateDelegate(typeof(Func<TState, IReadOnlyList<KeyValuePair<string, object>>>));
-            }
-
-            public static Func<TState, IReadOnlyList<KeyValuePair<string, object>>> ParseStateFunc { get; }
         }
     }
 }
