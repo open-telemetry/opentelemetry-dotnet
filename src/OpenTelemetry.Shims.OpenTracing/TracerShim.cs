@@ -28,8 +28,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat));
+            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer), "Parameter cannot be null");
+            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat), "Parameter cannot be null");
 
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
@@ -51,12 +51,12 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (format is null)
             {
-                throw new ArgumentNullException(nameof(format));
+                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
             }
 
             if (carrier == null)
             {
-                throw new ArgumentNullException(nameof(carrier));
+                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
             }
 
             PropagationContext propagationContext = default;
@@ -99,22 +99,22 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (spanContext is null)
             {
-                throw new ArgumentNullException(nameof(spanContext));
+                throw new ArgumentNullException(nameof(spanContext), "Parameter cannot be null");
             }
 
             if (!(spanContext is SpanContextShim shim))
             {
-                throw new ArgumentException("context is not a valid SpanContextShim object");
+                throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
             }
 
             if (format is null)
             {
-                throw new ArgumentNullException(nameof(format));
+                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
             }
 
             if (carrier == null)
             {
-                throw new ArgumentNullException(nameof(carrier));
+                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
             }
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
