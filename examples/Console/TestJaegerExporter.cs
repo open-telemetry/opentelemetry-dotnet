@@ -53,16 +53,10 @@ namespace Examples.Console
 
         internal static object RunWithActivity(string host, int port)
         {
-            List<KeyValuePair<string, object>> resAttribs = new List<KeyValuePair<string, object>>()
-            {
-                new KeyValuePair<string, object>("attribute1", "ABC"),
-                new KeyValuePair<string, object>("attribute2", 123),
-            };
-
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Jaeger exporter.
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
-                        ResourceBuilder.CreateDefault().AddService("jaeger-test").AddAttributes(resAttribs))
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("jaeger-test"))
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .AddJaegerExporter(o =>
                     {
