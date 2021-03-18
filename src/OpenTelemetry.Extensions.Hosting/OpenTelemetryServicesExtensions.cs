@@ -17,6 +17,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Trace;
 
@@ -81,8 +82,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Writes OpenTelemetry self diagnostics events to the logging system.
         /// </summary>
         /// <remarks>
-        /// This needs to be called before <see cref="AddOpenTelemetryTracing"/> in order to capture startup errors.
-        /// </remarks>        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// This needs to be called before <see cref="AddOpenTelemetryTracing(IServiceCollection)"/> in order to capture startup errors.
+        /// </remarks>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetrySelfDiagnosticsLogging(this IServiceCollection services)
         {
