@@ -18,8 +18,23 @@ using System;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Describes a tracer builder tha support deferred initialization using a <see cref="IServiceProvider"/> to perform dependency injection.
+    /// </summary>
     public interface IDeferredTracerBuilder
     {
+        /// <summary>
+        /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
+        /// </summary>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure);
+
+        /// <summary>
+        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        TracerProvider Build(IServiceProvider serviceProvider);
     }
 }

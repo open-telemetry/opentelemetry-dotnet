@@ -19,8 +19,17 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Contains extension methods for the <see cref="TracerProviderBuilder"/> class.
+    /// </summary>
     public static class TracerProviderBuilderExtensions
     {
+        /// <summary>
+        /// Adds instrumentation to the provider.
+        /// </summary>
+        /// <typeparam name="T">Instrumentation type.</typeparam>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : class
         {
@@ -32,6 +41,12 @@ namespace OpenTelemetry.Trace
             return tracerProviderBuilder;
         }
 
+        /// <summary>
+        /// Adds a processor to the provider.
+        /// </summary>
+        /// <typeparam name="T">Processor type.</typeparam>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : BaseProcessor<Activity>
         {
@@ -43,6 +58,12 @@ namespace OpenTelemetry.Trace
             return tracerProviderBuilder;
         }
 
+        /// <summary>
+        /// Sets the sampler on the provider.
+        /// </summary>
+        /// <typeparam name="T">Sampler type.</typeparam>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : Sampler
         {
@@ -54,6 +75,12 @@ namespace OpenTelemetry.Trace
             return tracerProviderBuilder;
         }
 
+        /// <summary>
+        /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
             if (tracerProviderBuilder is IDeferredTracerBuilder deferredTracerBuilder)
@@ -62,6 +89,27 @@ namespace OpenTelemetry.Trace
             }
 
             return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder, IServiceProvider serviceProvider)
+        {
+            if (tracerProviderBuilder is IDeferredTracerBuilder deferredTracerBuilder)
+            {
+                return deferredTracerBuilder.Build(serviceProvider);
+            }
+
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                return tracerProviderBuilderBase.Build();
+            }
+
+            return null;
         }
     }
 }

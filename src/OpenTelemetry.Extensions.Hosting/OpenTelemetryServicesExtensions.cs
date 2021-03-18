@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -76,21 +75,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
             try
             {
-                return services
-                    .AddSingleton(s => createTracerProvider(s))
-                    .AddOpenTelemetryTracingInternal();
+                services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+                return services.AddSingleton(s => createTracerProvider(s));
             }
             catch (Exception ex)
             {
                 HostingExtensionsEventSource.Log.FailedInitialize(ex);
             }
 
-            return services;
-        }
-
-        private static IServiceCollection AddOpenTelemetryTracingInternal(this IServiceCollection services)
-        {
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
             return services;
         }
     }
