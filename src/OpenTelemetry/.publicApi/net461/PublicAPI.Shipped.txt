@@ -66,7 +66,6 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(OpenTelemetry.BasePro
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.OpenTelemetryLoggerOptions() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateLogger(string categoryName) -> Microsoft.Extensions.Logging.ILogger
-OpenTelemetry.Logs.OpenTelemetryLoggerProvider.Dispose() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Microsoft.Extensions.Options.IOptionsMonitor<OpenTelemetry.Logs.OpenTelemetryLoggerOptions> options) -> void
 OpenTelemetry.ProviderExtensions
 OpenTelemetry.Resources.Resource
@@ -172,4 +171,3 @@ virtual OpenTelemetry.BaseProcessor<T>.OnEnd(T data) -> void
 virtual OpenTelemetry.BaseProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
-virtual OpenTelemetry.Logs.OpenTelemetryLoggerProvider.Dispose(bool disposing) -> void
