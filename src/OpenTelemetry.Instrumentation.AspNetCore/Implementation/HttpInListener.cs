@@ -57,6 +57,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what AspNetCore library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
             if (context == null)
             {
@@ -64,22 +79,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            try
-            {
-                if (this.options.Filter?.Invoke(context) == false)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
-                    activity.IsAllDataRequested = false;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
-                activity.IsAllDataRequested = false;
-                return;
-            }
-
+            // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
@@ -110,11 +110,29 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
-
+            // enrich Activity from payload only if sampling decision
+            // is favorable.
             if (activity.IsAllDataRequested)
             {
+                try
+                {
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        activity.IsAllDataRequested = false;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                    activity.IsAllDataRequested = false;
+                    return;
+                }
+
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
