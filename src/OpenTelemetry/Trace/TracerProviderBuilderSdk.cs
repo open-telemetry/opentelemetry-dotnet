@@ -18,5 +18,6 @@ namespace OpenTelemetry.Trace
 {
     internal class TracerProviderBuilderSdk : TracerProviderBuilderBase
     {
+        internal TracerProvider BuildSdk() => this.Build();
     }
 }
