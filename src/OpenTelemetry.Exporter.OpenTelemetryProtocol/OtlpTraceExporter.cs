@@ -188,7 +188,9 @@ namespace OpenTelemetry.Exporter
                     headers.Split(','),
                     (pair) =>
                     {
-                        var keyValueData = pair.Split('=');
+                        // Specify the maximum number of substrings to return to 2
+                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
+                        var keyValueData = pair.Split(new char[] { '=' }, 2);
                         if (keyValueData.Length != 2)
                         {
                             throw new ArgumentException("Headers provided in an invalid format.");
