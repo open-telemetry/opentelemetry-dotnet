@@ -18,7 +18,7 @@ using System;
 
 namespace Examples.AspNetCore.Models
 {
-    public class WeatherForecast
+    public record WeatherForecast
     {
         public DateTime Date { get; set; }
 

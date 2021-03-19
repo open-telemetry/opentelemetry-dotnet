@@ -17,18 +17,13 @@
 #if NET461_OR_GREATER || NETSTANDARD2_0 || NET5_0_OR_GREATER
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
-using System.Reflection.Emit;
 
 namespace OpenTelemetry.Logs
 {
     internal static class DefaultLogStateConverter
     {
-        private static readonly ConcurrentDictionary<Type, List<PropertyGetter>> TypePropertyCache = new ConcurrentDictionary<Type, List<PropertyGetter>>();
-
         public static void ConvertState(ActivityTagsCollection tags, IReadOnlyList<KeyValuePair<string, object>> state)
         {
             for (int i = 0; i < state.Count; i++)
@@ -91,86 +86,8 @@ namespace OpenTelemetry.Logs
                 }
                 else
                 {
-                    AddObjectToTags(tags, keyPrefix, state, type);
+                    tags[keyPrefix] = state.ToString();
                 }
-            }
-        }
-
-        private static void AddObjectToTags(ActivityTagsCollection tags, string keyPrefix, object item, Type itemType)
-        {
-            if (!TypePropertyCache.TryGetValue(itemType, out List<PropertyGetter>? propertyGetters))
-            {
-                PropertyInfo[] properties = itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-                propertyGetters = new List<PropertyGetter>(properties.Length);
-
-                foreach (PropertyInfo propertyInfo in properties)
-                {
-                    if (propertyInfo.CanRead)
-                    {
-                        propertyGetters.Add(new PropertyGetter(itemType, propertyInfo));
-                    }
-                }
-
-                TypePropertyCache.TryAdd(itemType, propertyGetters);
-            }
-
-            foreach (PropertyGetter propertyGetter in propertyGetters)
-            {
-                object propertyValue = propertyGetter.GetPropertyFunc(item);
-                ConvertState(tags, $"{keyPrefix}.{propertyGetter.PropertyName}", propertyValue);
-            }
-        }
-
-        private class PropertyGetter
-        {
-            public PropertyGetter(Type type, PropertyInfo propertyInfo)
-            {
-                this.PropertyName = propertyInfo.Name;
-
-                this.GetPropertyFunc = BuildGetPropertyFunc(propertyInfo, type);
-            }
-
-            public string PropertyName { get; }
-
-            public Func<object, object> GetPropertyFunc { get; }
-
-            private static Func<object, object> BuildGetPropertyFunc(PropertyInfo propertyInfo, Type runtimePropertyType)
-            {
-                MethodInfo realMethod = propertyInfo.GetMethod!;
-
-                Type declaringType = propertyInfo.DeclaringType!;
-
-                Type declaredPropertyType = propertyInfo.PropertyType;
-
-                DynamicMethod dynamicMethod = new DynamicMethod(
-                    nameof(PropertyGetter),
-                    typeof(object),
-                    new[] { typeof(object) },
-                    typeof(PropertyGetter).Module,
-                    skipVisibility: true);
-                ILGenerator generator = dynamicMethod.GetILGenerator();
-
-                generator.Emit(OpCodes.Ldarg_0);
-
-                if (declaringType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Unbox, declaringType);
-                    generator.Emit(OpCodes.Call, realMethod);
-                }
-                else
-                {
-                    generator.Emit(OpCodes.Castclass, declaringType);
-                    generator.Emit(OpCodes.Callvirt, realMethod);
-                }
-
-                if (declaredPropertyType != runtimePropertyType && declaredPropertyType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Box, declaredPropertyType);
-                }
-
-                generator.Emit(OpCodes.Ret);
-
-                return (Func<object, object>)dynamicMethod.CreateDelegate(typeof(Func<object, object>));
             }
         }
     }

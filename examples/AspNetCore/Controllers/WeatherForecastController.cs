@@ -61,7 +61,7 @@ namespace Examples.AspNetCore.Controllers
             this.logger.LogInformation(
                 "WeatherForecasts generated {count}: {forecasts}",
                 forecast.Length,
-                new { forecast });
+                forecast);
 
             return forecast;
         }
