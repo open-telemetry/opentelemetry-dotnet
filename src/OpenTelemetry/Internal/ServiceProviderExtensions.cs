@@ -21,7 +21,7 @@ using Microsoft.Extensions.Options;
 namespace System
 {
     /// <summary>
-    /// Extension methods for OpenTelemetry depedency injection support.
+    /// Extension methods for OpenTelemetry dependency injection support.
     /// </summary>
     internal static class ServiceProviderExtensions
     {
