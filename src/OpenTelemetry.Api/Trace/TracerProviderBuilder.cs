@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     public abstract class TracerProviderBuilder
     {
         /// <summary>
-        /// Adds an instrumentation to the provider.
+        /// Adds instrumentation to the provider.
         /// </summary>
         /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
         /// <param name="instrumentationFactory">Function that builds instrumentation.</param>

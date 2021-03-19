@@ -24,35 +24,21 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A <see cref="TracerProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
     /// </summary>
-    public class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
+    internal class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<Type> processorTypes = new List<Type>();
         private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
         private Type samplerType;
 
-        internal TracerProviderBuilderHosting(IServiceCollection services)
+        public TracerProviderBuilderHosting(IServiceCollection services)
         {
             this.Services = services ?? throw new ArgumentNullException(nameof(services));
         }
 
-        /// <summary>
-        /// Gets the application services.
-        /// </summary>
         public IServiceCollection Services { get; }
 
-        TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            this.configurationActions.Add(configure);
-            return this;
-        }
-
-        internal TracerProviderBuilder AddInstrumentation<TInstrumentation>(
+        public TracerProviderBuilder AddInstrumentation<TInstrumentation>(
             Func<IServiceProvider, TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
@@ -70,21 +56,32 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        internal TracerProviderBuilder AddProcessor<T>()
+        public TracerProviderBuilder AddProcessor<T>()
             where T : BaseProcessor<Activity>
         {
             this.processorTypes.Add(typeof(T));
             return this;
         }
 
-        internal TracerProviderBuilder SetSampler<T>()
+        public TracerProviderBuilder SetSampler<T>()
             where T : Sampler
         {
             this.samplerType = typeof(T);
             return this;
         }
 
-        internal TracerProvider Build(IServiceProvider serviceProvider)
+        public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            this.configurationActions.Add(configure);
+            return this;
+        }
+
+        public TracerProvider Build(IServiceProvider serviceProvider)
         {
             foreach (InstrumentationFactory instrumentationFactory in this.instrumentationFactories)
             {
@@ -109,10 +106,10 @@ namespace OpenTelemetry.Trace
                 configureAction(serviceProvider, this);
             }
 
-            return ((TracerProviderBuilderBase)this).Build();
+            return this.Build();
         }
 
-        internal readonly struct InstrumentationFactory
+        private readonly struct InstrumentationFactory
         {
             public readonly string Name;
             public readonly string Version;

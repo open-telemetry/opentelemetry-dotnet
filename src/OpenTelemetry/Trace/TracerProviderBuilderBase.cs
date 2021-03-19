@@ -37,12 +37,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        /// <summary>
-        /// Adds an instrumentation to the provider.
-        /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        /// <inheritdoc />
         public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
@@ -61,11 +56,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        /// <summary>
-        /// Adds given activitysource names to the list of subscribed sources.
-        /// </summary>
-        /// <param name="names">Activity source names.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
             if (names == null)
@@ -189,7 +180,11 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        internal TracerProvider Build()
+        /// <summary>
+        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        protected TracerProvider Build()
         {
             return new TracerProviderSdk(
                 this.resourceBuilder.Build(),
@@ -200,6 +195,13 @@ namespace OpenTelemetry.Trace
                 this.legacyActivityOperationNames);
         }
 
+        /// <summary>
+        /// Adds instrumentation to the provider.
+        /// </summary>
+        /// <param name="instrumentationName">Instrumentation name.</param>
+        /// <param name="instrumentationVersion">Instrumentation version.</param>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         protected TracerProviderBuilder AddInstrumentation(
             string instrumentationName,
             string instrumentationVersion,

@@ -9,9 +9,11 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.set -> void
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
 OpenTelemetry.Trace.TracerProviderBuilderBase
 OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string instrumentationName, string instrumentationVersion, System.Func<object> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider
 OpenTelemetry.Trace.TracerProviderBuilderBase.TracerProviderBuilderBase() -> void
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
