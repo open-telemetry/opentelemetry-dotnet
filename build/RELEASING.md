@@ -75,7 +75,7 @@ which produces version numbers based on git tags.
 Note:
 If releasing only core components, prefix the tag
 with "core-". For example:
-git tag -a 1.1.0-beta1 -m "1.1.0-beta1 of all core components"
+git tag -a core-1.1.0-beta1 -m "1.1.0-beta1 of all core components"
 
 If releasing only non-core components, use tags without
 prefix. For example:
