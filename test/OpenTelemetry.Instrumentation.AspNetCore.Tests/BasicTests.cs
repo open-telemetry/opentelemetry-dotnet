@@ -239,37 +239,37 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     WaitForProcessorInvocations(activityProcessor, 4);
                 }
 
-            // List of invocations on the processor
-            // 1. SetParentProvider for TracerProviderSdk
-            // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
-            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
-            Assert.Equal(4, activityProcessor.Invocations.Count);
+                // List of invocations on the processor
+                // 1. SetParentProvider for TracerProviderSdk
+                // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
+                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
+                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
+                Assert.Equal(4, activityProcessor.Invocations.Count);
 
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
                 var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
                 Assert.Equal(2, startedActivities.Count());
                 Assert.Single(stoppedActivities);
 
-            // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
-            Assert.Equal(2, startedActivities.Count(item =>
-            {
-                var startedActivity = item.Arguments[0] as Activity;
-                return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-            }));
+                // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
+                Assert.Equal(2, startedActivities.Count(item =>
+                {
+                    var startedActivity = item.Arguments[0] as Activity;
+                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+                }));
 
-            Assert.Single(startedActivities, item =>
-            {
-                var startedActivity = item.Arguments[0] as Activity;
-                return startedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
-            });
+                Assert.Single(startedActivities, item =>
+                {
+                    var startedActivity = item.Arguments[0] as Activity;
+                    return startedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
+                });
 
-            // Only the sibling activity is sent to Processor.OnEnd
-            Assert.Single(stoppedActivities, item =>
-            {
-                var stoppedActivity = item.Arguments[0] as Activity;
-                return stoppedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
-            });
+                // Only the sibling activity is sent to Processor.OnEnd
+                Assert.Single(stoppedActivities, item =>
+                {
+                    var stoppedActivity = item.Arguments[0] as Activity;
+                    return stoppedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
+                });
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
