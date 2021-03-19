@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Enabling endpoint configuration in ZipkinExporterOptions via OTEL_EXPORTER_ZIPKIN_ENDPOINT environment variable
+  ([#1453](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1453))
+
 ## 1.0.1
 
 Released 2021-Feb-10
