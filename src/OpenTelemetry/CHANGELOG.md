@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 * Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
   ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
 
