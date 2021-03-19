@@ -181,21 +181,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
-        /// </summary>
-        /// <returns><see cref="TracerProvider"/>.</returns>
-        protected TracerProvider Build()
-        {
-            return new TracerProviderSdk(
-                this.resourceBuilder.Build(),
-                this.sources,
-                this.instrumentationFactories,
-                this.sampler,
-                this.processors,
-                this.legacyActivityOperationNames);
-        }
-
-        /// <summary>
         /// Adds instrumentation to the provider.
         /// </summary>
         /// <param name="instrumentationName">Instrumentation name.</param>
@@ -211,6 +196,21 @@ namespace OpenTelemetry.Trace
                 new InstrumentationFactory(instrumentationName, instrumentationVersion, instrumentationFactory));
 
             return this;
+        }
+
+        /// <summary>
+        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        protected TracerProvider Build()
+        {
+            return new TracerProviderSdk(
+                this.resourceBuilder.Build(),
+                this.sources,
+                this.instrumentationFactories,
+                this.sampler,
+                this.processors,
+                this.legacyActivityOperationNames);
         }
 
         internal readonly struct InstrumentationFactory

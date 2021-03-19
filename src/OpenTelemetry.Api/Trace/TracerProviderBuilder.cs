@@ -22,7 +22,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilder
     {
-        internal TracerProviderBuilder()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TracerProviderBuilder"/> class.
+        /// </summary>
+        protected TracerProviderBuilder()
         {
         }
 
