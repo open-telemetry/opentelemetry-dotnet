@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:9411/api/v2/spans");
+        public Uri Endpoint { get; set; } = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT") ?? "http://localhost:9411/api/v2/spans");
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.
