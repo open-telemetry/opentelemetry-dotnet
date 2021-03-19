@@ -72,12 +72,19 @@ Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullNam
 We use [MinVer](https://github.com/adamralph/minver) to do versioning,
 which produces version numbers based on git tags.
 
-Note: If releasing only core components, prefix the tag
+Note:
+If releasing only core components, prefix the tag
 with "core-". For example:
-git tag -a core-1.0.0-rc4 -m "1.0.0-rc4 release of core"
+git tag -a core-1.1.0-beta1 -m "1.1.0-beta1 of all core components"
+
+If releasing only non-core components, use tags without
+prefix. For example:
+git tag -a 1.0.0-rc3 -m "1.0.0-rc3 of all non-core components"
+
+If releasing both, push both tags above.
 
 6.Open [Pack and publish to MyGet
-   workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions?query=workflow%3A%22Pack+and+publish+to+Myget%22)
+   workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
    and manually trigger a build. At the end of this, MyGet will have the
    packages. The package name will be the tag name used in step 5.
 
