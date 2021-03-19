@@ -17,6 +17,7 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
@@ -40,9 +41,9 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"{"LogRecord.CategoryName:".PadRight(RightPaddingLength)}{logRecord.CategoryName}");
                 this.WriteLine($"{"LogRecord.LogLevel:".PadRight(RightPaddingLength)}{logRecord.LogLevel}");
                 this.WriteLine($"{"LogRecord.TraceFlags:".PadRight(RightPaddingLength)}{logRecord.TraceFlags}");
-                if (logRecord.Message != null)
+                if (logRecord.FormattedMessage != null)
                 {
-                    this.WriteLine($"{"LogRecord.Message:".PadRight(RightPaddingLength)}{logRecord.Message}");
+                    this.WriteLine($"{"LogRecord.FormattedMessage:".PadRight(RightPaddingLength)}{logRecord.FormattedMessage}");
                 }
 
                 if (logRecord.State != null)
@@ -67,6 +68,16 @@ namespace OpenTelemetry.Exporter
 
                 static void ProcessScope(object scope, ConsoleLogRecordExporter exporter)
                     => exporter.WriteLine($"{"LogRecord.Scope:".PadRight(RightPaddingLength)}{scope}");
+
+                var resource = this.ParentProvider.GetResource();
+                if (resource != Resource.Empty)
+                {
+                    this.WriteLine("Resource associated with LogRecord:");
+                    foreach (var resourceAttribute in resource.Attributes)
+                    {
+                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                    }
+                }
 
                 this.WriteLine(string.Empty);
             }
