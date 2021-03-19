@@ -51,7 +51,7 @@ public class Program
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddGrpcClientInstrumentation()
-            .AddHttpClientInstrumentaiton()
+            .AddHttpClientInstrumentation()
             .AddConsoleExporter()
             .Build();
     }

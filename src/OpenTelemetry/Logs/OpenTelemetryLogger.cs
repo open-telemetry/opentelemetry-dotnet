@@ -16,8 +16,8 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
-using System.Runtime.InteropServices;
-using System.Threading;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -37,27 +37,58 @@ namespace OpenTelemetry.Logs
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!this.IsEnabled(logLevel))
+            if (!this.IsEnabled(logLevel)
+                || Sdk.SuppressInstrumentation)
             {
                 return;
             }
 
-            if (Sdk.SuppressInstrumentation)
+            var processor = this.provider.Processor;
+            if (processor != null)
             {
-                return;
+                var options = this.provider.Options;
+
+                var record = new LogRecord(
+                    options.IncludeScopes ? this.ScopeProvider : null,
+                    DateTime.UtcNow,
+                    this.categoryName,
+                    logLevel,
+                    eventId,
+                    options.IncludeFormattedMessage ? formatter(state, exception) : null,
+                    options.ParseStateValues ? null : (object)state,
+                    exception,
+                    options.ParseStateValues ? this.ParseState(state) : null);
+
+                processor.OnEnd(record);
             }
-
-            var record = new LogRecord(DateTime.UtcNow, this.categoryName, logLevel, eventId, state, exception);
-
-            this.provider.Processor?.OnEnd(record);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsEnabled(LogLevel logLevel)
         {
             return logLevel != LogLevel.None;
         }
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? null;
+
+        private IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
+        {
+            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            {
+                return stateList;
+            }
+            else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+            {
+                return new List<KeyValuePair<string, object>>(stateValues);
+            }
+            else
+            {
+                return new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>(string.Empty, state),
+                };
+            }
+        }
     }
 }
 #endif

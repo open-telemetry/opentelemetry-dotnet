@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Tests.Implementation;
 using OpenTelemetry.Resources;
@@ -28,8 +27,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 {
     public class JaegerExporterTests
     {
-        private const string DefaultServiceName = "OpenTelemetry Exporter";
-
         [Fact]
         public void JaegerExporter_BadArgs()
         {

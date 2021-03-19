@@ -26,11 +26,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal class TracerProviderBuilderSdk : TracerProviderBuilder
     {
-        private readonly List<DiagnosticSourceInstrumentationFactory> diagnosticSourceInstrumentationFactories = new List<DiagnosticSourceInstrumentationFactory>();
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
+        private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
@@ -90,6 +89,47 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="enabled">Enabled or not.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder SetErrorStatusOnException(bool enabled)
+        {
+            ExceptionProcessor existingExceptionProcessor = null;
+
+            if (this.processors.Count > 0)
+            {
+                existingExceptionProcessor = this.processors[0] as ExceptionProcessor;
+            }
+
+            if (enabled)
+            {
+                if (existingExceptionProcessor == null)
+                {
+                    try
+                    {
+                        this.processors.Insert(0, new ExceptionProcessor());
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                    }
+                }
+            }
+            else
+            {
+                if (existingExceptionProcessor != null)
+                {
+                    this.processors.RemoveAt(0);
+                    existingExceptionProcessor.Dispose();
+                }
+            }
+
+            return this;
+        }
+
+        /// <summary>
         /// Sets sampler.
         /// </summary>
         /// <param name="sampler">Sampler instance.</param>
@@ -129,55 +169,35 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        /// <summary>
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        internal TracerProviderBuilder AddLegacySource(string operationName)
+        {
+            if (string.IsNullOrWhiteSpace(operationName))
+            {
+                throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
+            }
+
+            this.legacyActivityOperationNames[operationName] = true;
+
+            return this;
+        }
+
         internal TracerProvider Build()
         {
             return new TracerProviderSdk(
                 this.resourceBuilder.Build(),
                 this.sources,
-                this.diagnosticSourceInstrumentationFactories,
                 this.instrumentationFactories,
                 this.sampler,
-                this.processors);
-        }
-
-        /// <summary>
-        /// Adds a DiagnosticSource based instrumentation.
-        /// This is required for libraries which is already instrumented with
-        /// DiagnosticSource and Activity, without using ActivitySource.
-        /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
-            where TInstrumentation : class
-        {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
-
-            this.diagnosticSourceInstrumentationFactories.Add(
-                new DiagnosticSourceInstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
-        }
-
-        internal readonly struct DiagnosticSourceInstrumentationFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<ActivitySourceAdapter, object> Factory;
-
-            internal DiagnosticSourceInstrumentationFactory(string name, string version, Func<ActivitySourceAdapter, object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
+                this.processors,
+                this.legacyActivityOperationNames);
         }
 
         internal readonly struct InstrumentationFactory

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Leverages added AddLegacySource API from OpenTelemetry SDK to trigger Samplers
+  and ActivityProcessors. Samplers, ActivityProcessor.OnStart will now get the
+  Activity before any enrichment done by the instrumentation.
+  ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
+* Performance optimization by leveraging sampling decision and short circuiting
+  activity enrichment.
+  ([#1903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1903))
 * Updated the logic to set the Activity DisplayName correctly in the
   OnStopActivity method of HttpInListener class. Added a new option to provide
   custom logic for setting activity DisplayName

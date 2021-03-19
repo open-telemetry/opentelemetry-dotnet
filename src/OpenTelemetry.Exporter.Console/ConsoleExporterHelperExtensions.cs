@@ -15,9 +15,7 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.Console;
 
 namespace OpenTelemetry.Trace
 {

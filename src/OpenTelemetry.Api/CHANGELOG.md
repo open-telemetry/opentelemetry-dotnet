@@ -1,6 +1,28 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Api/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Relax System.* packages version requirement to remove upper bound.
+* Require System.Diagnostics.DiagnosticSource package 5.0.1.
 
 ## 1.0.0-rc2
 
@@ -23,8 +45,8 @@ Released 2021-Jan-29
   `Status.StatusCode` is anything other than `ERROR`.
   ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
 * Metrics removed as it is not part 1.0.0 release. See issue
-  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
-  for details on Metric release plans.
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
+  details on Metric release plans.
 * Relax System.Diagnostics.DiagnosticSource version requirement to allow
   versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
   allowed.

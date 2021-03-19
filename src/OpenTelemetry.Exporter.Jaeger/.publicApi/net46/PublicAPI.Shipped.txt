@@ -1,0 +1,18 @@
+OpenTelemetry.Exporter.JaegerExporter
+OpenTelemetry.Exporter.JaegerExporter.JaegerExporter(OpenTelemetry.Exporter.JaegerExporterOptions options) -> void
+OpenTelemetry.Exporter.JaegerExporterOptions
+OpenTelemetry.Exporter.JaegerExporterOptions.AgentHost.get -> string
+OpenTelemetry.Exporter.JaegerExporterOptions.AgentHost.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.AgentPort.get -> int
+OpenTelemetry.Exporter.JaegerExporterOptions.AgentPort.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
+OpenTelemetry.Exporter.JaegerExporterOptions.BatchExportProcessorOptions.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Exporter.JaegerExporterOptions.ExportProcessorType.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.JaegerExporterOptions() -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.MaxPayloadSizeInBytes.get -> int?
+OpenTelemetry.Exporter.JaegerExporterOptions.MaxPayloadSizeInBytes.set -> void
+OpenTelemetry.Trace.JaegerExporterHelperExtensions
+override OpenTelemetry.Exporter.JaegerExporter.Dispose(bool disposing) -> void
+override OpenTelemetry.Exporter.JaegerExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

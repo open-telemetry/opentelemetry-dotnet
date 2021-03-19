@@ -1,9 +1,7 @@
 # OpenTelemetry .NET
 
-[![Gitter
-chat](https://badges.gitter.im/open-telemetry/opentelemetry-dotnet.svg)](https://gitter.im/open-telemetry/opentelemetry-dotnet)
-[![Build
-Status](https://action-badges.now.sh/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/actions)
+[![Slack](https://img.shields.io/badge/slack-@cncf/otel/dotnet-brightgreen.svg?logo=slack)](https://cloud-native.slack.com/archives/C01N3BC2W7Q)
+[![codecov.io](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/branch/main/graphs/badge.svg?)](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/)
 [![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 [![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
@@ -44,7 +42,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 * [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+* [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 * [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
 * [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
@@ -89,8 +87,8 @@ The passcode is `77777`.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).
-For edit access, get in touch on
-[Gitter](https://gitter.im/open-telemetry/opentelemetry-dotnet).
+If you have trouble accessing the doc, please get in touch on
+[Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
 Approvers
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
@@ -121,13 +119,14 @@ repository](https://github.com/open-telemetry/community/blob/main/community-memb
 
 ## Release Schedule
 
-OpenTelemetry .NET is under active development.
+Only the [core components](./VERSIONING.md#core-components) of the repo have
+released a stable version. Components which are marked
+[pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
+are still work in progress and can undergo many breaking changes before stable
+release.
 
-The library is not yet _generally available_, and releases aren't guaranteed to
-conform to a specific version of the specification. Future releases will not
-attempt to maintain backwards compatibility with previous releases. Each alpha
-and beta release includes significant changes to the API and SDK packages,
-making them incompatible with each other.
+See special note about [Metrics release
+plans](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
@@ -135,8 +134,8 @@ existing releases.
 
 See the [project
 milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestones)
-for details on upcoming releases. The dates and features described in issues
-and milestones are estimates, and subject to change.
+for details on upcoming releases. The dates and features described in issues and
+milestones are estimates, and subject to change.
 
 Daily builds from this repo are published to MyGet, and can be installed from
 [this source](https://www.myget.org/F/opentelemetry/api/v3/index.json).
