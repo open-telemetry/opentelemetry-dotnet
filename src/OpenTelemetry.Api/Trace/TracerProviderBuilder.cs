@@ -22,6 +22,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilder
     {
+        internal TracerProviderBuilder()
+        {
+        }
+
         /// <summary>
         /// Adds instrumentation to the provider.
         /// </summary>
