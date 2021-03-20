@@ -86,7 +86,7 @@ services.AddOpenTelemetryTracing(
 It is important to note that this `Filter` option is specific to this
 instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
-and the `Filter` option does the filtering *before* the Sampler is invoked.
+and the `Filter` option does the filtering *after* the Sampler is invoked.
 
 ### Enrich
 
@@ -129,6 +129,23 @@ services.AddOpenTelemetryTracing((builder) =>
 is the general extensibility point to add additional properties to any activity.
 The `Enrich` option is specific to this instrumentation, and is provided to
 get access to `HttpRequest` and `HttpResponse`.
+
+## How this instrumentation works?
+
+This instrumentation is a [special case of
+instrumentation.](../../../docs/trace/extending-the-sdk/README.md#special-case--instrumentation-for-libraries-producing-legacy-activity)
+The target library (ASP.NET Core), *already* produces an `Activity`, using the
+legacy method and also fires DiagnosticSource event. Hence, the `Activity` will
+have its `Kind` set to internal, and will have its ActivitySource as empty
+string, and will have no tags populated. This instrumentation leverages the
+DiagnosticSource callbacks provided by the ASP.NET Core library, and modifies
+the activity to set its Kind, populate Tags as per Otel semantic conventions
+etc. It is important to note that this enrichment occurs *after* sampler is
+executed. In other words, when Sampler sees this activity, the Kind will be
+internal and have almost no Tags populated. To achieve any advanced filtering of
+the activity based on its Tags, it is hence recommended to use the
+[Filter])(#filter) option provided by this instrumentation.
+
 
 ## References
 
