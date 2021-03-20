@@ -496,6 +496,60 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
+        [Fact]
+        public async Task AspNetCoreInstrumentationRespectSuppressInstrumentation()
+        {
+            try
+            {
+                bool isProcessorOnStartCalled = false;
+                bool isProcessorOnEndCalled = false;
+                var activityProcessor = new Mock<BaseProcessor<Activity>>();
+                activityProcessor.Setup(p => p.OnStart(It.IsAny<Activity>())).Callback(() => isProcessorOnStartCalled = true);
+                activityProcessor.Setup(p => p.OnEnd(It.IsAny<Activity>())).Callback(() => isProcessorOnEndCalled = true);
+
+                bool isPropagatorCalled = false;
+                var propagator = new Mock<TextMapPropagator>();
+                propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
+                    .Returns(() =>
+                    {
+                        isPropagatorCalled = true;
+                        return default(PropagationContext);
+                    });
+
+                // Arrange
+                using (var testFactory = this.factory
+                    .WithWebHostBuilder(builder =>
+                        builder.ConfigureTestServices(services =>
+                        {
+                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                                .AddAspNetCoreInstrumentation()
+                                .AddProcessor(activityProcessor.Object)
+                                .Build();
+                        })))
+                {
+                    using var scope = SuppressInstrumentationScope.Begin();
+                    using var client = testFactory.CreateClient();
+                    var response = await client.GetAsync("/api/values/2");
+                    response.EnsureSuccessStatusCode(); // Status Code 200-299
+                }
+
+                // If suppressed, activity is not emitted and
+                // propagation is also not performed.
+                Assert.False(isPropagatorCalled);
+                Assert.False(isProcessorOnStartCalled);
+                Assert.False(isProcessorOnEndCalled);
+            }
+            finally
+            {
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                {
+                    new TraceContextPropagator(),
+                    new BaggagePropagator(),
+                }));
+            }
+        }
+
         public void Dispose()
         {
             this.openTelemetrySdk?.Dispose();
