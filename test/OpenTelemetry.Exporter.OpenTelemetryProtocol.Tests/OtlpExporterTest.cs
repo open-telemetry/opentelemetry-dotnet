@@ -301,7 +301,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(3, stringArray.Count());
             Assert.Equal("test", stringArray[0].Value.StringValue);
             Assert.Equal(string.Empty, stringArray[1].Value.StringValue);
-            Assert.Equal(string.Empty, stringArray[2].Value.StringValue);
+            Assert.Null(stringArray[2].Value);
 
             var boolArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "boolArray").ToList();
 
@@ -309,7 +309,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(3, boolArray.Count());
             Assert.True(boolArray[0].Value.BoolValue);
             Assert.False(boolArray[1].Value.BoolValue);
-            Assert.False(boolArray[2].Value.BoolValue);
+            Assert.Null(boolArray[2].Value);
 
             var doubleArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "doubleArray").ToList();
 
@@ -317,7 +317,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(3, doubleArray.Count());
             Assert.Equal(1.0, doubleArray[0].Value.DoubleValue);
             Assert.Equal(0.0, doubleArray[1].Value.DoubleValue);
-            Assert.Equal(0.0, doubleArray[2].Value.DoubleValue);
+            Assert.Null(doubleArray[2].Value);
 
             var longArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "longArray").ToList();
 
@@ -325,7 +325,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(3, longArray.Count());
             Assert.Equal(1, longArray[0].Value.IntValue);
             Assert.Equal(0, longArray[1].Value.IntValue);
-            Assert.Equal(0, longArray[2].Value.IntValue);
+            Assert.Null(longArray[2].Value);
         }
 
         [Fact]
