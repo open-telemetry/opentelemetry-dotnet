@@ -131,6 +131,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Assert.Equal(1, endCalledCount);
         }
 
+        [Fact]
+        public void EndpointConfigurationUsingEnvironmentVariable()
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://fakeuri");
+
+            var options = new ZipkinExporterOptions();
+
+            Assert.Equal(new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT")).AbsoluteUri, options.Endpoint.AbsoluteUri);
+
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", null);
+        }
+
         [Theory]
         [InlineData(true, false, false)]
         [InlineData(false, false, false)]
