@@ -326,7 +326,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(1, longArray[0].Value.IntValue);
             Assert.Equal(0, longArray[1].Value.IntValue);
             Assert.Equal(0, longArray[2].Value.IntValue);
-
         }
 
         [Fact]
