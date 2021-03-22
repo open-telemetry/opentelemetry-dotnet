@@ -459,6 +459,34 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         }
 
                         break;
+                    case long[] longArray:
+                        foreach (var item in longArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
+                        }
+
+                        break;
+                    case bool?[] boolArray:
+                        foreach (var item in boolArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { BoolValue = item ?? false }));
+                        }
+
+                        break;
+                    case double?[] doubleArray:
+                        foreach (var item in doubleArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = item ?? 0.0 }));
+                        }
+
+                        break;
+                    case long?[] longArray:
+                        foreach (var item in longArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item ?? 0 }));
+                        }
+
+                        break;
                     default:
                         PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));
                         break;

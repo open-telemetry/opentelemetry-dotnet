@@ -275,8 +275,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var rootActivity = activitySource.StartActivity("root", ActivityKind.Client);
 
-            var stringArr = new string[] { "test", null };
+            var stringArr = new string[] { "test", string.Empty, null };
             rootActivity.SetTag("stringArray", stringArr);
+
+            var boolArr = new bool?[] { true, false, null };
+            rootActivity.SetTag("boolArray", boolArr);
+
+            var doubleArr = new double?[] { 1.0, 0.0, null };
+            rootActivity.SetTag("doubleArray", doubleArr);
+
+            var longArr = new long?[] { 1, 0, null };
+            rootActivity.SetTag("longArray", longArr);
 
             var otlpSpan = rootActivity.ToOtlpSpan();
 
@@ -285,9 +294,35 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var stringArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "stringArray").ToList();
 
             Assert.NotNull(stringArray);
-            Assert.Equal(2, stringArray.Count());
+            Assert.Equal(3, stringArray.Count());
             Assert.Equal("test", stringArray[0].Value.StringValue);
             Assert.Equal(string.Empty, stringArray[1].Value.StringValue);
+            Assert.Equal(string.Empty, stringArray[2].Value.StringValue);
+
+            var boolArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "boolArray").ToList();
+
+            Assert.NotNull(boolArray);
+            Assert.Equal(3, boolArray.Count());
+            Assert.True(boolArray[0].Value.BoolValue);
+            Assert.False(boolArray[1].Value.BoolValue);
+            Assert.False(boolArray[2].Value.BoolValue);
+
+            var doubleArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "doubleArray").ToList();
+
+            Assert.NotNull(doubleArray);
+            Assert.Equal(3, doubleArray.Count());
+            Assert.Equal(1.0, doubleArray[0].Value.DoubleValue);
+            Assert.Equal(0.0, doubleArray[1].Value.DoubleValue);
+            Assert.Equal(0.0, doubleArray[2].Value.DoubleValue);
+
+            var longArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "longArray").ToList();
+
+            Assert.NotNull(longArray);
+            Assert.Equal(3, longArray.Count());
+            Assert.Equal(1, longArray[0].Value.IntValue);
+            Assert.Equal(0, longArray[1].Value.IntValue);
+            Assert.Equal(0, longArray[2].Value.IntValue);
+
         }
 
         [Fact]
