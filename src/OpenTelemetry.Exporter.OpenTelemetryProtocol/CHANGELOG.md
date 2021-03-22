@@ -9,7 +9,7 @@ please check the latest changes
 
 ## Unreleased
 
-* Null values in string arrays are converted to empty strings according to
+* Null values in primitive arrays are preserved through otlp.
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
   ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919))
 
