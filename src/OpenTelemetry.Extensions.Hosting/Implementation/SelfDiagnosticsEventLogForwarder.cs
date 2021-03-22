@@ -125,7 +125,7 @@ namespace OpenTelemetry.Internal
 
         private static string FormatMessage(EventSourceEvent eventSourceEvent, Exception exception)
         {
-            return EventSourceEventFormatting.Format(eventSourceEvent.EventData);
+            return EventSourceEventFormatter.Format(eventSourceEvent.EventData);
         }
 
         private readonly struct EventSourceEvent : IReadOnlyList<KeyValuePair<string, object>>
