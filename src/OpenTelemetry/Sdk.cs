@@ -14,10 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -37,7 +35,7 @@ namespace OpenTelemetry
 
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
-            SelfDiagnostics.EnsureInitialized();
+            OpenTelemetry.Internal.SelfDiagnostics.EnsureInitialized();
         }
 
         /// <summary>
