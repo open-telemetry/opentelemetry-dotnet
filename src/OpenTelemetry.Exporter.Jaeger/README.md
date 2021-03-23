@@ -3,8 +3,11 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Jaeger.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Jaeger.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger)
 
-The Jaeger exporter communicates to a Jaeger Agent through the compact thrift
-protocol on the Compact Thrift API port.
+The Jaeger exporter converts OpenTelemetry traces into the Jaeger model
+following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
+
+The exporter communicates to a Jaeger Agent through the thrift protocol on
+the Compact Thrift API port, and as such only supports Thrift over UDP.
 
 ## Supported .NET Versions
 
@@ -25,15 +28,20 @@ dotnet add package OpenTelemetry.Exporter.Jaeger
 
 ## Configuration
 
-You can configure the `JaegerExporter` by following the directions below:
+You can configure the `JaegerExporter` through `JaegerExporterOptions`
+properties:
 
-* `ServiceName`: The name of your application or service.
 * `AgentHost`: Usually `localhost` since an agent should usually be running on
   the same machine as your application or service.
 * `AgentPort`: The compact thrift protocol port of the Jaeger Agent (default
   `6831`).
-* `MaxPacketSize`: The maximum size of each UDP packet that gets sent to the
-  agent. (default `65000`).
+* `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
+  sent to the agent. (default `4096`).
+* `ExportProcessorType`: Whether the exporter should use
+  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
+  .
+* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
+  Only used if ExportProcessorType is set to Batch.
 
 See the
 [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)

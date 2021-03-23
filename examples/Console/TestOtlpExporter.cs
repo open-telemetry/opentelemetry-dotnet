@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Examples.Console
@@ -31,10 +33,10 @@ namespace Examples.Console
              * launch the OpenTelemetry Collector with an OTLP receiver, by running:
              *
              *  - On Unix based systems use:
-             *     docker run --rm -it -p 55680:55680 -v $(pwd):/cfg otel/opentelemetry-collector:0.14.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.19.0 --config=/cfg/otlp-collector-example/config.yaml
              *
              *  - On Windows use:
-             *     docker run --rm -it -p 55680:55680 -v "%cd%":/cfg otel/opentelemetry-collector:0.14.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.19.0 --config=/cfg/otlp-collector-example/config.yaml
              *
              * Open another terminal window at the examples/Console/ directory and
              * launch the OTLP example by running:
@@ -52,11 +54,17 @@ namespace Examples.Console
 
         private static object RunWithActivitySource(string endpoint)
         {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .AddOtlpExporter(opt => opt.Endpoint = endpoint)
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
+                    .AddOtlpExporter(opt => opt.Endpoint = new Uri(endpoint))
                     .Build();
 
             // The above line is required only in Applications

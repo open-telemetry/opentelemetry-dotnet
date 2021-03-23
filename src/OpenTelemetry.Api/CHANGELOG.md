@@ -1,8 +1,72 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Api/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
 
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Relax System.* packages version requirement to remove upper bound.
+* Require System.Diagnostics.DiagnosticSource package 5.0.1.
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
+* In order to align with the
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
+  the `Status` (otel.status_code) tag (added on `Activity` using the `SetStatus`
+  extension) will now be set as the `UNSET`, `OK`, or `ERROR` string
+  representation instead of the `0`, `1`, or `2` integer representation.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579) &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
+* Metrics API/SDK support is in an experimental state and is not recommended for
+  production use. All metric APIs have been marked with the `Obsolete`
+  attribute. See
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for more information.
+  ([#1611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1611))
+* `Status.WithDescription` will now ignore the provided description if the
+  `Status.StatusCode` is anything other than `ERROR`.
+  ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
+  details on Metric release plans.
+* Relax System.Diagnostics.DiagnosticSource version requirement to allow
+  versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
+  allowed.
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Updated System.Diagnostics.DiagnosticSource to version 5.0.0
+* Mark Activity extension methods as internal as these are not required to be
+  public. GetTagValue, EnumerateTags, EnumerateLinks, EnumerateEvents. See
+  [#1544](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1544)
+  for full changes.
+* Changed SpanHelper class from public to internal. Moved SpanHelper.cs to
+  OpenTelemetry.Api\Internal
+  ([#1555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1555))
 
 ## 0.8.0-beta.1
 
@@ -17,9 +81,9 @@ Released 2020-Nov-5
   ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
 * Moving grpc status and helper to grpc project
   ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
-  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
-  and changed from interface to abstract class.
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+  CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
+  changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 * Added GlobalPropagators API via Propagators.DefaultTextMapPropagator.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1428))
@@ -108,7 +172,7 @@ Released 2020-08-28
   5.0.0-preview.8.20407.11.
 * Removed `CorrelationContext` and added `Baggage`, an implementation of the
   [`Baggage
-  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md)
+  API`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
   spec
   ([#1106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1106))
 * Renamed `TraceContextFormat` to `TextMapPropagator`, `BaggageFormat` to

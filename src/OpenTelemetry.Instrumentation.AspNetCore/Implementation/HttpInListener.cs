@@ -30,12 +30,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
+        internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
         private const string UnknownHostName = "UNKNOWN-HOST";
-        private const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
@@ -45,19 +46,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
         private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
             : base(name)
         {
             this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what AspNetCore library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
             if (context == null)
             {
@@ -65,22 +79,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            try
-            {
-                if (this.options.Filter?.Invoke(context) == false)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
-                    activity.IsAllDataRequested = false;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
-                activity.IsAllDataRequested = false;
-                return;
-            }
-
+            // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
@@ -99,6 +98,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
+
+                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                    activity.IsAllDataRequested = false;
                     activity = newOne;
                 }
 
@@ -108,23 +110,33 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
-
+            // enrich Activity from payload only if sampling decision
+            // is favorable.
             if (activity.IsAllDataRequested)
             {
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        activity.IsAllDataRequested = false;
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                    activity.IsAllDataRequested = false;
+                    return;
                 }
+
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
 
                 if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
@@ -144,6 +156,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -160,15 +181,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                try
-                {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
-                }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
 #if NETSTANDARD2_1
@@ -178,11 +190,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else
                 {
-                    SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    {
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    }
                 }
 #else
-                SetStatusFromHttpStatusCode(activity, response.StatusCode);
+                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                }
 #endif
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
 
             if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
@@ -202,8 +229,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
             }
-
-            this.activitySource.Stop(activity);
         }
 
         public override void OnCustom(string name, Activity activity, object payload)
@@ -245,6 +270,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
+
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+
                 try
                 {
                     this.options.Enrich?.Invoke(activity, "OnException", exc);
@@ -253,13 +285,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-
-                if (this.options.RecordException)
-                {
-                    activity.RecordException(exc);
-                }
-
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
             }
         }
 
@@ -298,13 +323,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetStatusFromHttpStatusCode(Activity activity, int statusCode)
-        {
-            var status = SpanHelper.ResolveSpanStatusForHttpStatusCode(statusCode);
-            activity.SetStatus(status);
-        }
-
 #if NETSTANDARD2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
@@ -316,6 +334,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
+            // The RPC semantic conventions indicate the span name
+            // should not have a leading forward slash.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#span-name
+            activity.DisplayName = grpcMethod.TrimStart('/');
+
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);

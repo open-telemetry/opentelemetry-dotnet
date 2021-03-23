@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET461 || NETSTANDARD2_0
+using OpenTelemetry.Logs;
+#endif
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -35,8 +38,24 @@ namespace OpenTelemetry
             {
                 return tracerProviderSdk.Resource;
             }
+#if NET461 || NETSTANDARD2_0
+            else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
+            {
+                return otelLoggerProvider.Resource;
+            }
+#endif
 
             return Resource.Empty;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
+        /// </summary>
+        /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
+        /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
+        public static Resource GetDefaultResource(this BaseProvider baseProvider)
+        {
+            return ResourceBuilder.CreateDefault().Build();
         }
     }
 }

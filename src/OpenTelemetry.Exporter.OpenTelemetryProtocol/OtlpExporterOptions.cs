@@ -14,43 +14,43 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using Grpc.Core;
+using System;
+using System.Diagnostics;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Configuration options for the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
     public class OtlpExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
+        /// <summary>
+        /// Gets or sets the target to which the exporter is going to send traces.
+        /// Must be a valid Uri with scheme (http) and host, and
+        /// may contain a port and path. Secure connection(https) is not
+        /// supported.
+        /// </summary>
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
         /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
+        /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
+        /// specification</a> for information on the expected format for Headers.
         /// </summary>
-        public string ServiceName { get; set; } = DefaultServiceName;
+        public string Headers { get; set; }
 
         /// <summary>
-        /// Gets or sets the target to which the exporter is going to send traces or metrics.
-        /// The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.
+        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span batch. The default value is 10000.
         /// </summary>
-        public string Endpoint { get; set; } = "localhost:55680";
+        public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
-        /// Gets or sets the client-side channel credentials. Used for creation of a secure channel.
-        /// The default is "insecure". See detais at https://grpc.io/docs/guides/auth/#credential-types.
+        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
         /// </summary>
-        public ChannelCredentials Credentials { get; set; } = ChannelCredentials.Insecure;
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
-        /// Gets or sets optional headers for the connection.
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
-        public Metadata Headers { get; set; } = new Metadata();
-
-        /// <summary>
-        /// Gets or sets the gRPC channel options.
-        /// </summary>
-        public IEnumerable<ChannelOption> ChannelOptions { get; set; }
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }

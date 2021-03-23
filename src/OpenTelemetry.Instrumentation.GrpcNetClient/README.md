@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.GrpcNetClient.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.GrpcNetClient)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.GrpcNetClient.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.GrpcNetClient)
 
-This is an [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library)
+This is an [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
 which instruments [Grpc.Net.Client](https://www.nuget.org/packages/Grpc.Net.Client)
 and collects telemetry about outgoing gRPC requests.
 
@@ -49,9 +49,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddGrpcClientInstrumentation()
-            .AddHttpClientInstrumentaiton()
+            .AddHttpClientInstrumentation()
             .AddConsoleExporter()
             .Build();
     }
@@ -80,7 +80,7 @@ context when `SuppressDownstreamInstrumentation` is enabled.
 The following example shows how to use `SuppressDownstreamInstrumentation`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddGrpcClientInstrumentation(
         opt => opt.SuppressDownstreamInstrumentation = true)
     .AddHttpClientInstrumentation()

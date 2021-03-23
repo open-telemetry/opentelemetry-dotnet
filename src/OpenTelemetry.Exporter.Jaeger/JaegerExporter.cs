@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Resources;
@@ -24,7 +25,7 @@ using Thrift.Protocol;
 using Thrift.Transport;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
@@ -34,9 +35,13 @@ namespace OpenTelemetry.Exporter.Jaeger
         private readonly JaegerThriftClient thriftClient;
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
-        private Dictionary<string, Process> processCache;
         private int batchByteSize;
         private bool disposedValue; // To detect redundant dispose calls
+
+        public JaegerExporter(JaegerExporterOptions options)
+            : this(options, null)
+        {
+        }
 
         internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
@@ -52,21 +57,23 @@ namespace OpenTelemetry.Exporter.Jaeger
             this.memoryTransport = new InMemoryTransport(16000);
             this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
 
-            this.Process = new Process(options.ServiceName, options.ProcessTags);
+            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+            this.Process = new Process(serviceName);
         }
 
         internal Process Process { get; set; }
 
-        internal Dictionary<string, Batch> CurrentBatches { get; } = new Dictionary<string, Batch>();
+        internal Batch Batch { get; private set; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
             try
             {
-                if (this.processCache == null)
+                if (this.Batch == null)
                 {
-                    this.SetResource(this.ParentProvider.GetResource());
+                    this.SetResourceAndInitializeBatch(this.ParentProvider.GetResource());
                 }
 
                 foreach (var activity in activityBatch)
@@ -74,7 +81,7 @@ namespace OpenTelemetry.Exporter.Jaeger
                     this.AppendSpan(activity.ToJaegerSpan());
                 }
 
-                this.SendCurrentBatches(null);
+                this.SendCurrentBatch();
 
                 return ExportResult.Success;
             }
@@ -86,7 +93,7 @@ namespace OpenTelemetry.Exporter.Jaeger
             }
         }
 
-        internal void SetResource(Resource resource)
+        internal void SetResourceAndInitializeBatch(Resource resource)
         {
             if (resource is null)
             {
@@ -105,10 +112,10 @@ namespace OpenTelemetry.Exporter.Jaeger
                 {
                     switch (key)
                     {
-                        case Resource.ServiceNameKey:
+                        case ResourceSemanticConventions.AttributeServiceName:
                             serviceName = strVal;
                             continue;
-                        case Resource.ServiceNamespaceKey:
+                        case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
                             continue;
                     }
@@ -124,59 +131,36 @@ namespace OpenTelemetry.Exporter.Jaeger
 
             if (serviceName != null)
             {
-                process.ServiceName = serviceNamespace != null
-                    ? serviceNamespace + "." + serviceName
-                    : serviceName;
+                serviceName = string.IsNullOrEmpty(serviceNamespace)
+                    ? serviceName
+                    : serviceNamespace + "." + serviceName;
             }
 
-            if (string.IsNullOrEmpty(process.ServiceName))
+            if (!string.IsNullOrEmpty(serviceName))
             {
-                process.ServiceName = JaegerExporterOptions.DefaultServiceName;
+                process.ServiceName = serviceName;
             }
 
             this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
-            this.processCache = new Dictionary<string, Process>
-            {
-                [this.Process.ServiceName] = this.Process,
-            };
+            this.Batch = new Batch(this.Process);
+            this.batchByteSize = this.Process.Message.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            var spanServiceName = jaegerSpan.PeerServiceName ?? this.Process.ServiceName;
-
-            if (!this.processCache.TryGetValue(spanServiceName, out var spanProcess))
-            {
-                spanProcess = new Process(spanServiceName, this.Process.Tags);
-                spanProcess.Message = this.BuildThriftMessage(spanProcess).ToArray();
-                this.processCache.Add(spanServiceName, spanProcess);
-            }
-
             var spanMessage = this.BuildThriftMessage(jaegerSpan);
 
             jaegerSpan.Return();
 
             var spanTotalBytesNeeded = spanMessage.Count;
 
-            if (!this.CurrentBatches.TryGetValue(spanServiceName, out var spanBatch))
-            {
-                spanBatch = new Batch(spanProcess);
-                this.CurrentBatches.Add(spanServiceName, spanBatch);
-
-                spanTotalBytesNeeded += spanProcess.Message.Length;
-            }
-
             if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
             {
-                this.SendCurrentBatches(spanBatch);
-
-                // Flushing effectively erases the spanBatch we were working on, so we have to rebuild it.
-                spanTotalBytesNeeded = spanMessage.Count + spanProcess.Message.Length;
-                this.CurrentBatches.Add(spanServiceName, spanBatch);
+                this.SendCurrentBatch();
             }
 
-            spanBatch.Add(spanMessage);
+            this.Batch.Add(spanMessage);
             this.batchByteSize += spanTotalBytesNeeded;
         }
 
@@ -199,30 +183,17 @@ namespace OpenTelemetry.Exporter.Jaeger
             base.Dispose(disposing);
         }
 
-        private void SendCurrentBatches(Batch workingBatch)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SendCurrentBatch()
         {
             try
             {
-                foreach (var batchKvp in this.CurrentBatches)
-                {
-                    var batch = batchKvp.Value;
-
-                    this.thriftClient.SendBatch(batch);
-
-                    if (batch != workingBatch)
-                    {
-                        batch.Return();
-                    }
-                    else
-                    {
-                        batch.Clear();
-                    }
-                }
+                this.thriftClient.SendBatch(this.Batch);
             }
             finally
             {
-                this.CurrentBatches.Clear();
-                this.batchByteSize = 0;
+                this.Batch.Clear();
+                this.batchByteSize = this.Process.Message.Length;
                 this.memoryTransport.Reset();
             }
         }

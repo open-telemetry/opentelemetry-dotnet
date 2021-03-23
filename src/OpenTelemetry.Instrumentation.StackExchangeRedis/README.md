@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.StackExchangeRedis.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.StackExchangeRedis)
 
 This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [StackExchange.Redis](https://www.nuget.org/packages/StackExchange.Redis/)
 and collects telemetry about outgoing calls to Redis.
@@ -24,9 +24,13 @@ dotnet add package OpenTelemetry.Instrumentation.StackExchangeRedis
 ## Step 2: Enable StackExchange.Redis Instrumentation at application startup
 
 StackExchange.Redis instrumentation must be enabled at application startup.
+`AddRedisInstrumentation` method on `TracerProviderBuilder` must be called to
+enable Redis instrumentation, passing the `IConnectionMultiplexer` instance used
+to make Redis calls. Only those Redis calls made using the same instance of the
+`IConnectionMultiplexer` will be instrumented.
 
-The following example demonstrates adding StackExchange.Redis instrumentation
-to a console application. This example also sets up the OpenTelemetry Console
+The following example demonstrates adding StackExchange.Redis instrumentation to
+a console application. This example also sets up the OpenTelemetry Console
 exporter, which requires adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
@@ -41,7 +45,7 @@ public class Program
         // Connect to the server.
         using var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddRedisInstrumentation(connection)
             .AddConsoleExporter()
             .Build();
@@ -71,7 +75,7 @@ interval. The `FlushInterval` option can be used to adjust this internval.
 The following example shows how to use `FlushInterval`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddRedisInstrumentation(
         connection,
         options => options.FlushInterval = TimeSpan.FromSeconds(5))

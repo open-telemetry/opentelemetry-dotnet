@@ -37,38 +37,36 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
         private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
 
-        public HttpInListener(string name, AspNetInstrumentationOptions options, ActivitySourceAdapter activitySource)
+        public HttpInListener(string name, AspNetInstrumentationOptions options)
             : base(name)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.activitySource = activitySource;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Activity is retrieved from Activity.Current later and disposed.")]
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what AspNet library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            // Ensure context extraction irrespective of sampling decision
             var context = HttpContext.Current;
             if (context == null)
             {
                 AspNetInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
-                return;
-            }
-
-            try
-            {
-                if (this.options.Filter?.Invoke(context) == false)
-                {
-                    AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
-                    activity.IsAllDataRequested = false;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
-                activity.IsAllDataRequested = false;
                 return;
             }
 
@@ -98,6 +96,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     // correctly stop and restore Activity.Current.
                     newOne.SetCustomProperty("OTel.ActivityByAspNet", activity);
                     activity.SetCustomProperty("OTel.ActivityByHttpInListener", newOne);
+
+                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
+                    activity.IsAllDataRequested = false;
                     activity = newOne;
                 }
 
@@ -107,22 +108,30 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
             }
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/data-semantic-conventions.md
-            var path = requestValues.Path;
-            activity.DisplayName = path;
-
-            this.activitySource.Start(activity, ActivityKind.Server, ActivitySource);
-
             if (activity.IsAllDataRequested)
             {
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        activity.IsAllDataRequested = false;
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
+                    activity.IsAllDataRequested = false;
+                    return;
                 }
+
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
+                var path = requestValues.Path;
+                activity.DisplayName = path;
 
                 if (request.Url.Port == 80 || request.Url.Port == 443)
                 {
@@ -137,6 +146,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, request.Url.ToString());
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
@@ -176,19 +194,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 var response = context.Response;
 
-                try
-                {
-                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
-                }
-                catch (Exception ex)
-                {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-
                 activityToEnrich.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-                Status status = SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode);
-                activityToEnrich.SetStatus(status);
+                if (activityToEnrich.GetStatus().StatusCode == StatusCode.Unset)
+                {
+                    activityToEnrich.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                }
 
                 var routeData = context.Request.RequestContext.RouteData;
 
@@ -217,6 +228,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     activityToEnrich.DisplayName = template;
                     activityToEnrich.SetTag(SemanticConventions.AttributeHttpRoute, template);
                 }
+
+                try
+                {
+                    this.options.Enrich?.Invoke(activityToEnrich, "OnStopActivity", response);
+                }
+                catch (Exception ex)
+                {
+                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
 
             if (isCustomPropagator)
@@ -242,8 +262,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     Activity.Current = activity;
                 }
             }
-
-            this.activitySource.Stop(activityToEnrich);
         }
     }
 }

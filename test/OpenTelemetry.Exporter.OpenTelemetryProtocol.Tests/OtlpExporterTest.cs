@@ -18,19 +18,24 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Google.Protobuf.Collections;
+using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Resources;
 #if NET452
 using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using Xunit.Sdk;
 using GrpcCore = Grpc.Core;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpTrace = Opentelemetry.Proto.Trace.V1;
+using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -58,9 +63,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData(true, null)]
-        [InlineData(false, "test-service")]
-        public void ToOtlpResourceSpansTest(bool addResource, string optionsServiceName)
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ToOtlpResourceSpansTest(bool addResource)
         {
             var evenTags = new[] { new KeyValuePair<string, object>("k0", "v0") };
             var oddTags = new[] { new KeyValuePair<string, object>("k1", "v1") };
@@ -70,22 +75,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-            using var exporter = new OtlpExporter(
-                new OtlpExporterOptions
-                {
-                    ServiceName = optionsServiceName,
-                },
+            using var exporter = new OtlpTraceExporter(
+                new OtlpExporterOptions(),
                 new NoopTraceServiceClient());
 
             if (addResource)
             {
                 exporter.SetResource(
-                    new Resources.Resource(
+                    ResourceBuilder.CreateEmpty().AddAttributes(
                         new List<KeyValuePair<string, object>>
                         {
-                            new KeyValuePair<string, object>(Resources.Resource.ServiceNameKey, "service-name"),
-                            new KeyValuePair<string, object>(Resources.Resource.ServiceNamespaceKey, "ns1"),
-                        }));
+                            new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceName, "service-name"),
+                            new KeyValuePair<string, object>(Resources.ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
+                        }).Build());
             }
             else
             {
@@ -98,7 +100,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var openTelemetrySdk = builder.Build();
 
-            var processor = new BatchExportProcessor<Activity>(new TestExporter<Activity>(RunTest));
+            var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -124,12 +126,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var oltpResource = request.ResourceSpans.First().Resource;
                 if (addResource)
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNamespaceKey && kvp.Value.StringValue == "ns1");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.Resource.ServiceNameKey && kvp.Value.StringValue == optionsServiceName);
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
@@ -322,6 +324,52 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.True(startCalled);
             Assert.True(endCalled);
+        }
+
+        [Theory]
+        [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
+        [InlineData("key1=value1,key2=value2", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
+        [InlineData("key1 = value1, key2=value2 ", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
+        [InlineData("key==value", new string[] { "key" }, new string[] { "=value" })]
+        [InlineData("access-token=abc=/123,timeout=1234", new string[] { "access-token", "timeout" }, new string[] { "abc=/123", "1234" })]
+        [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
+        public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
+        {
+            var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());
+            var metadata = typeof(OtlpTraceExporter)
+                    .GetMethod("GetMetadataFromHeaders", BindingFlags.NonPublic | BindingFlags.Static)
+                    .Invoke(otlpExporter, new object[] { headers }) as Metadata;
+
+            Assert.Equal(keys.Length, metadata.Count);
+
+            for (int i = 0; i < keys.Length; i++)
+            {
+                Assert.Contains(metadata, entry => entry.Key == keys[i] && entry.Value == values[i]);
+            }
+        }
+
+        [Theory]
+        [InlineData("headers")]
+        [InlineData("key,value")]
+        public void GetMetadataFromHeadersThrowsExceptionOnOnvalidFormat(string headers)
+        {
+            var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions());
+            try
+            {
+                var metadata = typeof(OtlpTraceExporter)
+                            .GetMethod("GetMetadataFromHeaders", BindingFlags.NonPublic | BindingFlags.Static)
+                            .Invoke(otlpExporter, new object[] { headers }) as Metadata;
+            }
+            catch (Exception ex)
+            {
+                // The exception thrown here is System.Reflection.TargetInvocationException. The exception thrown by the method GetMetadataFromHeaders
+                // is captured in the inner exception
+                Assert.IsType<ArgumentException>(ex.InnerException);
+                Assert.Equal("Headers provided in an invalid format.", ex.InnerException.Message);
+                return;
+            }
+
+            throw new XunitException("GetMetadataFromHeaders did not throw an exception for invalid input headers");
         }
 
         private static void AssertOtlpAttributes(

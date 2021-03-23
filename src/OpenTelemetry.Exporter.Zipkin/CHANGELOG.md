@@ -2,12 +2,71 @@
 
 ## Unreleased
 
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `ZipkinExporter` and `ZipkinExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Removes ability to configure ServiceName for Zipkin. ServiceName must come
+  via Resource. If service name is not found in Resource, Zipkin uses
+  GetDefaultResource() from the SDK to obtain it.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
+* Changed `ZipkinExporter` class and constructor from internal to public.
+  ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
+
+* Zipkin will now set the `error` tag to the `Status.Description` value or an
+  empty string when `Status.StatusCode` (`otel.status_code` tag) is set to
+  `ERROR`.
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579),
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620), &
+  [#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
+
+* Zipkin will no longer send the `otel.status_code` tag if the value is `UNSET`.
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609) &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
+
+* Zipkin bool tag values will now be sent as `true`/`false` instead of
+  `True`/`False`.
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609))
+
+* Span tags will no longer be populated with Resource Attributes.
+  ([#1663](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1663))
+
+* Spans will no longer be held in memory indefinitely when `ZipkinExporter`
+  cannot connect to the configured endpoint.
+  ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * Added ExportProcessorType to exporter options
   ([#1504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1504))
 * Zipkin tags used for InstrumentationLibrary changed from library.name,
   library.version to otel.library.name, otel.library.version respectively.
 * Sending `service.namespace` as Zipkin tag.
   ([#1521](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1521))
+* The `ZipkinExporter` class has been made internal.
+  ([#1540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1540))
 
 ## 0.8.0-beta.1
 

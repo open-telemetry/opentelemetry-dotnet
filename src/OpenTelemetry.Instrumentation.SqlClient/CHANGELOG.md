@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Mar-19
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
+* Microsoft.Data.SqlClient v2.0.0 and higher is now properly instrumented
+  on .NET Framework.
+  ([#1599](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1599))
+* SqlClientInstrumentationOptions API changes: `SetStoredProcedureCommandName`
+  and `SetTextCommandContent` have been renamed to
+  `SetDbStatementForStoredProcedure` and `SetDbStatementForText`. They are now
+  only available on .NET Core. On .NET Framework they are replaced by a single
+  `SetDbStatement` property.
+* On .NET Framework, "db.statement_type" attribute is no longer set for
+  activities created by the instrumentation.
+* New setting on SqlClientInstrumentationOptions on .NET Core: `RecordException`
+  can be set to instruct the instrumentation to record SqlExceptions as Activity
+  [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
+  ([#1592](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1592))
+
+## 1.0.0-rc1.1
+
+Released 2020-Nov-17
+
 * SqlInstrumentation sets ActivitySource to activities created outside
   ActivitySource.
   ([#1515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1515/))

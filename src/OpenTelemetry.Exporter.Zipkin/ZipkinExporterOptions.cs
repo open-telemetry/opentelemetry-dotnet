@@ -16,24 +16,19 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
+using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Zipkin
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Zipkin trace exporter options.
     /// </summary>
     public sealed class ZipkinExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
-
 #if !NET452
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 #endif
-
-        /// <summary>
-        /// Gets or sets the name of the service reporting telemetry.
-        /// </summary>
-        public string ServiceName { get; set; } = DefaultServiceName;
 
         /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.

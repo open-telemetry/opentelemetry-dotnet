@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNetCore)
 
 This is an [Instrumentation
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments [ASP.NET Core](https://docs.microsoft.com/aspnet/core) and
 collect telemetry about incoming web requests.
 This instrumentation also collects incoming gRPC requests using
@@ -45,9 +45,9 @@ public void ConfigureServices(IServiceCollection services)
 {
     services.AddOpenTelemetryTracing(
         (builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddJaegerExporter()
-                );
+            .AddAspNetCoreInstrumentation()
+            .AddJaegerExporter()
+            );
 }
 ```
 
@@ -60,32 +60,32 @@ This instrumentation can be configured to change the default behavior by using
 ### Filter
 
 This instrumentation by default collects all the incoming http requests. It
-allows filtering of requests by using `Filter` function in
-`AspNetCoreInstrumentationOptions`. This can be used to filter out any requests
-based on some condition. The Filter receives the `HttpContext` of the incoming
-request, and filters out the request if the Filter returns false or throws
-exception.
+allows filtering of requests by using the `Filter` function in
+`AspNetCoreInstrumentationOptions`. This defines the condition for allowable
+requests. The Filter receives the `HttpContext` of the incoming
+request, and does not collect telemetry about the request if the Filter
+returns false or throws exception.
 
-The following code snippet shows how to use `Filter` to filter out all POST
+The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
 services.AddOpenTelemetryTracing(
-        (builder) => builder
-        .AddAspNetCoreInstrumentation(
-            opt => opt.Filter =
-                (httpContext) =>
-                {
-                    // filter out all HTTP POST requests.
-                    return !httpContext.Request.Method.Equals("POST");
-                })
-        .AddJaegerExporter()
-        );
+    (builder) => builder
+    .AddAspNetCoreInstrumentation(
+        (options) => options.Filter =
+            (httpContext) =>
+            {
+                // only collect telemetry about HTTP GET requests
+                return httpContext.Request.Method.Equals("GET");
+            })
+    .AddJaegerExporter()
+    );
 ```
 
 It is important to note that this `Filter` option is specific to this
-instrumentation. OpenTelemetry has a concept of
-[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
+instrumentation. OpenTelemetry has a concept of a
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
 ### Enrich
@@ -104,7 +104,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 services.AddOpenTelemetryTracing((builder) =>
 {
     builder
-    .AddAspNetCoreInstrumentation(opt => opt.Enrich
+    .AddAspNetCoreInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))

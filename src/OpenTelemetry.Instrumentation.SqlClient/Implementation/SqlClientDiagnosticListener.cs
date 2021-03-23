@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#if !NETFRAMEWORK
 using System;
 using System.Data;
 using System.Diagnostics;
@@ -22,11 +23,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
     internal class SqlClientDiagnosticListener : ListenerHandler
     {
-        public const string ActivitySourceName = "OpenTelemetry.SqlClient";
-        public const string ActivityName = ActivitySourceName + ".Execute";
-
-        public const string CommandCustomPropertyName = "OTel.SqlHandler.Command";
-
         public const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
         public const string SqlMicrosoftBeforeExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandBefore";
 
@@ -35,13 +31,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         public const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
         public const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
-
-        public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
-
-        private static readonly Version Version = typeof(SqlClientDiagnosticListener).Assembly.GetName().Version;
-#pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before SqlClientActivitySource otherwise null ref exception is thrown.
-        internal static readonly ActivitySource SqlClientActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-#pragma warning restore SA1202 // Elements should be ordered by access
 
         private readonly PropertyFetcher<object> commandFetcher = new PropertyFetcher<object>("Command");
         private readonly PropertyFetcher<object> connectionFetcher = new PropertyFetcher<object>("Connection");
@@ -68,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
-                        activity = SqlClientActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+                        activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
                         if (activity == null)
                         {
                             // There is no listener or it decided not to sample the current request.
@@ -89,19 +78,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             _ = this.databaseFetcher.TryFetch(connection, out var database);
 
                             activity.DisplayName = (string)database;
-                            try
-                            {
-                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
-                            }
-                            catch (Exception ex)
-                            {
-                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
-                            }
 
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
-                            activity.SetTag(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName);
+                            activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
@@ -112,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                 {
                                     case CommandType.StoredProcedure:
                                         activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.StoredProcedure));
-                                        if (this.options.SetStoredProcedureCommandName)
+                                        if (this.options.SetDbStatementForStoredProcedure)
                                         {
                                             activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
@@ -121,7 +102,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                                     case CommandType.Text:
                                         activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.Text));
-                                        if (this.options.SetTextCommandContent)
+                                        if (this.options.SetDbStatementForText)
                                         {
                                             activity.SetTag(SemanticConventions.AttributeDbStatement, (string)commandText);
                                         }
@@ -132,6 +113,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                         activity.SetTag(SpanAttributeConstants.DatabaseStatementTypeKey, nameof(CommandType.TableDirect));
                                         break;
                                 }
+                            }
+
+                            try
+                            {
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
                             }
                         }
                     }
@@ -146,7 +136,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        if (activity.Source != SqlClientActivitySource)
+                        if (activity.Source != SqlActivitySourceHelper.ActivitySource)
                         {
                             return;
                         }
@@ -174,7 +164,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        if (activity.Source != SqlClientActivitySource)
+                        if (activity.Source != SqlActivitySourceHelper.ActivitySource)
                         {
                             return;
                         }
@@ -186,6 +176,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                                 if (this.exceptionFetcher.TryFetch(payload, out Exception exception) && exception != null)
                                 {
                                     activity.SetStatus(Status.Error.WithDescription(exception.Message));
+
+                                    if (this.options.RecordException)
+                                    {
+                                        activity.RecordException(exception);
+                                    }
                                 }
                                 else
                                 {
@@ -204,3 +199,4 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         }
     }
 }
+#endif

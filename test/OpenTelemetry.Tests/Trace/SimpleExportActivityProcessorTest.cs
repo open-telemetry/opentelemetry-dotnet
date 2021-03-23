@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckNullExporter()
         {
-            Assert.Throws<ArgumentNullException>(() => new SimpleExportProcessor<Activity>(null));
+            Assert.Throws<ArgumentNullException>(() => new SimpleActivityExportProcessor(null));
         }
 
         [Fact]
@@ -36,12 +36,18 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
-            processor.OnEnd(new Activity("start1"));
+            var activity1 = new Activity("start1");
+            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity1);
             Assert.Single(exportedItems);
 
-            processor.OnEnd(new Activity("start2"));
+            var activity2 = new Activity("start2");
+            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity2);
             Assert.Equal(2, exportedItems.Count);
         }
 
@@ -53,10 +59,16 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
-            processor.OnEnd(new Activity("start1"));
-            processor.OnEnd(new Activity("start2"));
+            var activity1 = new Activity("start1");
+            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            var activity2 = new Activity("start2");
+            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity1);
+            processor.OnEnd(activity2);
 
             // checking before force flush
             Assert.Equal(2, exportedItems.Count);
@@ -74,15 +86,32 @@ namespace OpenTelemetry.Trace.Tests
         {
             var exportedItems = new List<Activity>();
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
-            using var processor = new SimpleExportProcessor<Activity>(exporter);
+            using var processor = new SimpleActivityExportProcessor(exporter);
 
-            processor.OnEnd(new Activity("start"));
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            processor.OnEnd(activity);
 
             // checking before shutdown
             Assert.Single(exportedItems);
 
             processor.Shutdown(timeout);
             Assert.Single(exportedItems);
+        }
+
+        [Fact]
+        public void CheckExportForRecordingButNotSampledActivity()
+        {
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
+            using var processor = new SimpleActivityExportProcessor(exporter);
+
+            var activity = new Activity("start");
+            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+
+            processor.OnEnd(activity);
+            Assert.Empty(exportedItems);
         }
     }
 }

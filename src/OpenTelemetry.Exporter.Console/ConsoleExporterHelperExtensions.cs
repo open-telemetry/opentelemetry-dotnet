@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace
@@ -38,7 +37,7 @@ namespace OpenTelemetry.Trace
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
-            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new ConsoleExporter<Activity>(options)));
+            return builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
         }
     }
 }

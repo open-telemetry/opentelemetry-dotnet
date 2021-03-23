@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             }
         }
 
-        [Event(2, Message = "Enrichment thrw exception. Exception {0}.", Level = EventLevel.Error)]
+        [Event(2, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
         public void EnrichmentException(string exception)
         {
             this.WriteEvent(2, exception);

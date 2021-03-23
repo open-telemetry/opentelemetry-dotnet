@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     public class AspNetCoreInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a Filter function to filter instrumentation for requests on a per request basis.
+        /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
         /// The Filter gets the HttpContext, and should return a boolean.
         /// If Filter returns true, the request is collected.
         /// If Filter returns false or throw exception, the request is filtered out.
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/exceptions.md.
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
 
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/rpc.md.
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md.
         /// </remarks>
         public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
 #endif

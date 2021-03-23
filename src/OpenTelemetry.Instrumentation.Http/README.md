@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.Http.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.Http)
 
 This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/glossary.md#instrumentation-library),
+[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [System.Net.Http.HttpClient](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
 and
@@ -39,7 +39,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        using Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
             .AddConsoleExporter()
             .Build();
@@ -70,9 +70,9 @@ the `http.flavor` attribute.
 The following example shows how to use `SetHttpFlavor`.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        options => options.SetHttpFlavor = true)
+        (options) => options.SetHttpFlavor = true)
     .AddConsoleExporter()
     .Build();
 ```
@@ -81,22 +81,23 @@ using Sdk.CreateTracerProviderBuilder()
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `Filter` function option.
-This can be used to filter out any requests based on some condition. The Filter
+This defines the condition for allowable requests. The Filter
 receives the request object - `HttpRequestMessage` for .NET Core and
-`HttpWebRequest` for .NET Framework - of the outgoing request and filters out
-the request if the Filter returns false or throws an exception.
+`HttpWebRequest` for .NET Framework - of the outgoing request and does not
+collect telemetry about the request if the Filter returns false or throws
+exception.
 
-The following shows an example of `Filter` being used to filter out all POST
+The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
-using Sdk.CreateTracerProviderBuilder()
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        options => options.Filter =
-            httpRequestMessage =>
+        (options) => options.Filter =
+            (httpRequestMessage) =>
             {
-                // filter out all HTTP POST requests.
-                return httpRequestMessage.Method != HttpMethod.Post;
+                // only collect telemetry about HTTP GET requests
+                return httpRequestMessage.Method.Equals(HttpMethod.Get);
             })
     .AddConsoleExporter()
     .Build();
@@ -104,7 +105,7 @@ using Sdk.CreateTracerProviderBuilder()
 
 It is important to note that this `Filter` option is specific to this
 instrumentation. OpenTelemetry has a concept of a
-[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/sdk.md#sampling),
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
 and the `Filter` option does the filtering *before* the Sampler is invoked.
 
 ### Enrich
@@ -143,7 +144,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 services.AddOpenTelemetryTracing((builder) =>
 {
     builder
-    .AddHttpClientInstrumentation(opt => opt.Enrich
+    .AddHttpClientInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))

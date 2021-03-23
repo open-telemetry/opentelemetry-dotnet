@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -115,7 +116,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("string_array", eventField.Key);
             Assert.Equal("b", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -127,7 +128,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -174,7 +175,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -186,7 +187,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -339,7 +340,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[3];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
@@ -350,7 +351,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
-            Assert.Equal("message", eventField.Key);
+            Assert.Equal("event", eventField.Key);
             Assert.Equal("Event2", eventField.VStr);
         }
 
@@ -434,6 +435,45 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "nullTag");
         }
 
+        [Theory]
+        [InlineData(StatusCode.Unset, "unset")]
+        [InlineData(StatusCode.Ok, "Ok")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        [InlineData(StatusCode.Unset, "iNvAlId")]
+        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+        {
+            // Arrange
+            var activity = CreateTestActivity();
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+
+            // Act
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert
+
+            Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
+
+            if (expectedStatusCode == StatusCode.Unset)
+            {
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else
+            {
+                Assert.Equal(
+                    StatusHelper.GetTagValueForStatusCode(expectedStatusCode),
+                    jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+            }
+
+            if (expectedStatusCode == StatusCode.Error)
+            {
+                Assert.Contains(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+            }
+            else
+            {
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
+            }
+        }
+
         internal static Activity CreateTestActivity(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
@@ -441,7 +481,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             bool addLinks = true,
             Resource resource = null,
             ActivityKind kind = ActivityKind.Client,
-            bool isRootSpan = false)
+            bool isRootSpan = false,
+            Status? status = null)
         {
             var startTimestamp = DateTime.UtcNow;
             var endTimestamp = startTimestamp.AddSeconds(60);
@@ -521,6 +562,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 {
                     activity.AddEvent(evnt);
                 }
+            }
+
+            if (status.HasValue)
+            {
+                activity.SetStatus(status.Value);
             }
 
             activity.SetEndTime(endTimestamp);

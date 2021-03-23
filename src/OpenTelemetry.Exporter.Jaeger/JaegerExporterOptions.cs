@@ -15,19 +15,13 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
-namespace OpenTelemetry.Exporter.Jaeger
+namespace OpenTelemetry.Exporter
 {
     public class JaegerExporterOptions
     {
-        internal const string DefaultServiceName = "OpenTelemetry Exporter";
-
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
-
-        /// <summary>
-        /// Gets or sets the name of the service reporting telemetry. Default value: OpenTelemetry Exporter.
-        /// </summary>
-        public string ServiceName { get; set; } = DefaultServiceName;
 
         /// <summary>
         /// Gets or sets the Jaeger agent host. Default value: localhost.
@@ -45,8 +39,13 @@ namespace OpenTelemetry.Exporter.Jaeger
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
-        /// Gets or sets the tags that should be sent with telemetry.
+        /// Gets or sets the export processor type to be used with Jaeger Exporter.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> ProcessTags { get; set; }
+        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+
+        /// <summary>
+        /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
+        /// </summary>
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
     }
 }

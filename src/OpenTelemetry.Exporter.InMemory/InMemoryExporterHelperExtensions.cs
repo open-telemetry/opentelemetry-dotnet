@@ -18,9 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Trace;
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Trace
 {
     public static class InMemoryExporterHelperExtensions
     {
@@ -43,7 +42,7 @@ namespace OpenTelemetry
                 throw new ArgumentNullException(nameof(exportedItems));
             }
 
-            return builder.AddProcessor(new SimpleExportProcessor<Activity>(new InMemoryExporter<Activity>(exportedItems)));
+            return builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
         }
     }
 }

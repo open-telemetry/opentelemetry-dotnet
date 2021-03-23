@@ -60,6 +60,41 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void SetStatusWithDescriptionTwice()
+        {
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .Build();
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetStatus(Status.Error.WithDescription("Not Found"));
+            activity.SetStatus(Status.Ok);
+            activity?.Stop();
+
+            var status = activity.GetStatus();
+            Assert.Equal(StatusCode.Ok, status.StatusCode);
+            Assert.Null(status.Description);
+        }
+
+        [Fact]
+        public void SetStatusWithIgnoredDescription()
+        {
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .Build();
+
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity(ActivityName);
+            activity.SetStatus(Status.Ok.WithDescription("This should be ignored."));
+            activity?.Stop();
+
+            var status = activity.GetStatus();
+            Assert.Equal(StatusCode.Ok, status.StatusCode);
+            Assert.Null(status.Description);
+        }
+
+        [Fact]
         public void SetCancelledStatus()
         {
             using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
@@ -114,7 +149,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
             Assert.Equal(message, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
-            Assert.Equal(exception.GetType().Name, @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal("System.ArgumentNullException", @event.Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
         }
 
         [Fact]

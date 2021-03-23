@@ -117,22 +117,22 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             if (this.ServiceName != null)
             {
-                writer.WriteString("serviceName", this.ServiceName);
+                writer.WriteString(ZipkinSpanJsonHelper.ServiceNamePropertyName, this.ServiceName);
             }
 
             if (this.Ipv4 != null)
             {
-                writer.WriteString("ipv4", this.Ipv4);
+                writer.WriteString(ZipkinSpanJsonHelper.Ipv4PropertyName, this.Ipv4);
             }
 
             if (this.Ipv6 != null)
             {
-                writer.WriteString("ipv6", this.Ipv6);
+                writer.WriteString(ZipkinSpanJsonHelper.Ipv6PropertyName, this.Ipv6);
             }
 
             if (this.Port.HasValue)
             {
-                writer.WriteNumber("port", this.Port.Value);
+                writer.WriteNumber(ZipkinSpanJsonHelper.PortPropertyName, this.Port.Value);
             }
 
             writer.WriteEndObject();

@@ -26,7 +26,6 @@ namespace OpenTelemetry.Resources.Tests
         private const string KeyName = "key";
         private const string ValueName = "value";
         private const string OtelEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-        private static readonly Random Random = new Random();
 
         public ResourceTest()
         {
@@ -47,15 +46,8 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var attributes = new Dictionary<string, object> { { "NullValue", null } };
 
-            // Act
-            var resource = new Resource(attributes);
-
-            // Assert
-            Assert.Single(resource.Attributes);
-
-            var attribute = resource.Attributes.Single();
-            Assert.Equal("NullValue", attribute.Key);
-            Assert.Empty((string)attribute.Value);
+            // Act and Assert
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
@@ -87,6 +79,20 @@ namespace OpenTelemetry.Resources.Tests
             // Assert
             Assert.Single(resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("EmptyValue", string.Empty), resource.Attributes);
+        }
+
+        [Fact]
+        public void CreateResource_EmptyArray()
+        {
+            // Arrange
+            var attributes = new Dictionary<string, object> { { "EmptyArray", new string[0] } };
+
+            // does not throw
+            var resource = new Resource(attributes);
+
+            // Assert
+            Assert.Single(resource.Attributes);
+            Assert.Equal(new string[0], resource.Attributes.Where(x => x.Key == "EmptyArray").FirstOrDefault().Value);
         }
 
         [Fact]
@@ -134,21 +140,70 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void CreateResource_SupportedAttributeTypes()
         {
+            // Arrange
             var attributes = new Dictionary<string, object>
             {
                 { "string", "stringValue" },
-                { "long", 1L },
                 { "bool", true },
                 { "double", 0.1d },
+                { "long", 1L },
+
+                // int and float supported by conversion to long and double
+                { "int", 1 },
+                { "short", (short)1 },
+                { "float", 0.1f },
             };
 
+            // Act
             var resource = new Resource(attributes);
 
-            Assert.Equal(4, resource.Attributes.Count());
+            // Assert
+            Assert.Equal(7, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>("string", "stringValue"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("bool", true), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("double", 0.1d), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("long", 1L), resource.Attributes);
+
+            Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
+
+            double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
+        }
+
+        [Fact]
+        public void CreateResource_SupportedAttributeArrayTypes()
+        {
+            // Arrange
+            var attributes = new Dictionary<string, object>
+            {
+                // natively supported array types
+                { "string arr", new string[] { "stringValue" } },
+                { "bool arr", new bool[] { true } },
+                { "double arr", new double[] { 0.1d } },
+                { "long arr", new long[] { 1L } },
+
+                // have to convert to other primitive array types
+                { "int arr", new int[] { 1 } },
+                { "short arr", new short[] { (short)1 } },
+                { "float arr", new float[] { 0.1f } },
+            };
+
+            // Act
+            var resource = new Resource(attributes);
+
+            // Assert
+            Assert.Equal(7, resource.Attributes.Count());
+            Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where(x => x.Key == "string arr").FirstOrDefault().Value);
+            Assert.Equal(new bool[] { true }, resource.Attributes.Where(x => x.Key == "bool arr").FirstOrDefault().Value);
+            Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where(x => x.Key == "double arr").FirstOrDefault().Value);
+            Assert.Equal(new long[] { 1L }, resource.Attributes.Where(x => x.Key == "long arr").FirstOrDefault().Value);
+
+            var longArr = new long[] { 1 };
+            var doubleArr = new double[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture) };
+            Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "int arr").FirstOrDefault().Value);
+            Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "short arr").FirstOrDefault().Value);
+            Assert.Equal(doubleArr, resource.Attributes.Where(x => x.Key == "float arr").FirstOrDefault().Value);
         }
 
         [Fact]
@@ -159,16 +214,9 @@ namespace OpenTelemetry.Resources.Tests
                 { "dynamic", new { } },
                 { "array", new int[1] },
                 { "complex", this },
-                { "float", 0.1f },
             };
 
-            var resource = new Resource(attributes);
-
-            Assert.Equal(4, resource.Attributes.Count());
-            Assert.Contains(new KeyValuePair<string, object>("dynamic", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("array", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("complex", string.Empty), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("float", string.Empty), resource.Attributes);
+            Assert.Throws<ArgumentException>(() => new Resource(attributes));
         }
 
         [Fact]
@@ -320,46 +368,56 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void MergeResource_SecondaryCanOverridePrimaryEmptyAttributeValue()
+        public void MergeResource_UpdatingResourceOverridesCurrentResource()
         {
             // Arrange
-            var primaryAttributes = new Dictionary<string, object> { { "value", string.Empty } };
-            var secondaryAttributes = new Dictionary<string, object> { { "value", "not empty" } };
-            var primaryResource = new Resource(primaryAttributes);
-            var secondaryResource = new Resource(secondaryAttributes);
+            var currentAttributes = new Dictionary<string, object> { { "value", "currentValue" } };
+            var updatingAttributes = new Dictionary<string, object> { { "value", "updatedValue" } };
+            var currentResource = new Resource(currentAttributes);
+            var updatingResource = new Resource(updatingAttributes);
 
-            var newResource = primaryResource.Merge(secondaryResource);
+            var newResource = currentResource.Merge(updatingResource);
 
             // Assert
             Assert.Single(newResource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>("value", "not empty"), newResource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("value", "updatedValue"), newResource.Attributes);
+        }
+
+        [Fact]
+        public void GetResourceWithTelemetrySDKAttributes()
+        {
+            // Arrange
+            var resource = ResourceBuilder.CreateDefault().AddTelemetrySdk().AddEnvironmentVariableDetector().Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateTelemetrySdkAttributes(attributes);
         }
 
         [Fact]
         public void GetResourceWithDefaultAttributes_EmptyResource()
         {
             // Arrange
-            var resource = Resource.Empty;
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
-            Assert.Equal(3, attributes.Count());
-            ValidateTelemetrySdkAttributes(attributes);
+            var attributes = resource.Attributes;
+            Assert.Single(attributes);
+            ValidateDefaultAttributes(attributes);
         }
 
         [Fact]
         public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
-            Assert.Equal(5, attributes.Count());
+            var attributes = resource.Attributes;
+            Assert.Equal(3, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
-            ValidateTelemetrySdkAttributes(attributes);
+            ValidateDefaultAttributes(attributes);
         }
 
         [Fact]
@@ -367,36 +425,15 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceWithDefaultAttributes();
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
-            var attributes = new_resource.Attributes;
-            Assert.Equal(7, attributes.Count());
+            var attributes = resource.Attributes;
+            Assert.Equal(5, attributes.Count());
             ValidateAttributes(attributes, 0, 1);
-            ValidateTelemetrySdkAttributes(attributes);
+            ValidateDefaultAttributes(attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
             Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
-        }
-
-        [Fact]
-        public void GetResourceFromDetectors_OtelEnvDetector()
-        {
-            // Arrange
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey11=EVVal11,EVKey22=EVVal22");
-            var detectors = new List<IResourceDetector>
-            {
-                new OtelEnvResourceDetector(),
-            };
-            var resource = new Resource(this.CreateAttributes(2));
-            var new_resource = resource.GetResourceFromDetectors(detectors);
-
-            // Assert
-            var attributes = new_resource.Attributes;
-            Assert.Equal(4, attributes.Count());
-            ValidateAttributes(attributes, 0, 1);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey11", "EVVal11"), attributes);
-            Assert.Contains(new KeyValuePair<string, object>("EVKey22", "EVVal22"), attributes);
         }
 
         public void Dispose()
@@ -440,11 +477,11 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Single(versionAttribute);
         }
 
-        private static string RandomString(int length)
+        private static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[Random.Next(s.Length)]).ToArray());
+            var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
+            Assert.Single(serviceName);
+            Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
         }
 
         private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
