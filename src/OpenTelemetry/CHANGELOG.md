@@ -58,7 +58,7 @@ Released 2021-Mar-19
 
 * `ResourceBuilderExtensions` type constructor will no longer throw when
   OpenTelemetry is used in AWS Lambda. ([#1908](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1908))
- 
+
 ## 1.0.1
 
 Released 2021-Feb-10
