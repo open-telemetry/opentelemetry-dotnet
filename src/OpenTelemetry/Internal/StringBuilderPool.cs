@@ -14,43 +14,83 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Concurrent;
+using System;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 
 namespace OpenTelemetry.Internal
 {
+    // Based on Microsoft.Extensions.ObjectPool
+    // https://github.com/dotnet/aspnetcore/blob/main/src/ObjectPool/src/DefaultObjectPool.cs
     internal class StringBuilderPool
     {
-        private static readonly ConcurrentStack<StringBuilder> StringBuilderStack;
+        internal static StringBuilderPool Instance = new StringBuilderPool();
 
-        static StringBuilderPool()
-        {
-            StringBuilderStack = new ConcurrentStack<StringBuilder>();
-        }
+        private protected readonly ObjectWrapper[] items;
+        private protected StringBuilder firstItem;
 
         public StringBuilderPool()
+            : this(Environment.ProcessorCount * 2)
         {
         }
 
-        public static StringBuilder Allocate()
+        public StringBuilderPool(int maximumRetained)
         {
-            if (StringBuilderStack.TryPop(out var stringBuilder))
-            {
-                return stringBuilder;
-            }
-
-            return new StringBuilder(1024);
+            // -1 due to _firstItem
+            this.items = new ObjectWrapper[maximumRetained - 1];
         }
 
-        public static void Release(StringBuilder builder)
+        public int MaximumRetainedCapacity { get; set; } = 4 * 1024;
+
+        public int InitialCapacity { get; set; } = 100;
+
+        public StringBuilder Get()
         {
-            if (builder == null)
+            var item = this.firstItem;
+            if (item == null || Interlocked.CompareExchange(ref this.firstItem, null, item) != item)
             {
-                return;
+                var items = this.items;
+                for (var i = 0; i < items.Length; i++)
+                {
+                    item = items[i].Element;
+                    if (item != null && Interlocked.CompareExchange(ref items[i].Element, null, item) == item)
+                    {
+                        return item;
+                    }
+                }
+
+                item = new StringBuilder(this.InitialCapacity);
             }
 
-            builder.Clear();
-            StringBuilderStack.Push(builder);
+            return item;
+        }
+
+        public bool Return(StringBuilder item)
+        {
+            if (item.Capacity > this.MaximumRetainedCapacity)
+            {
+                // Too big. Discard this one.
+                return false;
+            }
+
+            item.Clear();
+
+            if (this.firstItem != null || Interlocked.CompareExchange(ref this.firstItem, item, null) != null)
+            {
+                var items = this.items;
+                for (var i = 0; i < items.Length && Interlocked.CompareExchange(ref items[i].Element, item, null) != null; ++i)
+                {
+                }
+            }
+
+            return true;
+        }
+
+        [DebuggerDisplay("{Element}")]
+        private protected struct ObjectWrapper
+        {
+            public StringBuilder Element;
         }
     }
 }

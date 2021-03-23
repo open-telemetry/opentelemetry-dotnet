@@ -23,15 +23,19 @@ namespace OpenTelemetry.Tests
     {
         public Action<Activity> StartAction;
         public Action<Activity> EndAction;
+        public Action FlushAction;
+        public Action ShutdownAction;
 
         public TestActivityProcessor()
         {
         }
 
-        public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd)
+        public TestActivityProcessor(Action<Activity> onStart, Action<Activity> onEnd, Action onFlush = null, Action onShutdown = null)
         {
             this.StartAction = onStart;
             this.EndAction = onEnd;
+            this.FlushAction = onFlush;
+            this.ShutdownAction = onShutdown;
         }
 
         public bool ShutdownCalled { get; private set; } = false;
@@ -53,12 +57,18 @@ namespace OpenTelemetry.Tests
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             this.ForceFlushCalled = true;
+
+            this.FlushAction?.Invoke();
+
             return true;
         }
 
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalled = true;
+
+            this.ShutdownAction?.Invoke();
+
             return true;
         }
 

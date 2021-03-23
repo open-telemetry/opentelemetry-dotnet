@@ -9,11 +9,13 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestActivityProcessor.cs" Link="TestActivityProcessor.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
     <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
+    <PackageReference Include="Foundatio.Xunit" Version="$(FoundatioXUnitPkgVer)" />
     <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVisualStudioPkgVer)">
       <PrivateAssets>all</PrivateAssets>

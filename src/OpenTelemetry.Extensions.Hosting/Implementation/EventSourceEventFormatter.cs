@@ -42,7 +42,7 @@ namespace OpenTelemetry.Internal
                 }
             }
 
-            var stringBuilder = StringBuilderPool.Allocate();
+            var stringBuilder = StringBuilderPool.Instance.Get();
 
             try
             {
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Internal
             }
             finally
             {
-                StringBuilderPool.Release(stringBuilder);
+                StringBuilderPool.Instance.Return(stringBuilder);
             }
         }
 
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Internal
         {
             if (o is byte[] bytes)
             {
-                var stringBuilder = StringBuilderPool.Allocate();
+                var stringBuilder = StringBuilderPool.Instance.Get();
 
                 try
                 {
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Internal
                 }
                 finally
                 {
-                    StringBuilderPool.Release(stringBuilder);
+                    StringBuilderPool.Instance.Return(stringBuilder);
                 }
             }
 
