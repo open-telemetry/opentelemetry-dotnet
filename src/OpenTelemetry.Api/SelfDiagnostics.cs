@@ -21,12 +21,12 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry
 {
     /// <summary>
-    /// SelfDiagnostics holds a Logger which can generate internal logs for OpenTelemetry self diagnostics.
+    /// SelfDiagnostics holds a Logger which can generate internal logs via EventSource for OpenTelemetry self diagnostics.
     /// </summary>
     public class SelfDiagnostics
     {
         /// <summary>
-        /// Logger for generating internal logs for OpenTelemetry self diagnostics.
+        /// Logger for generating internal logs via EventSource for OpenTelemetry self diagnostics.
         /// </summary>
         public static SelfDiagnostics Logger = new SelfDiagnostics();
 
