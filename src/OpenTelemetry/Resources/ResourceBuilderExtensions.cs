@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace OpenTelemetry.Resources
 {
@@ -126,7 +127,7 @@ namespace OpenTelemetry.Resources
         {
             try
             {
-                return FileVersionInfo.GetVersionInfo(typeof(Resource).Assembly.Location).FileVersion;
+                return typeof(Resource).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? string.Empty;
             }
             catch (Exception)
             {
