@@ -89,6 +89,34 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="operationNames">Operation names of the <see cref="Activity"/> objects to capture.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public override TracerProviderBuilder AddLegacySource(params string[] operationNames)
+        {
+            if (operationNames == null)
+            {
+                throw new ArgumentNullException(nameof(operationNames));
+            }
+
+            foreach (var operationName in operationNames)
+            {
+                if (string.IsNullOrWhiteSpace(operationName))
+                {
+                    throw new ArgumentException($"{nameof(operationNames)} contains null or whitespace string.");
+                }
+
+                this.legacyActivityOperationNames[operationName] = true;
+            }
+
+            return this;
+        }
+
+        /// <summary>
         /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
         /// </summary>
@@ -165,26 +193,6 @@ namespace OpenTelemetry.Trace
             }
 
             this.processors.Add(processor);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
-        /// </summary>
-        /// <remarks>
-        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
-        /// </remarks>
-        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder AddLegacySource(string operationName)
-        {
-            if (string.IsNullOrWhiteSpace(operationName))
-            {
-                throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
-            }
-
-            this.legacyActivityOperationNames[operationName] = true;
 
             return this;
         }

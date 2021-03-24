@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,5 +43,15 @@ namespace OpenTelemetry.Trace
         /// <param name="names">Activity source names.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public abstract TracerProviderBuilder AddSource(params string[] names);
+
+        /// <summary>
+        /// Adds given activity operation names to the list of subscribed sources.
+        /// </summary>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="operationNames">Operation name of the <see cref="Activity"/> objects to capture.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public abstract TracerProviderBuilder AddLegacySource(params string[] operationNames);
     }
 }

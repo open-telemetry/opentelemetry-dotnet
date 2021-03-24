@@ -88,25 +88,6 @@ namespace OpenTelemetry.Trace
             return tracerProviderBuilder;
         }
 
-        /// <summary>
-        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
-        /// </summary>
-        /// <remarks>
-        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
-        /// </remarks>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/> instance.</param>
-        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddLegacySource(this TracerProviderBuilder tracerProviderBuilder, string operationName)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
-            {
-                tracerProviderBuilderSdk.AddLegacySource(operationName);
-            }
-
-            return tracerProviderBuilder;
-        }
-
         public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
         {
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
