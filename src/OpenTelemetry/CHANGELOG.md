@@ -9,6 +9,11 @@ please check the latest changes
 
 ## Unreleased
 
+* Use `AssemblyFileVersionAttribute` instead of `FileVersionInfo.GetVersionInfo`
+  to get the SDK version attribute to ensure that it works when the assembly
+  is not loaded directly from a file on disk
+  ([#1908](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1908))
+
 ## 1.1.0-beta1
 
 Released 2021-Mar-19
