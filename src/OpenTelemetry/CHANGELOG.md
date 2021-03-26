@@ -61,6 +61,10 @@ Released 2021-Mar-19
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
 
+* Added `IDeferredTracerProviderBuilder` and `TracerProviderBuilderBase` to
+  support dependency injection through OpenTelemetry.Extensions.Hosting.
+  ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
+
 ## 1.0.1
 
 Released 2021-Feb-10
