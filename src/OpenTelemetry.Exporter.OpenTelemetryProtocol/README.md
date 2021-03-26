@@ -56,4 +56,4 @@ for more information.
 * [OpenTelemetry
   Collector](https://github.com/open-telemetry/opentelemetry-collector)
 * [OpenTelemetry Project](https://opentelemetry.io/)
-* [OTLP Proto Files](https://github.com/open-telemetry/opentelemetry-proto)
+* [OTLP proto files](https://github.com/open-telemetry/opentelemetry-proto)
