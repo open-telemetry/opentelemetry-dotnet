@@ -353,9 +353,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 },
                 new HttpResponse(new StringWriter()));
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
-
             bool isPropagatorCalled = false;
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
@@ -366,7 +363,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 });
 
             var activity = new Activity(HttpInListener.ActivityOperationName);
-            activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
@@ -402,9 +398,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 },
                 new HttpResponse(new StringWriter()));
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
-
             bool isPropagatorCalled = false;
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
@@ -415,7 +408,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 });
 
             var activity = new Activity(HttpInListener.ActivityOperationName);
-            activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
 
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
