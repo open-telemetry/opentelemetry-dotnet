@@ -21,8 +21,8 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
 
 * `Endpoint`: Target to which the exporter is going to send traces or metrics.
-  The endpoint must be a valid Uri with scheme (http) and host, and MAY contain
-  a port and path. In 1.0, secure connection(https) is *NOT* supported.
+  The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
+  contain a port and path.
 * `Headers`: Optional headers for the connection.
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
