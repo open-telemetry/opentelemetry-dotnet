@@ -9,6 +9,9 @@ please check the latest changes
 
 ## Unreleased
 
+* Resource attributes can now take nullable primitive arrays
+  ([1939](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1939))
+
 ## 1.1.0-beta1
 
 Released 2021-Mar-19
