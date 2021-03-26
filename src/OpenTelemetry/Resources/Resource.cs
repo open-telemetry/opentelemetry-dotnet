@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -136,7 +135,7 @@ namespace OpenTelemetry.Resources
                     int i = 0;
                     foreach (var val in (System.Array)value)
                     {
-                        convertedArr[i] = System.Convert.ToInt64(val);
+                        convertedArr[i] = System.Convert.ToInt64(val, System.Globalization.CultureInfo.InvariantCulture);
                         i++;
                     }
 
@@ -152,7 +151,7 @@ namespace OpenTelemetry.Resources
                             convertedArr[i] = null;
                         } else
                         {
-                            convertedArr[i] = System.Convert.ToInt64(val);
+                            convertedArr[i] = System.Convert.ToInt64(val, System.Globalization.CultureInfo.InvariantCulture);
                         }
 
                         i++;
