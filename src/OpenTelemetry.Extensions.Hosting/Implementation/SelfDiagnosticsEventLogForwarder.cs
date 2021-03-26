@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace OpenTelemetry.Internal
 {
@@ -31,52 +32,33 @@ namespace OpenTelemetry.Internal
     {
         private const string EventSourceNamePrefix = "OpenTelemetry-";
         private readonly object lockObj = new object();
-        private readonly EventLevel logLevel;
-        private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
+        private readonly EventLevel? defaultMinEventLevel;
+        private readonly List<EventSource> eventSources = new List<EventSource>();
         private readonly ILoggerFactory loggerFactory;
-        private readonly ConcurrentDictionary<string, ILogger> loggers = new ConcurrentDictionary<string, ILogger>();
+        private readonly IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions;
+        private readonly ConcurrentDictionary<EventSource, ILogger> loggers = new ConcurrentDictionary<EventSource, ILogger>();
 
         private readonly Func<EventSourceEvent, Exception, string> formatMessage = FormatMessage;
 
-        internal SelfDiagnosticsEventLogForwarder(EventLevel logLevel, ILoggerFactory loggerFactory)
+        internal SelfDiagnosticsEventLogForwarder(ILoggerFactory loggerFactory, IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions, EventLevel? defaultMinEventLevel = null)
         {
-            this.logLevel = logLevel;
             this.loggerFactory = loggerFactory;
+            this.loggerFilterOptions = loggerFilterOptions;
+            this.defaultMinEventLevel = defaultMinEventLevel;
 
-            List<EventSource> eventSources;
-            lock (this.lockObj)
-            {
-                eventSources = this.eventSourcesBeforeConstructor;
-                this.eventSourcesBeforeConstructor = null;
-            }
-
-            foreach (var eventSource in eventSources)
-            {
-                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-            }
+            loggerFilterOptions.OnChange(o => this.SetEventSourceLevels());
         }
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
             {
-                // If there are EventSource classes already initialized as of now, this method would be called from
-                // the base class constructor before the first line of code in SelfDiagnosticsEventListener constructor.
-                // In this case logLevel is always its default value, "LogAlways".
-                // Thus we should save the event source and enable them later, when code runs in constructor.
-                if (this.eventSourcesBeforeConstructor != null)
+                lock (this.lockObj)
                 {
-                    lock (this.lockObj)
-                    {
-                        if (this.eventSourcesBeforeConstructor != null)
-                        {
-                            this.eventSourcesBeforeConstructor.Add(eventSource);
-                            return;
-                        }
-                    }
+                    this.eventSources.Add(eventSource);
                 }
 
-                this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
+                this.SetEventSourceLevel(eventSource);
             }
 
             base.OnEventSourceCreated(eventSource);
@@ -93,7 +75,11 @@ namespace OpenTelemetry.Internal
                 return;
             }
 
-            var logger = this.loggers.GetOrAdd(eventData.EventSource.Name, name => this.loggerFactory.CreateLogger(ToLoggerName(name)));
+            if (!this.loggers.TryGetValue(eventData.EventSource, out var logger))
+            {
+                logger = this.loggers.GetOrAdd(eventData.EventSource, eventSource => this.loggerFactory.CreateLogger(ToLoggerName(eventSource.Name)));
+            }
+
             logger.Log(MapLevel(eventData.Level), new EventId(eventData.EventId, eventData.EventName), new EventSourceEvent(eventData), null, this.formatMessage);
         }
 
@@ -123,9 +109,137 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        private static EventLevel? MapLevel(LogLevel? level)
+        {
+            if (!level.HasValue)
+            {
+                return null;
+            }
+
+            switch (level)
+            {
+                case LogLevel.Critical:
+                    return EventLevel.Critical;
+                case LogLevel.Error:
+                    return EventLevel.Error;
+                case LogLevel.Information:
+                    return EventLevel.Informational;
+                case LogLevel.Debug:
+                    return EventLevel.Verbose;
+                case LogLevel.Trace:
+                    return EventLevel.LogAlways;
+                case LogLevel.Warning:
+                    return EventLevel.Warning;
+                default:
+                    return null;
+            }
+        }
+
         private static string FormatMessage(EventSourceEvent eventSourceEvent, Exception exception)
         {
             return EventSourceEventFormatter.Format(eventSourceEvent.EventData);
+        }
+
+        private EventLevel? GetEventLevel(string category)
+        {
+            var options = this.loggerFilterOptions?.CurrentValue;
+            if (options == null)
+            {
+                return this.defaultMinEventLevel;
+            }
+
+            EventLevel? minLevel = MapLevel(options.MinLevel);
+
+            LoggerFilterRule current = null;
+            foreach (LoggerFilterRule rule in options.Rules)
+            {
+                if (this.IsBetterRule(rule, current, category))
+                {
+                    current = rule;
+                }
+            }
+
+            if (current != null)
+            {
+                minLevel = MapLevel(current.LogLevel);
+            }
+
+            return minLevel;
+        }
+
+        private bool IsBetterRule(LoggerFilterRule rule, LoggerFilterRule current, string category)
+        {
+            string categoryName = rule.CategoryName;
+            if (categoryName != null)
+            {
+                const char WildcardChar = '*';
+
+                int wildcardIndex = categoryName.IndexOf(WildcardChar);
+                if (wildcardIndex != -1 &&
+                    categoryName.IndexOf(WildcardChar, wildcardIndex + 1) != -1)
+                {
+                    // can't have more than one wildcard
+                    return false;
+                }
+
+                ReadOnlySpan<char> prefix, suffix;
+                if (wildcardIndex == -1)
+                {
+                    prefix = categoryName.AsSpan();
+                    suffix = default;
+                }
+                else
+                {
+                    prefix = categoryName.AsSpan(0, wildcardIndex);
+                    suffix = categoryName.AsSpan(wildcardIndex + 1);
+                }
+
+                if (!category.AsSpan().StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ||
+                    !category.AsSpan().EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+
+            if (current?.CategoryName != null)
+            {
+                if (rule.CategoryName == null)
+                {
+                    return false;
+                }
+
+                if (current.CategoryName.Length > rule.CategoryName.Length)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void SetEventSourceLevels()
+        {
+            lock (this.lockObj)
+            {
+                foreach (var eventSource in this.eventSources)
+                {
+                    this.SetEventSourceLevel(eventSource);
+                }
+            }
+        }
+
+        private void SetEventSourceLevel(EventSource eventSource)
+        {
+            EventLevel? eventLevel = this.GetEventLevel(ToLoggerName(eventSource.Name));
+
+            if (eventLevel.HasValue)
+            {
+                this.EnableEvents(eventSource, eventLevel.Value);
+            }
+            else
+            {
+                this.DisableEvents(eventSource);
+            }
         }
 
         private readonly struct EventSourceEvent : IReadOnlyList<KeyValuePair<string, object>>

@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
@@ -39,7 +40,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             // The sole purpose of this HostedService is to
             // start forwarding the self-diagnostics events
             // to the logger factory
-            this.forwarder = new SelfDiagnosticsEventLogForwarder(System.Diagnostics.Tracing.EventLevel.LogAlways, this.serviceProvider.GetService<ILoggerFactory>());
+            this.forwarder = new SelfDiagnosticsEventLogForwarder(this.serviceProvider.GetService<ILoggerFactory>(), this.serviceProvider.GetService<IOptionsMonitor<LoggerFilterOptions>>(), System.Diagnostics.Tracing.EventLevel.Warning);
 
             return Task.CompletedTask;
         }
