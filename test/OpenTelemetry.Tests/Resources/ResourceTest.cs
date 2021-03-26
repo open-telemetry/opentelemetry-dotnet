@@ -185,15 +185,24 @@ namespace OpenTelemetry.Resources.Tests
 
                 // have to convert to other primitive array types
                 { "int arr", new int[] { 1 } },
-                { "short arr", new short[] { (short)1 } },
+                { "short arr", new short[] { 1 } },
                 { "float arr", new float[] { 0.1f } },
+
+                // nullable array types
+                { "string null arr", new string[] { "stringValue", null } },
+                { "bool null arr", new bool?[] { true, null } },
+                { "double null arr", new double?[] { 0.1d, null } },
+                { "long null arr", new long?[] { 1L, null } },
+                { "int null arr", new int?[] { 1, null } },
+                { "short null arr", new short?[] { 1, null } },
+                { "float null arr", new float?[] { 0.1f, null } },
             };
 
             // Act
             var resource = new Resource(attributes);
 
             // Assert
-            Assert.Equal(7, resource.Attributes.Count());
+            Assert.Equal(14, resource.Attributes.Count());
             Assert.Equal(new string[] { "stringValue" }, resource.Attributes.Where(x => x.Key == "string arr").FirstOrDefault().Value);
             Assert.Equal(new bool[] { true }, resource.Attributes.Where(x => x.Key == "bool arr").FirstOrDefault().Value);
             Assert.Equal(new double[] { 0.1d }, resource.Attributes.Where(x => x.Key == "double arr").FirstOrDefault().Value);
@@ -204,6 +213,18 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "int arr").FirstOrDefault().Value);
             Assert.Equal(longArr, resource.Attributes.Where(x => x.Key == "short arr").FirstOrDefault().Value);
             Assert.Equal(doubleArr, resource.Attributes.Where(x => x.Key == "float arr").FirstOrDefault().Value);
+
+            // nullable types section
+            Assert.Equal(new string[] { "stringValue", null }, resource.Attributes.Where(x => x.Key == "string null arr").FirstOrDefault().Value);
+            Assert.Equal(new bool?[] { true, null }, resource.Attributes.Where(x => x.Key == "bool null arr").FirstOrDefault().Value);
+            Assert.Equal(new double?[] { 0.1d, null}, resource.Attributes.Where(x => x.Key == "double null arr").FirstOrDefault().Value);
+            Assert.Equal(new long?[] { 1L, null }, resource.Attributes.Where(x => x.Key == "long null arr").FirstOrDefault().Value);
+
+            var nullLongArr = new long?[] { 1, null };
+            var nullDoubleArr = new double?[] { Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture), null };
+            Assert.Equal(nullLongArr, resource.Attributes.Where(x => x.Key == "int null arr").FirstOrDefault().Value);
+            Assert.Equal(nullLongArr, resource.Attributes.Where(x => x.Key == "short null arr").FirstOrDefault().Value);
+            Assert.Equal(nullDoubleArr, resource.Attributes.Where(x => x.Key == "float null arr").FirstOrDefault().Value);
         }
 
         [Fact]

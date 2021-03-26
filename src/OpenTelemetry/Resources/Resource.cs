@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -114,7 +115,7 @@ namespace OpenTelemetry.Resources
                     return value;
                 }
 
-                if (value is string[] || value is bool[] || value is double[] || value is long[])
+                if (value is string[] || value is bool[] || value is double[] || value is long[] || value is bool?[] || value is double?[] || value is long?[])
                 {
                     return value;
                 }
@@ -140,6 +141,24 @@ namespace OpenTelemetry.Resources
                     }
 
                     return convertedArr;
+                } else if (value is int?[] || value is short?[])
+                {
+                    long?[] convertedArr = new long?[((System.Array)value).Length];
+                    int i = 0;
+                    foreach (var val in (System.Array)value)
+                    {
+                        if (val == null)
+                        {
+                            convertedArr[i] = null;
+                        } else
+                        {
+                            convertedArr[i] = System.Convert.ToInt64(val);
+                        }
+
+                        i++;
+                    }
+
+                    return convertedArr;
                 }
 
                 if (value is float[])
@@ -149,6 +168,24 @@ namespace OpenTelemetry.Resources
                     foreach (float val in (float[])value)
                     {
                         convertedArr[i] = System.Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
+                        i++;
+                    }
+
+                    return convertedArr;
+                } else if (value is float?[])
+                {
+                    double?[] convertedArr = new double?[((float?[])value).Length];
+                    int i = 0;
+                    foreach (var val in (float?[])value)
+                    {
+                        if (val == null)
+                        {
+                            convertedArr[i] = null;
+                        } else
+                        {
+                            convertedArr[i] = System.Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
+                        }
+
                         i++;
                     }
 
