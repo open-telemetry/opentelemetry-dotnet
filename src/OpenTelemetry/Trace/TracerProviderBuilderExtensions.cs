@@ -20,6 +20,9 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Contains extension methods for the <see cref="TracerProviderBuilder"/> class.
+    /// </summary>
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
@@ -31,9 +34,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.SetErrorStatusOnException(enabled);
+                tracerProviderBuilderBase.SetErrorStatusOnException(enabled);
             }
 
             return tracerProviderBuilder;
@@ -47,9 +50,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler(this TracerProviderBuilder tracerProviderBuilder, Sampler sampler)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.SetSampler(sampler);
+                tracerProviderBuilderBase.SetSampler(sampler);
             }
 
             return tracerProviderBuilder;
@@ -64,9 +67,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                tracerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return tracerProviderBuilder;
@@ -80,9 +83,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseProcessor<Activity> processor)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.AddProcessor(processor);
+                tracerProviderBuilderBase.AddProcessor(processor);
             }
 
             return tracerProviderBuilder;
@@ -99,19 +102,29 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddLegacySource(this TracerProviderBuilder tracerProviderBuilder, string operationName)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.AddLegacySource(operationName);
+                tracerProviderBuilderBase.AddLegacySource(operationName);
             }
 
             return tracerProviderBuilder;
         }
 
+        /// <summary>
+        /// Run the given actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns><see cref="TracerProvider"/>.</returns>
         public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
         {
+            if (tracerProviderBuilder is IDeferredTracerProviderBuilder)
+            {
+                throw new NotSupportedException("DeferredTracerBuilder requires a ServiceProvider to build.");
+            }
+
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                return tracerProviderBuilderSdk.Build();
+                return tracerProviderBuilderSdk.BuildSdk();
             }
 
             return null;

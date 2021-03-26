@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
+            IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
             Dictionary<string, bool> legacyActivityOperationNames)
