@@ -140,7 +140,8 @@ namespace OpenTelemetry.Resources
                     }
 
                     return convertedArr;
-                } else if (value is int?[] || value is short?[])
+                }
+                else if (value is int?[] || value is short?[])
                 {
                     long?[] convertedArr = new long?[((System.Array)value).Length];
                     int i = 0;
@@ -149,7 +150,8 @@ namespace OpenTelemetry.Resources
                         if (val == null)
                         {
                             convertedArr[i] = null;
-                        } else
+                        }
+                        else
                         {
                             convertedArr[i] = System.Convert.ToInt64(val, System.Globalization.CultureInfo.InvariantCulture);
                         }
@@ -171,7 +173,8 @@ namespace OpenTelemetry.Resources
                     }
 
                     return convertedArr;
-                } else if (value is float?[])
+                }
+                else if (value is float?[])
                 {
                     double?[] convertedArr = new double?[((float?[])value).Length];
                     int i = 0;
@@ -180,7 +183,8 @@ namespace OpenTelemetry.Resources
                         if (val == null)
                         {
                             convertedArr[i] = null;
-                        } else
+                        }
+                        else
                         {
                             convertedArr[i] = System.Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
                         }

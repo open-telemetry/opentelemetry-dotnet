@@ -217,7 +217,7 @@ namespace OpenTelemetry.Resources.Tests
             // nullable types section
             Assert.Equal(new string[] { "stringValue", null }, resource.Attributes.Where(x => x.Key == "string null arr").FirstOrDefault().Value);
             Assert.Equal(new bool?[] { true, null }, resource.Attributes.Where(x => x.Key == "bool null arr").FirstOrDefault().Value);
-            Assert.Equal(new double?[] { 0.1d, null}, resource.Attributes.Where(x => x.Key == "double null arr").FirstOrDefault().Value);
+            Assert.Equal(new double?[] { 0.1d, null }, resource.Attributes.Where(x => x.Key == "double null arr").FirstOrDefault().Value);
             Assert.Equal(new long?[] { 1L, null }, resource.Attributes.Where(x => x.Key == "long null arr").FirstOrDefault().Value);
 
             var nullLongArr = new long?[] { 1, null };
