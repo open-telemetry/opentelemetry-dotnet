@@ -38,11 +38,24 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new ZipkinExporterOptions();
-            configure?.Invoke(exporterOptions);
-            var zipkinExporter = new ZipkinExporter(exporterOptions);
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddZipkinExporter(builder, sp.GetOptions<ZipkinExporterOptions>(), configure);
+                });
+            }
 
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            return AddZipkinExporter(builder, new ZipkinExporterOptions(), configure);
+        }
+
+        private static TracerProviderBuilder AddZipkinExporter(TracerProviderBuilder builder, ZipkinExporterOptions options, Action<ZipkinExporterOptions> configure = null)
+        {
+            configure?.Invoke(options);
+
+            var zipkinExporter = new ZipkinExporter(options);
+
+            if (options.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return builder.AddProcessor(new SimpleActivityExportProcessor(zipkinExporter));
             }
@@ -50,10 +63,10 @@ namespace OpenTelemetry.Trace
             {
                 return builder.AddProcessor(new BatchActivityExportProcessor(
                     zipkinExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+                    options.BatchExportProcessorOptions.MaxQueueSize,
+                    options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    options.BatchExportProcessorOptions.MaxExportBatchSize));
             }
         }
     }
