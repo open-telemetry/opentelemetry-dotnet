@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace OpenTelemetry.Resources
 {
@@ -25,13 +26,11 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public static class ResourceBuilderExtensions
     {
-        private static readonly string FileVersion = FileVersionInfo.GetVersionInfo(typeof(Resource).Assembly.Location).FileVersion;
-
         private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
             [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = FileVersion,
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = GetFileVersion(),
         });
 
         /// <summary>
@@ -122,6 +121,18 @@ namespace OpenTelemetry.Resources
         public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
         {
             return resourceBuilder.AddDetector(new OtelEnvResourceDetector());
+        }
+
+        private static string GetFileVersion()
+        {
+            try
+            {
+                return typeof(Resource).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
         }
     }
 }
