@@ -1,6 +1,36 @@
 # Changelog
 
+## Experimental - Metrics
+
+Note: the metrics work is happening in the [metrics feature
+branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
+please check the latest changes
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Api/CHANGELOG.md#experimental---metrics).
+
 ## Unreleased
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Relax System.* packages version requirement to remove upper bound.
+* Require System.Diagnostics.DiagnosticSource package 5.0.1.
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
 
 * In order to align with the
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)

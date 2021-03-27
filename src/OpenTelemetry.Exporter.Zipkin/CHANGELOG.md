@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
+## 1.0.1
+
+Released 2021-Feb-10
+
+## 1.0.0-rc4
+
+Released 2021-Feb-09
+
+## 1.0.0-rc3
+
+Released 2021-Feb-04
+
+* Moved `ZipkinExporter` and `ZipkinExporterOptions` classes to
+  `OpenTelemetry.Exporter` namespace.
+  ([#1770](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1770))
+* Removes ability to configure ServiceName for Zipkin. ServiceName must come
+  via Resource. If service name is not found in Resource, Zipkin uses
+  GetDefaultResource() from the SDK to obtain it.
+  [#1768](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1768)
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Changed `ZipkinExporter` class and constructor from internal to public.
   ([#1612](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1612))
 

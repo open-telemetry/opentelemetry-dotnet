@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Mar-19
+
+* Leverages added AddLegacySource API from OpenTelemetry SDK to trigger Samplers
+  and ActivityProcessors. Samplers, ActivityProcessor.OnStart will now get the
+  Activity before any enrichment done by the instrumentation.
+  ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
+* Performance optimization by leveraging sampling decision and short circuiting
+  activity enrichment. `Filter` and `Enrich` are now only called if
+  `activity.IsAllDataRequested` is `true`
+  ([#1899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1899))
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 ## 1.0.0-rc1.1
 
 Released 2020-Nov-17

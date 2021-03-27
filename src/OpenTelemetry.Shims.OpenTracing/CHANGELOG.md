@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0-rc3
+
+Released 2021-Mar-19
+
+## 1.0.0-rc2
+
+Released 2021-Jan-29
+
 * Made the following shim classes internal: `ScopeManagerShim`,
   `SpanBuilderShim`, `SpanContextShim`, `SpanShim`.
   ([#1619](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1619))

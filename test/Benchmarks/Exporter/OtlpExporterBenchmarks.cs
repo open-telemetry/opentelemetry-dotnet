@@ -21,7 +21,7 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using Grpc.Core;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
