@@ -336,6 +336,108 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
 
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
+
+        public void ExtractContextIrrespectiveOfSamplingDecision(SamplingDecision samplingDecision)
+        {
+            HttpContext.Current = new HttpContext(
+                new HttpRequest(string.Empty, "http://localhost/", string.Empty)
+                {
+                    RequestContext = new RequestContext()
+                    {
+                        RouteData = new RouteData(),
+                    },
+                },
+                new HttpResponse(new StringWriter()));
+
+            bool isPropagatorCalled = false;
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
+                .Returns(() =>
+                {
+                    isPropagatorCalled = true;
+                    return default(PropagationContext);
+                });
+
+            var activity = new Activity(HttpInListener.ActivityOperationName);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new TestSampler(samplingDecision))
+                .AddAspNetInstrumentation()
+                .AddProcessor(activityProcessor.Object).Build())
+            {
+                activity.Start();
+
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                {
+                    this.fakeAspNetDiagnosticSource.Write("Start", null);
+                }
+
+                this.fakeAspNetDiagnosticSource.Write("Stop", null);
+                activity.Stop();
+            }
+
+            Assert.True(isPropagatorCalled);
+        }
+
+        [Fact]
+        public void ExtractContextIrrespectiveOfTheFilterApplied()
+        {
+            HttpContext.Current = new HttpContext(
+                new HttpRequest(string.Empty, "http://localhost/", string.Empty)
+                {
+                    RequestContext = new RequestContext()
+                    {
+                        RouteData = new RouteData(),
+                    },
+                },
+                new HttpResponse(new StringWriter()));
+
+            bool isPropagatorCalled = false;
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
+                .Returns(() =>
+                {
+                    isPropagatorCalled = true;
+                    return default(PropagationContext);
+                });
+
+            var activity = new Activity(HttpInListener.ActivityOperationName);
+
+            bool isFilterCalled = false;
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetInstrumentation(options =>
+                {
+                    options.Filter = context =>
+                    {
+                        isFilterCalled = true;
+                        return false;
+                    };
+                })
+                .AddProcessor(activityProcessor.Object).Build())
+            {
+                activity.Start();
+
+                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                {
+                    this.fakeAspNetDiagnosticSource.Write("Start", null);
+                }
+
+                this.fakeAspNetDiagnosticSource.Write("Stop", null);
+                activity.Stop();
+            }
+
+            Assert.True(isFilterCalled);
+            Assert.True(isPropagatorCalled);
+        }
+
         private static Action<Activity, string, object> GetEnrichmentAction(Status statusToBeSet)
         {
             Action<Activity, string, object> enrichAction;
@@ -383,6 +485,21 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             public void Dispose()
             {
                 this.listener.Dispose();
+            }
+        }
+
+        private class TestSampler : Sampler
+        {
+            private SamplingDecision samplingDecision;
+
+            public TestSampler(SamplingDecision samplingDecision)
+            {
+                this.samplingDecision = samplingDecision;
+            }
+
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return new SamplingResult(this.samplingDecision);
             }
         }
     }
