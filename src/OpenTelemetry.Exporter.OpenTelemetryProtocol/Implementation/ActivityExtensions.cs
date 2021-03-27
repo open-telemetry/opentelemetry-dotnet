@@ -455,7 +455,35 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     case string[] stringArray:
                         foreach (var item in stringArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { StringValue = item }));
+                        }
+
+                        break;
+                    case long[] longArray:
+                        foreach (var item in longArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
+                        }
+
+                        break;
+                    case bool?[] boolArray:
+                        foreach (var item in boolArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { BoolValue = item.Value }));
+                        }
+
+                        break;
+                    case double?[] doubleArray:
+                        foreach (var item in doubleArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { DoubleValue = item.Value }));
+                        }
+
+                        break;
+                    case long?[] longArray:
+                        foreach (var item in longArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { IntValue = item.Value }));
                         }
 
                         break;
