@@ -13,6 +13,11 @@ please check the latest changes
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
   ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919))
 
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:
+  `services.Configure<OtlpExporterOptions>(this.Configuration.GetSection("Otlp"));`).
+  ([#1942](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1942))
+
 ## 1.1.0-beta1
 
 Released 2021-Mar-19
