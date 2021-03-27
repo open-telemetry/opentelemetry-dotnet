@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
 </Project>

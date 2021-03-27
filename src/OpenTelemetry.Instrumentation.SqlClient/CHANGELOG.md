@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Instrumentation modified to depend only on the API.
+
 ## 1.0.0-rc3
 
 Released 2021-Mar-19
