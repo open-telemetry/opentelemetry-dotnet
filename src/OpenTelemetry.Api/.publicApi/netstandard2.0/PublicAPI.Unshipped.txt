@@ -10,3 +10,4 @@ OpenTelemetry.SelfDiagnostics.LogInformation(System.Type type, System.Exception 
 OpenTelemetry.SelfDiagnostics.LogVerbose(System.Type type, string message, params object[] args) -> void
 OpenTelemetry.SelfDiagnostics.LogVerbose(System.Type type, System.Exception exception, string message, params object[] args) -> void
 static OpenTelemetry.SelfDiagnostics.Logger -> OpenTelemetry.SelfDiagnostics
+OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void
