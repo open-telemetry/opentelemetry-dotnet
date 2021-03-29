@@ -37,7 +37,19 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var exporterOptions = new OtlpExporterOptions();
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure);
+                });
+            }
+
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure);
+        }
+
+        private static TracerProviderBuilder AddOtlpExporter(TracerProviderBuilder builder, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
+        {
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
