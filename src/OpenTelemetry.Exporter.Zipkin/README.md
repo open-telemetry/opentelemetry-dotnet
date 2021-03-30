@@ -23,9 +23,13 @@ You can configure the `ZipkinExporter` through
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
    associated with the telemetry has "service.name" defined, then it'll be
    preferred over this option.
-* `Endpoint`: URI address to receive telemetry (default `http://localhost:9411/api/v2/spans`). It can be configured using following two ways:
+* `Endpoint`: URI address to receive telemetry (default `http://localhost:9411/api/v2/spans`).
+
+   It can be configured using two ways:
    1. [Incode](../../examples/Console/TestZipkinExporter.cs)
    2. [Environment variable](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#zipkin-exporter)
+
+   If both `Incode` and `Environment variable` is used, Incode value will take precedence.
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
 * `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions
