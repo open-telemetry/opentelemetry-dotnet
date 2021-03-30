@@ -86,7 +86,7 @@ services.AddOpenTelemetryTracing(
 It is important to note that this `Filter` option is specific to this
 instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
-and the `Filter` option does the filtering *before* the Sampler is invoked.
+and the `Filter` option does the filtering *after* the Sampler is invoked.
 
 ### Enrich
 
