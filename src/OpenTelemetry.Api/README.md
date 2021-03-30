@@ -419,7 +419,7 @@ As mentioned in the introduction section, using OpenTelemetry.API Shim is only
 recommended if you want to use OpenTelemetry terminology like Tracer, Span
 instead of ActivitySource, Activity.
 
-Follow [this](../../examples/console/TestOTelShimWithConsoleExporter.cs) code
+Follow [this](../../examples/Console/TestOTelShimWithConsoleExporter.cs) code
 for example usage of this shim.
 
 ## Context propagation
