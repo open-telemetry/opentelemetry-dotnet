@@ -20,8 +20,28 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Contains extension methods for the <see cref="TracerProviderBuilder"/> class.
+    /// </summary>
     public static class TracerProviderBuilderExtensions
     {
+        /// <summary>
+        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.SetErrorStatusOnException(enabled);
+            }
+
+            return tracerProviderBuilder;
+        }
+
         /// <summary>
         /// Sets sampler.
         /// </summary>
@@ -30,9 +50,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler(this TracerProviderBuilder tracerProviderBuilder, Sampler sampler)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.SetSampler(sampler);
+                tracerProviderBuilderBase.SetSampler(sampler);
             }
 
             return tracerProviderBuilder;
@@ -47,9 +67,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                tracerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return tracerProviderBuilder;
@@ -63,49 +83,51 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseProcessor<Activity> processor)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderSdk.AddProcessor(processor);
+                tracerProviderBuilderBase.AddProcessor(processor);
             }
 
             return tracerProviderBuilder;
-        }
-
-        public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
-            {
-                return tracerProviderBuilderSdk.Build();
-            }
-
-            return null;
         }
 
         /// <summary>
-        /// Adds a DiagnosticSource based instrumentation.
-        /// This is required for libraries which is already instrumented with
-        /// DiagnosticSource and Activity, without using ActivitySource.
+        /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
         /// </summary>
-        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
-        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <remarks>
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
+        /// </remarks>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/> instance.</param>
+        /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal static TracerProviderBuilder AddDiagnosticSourceInstrumentation<TInstrumentation>(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Func<ActivitySourceAdapter, TInstrumentation> instrumentationFactory)
-            where TInstrumentation : class
+        public static TracerProviderBuilder AddLegacySource(this TracerProviderBuilder tracerProviderBuilder, string operationName)
         {
-            if (instrumentationFactory == null)
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
+                tracerProviderBuilderBase.AddLegacySource(operationName);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Run the given actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is IDeferredTracerProviderBuilder)
+            {
+                throw new NotSupportedException("DeferredTracerBuilder requires a ServiceProvider to build.");
             }
 
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
-                tracerProviderBuilderSdk.AddDiagnosticSourceInstrumentation(instrumentationFactory);
+                return tracerProviderBuilderSdk.BuildSdk();
             }
 
-            return tracerProviderBuilder;
+            return null;
         }
     }
 }

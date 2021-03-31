@@ -143,7 +143,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 Name = activity.DisplayName,
 
-                Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1), // TODO: there is an offset of 1 on the enum.
+                // There is an offset of 1 on the OTLP enum.
+                Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1),
 
                 TraceId = ByteStringCtorFunc(traceIdBytes),
                 SpanId = ByteStringCtorFunc(spanIdBytes),
@@ -454,7 +455,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     case string[] stringArray:
                         foreach (var item in stringArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = item }));
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { StringValue = item }));
+                        }
+
+                        break;
+                    case long[] longArray:
+                        foreach (var item in longArray)
+                        {
+                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
                         }
 
                         break;

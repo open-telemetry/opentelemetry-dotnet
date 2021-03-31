@@ -41,11 +41,6 @@ namespace OpenTelemetry.Instrumentation
         {
             if (!this.handler.SupportsNullActivity && Activity.Current == null)
             {
-                if (!Sdk.SuppressInstrumentation)
-                {
-                    InstrumentationEventSource.Log.NullActivity(value.Key);
-                }
-
                 return;
             }
 
@@ -53,31 +48,19 @@ namespace OpenTelemetry.Instrumentation
             {
                 if (value.Key.EndsWith("Start", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
-                    {
-                        this.handler.OnStartActivity(Activity.Current, value.Value);
-                    }
+                    this.handler.OnStartActivity(Activity.Current, value.Value);
                 }
                 else if (value.Key.EndsWith("Stop", StringComparison.Ordinal))
                 {
-                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
-                    {
-                        this.handler.OnStopActivity(Activity.Current, value.Value);
-                    }
+                    this.handler.OnStopActivity(Activity.Current, value.Value);
                 }
                 else if (value.Key.EndsWith("Exception", StringComparison.Ordinal))
                 {
-                    if (!Sdk.SuppressInstrumentation)
-                    {
-                        this.handler.OnException(Activity.Current, value.Value);
-                    }
+                    this.handler.OnException(Activity.Current, value.Value);
                 }
                 else
                 {
-                    if (!Sdk.SuppressInstrumentation)
-                    {
-                        this.handler.OnCustom(value.Key, Activity.Current, value.Value);
-                    }
+                    this.handler.OnCustom(value.Key, Activity.Current, value.Value);
                 }
             }
             catch (Exception ex)
