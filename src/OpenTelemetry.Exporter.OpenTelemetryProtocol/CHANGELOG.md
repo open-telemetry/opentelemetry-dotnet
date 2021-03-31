@@ -15,6 +15,19 @@ please check the latest changes
   `UnsafeByteOperations.UnsafeWrap` to avoid unnecessary allocations.
   ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
 
+* Null values in primitive arrays are preserved through otlp.
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919))
+
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:
+  `services.Configure<OtlpExporterOptions>(this.Configuration.GetSection("Otlp"));`).
+  ([#1942](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1942))
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 ## 1.0.1
 
 Released 2021-Feb-10
