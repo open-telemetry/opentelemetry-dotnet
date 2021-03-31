@@ -13,7 +13,7 @@ please check the latest changes
   exporter with an application that references Google.Protobuf 3.15. The OTLP
   exporter now depends on Google.Protobuf 3.15.5 enabling the use of the new
   `UnsafeByteOperations.UnsafeWrap` to avoid unnecessary allocations.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#1873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1873))
 
 * Null values in primitive arrays are preserved through otlp.
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
