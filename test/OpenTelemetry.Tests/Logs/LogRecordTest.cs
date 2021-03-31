@@ -19,6 +19,7 @@
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -42,6 +43,7 @@ namespace OpenTelemetry.Tests.Logs
 #endif
         private readonly BaseExportProcessor<LogRecord> processor;
         private readonly BaseExporter<LogRecord> exporter;
+        private OpenTelemetryLoggerOptions options;
 
         public LogRecordTest()
         {
@@ -53,8 +55,12 @@ namespace OpenTelemetry.Tests.Logs
             this.loggerFactory = LoggerFactory.Create(builder =>
 #endif
             {
-                builder.AddOpenTelemetry(options => options
-                    .AddProcessor(this.processor));
+                builder.AddOpenTelemetry(options =>
+                {
+                    this.options = options;
+                    options
+                        .AddProcessor(this.processor);
+                });
                 builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
 
@@ -309,6 +315,223 @@ namespace OpenTelemetry.Tests.Logs
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
         }
 
+        [Fact]
+        public void IncludeFormattedMessageTest()
+        {
+            this.logger.LogInformation("OpenTelemetry!");
+            var logRecord = this.exportedItems[0];
+            Assert.Null(logRecord.FormattedMessage);
+
+            this.options.IncludeFormattedMessage = true;
+            try
+            {
+                this.logger.LogInformation("OpenTelemetry!");
+                logRecord = this.exportedItems[1];
+                Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+
+                this.logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+                logRecord = this.exportedItems[2];
+                Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
+            }
+            finally
+            {
+                this.options.IncludeFormattedMessage = false;
+            }
+        }
+
+        [Fact]
+        public void IncludeScopesTest()
+        {
+            using var scope = this.logger.BeginScope("string_scope");
+
+            this.logger.LogInformation("OpenTelemetry!");
+            var logRecord = this.exportedItems[0];
+
+            List<object> scopes = new List<object>();
+            logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+            Assert.Empty(scopes);
+
+            this.options.IncludeScopes = true;
+            try
+            {
+                this.logger.LogInformation("OpenTelemetry!");
+                logRecord = this.exportedItems[1];
+
+                logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+                Assert.Single(scopes);
+                Assert.Equal("string_scope", scopes[0]);
+
+                scopes.Clear();
+
+                using var scope2 = this.logger.BeginScope(2021);
+
+                this.logger.LogInformation("OpenTelemetry!");
+                logRecord = this.exportedItems[2];
+
+                logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+                Assert.Equal(2, scopes.Count);
+                Assert.Equal("string_scope", scopes[0]);
+                Assert.Equal(2021, scopes[1]);
+            }
+            finally
+            {
+                this.options.IncludeScopes = false;
+            }
+        }
+
+        [Fact]
+        public void ParseStateValuesUsingStandardExtensionsTest()
+        {
+            // Tests state parsing with standard extensions.
+
+            this.logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
+            var logRecord = this.exportedItems[0];
+
+            Assert.NotNull(logRecord.State);
+            Assert.Null(logRecord.StateValues);
+
+            this.options.ParseStateValues = true;
+            try
+            {
+                var complex = new { Property = "Value" };
+
+                this.logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
+                logRecord = this.exportedItems[1];
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(4, logRecord.StateValues.Count);
+                Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
+                Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
+                Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
+
+                KeyValuePair<string, object> actualComplex = logRecord.StateValues[2];
+                Assert.Equal("Complex", actualComplex.Key);
+                Assert.Same(complex, actualComplex.Value);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
+        [Fact]
+        public void ParseStateValuesUsingStructTest()
+        {
+            // Tests struct IReadOnlyList<KeyValuePair<string, object>> parse path.
+
+            this.options.ParseStateValues = true;
+            try
+            {
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    new StructState(new KeyValuePair<string, object>("Key1", "Value1")),
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                var logRecord = this.exportedItems[0];
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(1, logRecord.StateValues.Count);
+                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
+        [Fact]
+        public void ParseStateValuesUsingListTest()
+        {
+            // Tests ref IReadOnlyList<KeyValuePair<string, object>> parse path.
+
+            this.options.ParseStateValues = true;
+            try
+            {
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                var logRecord = this.exportedItems[0];
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(1, logRecord.StateValues.Count);
+                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
+        [Fact]
+        public void ParseStateValuesUsingIEnumerableTest()
+        {
+            // Tests IEnumerable<KeyValuePair<string, object>> parse path.
+
+            this.options.ParseStateValues = true;
+            try
+            {
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    new ListState(new KeyValuePair<string, object>("Key1", "Value1")),
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                var logRecord = this.exportedItems[0];
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(1, logRecord.StateValues.Count);
+                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
+        [Fact]
+        public void ParseStateValuesUsingCustomTest()
+        {
+            // Tests unknown state parse path.
+
+            this.options.ParseStateValues = true;
+            try
+            {
+                CustomState state = new CustomState
+                {
+                    Property = "Value",
+                };
+
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    state,
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                var logRecord = this.exportedItems[0];
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(1, logRecord.StateValues.Count);
+
+                KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+
+                Assert.Equal(string.Empty, actualState.Key);
+                Assert.Same(state, actualState.Value);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
         public void Dispose()
         {
 #if NETCOREAPP2_1
@@ -323,6 +546,55 @@ namespace OpenTelemetry.Tests.Logs
             public string Name { get; set; }
 
             public double Price { get; set; }
+        }
+
+        private struct StructState : IReadOnlyList<KeyValuePair<string, object>>
+        {
+            private readonly List<KeyValuePair<string, object>> list;
+
+            public StructState(params KeyValuePair<string, object>[] items)
+            {
+                this.list = new List<KeyValuePair<string, object>>(items);
+            }
+
+            public int Count => this.list.Count;
+
+            public KeyValuePair<string, object> this[int index] => this.list[index];
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                return this.list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return this.list.GetEnumerator();
+            }
+        }
+
+        private class ListState : IEnumerable<KeyValuePair<string, object>>
+        {
+            private readonly List<KeyValuePair<string, object>> list;
+
+            public ListState(params KeyValuePair<string, object>[] items)
+            {
+                this.list = new List<KeyValuePair<string, object>>(items);
+            }
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                return this.list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return this.list.GetEnumerator();
+            }
+        }
+
+        private class CustomState
+        {
+            public string Property { get; set; }
         }
     }
 }

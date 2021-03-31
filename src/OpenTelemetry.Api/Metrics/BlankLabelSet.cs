@@ -19,9 +19,8 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Blank or No-op labelset.
+    /// Blank or No-op LabelSet.
     /// </summary>
-    [Obsolete("Metrics API/SDK is not recommended for production. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501 for more information on metrics support.")]
     public sealed class BlankLabelSet : LabelSet
     {
     }

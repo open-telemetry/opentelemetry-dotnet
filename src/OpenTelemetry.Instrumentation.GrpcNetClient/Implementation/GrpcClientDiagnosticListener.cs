@@ -32,24 +32,33 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         private readonly GrpcClientInstrumentationOptions options;
-        private readonly ActivitySourceAdapter activitySource;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
 
-        public GrpcClientDiagnosticListener(ActivitySourceAdapter activitySource, GrpcClientInstrumentationOptions options)
+        public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
         {
-            if (activitySource == null)
-            {
-                throw new ArgumentNullException(nameof(activitySource));
-            }
-
             this.options = options;
-            this.activitySource = activitySource;
         }
 
         public override void OnStartActivity(Activity activity, object payload)
         {
+            // The overall flow of what GrpcClient library does is as below:
+            // Activity.Start()
+            // DiagnosticSource.WriteEvent("Start", payload)
+            // DiagnosticSource.WriteEvent("Stop", payload)
+            // Activity.Stop()
+
+            // This method is in the WriteEvent("Start", payload) path.
+            // By this time, samplers have already run and
+            // activity.IsAllDataRequested populated accordingly.
+
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            // Ensure context propagation irrespective of sampling decision
             if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
             {
                 GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
@@ -85,14 +94,15 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
-            var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
-
-            activity.DisplayName = grpcMethod?.Trim('/');
-
-            this.activitySource.Start(activity, ActivityKind.Client, ActivitySource);
-
             if (activity.IsAllDataRequested)
             {
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+
+                var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+
+                activity.DisplayName = grpcMethod?.Trim('/');
+
                 activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
                 if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
@@ -158,8 +168,6 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     }
                 }
             }
-
-            this.activitySource.Stop(activity);
         }
     }
 }

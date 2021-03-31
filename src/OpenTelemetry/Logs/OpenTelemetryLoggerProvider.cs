@@ -16,18 +16,20 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
     [ProviderAlias("OpenTelemetry")]
-    public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
+    public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
+        internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
-        private readonly OpenTelemetryLoggerOptions options;
-        private readonly IDictionary<string, ILogger> loggers;
+        internal Resource Resource;
+        private readonly Hashtable loggers = new Hashtable();
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
@@ -45,8 +47,9 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.loggers = new Dictionary<string, ILogger>(StringComparer.Ordinal);
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+
+            this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)
             {
@@ -54,47 +57,42 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        internal IExternalScopeProvider ScopeProvider
-        {
-            get
-            {
-                if (this.scopeProvider == null)
-                {
-                    this.scopeProvider = new LoggerExternalScopeProvider();
-                }
-
-                return this.scopeProvider;
-            }
-        }
-
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
-            // TODO: set existing loggers
             this.scopeProvider = scopeProvider;
+
+            lock (this.loggers)
+            {
+                foreach (DictionaryEntry entry in this.loggers)
+                {
+                    if (entry.Value is OpenTelemetryLogger logger)
+                    {
+                        logger.ScopeProvider = scopeProvider;
+                    }
+                }
+            }
         }
 
         public ILogger CreateLogger(string categoryName)
         {
-            lock (this.loggers)
+            if (!(this.loggers[categoryName] is OpenTelemetryLogger logger))
             {
-                ILogger logger;
-
-                if (this.loggers.TryGetValue(categoryName, out logger))
+                lock (this.loggers)
                 {
-                    return logger;
+                    logger = this.loggers[categoryName] as OpenTelemetryLogger;
+                    if (logger == null)
+                    {
+                        logger = new OpenTelemetryLogger(categoryName, this)
+                        {
+                            ScopeProvider = this.scopeProvider,
+                        };
+
+                        this.loggers[categoryName] = logger;
+                    }
                 }
-
-                logger = new OpenTelemetryLogger(categoryName, this);
-                this.loggers.Add(categoryName, logger);
-                return logger;
             }
-        }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
+            return logger;
         }
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
@@ -103,6 +101,8 @@ namespace OpenTelemetry.Logs
             {
                 throw new ArgumentNullException(nameof(processor));
             }
+
+            processor.SetParentProvider(this);
 
             if (this.Processor == null)
             {
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (this.disposed)
             {
