@@ -21,32 +21,32 @@ BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19042
 Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 .NET Core SDK=5.0.201
   [Host]     : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
-  Job-KYFGEQ : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
+  Job-SYFRJT : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
 
-IterationCount=1  LaunchCount=1  WarmupCount=1
+IterationCount=50  LaunchCount=10  WarmupCount=10
 
-|             Method |     Mean | Error |   Gen 0 |   Gen 1 | Gen 2 | Allocated |
-|------------------- |---------:|------:|--------:|--------:|------:|----------:|
-|       EncodeIntNew | 137.3 us |    NA | 17.0898 |  1.4648 |     - |  70.16 KB |
-|       EncodeIntOld | 121.4 us |    NA | 20.9961 |  1.9531 |     - |  85.96 KB |
-|       DecodeIntNew | 131.7 us |    NA | 29.7852 |  0.1221 |     - | 121.66 KB |
-|       DecodeIntOld | 141.6 us |    NA | 30.2734 |  0.7324 |     - |    124 KB |
-|  EncodeIntBatchNew | 447.2 us |    NA | 48.8281 | 16.1133 |     - | 222.31 KB |
-|  EncodeIntBatchOld | 374.5 us |    NA | 42.9688 | 10.7422 |     - |  175.9 KB |
-|  DecodeIntBatchNew | 427.5 us |    NA | 89.3555 | 32.7148 |     - | 417.18 KB |
-|  DecodeIntBatchOld | 394.5 us |    NA | 83.0078 | 28.3203 |     - |  391.4 KB |
-|    EncodeDoubleNew | 151.5 us |    NA | 17.0898 |  1.4648 |     - |  70.16 KB |
-|    EncodeDoubleOld | 123.8 us |    NA | 20.9961 |  1.2207 |     - |  86.64 KB |
-|    DecodeDoubleNew | 132.1 us |    NA | 29.7852 |  2.6855 |     - | 122.44 KB |
-|    DecodeDoubleOld | 159.5 us |    NA | 30.2734 |  0.7324 |     - |    124 KB |
-|   EncodeSummaryNew | 245.5 us |    NA | 34.6680 |  8.5449 |     - | 142.23 KB |
-|   EncodeSummaryOld | 239.5 us |    NA | 39.5508 |       - |     - | 163.89 KB |
-|   DecodeSummaryNew | 480.7 us |    NA | 67.3828 | 21.4844 |     - | 279.47 KB |
-|   DecodeSummaryOld | 515.3 us |    NA | 70.3125 | 14.6484 |     - | 290.41 KB |
-| EncodeHistogramNew | 209.6 us |    NA | 39.0625 | 10.2539 |     - |  164.7 KB |
-| EncodeHistogramOld | 237.2 us |    NA | 40.2832 |  0.4883 |     - | 165.45 KB |
-| DecodeHistogramNew | 313.0 us |    NA | 66.8945 | 21.4844 |     - | 296.87 KB |
-| DecodeHistogramOld | 398.6 us |    NA | 70.3125 | 18.5547 |     - | 299.21 KB |
+|             Method |      Mean |     Error |     StdDev |    Median |   Gen 0 |   Gen 1 | Gen 2 | Allocated |
+|------------------- |----------:|----------:|-----------:|----------:|--------:|--------:|------:|----------:|
+|       EncodeIntNew |  96.29 us |  1.084 us |   7.144 us |  94.84 us | 17.0898 |  0.7324 |     - |  70.16 KB |
+|       EncodeIntOld | 100.41 us |  1.401 us |   9.045 us |  98.48 us | 20.9961 |  1.3428 |     - |  85.96 KB |
+|       DecodeIntNew |  98.57 us |  1.100 us |   7.138 us |  97.03 us | 29.7852 |  0.1221 |     - | 121.66 KB |
+|       DecodeIntOld |  95.92 us |  2.052 us |  13.479 us |  92.22 us | 30.2734 |  0.7324 |     - |    124 KB |
+|  EncodeIntBatchNew | 380.08 us |  4.803 us |  31.413 us | 372.23 us | 48.8281 | 16.1133 |     - | 222.31 KB |
+|  EncodeIntBatchOld | 396.33 us | 22.300 us | 145.207 us | 345.26 us | 42.9688 | 10.7422 |     - |  175.9 KB |
+|  DecodeIntBatchNew | 384.45 us |  7.222 us |  46.406 us | 374.18 us | 89.8438 | 30.7617 |     - | 417.18 KB |
+|  DecodeIntBatchOld | 377.11 us |  7.578 us |  49.293 us | 364.51 us | 83.9844 | 29.7852 |     - |  391.4 KB |
+|    EncodeDoubleNew | 107.05 us |  1.568 us |  10.254 us | 105.26 us | 17.0898 |  0.7324 |     - |  70.16 KB |
+|    EncodeDoubleOld | 103.40 us |  1.763 us |  11.407 us | 100.66 us | 20.9961 |  1.2207 |     - |  86.64 KB |
+|    DecodeDoubleNew | 126.36 us |  3.274 us |  21.529 us | 122.68 us | 29.7852 |  2.6855 |     - | 122.44 KB |
+|    DecodeDoubleOld | 111.34 us |  3.084 us |  20.237 us | 105.89 us | 30.2734 |  0.7324 |     - |    124 KB |
+|   EncodeSummaryNew | 197.33 us |  2.592 us |  17.226 us | 193.64 us | 34.6680 |  8.3008 |     - | 142.23 KB |
+|   EncodeSummaryOld | 198.28 us |  2.485 us |  16.546 us | 195.11 us | 39.7949 |       - |     - | 163.89 KB |
+|   DecodeSummaryNew | 463.65 us |  7.493 us |  49.265 us | 452.40 us | 67.8711 | 21.4844 |     - | 279.47 KB |
+|   DecodeSummaryOld | 453.44 us |  7.655 us |  50.492 us | 443.31 us | 70.8008 |  7.3242 |     - | 290.41 KB |
+| EncodeHistogramNew | 183.62 us |  2.214 us |  14.495 us | 180.74 us | 39.0625 | 10.2539 |     - |  164.7 KB |
+| EncodeHistogramOld | 184.94 us |  3.447 us |  22.859 us | 180.61 us | 40.2832 |  0.4883 |     - | 165.45 KB |
+| DecodeHistogramNew | 264.42 us |  3.420 us |  22.344 us | 258.24 us | 66.8945 | 21.4844 |     - | 296.87 KB |
+| DecodeHistogramOld | 277.53 us |  2.317 us |  15.051 us | 274.77 us | 69.3359 | 18.5547 |     - | 299.21 KB |
 */
 
 namespace ProtoBench
