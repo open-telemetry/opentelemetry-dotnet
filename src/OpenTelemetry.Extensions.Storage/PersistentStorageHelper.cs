@@ -19,13 +19,17 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace OpenTelemetry.Extensions.Storage
 {
     internal static class PersistentStorageHelper
     {
+        private static long directorySize;
+
         internal static void RemoveExpiredBlob(DateTime retentionDeadline, string filePath)
         {
             if (filePath.EndsWith(".blob", StringComparison.OrdinalIgnoreCase))
@@ -120,8 +124,35 @@ namespace OpenTelemetry.Extensions.Storage
                     RemoveExpiredBlob(retentionDeadline, file);
                 }
             }
+
+            // It is faster to calculate the directory size, instead of removing length of expired files.
+            var size = CalculateFolderSize(directoryPath);
+            Interlocked.Exchange(ref directorySize, size);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static long GetDirectorySize()
+        {
+            return Interlocked.Read(ref directorySize);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void WriteAllBytes(string path, byte[] buffer)
+        {
+            File.WriteAllBytes(path, buffer);
+            UpdateDirectorySize(buffer.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void RemoveFile(string fileName)
+        {
+            var fileInfo = new FileInfo(fileName);
+            var fileSize = fileInfo.Length;
+            fileInfo.Delete();
+            UpdateDirectorySize(fileSize * -1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static string GetUniqueFileName(string extension)
         {
             return string.Format(CultureInfo.InvariantCulture, $"{DateTime.UtcNow:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}{extension}");
@@ -150,39 +181,14 @@ namespace OpenTelemetry.Extensions.Storage
                 StorageEventSource.Log.Error($"Error creating sub-directory {path}.", ex);
             }
 
+            directorySize = CalculateFolderSize(subdirectoryPath);
             return subdirectoryPath;
         }
 
-        internal static float CalculateFolderSize(string path)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static long UpdateDirectorySize(long fileContentLength)
         {
-            if (!Directory.Exists(path))
-            {
-                return 0;
-            }
-
-            float directorySize = 0.0f;
-            try
-            {
-                foreach (string file in Directory.EnumerateFiles(path))
-                {
-                    if (File.Exists(file))
-                    {
-                        FileInfo fileInfo = new FileInfo(file);
-                        directorySize += fileInfo.Length;
-                    }
-                }
-
-                foreach (string dir in Directory.GetDirectories(path))
-                {
-                    directorySize += CalculateFolderSize(dir);
-                }
-            }
-            catch (Exception ex)
-            {
-                StorageEventSource.Log.Error("Error calculating folder size.", ex);
-            }
-
-            return directorySize;
+            return Interlocked.Add(ref directorySize, fileContentLength);
         }
 
         internal static DateTime GetDateTimeFromBlobName(string filePath)
@@ -217,6 +223,38 @@ namespace OpenTelemetry.Extensions.Storage
             }
 
             return hashString.ToString();
+        }
+
+        private static long CalculateFolderSize(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return 0;
+            }
+
+            long directorySize = 0;
+            try
+            {
+                foreach (string file in Directory.EnumerateFiles(path))
+                {
+                    if (File.Exists(file))
+                    {
+                        FileInfo fileInfo = new FileInfo(file);
+                        directorySize += fileInfo.Length;
+                    }
+                }
+
+                foreach (string dir in Directory.GetDirectories(path))
+                {
+                    directorySize += CalculateFolderSize(dir);
+                }
+            }
+            catch (Exception ex)
+            {
+                StorageEventSource.Log.Error("Error calculating folder size.", ex);
+            }
+
+            return directorySize;
         }
     }
 }

@@ -163,7 +163,7 @@ namespace OpenTelemetry.Extensions.Storage
 
         private bool CheckStorageSize()
         {
-            var size = PersistentStorageHelper.CalculateFolderSize(this.directoryPath);
+            var size = PersistentStorageHelper.GetDirectorySize();
             if (size >= this.maxSizeInBytes)
             {
                 StorageEventSource.Log.Warning($"Persistent storage max capacity has been reached. Currently at {size / 1024} KB. " +

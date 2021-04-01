@@ -59,7 +59,7 @@ namespace OpenTelemetry.Extensions.Storage
 
             try
             {
-                File.WriteAllBytes(path, buffer);
+                PersistentStorageHelper.WriteAllBytes(path, buffer);
 
                 if (leasePeriodMilliseconds > 0)
                 {
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Extensions.Storage
         {
             try
             {
-                File.Delete(this.FullPath);
+                PersistentStorageHelper.RemoveFile(this.FullPath);
             }
             catch (Exception ex)
             {
