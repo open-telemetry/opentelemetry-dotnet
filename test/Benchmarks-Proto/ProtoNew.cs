@@ -1,4 +1,4 @@
-﻿// <copyright file="ProtoNew.cs" company="OpenTelemetry Authors">
+// <copyright file="ProtoNew.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -307,7 +307,7 @@ namespace ProtoBench
             var parser = new Google.Protobuf.MessageParser<ExportMetricsServiceRequest>(() => new ExportMetricsServiceRequest());
             var request = parser.ParseFrom(bytes);
 
-            List<string> extracts = new ();
+            var extracts = new List<string>();
 
             foreach (var resmetric in request.ResourceMetrics)
             {
