@@ -140,6 +140,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 ProfilingSession session = entry.Value.Session;
                 RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
+                this.cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
             }
         }
     }
