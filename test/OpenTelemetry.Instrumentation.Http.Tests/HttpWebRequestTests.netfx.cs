@@ -88,6 +88,27 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             ValidateHttpWebRequestActivity(activity);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal(
+                    tc.SpanStatus,
+                    activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string);
+
+            if (tc.SpanStatusHasDescription.HasValue)
+            {
+                var desc = activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey) as string;
+                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
+            }
+
+            var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToImmutableSortedDictionary(x => x.Key, x => x.Value.ToString());
+            var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
+
+            Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
+
+            foreach (var kv in normalizedAttributesTestCase)
+            {
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+            }
+
             tc.SpanAttributes = tc.SpanAttributes.ToDictionary(
                 x => x.Key,
                 x =>
