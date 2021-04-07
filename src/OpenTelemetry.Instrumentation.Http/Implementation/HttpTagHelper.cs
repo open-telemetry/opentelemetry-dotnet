@@ -105,6 +105,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 return uri.OriginalString;
             }
+
             return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
         }
 
