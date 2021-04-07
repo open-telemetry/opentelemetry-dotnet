@@ -273,7 +273,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             if (string.IsNullOrEmpty(uri.UserInfo))
             {
-                return uri.OriginalString;
+                return uri.ToString();
             }
 
             return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
