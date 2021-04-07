@@ -48,10 +48,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Theory]
         [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext")]
         [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", true)]
-        [InlineData("http://localhost/", "https://localhost/", 0, null, "TraceContext")]
+        [InlineData("https://localhost/", "https://localhost/", 0, null, "TraceContext")]
         [InlineData("http://localhost/", "https://user:pass@localhost/", 0, null, "TraceContext")] // Test URL sanitization
         [InlineData("http://localhost:443/", "http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
-        [InlineData("http://localhost:80/", "https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
+        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
         [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
         [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
         [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
@@ -304,10 +304,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
             }
 
-            var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
-            Assert.Equal(expectedUrl, actualUrl);
-
             var expectedUri = new Uri(expectedUrl);
+            var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
+
+            Assert.Equal(expectedUri.ToString(), actualUrl);
 
             // Url strips 80 or 443 if the scheme matches.
             if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
