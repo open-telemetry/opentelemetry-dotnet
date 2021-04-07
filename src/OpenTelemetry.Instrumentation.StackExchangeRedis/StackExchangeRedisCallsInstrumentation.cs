@@ -36,14 +36,14 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
+        internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
+            = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
+
         private readonly StackExchangeRedisCallsInstrumentationOptions options;
         private readonly EventWaitHandle stopHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
         private readonly Thread drainThread;
 
         private readonly ProfilingSession defaultSession = new ProfilingSession();
-
-        internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
-            = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsInstrumentation"/> class.
@@ -112,19 +112,6 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
             this.stopHandle.Dispose();
         }
 
-        private void DrainEntries(object state)
-        {
-            while (true)
-            {
-                if (this.stopHandle.WaitOne(this.options.FlushInterval))
-                {
-                    break;
-                }
-
-                this.Flush();
-            }
-        }
-
         internal void Flush()
         {
             RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling());
@@ -141,6 +128,19 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                 ProfilingSession session = entry.Value.Session;
                 RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
                 this.Cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
+            }
+        }
+
+        private void DrainEntries(object state)
+        {
+            while (true)
+            {
+                if (this.stopHandle.WaitOne(this.options.FlushInterval))
+                {
+                    break;
+                }
+
+                this.Flush();
             }
         }
     }
