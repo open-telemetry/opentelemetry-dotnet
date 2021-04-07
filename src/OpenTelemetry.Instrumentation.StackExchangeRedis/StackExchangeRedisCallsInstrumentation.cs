@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
         private readonly ProfilingSession defaultSession = new ProfilingSession();
 
-        private readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> cache
+        internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
             = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
 
         /// <summary>
@@ -91,10 +91,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 // Try to reuse a session for all activities created under the same TraceId+SpanId.
                 var cacheKey = (parent.TraceId, parent.SpanId);
-                if (!this.cache.TryGetValue(cacheKey, out var session))
+                if (!this.Cache.TryGetValue(cacheKey, out var session))
                 {
                     session = (parent, new ProfilingSession());
-                    this.cache.TryAdd(cacheKey, session);
+                    this.Cache.TryAdd(cacheKey, session);
                 }
 
                 return session.Session;
@@ -125,11 +125,11 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
             }
         }
 
-        private void Flush()
+        internal void Flush()
         {
             RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling());
 
-            foreach (var entry in this.cache)
+            foreach (var entry in this.Cache)
             {
                 var parent = entry.Value.Activity;
                 if (parent.Duration == TimeSpan.Zero)
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 ProfilingSession session = entry.Value.Session;
                 RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
-                this.cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
+                this.Cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
             }
         }
     }
