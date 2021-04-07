@@ -99,7 +99,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </summary>
         /// <param name="uri"><see cref="Uri"/>.</param>
         /// <returns>Span uri value.</returns>
-        public static string GetUriTagValueFromRequestUri(Uri uri) => string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
+        public static string GetUriTagValueFromRequestUri(Uri uri)
+        {
+            if (string.IsNullOrEmpty(uri.UserInfo))
+            {
+                return uri.OriginalString;
+            }
+            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
+        }
 
         private static string ConvertMethodToOperationName(string method) => $"HTTP {method}";
 
