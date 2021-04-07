@@ -35,7 +35,7 @@ namespace OpenTelemetry.Logs
             string categoryName,
             LogLevel logLevel,
             EventId eventId,
-            string message,
+            string formattedMessage,
             object state,
             Exception exception,
             IReadOnlyList<KeyValuePair<string, object>> stateValues)
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
-            this.Message = message;
+            this.FormattedMessage = formattedMessage;
             this.State = state;
             this.StateValues = stateValues;
             this.Exception = exception;
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string Message { get; }
+        public string FormattedMessage { get; }
 
         public object State { get; }
 

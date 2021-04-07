@@ -192,6 +192,63 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
+        public async Task HttpClientInstrumentationRespectsSuppress()
+        {
+            try
+            {
+                var propagator = new Mock<TextMapPropagator>();
+                propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                    .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                    {
+                        action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+                        action(message, "custom_tracestate", Activity.Current.TraceStateString);
+                    });
+
+                var processor = new Mock<BaseProcessor<Activity>>();
+
+                var request = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(this.url),
+                    Method = new HttpMethod("GET"),
+                };
+
+                var parent = new Activity("parent")
+                    .SetIdFormat(ActivityIdFormat.W3C)
+                    .Start();
+                parent.TraceStateString = "k1=v1,k2=v2";
+                parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+                using (Sdk.CreateTracerProviderBuilder()
+                       .AddHttpClientInstrumentation()
+                       .AddProcessor(processor.Object)
+                       .Build())
+                {
+                    using var c = new HttpClient();
+                    using (SuppressInstrumentationScope.Begin())
+                    {
+                        await c.SendAsync(request);
+                    }
+                }
+
+                // If suppressed, activity is not emitted and
+                // propagation is also not performed.
+                Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
+                Assert.False(request.Headers.Contains("custom_traceparent"));
+                Assert.False(request.Headers.Contains("custom_tracestate"));
+            }
+            finally
+            {
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                {
+                    new TraceContextPropagator(),
+                    new BaggagePropagator(),
+                }));
+            }
+        }
+
+        [Fact]
         public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
         {
             var processor = new Mock<BaseProcessor<Activity>>();

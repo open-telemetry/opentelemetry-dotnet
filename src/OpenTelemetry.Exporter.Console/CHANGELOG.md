@@ -9,9 +9,17 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 * Removed code that prints Baggage information
   ([#1825](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1825))
-* LogRecordExporter exports Message and StateValues from LogRecord.
+* LogRecordExporter exports Message, Scope, StateValues from LogRecord.
+  ([#1871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1871)
+  [#1895](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1895))
+* Added Resource support.
+  ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
 
 ## 1.0.1
 
