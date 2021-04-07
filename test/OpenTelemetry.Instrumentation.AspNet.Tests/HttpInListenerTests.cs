@@ -308,6 +308,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(expectedUrl, actualUrl);
 
             var expectedUri = new Uri(expectedUrl);
+
             // Url strips 80 or 443 if the scheme matches.
             if ((expectedUri.Port == 80 && expectedUri.Scheme == "http") || (expectedUri.Port == 443 && expectedUri.Scheme == "https"))
             {
