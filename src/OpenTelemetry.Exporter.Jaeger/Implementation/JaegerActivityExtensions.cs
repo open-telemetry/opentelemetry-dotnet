@@ -194,6 +194,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 int i => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i)),
                 long l => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l),
                 float f => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f)),
+                short sh => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(sh)),
                 double d => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d),
                 bool b => new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b),
                 _ => new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString()),
@@ -247,6 +248,30 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 foreach (var item in doubleArray)
                 {
                     JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: item);
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is long[] longArray)
+            {
+                foreach (var item in longArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: item);
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is short[] shortArray)
+            {
+                foreach (var item in shortArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(item));
+                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
+                }
+            }
+            else if (activityTag.Value is float[] floatArray)
+            {
+                foreach (var item in floatArray)
+                {
+                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(item));
                     PooledList<JaegerTag>.Add(ref tags, jaegerTag);
                 }
             }

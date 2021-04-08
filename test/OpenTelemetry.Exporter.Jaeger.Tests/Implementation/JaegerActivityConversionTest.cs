@@ -319,6 +319,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
             Assert.Equal("string_array", tag.Key);
             Assert.Equal("a", tag.VStr);
 
+            tag = tags[14];
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal("long_array", tag.Key);
+            Assert.Equal(1, tag.VLong);
+
+            tag = tags[16];
+            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal("short_array", tag.Key);
+            Assert.Equal(1, tag.VLong);
+
+            tag = tags[18];
+            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
+            Assert.Equal("float_array", tag.Key);
+            Assert.Equal(1, tag.VDouble);
+
             // The second to last tag should be span.kind in this case
             tag = tags[tags.Length - 2];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
@@ -503,6 +518,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
                 { "bool_array", new bool[] { true, false } },
                 { "double_array", new double[] { 1.0, 1.1 } },
                 { "string_array", new string[] { "a", "b" } },
+                { "long_array", new long[] { 1, 2 } },
+                { "short_array", new short[] { 1, 2 } },
+                { "float_array", new float[] { 1, 2 } },
             };
             if (additionalAttributes != null)
             {
