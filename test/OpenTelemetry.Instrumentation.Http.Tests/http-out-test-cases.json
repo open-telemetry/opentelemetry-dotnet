@@ -43,9 +43,9 @@
     }
   },
   {
-    "name": "http.url must not contain username nor password",
+    "name": "URL with fragment",
     "method": "GET",
-    "url": "http://username:password@{host}:{port}/path/to/resource/",
+    "url": "http://{host}:{port}/path/to/resource#fragment",
     "responseCode": 200,
     "spanName": "HTTP GET",
     "spanStatus": "UNSET",
@@ -54,7 +54,22 @@
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.status_code": "200",
-      "http.url": "http://{host}:{port}/path/to/resource/"
+      "http.url": "http://{host}:{port}/path/to/resource#fragment"
+    }
+  },
+  {
+    "name": "http.url must not contain username nor password",
+    "method": "GET",
+    "url": "http://username:password@{host}:{port}/path/to/resource#fragment",
+    "responseCode": 200,
+    "spanName": "HTTP GET",
+    "spanStatus": "UNSET",
+    "responseExpected": true,
+    "spanAttributes": {
+      "http.method": "GET",
+      "http.host": "{host}:{port}",
+      "http.status_code": "200",
+      "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
   },
   {
