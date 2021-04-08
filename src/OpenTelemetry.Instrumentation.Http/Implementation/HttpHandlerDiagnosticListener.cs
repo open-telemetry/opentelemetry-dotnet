@@ -113,6 +113,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
+                        activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                         return;
                     }
                 }
@@ -120,6 +121,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.RequestFilterException(ex);
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
                 }
 
