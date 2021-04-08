@@ -17,10 +17,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Tests.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Thrift.Protocol;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests
@@ -128,6 +130,77 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(1, jaegerExporter.Batch.Count);
         }
 
+        [Fact]
+        public void JaegerTraceExporter_SpansSplitToBatches_SpansIncludedInBatches()
+        {
+            // Arrange
+            var memoryTransport = new InMemoryTransport();
+            using var jaegerExporter = new JaegerExporter(
+                new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 }, memoryTransport);
+            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
+
+            var tempTransport = new InMemoryTransport(initialCapacity: 3000);
+            var protocol = new TCompactProtocol(tempTransport);
+
+            // Create six spans, each taking more space than the previous one
+            var spans = new JaegerSpan[6];
+            for (int i = 0; i < 6; i++)
+            {
+                spans[i] = CreateTestJaegerSpan(
+                    additionalAttributes: new Dictionary<string, object>
+                    {
+                        ["foo"] = new string('_', 10 * i),
+                    });
+            }
+
+            var serializedSpans = spans.Select(s =>
+            {
+                s.Write(protocol);
+                return tempTransport.ToArray();
+            }).ToArray();
+
+            // Act
+            var sentBatches = new List<byte[]>();
+            foreach (var span in spans)
+            {
+                jaegerExporter.AppendSpan(span);
+                var sentBatch = memoryTransport.ToArray();
+                if (sentBatch.Length > 0)
+                {
+                    sentBatches.Add(sentBatch);
+                }
+            }
+
+            // Assert
+
+            // Appending the six spans will send two batches with the first four spans
+            Assert.Equal(2, sentBatches.Count);
+            Assert.True(
+                ContainsSequence(sentBatches[0], serializedSpans[0]),
+                "Expected span data not found in sent batch");
+            Assert.True(
+                ContainsSequence(sentBatches[0], serializedSpans[1]),
+                "Expected span data not found in sent batch");
+
+            Assert.True(
+                ContainsSequence(sentBatches[1], serializedSpans[2]),
+                "Expected span data not found in sent batch");
+            Assert.True(
+                ContainsSequence(sentBatches[1], serializedSpans[3]),
+                "Expected span data not found in sent batch");
+
+            // jaegerExporter.Batch should contain the two remaining spans
+            Assert.Equal(2, jaegerExporter.Batch.Count);
+            jaegerExporter.Batch.Write(protocol);
+            var serializedBatch = tempTransport.ToArray();
+            Assert.True(
+                ContainsSequence(serializedBatch, serializedSpans[4]),
+                "Expected span data not found in unsent batch");
+            Assert.True(
+                ContainsSequence(serializedBatch, serializedSpans[5]),
+                "Expected span data not found in unsent batch");
+        }
+
         internal static JaegerSpan CreateTestJaegerSpan(
             bool setAttributes = true,
             Dictionary<string, object> additionalAttributes = null,
@@ -140,6 +213,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                 .CreateTestActivity(
                     setAttributes, additionalAttributes, addEvents, addLinks, resource, kind)
                 .ToJaegerSpan();
+        }
+
+        private static bool ContainsSequence(byte[] source, byte[] pattern)
+        {
+            for (var start = 0; start < (source.Length - pattern.Length + 1); start++)
+            {
+                if (source.Skip(start).Take(pattern.Length).SequenceEqual(pattern))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
