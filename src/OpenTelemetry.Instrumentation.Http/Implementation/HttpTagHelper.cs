@@ -94,6 +94,21 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             return hostTagValue;
         }
 
+        /// <summary>
+        /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="uri"><see cref="Uri"/>.</param>
+        /// <returns>Span uri value.</returns>
+        public static string GetUriTagValueFromRequestUri(Uri uri)
+        {
+            if (string.IsNullOrEmpty(uri.UserInfo))
+            {
+                return uri.OriginalString;
+            }
+
+            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
+        }
+
         private static string ConvertMethodToOperationName(string method) => $"HTTP {method}";
 
         private static string ConvertHttpMethodToOperationName(HttpMethod method) => $"HTTP {method}";

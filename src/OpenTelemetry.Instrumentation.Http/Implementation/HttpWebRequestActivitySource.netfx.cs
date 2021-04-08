@@ -98,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                 if (Options.SetHttpFlavor)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
