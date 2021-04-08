@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* All [spec-supported primitives and arrays](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md)
+  are now exported properly.
+  ([#1966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1966))
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
