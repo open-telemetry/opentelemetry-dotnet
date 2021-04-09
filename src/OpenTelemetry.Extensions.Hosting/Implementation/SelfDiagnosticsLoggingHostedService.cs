@@ -15,9 +15,9 @@
 // </copyright>
 
 using System;
+using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,12 +27,14 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
     internal class SelfDiagnosticsLoggingHostedService : IHostedService
     {
-        private readonly IServiceProvider serviceProvider;
+        private readonly ILoggerFactory loggerFactory;
+        private readonly IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions;
         private IDisposable forwarder;
 
-        public SelfDiagnosticsLoggingHostedService(IServiceProvider serviceProvider)
+        public SelfDiagnosticsLoggingHostedService(ILoggerFactory loggerFactory, IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions)
         {
-            this.serviceProvider = serviceProvider;
+            this.loggerFactory = loggerFactory;
+            this.loggerFilterOptions = loggerFilterOptions;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -40,7 +42,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             // The sole purpose of this HostedService is to
             // start forwarding the self-diagnostics events
             // to the logger factory
-            this.forwarder = new SelfDiagnosticsEventLogForwarder(this.serviceProvider.GetService<ILoggerFactory>(), this.serviceProvider.GetService<IOptionsMonitor<LoggerFilterOptions>>(), System.Diagnostics.Tracing.EventLevel.Warning);
+            this.forwarder = new SelfDiagnosticsEventLogForwarder(this.loggerFactory, this.loggerFilterOptions, EventLevel.Warning);
 
             return Task.CompletedTask;
         }
