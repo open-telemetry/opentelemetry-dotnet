@@ -25,7 +25,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
-    internal class SelfDiagnosticsLoggingHostedService : IHostedService
+    internal class SelfDiagnosticsLoggingHostedService : IHostedService, IDisposable
     {
         private readonly ILoggerFactory loggerFactory;
         private readonly IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions;
@@ -42,6 +42,11 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             this.forwarder = new SelfDiagnosticsEventLogForwarder(this.loggerFactory, this.loggerFilterOptions, EventLevel.Warning);
         }
 
+        public void Dispose()
+        {
+            this.forwarder?.Dispose();
+        }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
@@ -49,8 +54,6 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            this.forwarder?.Dispose();
-
             return Task.CompletedTask;
         }
     }

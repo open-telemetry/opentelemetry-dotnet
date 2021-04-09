@@ -49,6 +49,12 @@ namespace OpenTelemetry.Internal
             loggerFilterOptions.OnChange(o => this.SetEventSourceLevels());
         }
 
+        public override void Dispose()
+        {
+            this.StopForwarding();
+            base.Dispose();
+        }
+
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             if (eventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.Ordinal))
@@ -214,9 +220,20 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        private void StopForwarding()
+        {
+            lock (this.lockObj)
+            {
+                foreach (var eventSource in this.eventSources)
+                {
+                    this.DisableEvents(eventSource);
+                }
+            }
+        }
+
         private void SetEventSourceLevel(EventSource eventSource)
         {
-            EventLevel? eventLevel = this.GetEventLevel(ToLoggerName(eventSource.Name));
+            var eventLevel = this.GetEventLevel(ToLoggerName(eventSource.Name));
 
             if (eventLevel.HasValue)
             {
