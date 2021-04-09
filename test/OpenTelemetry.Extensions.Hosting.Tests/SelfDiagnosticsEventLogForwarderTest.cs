@@ -57,8 +57,8 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var builder = new HostBuilder().ConfigureLogging(b => b.AddConfiguration(config)).ConfigureServices(services =>
             {
                 services.AddSingleton<ILoggerFactory>(loggerFactory);
-                services.AddOpenTelemetrySelfDiagnosticsLogging();
                 services.AddOpenTelemetryTracing(b => b
+                    .AddSelfDiagnosticsLogging()
                     .SetSampler(new AlwaysOnSampler())
                     .AddSource(TestSourceName)
                     .AddProcessor(testActivityProcessor));
@@ -109,8 +109,8 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var builder = new HostBuilder().ConfigureLogging(b => b.AddConfiguration(config)).ConfigureServices(services =>
             {
                 services.AddSingleton<ILoggerFactory>(loggerFactory);
-                services.AddOpenTelemetrySelfDiagnosticsLogging();
                 services.AddOpenTelemetryTracing(b => b
+                    .AddSelfDiagnosticsLogging()
                     .SetSampler(new AlwaysOnSampler())
                     .AddSource(TestSourceName)
                     .AddProcessor(testActivityProcessor));

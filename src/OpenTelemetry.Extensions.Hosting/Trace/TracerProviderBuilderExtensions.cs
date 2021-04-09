@@ -16,6 +16,8 @@
 
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Extensions.Hosting.Implementation;
 
 namespace OpenTelemetry.Trace
 {
@@ -36,6 +38,21 @@ namespace OpenTelemetry.Trace
             if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
                 tracerProviderBuilderHosting.AddInstrumentation<T>();
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Writes OpenTelemetry self diagnostics events to the logging system.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddSelfDiagnosticsLogging(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
+            {
+                tracerProviderBuilderHosting.Services.AddHostedService<SelfDiagnosticsLoggingHostedService>();
             }
 
             return tracerProviderBuilder;

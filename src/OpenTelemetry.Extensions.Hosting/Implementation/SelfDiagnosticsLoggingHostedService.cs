@@ -29,21 +29,21 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
     {
         private readonly ILoggerFactory loggerFactory;
         private readonly IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions;
-        private IDisposable forwarder;
+        private readonly IDisposable forwarder;
 
         public SelfDiagnosticsLoggingHostedService(ILoggerFactory loggerFactory, IOptionsMonitor<LoggerFilterOptions> loggerFilterOptions)
         {
             this.loggerFactory = loggerFactory;
             this.loggerFilterOptions = loggerFilterOptions;
-        }
 
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
             // The sole purpose of this HostedService is to
             // start forwarding the self-diagnostics events
             // to the logger factory
             this.forwarder = new SelfDiagnosticsEventLogForwarder(this.loggerFactory, this.loggerFilterOptions, EventLevel.Warning);
+        }
 
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
             return Task.CompletedTask;
         }
 

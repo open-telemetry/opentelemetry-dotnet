@@ -90,23 +90,16 @@ namespace OpenTelemetry.Internal
 
         private static LogLevel MapLevel(EventLevel level)
         {
-            switch (level)
+            return level switch
             {
-                case EventLevel.Critical:
-                    return LogLevel.Critical;
-                case EventLevel.Error:
-                    return LogLevel.Error;
-                case EventLevel.Informational:
-                    return LogLevel.Information;
-                case EventLevel.Verbose:
-                    return LogLevel.Debug;
-                case EventLevel.Warning:
-                    return LogLevel.Warning;
-                case EventLevel.LogAlways:
-                    return LogLevel.Information;
-                default:
-                    return LogLevel.None;
-            }
+                EventLevel.Critical => LogLevel.Critical,
+                EventLevel.Error => LogLevel.Error,
+                EventLevel.Informational => LogLevel.Information,
+                EventLevel.Verbose => LogLevel.Debug,
+                EventLevel.Warning => LogLevel.Warning,
+                EventLevel.LogAlways => LogLevel.Information,
+                _ => LogLevel.None,
+            };
         }
 
         private static EventLevel? MapLevel(LogLevel? level)
@@ -116,23 +109,16 @@ namespace OpenTelemetry.Internal
                 return null;
             }
 
-            switch (level)
+            return level switch
             {
-                case LogLevel.Critical:
-                    return EventLevel.Critical;
-                case LogLevel.Error:
-                    return EventLevel.Error;
-                case LogLevel.Information:
-                    return EventLevel.Informational;
-                case LogLevel.Debug:
-                    return EventLevel.Verbose;
-                case LogLevel.Trace:
-                    return EventLevel.LogAlways;
-                case LogLevel.Warning:
-                    return EventLevel.Warning;
-                default:
-                    return null;
-            }
+                LogLevel.Critical => EventLevel.Critical,
+                LogLevel.Error => EventLevel.Error,
+                LogLevel.Information => EventLevel.Informational,
+                LogLevel.Debug => EventLevel.Verbose,
+                LogLevel.Trace => EventLevel.LogAlways,
+                LogLevel.Warning => EventLevel.Warning,
+                _ => null,
+            };
         }
 
         private static string FormatMessage(EventSourceEvent eventSourceEvent, Exception exception)
