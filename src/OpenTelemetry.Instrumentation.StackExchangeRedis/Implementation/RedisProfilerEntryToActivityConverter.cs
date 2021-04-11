@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Reflection;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
@@ -23,6 +25,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToActivityConverter
     {
+        private static FieldInfo messageInfo;
+
         public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command)
         {
             var name = command.Command; // Example: SET;
@@ -42,7 +46,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 return null;
             }
 
-            if (activity.IsAllDataRequested == true)
+            if (activity.IsAllDataRequested)
             {
                 // see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
 
@@ -66,6 +70,16 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 {
                     // Example: "db.statement": SET;
                     activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
+                    if (messageInfo == null)
+                    {
+                        messageInfo = command.GetType().GetField("Message", BindingFlags.NonPublic | BindingFlags.Instance);
+                    }
+
+                    var message = messageInfo.GetValue(command);
+                    if (message != null)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeDbOperation, message.ToString());
+                    }
                 }
 
                 if (command.EndPoint != null)
