@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -25,6 +24,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToActivityConverter
     {
+        private const string MessageFieldValue = "Message";
         private static FieldInfo messageInfo;
 
         public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command)
@@ -66,20 +66,17 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 activity.SetTag(SemanticConventions.AttributeDbSystem, "redis");
                 activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
+                var message = GetMessageValue(command);
+                if (!string.IsNullOrEmpty(message))
+                {
+                    // Example: "db.operation": [0]:GET key1
+                    activity.SetTag(SemanticConventions.AttributeDbOperation, message);
+                }
+
                 if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
                     activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
-                    if (messageInfo == null)
-                    {
-                        messageInfo = command.GetType().GetField("Message", BindingFlags.NonPublic | BindingFlags.Instance);
-                    }
-
-                    var message = messageInfo.GetValue(command);
-                    if (message != null)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeDbOperation, message.ToString());
-                    }
                 }
 
                 if (command.EndPoint != null)
@@ -128,6 +125,17 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             {
                 ProfilerCommandToActivity(parentActivity, command);
             }
+        }
+
+        private static string GetMessageValue(IProfiledCommand command)
+        {
+            if (messageInfo == null)
+            {
+                messageInfo = command.GetType().GetField(MessageFieldValue, BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+
+            var message = messageInfo?.GetValue(command);
+            return message?.ToString();
         }
     }
 }

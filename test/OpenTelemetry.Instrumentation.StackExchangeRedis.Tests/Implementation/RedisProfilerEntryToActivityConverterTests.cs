@@ -160,6 +160,22 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Equal(dnsEndPoint.Port, result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
+        [Fact]
+        public void ProfilerCommandToActivity_UsesMessageForDbOperation()
+        {
+            const int db = 0;
+            const string command = "GET";
+            const string message = "[0]: GET key";
+
+            var activity = new Activity("redis-profiler");
+            var profiledCommand = new ProfiledCommandStub(db, command, message);
+
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand);
+
+            Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeDbOperation));
+            Assert.Equal(message, result.GetTagValue(SemanticConventions.AttributeDbOperation));
+        }
+
 #if !NET461
         [Fact]
         public void ProfilerCommandToActivity_UsesOtherEndPointAsEndPoint()
