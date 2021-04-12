@@ -17,6 +17,7 @@
 #if NET461 || NETSTANDARD2_0
 using System;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
@@ -67,6 +68,16 @@ namespace OpenTelemetry.Exporter
 
                 static void ProcessScope(object scope, ConsoleLogRecordExporter exporter)
                     => exporter.WriteLine($"{"LogRecord.Scope:".PadRight(RightPaddingLength)}{scope}");
+
+                var resource = this.ParentProvider.GetResource();
+                if (resource != Resource.Empty)
+                {
+                    this.WriteLine("Resource associated with LogRecord:");
+                    foreach (var resourceAttribute in resource.Attributes)
+                    {
+                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                    }
+                }
 
                 this.WriteLine(string.Empty);
             }

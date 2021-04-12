@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         internal TracerProviderSdk(
             Resource resource,
             IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
+            IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
             Dictionary<string, bool> legacyActivityOperationNames)
@@ -372,6 +372,7 @@ namespace OpenTelemetry.Trace
         private void RunGetRequestedDataAlwaysOffSampler(Activity activity)
         {
             activity.IsAllDataRequested = false;
+            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
 
         private void RunGetRequestedDataOtherSampler(Activity activity)
@@ -412,9 +413,11 @@ namespace OpenTelemetry.Trace
             {
                 case SamplingDecision.Drop:
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     break;
                 case SamplingDecision.RecordOnly:
                     activity.IsAllDataRequested = true;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     break;
                 case SamplingDecision.RecordAndSample:
                     activity.IsAllDataRequested = true;
