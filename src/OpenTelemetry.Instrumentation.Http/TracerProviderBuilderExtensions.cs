@@ -30,13 +30,13 @@ namespace OpenTelemetry.Trace
         /// Enables HttpClient and HttpWebRequest instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// /// <param name="configureHttpWebRequestInstrumentationOptions">HttpWebRequest configuration options.</param>
         /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
-        /// <param name="configureHttpWebRequestInstrumentationOptions">HttpWebRequest configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null,
-            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null)
+            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
 #else
         /// <summary>
         /// Enables HttpClient instrumentation.
