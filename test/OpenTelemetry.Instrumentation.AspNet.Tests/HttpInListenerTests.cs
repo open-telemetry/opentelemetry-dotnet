@@ -46,21 +46,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         }
 
         [Theory]
-        [InlineData("http://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost/", 0, null, "TraceContext", true)]
-        [InlineData("https://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
-        [InlineData("https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
-        [InlineData("http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
-        [InlineData("https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
-        [InlineData("http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
-        [InlineData("https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
-        [InlineData("http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext")]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", true)]
+        [InlineData("https://localhost/", "https://localhost/", 0, null, "TraceContext")]
+        [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null, "TraceContext")] // Test URL sanitization
+        [InlineData("http://localhost:443/", "http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
+        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://user:password@localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL sanitization
+        [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
+        [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
+        [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
+        [InlineData("https://localhost:1843/subroute/10", "https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
+        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
+        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
         public void AspNetRequestsAreCollectedSuccessfully(
+            string expectedUrl,
             string url,
             int routeType,
             string routeTemplate,
@@ -302,7 +306,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
             }
 
-            var expectedUri = new Uri(url);
+            var expectedUri = new Uri(expectedUrl);
             var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
 
             Assert.Equal(expectedUri.ToString(), actualUrl);
