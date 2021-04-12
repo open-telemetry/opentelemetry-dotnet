@@ -342,6 +342,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 long[] arrayValue => string.Join(",", arrayValue),
                 double[] arrayValue => string.Join(",", arrayValue),
                 bool[] arrayValue => string.Join(",", arrayValue.Select(GetBoolString)),
+                string[] arrayValue => string.Join(",", arrayValue),
+                float[] arrayValue => string.Join(",", arrayValue),
+                short[] arrayValue => string.Join(",", arrayValue),
                 _ => obj.ToString(),
             };
         }
