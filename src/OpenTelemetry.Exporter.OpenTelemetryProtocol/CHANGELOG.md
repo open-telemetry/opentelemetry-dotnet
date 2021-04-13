@@ -9,9 +9,16 @@ please check the latest changes
 
 ## Unreleased
 
-* Null values in primitive arrays are preserved through otlp.
+* Resolves `System.TypeInitializationException` exception when using the
+  exporter with an application that references Google.Protobuf 3.15. The OTLP
+  exporter now depends on Google.Protobuf 3.15.5 enabling the use of the new
+  `UnsafeByteOperations.UnsafeWrap` to avoid unnecessary allocations.
+  ([#1873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1873))
+
+* Null values in string arrays are preserved according to
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
-  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919))
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)) and
+  ([#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945)).
 
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:
