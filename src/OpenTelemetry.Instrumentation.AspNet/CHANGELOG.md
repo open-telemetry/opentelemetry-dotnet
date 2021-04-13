@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Sanitize `http.url` attribute. ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
+
+## 1.0.0-rc3
+
+Released 2021-Mar-19
+
 * Leverages added AddLegacySource API from OpenTelemetry SDK to trigger Samplers
   and ActivityProcessors. Samplers, ActivityProcessor.OnStart will now get the
   Activity before any enrichment done by the instrumentation.

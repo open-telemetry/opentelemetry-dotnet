@@ -12,6 +12,11 @@
   * When using `Microsoft.Data.SqlClient`: `SetDbStatementForText` controls
     logging of `CommandType.Text` and `CommandType.StoredProcedure` as it's
     impossible to distinguish them.
+* Instrumentation modified to depend only on the API.
+
+## 1.0.0-rc3
+
+Released 2021-Mar-19
 
 ## 1.0.0-rc2
 
