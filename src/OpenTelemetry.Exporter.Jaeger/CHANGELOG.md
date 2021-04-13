@@ -7,6 +7,8 @@
   (ex:
   `services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));`).
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
+* Fixed data corruption when creating Jaeger Batch messages
+  ([#1372](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1372))
 
 ## 1.1.0-beta1
 
