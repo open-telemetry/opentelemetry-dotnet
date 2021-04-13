@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
@@ -31,10 +32,26 @@ namespace OpenTelemetry.Exporter
 #endif
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
+        /// Initializes zipkin endpoint.
+        /// </summary>
+        public ZipkinExporterOptions()
+        {
+            try
+            {
+                this.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT") ?? "http://localhost:9411/api/v2/spans");
+            }
+            catch (Exception ex)
+            {
+                ZipkinExporterEventSource.Log.FailedEndpointInitialization(ex);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT") ?? "http://localhost:9411/api/v2/spans");
+        public Uri Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.
