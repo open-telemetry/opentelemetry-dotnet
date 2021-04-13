@@ -125,7 +125,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
+            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
+                SqlActivitySourceHelper.ActivityName,
+                ActivityKind.Client,
+                default(ActivityContext),
+                SqlActivitySourceHelper.CreationTags);
+
             if (activity == null)
             {
                 // There is no listener or it decided not to sample the current request.
