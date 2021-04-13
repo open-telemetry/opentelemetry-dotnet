@@ -72,3 +72,8 @@ API to log a formatted string with a severity level of Information. Click
 for more information on the different logs levels. Opentelemetry captures this
 and sends it to `ConsoleExporter`. `ConsoleExporter` simply displays it on the
 console.
+
+## Learn more
+
+* If you want to build a custom exporter/processor/sampler, refer to [extending
+  the SDK](../extending-the-sdk/README.md).

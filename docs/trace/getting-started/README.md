@@ -74,3 +74,8 @@ and
 respectively. Read
 [this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
 to learn more.
+
+## Learn more
+
+* If you want to build a custom exporter/processor/sampler, refer to [extending
+  the SDK](../extending-the-sdk/README.md).
