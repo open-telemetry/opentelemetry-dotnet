@@ -125,7 +125,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
+            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
+                SqlActivitySourceHelper.ActivityName,
+                ActivityKind.Client,
+                default(ActivityContext),
+                SqlActivitySourceHelper.CreationTags);
+
             if (activity == null)
             {
                 // There is no listener or it decided not to sample the current request.
@@ -138,7 +143,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                 activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);

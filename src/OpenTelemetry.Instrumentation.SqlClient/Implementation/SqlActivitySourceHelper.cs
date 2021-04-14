@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
@@ -28,6 +30,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public const string ActivityName = ActivitySourceName + ".Execute";
 
         public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
+
+        public static readonly IEnumerable<KeyValuePair<string, object>> CreationTags = new[]
+        {
+            new KeyValuePair<string, object>(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName),
+        };
 
         private static readonly Version Version = typeof(SqlActivitySourceHelper).Assembly.GetName().Version;
 #pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before ActivitySource otherwise null ref exception is thrown.

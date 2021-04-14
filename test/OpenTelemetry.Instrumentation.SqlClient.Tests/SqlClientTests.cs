@@ -86,8 +86,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool shouldEnrich = true)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var sampler = new TestSampler();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
+                .SetSampler(sampler)
                 .AddSqlClientInstrumentation(options =>
                 {
 #if !NETFRAMEWORK
@@ -135,6 +137,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
             VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, dataSource, activity);
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
         // DiagnosticListener-based instrumentation is only available on .NET Core
@@ -280,6 +283,30 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
+
+        [Theory]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand)]
+        public void SqlClientCreatesActivityWithDbSystem(
+            string beforeCommand)
+        {
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
+
+            var sampler = new TestSampler
+            {
+                SamplingAction = _ => new SamplingResult(SamplingDecision.Drop),
+            };
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSqlClientInstrumentation()
+                .SetSampler(sampler)
+                .Build())
+            {
+                this.fakeSqlClientDiagnosticSource.Write(beforeCommand, new { });
+            }
+
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
+        }
 #endif
 
         private static void VerifyActivityData(
@@ -349,6 +376,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             }
 
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
+        }
+
+        private static void VerifySamplingParameters(SamplingParameters samplingParameters)
+        {
+            Assert.NotNull(samplingParameters.Tags);
+            Assert.Contains(
+                samplingParameters.Tags,
+                kvp => kvp.Key == SemanticConventions.AttributeDbSystem
+                       && (string)kvp.Value == SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

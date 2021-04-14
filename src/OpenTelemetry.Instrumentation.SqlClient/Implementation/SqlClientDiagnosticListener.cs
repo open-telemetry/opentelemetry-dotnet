@@ -57,7 +57,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
-                        activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
+                        activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
+                            SqlActivitySourceHelper.ActivityName,
+                            ActivityKind.Client,
+                            default(ActivityContext),
+                            SqlActivitySourceHelper.CreationTags);
+
                         if (activity == null)
                         {
                             // There is no listener or it decided not to sample the current request.
@@ -82,7 +87,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
-                            activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
