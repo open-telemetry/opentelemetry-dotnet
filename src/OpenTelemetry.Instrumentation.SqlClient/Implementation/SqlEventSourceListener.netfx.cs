@@ -143,7 +143,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                 activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);

@@ -87,7 +87,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
                             _ = this.commandTextFetcher.TryFetch(command, out var commandText);
 
-                            activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                             activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
 
                             this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
