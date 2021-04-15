@@ -180,6 +180,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             activity.SetStatus(status);
+            if (Options.RecordException)
+            {
+                activity.RecordException(exception);
+            }
 
             try
             {
