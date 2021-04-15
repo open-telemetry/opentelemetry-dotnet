@@ -1,9 +1,41 @@
 # Exception Handling
 
+The following doc describes recommended practices for Exception handling and
+reporting when user is manually creating Activities. If the user is using one of
+the [instrumentation
+libraries](../extending-the-sdk/README.md#instrumentation-library), it may
+provide these functionalities automatically. Please refer to the respective
+documentation for guidance.
+
 ## User-handled Exception
 
 The term `User-handled Exception` is used to describe exceptions that are
-handled by the application.
+handled by the application, as shown in the below sample code.
+
+```csharp
+try
+{
+    Func();
+}
+catch (SomeException ex)
+{
+    DoSomething();
+}
+catch (Exception ex)
+{
+    DoSomethingElse();
+    throw;
+}
+```
+
+OpenTelemetry .NET provides several options to report Exceptions in `Activity`.
+It varies from the most basic option of setting `Status`, to fully recording the
+`Exception` itself to activity.
+
+### Option 1 - Set Activity Status
+
+The most basic option is to use `Activity.SetStatus(Status.Error)` method to
+indicate that an Exception has occurred.
 
 While using `Activity` API, the common pattern would be:
 
@@ -19,7 +51,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
         activity?.SetStatus(Status.Error);
         DoSomething();
     }
-    catch (Exception)
+    catch (Exception ex)
     {
         activity?.SetStatus(Status.Error);
         throw;
@@ -43,6 +75,52 @@ A complete example can be found [here](./Program.cs).
 
 Note: this feature is platform dependent as it relies on
 [System.Runtime.InteropServices.Marshal.GetExceptionPointers](https://docs.microsoft.com/dotnet/api/system.runtime.interopservices.marshal.getexceptionpointers).
+
+### Option 2 - Set Activity Status with Error description
+
+While convenient, the `SetErrorStatusOnException` feature only sets the activity
+status to Error and nothing more. It is sometimes desirable to store the
+exception message as the Status description. The following code shows how to do
+that:
+
+```csharp
+using (var activity = MyActivitySource.StartActivity("Foo"))
+{
+    try
+    {
+        Func();
+    }
+    catch (SomeException ex)
+    {
+        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+    }
+}
+```
+
+### Option 3 - Use Activity.RecordException
+
+Both options 1 and 2 above showed the most basic reporting of Exception, by
+leveraging Activity status. Neither of the approach actually records the
+Exception itself to do more richer debugging. `Activity.RecordException()`
+allows the exception to be stored in the Activity as ActivityEvent as per
+[OpenTelemetry
+convention](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md),
+as shown below:
+
+```csharp
+using (var activity = MyActivitySource.StartActivity("Foo"))
+{
+    try
+    {
+        Func();
+    }
+    catch (SomeException ex)
+    {
+        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+        activity?.RecordException(ex);
+    }
+}
+```
 
 ## Unhandled Exception
 
