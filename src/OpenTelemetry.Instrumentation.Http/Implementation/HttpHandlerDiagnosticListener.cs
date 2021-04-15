@@ -171,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         if (currentStatusCode == StatusCode.Unset)
                         {
-                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            // Faults are handled in OnException and should already have a span.Status of Error w/ Description.
                             activity.SetStatus(Status.Error);
                         }
                     }
@@ -206,6 +206,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
+                }
+
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
                 }
 
                 if (exc is HttpRequestException)
