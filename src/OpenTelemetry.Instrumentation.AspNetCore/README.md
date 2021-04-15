@@ -32,7 +32,7 @@ below enables this instrumentation by using an extension method on
 to the application. This ensures the instrumentation is disposed when the host
 is shutdown.
 
-Additionaly, this examples sets up the OpenTelemetry Jaeger exporter, which
+Additionally, this examples sets up the OpenTelemetry Jaeger exporter, which
 requires adding the package
 [`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md) to
 the application.
@@ -132,9 +132,9 @@ get access to `HttpRequest` and `HttpResponse`.
 
 ### RecordException
 
-This instrumention automatically sets Activity Status to Error if the
+This instrumentation automatically sets Activity Status to Error if the
 Http StatusCode is >= 400.
-Additionaly, `RecordException` feature may be turned on, to store the exception
+Additionally, `RecordException` feature may be turned on, to store the exception
 to the Activity itself as ActivityEvent.
 
 ## References
