@@ -1,4 +1,4 @@
-// <copyright file="HttpWebRequestInstrumentationOptions.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestInstrumentationOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NETFRAMEWORK
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -74,4 +73,3 @@ namespace OpenTelemetry.Instrumentation.Http
         }
     }
 }
-#endif

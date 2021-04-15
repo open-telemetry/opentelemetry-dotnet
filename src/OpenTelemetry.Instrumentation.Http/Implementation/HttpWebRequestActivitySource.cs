@@ -1,4 +1,4 @@
-// <copyright file="HttpWebRequestActivitySource.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestActivitySource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETFRAMEWORK
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,6 +21,7 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -77,15 +77,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         static HttpWebRequestActivitySource()
         {
-            try
+#if NET46_OR_GREATER || NETSTANDARD
+            if (RuntimeInformation.FrameworkDescription.Contains("Framework"))
+#endif
             {
-                PrepareReflectionObjects();
-                PerformInjection();
-            }
-            catch (Exception ex)
-            {
-                // If anything went wrong, just no-op. Write an event so at least we can find out.
-                HttpInstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
+                try
+                {
+                    PrepareReflectionObjects();
+                    PerformInjection();
+                }
+                catch (Exception ex)
+                {
+                    // If anything went wrong, just no-op. Write an event so at least we can find out.
+                    HttpInstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
+                }
             }
         }
 
@@ -1050,4 +1055,3 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         }
     }
 }
-#endif
