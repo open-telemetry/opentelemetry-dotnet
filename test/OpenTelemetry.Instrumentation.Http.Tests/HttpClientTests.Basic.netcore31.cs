@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1
+#if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
 using System.Linq;
