@@ -2,9 +2,10 @@
 
 The following doc describes recommended practices for Exception handling and
 reporting when user is manually creating Activities. If the user is using one of
-the [instrumentation libraries](../extending-the-sdk#instrumentation-library),
-it may provide these functionalities automatically. Please refer to the
-respective documentation for guidance.
+the [instrumentation
+libraries](../extending-the-sdk/README.md#instrumentation-library), it may
+provide these functionalities automatically. Please refer to the respective
+documentation for guidance.
 
 ## User-handled Exception
 
