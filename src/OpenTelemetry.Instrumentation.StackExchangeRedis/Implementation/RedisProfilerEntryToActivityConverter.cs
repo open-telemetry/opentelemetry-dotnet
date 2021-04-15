@@ -35,6 +35,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 name,
                 ActivityKind.Client,
                 parentActivity?.Context ?? default,
+                StackExchangeRedisCallsInstrumentation.CreationTags,
                 startTime: command.CommandCreated);
 
             if (activity == null)
@@ -59,7 +60,6 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.SetStatus(Status.Unset);
 
-                activity.SetTag(SemanticConventions.AttributeDbSystem, "redis");
                 activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
                 if (command.Command != null)

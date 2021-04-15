@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Activities are now created with the `db.system` attribute set for usage
+  during sampling. ([#](https://github.com/open-telemetry/opentelemetry-dotnet/pull/))
+
 ## 1.0.0-rc3
 
 Released 2021-Mar-19
