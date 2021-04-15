@@ -52,6 +52,14 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </remarks>
         public Action<Activity, string, object> Enrich { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether exception will be recorded as ActivityEvent or not.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
+        /// </remarks>
+        public bool RecordException { get; set; }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)
         {
