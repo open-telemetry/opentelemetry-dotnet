@@ -32,7 +32,7 @@ below enables this instrumentation by using an extension method on
 to the application. This ensures the instrumentation is disposed when the host
 is shutdown.
 
-Additionally, this examples sets up the OpenTelemetry Jaeger exporter, which
+Additionaly, this examples sets up the OpenTelemetry Jaeger exporter, which
 requires adding the package
 [`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md) to
 the application.
