@@ -79,7 +79,23 @@
     "spanName": "HTTP GET",
     "spanStatus": "ERROR",
     "spanStatusHasDescription": true,
-    "responseExpected" : false,
+    "responseExpected": false,
+    "recordException": false,
+    "spanAttributes": {
+      "http.method": "GET",
+      "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
+      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+    }
+  },
+  {
+    "name": "Call that cannot resolve DNS will be reported as error span. And Records exception",
+    "method": "GET",
+    "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+    "spanName": "HTTP GET",
+    "spanStatus": "ERROR",
+    "spanStatusHasDescription": true,
+    "responseExpected": false,
+    "recordException": true,
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",

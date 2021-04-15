@@ -177,6 +177,10 @@ is the general extensibility point to add additional properties to any
 activity. The `Enrich` option is specific to this instrumentation, and is
 provided to get access to raw request, response, and exception objects.
 
+### RecordException
+
+// TODO:
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)

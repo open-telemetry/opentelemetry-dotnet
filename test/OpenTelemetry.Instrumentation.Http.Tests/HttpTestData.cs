@@ -67,6 +67,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             public bool ResponseExpected { get; set; }
 
+            public bool? RecordException { get; set; }
+
             public string SpanStatus { get; set; }
 
             public bool? SpanStatusHasDescription { get; set; }
