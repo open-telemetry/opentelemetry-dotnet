@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 
@@ -35,6 +37,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         internal const string ActivityName = ActivitySourceName + ".Execute";
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly IEnumerable<KeyValuePair<string, object>> CreationTags = new[]
+        {
+            new KeyValuePair<string, object>(SemanticConventions.AttributeDbSystem, "redis"),
+        };
 
         internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
             = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();

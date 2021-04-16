@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestSampler.cs" Link="TestSampler.cs" />
   </ItemGroup>
 
   <ItemGroup>
