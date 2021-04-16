@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     options.SetHttpFlavor = tc.SetHttpFlavor;
                     options.Enrich = ActivityEnrichment;
+                    options.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
                 })
                 .Build();
 
@@ -126,6 +127,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
 
                 Assert.Equal(value, tagValue);
+            }
+
+            if (tc.RecordException.HasValue && tc.RecordException.Value)
+            {
+                Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             }
         }
 
