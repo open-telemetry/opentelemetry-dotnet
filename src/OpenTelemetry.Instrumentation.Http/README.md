@@ -177,6 +177,13 @@ is the general extensibility point to add additional properties to any
 activity. The `Enrich` option is specific to this instrumentation, and is
 provided to get access to raw request, response, and exception objects.
 
+### RecordException
+
+This instrumentation automatically sets Activity Status to Error if the
+Http StatusCode is >= 400.
+Additionally, `RecordException` feature may be turned on, to store the exception
+to the Activity itself as ActivityEvent.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)

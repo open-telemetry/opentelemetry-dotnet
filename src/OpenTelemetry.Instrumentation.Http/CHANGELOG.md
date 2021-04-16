@@ -4,6 +4,9 @@
 
 * Sanitize `http.url` attribute.
   ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
+* Added `RecordException` to HttpClientInstrumentationOptions and
+  HttpWebRequestInstrumentationOptions which allows Exception to be reported as
+  ActivityEvent.
 * Update `AddHttpClientInstrumentation` extension method for .NET Framework to
   use only use `HttpWebRequestInstrumentationOptions`
   ([#1982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1982))
