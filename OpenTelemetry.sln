@@ -197,7 +197,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shared", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.5.0", "test\TestApp.AspNetCore.5.0\TestApp.AspNetCore.5.0.csproj", "{972396A8-E35B-499C-9BA1-765E9B8822E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-handling", "docs\trace\exception-handling\exception-handling.csproj", "{08D29501-F0A3-468F-B18D-BD1821A72383}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-reporting", "docs\trace\exception-reporting\exception-reporting.csproj", "{08D29501-F0A3-468F-B18D-BD1821A72383}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
