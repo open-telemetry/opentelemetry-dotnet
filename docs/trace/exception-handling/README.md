@@ -34,8 +34,8 @@ It varies from the most basic option of setting `Status`, to fully recording the
 
 ### Option 1 - Set Activity Status manually
 
-The most basic option is to use `Activity.SetStatus(Status.Error)` method to
-indicate that an Exception has occurred.
+The most basic option is to set Activity status to Error to indicate that an
+Exception has occurred.
 
 While using `Activity` API, the common pattern would be:
 
@@ -61,7 +61,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
 
 ### Option 2 - Set Activity Status using SetErrorStatusOnException feature
 
-The approach described as Option 1 could become hard to manage if there are
+The approach described in Option 1 could become hard to manage if there are
 deeply nested `Activity` objects, or there are activities created in a 3rd party
 library.
 
