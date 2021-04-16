@@ -4,6 +4,8 @@ OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.set -
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Filter.get -> System.Func<System.Net.Http.HttpRequestMessage, bool>
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Filter.set -> void
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.HttpClientInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.get -> bool
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.set -> void
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.get -> bool
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.set -> void
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions
