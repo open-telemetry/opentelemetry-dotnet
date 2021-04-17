@@ -48,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpWebRequestInstrumentation(options =>
+                .AddHttpClientInstrumentation(options =>
                 {
                     options.SetHttpFlavor = tc.SetHttpFlavor;
                     options.Enrich = ActivityEnrichment;

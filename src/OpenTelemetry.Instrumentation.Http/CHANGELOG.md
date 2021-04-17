@@ -2,10 +2,14 @@
 
 ## Unreleased
 
-* Sanitize `http.url` attribute. ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
+* Sanitize `http.url` attribute.
+  ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
 * Added `RecordException` to HttpClientInstrumentationOptions and
-  HttpWebRequestInstrumentationOptions which allows Exception to be
-  reported as ActivityEvent.
+  HttpWebRequestInstrumentationOptions which allows Exception to be reported as
+  ActivityEvent.
+* Update `AddHttpClientInstrumentation` extension method for .NET Framework to
+  use only use `HttpWebRequestInstrumentationOptions`
+  ([#1982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1982))
 
 ## 1.0.0-rc3
 
@@ -17,7 +21,7 @@ Released 2021-Mar-19
   ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
 * Performance optimization by leveraging sampling decision and short circuiting
   activity enrichment.
-  ([#1903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
+  ([#1894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
 
 ## 1.0.0-rc2
 
