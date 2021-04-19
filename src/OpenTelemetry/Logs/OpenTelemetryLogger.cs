@@ -60,6 +60,8 @@ namespace OpenTelemetry.Logs
                     options.ParseStateValues ? this.ParseState(state) : null);
 
                 processor.OnEnd(record);
+
+                record.ScopeProvider = null;
             }
         }
 

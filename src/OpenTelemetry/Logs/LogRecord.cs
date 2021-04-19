@@ -27,7 +27,7 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
-        private readonly IExternalScopeProvider scopeProvider;
+        private List<object> bufferedScopes;
 
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Logs
             Exception exception,
             IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
-            this.scopeProvider = scopeProvider;
+            this.ScopeProvider = scopeProvider;
 
             var activity = Activity.Current;
             if (activity != null)
@@ -85,17 +85,59 @@ namespace OpenTelemetry.Logs
 
         public Exception Exception { get; }
 
+        internal IExternalScopeProvider ScopeProvider { get; set; }
+
         /// <summary>
         /// Executes callback for each currently active scope objects in order
         /// of creation. All callbacks are guaranteed to be called inline from
         /// this method.
         /// </summary>
+        /// <remarks>
+        /// Note: Scopes are only available during the lifecycle of the log
+        /// message being written. If you need to capture scopes to be used
+        /// later (for example in batching scenarios), call <see
+        /// cref="BufferLogScopes"/> to safely capture the values (incurs
+        /// allocation).
+        /// </remarks>
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
         public void ForEachScope<TState>(Action<object, TState> callback, TState state)
         {
-            this.scopeProvider?.ForEachScope(callback, state);
+            if (this.bufferedScopes != null)
+            {
+                foreach (object scope in this.bufferedScopes)
+                {
+                    callback(scope, state);
+                }
+            }
+            else
+            {
+                this.ScopeProvider?.ForEachScope(callback, state);
+            }
+        }
+
+        /// <summary>
+        /// Buffers the scopes attached to the log into a list so that they can
+        /// be safely processed after the log message lifecycle has ended.
+        /// </summary>
+        public void BufferLogScopes()
+        {
+            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            {
+                return;
+            }
+
+            List<object> scopes = new List<object>();
+
+            this.ForEachScope(AddScopeToList, scopes);
+
+            this.bufferedScopes = scopes;
+
+            static void AddScopeToList(object scope, List<object> state)
+            {
+                state.Add(scope);
+            }
         }
     }
 }
