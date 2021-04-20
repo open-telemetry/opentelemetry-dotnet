@@ -75,6 +75,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var client = new Greeter.GreeterClient(channel);
             client.SayHello(new HelloRequest());
 
+            tracerProvider.ForceFlush();
             WaitForProcessorInvocations(processor, 2);
 
             Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
