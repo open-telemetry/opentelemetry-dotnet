@@ -96,32 +96,6 @@ namespace OpenTelemetry.Trace.Tests
                 defaultProbability.ShouldSample(new SamplingParameters(default, sampledtraceId, ActivityDisplayName, ActivityKindServer, null, null)).Decision);
         }
 
-        [Theory]
-        [InlineData(1, 100, 100)]
-        [InlineData(0, 100, 0)]
-        [InlineData(0.5D, 100, 40, 60)]
-        public void SampleUsingRandomTraceIds(double probability, int numberOfSpans, int expectedNumberOfSampledSpansLowerInclusive, int? expectedNumberOfSampledSpansUpperInclusive = null)
-        {
-            Sampler probabilitySampler = new TraceIdRatioBasedSampler(probability);
-
-            int numberOfSampledSpans = 0;
-
-            for (int i = 0; i < numberOfSpans; i++)
-            {
-                ActivityTraceId traceId = ActivityTraceId.CreateRandom();
-
-                SamplingResult samplingResult = probabilitySampler.ShouldSample(new SamplingParameters(default, traceId, "Test", ActivityKind.Server));
-
-                if (samplingResult.Decision == SamplingDecision.RecordAndSample)
-                {
-                    numberOfSampledSpans++;
-                }
-            }
-
-            Assert.True(numberOfSampledSpans >= expectedNumberOfSampledSpansLowerInclusive);
-            Assert.True(numberOfSampledSpans <= (expectedNumberOfSampledSpansUpperInclusive ?? expectedNumberOfSampledSpansLowerInclusive));
-        }
-
         [Fact]
         public void GetDescription()
         {
