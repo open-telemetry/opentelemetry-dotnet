@@ -21,7 +21,7 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Extensions.Hosting
+namespace OpenTelemetry.Extensions.Hosting.Tests
 {
     public class HostingExtensionsTests
     {
@@ -116,6 +116,36 @@ namespace OpenTelemetry.Extensions.Hosting
                     builder.Configure(
                         (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
                 }));
+        }
+
+        [Fact(Skip = "Known limitation. See issue 1215.")]
+        public void AddOpenTelemetryTracerProvider_Idempotent()
+        {
+            var testInstrumentation1 = new TestInstrumentation();
+            var testInstrumentation2 = new TestInstrumentation();
+
+            var services = new ServiceCollection();
+            services.AddSingleton(testInstrumentation1);
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.AddInstrumentation(() => testInstrumentation1);
+            });
+
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.AddInstrumentation(() => testInstrumentation2);
+            });
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
+            Assert.NotNull(tracerFactory);
+
+            Assert.False(testInstrumentation1.Disposed);
+            Assert.False(testInstrumentation2.Disposed);
+            serviceProvider.Dispose();
+            Assert.True(testInstrumentation1.Disposed);
+            Assert.True(testInstrumentation2.Disposed);
         }
 
         internal class TestInstrumentation : IDisposable
