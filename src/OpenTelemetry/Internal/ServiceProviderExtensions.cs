@@ -14,7 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0
+#if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 #endif
 
@@ -34,7 +35,7 @@ namespace System
         public static T GetOptions<T>(this IServiceProvider serviceProvider)
             where T : class, new()
         {
-#if NET461 || NETSTANDARD2_0
+#if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
             IOptions<T> options = (IOptions<T>)serviceProvider.GetService(typeof(IOptions<T>));
 
             // Note: options could be null if user never invoked services.AddOptions().

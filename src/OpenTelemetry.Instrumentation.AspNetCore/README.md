@@ -57,6 +57,29 @@ This instrumentation can be configured to change the default behavior by using
 `AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
+// TODO: This section could be refined.
+When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
+all configurations to `AspNetCoreInstrumentationOptions` can be done in the `ConfigureServices`
+method of you applications `Startup` class as shown below.
+
+```csharp
+// Configure
+services.Configure<AspNetCoreInstrumentationOptions>(options =>
+        {
+            options.Filter = (req) =>
+            {
+                // only collect telemetry about HTTP GET requests
+                return httpContext.Request.Method.Equals("GET");
+            };
+        });
+
+services.AddOpenTelemetryTracing(
+        (builder) => builder
+            .AddAspNetCoreInstrumentation()
+            .AddJaegerExporter()
+            );
+```
+
 ### Filter
 
 This instrumentation by default collects all the incoming http requests. It

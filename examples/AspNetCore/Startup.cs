@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -95,6 +96,19 @@ namespace Examples.AspNetCore
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
+
+                    // For options which can be bound from IConfiguration.
+                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+                    // For options which can be configured from code only.
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.Filter = (req) =>
+                        {
+                            return req.Request.Host != null;
+                        };
+                    });
+
                     break;
             }
         }
