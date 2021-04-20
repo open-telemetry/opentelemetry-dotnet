@@ -816,7 +816,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         private static void ValidateBaggage(HttpWebRequest request)
         {
-            string[] baggage = request.Headers["Baggage"].Split(',');
+            string[] baggage = request.Headers["baggage"].Split(',');
 
             Assert.Equal(3, baggage.Length);
             Assert.Contains("key=value", baggage);
