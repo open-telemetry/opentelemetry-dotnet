@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -95,6 +96,27 @@ namespace Examples.AspNetCore
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
+
+                    // For options which can be bound from IConfiguration.
+                    // If uncommenting this, make sure to have a section
+                    // named "AspNetCore" in appsettings.json
+                    // services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCore"));
+
+                    // For options which can be configure via code only.
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.RecordException = true;
+                    });
+
+                    // Keep configuring..
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.Filter = (req) =>
+                        {
+                            return req.Request.Host != null;
+                        };
+                    });
+
                     break;
             }
         }
