@@ -113,6 +113,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
+                        activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                         return;
                     }
                 }
@@ -120,6 +121,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.RequestFilterException(ex);
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
                 }
 
@@ -130,8 +132,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.RequestUri.OriginalString);
-
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                 if (this.options.SetHttpFlavor)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
@@ -170,7 +171,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         if (currentStatusCode == StatusCode.Unset)
                         {
-                            // Faults are handled in OnException and should already have a span.Status of Unknown w/ Description.
+                            // Faults are handled in OnException and should already have a span.Status of Error w/ Description.
                             activity.SetStatus(Status.Error);
                         }
                     }
@@ -205,6 +206,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                     return;
+                }
+
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
                 }
 
                 if (exc is HttpRequestException)
