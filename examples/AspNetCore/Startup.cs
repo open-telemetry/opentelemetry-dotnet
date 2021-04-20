@@ -98,17 +98,9 @@ namespace Examples.AspNetCore
                         .AddConsoleExporter());
 
                     // For options which can be bound from IConfiguration.
-                    // If uncommenting this, make sure to have a section
-                    // named "AspNetCore" in appsettings.json
-                    // services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCore"));
+                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
 
-                    // For options which can be configure via code only.
-                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
-                    {
-                        options.RecordException = true;
-                    });
-
-                    // Keep configuring..
+                    // For options which can be configured from code only.
                     services.Configure<AspNetCoreInstrumentationOptions>(options =>
                     {
                         options.Filter = (req) =>

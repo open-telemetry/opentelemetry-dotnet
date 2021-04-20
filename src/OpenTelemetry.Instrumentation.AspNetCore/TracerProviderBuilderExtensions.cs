@@ -44,9 +44,7 @@ namespace OpenTelemetry.Trace
             {
                 return deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
-                    var options = sp.GetOptions<AspNetCoreInstrumentationOptions>();
-                    sp.ApplyConfigAction<AspNetCoreInstrumentationOptions>(options);
-                    AddAspNetCoreInstrumentation(builder, options, configureAspNetCoreInstrumentationOptions);
+                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions);
                 });
             }
 

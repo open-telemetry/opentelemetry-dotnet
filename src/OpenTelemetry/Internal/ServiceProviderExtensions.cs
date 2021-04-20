@@ -44,20 +44,5 @@ namespace System
             return new T();
 #endif
         }
-
-        /// <summary>
-        /// Apply Config actions from the supplied <see cref="IServiceProvider"/> to the instance of T.
-        /// </summary>
-        /// <typeparam name="T">Options type.</typeparam>
-        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        /// <param name="toConfigure">Instance to configure.</param>
-        public static void ApplyConfigAction<T>(this IServiceProvider serviceProvider, T toConfigure)
-            where T : class, new()
-        {
-#if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var configAction = serviceProvider.GetRequiredService<IConfigureOptions<T>>();
-            configAction?.Configure(toConfigure);
-#endif
-        }
     }
 }
