@@ -102,18 +102,44 @@ namespace OpenTelemetry.Logs
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
-        public void ForEachScope<TState>(Action<object, TState> callback, TState state)
+        public void ForEachScope<TState>(Action<int, KeyValuePair<string, object>, TState> callback, TState state)
         {
             if (this.bufferedScopes != null)
             {
-                foreach (object scope in this.bufferedScopes)
+                for (int scopeIndex = 0; scopeIndex < this.bufferedScopes.Count; scopeIndex++)
                 {
-                    callback(scope, state);
+                    ForEachScope(this.bufferedScopes[scopeIndex], (scopeIndex, callback, state));
                 }
             }
             else
             {
-                this.ScopeProvider?.ForEachScope(callback, state);
+                int scopeIndex = 0;
+                this.ScopeProvider?.ForEachScope(ForEachScope, (scopeIndex++, callback, state));
+            }
+
+            static void ForEachScope(object scope, (int scopeIndex, Action<int, KeyValuePair<string, object>, TState> callback, TState userState) state)
+            {
+                if (scope is IReadOnlyList<KeyValuePair<string, object>> stateList)
+                {
+                    for (int i = 0; i < stateList.Count; i++)
+                    {
+                        state.callback(state.scopeIndex, stateList[i], state.userState);
+                    }
+                }
+                else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+                {
+                    foreach (KeyValuePair<string, object> stateValue in stateValues)
+                    {
+                        state.callback(state.scopeIndex, stateValue, state.userState);
+                    }
+                }
+                else
+                {
+                    state.callback(
+                        state.scopeIndex,
+                        new KeyValuePair<string, object>(string.Empty, state),
+                        state.userState);
+                }
             }
         }
 
@@ -130,7 +156,7 @@ namespace OpenTelemetry.Logs
 
             List<object> scopes = new List<object>();
 
-            this.ForEachScope(AddScopeToList, scopes);
+            this.ScopeProvider?.ForEachScope(AddScopeToList, scopes);
 
             this.bufferedScopes = scopes;
 
