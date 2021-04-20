@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
@@ -92,21 +93,51 @@ namespace Examples.AspNetCore
                         }));
                     break;
                 default:
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddHttpClientInstrumentation()
-                        .AddConsoleExporter());
+                    // Adding OtelTracing. Prepares to accept more configs from DI.
+                    services.AddOpenTelemetryTracing();
 
-                    // For options which can be bound from IConfiguration.
+                    // Configure builder..
+                    services.Configure<TracerProviderBuilder>(builder =>
+                    {
+                        builder.AddHttpClientInstrumentation();
+                    });
+
+                    // Configure builder with more..
+                    services.Configure<TracerProviderBuilder>(builder =>
+                    {
+                        builder.AddAspNetCoreInstrumentation();
+                    });
+
+                    // and more..
+                    services.Configure<TracerProviderBuilder>(builder =>
+                    {
+                        builder.AddConsoleExporter();
+                    });
+
+                    // Configure instrumentation options which can be bound from IConfiguration.
+                    // Has no effect unless AddAspNetCoreInstrumentation() is also called.
                     services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
 
-                    // For options which can be configured from code only.
+                    // Configure instrumentation options which can be configured from code only.
+                    // Has no effect unless AddAspNetCoreInstrumentation() is also called.
                     services.Configure<AspNetCoreInstrumentationOptions>(options =>
                     {
                         options.Filter = (req) =>
                         {
                             return req.Request.Host != null;
                         };
+                    });
+
+                    // Configure builder, but also need to get hold of IServiceProvider.
+                    // Ugly??
+                    services.Configure<TracerProviderBuilder>(builder =>
+                    {
+                        builder.Configure((sp, tracerProviderBuilder) =>
+                        {
+                            // Retrieve something from IServiceProvider.
+                            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                            tracerProviderBuilder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddTelemetrySdk());
+                        });
                     });
 
                     break;

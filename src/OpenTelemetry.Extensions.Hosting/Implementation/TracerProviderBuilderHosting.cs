@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace OpenTelemetry.Trace
 {
@@ -83,6 +84,12 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build(IServiceProvider serviceProvider)
         {
+            var configActions = serviceProvider.GetRequiredService<IEnumerable<IConfigureOptions<TracerProviderBuilder>>>();
+            foreach (var configAction in configActions)
+            {
+                configAction?.Configure(this);
+            }
+
             foreach (InstrumentationFactory instrumentationFactory in this.instrumentationFactories)
             {
                 this.AddInstrumentation(
