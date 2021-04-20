@@ -113,6 +113,14 @@ Maintainers
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
 
+Triager
+([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+
+* [Victor Lu](https://github.com/victlu), Microsoft
+
+*Find more about the triager role in [community
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager).*
+
 ### Thanks to all the people who have contributed
 
 [![contributors](https://contributors-img.web.app/image?repo=open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/graphs/contributors)
