@@ -3,7 +3,7 @@
 ## Unreleased
 
 * When using OpenTelemetry.Extensions.Hosting you can now bind
-  `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
+  `ZipkinExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
   `services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));`).
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))

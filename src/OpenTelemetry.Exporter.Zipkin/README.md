@@ -13,9 +13,12 @@
 dotnet add package OpenTelemetry.Exporter.Zipkin
 ```
 
-## Configuration
+## Enable/Add Zipkin as a tracing exporter
 
-You can enable the the `ZipkinExporter` with the `AddZipkinExporter()`.
+You can enable the the `ZipkinExporter` with the `AddZipkinExporter()` extension
+method on `TracerProviderBuilder`.
+
+## Configuration
 
 You can configure the `ZipkinExporter` through
 `ZipkinExporterOptions` properties:
@@ -37,6 +40,15 @@ You can configure the `ZipkinExporter` through
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
 for example use.
+
+## Configuration using Dependency Injection
+
+This exporter allows easy configuration of `ZipkinExporterOptions` from
+dependency injection container, when used in conjunction with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md).
+
+See the [Startup](../../examples/AspNetCore/Startup.cs) class of the ASP.NET
+Core application for example use.
 
 ## References
 
