@@ -37,6 +37,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
         /// The Filter gets the HttpRequestMessage, and should return a boolean.
+        /// NOTE: Only relevant when running under .NET Core
         /// If Filter returns true, the request is collected.
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
@@ -44,6 +45,7 @@ namespace OpenTelemetry.Instrumentation.Http
 
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
+        /// NOTE: Only relevant when running under .NET Framework
         /// The Filter gets the HttpWebRequest, and should return a boolean.
         /// If Filter returns true, the request is collected.
         /// If Filter returns false or throw exception, the request is filtered out.

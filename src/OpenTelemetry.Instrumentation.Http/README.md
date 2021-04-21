@@ -57,13 +57,9 @@ For an ASP.NET application, adding instrumentation is typically done in the
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`HttpClientInstrumentationOptions` (.NET/.NET Core applications) or
-`HttpWebRequestInstrumentationOptions` (.NET Framework applications). It is
+`HttpClientInstrumentationOptions`. It is
 important to note that even if `HttpClient` is used in .NET Framework
-applications, it underneath uses `HttpWebRequest`. Because of this,
-`HttpWebRequestInstrumentationOptions` is the configuration option for .NET
-Framework applications, irrespective of whether `HttpWebRequest` or `HttpClient`
-is used.
+applications, it underneath uses `HttpWebRequest`.
 
 ### SetHttpFlavor
 
@@ -82,13 +78,13 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### Filter
+### Filter / WebRequestFilter
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `Filter` function option. This defines
 the condition for allowable requests. The Filter receives the request object -
-`HttpRequestMessage` (when using `HttpClientInstrumentationOptions`) and
-`HttpWebRequest` (when using `HttpWebRequestInstrumentationOptions`) -
+`HttpRequestMessage` (when using `Filter` for .NET Core applications) and
+`HttpWebRequest` (when using `WebRequestFilter` for .NET Framework) -
 representing the outgoing request and does not collect telemetry about the
 request if the Filter returns false or throws exception.
 
@@ -119,16 +115,15 @@ This option allows one to enrich the activity with additional information from
 the raw request and response objects. The `Enrich` action is called only when
 `activity.IsAllDataRequested` is `true`. It contains the activity itself (which
 can be enriched), the name of the event, and the actual raw object. The object
-type is different for `HttpClientInstrumentationOptions` vs
-`HttpWebRequestInstrumentationOptions` and is detailed below.
-
-#### HttpClientInstrumentationOptions
+type is different for .NET Core vs .NET Framework applications and is detailed below.
 
 For event name "OnStartActivity", the actual object will be
-`HttpRequestMessage`.
+`HttpRequestMessage` in .NET Core applications and
+`HttpWebRequest` in .NET Framework applications.
 
 For event name "OnStopActivity", the actual object will be
-`HttpResponseMessage`.
+`HttpResponseMessage` in .NET Core applications and
+`HttpWebResponse` in .NET Framework applications.
 
 For event name "OnException", the actual object will be
 `Exception`.
@@ -154,50 +149,6 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         if (rawObject is HttpWebResponse response)
                         {
                             activity.SetTag("responseVersion", response.Version);
-                        }
-                    }
-                    else if (eventName.Equals("OnException"))
-                    {
-                        if (rawObject is Exception exception)
-                        {
-                            activity.SetTag("stackTrace", exception.StackTrace);
-                        }
-                    }
-                }).Build();
-```
-
-#### HttpWebRequestInstrumentationOptions
-
-For event name "OnStartActivity", the actual object will be
-`HttpWebRequest`.
-
-For event name "OnStopActivity", the actual object will be
-`HttpWebResponse`.
-
-For event name "OnException", the actual object will be
-`Exception`.
-
-Example:
-
-```csharp
-using System.Net;
-
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation((options) => options.Enrich
-                = (activity, eventName, rawObject) =>
-                {
-                    if (eventName.Equals("OnStartActivity"))
-                    {
-                        if (rawObject is HttpWebRequest request)
-                        {
-                            activity.SetTag("requestVersion", request.ProtocolVersion);
-                        }
-                    }
-                    else if (eventName.Equals("OnStopActivity"))
-                    {
-                        if (rawObject is HttpWebResponse response)
-                        {
-                            activity.SetTag("responseVersion", response.ProtocolVersion);
                         }
                     }
                     else if (eventName.Equals("OnException"))
