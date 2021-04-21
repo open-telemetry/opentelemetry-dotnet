@@ -56,20 +56,6 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        public TracerProviderBuilder AddProcessor<T>()
-            where T : BaseProcessor<Activity>
-        {
-            this.processorTypes.Add(typeof(T));
-            return this;
-        }
-
-        public TracerProviderBuilder SetSampler<T>()
-            where T : Sampler
-        {
-            this.samplerType = typeof(T);
-            return this;
-        }
-
         public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         {
             if (configure == null)
@@ -91,14 +77,20 @@ namespace OpenTelemetry.Trace
                     () => serviceProvider.GetRequiredService(instrumentationFactory.Type));
             }
 
-            foreach (Type processorType in this.processorTypes)
+            // Check if any processors are added to DI
+            // and add them all.
+            var processors = serviceProvider.GetServices<BaseProcessor<Activity>>();
+            foreach (var p in processors)
             {
-                this.AddProcessor((BaseProcessor<Activity>)serviceProvider.GetRequiredService(processorType));
+                this.AddProcessor(p);
             }
 
-            if (this.samplerType != null)
+            // Check if any Sampler is added to DI
+            // and set it.
+            var sampler = serviceProvider.GetService<Sampler>();
+            if (sampler != null)
             {
-                this.SetSampler((Sampler)serviceProvider.GetRequiredService(this.samplerType));
+                this.SetSampler(sampler);
             }
 
             foreach (Action<IServiceProvider, TracerProviderBuilder> configureAction in this.configurationActions)

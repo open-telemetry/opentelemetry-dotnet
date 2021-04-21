@@ -15,9 +15,11 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -146,6 +148,27 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             serviceProvider.Dispose();
             Assert.True(testInstrumentation1.Disposed);
             Assert.True(testInstrumentation2.Disposed);
+        }
+
+        [Fact]
+        public async Task AddOpenTelemetryTracerProvider_1()
+        {
+            var builder = new HostBuilder().ConfigureServices(services =>
+            {
+                services.AddOpenTelemetryTracing();
+                services.AddSingleton<Sampler>(new ParentBasedSampler(new AlwaysOffSampler()));
+                services.AddSingleton<BaseProcessor<Activity>>(new TestActivityProcessor());
+                services.AddSingleton<BaseProcessor<Activity>>(new TestActivityProcessor());
+            });
+
+            var host = builder.Build();
+            await host.StartAsync();
+            var provider = host.Services.GetRequiredService<TracerProvider>();
+
+            // TODO: validate that provider has the sampler and processors from DI.
+
+            await host.StopAsync();
+            host.Dispose();
         }
 
         internal class TestInstrumentation : IDisposable
