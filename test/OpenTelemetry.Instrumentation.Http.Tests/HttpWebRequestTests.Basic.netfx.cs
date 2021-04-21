@@ -225,6 +225,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
+                    null,
                     c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
@@ -240,8 +241,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(
-                    c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
+                .AddHttpClientInstrumentation(null, c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
                 .Build();
 
             using var c = new HttpClient();
@@ -258,10 +258,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProviderSdk = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(options =>
-                {
-                    Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
-                })
+                .AddHttpClientInstrumentation(
+                    null,
+                    options =>
+                    {
+                        Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
+                    })
                 .Build();
         }
     }
