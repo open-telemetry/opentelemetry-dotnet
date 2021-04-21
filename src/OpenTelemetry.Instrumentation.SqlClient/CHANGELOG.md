@@ -13,6 +13,8 @@
     logging of `CommandType.Text` and `CommandType.StoredProcedure` as it's
     impossible to distinguish them.
 * Instrumentation modified to depend only on the API.
+* Activities are now created with the `db.system` attribute set for usage
+  during sampling. ([#1979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1979))
 
 ## 1.0.0-rc3
 
