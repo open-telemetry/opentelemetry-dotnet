@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -42,6 +43,14 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpRequestMessage, bool> Filter { get; set; }
 
         /// <summary>
+        /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
+        /// The Filter gets the HttpWebRequest, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
+        /// </summary>
+        public Func<HttpWebRequest, bool> WebRequestFilter { get; set; }
+
+        /// <summary>
         /// Gets or sets an action to enrich an Activity.
         /// </summary>
         /// <remarks>
@@ -59,6 +68,19 @@ namespace OpenTelemetry.Instrumentation.Http
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
         /// </remarks>
         public bool RecordException { get; set; }
+
+        internal bool WebRequestEventFilter(HttpWebRequest request)
+        {
+            try
+            {
+                return this.WebRequestFilter?.Invoke(request) ?? true;
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(string activityName, object arg1)

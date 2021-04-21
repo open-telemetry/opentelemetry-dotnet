@@ -224,9 +224,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(
-                    null,
-                    c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                .AddHttpClientInstrumentation(c => c.WebRequestFilter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
             using var c = new HttpClient();
@@ -241,7 +239,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(null, c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
+                .AddHttpClientInstrumentation(c => c.WebRequestFilter = (req) => throw new Exception("From Instrumentation filter"))
                 .Build();
 
             using var c = new HttpClient();
@@ -250,21 +248,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.GetAsync(this.url);
                 Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
-        }
-
-        [Fact]
-        public void AddHttpClientInstrumentationUsesHttpWebRequestInstrumentationOptions()
-        {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var tracerProviderSdk = Sdk.CreateTracerProviderBuilder()
-                .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(
-                    null,
-                    options =>
-                    {
-                        Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
-                    })
-                .Build();
         }
     }
 }
