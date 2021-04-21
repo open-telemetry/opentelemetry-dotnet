@@ -18,6 +18,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -118,8 +119,8 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 }));
         }
 
-        [Fact(Skip = "Known limitation. See issue 1215.")]
-        public void AddOpenTelemetryTracerProvider_Idempotent()
+        [Fact]
+        public async Task AddOpenTelemetryTracerProvider_Idempotent()
         {
             var testInstrumentation1 = new TestInstrumentation();
             var testInstrumentation2 = new TestInstrumentation();
@@ -138,8 +139,11 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var telemetryHostedService = new TelemetryHostedService(serviceProvider);
+            Assert.NotNull(telemetryHostedService);
+
+            await telemetryHostedService.StartAsync(default).ConfigureAwait(false);
+            await telemetryHostedService.StopAsync(default).ConfigureAwait(false);
 
             Assert.False(testInstrumentation1.Disposed);
             Assert.False(testInstrumentation2.Disposed);

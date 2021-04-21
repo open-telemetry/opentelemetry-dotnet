@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
                 // This method is invoked when host starts, and
                 // by requesting the TracerProvider from DI
                 // it ensures all instrumentations gets started.
-                this.serviceProvider.GetRequiredService<TracerProvider>();
+                this.serviceProvider.GetRequiredService<IEnumerable<TracerProvider>>();
             }
             catch (Exception ex)
             {
