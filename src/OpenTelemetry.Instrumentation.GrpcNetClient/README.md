@@ -10,8 +10,8 @@ and collects telemetry about outgoing gRPC requests.
 ## Supported .NET Versions
 
 This package targets
-[`NETSTANDARD2.1`](https://docs.microsoft.com/dotnet/standard/net-standard#net-implementation-support)
-and hence can be used in any .NET versions implementing `NETSTANDARD2.1`.
+[`NETSTANDARD2.0`](https://docs.microsoft.com/dotnet/standard/net-standard#net-implementation-support)
+and hence can be used in any .NET versions implementing `NETSTANDARD2.0`.
 
 ## Steps to enable OpenTelemetry.Instrumentation.GrpcNetClient
 
