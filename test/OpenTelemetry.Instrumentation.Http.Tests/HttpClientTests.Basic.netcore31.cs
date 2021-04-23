@@ -392,7 +392,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
-            Assert.True(request.Headers.TryGetValues("Baggage", out var baggages));
+            Assert.True(request.Headers.TryGetValues("baggage", out var baggages));
             Assert.Single(traceparents);
             Assert.Single(tracestates);
             Assert.Single(baggages);

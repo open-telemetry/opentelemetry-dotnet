@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc4
+
+Released 2021-Apr-23
+
 * Activities are now created with the `db.system` attribute set for usage
   during sampling. ([#1984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1984))
 
