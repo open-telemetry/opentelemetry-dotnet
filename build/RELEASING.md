@@ -18,7 +18,7 @@ Only for Maintainers.
      $ended = $false
      foreach ($line in $lines)
          {
-            if($line -like "## *" -and $started -ne $true)
+            if($line -like "## Unreleased" -and $started -ne $true)
             {
               $started = $true
             }

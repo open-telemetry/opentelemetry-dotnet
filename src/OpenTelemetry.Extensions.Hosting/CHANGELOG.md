@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc4
+
+Released 2021-Apr-23
+
 * Added `AddInstrumentation<T>`, `AddProcessor<T>`, `SetSampler<T>`, and
   `Configure` extensions to support dependency injection through the
   OpenTelemetry.Extensions.Hosting `TracerProviderBuilder`.
