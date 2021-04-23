@@ -35,13 +35,14 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         private const string OperationNameGrpcOut = "Grpc.Net.Client.GrpcOut";
         private const string OperationNameHttpOut = "System.Net.Http.HttpRequestOut";
 
-        private readonly GrpcServer<GreeterService> server;
+        private readonly GrpcServer server;
 
         public GrpcTests()
         {
-            this.server = new GrpcServer<GreeterService>();
+            this.server = new GrpcServer();
         }
 
+#if !NETFRAMEWORK
         [Theory]
         [InlineData(null)]
         [InlineData(true)]
@@ -108,6 +109,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
+
+#endif
 
         public void Dispose()
         {

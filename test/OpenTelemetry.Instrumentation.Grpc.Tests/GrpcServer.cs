@@ -13,18 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
+#if !NETFRAMEWORK
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests
 {
-    public class GrpcServer<TService> : IDisposable
-        where TService : class
+    public class GrpcServer : IDisposable
     {
         private static readonly Random GlobalRandom = new Random();
 
@@ -94,9 +94,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
                 app.UseEndpoints(endpoints =>
                 {
-                    endpoints.MapGrpcService<TService>();
+                    endpoints.MapGrpcService<GreeterService>();
                 });
             }
         }
     }
 }
+#endif

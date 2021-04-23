@@ -64,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-                var channel = GrpcChannel.ForAddress(uri);
+                var channel = GetChannel(uri);
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -127,16 +127,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-#if NETCOREAPP3_1
-                using var channel = GrpcChannel.ForAddress(uri);
-#else
-                // With net5, based on the grpc changes, the quantity of default activities changed.
-                // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
-                using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
-                {
-                    HttpClient = new HttpClient(),
-                });
-#endif
+                using var channel = GetChannel(uri);
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -185,7 +176,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 },
                 (value) =>
                 {
-                    var channel = GrpcChannel.ForAddress(uri);
+                    var channel = GetChannel(uri);
                     var client = new Greeter.GreeterClient(channel);
                     var rs = client.SayHello(new HelloRequest());
                 });
@@ -265,7 +256,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     using (var activity = source.StartActivity("parent"))
                     {
                         Assert.NotNull(activity);
-                        var channel = GrpcChannel.ForAddress(uri);
+                        var channel = GetChannel(uri);
                         var client = new Greeter.GreeterClient(channel);
                         var rs = client.SayHello(new HelloRequest());
                     }
@@ -338,7 +329,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 {
                     using (var activity = source.StartActivity("parent"))
                     {
-                        var channel = GrpcChannel.ForAddress(uri);
+                        var channel = GetChannel(uri);
                         var client = new Greeter.GreeterClient(channel);
                         var rs = client.SayHello(new HelloRequest(), headers);
                     }
@@ -404,7 +395,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     {
                         using (SuppressInstrumentationScope.Begin())
                         {
-                            var channel = GrpcChannel.ForAddress(uri);
+                            var channel = GetChannel(uri);
                             var client = new Greeter.GreeterClient(channel);
                             var rs = client.SayHello(new HelloRequest());
                         }
@@ -458,6 +449,25 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 default:
                     break;
             }
+        }
+
+        private static GrpcChannel GetChannel(Uri uri)
+        {
+#if NETFRAMEWORK
+            return GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
+            {
+                HttpHandler = new WinHttpHandler(),
+            });
+#elif NETCOREAPP3_1
+            return GrpcChannel.ForAddress(uri);
+#else
+            // With net5, based on the grpc changes, the quantity of default activities changed.
+            // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
+            return GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
+            {
+                HttpClient = new HttpClient(),
+            });
+#endif
         }
 
         private static Predicate<IInvocation> GeneratePredicateForMoqProcessorActivity(string methodName, string activityOperationName)
