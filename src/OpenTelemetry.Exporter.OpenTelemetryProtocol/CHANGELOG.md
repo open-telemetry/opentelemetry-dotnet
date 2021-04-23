@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * Resolves `System.TypeInitializationException` exception when using the
   exporter with an application that references Google.Protobuf 3.15. The OTLP
   exporter now depends on Google.Protobuf 3.15.5 enabling the use of the new
