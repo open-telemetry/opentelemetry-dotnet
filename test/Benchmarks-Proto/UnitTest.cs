@@ -43,9 +43,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoOld()
         {
-            var bytes = global::ProtoBench.ProtoOld.Encode(false, this.resources, this.labels, 1, 100, 1);
+            var bytes = global::ProtoBench.Otlp040.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
 
-            var extracts = global::ProtoBench.ProtoOld.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp040.Decode(bytes);
 
             Assert.Equal(305, extracts.Count);
         }
@@ -53,9 +53,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoNew()
         {
-            var bytes = global::ProtoBench.ProtoNew.Encode(false, this.resources, this.labels, 1, 100, 1);
+            var bytes = global::ProtoBench.Otlp080.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
 
-            var extracts = global::ProtoBench.ProtoNew.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp080.Decode(bytes);
 
             Assert.Equal(305, extracts.Count);
         }
@@ -63,9 +63,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoOldSummary()
         {
-            var bytes = global::ProtoBench.ProtoOld.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
+            var bytes = global::ProtoBench.Otlp040.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
 
-            var extracts = global::ProtoBench.ProtoOld.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp040.Decode(bytes);
 
             Assert.Equal(405, extracts.Count);
         }
@@ -73,9 +73,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoNewSummary()
         {
-            var bytes = global::ProtoBench.ProtoNew.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
+            var bytes = global::ProtoBench.Otlp080.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
 
-            var extracts = global::ProtoBench.ProtoNew.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp080.Decode(bytes);
 
             Assert.Equal(405, extracts.Count);
         }
@@ -83,9 +83,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoOldHistogram()
         {
-            var bytes = global::ProtoBench.ProtoOld.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 10, 20);
+            var bytes = global::ProtoBench.Otlp040.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 10, 20);
 
-            var extracts = global::ProtoBench.ProtoOld.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp040.Decode(bytes);
 
             Assert.Equal(1505, extracts.Count);
         }
@@ -93,9 +93,9 @@ namespace ProtoBench
         [Fact]
         public void ProtoNewHistogram()
         {
-            var bytes = global::ProtoBench.ProtoNew.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 10, 20);
+            var bytes = global::ProtoBench.Otlp080.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 10, 20);
 
-            var extracts = global::ProtoBench.ProtoNew.Decode(bytes);
+            var extracts = global::ProtoBench.Otlp080.Decode(bytes);
 
             Assert.Equal(1505, extracts.Count);
         }

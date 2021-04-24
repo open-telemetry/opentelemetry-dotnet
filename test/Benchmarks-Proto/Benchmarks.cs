@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 
 /*
@@ -58,16 +59,12 @@ namespace ProtoBench
     {
         private (string name, object value)[] resources;
         private (string name, string value)[] labels;
-        private byte[] oldIntBytes;
-        private byte[] newIntBytes;
-        private byte[] oldDoubleBytes;
-        private byte[] newDoubleBytes;
-        private byte[] oldIntBatchBytes;
-        private byte[] newIntBatchBytes;
-        private byte[] oldSummaryBytes;
-        private byte[] newSummaryBytes;
-        private byte[] oldHistogramBytes;
-        private byte[] newHistogramBytes;
+        private byte[] bytesGauge;
+        private byte[] bytesSummary;
+        private byte[] bytesHistogram;
+
+        [Params("0.4.0", "0.5.0", "0.6.0", "0.7.0", "0.8.0")]
+        public string Version { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -86,160 +83,195 @@ namespace ProtoBench
                 ("label2", "val2"),
             };
 
-            this.newIntBytes = ProtoNew.Encode(false, this.resources, this.labels, 1, 100, 1);
-            this.oldIntBytes = ProtoOld.Encode(false, this.resources, this.labels, 1, 100, 1);
-
-            this.newDoubleBytes = ProtoNew.Encode(true, this.resources, this.labels, 1, 100, 1);
-            this.oldDoubleBytes = ProtoOld.Encode(true, this.resources, this.labels, 1, 100, 1);
-
-            this.newIntBatchBytes = ProtoNew.Encode(false, this.resources, this.labels, 1, 100, 5);
-            this.oldIntBatchBytes = ProtoOld.Encode(false, this.resources, this.labels, 1, 100, 5);
-
-            this.newSummaryBytes = ProtoNew.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
-            this.oldSummaryBytes = ProtoOld.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
-
-            this.newHistogramBytes = ProtoNew.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 2, 2);
-            this.oldHistogramBytes = ProtoOld.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 2, 2);
+            this.bytesGauge = this.EncodeGauge();
+            this.bytesSummary = this.EncodeSummary();
+            this.bytesHistogram = this.EncodeHistogram();
         }
 
         [Benchmark]
-        public int EncodeIntNew()
+        public byte[] EncodeGauge()
         {
-            var bytes = ProtoNew.Encode(false, this.resources, this.labels, 1, 100, 1);
-            return bytes.Length;
+            byte[] bytes = new byte[0];
+
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    bytes = Otlp040.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    break;
+
+                case "0.5.0":
+                    bytes = Otlp050.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    break;
+
+                case "0.6.0":
+                    bytes = Otlp060.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    break;
+
+                case "0.7.0":
+                    bytes = Otlp070.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    break;
+
+                case "0.8.0":
+                    bytes = Otlp080.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    break;
+            }
+
+            return bytes;
         }
 
         [Benchmark]
-        public int EncodeIntOld()
+        public List<string> DecodeGauge()
         {
-            var bytes = ProtoOld.Encode(false, this.resources, this.labels, 1, 100, 1);
-            return bytes.Length;
+            List<string> extracts = new List<string>();
+
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    extracts = Otlp040.Decode(this.bytesGauge);
+                    break;
+
+                case "0.5.0":
+                    extracts = Otlp050.Decode(this.bytesGauge);
+                    break;
+
+                case "0.6.0":
+                    extracts = Otlp060.Decode(this.bytesGauge);
+                    break;
+
+                case "0.7.0":
+                    extracts = Otlp070.Decode(this.bytesGauge);
+                    break;
+
+                case "0.8.0":
+                    extracts = Otlp080.Decode(this.bytesGauge);
+                    break;
+            }
+
+            return extracts;
         }
 
         [Benchmark]
-        public int DecodeIntNew()
+        public byte[] EncodeSummary()
         {
-            var extracts = ProtoNew.Decode(this.newIntBytes);
-            return extracts.Count;
+            byte[] bytes = new byte[0];
+
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    bytes = Otlp040.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    break;
+
+                case "0.5.0":
+                    bytes = Otlp050.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    break;
+
+                case "0.7.0":
+                    bytes = Otlp070.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    break;
+
+                case "0.6.0":
+                    bytes = Otlp060.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    break;
+
+                case "0.8.0":
+                    bytes = Otlp080.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    break;
+            }
+
+            return bytes;
         }
 
         [Benchmark]
-        public int DecodeIntOld()
+        public List<string> DecodeSummary()
         {
-            var extracts = ProtoOld.Decode(this.oldIntBytes);
-            return extracts.Count;
+            List<string> extracts = new List<string>();
+
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    extracts = Otlp040.Decode(this.bytesSummary);
+                    break;
+
+                case "0.5.0":
+                    extracts = Otlp050.Decode(this.bytesSummary);
+                    break;
+
+                case "0.6.0":
+                    extracts = Otlp060.Decode(this.bytesSummary);
+                    break;
+
+                case "0.7.0":
+                    extracts = Otlp070.Decode(this.bytesSummary);
+                    break;
+
+                case "0.8.0":
+                    extracts = Otlp080.Decode(this.bytesSummary);
+                    break;
+            }
+
+            return extracts;
         }
 
         [Benchmark]
-        public int EncodeIntBatchNew()
+        public byte[] EncodeHistogram()
         {
-            var bytes = ProtoNew.Encode(false, this.resources, this.labels, 1, 100, 5);
-            return bytes.Length;
+            byte[] bytes = new byte[0];
+
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    bytes = Otlp040.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    break;
+
+                case "0.5.0":
+                    bytes = Otlp050.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    break;
+
+                case "0.7.0":
+                    bytes = Otlp070.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    break;
+
+                case "0.6.0":
+                    bytes = Otlp060.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    break;
+
+                case "0.8.0":
+                    bytes = Otlp080.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    break;
+            }
+
+            return bytes;
         }
 
         [Benchmark]
-        public int EncodeIntBatchOld()
+        public List<string> DecodeHistogram()
         {
-            var bytes = ProtoOld.Encode(false, this.resources, this.labels, 1, 100, 5);
-            return bytes.Length;
-        }
+            List<string> extracts = new List<string>();
 
-        [Benchmark]
-        public int DecodeIntBatchNew()
-        {
-            var extracts = ProtoNew.Decode(this.newIntBatchBytes);
-            return extracts.Count;
-        }
+            switch (this.Version)
+            {
+                case "0.4.0":
+                    extracts = Otlp040.Decode(this.bytesHistogram);
+                    break;
 
-        [Benchmark]
-        public int DecodeIntBatchOld()
-        {
-            var extracts = ProtoOld.Decode(this.oldIntBatchBytes);
-            return extracts.Count;
-        }
+                case "0.5.0":
+                    extracts = Otlp050.Decode(this.bytesHistogram);
+                    break;
 
-        [Benchmark]
-        public int EncodeDoubleNew()
-        {
-            var bytes = ProtoNew.Encode(true, this.resources, this.labels, 1, 100, 1);
-            return bytes.Length;
-        }
+                case "0.7.0":
+                    extracts = Otlp070.Decode(this.bytesHistogram);
+                    break;
 
-        [Benchmark]
-        public int EncodeDoubleOld()
-        {
-            var bytes = ProtoOld.Encode(true, this.resources, this.labels, 1, 100, 1);
-            return bytes.Length;
-        }
+                case "0.6.0":
+                    extracts = Otlp060.Decode(this.bytesHistogram);
+                    break;
 
-        [Benchmark]
-        public int DecodeDoubleNew()
-        {
-            var extracts = ProtoNew.Decode(this.newDoubleBytes);
-            return extracts.Count;
-        }
+                case "0.8.0":
+                    extracts = Otlp080.Decode(this.bytesHistogram);
+                    break;
+            }
 
-        [Benchmark]
-        public int DecodeDoubleOld()
-        {
-            var extracts = ProtoOld.Decode(this.oldDoubleBytes);
-            return extracts.Count;
-        }
-
-        [Benchmark]
-        public int EncodeSummaryNew()
-        {
-            var bytes = ProtoNew.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
-            return bytes.Length;
-        }
-
-        [Benchmark]
-        public int EncodeSummaryOld()
-        {
-            var bytes = ProtoOld.EncodeSummary(this.resources, this.labels, 1, 100, 1, 10);
-            return bytes.Length;
-        }
-
-        [Benchmark]
-        public int DecodeSummaryNew()
-        {
-            var extracts = ProtoNew.Decode(this.newSummaryBytes);
-            return extracts.Count;
-        }
-
-        [Benchmark]
-        public int DecodeSummaryOld()
-        {
-            var extracts = ProtoOld.Decode(this.oldSummaryBytes);
-            return extracts.Count;
-        }
-
-        [Benchmark]
-        public int EncodeHistogramNew()
-        {
-            var bytes = ProtoNew.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 2, 2);
-            return bytes.Length;
-        }
-
-        [Benchmark]
-        public int EncodeHistogramOld()
-        {
-            var bytes = ProtoOld.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 2, 2);
-            return bytes.Length;
-        }
-
-        [Benchmark]
-        public int DecodeHistogramNew()
-        {
-            var extracts = ProtoNew.Decode(this.newHistogramBytes);
-            return extracts.Count;
-        }
-
-        [Benchmark]
-        public int DecodeHistogramOld()
-        {
-            var extracts = ProtoOld.Decode(this.oldHistogramBytes);
-            return extracts.Count;
+            return extracts;
         }
     }
 }
