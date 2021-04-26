@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         static HttpWebRequestActivitySource()
         {
-#if NET46_OR_GREATER || NETSTANDARD
+#if NETSTANDARD
             if (RuntimeInformation.FrameworkDescription.Contains("Framework"))
 #endif
             {
