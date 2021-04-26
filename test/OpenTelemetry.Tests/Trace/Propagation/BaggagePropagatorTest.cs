@@ -134,6 +134,32 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
+        public void ValidateSpecialCharsBaggageExtraction()
+        {
+            var carrier = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A"),
+            };
+
+            var propagationContext = this.baggage.Extract(default, carrier, GetterList);
+
+            Assert.False(propagationContext == default);
+            Assert.True(propagationContext.ActivityContext == default);
+
+            Assert.Equal(2, propagationContext.Baggage.Count);
+
+            var actualBaggage = propagationContext.Baggage.GetBaggage();
+
+            Assert.Equal(2, actualBaggage.Count);
+
+            Assert.True(actualBaggage.ContainsKey("key 1"));
+            Assert.Equal("value 1", actualBaggage["key 1"]);
+
+            Assert.True(actualBaggage.ContainsKey("key2"));
+            Assert.Equal("!x_x,x-x&x(x\");:", actualBaggage["key2"]);
+        }
+
+        [Fact]
         public void ValidateEmptyBaggageInjection()
         {
             var carrier = new Dictionary<string, string>();
@@ -158,6 +184,24 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             Assert.Single(carrier);
             Assert.Equal("key1=value1,key2=value2", carrier[BaggagePropagator.BaggageHeaderName]);
+        }
+
+        [Fact]
+        public void ValidateSpecialCharsBaggageInjection()
+        {
+            var carrier = new Dictionary<string, string>();
+            var propagationContext = new PropagationContext(
+                default,
+                new Baggage(new Dictionary<string, string>
+                {
+                    { "key 1", "value 1" },
+                    { "key2", "!x_x,x-x&x(x\");:" },
+                }));
+
+            this.baggage.Inject(propagationContext, carrier, Setter);
+
+            Assert.Single(carrier);
+            Assert.Equal("key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
         }
     }
 }

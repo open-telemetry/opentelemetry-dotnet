@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using OpenTelemetry.Internal;
 
@@ -107,7 +106,7 @@ namespace OpenTelemetry.Context.Propagation
                         continue;
                     }
 
-                    baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
+                    baggage.Append(Uri.EscapeDataString(item.Key)).Append('=').Append(Uri.EscapeDataString(item.Value)).Append(',');
                 }
                 while (e.MoveNext() && ++itemCount < MaxBaggageItems && baggage.Length < MaxBaggageLength);
                 baggage.Remove(baggage.Length - 1, 1);
@@ -155,7 +154,9 @@ namespace OpenTelemetry.Context.Propagation
                             baggageDictionary = new Dictionary<string, string>();
                         }
 
-                        baggageDictionary[baggageItem.Name] = baggageItem.Value;
+                        var key = Uri.UnescapeDataString(baggageItem.Name);
+                        var value = Uri.UnescapeDataString(baggageItem.Value);
+                        baggageDictionary[key] = value;
                     }
                 }
             }
