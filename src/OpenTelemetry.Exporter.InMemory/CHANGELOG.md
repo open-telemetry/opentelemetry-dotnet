@@ -9,6 +9,14 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 ## 1.0.1
 
 Released 2021-Feb-10

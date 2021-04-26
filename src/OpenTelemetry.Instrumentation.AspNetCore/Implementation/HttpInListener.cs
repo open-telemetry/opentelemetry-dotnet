@@ -121,6 +121,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     {
                         AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
+                        activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                         return;
                     }
                 }
@@ -128,6 +129,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
                 }
 

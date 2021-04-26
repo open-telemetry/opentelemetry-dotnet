@@ -28,7 +28,7 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public class BaggagePropagator : TextMapPropagator
     {
-        internal const string BaggageHeaderName = "Baggage";
+        internal const string BaggageHeaderName = "baggage";
 
         private const int MaxBaggageLength = 8192;
         private const int MaxBaggageItems = 180;

@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 
@@ -35,15 +37,19 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         internal const string ActivityName = ActivitySourceName + ".Execute";
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly IEnumerable<KeyValuePair<string, object>> CreationTags = new[]
+        {
+            new KeyValuePair<string, object>(SemanticConventions.AttributeDbSystem, "redis"),
+        };
+
+        internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
+            = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
 
         private readonly StackExchangeRedisCallsInstrumentationOptions options;
         private readonly EventWaitHandle stopHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
         private readonly Thread drainThread;
 
         private readonly ProfilingSession defaultSession = new ProfilingSession();
-
-        private readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> cache
-            = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StackExchangeRedisCallsInstrumentation"/> class.
@@ -91,10 +97,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 // Try to reuse a session for all activities created under the same TraceId+SpanId.
                 var cacheKey = (parent.TraceId, parent.SpanId);
-                if (!this.cache.TryGetValue(cacheKey, out var session))
+                if (!this.Cache.TryGetValue(cacheKey, out var session))
                 {
                     session = (parent, new ProfilingSession());
-                    this.cache.TryAdd(cacheKey, session);
+                    this.Cache.TryAdd(cacheKey, session);
                 }
 
                 return session.Session;
@@ -112,24 +118,11 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
             this.stopHandle.Dispose();
         }
 
-        private void DrainEntries(object state)
-        {
-            while (true)
-            {
-                if (this.stopHandle.WaitOne(this.options.FlushInterval))
-                {
-                    break;
-                }
-
-                this.Flush();
-            }
-        }
-
-        private void Flush()
+        internal void Flush()
         {
             RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling());
 
-            foreach (var entry in this.cache)
+            foreach (var entry in this.Cache)
             {
                 var parent = entry.Value.Activity;
                 if (parent.Duration == TimeSpan.Zero)
@@ -140,6 +133,20 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
                 ProfilingSession session = entry.Value.Session;
                 RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
+                this.Cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
+            }
+        }
+
+        private void DrainEntries(object state)
+        {
+            while (true)
+            {
+                if (this.stopHandle.WaitOne(this.options.FlushInterval))
+                {
+                    break;
+                }
+
+                this.Flush();
             }
         }
     }

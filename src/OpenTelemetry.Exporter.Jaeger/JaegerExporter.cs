@@ -158,6 +158,13 @@ namespace OpenTelemetry.Exporter
             if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
             {
                 this.SendCurrentBatch();
+
+                // SendCurrentBatch clears/invalidates the BufferWriter in InMemoryTransport.
+                // The new spanMessage is still located in it, though. It might get overwritten later
+                // when spans are written in the buffer for the next batch.
+                // Move spanMessage to the beginning of the BufferWriter to avoid data corruption.
+                this.memoryTransport.Write(spanMessage.BufferWriter.Buffer, spanMessage.Offset, spanMessage.Count);
+                spanMessage = this.memoryTransport.ToBuffer();
             }
 
             this.Batch.Add(spanMessage);
