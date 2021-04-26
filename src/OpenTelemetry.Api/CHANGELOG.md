@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+* `BaggagePropagator` now uses `baggage` as the header name instead of `Baggage`
+  to `Extract` from and `Inject` to `carrier`
+  ([#2003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2003))
+
 ## 1.1.0-beta1
 
 Released 2021-Mar-19
