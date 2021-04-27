@@ -171,6 +171,29 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Null(activity.GetTagValue("Tag2"));
         }
 
+        [Theory]
+        [InlineData("Key", "Value", true)]
+        [InlineData("CustomTag", null, false)]
+        public void CheckFirstTag(string tagName, object expectedTagValue, bool expectedResult)
+        {
+            Activity activity = new Activity("Test");
+            activity.SetTag("Key", "Value");
+
+            var result = activity.CheckFirstTag(tagName, out var tagValue);
+            Assert.Equal(expectedResult, result);
+            Assert.Equal(expectedTagValue, tagValue);
+        }
+
+        [Fact]
+        public void CheckFirstTagReturnsFalseForActivityWithNoTags()
+        {
+            Activity activity = new Activity("Test");
+
+            var result = activity.CheckFirstTag("Key", out var tagValue);
+            Assert.False(result);
+            Assert.Null(tagValue);
+        }
+
         [Fact]
         public void EnumerateTagValuesEmpty()
         {

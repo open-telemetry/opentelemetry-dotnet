@@ -177,8 +177,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // List of invocations
             // 1. SetParentProvider for TracerProviderSdk
             // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
-            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
+            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, true)
+            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, true)
 
             // we should only call Processor.OnEnd once for the sibling activity
             Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 #else
             // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
             // is always ignored and new one is created by the Instrumentation
-            Assert.True(activity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation);
+            Assert.True(activity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && tagValue is bool isCreatedByInstrumentation && isCreatedByInstrumentation);
 #endif
             Assert.Equal("api/Values/{id}", activity.DisplayName);
 
@@ -242,8 +242,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // List of invocations on the processor
                 // 1. SetParentProvider for TracerProviderSdk
                 // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
-                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the customProperty IsCreatedByInstrumentation set to true
+                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, true)
+                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, true)
                 Assert.Equal(4, activityProcessor.Invocations.Count);
 
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
@@ -261,14 +261,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Single(startedActivities, item =>
                 {
                     var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
+                    return startedActivity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && tagValue is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
                 });
 
                 // Only the sibling activity is sent to Processor.OnEnd
                 Assert.Single(stoppedActivities, item =>
                 {
                     var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.GetCustomProperty("IsCreatedByInstrumentation") is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
+                    return stoppedActivity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && tagValue is bool isCreatedByInstrumentation && isCreatedByInstrumentation;
                 });
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
