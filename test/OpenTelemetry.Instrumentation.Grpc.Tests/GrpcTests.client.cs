@@ -458,15 +458,15 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             {
                 HttpHandler = new WinHttpHandler(),
             });
-#elif NETCOREAPP3_1
-            return GrpcChannel.ForAddress(uri);
-#else
+#elif NET5_0
             // With net5, based on the grpc changes, the quantity of default activities changed.
             // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
             return GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
             {
                 HttpClient = new HttpClient(),
             });
+#else
+            return GrpcChannel.ForAddress(uri);
 #endif
         }
 

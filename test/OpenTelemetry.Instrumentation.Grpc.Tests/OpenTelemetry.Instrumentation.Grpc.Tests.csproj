@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry Grpc for .NET instrumentation</Description>
-    <TargetFrameworks>netcoreapp3.1;net5.0;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <!-- This should also target net461, but it requires a preview build of windows to work which we don't have on the build server -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +23,7 @@
     <PackageReference Include="Grpc.AspNetCore.Server" Version="$(GrpcAspNetCoreServerPkgVer)" Condition="'$(TargetFramework)' != 'net461'" />
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="All" />
-    <PackageReference Include="Grpc.Core" Version="2.37.0" Condition="'$(TargetFramework)' == 'net461'" />
+    <PackageReference Include="Grpc.Core" Version="$(GrpcPkgVer)" Condition="'$(TargetFramework)' == 'net461'" />
     <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.0-preview.3.21201.4" Condition="'$(TargetFramework)' == 'net461'" />
   </ItemGroup>
 
