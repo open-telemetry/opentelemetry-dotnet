@@ -59,6 +59,40 @@ of Windows.
 * Visual Studio 2017+ or Visual Studio Code
 * .NET Framework 4.6+
 
+### Visual Studio Code
+
+This repository contains example configuration for Visual Studio Code located
+under `.vscode.example`. You can copy it to `.vscode`.
+
+```sh
+cp -r .vscode.example .vscode
+```
+
+#### OmniSharp issues
+
+Because of [Mono missing features](https://github.com/OmniSharp/omnisharp-vscode#note-about-using-net-5-sdks),
+`omnisharp.useGlobalMono` may have to be set to `never`.
+
+To do so, go to `File` -> `Preferences` -> `Settings` -> `Extensions` -> `C# Configuration` -> Change `Omnisharp: Use Global Mono` to `never`.
+
+Afterwards, you have to restart OmniSharp: `F1` -> `OmniSharp: Restart OmniSharp`.
+
+### Development Container
+
+The repository also contains configuration for developing inside a Container
+([installation steps](https://code.visualstudio.com/docs/remote/containers#_installation))
+using [Visual Studio Code Remote - Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+located under `.devcontainer.example`. You can copy it to `.devcontainer`.
+
+```sh
+cp -r .devcontainer.example .devcontainer
+```
+
+The Development Container configuration mixes
+[Docker in Docker](https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-in-docker)
+and [C# (.NET)](https://github.com/microsoft/vscode-dev-containers/tree/master/containers/dotnet)
+definitions. Thanks to it you can use `docker` and `docker-compose` inside the container.
+
 ### Public API
 
 It is critical to keep public API surface small and clean. This repository is
