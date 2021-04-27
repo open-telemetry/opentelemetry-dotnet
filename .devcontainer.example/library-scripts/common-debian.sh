@@ -267,7 +267,7 @@ EOF
 )"
 
 # Adapted Oh My Zsh! install step to work with both "Oh Mys" rather than relying on an installer script
-# See https://github.com/ohmyzsh/ohmyzsh/blob/master/tools/install.sh for offical script.
+# See https://github.com/ohmyzsh/ohmyzsh/blob/master/tools/install.sh for official script.
 install-oh-my()
 {
     local OH_MY=$1
