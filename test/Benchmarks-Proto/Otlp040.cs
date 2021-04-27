@@ -43,6 +43,7 @@ namespace ProtoBench
             for (var lib = 0; lib < numLibs; lib++)
             {
                 var instMetric = new InstrumentationLibraryMetrics();
+
                 instMetric.InstrumentationLibrary = new InstrumentationLibrary();
                 instMetric.InstrumentationLibrary.Name = $"Library{lib}";
                 instMetric.InstrumentationLibrary.Version = "1.0.0";
@@ -140,6 +141,7 @@ namespace ProtoBench
             for (var lib = 0; lib < numLibs; lib++)
             {
                 var instMetric = new InstrumentationLibraryMetrics();
+
                 instMetric.InstrumentationLibrary = new InstrumentationLibrary();
                 instMetric.InstrumentationLibrary.Name = $"Library{lib}";
                 instMetric.InstrumentationLibrary.Version = "1.0.0";
@@ -169,6 +171,8 @@ namespace ProtoBench
                         datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.Labels.AddRange(stringLabels);
+                        datapoint.Count = 1;
+                        datapoint.Sum = tsx + 100.1;
 
                         for (int qv = 0; qv < numQV; qv++)
                         {
@@ -256,6 +260,7 @@ namespace ProtoBench
                     for (int tsx = 0; tsx < numTimeseries; tsx++)
                     {
                         var datapoint = new HistogramDataPoint();
+
                         datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.Labels.AddRange(stringLabels);
@@ -269,8 +274,9 @@ namespace ProtoBench
                             for (int ex = 0; ex < numExemplars; ex++)
                             {
                                 var buck = new HistogramDataPoint.Types.Bucket();
-                                buck.Exemplar = new HistogramDataPoint.Types.Bucket.Types.Exemplar();
                                 buck.Count++;
+
+                                buck.Exemplar = new HistogramDataPoint.Types.Bucket.Types.Exemplar();
                                 buck.Exemplar.Value = qv;
                                 datapoint.Buckets.Add(buck);
                             }
@@ -350,19 +356,6 @@ namespace ProtoBench
                     {
                         extracts.Add(metric.MetricDescriptor.Name);
 
-                        if (metric.DoubleDataPoints.Count > 0)
-                        {
-                            double sumd = 0.0;
-                            foreach (var dp in metric.DoubleDataPoints)
-                            {
-                                extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
-
-                                sumd += dp.Value;
-                            }
-
-                            extracts.Add($"sum:{sumd}");
-                        }
-
                         if (metric.Int64DataPoints.Count > 0)
                         {
                             long suml = 0;
@@ -374,6 +367,19 @@ namespace ProtoBench
                             }
 
                             extracts.Add($"sum:{suml}");
+                        }
+
+                        if (metric.DoubleDataPoints.Count > 0)
+                        {
+                            double sumd = 0.0;
+                            foreach (var dp in metric.DoubleDataPoints)
+                            {
+                                extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
+
+                                sumd += dp.Value;
+                            }
+
+                            extracts.Add($"sum:{sumd}");
                         }
 
                         if (metric.SummaryDataPoints.Count > 0)
@@ -390,10 +396,10 @@ namespace ProtoBench
 
                         if (metric.HistogramDataPoints.Count > 0)
                         {
-                            double sumd = 0.0;
-
                             foreach (var dp in metric.HistogramDataPoints)
                             {
+                                double sumd = 0.0;
+
                                 extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
 
                                 extracts.Add(string.Join(",", dp.Buckets.Select(k => $"{k.Count}")));
@@ -405,9 +411,9 @@ namespace ProtoBench
                                     extracts.Add(string.Join(",", buck.Exemplar.Attachments.Select(lbl => $"{lbl.Key}={lbl.Value}")));
                                     sumd += buck.Exemplar.Value;
                                 }
-                            }
 
-                            extracts.Add($"sum:{sumd}");
+                                extracts.Add($"sum:{sumd}");
+                            }
                         }
                     }
                 }

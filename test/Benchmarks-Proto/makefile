@@ -51,3 +51,39 @@ clean:
 	rm -r -f opentelemetry060
 	rm -r -f opentelemetry070
 	rm -r -f opentelemetry080
+
+strip:
+	cp opentelemetry040/proto/metrics/v1/metrics.proto protov040.txt
+	sed -i 's://.*::g' protov040.txt
+	sed -i 's:import.*::g' protov040.txt
+	sed -i 's:option.*::g' protov040.txt
+	sed -i 's:^[ ]*$$::g' protov040.txt
+	sed -i '/^$$/d' protov040.txt
+
+	cp opentelemetry050/proto/metrics/v1/metrics.proto protov050.txt
+	sed -i 's://.*::g' protov050.txt
+	sed -i 's:import.*::g' protov050.txt
+	sed -i 's:option.*::g' protov050.txt
+	sed -i 's:^[ ]*$$::g' protov050.txt
+	sed -i '/^$$/d' protov050.txt
+
+	cp opentelemetry060/proto/metrics/v1/metrics.proto protov060.txt
+	sed -i 's://.*::g' protov060.txt
+	sed -i 's:import.*::g' protov060.txt
+	sed -i 's:option.*::g' protov060.txt
+	sed -i 's:^[ ]*$$::g' protov060.txt
+	sed -i '/^$$/d' protov060.txt
+
+	cp opentelemetry070/proto/metrics/v1/metrics.proto protov070.txt
+	sed -i 's://.*::g' protov070.txt
+	sed -i 's:import.*::g' protov070.txt
+	sed -i 's:option.*::g' protov070.txt
+	sed -i 's:^[ ]*$$::g' protov070.txt
+	sed -i '/^$$/d' protov070.txt
+
+	cp opentelemetry080/proto/metrics/v1/metrics.proto protov080.txt
+	sed -i 's://.*::g' protov080.txt
+	sed -i 's:import.*::g' protov080.txt
+	sed -i 's:option.*::g' protov080.txt
+	sed -i 's:^[ ]*$$::g' protov080.txt
+	sed -i '/^$$/d' protov080.txt

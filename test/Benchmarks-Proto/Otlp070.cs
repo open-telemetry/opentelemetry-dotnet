@@ -38,7 +38,7 @@ namespace ProtoBench
         {
             DateTimeOffset dt = DateTimeOffset.UtcNow;
 
-            var instMetrics = new List<InstrumentationLibraryMetrics>();
+            var resmetric = new ResourceMetrics();
 
             for (int lib = 0; lib < numLibs; lib++)
             {
@@ -52,36 +52,56 @@ namespace ProtoBench
                 {
                     Metric metric = new Metric();
                     metric.Name = $"Metric_{m}";
-                    metric.DoubleGauge = new DoubleGauge();
 
-                    for (int dp = 0; dp < numPoints; dp++)
+                    var stringLabels = new RepeatedField<StringKeyValue>();
+                    foreach (var l in labels)
                     {
-                        var datapoint = new DoubleDataPoint();
+                        var kv = new StringKeyValue();
+                        kv.Key = l.name;
+                        kv.Value = l.value;
+                        stringLabels.Add(kv);
+                    }
 
-                        datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
-                        datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                    if (isDouble)
+                    {
+                        var gauge = new DoubleGauge();
+                        metric.DoubleGauge = gauge;
 
-                        foreach (var l in labels)
+                        for (int dp = 0; dp < numPoints; dp++)
                         {
-                            var kv = new StringKeyValue();
-                            kv.Key = l.name;
-                            kv.Value = l.value;
-                            datapoint.Labels.Add(kv);
+                            var datapoint = new DoubleDataPoint();
+
+                            datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.Labels.AddRange(stringLabels);
+                            datapoint.Value = (double)(dp + 100.1);
+
+                            gauge.DataPoints.Add(datapoint);
                         }
+                    }
+                    else
+                    {
+                        var gauge = new IntGauge();
+                        metric.IntGauge = gauge;
 
-                        datapoint.Value = (double)(dp + 100.1);
+                        for (int dp = 0; dp < numPoints; dp++)
+                        {
+                            var datapoint = new IntDataPoint();
 
-                        metric.DoubleGauge.DataPoints.Add(datapoint);
+                            datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.Labels.AddRange(stringLabels);
+                            datapoint.Value = (long)(dp + 100);
+
+                            gauge.DataPoints.Add(datapoint);
+                        }
                     }
 
                     instMetric.Metrics.Add(metric);
                 }
 
-                instMetrics.Add(instMetric);
+                resmetric.InstrumentationLibraryMetrics.Add(instMetric);
             }
-
-            var resmetric = new ResourceMetrics();
-            resmetric.InstrumentationLibraryMetrics.AddRange(instMetrics);
 
             resmetric.Resource = new Resource();
             resmetric.Resource.DroppedAttributesCount = 0;
@@ -335,12 +355,17 @@ namespace ProtoBench
                     {
                         extracts.Add(metric.Name);
 
+                        RepeatedField<IntDataPoint> idps = null;
                         RepeatedField<DoubleDataPoint> dps = null;
                         RepeatedField<DoubleSummaryDataPoint> sumdps = null;
                         RepeatedField<DoubleHistogramDataPoint> histdps = null;
 
                         switch (metric.DataCase)
                         {
+                            case Metric.DataOneofCase.IntGauge:
+                                idps = metric.IntGauge.DataPoints;
+                                break;
+
                             case Metric.DataOneofCase.DoubleGauge:
                                 dps = metric.DoubleGauge.DataPoints;
                                 break;
@@ -354,9 +379,22 @@ namespace ProtoBench
                                 break;
                         }
 
-                        if (dps is not null)
+                        if (idps is not null)
                         {
                             long suml = 0;
+
+                            foreach (var dp in idps)
+                            {
+                                extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
+
+                                suml += dp.Value;
+                            }
+
+                            extracts.Add($"sum:{suml}");
+                        }
+
+                        if (dps is not null)
+                        {
                             double sumd = 0;
 
                             foreach (var dp in dps)
@@ -366,7 +404,7 @@ namespace ProtoBench
                                 sumd += dp.Value;
                             }
 
-                            extracts.Add($"sum:{suml}/{sumd}");
+                            extracts.Add($"sum:{sumd}");
                         }
 
                         if (sumdps is not null)

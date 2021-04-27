@@ -43,6 +43,7 @@ namespace ProtoBench
             for (var lib = 0; lib < numLibs; lib++)
             {
                 var instMetric = new InstrumentationLibraryMetrics();
+
                 instMetric.InstrumentationLibrary = new InstrumentationLibrary();
                 instMetric.InstrumentationLibrary.Name = $"Library{lib}";
                 instMetric.InstrumentationLibrary.Version = "1.0.0";
@@ -340,23 +341,35 @@ namespace ProtoBench
                     {
                         extracts.Add(metric.Name);
 
-                        if (metric.DoubleGauge is not null)
+                        RepeatedField<IntDataPoint> idps = null;
+                        RepeatedField<DoubleDataPoint> dps = null;
+                        RepeatedField<DoubleDataPoint> sumdps = null;
+                        RepeatedField<DoubleHistogramDataPoint> histdps = null;
+
+                        switch (metric.DataCase)
                         {
-                            double sumd = 0.0;
-                            foreach (var dp in metric.DoubleGauge.DataPoints)
-                            {
-                                extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
+                            case Metric.DataOneofCase.IntGauge:
+                                idps = metric.IntGauge.DataPoints;
+                                break;
 
-                                sumd += dp.Value;
-                            }
+                            case Metric.DataOneofCase.DoubleGauge:
+                                dps = metric.DoubleGauge.DataPoints;
+                                break;
 
-                            extracts.Add($"sum:{sumd}");
+                            case Metric.DataOneofCase.DoubleSum:
+                                sumdps = metric.DoubleSum.DataPoints;
+                                break;
+
+                            case Metric.DataOneofCase.DoubleHistogram:
+                                histdps = metric.DoubleHistogram.DataPoints;
+                                break;
                         }
 
-                        if (metric.IntGauge is not null)
+                        if (idps is not null)
                         {
                             long suml = 0;
-                            foreach (var dp in metric.IntGauge.DataPoints)
+
+                            foreach (var dp in idps)
                             {
                                 extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
 
@@ -366,30 +379,51 @@ namespace ProtoBench
                             extracts.Add($"sum:{suml}");
                         }
 
-                        if (metric.DoubleSum is not null)
+                        if (dps is not null)
                         {
-                            foreach (var dp in metric.DoubleSum.DataPoints)
+                            double sumd = 0;
+
+                            foreach (var dp in dps)
+                            {
+                                extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
+
+                                sumd += dp.Value;
+                            }
+
+                            extracts.Add($"sum:{sumd}");
+                        }
+
+                        if (sumdps is not null)
+                        {
+                            foreach (var dp in sumdps)
                             {
                                 extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
 
                                 extracts.Add($"{dp.Value}");
-
-                                extracts.Add(string.Join(",", dp.Exemplars.Select(ex => $"{ex.Value}")));
                             }
                         }
 
-                        if (metric.DoubleHistogram is not null)
+                        if (histdps is not null)
                         {
-                            foreach (var dp in metric.DoubleHistogram.DataPoints)
+                            foreach (var dp in histdps)
                             {
                                 extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
 
-                                extracts.Add($"count:{dp.Count}");
-                                extracts.Add($"sum:{dp.Sum}");
+                                extracts.Add(string.Join(",", dp.BucketCounts.Select(k => $"{k}")));
 
                                 extracts.Add(string.Join(",", dp.ExplicitBounds.Select(k => $"{k}")));
 
-                                extracts.Add(string.Join(",", dp.Exemplars.Select(ex => $"{ex.Value}")));
+                                long suml = 0;
+                                double sumd = 0.0;
+
+                                foreach (var xp in dp.Exemplars)
+                                {
+                                    extracts.Add(string.Join(",", xp.FilteredLabels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
+
+                                    sumd += xp.Value;
+                                }
+
+                                extracts.Add($"sum:{suml}/{sumd}");
                             }
                         }
                     }

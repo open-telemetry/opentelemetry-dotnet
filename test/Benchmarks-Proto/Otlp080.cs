@@ -38,7 +38,7 @@ namespace ProtoBench
         {
             DateTimeOffset dt = DateTimeOffset.UtcNow;
 
-            var instMetrics = new List<InstrumentationLibraryMetrics>();
+            var resmetric = new ResourceMetrics();
 
             for (int lib = 0; lib < numLibs; lib++)
             {
@@ -52,43 +52,53 @@ namespace ProtoBench
                 {
                     Metric metric = new Metric();
                     metric.Name = $"Metric_{m}";
-                    metric.Gauge = new Gauge();
 
-                    for (int dp = 0; dp < numPoints; dp++)
+                    var stringLabels = new RepeatedField<StringKeyValue>();
+                    foreach (var l in labels)
                     {
-                        var datapoint = new NumberDataPoint();
+                        var kv = new StringKeyValue();
+                        kv.Key = l.name;
+                        kv.Value = l.value;
+                        stringLabels.Add(kv);
+                    }
 
-                        datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
-                        datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                    var gauge = new Gauge();
+                    metric.Gauge = gauge;
 
-                        foreach (var l in labels)
+                    if (isDouble)
+                    {
+                        for (int dp = 0; dp < numPoints; dp++)
                         {
-                            var kv = new StringKeyValue();
-                            kv.Key = l.name;
-                            kv.Value = l.value;
-                            datapoint.Labels.Add(kv);
-                        }
+                            var datapoint = new NumberDataPoint();
 
-                        if (isDouble)
-                        {
+                            datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.Labels.AddRange(stringLabels);
                             datapoint.AsDouble = (double)(dp + 100.1);
-                        }
-                        else
-                        {
-                            datapoint.AsInt = (long)(dp + 100);
-                        }
 
-                        metric.Gauge.DataPoints.Add(datapoint);
+                            gauge.DataPoints.Add(datapoint);
+                        }
+                    }
+                    else
+                    {
+                        for (int dp = 0; dp < numPoints; dp++)
+                        {
+                            var datapoint = new NumberDataPoint();
+
+                            datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
+                            datapoint.Labels.AddRange(stringLabels);
+                            datapoint.AsInt = (long)(dp + 100);
+
+                            gauge.DataPoints.Add(datapoint);
+                        }
                     }
 
                     instMetric.Metrics.Add(metric);
                 }
 
-                instMetrics.Add(instMetric);
+                resmetric.InstrumentationLibraryMetrics.Add(instMetric);
             }
-
-            var resmetric = new ResourceMetrics();
-            resmetric.InstrumentationLibraryMetrics.AddRange(instMetrics);
 
             resmetric.Resource = new Resource();
             resmetric.Resource.DroppedAttributesCount = 0;
@@ -126,7 +136,7 @@ namespace ProtoBench
         {
             DateTimeOffset dt = DateTimeOffset.UtcNow;
 
-            var instMetrics = new List<InstrumentationLibraryMetrics>();
+            var resmetric = new ResourceMetrics();
 
             for (int lib = 0; lib < numLibs; lib++)
             {
@@ -139,8 +149,18 @@ namespace ProtoBench
                 for (int m = 0; m < numMetrics; m++)
                 {
                     Metric metric = new Metric();
+
                     metric.Name = $"Metric_{m}";
                     metric.Summary = new Summary();
+
+                    var stringLabels = new RepeatedField<StringKeyValue>();
+                    foreach (var l in labels)
+                    {
+                        var kv = new StringKeyValue();
+                        kv.Key = l.name;
+                        kv.Value = l.value;
+                        stringLabels.Add(kv);
+                    }
 
                     for (int tsx = 0; tsx < numTimeseries; tsx++)
                     {
@@ -148,15 +168,7 @@ namespace ProtoBench
 
                         datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
-
-                        foreach (var l in labels)
-                        {
-                            var kv = new StringKeyValue();
-                            kv.Key = l.name;
-                            kv.Value = l.value;
-                            datapoint.Labels.Add(kv);
-                        }
-
+                        datapoint.Labels.AddRange(stringLabels);
                         datapoint.Count = 1;
                         datapoint.Sum = tsx + 100.1;
 
@@ -175,11 +187,8 @@ namespace ProtoBench
                     instMetric.Metrics.Add(metric);
                 }
 
-                instMetrics.Add(instMetric);
+                resmetric.InstrumentationLibraryMetrics.Add(instMetric);
             }
-
-            var resmetric = new ResourceMetrics();
-            resmetric.InstrumentationLibraryMetrics.AddRange(instMetrics);
 
             resmetric.Resource = new Resource();
             resmetric.Resource.DroppedAttributesCount = 0;
@@ -234,20 +243,22 @@ namespace ProtoBench
                     metric.Name = $"Metric_{m}";
                     metric.Histogram = new Histogram();
 
+                    var stringLabels = new RepeatedField<StringKeyValue>();
+                    foreach (var l in labels)
+                    {
+                        var kv = new StringKeyValue();
+                        kv.Key = l.name;
+                        kv.Value = l.value;
+                        stringLabels.Add(kv);
+                    }
+
                     for (int tsx = 0; tsx < numTimeseries; tsx++)
                     {
                         var datapoint = new HistogramDataPoint();
 
                         datapoint.StartTimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
                         datapoint.TimeUnixNano = (ulong)dt.ToUnixTimeMilliseconds() * 100000;
-
-                        foreach (var l in labels)
-                        {
-                            var kv = new StringKeyValue();
-                            kv.Key = l.name;
-                            kv.Value = l.value;
-                            datapoint.Labels.Add(kv);
-                        }
+                        datapoint.Labels.AddRange(stringLabels);
 
                         for (int qv = 0; qv < numQV; qv++)
                         {
@@ -342,14 +353,14 @@ namespace ProtoBench
                     {
                         extracts.Add(metric.Name);
 
-                        RepeatedField<NumberDataPoint> dps = null;
+                        RepeatedField<NumberDataPoint> gaugedps = null;
                         RepeatedField<SummaryDataPoint> sumdps = null;
                         RepeatedField<HistogramDataPoint> histdps = null;
 
                         switch (metric.DataCase)
                         {
                             case Metric.DataOneofCase.Gauge:
-                                dps = metric.Gauge.DataPoints;
+                                gaugedps = metric.Gauge.DataPoints;
                                 break;
 
                             case Metric.DataOneofCase.Summary:
@@ -361,12 +372,12 @@ namespace ProtoBench
                                 break;
                         }
 
-                        if (dps is not null)
+                        if (gaugedps is not null)
                         {
                             long suml = 0;
                             double sumd = 0;
 
-                            foreach (var dp in dps)
+                            foreach (var dp in gaugedps)
                             {
                                 extracts.Add(string.Join(",", dp.Labels.Select(lbl => $"{lbl.Key}={lbl.Value}")));
 

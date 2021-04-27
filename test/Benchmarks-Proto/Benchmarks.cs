@@ -22,48 +22,41 @@ BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19042
 Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 .NET Core SDK=5.0.201
   [Host]     : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
-  Job-UQXYHB : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
+  Job-ECBCNO : .NET Core 5.0.4 (CoreCLR 5.0.421.11614, CoreFX 5.0.421.11614), X64 RyuJIT
 
-IterationCount=50  LaunchCount=10  WarmupCount=10
+IterationCount=20  LaunchCount=10  WarmupCount=4
 
-|          Method | Version |      Mean |    Error |    StdDev |    Median |   Gen 0 |   Gen 1 | Gen 2 | Allocated |
-|---------------- |-------- |----------:|---------:|----------:|----------:|--------:|--------:|------:|----------:|
-|     EncodeGauge |   0.4.0 |  90.38 us | 0.743 us |  4.922 us |  88.93 us | 20.9961 |  0.1221 |     - |  85.98 KB |
-|     DecodeGauge |   0.4.0 |  80.52 us | 0.359 us |  2.367 us |  79.65 us | 30.2734 |  0.6104 |     - | 124.03 KB |
-|   EncodeSummary |   0.4.0 | 120.16 us | 0.796 us |  5.251 us | 118.80 us | 29.0527 |  6.3477 |     - | 118.99 KB |
-|   DecodeSummary |   0.4.0 | 224.80 us | 2.788 us | 18.662 us | 217.48 us | 49.0723 |  1.2207 |     - | 200.59 KB |
-| EncodeHistogram |   0.4.0 | 166.26 us | 1.102 us |  7.261 us | 163.73 us | 41.0156 | 13.6719 |     - | 168.02 KB |
-| DecodeHistogram |   0.4.0 | 277.14 us | 1.827 us | 11.845 us | 272.85 us | 74.2188 | 23.4375 |     - |  309.4 KB |
-|     EncodeGauge |   0.5.0 |  93.26 us | 0.512 us |  3.351 us |  92.47 us | 19.1650 |  0.3662 |     - |  78.66 KB |
-|     DecodeGauge |   0.5.0 |  81.69 us | 0.391 us |  2.530 us |  80.84 us | 28.4424 |       - |     - | 116.22 KB |
-|   EncodeSummary |   0.5.0 |  95.05 us | 0.549 us |  3.596 us |  94.34 us | 19.1650 |  0.1221 |     - |  78.56 KB |
-|   DecodeSummary |   0.5.0 |  90.39 us | 0.428 us |  2.757 us |  89.52 us | 30.5176 |  0.4883 |     - | 124.81 KB |
-| EncodeHistogram |   0.5.0 | 154.30 us | 0.760 us |  4.806 us | 153.25 us | 36.1328 |  0.2441 |     - |  147.7 KB |
-| DecodeHistogram |   0.5.0 | 260.91 us | 6.413 us | 41.713 us | 245.25 us | 60.5469 | 20.0195 |     - | 257.84 KB |
-|     EncodeGauge |   0.6.0 |  92.14 us | 0.918 us |  5.845 us |  90.29 us | 16.3574 |  0.1221 |     - |  67.06 KB |
-|     DecodeGauge |   0.6.0 | 100.51 us | 1.193 us |  7.711 us |  97.63 us | 29.1748 |  0.2441 |     - | 119.34 KB |
-|   EncodeSummary |   0.6.0 |  89.41 us | 0.709 us |  4.612 us |  87.85 us | 16.6016 |       - |     - |  67.84 KB |
-|   DecodeSummary |   0.6.0 |  91.23 us | 0.387 us |  2.566 us |  90.50 us | 28.4424 |       - |     - | 116.22 KB |
-| EncodeHistogram |   0.6.0 | 166.32 us | 1.428 us |  9.412 us | 163.94 us | 36.8652 |  9.2773 |     - | 151.83 KB |
-| DecodeHistogram |   0.6.0 | 279.38 us | 2.231 us | 14.414 us | 275.05 us | 70.8008 | 22.9492 |     - | 304.71 KB |
-|     EncodeGauge |   0.7.0 |  97.39 us | 1.619 us | 10.779 us |  94.38 us | 16.3574 |  0.1221 |     - |  67.06 KB |
-|     DecodeGauge |   0.7.0 |  99.56 us | 0.987 us |  6.559 us |  97.21 us | 29.0527 |  0.4883 |     - | 119.34 KB |
-|   EncodeSummary |   0.7.0 | 122.87 us | 0.933 us |  6.127 us | 120.65 us | 23.6816 |  4.6387 |     - |  97.24 KB |
-|   DecodeSummary |   0.7.0 | 235.73 us | 2.654 us | 17.616 us | 229.94 us | 46.3867 |  3.9063 |     - | 189.66 KB |
-| EncodeHistogram |   0.7.0 | 165.69 us | 1.245 us |  8.091 us | 162.92 us | 36.8652 |  9.2773 |     - | 151.83 KB |
-| DecodeHistogram |   0.7.0 | 273.84 us | 1.980 us | 12.905 us | 269.18 us | 68.8477 | 21.9727 |     - | 304.71 KB |
-|     EncodeGauge |   0.8.0 |  92.84 us | 0.687 us |  4.558 us |  91.60 us | 17.0898 |  3.4180 |     - |  70.19 KB |
-|     DecodeGauge |   0.8.0 |  94.21 us | 0.707 us |  4.688 us |  92.42 us | 29.7852 |  0.2441 |     - | 121.69 KB |
-|   EncodeSummary |   0.8.0 | 127.31 us | 2.397 us | 15.724 us | 121.89 us | 23.8037 |  2.8076 |     - |  97.24 KB |
-|   DecodeSummary |   0.8.0 | 238.60 us | 2.169 us | 14.517 us | 235.57 us | 46.3867 |  4.8828 |     - | 189.66 KB |
-| EncodeHistogram |   0.8.0 | 176.01 us | 1.245 us |  8.271 us | 173.24 us | 41.0156 |  2.6855 |     - | 167.84 KB |
-| DecodeHistogram |   0.8.0 | 290.50 us | 2.308 us | 15.303 us | 285.33 us | 68.3594 | 19.5313 |     - | 317.21 KB |
+|          Method | Version | IsDouble | NumMetrics | NumDataPoints |       Mean |    Error |    StdDev |     Median |    Gen 0 |    Gen 1 |   Gen 2 |  Allocated |
+|---------------- |-------- |--------- |----------- |-------------- |-----------:|---------:|----------:|-----------:|---------:|---------:|--------:|-----------:|
+|     EncodeGauge |   0.4.0 |    False |        100 |            10 |   590.2 us | 12.45 us |  50.35 us |   573.1 us |  66.4063 |  21.4844 |       - |  303.07 KB |
+|     DecodeGauge |   0.4.0 |    False |        100 |            10 |   611.1 us | 11.05 us |  45.45 us |   600.0 us | 133.7891 |  58.5938 |       - |  746.52 KB |
+|   EncodeSummary |   0.4.0 |    False |        100 |            10 |   947.9 us | 13.56 us |  54.52 us |   932.7 us | 102.5391 |  35.1563 | 34.1797 |  643.89 KB |
+|   DecodeSummary |   0.4.0 |    False |        100 |            10 | 2,332.9 us | 36.61 us | 149.75 us | 2,292.6 us | 265.6250 | 132.8125 |       - | 1608.23 KB |
+| EncodeHistogram |   0.4.0 |    False |        100 |            10 | 1,488.9 us | 25.51 us | 105.19 us | 1,466.0 us | 191.4063 |  93.7500 | 46.8750 | 1122.41 KB |
+| DecodeHistogram |   0.4.0 |    False |        100 |            10 | 3,203.4 us | 50.48 us | 206.47 us | 3,150.5 us | 437.5000 | 218.7500 |       - | 2672.25 KB |
+|     EncodeGauge |   0.8.0 |    False |        100 |            10 |   665.2 us | 19.82 us |  79.93 us |   643.9 us |  78.1250 |  21.4844 |       - |  368.41 KB |
+|     DecodeGauge |   0.8.0 |    False |        100 |            10 |   613.4 us |  6.56 us |  26.23 us |   605.6 us | 145.5078 |  61.5234 |       - |  808.23 KB |
+|   EncodeSummary |   0.8.0 |    False |        100 |            10 | 1,028.4 us | 15.80 us |  62.62 us | 1,012.2 us | 107.4219 |  70.3125 | 35.1563 |  638.91 KB |
+|   DecodeSummary |   0.8.0 |    False |        100 |            10 | 2,329.2 us | 50.81 us | 207.79 us | 2,254.2 us | 261.7188 | 128.9063 |       - | 1596.51 KB |
+| EncodeHistogram |   0.8.0 |    False |        100 |            10 | 1,714.9 us | 39.31 us | 162.11 us | 1,673.4 us | 201.1719 | 132.8125 | 66.4063 | 1336.11 KB |
+| DecodeHistogram |   0.8.0 |    False |        100 |            10 | 3,461.5 us | 96.18 us | 389.01 us | 3,317.8 us | 468.7500 | 234.3750 |       - | 2848.81 KB |
+
+Calculated % difference between 0.4.0 and 0.8.0
+
+|          Method | Mean% | Allocated% |
+|---------------- |------ |----------- |
+|     EncodeGauge |   12% |        19% |
+|     DecodeGauge |    0% |         8% |
+|   EncodeSummary |    8% |        -1% |
+|   DecodeSummary |    0% |        -1% |
+| EncodeHistogram |   14% |        17% |
+| DecodeHistogram |    8% |         6% |
 */
 
 namespace ProtoBench
 {
-    // [SimpleJob(launchCount: 10, warmupCount: 10, targetCount: 50)]
-    [SimpleJob(launchCount: 1, warmupCount: 1, targetCount: 1)]
+    // [SimpleJob(launchCount: 10, warmupCount: 4, targetCount: 20)]
+    [SimpleJob(launchCount: 1, warmupCount: 4, targetCount: 20)]
     [MemoryDiagnoser]
     public class Benchmarks
     {
@@ -73,8 +66,21 @@ namespace ProtoBench
         private byte[] bytesSummary;
         private byte[] bytesHistogram;
 
-        [Params("0.4.0", "0.5.0", "0.6.0", "0.7.0", "0.8.0")]
+        private int numLibs = 1;
+
+        // [Params("0.4.0", "0.5.0", "0.6.0", "0.7.0", "0.8.0")]
+        [Params("0.4.0", "0.8.0")]
         public string Version { get; set; }
+
+        // [Params(true, false)]
+        [Params(false)]
+        public bool IsDouble { get; set; }
+
+        [Params(100)]
+        public int NumMetrics { get; set; }
+
+        [Params(10)]
+        public int NumDataPoints { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -106,23 +112,23 @@ namespace ProtoBench
             switch (this.Version)
             {
                 case "0.4.0":
-                    bytes = Otlp040.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    bytes = Otlp040.EncodeGauge(this.IsDouble, this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints);
                     break;
 
                 case "0.5.0":
-                    bytes = Otlp050.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    bytes = Otlp050.EncodeGauge(this.IsDouble, this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints);
                     break;
 
                 case "0.6.0":
-                    bytes = Otlp060.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    bytes = Otlp060.EncodeGauge(this.IsDouble, this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints);
                     break;
 
                 case "0.7.0":
-                    bytes = Otlp070.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    bytes = Otlp070.EncodeGauge(this.IsDouble, this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints);
                     break;
 
                 case "0.8.0":
-                    bytes = Otlp080.EncodeGauge(false, this.resources, this.labels, 1, 100, 1);
+                    bytes = Otlp080.EncodeGauge(this.IsDouble, this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints);
                     break;
             }
 
@@ -168,23 +174,23 @@ namespace ProtoBench
             switch (this.Version)
             {
                 case "0.4.0":
-                    bytes = Otlp040.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    bytes = Otlp040.EncodeSummary(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4);
                     break;
 
                 case "0.5.0":
-                    bytes = Otlp050.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    bytes = Otlp050.EncodeSummary(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4);
                     break;
 
                 case "0.7.0":
-                    bytes = Otlp070.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    bytes = Otlp070.EncodeSummary(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4);
                     break;
 
                 case "0.6.0":
-                    bytes = Otlp060.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    bytes = Otlp060.EncodeSummary(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4);
                     break;
 
                 case "0.8.0":
-                    bytes = Otlp080.EncodeSummary(this.resources, this.labels, 1, 100, 1, 4);
+                    bytes = Otlp080.EncodeSummary(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4);
                     break;
             }
 
@@ -230,23 +236,23 @@ namespace ProtoBench
             switch (this.Version)
             {
                 case "0.4.0":
-                    bytes = Otlp040.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    bytes = Otlp040.EncodeHistogram(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4, 1);
                     break;
 
                 case "0.5.0":
-                    bytes = Otlp050.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    bytes = Otlp050.EncodeHistogram(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4, 1);
                     break;
 
                 case "0.7.0":
-                    bytes = Otlp070.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    bytes = Otlp070.EncodeHistogram(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4, 1);
                     break;
 
                 case "0.6.0":
-                    bytes = Otlp060.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    bytes = Otlp060.EncodeHistogram(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4, 1);
                     break;
 
                 case "0.8.0":
-                    bytes = Otlp080.EncodeHistogram(this.resources, this.labels, 1, 100, 1, 4, 1);
+                    bytes = Otlp080.EncodeHistogram(this.resources, this.labels, this.numLibs, this.NumMetrics, this.NumDataPoints, 4, 1);
                     break;
             }
 
