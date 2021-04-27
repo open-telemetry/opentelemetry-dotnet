@@ -73,7 +73,8 @@ cp -r .vscode.example .vscode
 Because of [Mono missing features](https://github.com/OmniSharp/omnisharp-vscode#note-about-using-net-5-sdks),
 `omnisharp.useGlobalMono` may have to be set to `never`.
 
-To do so, go to `File` -> `Preferences` -> `Settings` -> `Extensions` -> `C# Configuration` -> Change `Omnisharp: Use Global Mono` to `never`.
+To do so, go to `File` -> `Preferences` -> `Settings` -> `Extensions` -> `C# Configuration`
+-> Change `Omnisharp: Use Global Mono` to `never`.
 
 Afterwards, you have to restart OmniSharp: `F1` -> `OmniSharp: Restart OmniSharp`.
 
