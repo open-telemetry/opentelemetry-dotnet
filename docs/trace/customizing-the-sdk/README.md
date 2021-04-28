@@ -4,13 +4,9 @@ Talks about customizing the SDK.
 
 ## TracerProvider
 
-Contents from https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry#tracing-configuration
-
+// TODO: OpenTelemetry Sdk contents about Tracer configuration.
 
 ## Context Propagation
 
-Contents from https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry#propagators
-Links to built-in instrumentations doing Context Propagation.
-
-
-
+// TODO: OpenTelemetry Sdk contents about Context.
+// TODO: Links to built-in instrumentations doing Propagation.
