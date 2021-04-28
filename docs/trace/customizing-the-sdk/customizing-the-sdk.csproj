@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <!--
-    <PackageReference Include="OpenTelemetry" Version="$(OpenTelemetryPkgVer)" />
+    <!---
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="$(OpenTelemetryExporterConsolePkgVer)" />
     -->
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
   </ItemGroup>
 </Project>
