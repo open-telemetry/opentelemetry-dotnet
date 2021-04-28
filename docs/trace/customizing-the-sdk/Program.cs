@@ -36,11 +36,11 @@ public class Program
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
-            // The following subscribes to activities from Activity Source
+            // The following adds activities from Activity Source
             // named "MyCompany.MyProduct.MyLibrary" only.
             .AddSource("MyCompany.MyProduct.MyLibrary")
 
-            // The following subscribes to activities from all Activity Sources
+            // The following further adds activities from all Activity Sources
             // whose name starts with  "ABCCompany.XYZProduct.".
             .AddSource("ABCCompany.XYZProduct.*")
             .AddConsoleExporter()
