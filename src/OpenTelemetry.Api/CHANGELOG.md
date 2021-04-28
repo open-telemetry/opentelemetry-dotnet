@@ -9,7 +9,8 @@ please check the latest changes
 
 ## Unreleased
 
-* `TracerProviderBuilder`'s [AddLegacySource()](https://github.com/open-telemetry/opentelemetry-dotnet/blob/50b0148c2c194956413896d99ffb52b3fc94cf79/src/OpenTelemetry/Trace/TracerProviderBuilderBase.cs#L171) moved to public API
+* `TracerProviderBuilder`'s [AddLegacySource()](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/Trace/TracerProviderBuilderBase.cs#L171)
+  moved to public API
   ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
 
 ## 1.1.0-beta2
