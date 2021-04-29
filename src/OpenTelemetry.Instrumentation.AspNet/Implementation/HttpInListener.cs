@@ -256,6 +256,21 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             }
         }
 
+        /// <summary>
+        /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="uri"><see cref="Uri"/>.</param>
+        /// <returns>Span uri value.</returns>
+        private static string GetUriTagValueFromRequestUri(Uri uri)
+        {
+            if (string.IsNullOrEmpty(uri.UserInfo))
+            {
+                return uri.ToString();
+            }
+
+            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
+        }
+
         private void DefaultActivityNameSetter(HttpContext context, Activity activity)
         {
             var request = context.Request;
@@ -310,21 +325,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.
-        /// </summary>
-        /// <param name="uri"><see cref="Uri"/>.</param>
-        /// <returns>Span uri value.</returns>
-        private static string GetUriTagValueFromRequestUri(Uri uri)
-        {
-            if (string.IsNullOrEmpty(uri.UserInfo))
-            {
-                return uri.ToString();
-            }
-
-            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
         }
     }
 }
