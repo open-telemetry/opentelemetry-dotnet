@@ -42,7 +42,9 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 2. The list of instrumentations enabled via
    [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
 3. The list of
-   [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
+   [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor),
+   including exporting processors which exports traces to
+   [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
 4. The
    [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
    associated with the traces.
@@ -79,8 +81,8 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     // named "MyCompany.MyProduct.MyLibrary" only.
     .AddSource("MyCompany.MyProduct.MyLibrary")
     // The following subscribes to activities from all Activity Sources
-    // whose name starts with  "ABCCompany.XYZProduct.".
-    .AddSource("ABCCompany.XYZProduct.*")
+    // whose name starts with  "AbcCompany.XyzProduct.".
+    .AddSource("AbcCompany.XyzProduct.*")
     .Build();
 ```
 
@@ -91,8 +93,8 @@ A common mistake while configuring `TracerProvider` is forgetting to add
 all `ActivitySources` to the provider. It is recommended to leverage the
 wild card subscription model where it makes sense. For example, if your
 application is expecting to enable tracing from a number of libraries
-from a company "ABC", the you can use `AddSource("ABC.*")` to enable
-all sources whose name starts with "ABC".
+from a company "Abc", the you can use `AddSource("Abc.*")` to enable
+all sources whose name starts with "Abc.".
 
 ### Instrumentation
 

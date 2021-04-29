@@ -24,10 +24,10 @@ public class Program
         "MyCompany.MyProduct.MyLibrary");
 
     private static readonly ActivitySource ComponentAActivitySource = new ActivitySource(
-        "ABCCompany.XYZProduct.ComponentA");
+        "AbcCompany.XyzProduct.ComponentA");
 
     private static readonly ActivitySource ComponentBActivitySource = new ActivitySource(
-        "ABCCompany.XYZProduct.ComponentB");
+        "AbcCompany.XyzProduct.ComponentB");
 
     private static readonly ActivitySource SomeOtherActivitySource = new ActivitySource(
         "SomeCompany.SomeProduct.SomeComponent");
@@ -41,8 +41,8 @@ public class Program
             .AddSource("MyCompany.MyProduct.MyLibrary")
 
             // The following adds subscription to activities from all Activity Sources
-            // whose name starts with "ABCCompany.XYZProduct.".
-            .AddSource("ABCCompany.XYZProduct.*")
+            // whose name starts with "AbcCompany.XyzProduct.".
+            .AddSource("AbcCompany.XyzProduct.*")
             .AddConsoleExporter()
             .Build();
 
@@ -53,14 +53,14 @@ public class Program
             activity?.SetTag("bar", "Hello, World!");
         }
 
-        // This activity source is enabled through wild card "ABCCompany.XYZProduct.*"
+        // This activity source is enabled through wild card "AbcCompany.XyzProduct.*"
         using (var activity = ComponentAActivitySource.StartActivity("SayHello"))
         {
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
         }
 
-        // This activity source is enabled through wild card "ABCCompany.XYZProduct.*"
+        // This activity source is enabled through wild card "AbcCompany.XyzProduct.*"
         using (var activity = ComponentBActivitySource.StartActivity("SayHello"))
         {
             activity?.SetTag("foo", 1);
