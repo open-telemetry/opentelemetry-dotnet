@@ -17,21 +17,7 @@ You should see the following output:
 Hello World!
 ```
 
-Let's install the packages to get started with logging. If your ConsoleApp
-targets `netcoreapp2.1` install the version `2.1.1` of
-`Microsoft.Extensions.Logging` and `Microsoft.Extensions.DependencyInjection`
-packages:
-
-  ```sh
-  dotnet add package Microsoft.Extensions.Logging -v 2.1.1
-  ```
-
-  ```sh
-  dotnet add package Microsoft.Extensions.DependencyInjection -v 2.1.1
-  ```
-
-If your ConsoleApp targets a framework other than `netcoreapp2.1`, install the
-latest Microsoft.Extensions.Logging package:
+Install the latest `Microsoft.Extensions.Logging` package:
 
   ```sh
   dotnet add package Microsoft.Extensions.Logging
@@ -39,7 +25,7 @@ latest Microsoft.Extensions.Logging package:
 
 Install the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-package (Use the latest version):
+package:
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
@@ -72,3 +58,8 @@ API to log a formatted string with a severity level of Information. Click
 for more information on the different logs levels. Opentelemetry captures this
 and sends it to `ConsoleExporter`. `ConsoleExporter` simply displays it on the
 console.
+
+## Learn more
+
+* If you want to build a custom exporter/processor/sampler, refer to [extending
+  the SDK](../extending-the-sdk/README.md).
