@@ -47,7 +47,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         [Theory]
         [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", "/")]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", "/", null, null, null, true)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", "/", null, false, null, true)]
         [InlineData("https://localhost/", "https://localhost/", 0, null, "TraceContext", "/")]
         [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null, "TraceContext", "/")] // Test URL sanitization
         [InlineData("http://localhost:443/", "http://localhost:443/", 0, null, "TraceContext", "/")] // Test http over 443
