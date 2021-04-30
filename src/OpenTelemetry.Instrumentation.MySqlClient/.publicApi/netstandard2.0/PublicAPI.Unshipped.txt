@@ -1,0 +1,10 @@
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.EnableConnectionLevelAttributes.get -> bool
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.EnableConnectionLevelAttributes.set -> void
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.MySqlClientInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.RecordException.get -> bool
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.RecordException.set -> void
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.SetDbStatement.get -> bool
+OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions.SetDbStatement.set -> void
+OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddMySqlClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.MySqlClient.MySqlClientInstrumentationOptions> configureMySqlClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

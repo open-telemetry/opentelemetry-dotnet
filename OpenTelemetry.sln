@@ -201,6 +201,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-reporting", "docs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customizing-the-sdk", "docs\trace\customizing-the-sdk\customizing-the-sdk.csproj", "{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Instrumentation.MySqlClient", "src\OpenTelemetry.Instrumentation.MySqlClient\OpenTelemetry.Instrumentation.MySqlClient.csproj", "{A78FD46E-A83E-4689-9CB5-55DC34C5F8AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Instrumentation.MySqlClient.Tests", "test\OpenTelemetry.Instrumentation.MySqlClient.Tests\OpenTelemetry.Instrumentation.MySqlClient.Tests.csproj", "{A29F6C93-00F0-4D5D-85F4-E21D88756EE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -399,6 +403,14 @@ Global
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A78FD46E-A83E-4689-9CB5-55DC34C5F8AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A78FD46E-A83E-4689-9CB5-55DC34C5F8AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A78FD46E-A83E-4689-9CB5-55DC34C5F8AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A78FD46E-A83E-4689-9CB5-55DC34C5F8AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A29F6C93-00F0-4D5D-85F4-E21D88756EE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A29F6C93-00F0-4D5D-85F4-E21D88756EE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A29F6C93-00F0-4D5D-85F4-E21D88756EE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A29F6C93-00F0-4D5D-85F4-E21D88756EE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
