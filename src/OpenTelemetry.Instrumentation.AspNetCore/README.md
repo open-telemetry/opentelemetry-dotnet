@@ -69,7 +69,7 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
             options.Filter = (req) =>
             {
                 // only collect telemetry about HTTP GET requests
-                return httpContext.Request.Method.Equals("GET");
+                return req.Request.Method.Equals("GET");
             };
         });
 
