@@ -46,8 +46,15 @@ internal class MyExporter : BaseExporter<LogRecord>
 
             record.ForEachScope(ProcessScope, sb);
 
-            static void ProcessScope(object scope, StringBuilder builder)
-                => builder.Append($"{scope}");
+            static void ProcessScope(LogRecordScope scope, StringBuilder builder)
+            {
+                if (scope.Depth > 0)
+                {
+                    builder.Append(',');
+                }
+
+                builder.Append($"{scope.Scope}");
+            }
 
             sb.Append($")");
         }
