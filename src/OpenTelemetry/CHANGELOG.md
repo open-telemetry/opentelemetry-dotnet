@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+* `AddLegacySource()` moved out of `TracerProviderBuilderExtensions` and into
+  public API
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
 ## 1.1.0-beta2
 
 Released 2021-Apr-23
