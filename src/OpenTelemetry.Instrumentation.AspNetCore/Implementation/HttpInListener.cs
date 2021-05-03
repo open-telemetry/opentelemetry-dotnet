@@ -95,10 +95,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
+                    newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
+
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
-
-                    newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
 
                     // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
                     activity.IsAllDataRequested = false;
@@ -215,10 +215,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
+            if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
+                activity.SetTag("IsCreatedByInstrumentation", null);
                 activity.Stop();
 
                 // After the activity.Stop() code, Activity.Current becomes null.

@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tagValue">Tag value.</param>
         /// <returns><see langword="true"/> if the first tag of the supplied Activity matches the user provide tag name.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool CheckFirstTag(this Activity activity, string tagName, out object tagValue)
+        public static bool TryCheckFirstTag(this Activity activity, string tagName, out object tagValue)
         {
             Debug.Assert(activity != null, "Activity should not be null");
 

@@ -184,15 +184,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
             var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
-#if !NETCOREAPP2_1
-            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
-            // must be used.
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-#else
-            // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
-            // is always ignored and new one is created by the Instrumentation
-            Assert.True(activity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString));
-#endif
             Assert.Equal("api/Values/{id}", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
@@ -258,18 +250,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     return startedActivity.OperationName == HttpInListener.ActivityOperationName;
                 }));
 
-                Assert.Single(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString);
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
-                Assert.Single(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.CheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString);
-                });
+                // we should only call Processor.OnEnd once for the sibling activity
+                Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
