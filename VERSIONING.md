@@ -56,9 +56,11 @@ changes. For example,
 shows the public APIs, per target framework for the
 `OpenTelemetry.Instrumentation.AspNetCore` package.
 
-Since no stable version has been released so far, every API is listed in the
-"Unshipped.txt" file. Once 1.0.0 is shipped, it'll be moved to "Shipped.txt"
-file.
+APIs which are released as part of stable packages will be listed in the
+"Shipped.txt" file, and those APIs which are released as part of
+[pre-release](#pre-releases) packages in the "Unshipped.txt". APIs will be moved
+from "Unshipped.txt" to "Shipped.txt" when the packages move from
+[pre-release](#pre-releases) to stable.
 
 ## Packaging
 
