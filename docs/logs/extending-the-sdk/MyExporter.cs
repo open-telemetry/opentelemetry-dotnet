@@ -50,7 +50,7 @@ internal class MyExporter : BaseExporter<LogRecord>
             {
                 if (scope.Depth > 0)
                 {
-                    builder.Append(',');
+                    builder.Append(", ");
                 }
 
                 builder.Append($"{scope.Scope}");

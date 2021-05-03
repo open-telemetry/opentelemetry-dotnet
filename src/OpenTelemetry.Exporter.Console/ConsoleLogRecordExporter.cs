@@ -65,9 +65,9 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.Exception:".PadRight(RightPaddingLength)}{logRecord.Exception?.Message}");
                 }
 
-                logRecord.ForEachScope(ProcessScopeItem, this);
+                logRecord.ForEachScope(ProcessScope, this);
 
-                static void ProcessScopeItem(LogRecordScope scope, ConsoleLogRecordExporter exporter)
+                static void ProcessScope(LogRecordScope scope, ConsoleLogRecordExporter exporter)
                 {
                     if (scope.Depth == 0)
                     {
