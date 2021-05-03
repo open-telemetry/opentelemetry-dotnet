@@ -1,1 +1,2 @@
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void

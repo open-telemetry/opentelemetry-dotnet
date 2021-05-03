@@ -896,6 +896,28 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Contains("unknown_service", (string)resource.Attributes.FirstOrDefault().Value);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void AddLegacyOperationName_BadArgs(string operationName)
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+            Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
+        }
+
+        [Fact]
+        public void AddLegacyOperationNameAddsActivityListenerForEmptyActivitySource()
+        {
+            var emptyActivitySource = new ActivitySource(string.Empty);
+            var builder = Sdk.CreateTracerProviderBuilder();
+            builder.AddLegacySource("TestOperationName");
+
+            Assert.False(emptyActivitySource.HasListeners());
+            using var provider = builder.Build();
+            Assert.True(emptyActivitySource.HasListeners());
+        }
+
         [Fact]
         public void TracerProviderSdkBuildsWithSDKResource()
         {

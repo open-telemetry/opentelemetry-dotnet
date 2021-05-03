@@ -26,41 +26,6 @@ namespace OpenTelemetry.Trace.Tests
         private const string ActivitySourceName = "TracerProviderBuilderExtensionsTest";
 
         [Fact]
-        public void AddLegacyOperationName_NullBuilder_Noop()
-        {
-            TracerProviderBuilder builder = null;
-
-            // No exception is thrown on executing this line
-            builder.AddLegacySource("TestOperationName");
-            using var provider = builder.Build();
-
-            var emptyActivitySource = new ActivitySource(string.Empty);
-            Assert.False(emptyActivitySource.HasListeners()); // Check if AddLegacyOperationName was noop after TracerProviderBuilder.Build
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData(" ")]
-        public void AddLegacyOperationName_BadArgs(string operationName)
-        {
-            var builder = Sdk.CreateTracerProviderBuilder();
-            Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
-        }
-
-        [Fact]
-        public void AddLegacyOperationNameAddsActivityListenerForEmptyActivitySource()
-        {
-            var emptyActivitySource = new ActivitySource(string.Empty);
-            var builder = Sdk.CreateTracerProviderBuilder();
-            builder.AddLegacySource("TestOperationName");
-
-            Assert.False(emptyActivitySource.HasListeners());
-            using var provider = builder.Build();
-            Assert.True(emptyActivitySource.HasListeners());
-        }
-
-        [Fact]
         public void SetErrorStatusOnExceptionEnabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
