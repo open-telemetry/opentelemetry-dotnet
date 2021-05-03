@@ -28,6 +28,11 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
+        private static readonly Action<object, List<object>> AddScopeToBufferedList = (object scope, List<object> state) =>
+        {
+            state.Add(scope);
+        };
+
         private List<object> bufferedScopes;
 
         internal LogRecord(
@@ -147,14 +152,9 @@ namespace OpenTelemetry.Logs
 
             List<object> scopes = new List<object>();
 
-            this.ScopeProvider?.ForEachScope(AddScopeToList, scopes);
+            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
             this.bufferedScopes = scopes;
-
-            static void AddScopeToList(object scope, List<object> state)
-            {
-                state.Add(scope);
-            }
         }
 
         private unsafe struct ScopeForEachState<TState>
