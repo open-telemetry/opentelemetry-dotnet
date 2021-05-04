@@ -116,6 +116,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     {
                         AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
+                        activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                         return;
                     }
                 }
@@ -123,6 +124,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 {
                     AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
                     activity.IsAllDataRequested = false;
+                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
                 }
 
@@ -145,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.HttpMethod);
                 activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, request.Url.ToString());
+                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUriTagValueFromRequestUri(request.Url));
 
                 try
                 {
@@ -262,6 +264,21 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     Activity.Current = activity;
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="uri"><see cref="Uri"/>.</param>
+        /// <returns>Span uri value.</returns>
+        private static string GetUriTagValueFromRequestUri(Uri uri)
+        {
+            if (string.IsNullOrEmpty(uri.UserInfo))
+            {
+                return uri.ToString();
+            }
+
+            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
         }
     }
 }

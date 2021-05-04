@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;net46;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net452;net46</TargetFrameworks>
 
     <!--
         There is an integration test for the OTLP exporter that runs a test targeting netcoreapp2.1, netcoreapp3.1 and net5.0.
@@ -49,6 +49,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PooledList.cs" Link="Includes\PooledList.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,7 +7,19 @@ branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
 please check the latest changes
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
 
+* Removed existing Metrics code as the spec is completely being re-written.
+  ([#2030](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2030))
+
 ## Unreleased
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* Use `AssemblyFileVersionAttribute` instead of `FileVersionInfo.GetVersionInfo`
+  to get the SDK version attribute to ensure that it works when the assembly
+  is not loaded directly from a file on disk
+  ([#1908](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1908))
 
 ## 1.1.0-beta1
 
@@ -55,6 +67,10 @@ Released 2021-Mar-19
 
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
+
+* Added `IDeferredTracerProviderBuilder` and `TracerProviderBuilderBase` to
+  support dependency injection through OpenTelemetry.Extensions.Hosting.
+  ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
 
 ## 1.0.1
 

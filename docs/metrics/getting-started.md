@@ -10,8 +10,3 @@ Please check the [Metric support
 plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 ## Sample usage
-
-Check
-[TestPrometheusExporter.cs](../../examples/Console/TestPrometheusExporter.cs)
-for an example usage of currently implemented Metrics API/SDK along with
-Prometheus exporter.

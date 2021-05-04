@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
@@ -55,6 +54,7 @@ namespace OpenTelemetry
             Propagators.DefaultTextMapPropagator = textMapPropagator;
         }
 
+        /*
         /// <summary>
         /// Creates MeterProviderBuilder which should be used to build MeterProvider.
         /// </summary>
@@ -63,6 +63,7 @@ namespace OpenTelemetry
         {
             return new MeterProviderBuilder();
         }
+        */
 
         /// <summary>
         /// Creates TracerProviderBuilder which should be used to build

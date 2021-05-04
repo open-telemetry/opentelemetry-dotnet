@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0-rc4
+
+Released 2021-Apr-23
+
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `AspNetCoreInstrumentationOptions` from DI.
+  ([#1997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1997))
+
 ## 1.0.0-rc3
 
 Released 2021-Mar-19

@@ -55,7 +55,6 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
@@ -113,6 +112,14 @@ Maintainers
 
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
+
+Triager
+([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+
+* [Victor Lu](https://github.com/victlu), Microsoft
+
+*Find more about the triager role in [community
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager).*
 
 ### Thanks to all the people who have contributed
 

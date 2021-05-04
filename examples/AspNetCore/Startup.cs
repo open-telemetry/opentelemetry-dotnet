@@ -23,7 +23,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -63,20 +64,17 @@ namespace Examples.AspNetCore
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .AddJaegerExporter(jaegerOptions =>
-                        {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                        }));
+                        .AddJaegerExporter());
+
+                    services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .AddZipkinExporter(zipkinOptions =>
-                        {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                        }));
+                        .AddZipkinExporter());
+
+                    services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));
                     break;
                 case "otlp":
                     // Adding the OtlpExporter creates a GrpcChannel.
@@ -98,6 +96,19 @@ namespace Examples.AspNetCore
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
+
+                    // For options which can be bound from IConfiguration.
+                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+                    // For options which can be configured from code only.
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.Filter = (req) =>
+                        {
+                            return req.Request.Host != null;
+                        };
+                    });
+
                     break;
             }
         }
