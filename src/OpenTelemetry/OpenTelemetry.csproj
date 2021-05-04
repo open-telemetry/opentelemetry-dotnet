@@ -28,4 +28,9 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Metrics\Aggregators\" />
+    <Folder Include="Metrics\Export\" />
+  </ItemGroup>
+
 </Project>
