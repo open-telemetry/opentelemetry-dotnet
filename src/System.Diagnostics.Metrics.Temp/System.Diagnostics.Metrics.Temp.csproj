@@ -5,6 +5,7 @@
     <RootNamespace>OpenTelemetry</RootNamespace>
     <NoWarn>$(NoWarn),CS0618, CS1591</NoWarn>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
