@@ -1,0 +1,78 @@
+// <copyright file="Instrument.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+using System.Collections.Generic;
+
+#nullable enable
+
+namespace System.Diagnostics.Metrics
+{
+    /// <summary>
+    /// Is the base class which contains all common properties between different types of instruments.
+    /// It contains the protected constructor and the Publish method allows activating the instrument
+    /// to start recording measurements.
+    /// </summary>
+
+    public abstract class Instrument
+    {
+        /// <summary>
+        /// Protected constructor to initialize the common instrument properties.
+        /// </summary>
+        protected Instrument(Meter meter, string name, string? description, string? unit)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Publish is to allow activating the instrument to start recording measurements and to allow
+        /// listeners to start listening to such measurements.
+        /// </summary>
+        protected void Publish()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Getters to retrieve the properties that the instrument is created with.
+        /// </summary>
+        public Meter Meter { get; }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public string? Description { get; }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public string? Unit { get; }
+
+        /// <summary>
+        /// A property tells if a listener is listening to this instrument measurement recording.
+        /// </summary>
+        public bool Enabled => throw new NotImplementedException();
+
+        /// <summary>
+        /// A property tells if the instrument is a regular instrument or an observable instrument.
+        /// </summary>
+        public virtual bool IsObservable => throw new NotImplementedException();
+    }
+}
