@@ -159,22 +159,23 @@ namespace System.Diagnostics.Metrics
 #else
                 RecordMeasurement(val, Array.Empty<(string LabelName, object LabelValue)>());
 #endif
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void RecordMeasurement(T val, (string LabelName, object LabelValue) label1)
         {
 #if NET5_0
-                ReadOnlySpan<(string LabelName, object LabelValue)> labels = MemoryMarshal.CreateReadOnlySpan(ref label1, 1);
+            ReadOnlySpan<(string LabelName, object LabelValue)> labels = MemoryMarshal.CreateReadOnlySpan(ref label1, 1);
 #else
-                var oneLabels = new (string LabelName, object labelValue)[1];
-                oneLabels[0] = label1;
-                var labels = new ReadOnlySpan<(string LabelName, object LabelValue)>(oneLabels);
+            var oneLabels = new (string LabelName, object labelValue)[1];
+            oneLabels[0] = label1;
+            var labels = new ReadOnlySpan<(string LabelName, object LabelValue)>(oneLabels);
 #endif
             RecordMeasurement(val, labels);
         }
 
 #if NET5_0
         [SkipLocalsInit]
-        #endif
+#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void RecordMeasurement(T val,
             (string LabelName, object LabelValue) label1,
@@ -204,17 +205,17 @@ namespace System.Diagnostics.Metrics
             (string LabelName, object LabelValue) label3)
         {
 #if NET5_0
-                ThreeLabels threeLabels = new ThreeLabels();
-                threeLabels.Label1 = label1;
-                threeLabels.Label2 = label2;
-                threeLabels.Label3 = label3;
-                ReadOnlySpan<(string LabelName, object LabelValue)> labels = MemoryMarshal.CreateReadOnlySpan(ref threeLabels.Label1, 3);
+            ThreeLabels threeLabels = new ThreeLabels();
+            threeLabels.Label1 = label1;
+            threeLabels.Label2 = label2;
+            threeLabels.Label3 = label3;
+            ReadOnlySpan<(string LabelName, object LabelValue)> labels = MemoryMarshal.CreateReadOnlySpan(ref threeLabels.Label1, 3);
 #else
-                var threeLabels = new (string LabelName, object labelValue)[3];
-                threeLabels[0] = label1;
-                threeLabels[1] = label2;
-                threeLabels[2] = label3;
-                var labels = new ReadOnlySpan<(string LabelName, object LabelValue)>(threeLabels);
+            var threeLabels = new (string LabelName, object labelValue)[3];
+            threeLabels[0] = label1;
+            threeLabels[1] = label2;
+            threeLabels[2] = label3;
+            var labels = new ReadOnlySpan<(string LabelName, object LabelValue)>(threeLabels);
 #endif
             RecordMeasurement(val, labels);
         }
