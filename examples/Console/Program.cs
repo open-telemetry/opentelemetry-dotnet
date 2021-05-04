@@ -45,7 +45,7 @@ namespace Examples.Console
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                    (PrometheusOptions options) => TestPrometheusExporter.RunAsync(options.Port, options.PushIntervalInSecs, options.DurationInMins),
+                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
