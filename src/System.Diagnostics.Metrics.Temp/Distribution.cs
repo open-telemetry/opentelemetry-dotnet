@@ -4,14 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-#nullable enable
-
 namespace System.Diagnostics.Metrics
 {
     public class Distribution<T> : MeterInstrument<T> where T: unmanaged
     {
-        internal Distribution(Meter meter, string name, string? description, string? unit) :
-            base(meter, name, description, unit)
+        internal Distribution(Meter meter, string name, string? description, string? unit)
+            : base(meter, name, description, unit)
         {
             Publish();
         }

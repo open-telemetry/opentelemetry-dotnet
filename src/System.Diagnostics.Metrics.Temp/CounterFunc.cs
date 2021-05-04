@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics.Metrics
 {
-
     public class CounterFunc<T> : ObservableMeterInstrument<T> where T: unmanaged
     {
         // This is either a Func<T> or an Func<IEnumerable<Measurement<T>>>
