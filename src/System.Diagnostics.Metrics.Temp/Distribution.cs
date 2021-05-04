@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics.Metrics
 {
-    public class Distribution<T> : MeterInstrument<T> where T: unmanaged
+    public class Distribution<T> : MeterInstrument<T> where T : unmanaged
     {
         internal Distribution(Meter meter, string name, string? description, string? unit)
             : base(meter, name, description, unit)

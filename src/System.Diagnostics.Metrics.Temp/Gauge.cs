@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics.Metrics
 {
-    public class Gauge<T> : MeterInstrument<T> where T: unmanaged
+    public class Gauge<T> : MeterInstrument<T> where T : unmanaged
     {
         internal Gauge(Meter meter, string name, string? description, string? unit) :
             base(meter, name, description, unit)

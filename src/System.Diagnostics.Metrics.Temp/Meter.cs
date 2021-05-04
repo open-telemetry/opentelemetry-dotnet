@@ -24,27 +24,27 @@ namespace System.Diagnostics.Metrics
             }
         }
 
-        public Counter<T> CreateCounter<T>(string name, string? description = null, string? unit = null) where T:unmanaged
+        public Counter<T> CreateCounter<T>(string name, string? description = null, string? unit = null) where T :unmanaged
         {
             return new Counter<T>(this, name, description, unit);
         }
 
-        public CounterFunc<T> CreateCounterFunc<T>(string name, Func<T> observeValue, string? description = null, string? unit = null) where T: unmanaged
+        public CounterFunc<T> CreateCounterFunc<T>(string name, Func<T> observeValue, string? description = null, string? unit = null) where T : unmanaged
         {
             return new CounterFunc<T>(this, name, observeValue, description, unit);
         }
 
-        public CounterFunc<T> CreateCounterFunc<T>(string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description = null, string? unit = null) where T: unmanaged
+        public CounterFunc<T> CreateCounterFunc<T>(string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description = null, string? unit = null) where T : unmanaged
         {
             return new CounterFunc<T>(this, name, observeValues, description, unit);
         }
 
-        public Gauge<T> CreateGauge<T>(string name, string? description = null, string? unit = null) where T: unmanaged
+        public Gauge<T> CreateGauge<T>(string name, string? description = null, string? unit = null) where T : unmanaged
         {
             return new Gauge<T>(this, name, description, unit);
         }
 
-        public Distribution<T> CreateDistribution<T>(string name, string? description = null, string? unit = null) where T: unmanaged
+        public Distribution<T> CreateDistribution<T>(string name, string? description = null, string? unit = null) where T : unmanaged
         {
             return new Distribution<T>(this, name, description, unit);
         }
