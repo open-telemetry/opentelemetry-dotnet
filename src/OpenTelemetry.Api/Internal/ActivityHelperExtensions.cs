@@ -78,6 +78,32 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Checks if the user provided tag name is the first tag of the <see cref="Activity"/> and retrieves the tag value.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="tagName">Tag name.</param>
+        /// <param name="tagValue">Tag value.</param>
+        /// <returns><see langword="true"/> if the first tag of the supplied Activity matches the user provide tag name.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryCheckFirstTag(this Activity activity, string tagName, out object tagValue)
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+
+            ActivityFirstTagEnumerator state = new ActivityFirstTagEnumerator(tagName);
+
+            ActivityTagsEnumeratorFactory<ActivityFirstTagEnumerator>.Enumerate(activity, ref state);
+
+            if (state.Value == null)
+            {
+                tagValue = null;
+                return false;
+            }
+
+            tagValue = state.Value;
+            return true;
+        }
+
+        /// <summary>
         /// Enumerates all the key/value pairs on an <see cref="Activity"/> without performing an allocation.
         /// </summary>
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
@@ -196,6 +222,29 @@ namespace OpenTelemetry.Trace
                 }
 
                 return !this.StatusCode.HasValue || this.StatusDescription == null;
+            }
+        }
+
+        private struct ActivityFirstTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
+        {
+            public object Value;
+
+            private readonly string tagName;
+
+            public ActivityFirstTagEnumerator(string tagName)
+            {
+                this.tagName = tagName;
+                this.Value = null;
+            }
+
+            public bool ForEach(KeyValuePair<string, object> item)
+            {
+                if (item.Key == this.tagName)
+                {
+                    this.Value = item.Value;
+                }
+
+                return false;
             }
         }
 
