@@ -45,6 +45,14 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
+            if (activity.GetStatus().StatusCode == StatusCode.Ok)
+            {
+                // If the status is Ok, subsequent calls will be ignored.
+                // This will travel through the list which hurts the performance.
+                // The perf issue will be solved once .NET added native support for Activity.SetStatus.
+                return;
+            }
+
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
         }
