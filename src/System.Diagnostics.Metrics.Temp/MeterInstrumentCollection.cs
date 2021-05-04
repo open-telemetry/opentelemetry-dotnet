@@ -96,7 +96,7 @@ namespace System.Diagnostics.Metrics
 
         public void VisitInstruments(Action<MeterInstrument> visitor)
         {
-            lock(Lock)
+            lock (Lock)
             {
                 foreach (Meter meter in _meters)
                 {

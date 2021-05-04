@@ -89,10 +89,10 @@ namespace System.Diagnostics.Metrics
             ListenerSubscription[] subs;
             for (int i = 0; i < _subscriptions.Length; i++)
             {
-                if(_subscriptions[i].Listener == listener)
+                if (_subscriptions[i].Listener == listener)
                 {
                     previousCookie = _subscriptions[i].Cookie;
-                    if(_subscriptions[i].Cookie != listenerCookie)
+                    if (_subscriptions[i].Cookie != listenerCookie)
                     {
                         // because the array is read lock-free we always allocate a new
                         // one when making any change. If we wanted to get really detailed
@@ -163,7 +163,7 @@ namespace System.Diagnostics.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void RecordMeasurement(T val, (string LabelName, object LabelValue) label1)
         {
-            #if NET5_0
+#if NET5_0
                 ReadOnlySpan<(string LabelName, object LabelValue)> labels = MemoryMarshal.CreateReadOnlySpan(ref label1, 1);
 #else
                 var oneLabels = new (string LabelName, object labelValue)[1];
@@ -173,7 +173,7 @@ namespace System.Diagnostics.Metrics
             RecordMeasurement(val, labels);
         }
 
-        #if NET5_0
+#if NET5_0
         [SkipLocalsInit]
         #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -195,16 +195,16 @@ namespace System.Diagnostics.Metrics
             RecordMeasurement(val, labels);
         }
 
-        #if NET5_0
+#if NET5_0
         [SkipLocalsInit]
-        #endif
+#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void RecordMeasurement(T val,
             (string LabelName, object LabelValue) label1,
             (string LabelName, object LabelValue) label2,
             (string LabelName, object LabelValue) label3)
         {
-            #if NET5_0
+#if NET5_0
                 ThreeLabels threeLabels = new ThreeLabels();
                 threeLabels.Label1 = label1;
                 threeLabels.Label2 = label2;

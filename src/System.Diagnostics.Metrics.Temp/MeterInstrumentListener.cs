@@ -70,7 +70,7 @@ namespace System.Diagnostics.Metrics
                     }
                 }
             }
-            if(!isNewlySubscribed)
+            if (!isNewlySubscribed)
             {
                 InstrumentMeasurementsComplete?.Invoke(instrument, previousCookie);
             }
@@ -100,7 +100,7 @@ namespace System.Diagnostics.Metrics
                 }
             }
 
-            if(wasSubscribed)
+            if (wasSubscribed)
             {
                 InstrumentMeasurementsComplete?.Invoke(instrument, cookie);
             }
@@ -114,7 +114,7 @@ namespace System.Diagnostics.Metrics
         public void SetMeasurementEventCallback<T>(MeasurementCallback<T>? measurementFunc)
         {
             // measurementFunc might be null so we can't type test with 'is'
-            if(typeof(T) == typeof(object))
+            if (typeof(T) == typeof(object))
             {
                 if (measurementFunc is MeasurementCallback<object?> objFunc)
                 {
@@ -125,7 +125,7 @@ namespace System.Diagnostics.Metrics
                     _recordObjectFunc = (i, m, l, c) => { };
                 }
             }
-            else if(typeof(T) == typeof(double))
+            else if (typeof(T) == typeof(double))
             {
                 if (measurementFunc is MeasurementCallback<double> doubleFunc)
                 {

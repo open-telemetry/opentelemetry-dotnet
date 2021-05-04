@@ -24,7 +24,7 @@ namespace System.Diagnostics.Metrics
             }
         }
 
-        public Counter<T> CreateCounter<T>(string name, string? description = null, string? unit = null) where T :unmanaged
+        public Counter<T> CreateCounter<T>(string name, string? description = null, string? unit = null) where T : unmanaged
         {
             return new Counter<T>(this, name, description, unit);
         }
@@ -75,10 +75,10 @@ namespace System.Diagnostics.Metrics
         }
 
         internal IEnumerable<MeterInstrument> Instruments =>
-            #if NET452
+#if NET452
                 (IEnumerable<MeterInstrument>?)_instruments ?? new MeterInstrument[0];
-            #else
+#else
                 (IEnumerable<MeterInstrument>?)_instruments ?? Array.Empty<MeterInstrument>();
-            #endif
+#endif
     }
 }
