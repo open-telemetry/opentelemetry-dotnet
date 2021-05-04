@@ -25,7 +25,7 @@ namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {
-        internal static async Task<object> RunAsync(int port, int pushIntervalInSecs, int totalDurationInMins)
+        internal static object Run(int port, int pushIntervalInSecs, int totalDurationInMins)
         {
             System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
 
