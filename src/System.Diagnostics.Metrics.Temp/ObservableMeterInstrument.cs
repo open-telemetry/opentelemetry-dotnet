@@ -17,7 +17,7 @@ namespace System.Diagnostics.Metrics
 
         internal override void Observe(MeterInstrumentListener listener, object? cookie)
         {
-            foreach(Measurement<T> m in Observe())
+            foreach (Measurement<T> m in Observe())
             {
                 listener.OnMeasurement(this, m.Value, m.Labels.ToArray(), cookie);
             }

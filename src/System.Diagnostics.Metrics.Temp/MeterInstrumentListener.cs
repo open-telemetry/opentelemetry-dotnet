@@ -22,8 +22,7 @@ namespace System.Diagnostics.Metrics
         MeasurementCallback<short> _recordShortFunc;
         MeasurementCallback<byte> _recordByteFunc;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
-                               // SetMeasurementEventCallback will set these values
+#pragma warning disable CS8618
         public MeterInstrumentListener()
 #pragma warning restore CS8618
         {

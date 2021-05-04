@@ -158,8 +158,7 @@ namespace System.Diagnostics.Metrics
                 RecordMeasurement(val, new (string LabelName, object LabelValue)[0]);
 #else
                 RecordMeasurement(val, Array.Empty<(string LabelName, object LabelValue)>());
-            #endif
-
+#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void RecordMeasurement(T val, (string LabelName, object LabelValue) label1)
         {
