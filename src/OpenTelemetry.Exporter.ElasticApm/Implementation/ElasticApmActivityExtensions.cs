@@ -14,12 +14,52 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
                 throw new NotSupportedException();
             }
 
+            // TODO: all strings "maxLength": 1024
+
+            string name = activity.DisplayName;
+            string traceId = activity.GetTraceId();
+            string parentId = activity.GetParentId();
+            long duration = activity.Duration.ToEpochMicroseconds();
+            long timestamp = activity.StartTimeUtc.ToEpochMicroseconds();
+            string type = activity.GetActivityType();
+
             if (activity.Kind == ActivityKind.Internal)
             {
                 return new V2.ElasticApmSpan("foo");
             }
 
-            return new V2.ElasticApmTransaction("foo");
+            return new V2.ElasticApmTransaction(
+                name,
+                traceId,
+                "todo",
+                parentId,
+                duration,
+                timestamp,
+                type);
+        }
+
+        private static string GetTraceId(this Activity activity)
+        {
+            return activity.Context.TraceId.ToHexString();
+        }
+
+        private static string GetParentId(this Activity activity)
+        {
+            return activity.ParentSpanId == default
+                ? null
+                : activity.ParentSpanId.ToHexString();
+        }
+
+        private static string GetActivityType(this Activity activity)
+        {
+            return activity.Kind switch
+            {
+                ActivityKind.Server => "server",
+                ActivityKind.Producer => "producer",
+                ActivityKind.Consumer => "consumer",
+                ActivityKind.Client => "client",
+                _ => null,
+            };
         }
     }
 }
