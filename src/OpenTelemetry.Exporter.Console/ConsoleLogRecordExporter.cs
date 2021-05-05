@@ -65,13 +65,13 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.Exception:".PadRight(RightPaddingLength)}{logRecord.Exception?.Message}");
                 }
 
-                int scopeDepth = 0;
+                int scopeDepth = -1;
 
                 logRecord.ForEachScope(ProcessScope, this);
 
                 void ProcessScope(LogRecordScope scope, ConsoleLogRecordExporter exporter)
                 {
-                    if (scopeDepth == 0)
+                    if (++scopeDepth == 0)
                     {
                         exporter.WriteLine("LogRecord.ScopeValues (Key:Value):");
                     }
@@ -80,8 +80,6 @@ namespace OpenTelemetry.Exporter
                     {
                         exporter.WriteLine($"[Scope.{scopeDepth}]:{scopeItem.Key.PadRight(RightPaddingLength)}{scopeItem.Value}");
                     }
-
-                    scopeDepth++;
                 }
 
                 var resource = this.ParentProvider.GetResource();
