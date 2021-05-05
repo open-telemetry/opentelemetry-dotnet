@@ -45,15 +45,15 @@ namespace OpenTelemetry.Metrics
 
             this.listener = new MeterListener()
             {
-            InstrumentPublished = (instrument, listener) =>
-                {
-                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
-                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                InstrumentPublished = (instrument, listener) =>
                     {
-                        listener.EnableMeasurementEvents(instrument, null);
-                    }
-                },
-            MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
+                        Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
+                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                        {
+                            listener.EnableMeasurementEvents(instrument, null);
+                        }
+                    },
+                MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
 
             this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
