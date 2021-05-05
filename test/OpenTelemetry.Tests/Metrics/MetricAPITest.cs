@@ -39,7 +39,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             var observableCounter = meter.CreateObservableCounter<int>("counter2", () =>
             {
-                return new Measurement<int>(30, new KeyValuePair<string, object?>("attrb1", "value1"));
+                return new List<Measurement<int>>()
+                {
+                    new Measurement<int>(
+                        30,
+                        new KeyValuePair<string, object?>("attrb1", "value1")),
+
+                    new Measurement<int>(
+                        40,
+                        new KeyValuePair<string, object?>("label1", "value1"),
+                        new KeyValuePair<string, object?>("label2", "value2")),
+                };
             });
 
             counter.Add(10);
