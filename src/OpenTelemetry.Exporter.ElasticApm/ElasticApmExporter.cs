@@ -23,9 +23,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
 
             try
             {
-                using var request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    this.Options.IntakeApiVersion)
+                using var request = new HttpRequestMessage(HttpMethod.Post, this.Options.IntakeApiVersion)
                 {
                     Content = new NdjsonContent(this.Options, batch),
                 };

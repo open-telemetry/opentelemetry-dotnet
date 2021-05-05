@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
         {
             return new Implementation.V2.ElasticApmMetadata(
                 new Implementation.V2.Service(
-                    this.options.Name,
+                    this.options.ServiceName,
                     this.options.Environment,
                     new Implementation.V2.Agent(typeof(ElasticApmExporter).Assembly)));
         }

@@ -51,6 +51,12 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
             writer.WriteNumber(ElasticApmJsonHelper.TimestampPropertyName, this.Timestamp);
             writer.WriteString(ElasticApmJsonHelper.TypePropertyName, this.Type);
 
+            // TODO: Not sure if this can be somehow in OT implemented and how this will influence the APM view.
+            writer.WriteStartObject(ElasticApmJsonHelper.SpanCountPropertyName);
+            writer.WriteNumber(ElasticApmJsonHelper.DroppedPropertyName, 0);
+            writer.WriteNumber(ElasticApmJsonHelper.StartedPropertyName, 0);
+            writer.WriteEndObject();
+
             writer.WriteEndObject();
 
             writer.WriteEndObject();

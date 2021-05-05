@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
         /// <summary>
         /// Gets or sets application name. Default value: MyService.
         /// </summary>
-        public string Name { get; set; } = "MyService";
+        public string ServiceName { get; set; } = "MyService";
 
         /// <summary>
         /// Gets or sets Elastic APM Server API version. Default value: IntakeApiVersion.V2.

@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.ElasticApm;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -75,6 +76,14 @@ namespace Examples.AspNetCore
                         .AddZipkinExporter());
 
                     services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));
+                    break;
+                case "elastic":
+                    services.AddOpenTelemetryTracing((builder) => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddElasticApmExporter());
+
+                    services.Configure<ElasticApmOptions>(this.Configuration.GetSection("Elastic"));
                     break;
                 case "otlp":
                     // Adding the OtlpExporter creates a GrpcChannel.
