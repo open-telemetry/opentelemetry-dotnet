@@ -7,7 +7,6 @@
     -->
     <NoWarn>$(NoWarn),1591,CS0618</NoWarn>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

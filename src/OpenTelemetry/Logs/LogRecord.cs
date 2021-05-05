@@ -118,24 +118,20 @@ namespace OpenTelemetry.Logs
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
-        public unsafe void ForEachScope<TState>(LogRecordScopeCallback<TState> callback, TState state)
+        public void ForEachScope<TState>(LogRecordScopeCallback<TState> callback, TState state)
         {
+            var forEachScopeState = new ScopeForEachState<TState>(callback, state);
+
             if (this.bufferedScopes != null)
             {
-                ScopeForEachState<TState> forEachState = new ScopeForEachState<TState>(callback, state, 0);
-                IntPtr statePointer = new IntPtr(Unsafe.AsPointer(ref forEachState));
-
                 foreach (object scope in this.bufferedScopes)
                 {
-                    ScopeForEachState<TState>.ForEachScope(scope, statePointer);
+                    ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
             }
             else if (this.ScopeProvider != null)
             {
-                ScopeForEachState<TState> forEachState = new ScopeForEachState<TState>(callback, state, 0);
-                IntPtr statePointer = new IntPtr(Unsafe.AsPointer(ref forEachState));
-
-                this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, statePointer);
+                this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
         }
 
@@ -157,13 +153,11 @@ namespace OpenTelemetry.Logs
             this.bufferedScopes = scopes;
         }
 
-        private unsafe struct ScopeForEachState<TState>
+        private readonly struct ScopeForEachState<TState>
         {
-            public static readonly Action<object, IntPtr> ForEachScope = (object scope, IntPtr statePointer) =>
+            public static readonly Action<object, ScopeForEachState<TState>> ForEachScope = (object scope, ScopeForEachState<TState> state) =>
             {
-                ref ScopeForEachState<TState> state = ref Unsafe.AsRef<ScopeForEachState<TState>>((void*)statePointer);
-
-                LogRecordScope logRecordScope = new LogRecordScope(scope, state.Depth++);
+                LogRecordScope logRecordScope = new LogRecordScope(scope);
 
                 state.Callback(logRecordScope, state.UserState);
             };
@@ -172,13 +166,10 @@ namespace OpenTelemetry.Logs
 
             public readonly TState UserState;
 
-            public int Depth;
-
-            public ScopeForEachState(LogRecordScopeCallback<TState> callback, TState state, int depth)
+            public ScopeForEachState(LogRecordScopeCallback<TState> callback, TState state)
             {
                 this.Callback = callback;
                 this.UserState = state;
-                this.Depth = depth;
             }
         }
     }

@@ -3,7 +3,6 @@ OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(OpenTelemetry.Logs.LogRecordSc
 OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Logs.LogRecordScope
-OpenTelemetry.Logs.LogRecordScope.Depth.get -> int
 OpenTelemetry.Logs.LogRecordScope.Enumerator
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Dispose() -> void

@@ -26,21 +26,15 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public readonly ref struct LogRecordScope
     {
-        internal LogRecordScope(object scope, int depth)
+        internal LogRecordScope(object scope)
         {
             this.Scope = scope;
-            this.Depth = depth;
         }
 
         /// <summary>
         /// Gets the raw scope value.
         /// </summary>
         public object Scope { get; }
-
-        /// <summary>
-        /// Gets the depth of the current scope in the stack of active scopes.
-        /// </summary>
-        public int Depth { get; }
 
         /// <summary>
         /// Gets an <see cref="IEnumerator"/> for looping over the inner values

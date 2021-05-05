@@ -357,11 +357,11 @@ namespace OpenTelemetry.Tests.Logs
                 this.logger.LogInformation("OpenTelemetry!");
                 logRecord = this.exportedItems[1];
 
-                int actualMaxDepth = -1;
+                int reachedDepth = -1;
                 logRecord.ForEachScope<object>(
                     (scope, state) =>
                     {
-                        actualMaxDepth = scope.Depth;
+                        reachedDepth++;
                         scopes.Add(scope.Scope);
                         foreach (KeyValuePair<string, object> item in scope)
                         {
@@ -371,7 +371,7 @@ namespace OpenTelemetry.Tests.Logs
                     },
                     null);
                 Assert.Single(scopes);
-                Assert.Equal(0, actualMaxDepth);
+                Assert.Equal(0, reachedDepth);
                 Assert.Equal("string_scope", scopes[0]);
 
                 scopes.Clear();
@@ -386,13 +386,12 @@ namespace OpenTelemetry.Tests.Logs
                 this.logger.LogInformation("OpenTelemetry!");
                 logRecord = this.exportedItems[2];
 
-                actualMaxDepth = -1;
+                reachedDepth = -1;
                 logRecord.ForEachScope<object>(
                     (scope, state) =>
                     {
-                        actualMaxDepth = scope.Depth;
                         scopes.Add(scope.Scope);
-                        if (scope.Depth == 1)
+                        if (reachedDepth++ == 1)
                         {
                             foreach (KeyValuePair<string, object> item in scope)
                             {
@@ -402,7 +401,7 @@ namespace OpenTelemetry.Tests.Logs
                     },
                     null);
                 Assert.Equal(2, scopes.Count);
-                Assert.Equal(1, actualMaxDepth);
+                Assert.Equal(1, reachedDepth);
                 Assert.Equal("string_scope", scopes[0]);
                 Assert.Same(expectedScope2, scopes[1]);
 
@@ -418,13 +417,12 @@ namespace OpenTelemetry.Tests.Logs
                 this.logger.LogInformation("OpenTelemetry!");
                 logRecord = this.exportedItems[3];
 
-                actualMaxDepth = -1;
+                reachedDepth = -1;
                 logRecord.ForEachScope<object>(
                     (scope, state) =>
                     {
-                        actualMaxDepth = scope.Depth;
                         scopes.Add(scope.Scope);
-                        if (scope.Depth == 2)
+                        if (reachedDepth++ == 2)
                         {
                             foreach (KeyValuePair<string, object> item in scope)
                             {
@@ -434,7 +432,7 @@ namespace OpenTelemetry.Tests.Logs
                     },
                     null);
                 Assert.Equal(3, scopes.Count);
-                Assert.Equal(2, actualMaxDepth);
+                Assert.Equal(2, reachedDepth);
                 Assert.Equal("string_scope", scopes[0]);
                 Assert.Same(expectedScope2, scopes[1]);
                 Assert.Same(expectedScope3, scopes[2]);
