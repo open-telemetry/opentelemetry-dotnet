@@ -17,28 +17,34 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
     /// ObservableGauge is an observable Instrument that reports non-additive value(s)
     /// when the instrument is being observed.
-    /// e.g. the current room temperature
+    /// e.g. the current room temperature.
     /// </summary>
-    public sealed class ObservableGauge<T> : ObservableInstrument<T> where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public sealed class ObservableGauge<T> : ObservableInstrument<T>
+        where T : unmanaged
     {
-        internal ObservableGauge(Meter meter, string name, string? description, string? unit)
+        private Func<IEnumerable<Measurement<T>>> observeValues;
+
+        internal ObservableGauge(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
             : base(meter, name, description, unit)
         {
-            throw new NotImplementedException();
+            this.observeValues = observeValues;
+            this.Publish();
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
-        protected override IEnumerable<Measurement<T>> Observe()
+        internal override IEnumerable<Measurement<T>> Observe()
         {
-            throw new NotImplementedException();
+            return this.observeValues();
         }
     }
 }

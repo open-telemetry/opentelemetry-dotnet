@@ -15,8 +15,10 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
@@ -24,31 +26,37 @@ namespace System.Diagnostics.Metrics
     /// A measurement stores one observed value and its associated tags. This type is used by Observable instruments' Observe() method when reporting current measurements.
     /// with the associated tags.
     /// </summary>
-    public struct Measurement<T> where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public struct Measurement<T>
+        where T : unmanaged
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="Measurement{T}"/> struct.
         /// Construct the Measurement using the value and the list of tags.
         /// We'll always copy the input list as this is not perf hot path.
         /// </summary>
         public Measurement(T value, IEnumerable<KeyValuePair<string, object?>> tags)
         {
-            throw new NotImplementedException();
+            this.Value = value;
+            this.TagArray = Enumerable.ToArray(tags);
         }
 
         /// <summary>
-        /// TBD.
+        /// Initializes a new instance of the <see cref="Measurement{T}"/> struct.
         /// </summary>
         public Measurement(T value, params KeyValuePair<string, object?>[] tags)
         {
-            throw new NotImplementedException();
+            this.Value = value;
+            this.TagArray = tags;
         }
 
         /// <summary>
-        /// TBD.
+        /// Initializes a new instance of the <see cref="Measurement{T}"/> struct.
         /// </summary>
         public Measurement(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            throw new NotImplementedException();
+            this.Value = value;
+            this.TagArray = tags.ToArray();
         }
 
         /// <summary>
@@ -58,7 +66,7 @@ namespace System.Diagnostics.Metrics
         {
             get
             {
-                throw new NotImplementedException();
+                return new ReadOnlySpan<KeyValuePair<string, object?>>(this.TagArray);
             }
         }
 
@@ -66,5 +74,7 @@ namespace System.Diagnostics.Metrics
         /// TBD.
         /// </summary>
         public T Value { get; }
+
+        private KeyValuePair<string, object?>[] TagArray { get; }
     }
 }

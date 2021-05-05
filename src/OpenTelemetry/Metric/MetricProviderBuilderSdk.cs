@@ -35,6 +35,12 @@ namespace OpenTelemetry.Metric
             return this;
         }
 
+        public MetricProviderBuilderSdk SetObservationPeriod(int periodMilli)
+        {
+            this.options.ObservationPeriodMilliseconds = periodMilli;
+            return this;
+        }
+
         public MetricProviderBuilderSdk Verbose(bool verbose)
         {
             this.options.Verbose = verbose;

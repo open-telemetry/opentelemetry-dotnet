@@ -14,9 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
@@ -25,24 +27,20 @@ namespace System.Diagnostics.Metrics
     /// It contains the protected constructor and the Publish method allows activating the instrument
     /// to start recording measurements.
     /// </summary>
-
     public abstract class Instrument
     {
+        internal ConcurrentDictionary<MeterListener, bool> Listeners = new ConcurrentDictionary<MeterListener, bool>();
+
         /// <summary>
+        /// Initializes a new instance of the <see cref="Instrument"/> class.
         /// Protected constructor to initialize the common instrument properties.
         /// </summary>
         protected Instrument(Meter meter, string name, string? description, string? unit)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Publish is to allow activating the instrument to start recording measurements and to allow
-        /// listeners to start listening to such measurements.
-        /// </summary>
-        protected void Publish()
-        {
-            throw new NotImplementedException();
+            this.Meter = meter;
+            this.Name = name;
+            this.Description = description;
+            this.Unit = unit;
         }
 
         /// <summary>
@@ -68,11 +66,23 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// A property tells if a listener is listening to this instrument measurement recording.
         /// </summary>
-        public bool Enabled => throw new NotImplementedException();
+        public bool Enabled { get; set; }
 
         /// <summary>
         /// A property tells if the instrument is a regular instrument or an observable instrument.
         /// </summary>
-        public virtual bool IsObservable => throw new NotImplementedException();
+        public virtual bool IsObservable => false;
+
+        /// <summary>
+        /// Publish is to allow activating the instrument to start recording measurements and to allow
+        /// listeners to start listening to such measurements.
+        /// </summary>
+        protected void Publish()
+        {
+            foreach (var kv in MeterListener.GlobalListeners)
+            {
+                kv.Key.InstrumentPublished?.Invoke(this, kv.Key);
+            }
+        }
     }
 }

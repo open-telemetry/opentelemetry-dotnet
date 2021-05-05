@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
@@ -24,12 +25,14 @@ namespace System.Diagnostics.Metrics
     /// The counter is a non-observable Instrument that supports non-negative increments.
     /// e.g. Number of completed requests.
     /// </summary>
-    public sealed class Counter<T> : Instrument<T> where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public sealed class Counter<T> : Instrument<T>
+        where T : unmanaged
     {
         internal Counter(Meter meter, string name, string? description, string? unit)
             : base(meter, name, description, unit)
         {
-            throw new NotImplementedException();
+            this.Publish();
         }
 
         /// <summary>
@@ -37,7 +40,7 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public void Add(T measurement)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement);
         }
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace System.Diagnostics.Metrics
             T measurement,
             KeyValuePair<string, object?> tag1)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement, tag1);
         }
 
         /// <summary>
@@ -58,7 +61,7 @@ namespace System.Diagnostics.Metrics
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement, tag1, tag2);
         }
 
         /// <summary>
@@ -70,7 +73,7 @@ namespace System.Diagnostics.Metrics
             KeyValuePair<string, object?> tag2,
             KeyValuePair<string, object?> tag3)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement, tag1, tag2, tag3);
         }
 
         /// <summary>
@@ -80,7 +83,7 @@ namespace System.Diagnostics.Metrics
             T measurement,
             ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement, tags);
         }
 
         /// <summary>
@@ -90,7 +93,7 @@ namespace System.Diagnostics.Metrics
             T measurement,
             params KeyValuePair<string, object?>[] tags)
         {
-            throw new NotImplementedException();
+            this.RecordMeasurement(measurement, tags);
         }
     }
 }

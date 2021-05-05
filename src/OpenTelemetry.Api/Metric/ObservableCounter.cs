@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
@@ -25,20 +26,25 @@ namespace System.Diagnostics.Metrics
     /// when the instrument is being observed.
     /// e.g. CPU time (for different processes, threads, user mode or kernel mode).
     /// </summary>
-    public sealed class ObservableCounter<T> : ObservableInstrument<T> where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public sealed class ObservableCounter<T> : ObservableInstrument<T>
+        where T : unmanaged
     {
-        internal ObservableCounter(Meter meter, string name, string? description, string? unit)
+        private Func<IEnumerable<Measurement<T>>> observeValues;
+
+        internal ObservableCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
             : base(meter, name, description, unit)
         {
-            throw new NotImplementedException();
+            this.observeValues = observeValues;
+            this.Publish();
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
-        protected override IEnumerable<Measurement<T>> Observe()
+        internal override IEnumerable<Measurement<T>> Observe()
         {
-            throw new NotImplementedException();
+            return this.observeValues();
         }
     }
 }

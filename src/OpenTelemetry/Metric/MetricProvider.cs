@@ -18,6 +18,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Threading;
+using System.Threading.Tasks;
 
 #nullable enable
 
@@ -28,6 +30,8 @@ namespace OpenTelemetry.Metric
         private BuildOptions options;
         private ConcurrentDictionary<Meter, int> meters;
         private MeterListener listener;
+        private CancellationTokenSource cts;
+        private Task observerTask;
 
         internal MetricProvider(BuildOptions options)
         {
@@ -48,6 +52,25 @@ namespace OpenTelemetry.Metric
             this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
 
             this.listener.Start();
+
+            this.cts = new CancellationTokenSource();
+
+            var token = this.cts.Token;
+            this.observerTask = Task.Run(async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(this.options.ObservationPeriodMilliseconds, token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                    }
+
+                    this.listener.RecordObservableInstruments();
+                }
+            });
         }
 
         public Meter GetMeter(string name, string version)
@@ -60,6 +83,8 @@ namespace OpenTelemetry.Metric
 
         public void Dispose()
         {
+            this.cts.Cancel();
+            this.observerTask.Wait();
         }
 
         internal void InstrumentPublished(Instrument instrument, MeterListener listener)
@@ -115,6 +140,8 @@ namespace OpenTelemetry.Metric
             public Func<Instrument, bool>[] IncludeMeters { get; set; } = new Func<Instrument, bool>[0];
 
             public bool Verbose { get; set; } = true;
+
+            public int ObservationPeriodMilliseconds { get; set; } = 1000;
         }
     }
 }

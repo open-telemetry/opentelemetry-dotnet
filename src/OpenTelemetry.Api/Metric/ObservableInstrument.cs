@@ -17,16 +17,20 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
     /// ObservableInstrument_T is the base class from which all observable instruments will inherit from.
-    /// It will only support the CLS compliant numerical types
+    /// It will only support the CLS compliant numerical types.
     /// </summary>
-    public abstract class ObservableInstrument<T> : Instrument where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public abstract class ObservableInstrument<T> : Instrument
+        where T : unmanaged
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="ObservableInstrument{T}"/> class.
         /// Protected constructor to create the instrument with the common properties.
         /// </summary>
         protected ObservableInstrument(
@@ -36,17 +40,16 @@ namespace System.Diagnostics.Metrics
             string? unit)
             : base(meter, name, description, unit)
         {
-            throw new NotImplementedException();
         }
-
-        /// <summary>
-        /// Observe() fetches the current measurements being tracked by this instrument.
-        /// </summary>
-        protected abstract IEnumerable<Measurement<T>> Observe();
 
         /// <summary>
         /// TBD.
         /// </summary>
-        public override bool IsObservable => throw new NotImplementedException();
+        public override bool IsObservable => true;
+
+        /// <summary>
+        /// Observe() fetches the current measurements being tracked by this instrument.
+        /// </summary>
+        internal abstract IEnumerable<Measurement<T>> Observe();
     }
 }

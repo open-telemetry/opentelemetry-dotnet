@@ -17,28 +17,34 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
     /// ObservableUpDownCounter is an observable Instrument that reports additive value(s)
     /// when the instrument is being observed.
-    /// e.g. the process heap size
+    /// e.g. the process heap size.
     /// </summary>
-    public sealed class ObservableUpDownCounter<T> : ObservableInstrument<T> where T : unmanaged
+    /// <typeparam name="T">TBD.</typeparam>
+    public sealed class ObservableUpDownCounter<T> : ObservableInstrument<T>
+        where T : unmanaged
     {
-        internal ObservableUpDownCounter(Meter meter, string name, string? description, string? unit)
+        private Func<IEnumerable<Measurement<T>>> observeValues;
+
+        internal ObservableUpDownCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
             : base(meter, name, description, unit)
         {
-            throw new NotImplementedException();
+            this.observeValues = observeValues;
+            this.Publish();
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
-        protected override IEnumerable<Measurement<T>> Observe()
+        internal override IEnumerable<Measurement<T>> Observe()
         {
-            throw new NotImplementedException();
+            return this.observeValues();
         }
     }
 }

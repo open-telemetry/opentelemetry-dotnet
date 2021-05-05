@@ -14,15 +14,20 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 #nullable enable
+#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
     /// A delegate to represent the callbacks signatures used in the listener.
     /// </summary>
+    /// <typeparam name="T">TBD.</typeparam>
     public delegate void MeasurementCallback<T>(
         Instrument instrument,
         T measurement,
@@ -35,16 +40,21 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     public sealed class MeterListener : IDisposable
     {
+        internal static ConcurrentDictionary<MeterListener, bool> GlobalListeners = new ConcurrentDictionary<MeterListener, bool>();
+
+        internal ConcurrentDictionary<Instrument, object?> Instruments = new ConcurrentDictionary<Instrument, object?>();
+        internal ConcurrentDictionary<Type, object?> Callbacks = new ConcurrentDictionary<Type, object?>();
+
         /// <summary>
-        /// Simple constructor
+        /// Initializes a new instance of the <see cref="MeterListener"/> class.
         /// </summary>
         public MeterListener()
         {
-            throw new NotImplementedException();
+            MeterListener.GlobalListeners.TryAdd(this, true);
         }
 
         /// <summary>
-        /// Callbacks to get notification when an instrument is published
+        /// Callbacks to get notification when an instrument is published.
         /// </summary>
         public Action<Instrument, MeterListener>? InstrumentPublished { get; set; }
 
@@ -61,7 +71,8 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public void EnableMeasurementEvents(Instrument instrument, object? state = null)
         {
-            throw new NotImplementedException();
+            this.Instruments.TryAdd(instrument, state);
+            instrument.Listeners.TryAdd(this, true);
         }
 
         /// <summary>
@@ -70,7 +81,8 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public object? DisableMeasurementEvents(Instrument instrument)
         {
-            throw new NotImplementedException();
+            this.Instruments.TryRemove(instrument, out var state);
+            return state;
         }
 
         /// <summary>
@@ -81,9 +93,10 @@ namespace System.Diagnostics.Metrics
         /// object, the measured value is boxed and reported via the object typed callback. If there is
         /// neither type T callback nor object callback then the measurement will not be reported.
         /// </summary>
+        /// <typeparam name="T">TBD.</typeparam>
         public void SetMeasurementEventCallback<T>(MeasurementCallback<T>? measurementCallback)
         {
-            throw new NotImplementedException();
+            this.Callbacks.TryAdd(typeof(T), (object?)measurementCallback);
         }
 
         /// <summary>
@@ -91,7 +104,6 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public void Start()
         {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -99,16 +111,36 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public void Stop()
         {
-            throw new NotImplementedException();
         }
 
         /// <summary>
         /// Call all Observable instruments to get the recorded measurements reported to the
-        /// callbacks enabled by SetMeasurementEventCallback_T
+        /// callbacks enabled by SetMeasurementEventCallback_T.
         /// </summary>
         public void RecordObservableInstruments()
         {
-            throw new NotImplementedException();
+            foreach (var instrument in this.Instruments)
+            {
+                if (instrument.Key.IsObservable)
+                {
+                    if (instrument.Key is ObservableInstrument<int> iInst)
+                    {
+                        if (this.Callbacks.TryGetValue(typeof(int), out var callback))
+                        {
+                            if (callback is MeasurementCallback<int> intCallback)
+                            {
+                                var measurements = iInst.Observe();
+
+                                var state = instrument.Value;
+                                foreach (var m in measurements)
+                                {
+                                    intCallback(instrument.Key, m.Value, m.Tags, instrument.Value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -116,7 +148,7 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         public void Dispose()
         {
-            throw new NotImplementedException();
+            MeterListener.GlobalListeners.TryRemove(this, out var _);
         }
     }
 }
