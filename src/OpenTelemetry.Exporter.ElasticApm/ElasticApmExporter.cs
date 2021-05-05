@@ -7,16 +7,20 @@ namespace OpenTelemetry.Exporter.ElasticApm
 {
     internal class ElasticApmExporter : BaseExporter<Activity>
     {
-        private readonly ElasticApmOptions options;
-        private readonly string requestUri;
         private readonly HttpClient httpClient;
 
         public ElasticApmExporter(ElasticApmOptions options, HttpClient httpClient = null)
         {
-            this.options = options;
+            this.Options = options;
             this.httpClient = httpClient ?? CreateHttpClient(options);
-            this.requestUri = this.GetIntakeApiUri();
+            this.MaxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
+                ? ElasticApmOptions.DefaultMaxPayloadSizeInBytes
+                : options.MaxPayloadSizeInBytes.Value;
         }
+
+        internal ElasticApmOptions Options { get; }
+
+        internal int MaxPayloadSizeInBytes { get; }
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
@@ -24,9 +28,11 @@ namespace OpenTelemetry.Exporter.ElasticApm
 
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Post, this.requestUri)
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    this.Options.IntakeApiVersion)
                 {
-                    Content = null // TODO
+                    Content = new NdjsonContent(this, batch),
                 };
 
                 using var response = this.httpClient
@@ -48,13 +54,6 @@ namespace OpenTelemetry.Exporter.ElasticApm
             {
                 BaseAddress = new UriBuilder(options.ServerScheme, options.ServerHost, options.ServerPort).Uri,
             };
-        }
-
-        private string GetIntakeApiUri()
-        {
-            return this.options.IntakeApiVersion == IntakeApiVersion.V2
-                ? "/intake/v2/events"
-                : throw new NotSupportedException();
         }
     }
 }
