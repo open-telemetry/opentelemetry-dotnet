@@ -118,7 +118,7 @@ namespace OpenTelemetry.Logs
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
-        public void ForEachScope<TState>(LogRecordScopeCallback<TState> callback, TState state)
+        public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
         {
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
@@ -162,11 +162,11 @@ namespace OpenTelemetry.Logs
                 state.Callback(logRecordScope, state.UserState);
             };
 
-            public readonly LogRecordScopeCallback<TState> Callback;
+            public readonly Action<LogRecordScope, TState> Callback;
 
             public readonly TState UserState;
 
-            public ScopeForEachState(LogRecordScopeCallback<TState> callback, TState state)
+            public ScopeForEachState(Action<LogRecordScope, TState> callback, TState state)
             {
                 this.Callback = callback;
                 this.UserState = state;

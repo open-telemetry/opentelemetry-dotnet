@@ -24,7 +24,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Stores details about a scope attached to a log message.
     /// </summary>
-    public readonly ref struct LogRecordScope
+    public readonly struct LogRecordScope
     {
         internal LogRecordScope(object scope)
         {

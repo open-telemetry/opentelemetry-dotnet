@@ -1,4 +1,4 @@
-OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(OpenTelemetry.Logs.LogRecordScopeCallback<TState> callback, TState state) -> void
+OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<OpenTelemetry.Logs.LogRecordScope, TState> callback, TState state) -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Logs.LogRecordScope
@@ -12,7 +12,6 @@ OpenTelemetry.Logs.LogRecordScope.Enumerator.Reset() -> void
 OpenTelemetry.Logs.LogRecordScope.GetEnumerator() -> OpenTelemetry.Logs.LogRecordScope.Enumerator
 OpenTelemetry.Logs.LogRecordScope.LogRecordScope() -> void
 OpenTelemetry.Logs.LogRecordScope.Scope.get -> object
-OpenTelemetry.Logs.LogRecordScopeCallback<TState>
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.get -> bool
