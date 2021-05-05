@@ -37,19 +37,13 @@ namespace OpenTelemetry.Exporter.ElasticApm
             this.EnsureWriter(stream);
 
             this.metadata.Write(this.writer);
-            this.metadata.Return();
-
-            this.writer.Flush();
-            this.writer.Reset();
+            this.writer.WriteNewLine(stream);
 
             foreach (var activity in this.batch)
             {
                 var span = activity.ToElasticApmSpan(this.options.IntakeApiVersion);
                 span.Write(this.writer);
-                span.Return();
-
-                this.writer.Flush();
-                this.writer.Reset();
+                this.writer.WriteNewLine(stream);
             }
 
             return Task.CompletedTask;

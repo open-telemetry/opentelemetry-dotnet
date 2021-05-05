@@ -13,10 +13,10 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
             long timestamp,
             string type)
         {
+            this.Name = name;
+            this.TraceId = traceId;
             this.Id = id;
             this.ParentId = parentId;
-            this.TraceId = traceId;
-            this.Name = name;
             this.Duration = duration;
             this.Timestamp = timestamp;
             this.Type = type;
@@ -38,10 +38,22 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
 
         public void Write(Utf8JsonWriter writer)
         {
-        }
+            writer.WriteStartObject();
 
-        public void Return()
-        {
+            writer.WritePropertyName(ElasticApmJsonHelper.SpanPropertyName);
+            writer.WriteStartObject();
+
+            writer.WriteString(ElasticApmJsonHelper.NamePropertyName, this.Name);
+            writer.WriteString(ElasticApmJsonHelper.TraceIdPropertyName, this.TraceId);
+            writer.WriteString(ElasticApmJsonHelper.IdPropertyName, this.Id);
+            writer.WriteString(ElasticApmJsonHelper.ParentIdPropertyName, this.ParentId);
+            writer.WriteNumber(ElasticApmJsonHelper.DurationPropertyName, this.Duration);
+            writer.WriteNumber(ElasticApmJsonHelper.TimestampPropertyName, this.Timestamp);
+            writer.WriteString(ElasticApmJsonHelper.TypePropertyName, this.Type);
+
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
         }
     }
 }

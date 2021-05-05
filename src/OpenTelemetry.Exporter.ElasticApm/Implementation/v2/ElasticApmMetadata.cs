@@ -15,10 +15,17 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
 
         public void Write(Utf8JsonWriter writer)
         {
-        }
+            writer.WriteStartObject();
 
-        public void Return()
-        {
+            writer.WritePropertyName(ElasticApmJsonHelper.MetadataPropertyName);
+            writer.WriteStartObject();
+
+            writer.WritePropertyName(ElasticApmJsonHelper.ServicePropertyName);
+            this.Service.Write(writer);
+
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
         }
     }
 
@@ -31,11 +38,23 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
             this.Agent = agent;
         }
 
+        internal string Name { get; }
+
         internal string Environment { get; }
 
         internal Agent Agent { get; }
 
-        internal string Name { get; }
+        public void Write(Utf8JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString(ElasticApmJsonHelper.NamePropertyName, this.Name);
+            writer.WriteString(ElasticApmJsonHelper.EnvironmentPropertyName, this.Environment);
+            writer.WritePropertyName(ElasticApmJsonHelper.AgentPropertyName);
+            this.Agent.Write(writer);
+
+            writer.WriteEndObject();
+        }
     }
 
     internal readonly struct Agent
@@ -49,5 +68,15 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
         internal string Name { get; }
 
         internal string Version { get; }
+
+        public void Write(Utf8JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString(ElasticApmJsonHelper.NamePropertyName, this.Name);
+            writer.WriteString(ElasticApmJsonHelper.VersionPropertyName, this.Version);
+
+            writer.WriteEndObject();
+        }
     }
 }

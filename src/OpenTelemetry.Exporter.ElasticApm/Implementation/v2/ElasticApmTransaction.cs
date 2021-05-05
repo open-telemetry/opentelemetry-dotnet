@@ -38,10 +38,22 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
 
         public void Write(Utf8JsonWriter writer)
         {
-        }
+            writer.WriteStartObject();
 
-        public void Return()
-        {
+            writer.WritePropertyName(ElasticApmJsonHelper.TransactionPropertyName);
+            writer.WriteStartObject();
+
+            writer.WriteString(ElasticApmJsonHelper.NamePropertyName, this.Name);
+            writer.WriteString(ElasticApmJsonHelper.TraceIdPropertyName, this.TraceId);
+            writer.WriteString(ElasticApmJsonHelper.IdPropertyName, this.Id);
+            writer.WriteString(ElasticApmJsonHelper.ParentIdPropertyName, this.ParentId);
+            writer.WriteNumber(ElasticApmJsonHelper.DurationPropertyName, this.Duration);
+            writer.WriteNumber(ElasticApmJsonHelper.TimestampPropertyName, this.Timestamp);
+            writer.WriteString(ElasticApmJsonHelper.TypePropertyName, this.Type);
+
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
         }
     }
 }
