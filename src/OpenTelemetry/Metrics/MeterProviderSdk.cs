@@ -26,7 +26,7 @@ using System.Threading.Tasks;
 namespace OpenTelemetry.Metrics
 {
     public class MeterProviderSdk
-        : MeterProvider
+        : BaseProvider
     {
         private ConcurrentDictionary<Meter, int> meters;
         private MeterListener listener;
@@ -83,13 +83,6 @@ namespace OpenTelemetry.Metrics
                     this.listener.RecordObservableInstruments();
                 }
             });
-        }
-
-        public Meter GetMeter(string name, string version)
-        {
-            var meter = new Meter(name, version);
-            this.meters.TryAdd(meter, 0);
-            return meter;
         }
 
         internal void MeasurementsCompleted(Instrument instrument, object? state)
