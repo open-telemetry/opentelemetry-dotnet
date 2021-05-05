@@ -14,8 +14,6 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
                 throw new NotSupportedException();
             }
 
-            // TODO: all strings "maxLength": 1024
-
             string name = activity.DisplayName;
             string traceId = activity.GetTraceId();
             string id = activity.GetSpanId();
@@ -26,17 +24,10 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
 
             if (activity.Kind == ActivityKind.Internal)
             {
-                return new V2.ElasticApmSpan("foo");
+                return new V2.ElasticApmSpan(name, traceId, id, parentId, duration, timestamp, type);
             }
 
-            return new V2.ElasticApmTransaction(
-                name,
-                traceId,
-                id,
-                parentId,
-                duration,
-                timestamp,
-                type);
+            return new V2.ElasticApmTransaction(name, traceId, id, parentId, duration, timestamp, type);
         }
 
         private static string GetSpanId(this Activity activity)
