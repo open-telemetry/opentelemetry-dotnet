@@ -20,7 +20,7 @@ using Xunit;
 
 #nullable enable
 
-namespace OpenTelemetry.Metric.Tests
+namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricApiTest
     {

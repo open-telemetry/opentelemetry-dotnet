@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 
 #nullable enable
 
-namespace OpenTelemetry.Metric
+namespace OpenTelemetry.Metrics
 {
     public class MetricProvider : IDisposable
     {

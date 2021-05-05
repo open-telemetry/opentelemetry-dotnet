@@ -1,4 +1,4 @@
-// <copyright file="ObservableUpDownCounter.cs" company="OpenTelemetry Authors">
+// <copyright file="ObservableCounter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,22 +17,21 @@
 using System.Collections.Generic;
 
 #nullable enable
-#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
-    /// ObservableUpDownCounter is an observable Instrument that reports additive value(s)
+    /// ObservableCounter is an observable Instrument that reports monotonically increasing value(s)
     /// when the instrument is being observed.
-    /// e.g. the process heap size.
+    /// e.g. CPU time (for different processes, threads, user mode or kernel mode).
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
-    public sealed class ObservableUpDownCounter<T> : ObservableInstrument<T>
+    public sealed class ObservableCounter<T> : ObservableInstrument<T>
         where T : unmanaged
     {
         private Func<IEnumerable<Measurement<T>>> observeValues;
 
-        internal ObservableUpDownCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
+        internal ObservableCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
             : base(meter, name, description, unit)
         {
             this.observeValues = observeValues;

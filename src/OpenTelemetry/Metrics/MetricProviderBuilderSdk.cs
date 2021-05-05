@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-namespace OpenTelemetry.Metric
+namespace OpenTelemetry.Metrics
 {
     public class MetricProviderBuilderSdk
     {

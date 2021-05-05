@@ -1,4 +1,4 @@
-// <copyright file="ActivityExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="Counter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,29 +14,85 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 #nullable enable
 
 namespace System.Diagnostics.Metrics
 {
-    public class Counter<T> : MeterInstrument<T>
+    /// <summary>
+    /// The counter is a non-observable Instrument that supports non-negative increments.
+    /// e.g. Number of completed requests.
+    /// </summary>
+    /// <typeparam name="T">TBD.</typeparam>
+    public sealed class Counter<T> : Instrument<T>
         where T : unmanaged
     {
-        internal Counter(Meter meter, string name, string? description, string? unit) :
-            base(meter, name, description, unit)
+        internal Counter(Meter meter, string name, string? description, string? unit)
+            : base(meter, name, description, unit)
         {
-            Publish();
+            this.Publish();
         }
 
-        public void Add(T measurement) => RecordMeasurement(measurement);
-        public void Add(T measurement,
-            (string LabelName, object LabelValue) label1) => RecordMeasurement(measurement, label1);
-        public void Add(T measurement,
-            (string LabelName, object LabelValue) label1,
-            (string LabelName, object LabelValue) label2) => RecordMeasurement(measurement, label1, label2);
-        public void Add(T measurement,
-            (string LabelName, object LabelValue) label1,
-            (string LabelName, object LabelValue) label2,
-            (string LabelName, object LabelValue) label3) => RecordMeasurement(measurement, label1, label2, label3);
-        public void Add(T measurement, params (string LabelName, object LabelValue)[] labels) => RecordMeasurement(measurement, labels);
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(T measurement)
+        {
+            this.RecordMeasurement(measurement);
+        }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(
+            T measurement,
+            KeyValuePair<string, object?> tag1)
+        {
+            this.RecordMeasurement(measurement, tag1);
+        }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(
+            T measurement,
+            KeyValuePair<string, object?> tag1,
+            KeyValuePair<string, object?> tag2)
+        {
+            this.RecordMeasurement(measurement, tag1, tag2);
+        }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(
+            T measurement,
+            KeyValuePair<string, object?> tag1,
+            KeyValuePair<string, object?> tag2,
+            KeyValuePair<string, object?> tag3)
+        {
+            this.RecordMeasurement(measurement, tag1, tag2, tag3);
+        }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(
+            T measurement,
+            ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        {
+            this.RecordMeasurement(measurement, tags);
+        }
+
+        /// <summary>
+        /// TBD.
+        /// </summary>
+        public void Add(
+            T measurement,
+            params KeyValuePair<string, object?>[] tags)
+        {
+            this.RecordMeasurement(measurement, tags);
+        }
     }
 }

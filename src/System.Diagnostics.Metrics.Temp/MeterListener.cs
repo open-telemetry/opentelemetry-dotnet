@@ -20,7 +20,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 #nullable enable
-#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {

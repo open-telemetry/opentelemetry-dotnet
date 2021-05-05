@@ -1,4 +1,4 @@
-// <copyright file="ObservableCounter.cs" company="OpenTelemetry Authors">
+// <copyright file="ObservableGauge.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,22 +17,21 @@
 using System.Collections.Generic;
 
 #nullable enable
-#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
-    /// ObservableCounter is an observable Instrument that reports monotonically increasing value(s)
+    /// ObservableGauge is an observable Instrument that reports non-additive value(s)
     /// when the instrument is being observed.
-    /// e.g. CPU time (for different processes, threads, user mode or kernel mode).
+    /// e.g. the current room temperature.
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
-    public sealed class ObservableCounter<T> : ObservableInstrument<T>
+    public sealed class ObservableGauge<T> : ObservableInstrument<T>
         where T : unmanaged
     {
         private Func<IEnumerable<Measurement<T>>> observeValues;
 
-        internal ObservableCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
+        internal ObservableGauge(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
             : base(meter, name, description, unit)
         {
             this.observeValues = observeValues;

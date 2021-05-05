@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 #nullable enable
-#pragma warning disable SA1623, SA1611, SA1615
 
 namespace System.Diagnostics.Metrics
 {
