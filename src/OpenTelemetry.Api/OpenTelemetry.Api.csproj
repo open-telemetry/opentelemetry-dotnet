@@ -13,8 +13,4 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Metrics\" />
-  </ItemGroup>
-
 </Project>

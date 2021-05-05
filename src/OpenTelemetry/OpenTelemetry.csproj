@@ -29,9 +29,4 @@
     <ProjectReference Include="$(RepoRoot)\src\System.Diagnostics.Metrics.Temp\System.Diagnostics.Metrics.Temp.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Metrics\Aggregators\" />
-    <Folder Include="Metrics\Export\" />
-  </ItemGroup>
-
 </Project>
