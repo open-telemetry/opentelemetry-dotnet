@@ -4,8 +4,6 @@ namespace OpenTelemetry.Exporter.ElasticApm
 {
     public class ElasticApmOptions
     {
-        internal const int DefaultMaxPayloadSizeInBytes = 4096;
-
         /// <summary>
         /// Gets or sets Elastic APM Server host. Default value: localhost.
         /// https://www.elastic.co/guide/en/apm/server/current/configuration-process.html#host.
@@ -32,11 +30,6 @@ namespace OpenTelemetry.Exporter.ElasticApm
         /// Gets or sets application name. Default value: MyService.
         /// </summary>
         public string Name { get; set; } = "MyService";
-
-        /// <summary>
-        /// Gets or sets the maximum payload size in bytes. Default value: 4096.
-        /// </summary>
-        public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
         /// Gets or sets Elastic APM Server API version. Default value: IntakeApiVersion.V2.

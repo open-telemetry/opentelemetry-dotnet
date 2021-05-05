@@ -11,16 +11,11 @@ namespace OpenTelemetry.Exporter.ElasticApm
 
         public ElasticApmExporter(ElasticApmOptions options, HttpClient httpClient = null)
         {
-            this.Options = options;
             this.httpClient = httpClient ?? this.CreateHttpClient(options);
-            this.MaxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
-                ? ElasticApmOptions.DefaultMaxPayloadSizeInBytes
-                : options.MaxPayloadSizeInBytes.Value;
+            this.Options = options;
         }
 
         internal ElasticApmOptions Options { get; }
-
-        internal int MaxPayloadSizeInBytes { get; }
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
@@ -32,7 +27,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
                     HttpMethod.Post,
                     this.Options.IntakeApiVersion)
                 {
-                    Content = new NdjsonContent(this, batch),
+                    Content = new NdjsonContent(this.Options, batch),
                 };
 
                 using var response = this.httpClient

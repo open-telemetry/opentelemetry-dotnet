@@ -18,14 +18,14 @@ namespace OpenTelemetry.Exporter.ElasticApm
                 CharSet = new UTF8Encoding(false).WebName,
             };
 
-        private readonly ElasticApmExporter exporter;
+        private readonly ElasticApmOptions options;
         private readonly Batch<Activity> batch;
         private readonly IJsonSerializable metadata;
         private Utf8JsonWriter writer;
 
-        public NdjsonContent(ElasticApmExporter exporter, in Batch<Activity> batch)
+        public NdjsonContent(ElasticApmOptions options, in Batch<Activity> batch)
         {
-            this.exporter = exporter;
+            this.options = options;
             this.batch = batch;
             this.metadata = this.CreateMetadata();
 
@@ -39,19 +39,18 @@ namespace OpenTelemetry.Exporter.ElasticApm
             this.metadata.Write(this.writer);
             this.metadata.Return();
 
+            this.writer.Flush();
+            this.writer.Reset();
+
             foreach (var activity in this.batch)
             {
-                var span = activity.ToElasticApmSpan(this.exporter.Options.IntakeApiVersion);
+                var span = activity.ToElasticApmSpan(this.options.IntakeApiVersion);
                 span.Write(this.writer);
                 span.Return();
 
-                if (this.writer.BytesPending >= this.exporter.MaxPayloadSizeInBytes)
-                {
-                    this.writer.Flush();
-                }
+                this.writer.Flush();
+                this.writer.Reset();
             }
-
-            this.writer.Flush();
 
             return Task.CompletedTask;
         }
@@ -78,8 +77,8 @@ namespace OpenTelemetry.Exporter.ElasticApm
         {
             return new Implementation.V2.ElasticApmMetadata(
                 new Implementation.V2.Service(
-                    this.exporter.Options.Name,
-                    this.exporter.Options.Environment,
+                    this.options.Name,
+                    this.options.Environment,
                     new Implementation.V2.Agent(typeof(ElasticApmExporter).Assembly)));
         }
     }
