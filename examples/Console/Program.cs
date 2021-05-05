@@ -34,6 +34,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
         /// dotnet run -p Examples.Console.csproj zpages
+        /// dotnet run -p Examples.Console.csproj metrics -p 100
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
@@ -41,11 +42,12 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
+                    (MetricsOptions options) => TestMetrics.Run(options.ObservationPeriodMilliseconds),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -91,6 +93,13 @@ namespace Examples.Console
 
         [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo. Run atleast for a min to see metrics flowing.", Required = false)]
         public int DurationInMins { get; set; }
+    }
+
+    [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
+    internal class MetricsOptions
+    {
+        [Option('p', "observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
+        public int ObservationPeriodMilliseconds { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

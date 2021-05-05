@@ -1,4 +1,4 @@
-// <copyright file="MeterProvider.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,26 +25,37 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProvider
-        : IDisposable
+    public class MeterProviderSdk
+        : MeterProvider
     {
-        private BuildOptions options;
         private ConcurrentDictionary<Meter, int> meters;
         private MeterListener listener;
         private CancellationTokenSource cts;
         private Task observerTask;
 
-        internal MeterProvider(BuildOptions options)
+        internal MeterProviderSdk(IEnumerable<string> meterSources, int observationPeriodMilliseconds)
         {
-            this.options = options;
-
             this.meters = new ConcurrentDictionary<Meter, int>();
+
+            var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in meterSources)
+            {
+                meterSourcesToSubscribe[name] = true;
+            }
 
             this.listener = new MeterListener()
             {
-                InstrumentPublished = (instrument, listener) => this.InstrumentPublished(instrument, listener),
+                InstrumentPublished = (instrument, listener) =>
+                    {
+                        Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
+                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                        {
+                            listener.EnableMeasurementEvents(instrument, null);
+                        }
+                    },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
+
             this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
             this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
             this.listener.SetMeasurementEventCallback<long>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
@@ -63,7 +74,7 @@ namespace OpenTelemetry.Metrics
                 {
                     try
                     {
-                        await Task.Delay(this.options.ObservationPeriodMilliseconds, token);
+                        await Task.Delay(observationPeriodMilliseconds, token);
                     }
                     catch (TaskCanceledException)
                     {
@@ -74,75 +85,20 @@ namespace OpenTelemetry.Metrics
             });
         }
 
-        public Meter GetMeter(string name, string version)
-        {
-            var meter = new Meter(name, version);
-            this.meters.TryAdd(meter, 0);
-
-            return meter;
-        }
-
-        public void Dispose()
-        {
-            this.cts.Cancel();
-            this.observerTask.Wait();
-        }
-
-        internal void InstrumentPublished(Instrument instrument, MeterListener listener)
-        {
-            bool isInclude = false;
-
-            if (this.options.IncludeMeters != null && this.options.IncludeMeters.Length > 0)
-            {
-                foreach (var meterFunc in this.options.IncludeMeters)
-                {
-                    if (meterFunc(instrument))
-                    {
-                        isInclude = true;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                isInclude = this.meters.TryGetValue(instrument.Meter, out var _);
-            }
-
-            if (isInclude)
-            {
-                // Enable this Instrument if it should be included.
-                listener.EnableMeasurementEvents(instrument, null);
-
-                if (this.options.Verbose)
-                {
-                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
-                }
-            }
-        }
-
         internal void MeasurementsCompleted(Instrument instrument, object? state)
         {
-            if (this.options.Verbose)
-            {
-                Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
-            }
+            Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
         internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> attribs, object? state)
         {
-            if (this.options.Verbose)
-            {
-                Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} recorded {value}.");
-            }
+            Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} recorded {value}.");
         }
 
-        internal class BuildOptions
+        protected override void Dispose(bool disposing)
         {
-            public Func<Instrument, bool>[] IncludeMeters { get; set; } = new Func<Instrument, bool>[0];
-
-            public bool Verbose { get; set; } = true;
-
-            public int ObservationPeriodMilliseconds { get; set; } = 1000;
+            this.cts.Cancel();
+            this.observerTask.Wait();
         }
     }
 }
