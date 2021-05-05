@@ -1,4 +1,4 @@
-// <copyright file="TestPrometheusExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestMetrics.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {
