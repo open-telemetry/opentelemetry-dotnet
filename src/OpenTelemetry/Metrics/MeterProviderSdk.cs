@@ -85,13 +85,6 @@ namespace OpenTelemetry.Metrics
             });
         }
 
-        public Meter GetMeter(string name, string version)
-        {
-            var meter = new Meter(name, version);
-            this.meters.TryAdd(meter, 0);
-            return meter;
-        }
-
         internal void MeasurementsCompleted(Instrument instrument, object? state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
