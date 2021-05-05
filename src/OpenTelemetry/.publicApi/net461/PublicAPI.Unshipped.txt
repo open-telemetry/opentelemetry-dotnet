@@ -1,4 +1,3 @@
-OpenTelemetry.Logs.LogRecord.BufferLogScopes() -> void
 OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(OpenTelemetry.Logs.LogRecordScopeCallback<TState> callback, TState state) -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>

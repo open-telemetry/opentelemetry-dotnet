@@ -139,7 +139,7 @@ namespace OpenTelemetry.Logs
         /// Buffers the scopes attached to the log into a list so that they can
         /// be safely processed after the log message lifecycle has ended.
         /// </summary>
-        public void BufferLogScopes()
+        internal void BufferLogScopes()
         {
             if (this.ScopeProvider == null || this.bufferedScopes != null)
             {

@@ -58,7 +58,7 @@ internal class MyExporter : BaseExporter<LogRecord>
                 builder.Append($"{scope.Scope}");
             }
 
-            sb.Append($")");
+            sb.Append(')');
         }
 
         Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
