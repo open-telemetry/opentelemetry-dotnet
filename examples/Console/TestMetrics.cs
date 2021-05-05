@@ -39,12 +39,12 @@ namespace Examples.Console
 
             counter.Add(
                 100,
-                new KeyValuePair<string, object>("label1", "value1"));
+                new KeyValuePair<string, object>("tag1", "value1"));
 
             counter.Add(
                 200,
-                new KeyValuePair<string, object>("label1", "value1"),
-                new KeyValuePair<string, object>("label2", "value2"));
+                new KeyValuePair<string, object>("tag1", "value1"),
+                new KeyValuePair<string, object>("tag2", "value2"));
 
             var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
             {
@@ -52,7 +52,7 @@ namespace Examples.Console
                 {
                     new Measurement<int>(
                         (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                        new KeyValuePair<string, object>("attrb1", "value1")),
+                        new KeyValuePair<string, object>("tag1", "value1")),
                 };
             });
 
