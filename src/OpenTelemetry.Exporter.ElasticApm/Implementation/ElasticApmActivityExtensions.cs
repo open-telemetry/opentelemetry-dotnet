@@ -16,12 +16,10 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
 
             if (activity.Kind == ActivityKind.Internal)
             {
-                // TODO: span
-                return default;
+                return new V2.ElasticApmSpan("foo");
             }
 
-            // TODO: transaction
-            return default;
+            return new V2.ElasticApmTransaction("foo");
         }
     }
 }
