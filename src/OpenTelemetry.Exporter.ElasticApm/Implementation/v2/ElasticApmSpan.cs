@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace OpenTelemetry.Exporter.ElasticApm.Implementation.V2
 {
-    internal readonly struct ElasticApmSpan : IElasticApmSpan
+    internal readonly struct ElasticApmSpan : IJsonSerializable
     {
         public ElasticApmSpan(
             string name,

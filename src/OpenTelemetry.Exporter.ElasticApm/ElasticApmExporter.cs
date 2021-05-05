@@ -12,7 +12,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
         public ElasticApmExporter(ElasticApmOptions options, HttpClient httpClient = null)
         {
             this.Options = options;
-            this.httpClient = httpClient ?? CreateHttpClient(options);
+            this.httpClient = httpClient ?? this.CreateHttpClient(options);
             this.MaxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
                 ? ElasticApmOptions.DefaultMaxPayloadSizeInBytes
                 : options.MaxPayloadSizeInBytes.Value;
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.ElasticApm
             }
         }
 
-        private static HttpClient CreateHttpClient(ElasticApmOptions options)
+        private HttpClient CreateHttpClient(ElasticApmOptions options)
         {
             return new HttpClient
             {

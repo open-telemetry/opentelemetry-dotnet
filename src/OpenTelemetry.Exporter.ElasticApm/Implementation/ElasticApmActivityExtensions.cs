@@ -5,7 +5,7 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
 {
     internal static class ElasticApmActivityExtensions
     {
-        internal static IElasticApmSpan ToElasticApmSpan(
+        internal static IJsonSerializable ToElasticApmSpan(
             this Activity activity,
             IntakeApiVersion intakeApiVersion)
         {

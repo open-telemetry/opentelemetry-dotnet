@@ -20,12 +20,14 @@ namespace OpenTelemetry.Exporter.ElasticApm
 
         private readonly ElasticApmExporter exporter;
         private readonly Batch<Activity> batch;
+        private readonly IJsonSerializable metadata;
         private Utf8JsonWriter writer;
 
         public NdjsonContent(ElasticApmExporter exporter, in Batch<Activity> batch)
         {
             this.exporter = exporter;
             this.batch = batch;
+            this.metadata = this.CreateMetadata();
 
             this.Headers.ContentType = NdjsonHeader;
         }
@@ -34,7 +36,8 @@ namespace OpenTelemetry.Exporter.ElasticApm
         {
             this.EnsureWriter(stream);
 
-            this.writer.WriteStartObject(); // TODO: write metadata
+            this.metadata.Write(this.writer);
+            this.metadata.Return();
 
             foreach (var activity in this.batch)
             {
@@ -69,6 +72,15 @@ namespace OpenTelemetry.Exporter.ElasticApm
             {
                 this.writer.Reset(stream);
             }
+        }
+
+        private IJsonSerializable CreateMetadata()
+        {
+            return new Implementation.V2.ElasticApmMetadata(
+                new Implementation.V2.Service(
+                    this.exporter.Options.Name,
+                    this.exporter.Options.Environment,
+                    new Implementation.V2.Agent(typeof(ElasticApmExporter).Assembly)));
         }
     }
 }
