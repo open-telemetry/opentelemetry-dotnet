@@ -1,4 +1,4 @@
-// <copyright file="Counter.cs" company="OpenTelemetry Authors">
+// <copyright file="Histogram.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,15 @@ using System.Collections.Generic;
 namespace System.Diagnostics.Metrics
 {
     /// <summary>
-    /// The counter is a non-observable Instrument that supports non-negative increments.
-    /// e.g. Number of completed requests.
+    /// The histogram is a non-observable Instrument that can be used to report arbitrary values
+    /// that are likely to be statistically meaningful. It is intended for statistics such
+    /// e.g. the request duration.
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
-    public sealed class Counter<T> : Instrument<T>
+    public sealed class Histogram<T> : Instrument<T>
         where T : unmanaged
     {
-        internal Counter(Meter meter, string name, string? description, string? unit)
+        internal Histogram(Meter meter, string name, string? description, string? unit)
             : base(meter, name, description, unit)
         {
             this.Publish();
@@ -37,7 +38,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(T measurement)
+        public void Record(T measurement)
         {
             this.RecordMeasurement(measurement);
         }
@@ -45,7 +46,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(
+        public void Record(
             T measurement,
             KeyValuePair<string, object?> tag1)
         {
@@ -55,7 +56,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(
+        public void Record(
             T measurement,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2)
@@ -66,7 +67,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(
+        public void Record(
             T measurement,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2,
@@ -78,7 +79,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(
+        public void Record(
             T measurement,
             ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
@@ -88,7 +89,7 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(
+        public void Record(
             T measurement,
             params KeyValuePair<string, object?>[] tags)
         {

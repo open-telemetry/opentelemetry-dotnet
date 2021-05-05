@@ -30,8 +30,4 @@
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Metrics\Aggregators\" />
-  </ItemGroup>
 </Project>

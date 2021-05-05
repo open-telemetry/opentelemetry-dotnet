@@ -14,17 +14,43 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProviderBuilderSdk : MeterProviderBuilder
+    public class MeterProviderBuilderSdk
     {
-        protected MeterProviderBuilderSdk()
+        private List<Func<Instrument, bool>> includeMeters = new List<Func<Instrument, bool>>();
+        private MeterProvider.BuildOptions options = new MeterProvider.BuildOptions();
+
+        public MeterProviderBuilderSdk()
         {
         }
 
-        public override MeterProviderBuilder AddSource(params string[] names)
+        public MeterProviderBuilderSdk IncludeInstrument(Func<Instrument, bool> meterFunc)
         {
+            this.includeMeters.Add(meterFunc);
             return this;
+        }
+
+        public MeterProviderBuilderSdk SetObservationPeriod(int periodMilli)
+        {
+            this.options.ObservationPeriodMilliseconds = periodMilli;
+            return this;
+        }
+
+        public MeterProviderBuilderSdk Verbose(bool verbose)
+        {
+            this.options.Verbose = verbose;
+            return this;
+        }
+
+        public MeterProvider Build()
+        {
+            this.options.IncludeMeters = this.includeMeters.ToArray();
+            return new MeterProvider(this.options);
         }
     }
 }
