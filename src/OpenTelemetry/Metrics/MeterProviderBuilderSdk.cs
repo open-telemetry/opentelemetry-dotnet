@@ -1,4 +1,4 @@
-// <copyright file="MetricProviderBuilderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderBuilderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,37 +20,37 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricProviderBuilderSdk
+    public class MeterProviderBuilderSdk
     {
         private List<Func<Instrument, bool>> includeMeters = new List<Func<Instrument, bool>>();
-        private MetricProvider.BuildOptions options = new MetricProvider.BuildOptions();
+        private MeterProvider.BuildOptions options = new MeterProvider.BuildOptions();
 
-        public MetricProviderBuilderSdk()
+        public MeterProviderBuilderSdk()
         {
         }
 
-        public MetricProviderBuilderSdk IncludeInstrument(Func<Instrument, bool> meterFunc)
+        public MeterProviderBuilderSdk IncludeInstrument(Func<Instrument, bool> meterFunc)
         {
             this.includeMeters.Add(meterFunc);
             return this;
         }
 
-        public MetricProviderBuilderSdk SetObservationPeriod(int periodMilli)
+        public MeterProviderBuilderSdk SetObservationPeriod(int periodMilli)
         {
             this.options.ObservationPeriodMilliseconds = periodMilli;
             return this;
         }
 
-        public MetricProviderBuilderSdk Verbose(bool verbose)
+        public MeterProviderBuilderSdk Verbose(bool verbose)
         {
             this.options.Verbose = verbose;
             return this;
         }
 
-        public MetricProvider Build()
+        public MeterProvider Build()
         {
             this.options.IncludeMeters = this.includeMeters.ToArray();
-            return new MetricProvider(this.options);
+            return new MeterProvider(this.options);
         }
     }
 }

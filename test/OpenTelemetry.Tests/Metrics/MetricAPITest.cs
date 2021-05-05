@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void SimpleTest()
         {
-            using var provider = new MetricProviderBuilderSdk()
+            using var provider = new MeterProviderBuilderSdk()
                 .IncludeInstrument((instrument) => true)
                 .SetObservationPeriod(1000)
                 .Verbose(true)
