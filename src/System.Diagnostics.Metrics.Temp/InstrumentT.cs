@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1649
 
 namespace System.Diagnostics.Metrics
 {
