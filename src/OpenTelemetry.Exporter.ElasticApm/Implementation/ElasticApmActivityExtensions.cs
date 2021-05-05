@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
 
             string name = activity.DisplayName;
             string traceId = activity.GetTraceId();
+            string id = activity.GetSpanId();
             string parentId = activity.GetParentId();
             long duration = activity.Duration.ToEpochMicroseconds();
             long timestamp = activity.StartTimeUtc.ToEpochMicroseconds();
@@ -31,11 +32,16 @@ namespace OpenTelemetry.Exporter.ElasticApm.Implementation
             return new V2.ElasticApmTransaction(
                 name,
                 traceId,
-                "todo",
+                id,
                 parentId,
                 duration,
                 timestamp,
                 type);
+        }
+
+        private static string GetSpanId(this Activity activity)
+        {
+            return activity.SpanId.ToHexString();
         }
 
         private static string GetTraceId(this Activity activity)
