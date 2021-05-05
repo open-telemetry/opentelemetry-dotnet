@@ -66,7 +66,7 @@ method of you applications `Startup` class as shown below.
 // Configure
 services.Configure<AspNetCoreInstrumentationOptions>(options =>
         {
-            options.Filter = (req) =>
+            options.Filter = (httpContext) =>
             {
                 // only collect telemetry about HTTP GET requests
                 return httpContext.Request.Method.Equals("GET");

@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+* `AddLegacySource()` moved out of `TracerProviderBuilderExtensions` and into
+  public API
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
 * Fixed an issue causing inconsistent log scopes when using
   `BatchLogRecordExportProcessor`. To make parsing scopes easier the
   `LogRecord.ForEachScope` signature has been changed to receive instances of
