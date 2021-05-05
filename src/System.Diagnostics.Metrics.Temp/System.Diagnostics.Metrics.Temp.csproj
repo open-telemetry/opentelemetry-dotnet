@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+    <Description>Temporary .NET Metrics API</Description>
+    <RootNamespace>OpenTelemetry</RootNamespace>
+    <NoWarn>,1573,1712,CS0618, CS1591;NU5105;105;NU5105;NU5105, SA1611; SA1615; NU5105;NU5105; SA1625;NU5105; SA1625;;NU5105;SA1623;</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+</Project>

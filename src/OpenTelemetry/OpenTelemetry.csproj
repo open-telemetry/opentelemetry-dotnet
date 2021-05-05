@@ -26,11 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Metrics\Aggregators\" />
-    <Folder Include="Metrics\Export\" />
+    <ProjectReference Include="$(RepoRoot)\src\System.Diagnostics.Metrics.Temp\System.Diagnostics.Metrics.Temp.csproj" />
   </ItemGroup>
 
 </Project>
