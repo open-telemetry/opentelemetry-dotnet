@@ -34,7 +34,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the callback action used to convert log scopes to tags.
         /// </summary>
-        public Action<ActivityTagsCollection, int, object> ScopeConverter { get; set; } = DefaultLogStateConverter.ConvertScope;
+        public Action<ActivityTagsCollection, int, LogRecordScope> ScopeConverter { get; set; } = DefaultLogStateConverter.ConvertScope;
     }
 }
 #endif

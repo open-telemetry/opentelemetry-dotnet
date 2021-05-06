@@ -15,8 +15,6 @@
 // </copyright>
 
 #if NET461_OR_GREATER || NETSTANDARD2_0 || NET5_0_OR_GREATER
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -28,65 +26,40 @@ namespace OpenTelemetry.Logs
         {
             for (int i = 0; i < state.Count; i++)
             {
-                KeyValuePair<string, object> item = state[i];
+                KeyValuePair<string, object> stateItem = state[i];
 
-                if (!string.IsNullOrEmpty(item.Key))
+                object value = stateItem.Value;
+                if (value != null)
                 {
-                    ConvertState(tags, $"state.{item.Key}", item.Value);
-                }
-                else
-                {
-                    ConvertState(tags, $"state", item.Value);
+                    if (string.IsNullOrEmpty(stateItem.Key))
+                    {
+                        tags["state"] = value;
+                    }
+                    else
+                    {
+                        tags[$"state.{stateItem.Key}"] = value;
+                    }
                 }
             }
         }
 
-        public static void ConvertScope(ActivityTagsCollection tags, int index, object scope)
+        public static void ConvertScope(ActivityTagsCollection tags, int index, LogRecordScope scope)
         {
-            ConvertState(tags, $"scope[{index}]", scope);
-        }
+            string prefix = $"scope[{index}]";
 
-        private static void ConvertState(ActivityTagsCollection tags, string keyPrefix, object state)
-        {
-            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            foreach (KeyValuePair<string, object> scopeItem in scope)
             {
-                for (int i = 0; i < stateList.Count; i++)
+                object value = scopeItem.Value;
+                if (value != null)
                 {
-                    KeyValuePair<string, object> item = stateList[i];
-
-                    ConvertState(tags, $"{keyPrefix}.{item.Key}", item.Value);
-                }
-            }
-            else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
-            {
-                foreach (KeyValuePair<string, object> item in stateValues)
-                {
-                    ConvertState(tags, $"{keyPrefix}.{item.Key}", item.Value);
-                }
-            }
-            else if (state != null)
-            {
-                Type type = state.GetType();
-                if (type.IsValueType || type == typeof(string))
-                {
-                    if (keyPrefix == "state.{OriginalFormat}")
+                    if (string.IsNullOrEmpty(scopeItem.Key))
                     {
-                        keyPrefix = "Format";
+                        tags[prefix] = value;
                     }
-
-                    tags[keyPrefix] = state;
-                }
-                else if (state is IEnumerable enumerable)
-                {
-                    int index = 0;
-                    foreach (object stateItem in enumerable)
+                    else
                     {
-                        ConvertState(tags, $"{keyPrefix}[{index++}]", stateItem);
+                        tags[$"{prefix}.{scopeItem.Key}"] = value;
                     }
-                }
-                else
-                {
-                    tags[keyPrefix] = state.ToString();
                 }
             }
         }

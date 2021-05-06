@@ -50,7 +50,9 @@ namespace Examples.AspNetCore
                             options.IncludeFormattedMessage = true;
                             options.AddConsoleExporter();
                             if (context.Configuration.GetValue<bool>("AttachLogsToActivity"))
+                            {
                                 options.AddActivityEventAttachingLogProcessor();
+                            }
                         });
                     }
                 });

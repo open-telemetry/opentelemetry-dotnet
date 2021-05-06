@@ -24,7 +24,7 @@ namespace OpenTelemetry.Logs
 {
     internal class ActivityEventAttachingLogProcessor : BaseProcessor<LogRecord>
     {
-        private static readonly Action<object, State> ProcessScopeRef = ProcessScope;
+        private static readonly Action<LogRecordScope, State> ProcessScopeRef = ProcessScope;
 
         private readonly ActivityEventAttachingLogProcessorOptions options;
 
@@ -80,18 +80,15 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        private static void ProcessScope(object scope, State state)
+        private static void ProcessScope(LogRecordScope scope, State state)
         {
-            if (scope != null)
+            try
             {
-                try
-                {
-                    state.Processor.options.ScopeConverter?.Invoke(state.Tags, state.Index++, scope);
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetryExtensionsEventSource.Log.LogProcessorException($"Processing scope of type [{scope.GetType().FullName}]", ex);
-                }
+                state.Processor.options.ScopeConverter?.Invoke(state.Tags, state.Index++, scope);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryExtensionsEventSource.Log.LogProcessorException($"Processing scope of type [{scope.GetType().FullName}]", ex);
             }
         }
 
