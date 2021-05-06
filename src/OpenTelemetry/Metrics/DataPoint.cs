@@ -38,32 +38,14 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        public void SetTags(KeyValuePair<string, object?>[] tags)
+        {
+            this.tags = tags;
+        }
+
         public virtual string ValueAsString()
         {
             throw new NotImplementedException();
-        }
-    }
-
-    public class DataPoint<T> : DataPoint
-        where T : unmanaged
-    {
-        internal readonly T Value;
-
-        public DataPoint(T value, params KeyValuePair<string, object?>[] tags)
-            : base(new ReadOnlySpan<KeyValuePair<string, object?>>(tags))
-        {
-            this.Value = value;
-        }
-
-        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-            : base(tags)
-        {
-            this.Value = value;
-        }
-
-        public override string ValueAsString()
-        {
-            return this.Value.ToString();
         }
     }
 }

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -28,10 +27,9 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderSdk
         : MeterProvider
     {
-        private readonly CancellationTokenSource cts;
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task observerTask;
         private readonly Task exporterTask;
-        private readonly ConcurrentDictionary<Meter, int> meters;
         private readonly MeterListener listener;
 
         internal MeterProviderSdk(
@@ -39,7 +37,7 @@ namespace OpenTelemetry.Metrics
             int observationPeriodMilliseconds,
             int exportPeriodMilliseconds,
             MeasurementProcessor[] measurementProcessors,
-            ExportMetricProcessor[] exportMetricProcessors)
+            MetricProcessor[] metricExportProcessors)
         {
             this.ObservationPeriodMilliseconds = observationPeriodMilliseconds;
             this.ExportPeriodMilliseconds = exportPeriodMilliseconds;
@@ -48,13 +46,11 @@ namespace OpenTelemetry.Metrics
 
             this.MeasurementProcessors.AddRange(measurementProcessors);
 
-            this.AggregatorProcessors.Add(new AggregatorProcessor());
+            this.AggregateProcessors.Add(new AggregateProcessor());
 
-            this.ExportProcessors.AddRange(exportMetricProcessors);
+            this.ExportProcessors.AddRange(metricExportProcessors);
 
             // Setup Listener
-
-            this.meters = new ConcurrentDictionary<Meter, int>();
 
             var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             foreach (var name in meterSources)
@@ -86,22 +82,22 @@ namespace OpenTelemetry.Metrics
 
             // Start our long running Task
 
-            this.cts = new CancellationTokenSource();
-
             var token = this.cts.Token;
             this.observerTask = Task.Run(async () => await this.ObserverTask(token));
             this.exporterTask = Task.Run(async () => await this.ExporterTask(token));
         }
 
-        public int ObservationPeriodMilliseconds { get; } = 1000;
+        internal int ObservationPeriodMilliseconds { get; } = 1000;
 
-        public int ExportPeriodMilliseconds { get; } = 1000;
+        internal int ExportPeriodMilliseconds { get; } = 1000;
 
-        public List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
+        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
-        public List<AggregatorProcessor> AggregatorProcessors { get; }  = new List<AggregatorProcessor>();
+        internal List<AggregateProcessor> AggregateProcessors { get; } = new List<AggregateProcessor>();
 
-        public List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
+        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
+
+        internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
         internal void MeasurementsCompleted(Instrument instrument, object? state)
         {
@@ -113,12 +109,7 @@ namespace OpenTelemetry.Metrics
         {
             // Run Pre Aggregator Processors
 
-            var measurmentContext = new MeasurementContext(instrument, new DataPoint<T>(value, tags));
-
-            foreach (var processor in this.MeasurementProcessors)
-            {
-                processor.OnStart(measurmentContext);
-            }
+            var measurmentContext = new MeasurementItem(instrument, new DataPoint<T>(value, tags));
 
             foreach (var processor in this.MeasurementProcessors)
             {
@@ -127,9 +118,8 @@ namespace OpenTelemetry.Metrics
 
             // Run Aggregator Processors
 
-            foreach (var processor in this.AggregatorProcessors)
+            foreach (var processor in this.AggregateProcessors)
             {
-                processor.OnStart(measurmentContext);
                 processor.OnEnd(measurmentContext);
             }
         }
@@ -179,17 +169,21 @@ namespace OpenTelemetry.Metrics
 
         private void Export()
         {
-            var exportContext = new ExportMetricContext();
+            var exportContext = new MetricItem();
 
-            foreach (var processor in this.AggregatorProcessors)
+            foreach (var processor in this.AggregateProcessors)
             {
                 var export = processor.Collect();
                 exportContext.Exports.Add(export);
             }
 
+            foreach (var processor in this.MetricProcessors)
+            {
+                processor.OnEnd(exportContext);
+            }
+
             foreach (var processor in this.ExportProcessors)
             {
-                processor.OnStart(exportContext);
                 processor.OnEnd(exportContext);
             }
         }

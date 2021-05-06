@@ -29,8 +29,8 @@ namespace Examples.Console
         {
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .AddProcessor(new MeasurementProcessor())
-                .AddExportProcessor(new ExportMetricProcessor())
+                .AddProcessor(new TagEnrichmentProcessor())
+                .AddExportProcessor(new MetricConsoleExporter())
                 .SetObservationPeriod(observationInterval)
                 .Build();
 

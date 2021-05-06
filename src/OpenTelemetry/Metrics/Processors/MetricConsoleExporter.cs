@@ -1,4 +1,4 @@
-// <copyright file="AggState.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricConsoleExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -22,22 +23,18 @@ using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
-    public class AggState
+    public class MetricConsoleExporter : MetricProcessor
     {
-        internal long Count = 0;
-        internal long Sum = 0;
-
-        public virtual void Update(DataPoint? value)
+        public override void OnEnd(MetricItem data)
         {
-            long val = 0;
-
-            if (value is DataPoint<int> idp)
+            foreach (var exports in data.Exports)
             {
-                val = idp.Value;
+                foreach (var item in exports)
+                {
+                    var msg = $"{item.Key.Meter.Name}:{item.Key.Name} = count:{item.Value.Count}, sum:{item.Value.Sum}";
+                    Console.WriteLine($"Export: {msg}");
+                }
             }
-
-            this.Count++;
-            this.Sum += val;
         }
     }
 }

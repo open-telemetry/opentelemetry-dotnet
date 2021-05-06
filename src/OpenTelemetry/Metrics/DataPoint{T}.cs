@@ -1,4 +1,4 @@
-// <copyright file="AggregatorProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="DataPoint{T}.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,27 +14,33 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Concurrent;
-using System.Diagnostics.Metrics;
-using System.Threading;
+using System;
+using System.Collections.Generic;
 
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class AggregatorProcessor : BaseProcessor<MeasurementContext>
+    internal class DataPoint<T> : DataPoint
+        where T : unmanaged
     {
-        private ConcurrentDictionary<Instrument, AggState> states = new ConcurrentDictionary<Instrument, AggState>();
+        internal readonly T Value;
 
-        public override void OnEnd(MeasurementContext data)
+        public DataPoint(T value, params KeyValuePair<string, object?>[] tags)
+            : base(new ReadOnlySpan<KeyValuePair<string, object?>>(tags))
         {
-            var state = this.states.GetOrAdd(data.Instrument, (k) => new AggState());
-            state.Update(data.Point);
+            this.Value = value;
         }
 
-        public ConcurrentDictionary<Instrument, AggState> Collect()
+        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+            : base(tags)
         {
-            return Interlocked.Exchange(ref this.states, new ConcurrentDictionary<Instrument, AggState>());
+            this.Value = value;
+        }
+
+        public override string ValueAsString()
+        {
+            return this.Value.ToString();
         }
     }
 }

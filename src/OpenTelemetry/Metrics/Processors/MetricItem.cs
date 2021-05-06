@@ -1,4 +1,4 @@
-// <copyright file="ExportMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +16,19 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
 
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class ExportMetricProcessor : BaseProcessor<ExportMetricContext>
+    public class MetricItem
     {
-        public override void OnEnd(ExportMetricContext data)
+        internal List<ConcurrentDictionary<Instrument, AggregateState>> Exports = new List<ConcurrentDictionary<Instrument, AggregateState>>();
+
+        public MetricItem()
         {
-            foreach (var exports in data.Exports)
-            {
-                foreach (var item in exports)
-                {
-                    var msg = $"{item.Key.Meter.Name}:{item.Key.Name} = count:{item.Value.Count}, sum:{item.Value.Sum}";
-                    Console.WriteLine($"Export: {msg}");
-                }
-            }
         }
     }
 }

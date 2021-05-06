@@ -63,7 +63,7 @@ namespace OpenTelemetry.Metrics
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddProcessor(processor);
+                return meterProviderBuilderSdk.AddMeasurementProcessor(processor);
             }
 
             return null;
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="processor">Measurement Processors.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, ExportMetricProcessor processor)
+        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {

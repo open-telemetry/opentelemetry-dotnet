@@ -1,4 +1,4 @@
-// <copyright file="MeasurementContext.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregateState.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeasurementContext
+    internal class AggregateState
     {
-        internal readonly Instrument Instrument;
-        internal DataPoint? Point;
+        internal long Count = 0;
+        internal long Sum = 0;
 
-        public MeasurementContext(Instrument instrument, DataPoint point)
+        public virtual void Update(DataPoint? value)
         {
-            this.Instrument = instrument;
-            this.Point = point;
+            long val = 0;
+
+            if (value is DataPoint<int> idp)
+            {
+                val = idp.Value;
+            }
+
+            this.Count++;
+            this.Sum += val;
         }
     }
 }

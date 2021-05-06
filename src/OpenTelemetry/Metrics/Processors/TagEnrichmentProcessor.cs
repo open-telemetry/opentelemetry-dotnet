@@ -1,4 +1,4 @@
-// <copyright file="ExportMetricContext.cs" company="OpenTelemetry Authors">
+// <copyright file="TagEnrichmentProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class ExportMetricContext
+    public class TagEnrichmentProcessor : MeasurementProcessor
     {
-        internal List<ConcurrentDictionary<Instrument, AggState>> Exports = new List<ConcurrentDictionary<Instrument, AggState>>();
-
-        public ExportMetricContext()
+        public override void OnEnd(MeasurementItem data)
         {
+            var oldArray = data.Point!.Tags.ToArray();
+            int len = oldArray.Length;
+
+            var newArray = new KeyValuePair<string, object?>[len + 1];
+            oldArray.CopyTo(newArray, 0);
+
+            newArray[len] = new KeyValuePair<string, object?>("newLabel", "newValue");
+
+            data.Point.SetTags(newArray);
         }
     }
 }

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
-        internal List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
+        internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -65,13 +65,13 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddProcessor(MeasurementProcessor processor)
+        internal MeterProviderBuilderSdk AddMeasurementProcessor(MeasurementProcessor processor)
         {
             this.MeasurementProcessors.Add(processor);
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddExporter(ExportMetricProcessor processor)
+        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
         {
             this.ExportProcessors.Add(processor);
             return this;

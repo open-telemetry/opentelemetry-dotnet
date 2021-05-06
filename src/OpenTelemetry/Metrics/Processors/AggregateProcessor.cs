@@ -1,4 +1,4 @@
-// <copyright file="AggregateContext.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregateProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
+using System.Threading;
 
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class AggregateContext
+    internal class AggregateProcessor : MeasurementProcessor
     {
-        public AggregateContext(MeasurementContext measurment)
+        private ConcurrentDictionary<Instrument, AggregateState> states = new ConcurrentDictionary<Instrument, AggregateState>();
+
+        public override void OnEnd(MeasurementItem data)
         {
-            this.Measurment = measurment;
+            var state = this.states.GetOrAdd(data.Instrument, (k) => new AggregateState());
+            state.Update(data.Point);
         }
 
-        internal MeasurementContext Measurment { get; }
+        public ConcurrentDictionary<Instrument, AggregateState> Collect()
+        {
+            return Interlocked.Exchange(ref this.states, new ConcurrentDictionary<Instrument, AggregateState>());
+        }
     }
 }
