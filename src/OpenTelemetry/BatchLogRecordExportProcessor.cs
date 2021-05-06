@@ -35,6 +35,13 @@ namespace OpenTelemetry
                 maxExportBatchSize)
         {
         }
+
+        public override void OnEnd(LogRecord data)
+        {
+            data.BufferLogScopes();
+
+            base.OnEnd(data);
+        }
     }
 }
 #endif
