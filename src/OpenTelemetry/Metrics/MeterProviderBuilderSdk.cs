@@ -41,6 +41,18 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        public MeterProviderBuilderSdk AddProcessor(MeasurementProcessor processor)
+        {
+            this.options.Processors.Add(processor);
+            return this;
+        }
+
+        public MeterProviderBuilderSdk AddExporter(ExportMetricProcessor processor)
+        {
+            this.options.ExportProcessors.Add(processor);
+            return this;
+        }
+
         public MeterProviderBuilderSdk Verbose(bool verbose)
         {
             this.options.Verbose = verbose;

@@ -28,17 +28,22 @@ namespace OpenTelemetry.Metrics
     public class MeterProvider
         : IDisposable
     {
-        private BuildOptions options;
-        private ConcurrentDictionary<Meter, int> meters;
-        private MeterListener listener;
-        private CancellationTokenSource cts;
-        private Task observerTask;
+        private readonly CancellationTokenSource cts;
+        private readonly Task observerTask;
+        private readonly Task exporterTask;
+        private readonly ConcurrentDictionary<Meter, int> meters;
+        private readonly MeterListener listener;
+        private readonly BuildOptions options;
+
+        private List<AggregatorProcessor> aggregatorProcessors = new List<AggregatorProcessor>();
 
         internal MeterProvider(BuildOptions options)
         {
             this.options = options;
 
             this.meters = new ConcurrentDictionary<Meter, int>();
+
+            // Setup our MeterListener
 
             this.listener = new MeterListener()
             {
@@ -54,24 +59,17 @@ namespace OpenTelemetry.Metrics
 
             this.listener.Start();
 
+            // Setup our Processors
+
+            this.aggregatorProcessors.Add(new AggregatorProcessor());
+
+            // Start our long running Task
+
             this.cts = new CancellationTokenSource();
 
             var token = this.cts.Token;
-            this.observerTask = Task.Run(async () =>
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Task.Delay(this.options.ObservationPeriodMilliseconds, token);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                    }
-
-                    this.listener.RecordObservableInstruments();
-                }
-            });
+            this.observerTask = Task.Run(async () => await this.ObserverTask(token));
+            this.exporterTask = Task.Run(async () => await this.ExporterTask(token));
         }
 
         public Meter GetMeter(string name, string version)
@@ -85,7 +83,12 @@ namespace OpenTelemetry.Metrics
         public void Dispose()
         {
             this.cts.Cancel();
+
             this.observerTask.Wait();
+
+            this.exporterTask.Wait();
+
+            this.Export();
         }
 
         internal void InstrumentPublished(Instrument instrument, MeterListener listener)
@@ -128,11 +131,78 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> attribs, object? state)
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+            where T : unmanaged
         {
-            if (this.options.Verbose)
+            // Run Pre Aggregator Processors
+
+            var measurmentContext = new MeasurementContext(instrument, new DataPoint<T>(value, tags));
+
+            foreach (var processor in this.options.Processors)
             {
-                Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} recorded {value}.");
+                processor.OnStart(measurmentContext);
+            }
+
+            foreach (var processor in this.options.Processors)
+            {
+                processor.OnEnd(measurmentContext);
+            }
+
+            // Run Aggregator Processors
+
+            foreach (var processor in this.aggregatorProcessors)
+            {
+                processor.OnStart(measurmentContext);
+                processor.OnEnd(measurmentContext);
+            }
+        }
+
+        private async Task ObserverTask(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(this.options.ObservationPeriodMilliseconds, token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
+
+                this.listener.RecordObservableInstruments();
+            }
+        }
+
+        private async Task ExporterTask(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(this.options.ExportPeriodMilliseconds, token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
+
+                this.Export();
+            }
+        }
+
+        private void Export()
+        {
+            var exportContext = new ExportMetricContext();
+
+            foreach (var processor in this.aggregatorProcessors)
+            {
+                var export = processor.Collect();
+                exportContext.Exports.Add(export);
+            }
+
+            foreach (var processor in this.options.ExportProcessors)
+            {
+                processor.OnStart(exportContext);
+                processor.OnEnd(exportContext);
             }
         }
 
@@ -143,6 +213,12 @@ namespace OpenTelemetry.Metrics
             public bool Verbose { get; set; } = true;
 
             public int ObservationPeriodMilliseconds { get; set; } = 1000;
+
+            public int ExportPeriodMilliseconds { get; set; } = 1000;
+
+            public List<MeasurementProcessor> Processors { get; } = new List<MeasurementProcessor>();
+
+            public List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
         }
     }
 }

@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Threading.Tasks;
 using Xunit;
 
 #nullable enable
@@ -29,6 +30,8 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var provider = new MeterProviderBuilderSdk()
                 .IncludeInstrument((instrument) => true)
+                .AddProcessor(new MeasurementProcessor())
+                .AddExporter(new ExportMetricProcessor())
                 .SetObservationPeriod(1000)
                 .Verbose(true)
                 .Build();
@@ -62,6 +65,8 @@ namespace OpenTelemetry.Metrics.Tests
                 200,
                 new KeyValuePair<string, object?>("label1", "value1"),
                 new KeyValuePair<string, object?>("label2", "value2"));
+
+            Task.Delay(3000).Wait();
         }
     }
 }
