@@ -16,53 +16,76 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProviderBuilderSdk
+    internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
-        private List<Func<Instrument, bool>> includeMeters = new List<Func<Instrument, bool>>();
-        private MeterProvider.BuildOptions options = new MeterProvider.BuildOptions();
+        private readonly List<string> meterSources = new List<string>();
+        private int observationPeriodMilliseconds = 1000;
+        private int exportPeriodMilliseconds = 1000;
 
-        public MeterProviderBuilderSdk()
+        internal MeterProviderBuilderSdk()
         {
         }
 
-        public MeterProviderBuilderSdk IncludeInstrument(Func<Instrument, bool> meterFunc)
+        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
+
+        internal List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
+
+        public override MeterProviderBuilder AddSource(params string[] names)
         {
-            this.includeMeters.Add(meterFunc);
+            if (names == null)
+            {
+                throw new ArgumentNullException(nameof(names));
+            }
+
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
+                }
+
+                this.meterSources.Add(name);
+            }
+
             return this;
         }
 
-        public MeterProviderBuilderSdk SetObservationPeriod(int periodMilli)
+        internal MeterProviderBuilderSdk SetObservationPeriod(int periodMilliseconds)
         {
-            this.options.ObservationPeriodMilliseconds = periodMilli;
+            this.observationPeriodMilliseconds = periodMilliseconds;
             return this;
         }
 
-        public MeterProviderBuilderSdk AddProcessor(MeasurementProcessor processor)
+        internal MeterProviderBuilderSdk SetExportPeriod(int periodMilliseconds)
         {
-            this.options.Processors.Add(processor);
+            this.exportPeriodMilliseconds = periodMilliseconds;
             return this;
         }
 
-        public MeterProviderBuilderSdk AddExporter(ExportMetricProcessor processor)
+        internal MeterProviderBuilderSdk AddProcessor(MeasurementProcessor processor)
         {
-            this.options.ExportProcessors.Add(processor);
+            this.MeasurementProcessors.Add(processor);
             return this;
         }
 
-        public MeterProviderBuilderSdk Verbose(bool verbose)
+        internal MeterProviderBuilderSdk AddExporter(ExportMetricProcessor processor)
         {
-            this.options.Verbose = verbose;
+            this.ExportProcessors.Add(processor);
             return this;
         }
 
-        public MeterProvider Build()
+        internal MeterProvider Build()
         {
-            this.options.IncludeMeters = this.includeMeters.ToArray();
-            return new MeterProvider(this.options);
+            // TODO: Need to review using a struct for BuildOptions
+            return new MeterProviderSdk(
+                this.meterSources,
+                this.observationPeriodMilliseconds,
+                this.exportPeriodMilliseconds,
+                this.MeasurementProcessors.ToArray(),
+                this.ExportProcessors.ToArray());
         }
     }
 }

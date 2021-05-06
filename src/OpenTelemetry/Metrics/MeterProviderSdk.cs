@@ -1,4 +1,4 @@
-// <copyright file="MeterProvider.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,31 +25,56 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProvider
-        : IDisposable
+    public class MeterProviderSdk
+        : MeterProvider
     {
         private readonly CancellationTokenSource cts;
         private readonly Task observerTask;
         private readonly Task exporterTask;
         private readonly ConcurrentDictionary<Meter, int> meters;
         private readonly MeterListener listener;
-        private readonly BuildOptions options;
 
-        private List<AggregatorProcessor> aggregatorProcessors = new List<AggregatorProcessor>();
-
-        internal MeterProvider(BuildOptions options)
+        internal MeterProviderSdk(
+            IEnumerable<string> meterSources,
+            int observationPeriodMilliseconds,
+            int exportPeriodMilliseconds,
+            MeasurementProcessor[] measurementProcessors,
+            ExportMetricProcessor[] exportMetricProcessors)
         {
-            this.options = options;
+            this.ObservationPeriodMilliseconds = observationPeriodMilliseconds;
+            this.ExportPeriodMilliseconds = exportPeriodMilliseconds;
+
+            // Setup our Processors
+
+            this.MeasurementProcessors.AddRange(measurementProcessors);
+
+            this.AggregatorProcessors.Add(new AggregatorProcessor());
+
+            this.ExportProcessors.AddRange(exportMetricProcessors);
+
+            // Setup Listener
 
             this.meters = new ConcurrentDictionary<Meter, int>();
 
-            // Setup our MeterListener
+            var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in meterSources)
+            {
+                meterSourcesToSubscribe[name] = true;
+            }
 
             this.listener = new MeterListener()
             {
-                InstrumentPublished = (instrument, listener) => this.InstrumentPublished(instrument, listener),
+                InstrumentPublished = (instrument, listener) =>
+                    {
+                        Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
+                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                        {
+                            listener.EnableMeasurementEvents(instrument, null);
+                        }
+                    },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
+
             this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
             this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
             this.listener.SetMeasurementEventCallback<long>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
@@ -58,10 +83,6 @@ namespace OpenTelemetry.Metrics
             this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
 
             this.listener.Start();
-
-            // Setup our Processors
-
-            this.aggregatorProcessors.Add(new AggregatorProcessor());
 
             // Start our long running Task
 
@@ -72,15 +93,48 @@ namespace OpenTelemetry.Metrics
             this.exporterTask = Task.Run(async () => await this.ExporterTask(token));
         }
 
-        public Meter GetMeter(string name, string version)
-        {
-            var meter = new Meter(name, version);
-            this.meters.TryAdd(meter, 0);
+        public int ObservationPeriodMilliseconds { get; } = 1000;
 
-            return meter;
+        public int ExportPeriodMilliseconds { get; } = 1000;
+
+        public List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
+
+        public List<AggregatorProcessor> AggregatorProcessors { get; }  = new List<AggregatorProcessor>();
+
+        public List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
+
+        internal void MeasurementsCompleted(Instrument instrument, object? state)
+        {
+            Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        public void Dispose()
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+            where T : unmanaged
+        {
+            // Run Pre Aggregator Processors
+
+            var measurmentContext = new MeasurementContext(instrument, new DataPoint<T>(value, tags));
+
+            foreach (var processor in this.MeasurementProcessors)
+            {
+                processor.OnStart(measurmentContext);
+            }
+
+            foreach (var processor in this.MeasurementProcessors)
+            {
+                processor.OnEnd(measurmentContext);
+            }
+
+            // Run Aggregator Processors
+
+            foreach (var processor in this.AggregatorProcessors)
+            {
+                processor.OnStart(measurmentContext);
+                processor.OnEnd(measurmentContext);
+            }
+        }
+
+        protected override void Dispose(bool disposing)
         {
             this.cts.Cancel();
 
@@ -91,79 +145,13 @@ namespace OpenTelemetry.Metrics
             this.Export();
         }
 
-        internal void InstrumentPublished(Instrument instrument, MeterListener listener)
-        {
-            bool isInclude = false;
-
-            if (this.options.IncludeMeters != null && this.options.IncludeMeters.Length > 0)
-            {
-                foreach (var meterFunc in this.options.IncludeMeters)
-                {
-                    if (meterFunc(instrument))
-                    {
-                        isInclude = true;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                isInclude = this.meters.TryGetValue(instrument.Meter, out var _);
-            }
-
-            if (isInclude)
-            {
-                // Enable this Instrument if it should be included.
-                listener.EnableMeasurementEvents(instrument, null);
-
-                if (this.options.Verbose)
-                {
-                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
-                }
-            }
-        }
-
-        internal void MeasurementsCompleted(Instrument instrument, object? state)
-        {
-            if (this.options.Verbose)
-            {
-                Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
-            }
-        }
-
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-            where T : unmanaged
-        {
-            // Run Pre Aggregator Processors
-
-            var measurmentContext = new MeasurementContext(instrument, new DataPoint<T>(value, tags));
-
-            foreach (var processor in this.options.Processors)
-            {
-                processor.OnStart(measurmentContext);
-            }
-
-            foreach (var processor in this.options.Processors)
-            {
-                processor.OnEnd(measurmentContext);
-            }
-
-            // Run Aggregator Processors
-
-            foreach (var processor in this.aggregatorProcessors)
-            {
-                processor.OnStart(measurmentContext);
-                processor.OnEnd(measurmentContext);
-            }
-        }
-
         private async Task ObserverTask(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.Delay(this.options.ObservationPeriodMilliseconds, token);
+                    await Task.Delay(this.ObservationPeriodMilliseconds, token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -179,7 +167,7 @@ namespace OpenTelemetry.Metrics
             {
                 try
                 {
-                    await Task.Delay(this.options.ExportPeriodMilliseconds, token);
+                    await Task.Delay(this.ExportPeriodMilliseconds, token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -193,32 +181,17 @@ namespace OpenTelemetry.Metrics
         {
             var exportContext = new ExportMetricContext();
 
-            foreach (var processor in this.aggregatorProcessors)
+            foreach (var processor in this.AggregatorProcessors)
             {
                 var export = processor.Collect();
                 exportContext.Exports.Add(export);
             }
 
-            foreach (var processor in this.options.ExportProcessors)
+            foreach (var processor in this.ExportProcessors)
             {
                 processor.OnStart(exportContext);
                 processor.OnEnd(exportContext);
             }
-        }
-
-        internal class BuildOptions
-        {
-            public Func<Instrument, bool>[] IncludeMeters { get; set; } = new Func<Instrument, bool>[0];
-
-            public bool Verbose { get; set; } = true;
-
-            public int ObservationPeriodMilliseconds { get; set; } = 1000;
-
-            public int ExportPeriodMilliseconds { get; set; } = 1000;
-
-            public List<MeasurementProcessor> Processors { get; } = new List<MeasurementProcessor>();
-
-            public List<ExportMetricProcessor> ExportProcessors { get; } = new List<ExportMetricProcessor>();
         }
     }
 }

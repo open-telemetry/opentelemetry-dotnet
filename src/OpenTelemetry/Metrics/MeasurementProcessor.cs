@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     {
         public override void OnStart(MeasurementContext data)
         {
-            Console.WriteLine($"Start: {this.AsString(data)}");
+            // Console.WriteLine($"Start: {this.AsString(data)}");
 
             // // Replace datapoint
             // var oldArray = data.Point!.Tags.ToArray();
@@ -39,13 +39,13 @@ namespace OpenTelemetry.Metrics
 
         public override void OnEnd(MeasurementContext data)
         {
-            Console.WriteLine($"End: {this.AsString(data)}");
+            // Console.WriteLine($"End: {this.AsString(data)}");
         }
 
         public string AsString(MeasurementContext data)
         {
             var tags = string.Join(",", data.Point!.Tags.ToArray());
-            return $"{data.Instrument.Meter.Name}:{data.Instrument.Name}[{tags}] = {data.Point!.ValueAsString()}";
+            return $"{data.Instrument.Meter.Name}:{data.Instrument.Name}{tags} = {data.Point!.ValueAsString()}";
         }
     }
 }

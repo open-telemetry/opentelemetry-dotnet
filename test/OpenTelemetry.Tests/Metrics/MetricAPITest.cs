@@ -28,19 +28,16 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void SimpleTest()
         {
-            using var provider = new MeterProviderBuilderSdk()
-                .IncludeInstrument((instrument) => true)
-                .AddProcessor(new MeasurementProcessor())
-                .AddExporter(new ExportMetricProcessor())
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("BasicAllTest")
                 .SetObservationPeriod(1000)
-                .Verbose(true)
                 .Build();
 
             using var meter = new Meter("BasicAllTest", "0.0.1");
 
             var counter = meter.CreateCounter<int>("counter1");
 
-            var observableCounter = meter.CreateObservableCounter<int>("counter2", () =>
+            var observableCounter = meter.CreateObservableGauge<int>("MemoryUsage", () =>
             {
                 return new List<Measurement<int>>()
                 {
