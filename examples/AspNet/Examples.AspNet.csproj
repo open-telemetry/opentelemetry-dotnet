@@ -79,7 +79,6 @@
     <PackageReference Include="Microsoft.AspNet.WebApi.WebHost" Version="$(MicrosoftAspNetWebApiWebHostPkgVer)" />
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="$(MicrosoftAspNetMvcPkgVer)" />
     <PackageReference Include="Microsoft.AspNet.WebPages" Version="$(MicrosoftAspNetWebPagesPkgVer)" />
-    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj">

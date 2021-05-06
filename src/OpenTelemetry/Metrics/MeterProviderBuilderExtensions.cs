@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
                 return meterProviderBuilderSdk.SetObservationPeriod(periodMilliseconds);
             }
 
-            return null;
+            return meterProviderBuilder;
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Metrics
                 return meterProviderBuilderSdk.SetExportPeriod(periodMilliseconds);
             }
 
-            return null;
+            return meterProviderBuilder;
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics
                 return meterProviderBuilderSdk.AddMeasurementProcessor(processor);
             }
 
-            return null;
+            return meterProviderBuilder;
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Metrics
                 return meterProviderBuilderSdk.AddExporter(processor);
             }
 
-            return null;
+            return meterProviderBuilder;
         }
 
         /// <summary>
