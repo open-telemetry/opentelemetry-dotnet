@@ -40,16 +40,18 @@ namespace Examples.AspNetCore
                     builder.ClearProviders();
                     builder.AddConsole();
 
-                    var useLogging = context.Configuration.GetValue<bool>("UseLogging");
+                    var loggingConfiguration = context.Configuration.GetSection("Logs");
+
+                    var useLogging = loggingConfiguration.GetValue<bool>("Enabled");
                     if (useLogging)
                     {
                         builder.AddOpenTelemetry(options =>
                         {
-                            options.IncludeScopes = true;
-                            options.ParseStateValues = true;
-                            options.IncludeFormattedMessage = true;
+                            options.IncludeScopes = loggingConfiguration.GetValue<bool>("IncludeScopes");
+                            options.ParseStateValues = loggingConfiguration.GetValue<bool>("ParseStateValues");
+                            options.IncludeFormattedMessage = loggingConfiguration.GetValue<bool>("IncludeFormattedMessage");
                             options.AddConsoleExporter();
-                            if (context.Configuration.GetValue<bool>("AttachLogsToActivity"))
+                            if (loggingConfiguration.GetValue<bool>("AttachLogsToActivity"))
                             {
                                 options.AddActivityEventAttachingLogProcessor();
                             }
