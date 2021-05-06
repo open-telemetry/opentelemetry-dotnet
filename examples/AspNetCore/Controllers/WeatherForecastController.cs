@@ -45,6 +45,8 @@ namespace Examples.AspNetCore.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
+            using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
+
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated
             // automatically as child of incoming request.

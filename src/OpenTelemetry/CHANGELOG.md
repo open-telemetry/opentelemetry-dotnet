@@ -9,6 +9,30 @@ please check the latest changes
 
 ## Unreleased
 
+* `AddLegacySource()` moved out of `TracerProviderBuilderExtensions` and into
+  public API
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
+* Fixed an issue causing inconsistent log scopes when using
+  `BatchLogRecordExportProcessor`. To make parsing scopes easier the
+  `LogRecord.ForEachScope` signature has been changed to receive instances of
+  `LogRecordScope` (a new type which implements
+  `IEnumerator<KeyValuePair<string, object>>` for accessing scope items)
+  ([#2026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2026))
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* Use `AssemblyFileVersionAttribute` instead of `FileVersionInfo.GetVersionInfo`
+  to get the SDK version attribute to ensure that it works when the assembly
+  is not loaded directly from a file on disk
+  ([#1908](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1908))
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 * Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
   ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
 
@@ -51,6 +75,10 @@ please check the latest changes
 
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
+
+* Added `IDeferredTracerProviderBuilder` and `TracerProviderBuilderBase` to
+  support dependency injection through OpenTelemetry.Extensions.Hosting.
+  ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
 
 ## 1.0.1
 

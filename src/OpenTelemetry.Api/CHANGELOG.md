@@ -9,6 +9,21 @@ please check the latest changes
 
 ## Unreleased
 
+* Adds `AddLegacySource()` to `TracerProviderBuilder`
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* `BaggagePropagator` now uses `baggage` as the header name instead of `Baggage`
+  to `Extract` from and `Inject` to `carrier`
+  ([#2003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2003))
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 ## 1.0.1
 
 Released 2021-Feb-10

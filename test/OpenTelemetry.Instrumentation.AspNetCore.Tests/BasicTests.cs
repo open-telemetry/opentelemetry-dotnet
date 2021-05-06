@@ -177,22 +177,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // List of invocations
             // 1. SetParentProvider for TracerProviderSdk
             // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
-            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
+            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
 
-            // we should only call Processor.OnEnd once for the sibling activity with the OperationName ActivityCreatedByHttpInListener
+            // we should only call Processor.OnEnd once for the sibling activity
             Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
             var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
-#if !NETCOREAPP2_1
-            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
-            // must be used.
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-#else
-            // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
-            // is always ignored and new one is created by the Instrumentation
-            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
-#endif
             Assert.Equal("api/Values/{id}", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
@@ -242,8 +234,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // List of invocations on the processor
                 // 1. SetParentProvider for TracerProviderSdk
                 // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
-                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
+                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
                 Assert.Equal(4, activityProcessor.Invocations.Count);
 
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
@@ -252,24 +244,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Single(stoppedActivities);
 
                 // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
-                Assert.Contains(startedActivities, item =>
+                Assert.Equal(2, startedActivities.Count(item =>
                 {
                     var startedActivity = item.Arguments[0] as Activity;
                     return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-                });
+                }));
 
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
+                // we should only call Processor.OnEnd once for the sibling activity
+                Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
@@ -425,6 +407,75 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     // Test TraceContext Propagation
                     var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
                     var response = await client.SendAsync(request);
+                    var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+
+                    response.EnsureSuccessStatusCode();
+
+                    Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
+                    Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
+                    Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
+
+                    // Test Baggage Context Propagation
+                    request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
+
+                    response = await client.SendAsync(request);
+                    var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+
+                    response.EnsureSuccessStatusCode();
+
+                    Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
+                    Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
+                }
+            }
+            finally
+            {
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                {
+                    new TraceContextPropagator(),
+                    new BaggagePropagator(),
+                }));
+            }
+        }
+
+        [Fact]
+        public async Task ExtractContextIrrespectiveOfTheFilterApplied()
+        {
+            try
+            {
+                var expectedTraceId = ActivityTraceId.CreateRandom();
+                var expectedParentSpanId = ActivitySpanId.CreateRandom();
+                var expectedTraceState = "rojo=1,congo=2";
+                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
+                var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
+                Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
+
+                // Arrange
+                bool isFilterCalled = false;
+                using (var testFactory = this.factory
+                    .WithWebHostBuilder(builder =>
+                        builder.ConfigureTestServices(services =>
+                        {
+                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            .AddAspNetCoreInstrumentation(options =>
+                            {
+                                options.Filter = context =>
+                                {
+                                    isFilterCalled = true;
+                                    return false;
+                                };
+                            })
+                            .Build();
+                        })))
+                {
+                    using var client = testFactory.CreateClient();
+
+                    // Test TraceContext Propagation
+                    var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
+                    var response = await client.SendAsync(request);
+
+                    // Ensure that filter was called
+                    Assert.True(isFilterCalled);
+
                     var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                     response.EnsureSuccessStatusCode();

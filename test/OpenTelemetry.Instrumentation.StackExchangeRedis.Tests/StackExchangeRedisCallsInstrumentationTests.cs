@@ -54,8 +54,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var sampler = new TestSampler();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
+                .SetSampler(sampler)
                 .AddRedisInstrumentation(connection)
                 .Build())
             {
@@ -77,6 +79,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0]);
             VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0]);
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
         [Fact]
@@ -98,6 +101,46 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             await Task.Delay(1).ContinueWith((t) => { third = profilerFactory(); });
             Assert.Equal(first, second);
             Assert.Equal(second, third);
+        }
+
+        [Fact]
+        public void CheckCacheIsFlushedProperly()
+        {
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost:6379");
+
+            var connection = ConnectionMultiplexer.Connect(connectionOptions);
+
+            using var instrumentation = new StackExchangeRedisCallsInstrumentation(connection, new StackExchangeRedisCallsInstrumentationOptions());
+            var profilerFactory = instrumentation.GetProfilerSessionsFactory();
+
+            // start a root level activity
+            using Activity rootActivity = new Activity("Parent")
+                .SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded)
+                .Start();
+
+            Assert.NotNull(rootActivity.Id);
+
+            // get an initial profiler from root activity
+            Activity.Current = rootActivity;
+            ProfilingSession profiler0 = profilerFactory();
+
+            // expect different result from synchronous child activity
+            ProfilingSession profiler1;
+            using (Activity.Current = new Activity("Child-Span-1").SetParentId(rootActivity.Id).Start())
+            {
+                profiler1 = profilerFactory();
+                Assert.NotSame(profiler0, profiler1);
+            }
+
+            rootActivity.Stop();
+            rootActivity.Dispose();
+
+            instrumentation.Flush();
+            Assert.Empty(instrumentation.Cache);
         }
 
         [Fact]
@@ -198,6 +241,15 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             {
                 Assert.Equal(endPoint.ToString(), activity.GetTagValue(SemanticConventions.AttributePeerService));
             }
+        }
+
+        private static void VerifySamplingParameters(SamplingParameters samplingParameters)
+        {
+            Assert.NotNull(samplingParameters.Tags);
+            Assert.Contains(
+                samplingParameters.Tags,
+                kvp => kvp.Key == SemanticConventions.AttributeDbSystem
+                       && (string)kvp.Value == "redis");
         }
     }
 }

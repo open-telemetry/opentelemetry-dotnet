@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 namespace Examples.AspNetCore
 {
@@ -39,15 +40,17 @@ namespace Examples.AspNetCore
                     builder.ClearProviders();
                     builder.AddConsole();
 
-                    var attachLogsToActivity = context.Configuration.GetValue<bool>("AttachLogsToActivity");
-                    if (attachLogsToActivity)
+                    var useLogging = context.Configuration.GetValue<bool>("UseLogging");
+                    if (useLogging)
                     {
                         builder.AddOpenTelemetry(options =>
                         {
                             options.IncludeScopes = true;
                             options.ParseStateValues = true;
                             options.IncludeFormattedMessage = true;
-                            options.AddActivityEventAttachingLogProcessor();
+                            options.AddConsoleExporter();
+                            if (context.Configuration.GetValue<bool>("AttachLogsToActivity"))
+                                options.AddActivityEventAttachingLogProcessor();
                         });
                     }
                 });

@@ -71,10 +71,15 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the kind of span/activity to be created.
         /// </summary>
+        /// <remarks>
+        /// For Activities created outside of ActivitySource,
+        /// the Kind will be the default (Internal).
+        /// </remarks>
         public ActivityKind Kind { get; }
 
         /// <summary>
         /// Gets the tags to be associated to the span/activity to be created.
+        /// These are the tags provided at the time of Activity creation.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Tags { get; }
 

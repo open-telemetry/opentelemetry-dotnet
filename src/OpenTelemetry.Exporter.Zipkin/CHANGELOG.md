@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `ZipkinExporterOptions` to `IConfiguration` using the `Configure` extension
+  (ex:
+  `services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));`).
+  ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 ## 1.0.1
 
 Released 2021-Feb-10
