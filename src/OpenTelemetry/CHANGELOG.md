@@ -13,6 +13,13 @@ please check the latest changes
   public API
   ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
 
+* Fixed an issue causing inconsistent log scopes when using
+  `BatchLogRecordExportProcessor`. To make parsing scopes easier the
+  `LogRecord.ForEachScope` signature has been changed to receive instances of
+  `LogRecordScope` (a new type which implements
+  `IEnumerator<KeyValuePair<string, object>>` for accessing scope items)
+  ([#2026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2026))
+
 ## 1.1.0-beta2
 
 Released 2021-Apr-23

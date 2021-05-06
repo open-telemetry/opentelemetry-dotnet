@@ -16,6 +16,7 @@
 
 #if NET461 || NETSTANDARD2_0
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -64,10 +65,22 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.Exception:".PadRight(RightPaddingLength)}{logRecord.Exception?.Message}");
                 }
 
+                int scopeDepth = -1;
+
                 logRecord.ForEachScope(ProcessScope, this);
 
-                static void ProcessScope(object scope, ConsoleLogRecordExporter exporter)
-                    => exporter.WriteLine($"{"LogRecord.Scope:".PadRight(RightPaddingLength)}{scope}");
+                void ProcessScope(LogRecordScope scope, ConsoleLogRecordExporter exporter)
+                {
+                    if (++scopeDepth == 0)
+                    {
+                        exporter.WriteLine("LogRecord.ScopeValues (Key:Value):");
+                    }
+
+                    foreach (KeyValuePair<string, object> scopeItem in scope)
+                    {
+                        exporter.WriteLine($"[Scope.{scopeDepth}]:{scopeItem.Key.PadRight(RightPaddingLength)}{scopeItem.Value}");
+                    }
+                }
 
                 var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)

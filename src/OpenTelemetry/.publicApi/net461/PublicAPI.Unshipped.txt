@@ -1,6 +1,17 @@
-OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<object, TState> callback, TState state) -> void
+OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<OpenTelemetry.Logs.LogRecordScope, TState> callback, TState state) -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
+OpenTelemetry.Logs.LogRecordScope
+OpenTelemetry.Logs.LogRecordScope.Enumerator
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Dispose() -> void
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator() -> void
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator(object scope) -> void
+OpenTelemetry.Logs.LogRecordScope.Enumerator.MoveNext() -> bool
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Reset() -> void
+OpenTelemetry.Logs.LogRecordScope.GetEnumerator() -> OpenTelemetry.Logs.LogRecordScope.Enumerator
+OpenTelemetry.Logs.LogRecordScope.LogRecordScope() -> void
+OpenTelemetry.Logs.LogRecordScope.Scope.get -> object
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.get -> bool
@@ -16,6 +27,7 @@ OpenTelemetry.Trace.TracerProviderBuilderBase
 OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string instrumentationName, string instrumentationVersion, System.Func<object> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider
 OpenTelemetry.Trace.TracerProviderBuilderBase.TracerProviderBuilderBase() -> void
+override OpenTelemetry.BatchLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord data) -> void
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder

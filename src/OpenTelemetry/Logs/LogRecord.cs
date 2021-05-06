@@ -18,16 +18,22 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// Log record base class.
+    /// Stores details about a log message.
     /// </summary>
     public sealed class LogRecord
     {
-        private readonly IExternalScopeProvider scopeProvider;
+        private static readonly Action<object, List<object>> AddScopeToBufferedList = (object scope, List<object> state) =>
+        {
+            state.Add(scope);
+        };
+
+        private List<object> bufferedScopes;
 
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
@@ -40,7 +46,7 @@ namespace OpenTelemetry.Logs
             Exception exception,
             IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
-            this.scopeProvider = scopeProvider;
+            this.ScopeProvider = scopeProvider;
 
             var activity = Activity.Current;
             if (activity != null)
@@ -79,23 +85,92 @@ namespace OpenTelemetry.Logs
 
         public string FormattedMessage { get; }
 
+        /// <summary>
+        /// Gets the raw state attached to the log. Set to <see
+        /// langword="null"/> when <see
+        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
+        /// </summary>
         public object State { get; }
 
+        /// <summary>
+        /// Gets the parsed state values attached to the log. Set when <see
+        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
+        /// otherwise <see langword="null"/>.
+        /// </summary>
         public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
 
         public Exception Exception { get; }
+
+        internal IExternalScopeProvider ScopeProvider { get; set; }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
         /// of creation. All callbacks are guaranteed to be called inline from
         /// this method.
         /// </summary>
+        /// <remarks>
+        /// Note: Scopes are only available during the lifecycle of the log
+        /// message being written. If you need to capture scopes to be used
+        /// later (for example in batching scenarios), call <see
+        /// cref="BufferLogScopes"/> to safely capture the values (incurs
+        /// allocation).
+        /// </remarks>
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
-        public void ForEachScope<TState>(Action<object, TState> callback, TState state)
+        public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
         {
-            this.scopeProvider?.ForEachScope(callback, state);
+            var forEachScopeState = new ScopeForEachState<TState>(callback, state);
+
+            if (this.bufferedScopes != null)
+            {
+                foreach (object scope in this.bufferedScopes)
+                {
+                    ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
+                }
+            }
+            else if (this.ScopeProvider != null)
+            {
+                this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
+            }
+        }
+
+        /// <summary>
+        /// Buffers the scopes attached to the log into a list so that they can
+        /// be safely processed after the log message lifecycle has ended.
+        /// </summary>
+        internal void BufferLogScopes()
+        {
+            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            {
+                return;
+            }
+
+            List<object> scopes = new List<object>();
+
+            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
+
+            this.bufferedScopes = scopes;
+        }
+
+        private readonly struct ScopeForEachState<TState>
+        {
+            public static readonly Action<object, ScopeForEachState<TState>> ForEachScope = (object scope, ScopeForEachState<TState> state) =>
+            {
+                LogRecordScope logRecordScope = new LogRecordScope(scope);
+
+                state.Callback(logRecordScope, state.UserState);
+            };
+
+            public readonly Action<LogRecordScope, TState> Callback;
+
+            public readonly TState UserState;
+
+            public ScopeForEachState(Action<LogRecordScope, TState> callback, TState state)
+            {
+                this.Callback = callback;
+                this.UserState = state;
+            }
         }
     }
 }

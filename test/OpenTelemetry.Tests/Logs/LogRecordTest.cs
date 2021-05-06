@@ -32,7 +32,7 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Logs
 {
-    public class LogRecordTest : IDisposable
+    public sealed class LogRecordTest : IDisposable
     {
         private readonly ILogger logger;
         private readonly List<LogRecord> exportedItems = new List<LogRecord>();
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Tests.Logs
         public LogRecordTest()
         {
             this.exporter = new InMemoryExporter<LogRecord>(this.exportedItems);
-            this.processor = new SimpleLogRecordExportProcessor(this.exporter);
+            this.processor = new TestLogRecordProcessor(this.exporter);
 #if NETCOREAPP2_1
             var serviceCollection = new ServiceCollection().AddLogging(builder =>
 #else
@@ -348,7 +348,7 @@ namespace OpenTelemetry.Tests.Logs
             var logRecord = this.exportedItems[0];
 
             List<object> scopes = new List<object>();
-            logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+            logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope.Scope), null);
             Assert.Empty(scopes);
 
             this.options.IncludeScopes = true;
@@ -357,21 +357,85 @@ namespace OpenTelemetry.Tests.Logs
                 this.logger.LogInformation("OpenTelemetry!");
                 logRecord = this.exportedItems[1];
 
-                logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+                int reachedDepth = -1;
+                logRecord.ForEachScope<object>(
+                    (scope, state) =>
+                    {
+                        reachedDepth++;
+                        scopes.Add(scope.Scope);
+                        foreach (KeyValuePair<string, object> item in scope)
+                        {
+                            Assert.Equal(string.Empty, item.Key);
+                            Assert.Equal("string_scope", item.Value);
+                        }
+                    },
+                    null);
                 Assert.Single(scopes);
+                Assert.Equal(0, reachedDepth);
                 Assert.Equal("string_scope", scopes[0]);
 
                 scopes.Clear();
 
-                using var scope2 = this.logger.BeginScope(2021);
+                List<KeyValuePair<string, object>> expectedScope2 = new List<KeyValuePair<string, object>>
+                {
+                    new KeyValuePair<string, object>("item1", "value1"),
+                    new KeyValuePair<string, object>("item2", "value2"),
+                };
+                using var scope2 = this.logger.BeginScope(expectedScope2);
 
                 this.logger.LogInformation("OpenTelemetry!");
                 logRecord = this.exportedItems[2];
 
-                logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope), null);
+                reachedDepth = -1;
+                logRecord.ForEachScope<object>(
+                    (scope, state) =>
+                    {
+                        scopes.Add(scope.Scope);
+                        if (reachedDepth++ == 1)
+                        {
+                            foreach (KeyValuePair<string, object> item in scope)
+                            {
+                                Assert.Contains(item, expectedScope2);
+                            }
+                        }
+                    },
+                    null);
                 Assert.Equal(2, scopes.Count);
+                Assert.Equal(1, reachedDepth);
                 Assert.Equal("string_scope", scopes[0]);
-                Assert.Equal(2021, scopes[1]);
+                Assert.Same(expectedScope2, scopes[1]);
+
+                scopes.Clear();
+
+                KeyValuePair<string, object>[] expectedScope3 = new KeyValuePair<string, object>[]
+                {
+                    new KeyValuePair<string, object>("item3", "value3"),
+                    new KeyValuePair<string, object>("item4", "value4"),
+                };
+                using var scope3 = this.logger.BeginScope(expectedScope3);
+
+                this.logger.LogInformation("OpenTelemetry!");
+                logRecord = this.exportedItems[3];
+
+                reachedDepth = -1;
+                logRecord.ForEachScope<object>(
+                    (scope, state) =>
+                    {
+                        scopes.Add(scope.Scope);
+                        if (reachedDepth++ == 2)
+                        {
+                            foreach (KeyValuePair<string, object> item in scope)
+                            {
+                                Assert.Contains(item, expectedScope3);
+                            }
+                        }
+                    },
+                    null);
+                Assert.Equal(3, scopes.Count);
+                Assert.Equal(2, reachedDepth);
+                Assert.Equal("string_scope", scopes[0]);
+                Assert.Same(expectedScope2, scopes[1]);
+                Assert.Same(expectedScope3, scopes[2]);
             }
             finally
             {
@@ -595,6 +659,21 @@ namespace OpenTelemetry.Tests.Logs
         private class CustomState
         {
             public string Property { get; set; }
+        }
+
+        private class TestLogRecordProcessor : SimpleExportProcessor<LogRecord>
+        {
+            public TestLogRecordProcessor(BaseExporter<LogRecord> exporter)
+                : base(exporter)
+            {
+            }
+
+            public override void OnEnd(LogRecord data)
+            {
+                data.BufferLogScopes();
+
+                base.OnEnd(data);
+            }
         }
     }
 }
