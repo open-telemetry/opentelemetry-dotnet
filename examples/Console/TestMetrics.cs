@@ -25,13 +25,14 @@ namespace Examples.Console
 {
     internal class TestMetrics
     {
-        internal static object Run(int observationInterval)
+        internal static object Run(int observationInterval, int exportInterval)
         {
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
+                .SetObservationPeriod(observationInterval)
+                .SetExportPeriod(exportInterval)
                 .AddProcessor(new TagEnrichmentProcessor())
                 .AddExportProcessor(new MetricConsoleExporter())
-                .SetObservationPeriod(observationInterval)
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
