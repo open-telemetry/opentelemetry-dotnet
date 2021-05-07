@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
 {
     public class MetricItem
     {
-        internal List<ConcurrentDictionary<Instrument, AggregateState>> Exports = new List<ConcurrentDictionary<Instrument, AggregateState>>();
+        internal List<ConcurrentDictionary<Instrument, AggregateState>> Metrics = new List<ConcurrentDictionary<Instrument, AggregateState>>();
 
         public MetricItem()
         {

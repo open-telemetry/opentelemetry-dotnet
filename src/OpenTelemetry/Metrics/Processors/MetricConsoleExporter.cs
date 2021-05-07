@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
     {
         public override void OnEnd(MetricItem data)
         {
-            foreach (var exports in data.Exports)
+            foreach (var exports in data.Metrics)
             {
                 foreach (var item in exports)
                 {

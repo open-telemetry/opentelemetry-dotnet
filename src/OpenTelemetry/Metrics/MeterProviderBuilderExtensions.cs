@@ -38,16 +38,16 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Sets export period.
+        /// Sets collection period.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="periodMilliseconds">Perion in milliseconds.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder SetExportPeriod(this MeterProviderBuilder meterProviderBuilder, int periodMilliseconds)
+        public static MeterProviderBuilder SetCollectionPeriod(this MeterProviderBuilder meterProviderBuilder, int periodMilliseconds)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.SetExportPeriod(periodMilliseconds);
+                return meterProviderBuilderSdk.SetCollectionPeriod(periodMilliseconds);
             }
 
             return meterProviderBuilder;

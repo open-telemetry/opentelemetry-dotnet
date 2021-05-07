@@ -47,7 +47,7 @@ namespace Examples.Console
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
-                    (MetricsOptions options) => TestMetrics.Run(options.ObservationPeriodMilliseconds, options.ExportPeriodMilliseconds),
+                    (MetricsOptions options) => TestMetrics.Run(options.ObservationPeriodMilliseconds, options.CollectionPeriodMilliseconds),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -101,8 +101,8 @@ namespace Examples.Console
         [Option('p', "observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
         public int ObservationPeriodMilliseconds { get; set; }
 
-        [Option('e', "exportPeriodMilliseconds", Default = 500, HelpText = "Export period.", Required = false)]
-        public int ExportPeriodMilliseconds { get; set; }
+        [Option('c', "collectionPeriodMilliseconds", Default = 500, HelpText = "Collection period.", Required = false)]
+        public int CollectionPeriodMilliseconds { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<string> meterSources = new List<string>();
         private int observationPeriodMilliseconds = 1000;
-        private int exportPeriodMilliseconds = 1000;
+        private int collectionPeriodMilliseconds = 1000;
 
         internal MeterProviderBuilderSdk()
         {
@@ -59,9 +59,9 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk SetExportPeriod(int periodMilliseconds)
+        internal MeterProviderBuilderSdk SetCollectionPeriod(int periodMilliseconds)
         {
-            this.exportPeriodMilliseconds = periodMilliseconds;
+            this.collectionPeriodMilliseconds = periodMilliseconds;
             return this;
         }
 
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Metrics
             return new MeterProviderSdk(
                 this.meterSources,
                 this.observationPeriodMilliseconds,
-                this.exportPeriodMilliseconds,
+                this.collectionPeriodMilliseconds,
                 this.MeasurementProcessors.ToArray(),
                 this.ExportProcessors.ToArray());
         }

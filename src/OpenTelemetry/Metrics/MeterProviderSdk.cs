@@ -35,12 +35,12 @@ namespace OpenTelemetry.Metrics
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
             int observationPeriodMilliseconds,
-            int exportPeriodMilliseconds,
+            int collectionPeriodMilliseconds,
             MeasurementProcessor[] measurementProcessors,
             MetricProcessor[] metricExportProcessors)
         {
             this.ObservationPeriodMilliseconds = observationPeriodMilliseconds;
-            this.ExportPeriodMilliseconds = exportPeriodMilliseconds;
+            this.CollectionPeriodMilliseconds = collectionPeriodMilliseconds;
 
             // Setup our Processors
 
@@ -84,12 +84,12 @@ namespace OpenTelemetry.Metrics
 
             var token = this.cts.Token;
             this.observerTask = Task.Run(async () => await this.ObserverTask(token));
-            this.exporterTask = Task.Run(async () => await this.ExporterTask(token));
+            this.exporterTask = Task.Run(async () => await this.CollectorTask(token));
         }
 
         internal int ObservationPeriodMilliseconds { get; } = 1000;
 
-        internal int ExportPeriodMilliseconds { get; } = 1000;
+        internal int CollectionPeriodMilliseconds { get; } = 1000;
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Metrics
 
             this.exporterTask.Wait();
 
-            this.Export();
+            this.Collect();
         }
 
         private async Task ObserverTask(CancellationToken token)
@@ -151,40 +151,40 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private async Task ExporterTask(CancellationToken token)
+        private async Task CollectorTask(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.Delay(this.ExportPeriodMilliseconds, token);
+                    await Task.Delay(this.CollectionPeriodMilliseconds, token);
                 }
                 catch (TaskCanceledException)
                 {
                 }
 
-                this.Export();
+                this.Collect();
             }
         }
 
-        private void Export()
+        private void Collect()
         {
-            var exportContext = new MetricItem();
+            var metricItem = new MetricItem();
 
             foreach (var processor in this.AggregateProcessors)
             {
-                var export = processor.Collect();
-                exportContext.Exports.Add(export);
+                var metric = processor.Collect();
+                metricItem.Metrics.Add(metric);
             }
 
             foreach (var processor in this.MetricProcessors)
             {
-                processor.OnEnd(exportContext);
+                processor.OnEnd(metricItem);
             }
 
             foreach (var processor in this.ExportProcessors)
             {
-                processor.OnEnd(exportContext);
+                processor.OnEnd(metricItem);
             }
         }
     }

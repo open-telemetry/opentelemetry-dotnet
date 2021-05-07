@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("BasicAllTest")
                 .SetObservationPeriod(300)
-                .SetExportPeriod(1000)
+                .SetCollectionPeriod(1000)
                 .AddProcessor(new TagEnrichmentProcessor())
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
