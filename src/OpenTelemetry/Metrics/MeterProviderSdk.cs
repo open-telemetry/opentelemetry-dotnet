@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task observerTask;
-        private readonly Task exporterTask;
+        private readonly Task collectorTask;
         private readonly MeterListener listener;
 
         internal MeterProviderSdk(
@@ -84,7 +84,7 @@ namespace OpenTelemetry.Metrics
 
             var token = this.cts.Token;
             this.observerTask = Task.Run(async () => await this.ObserverTask(token));
-            this.exporterTask = Task.Run(async () => await this.CollectorTask(token));
+            this.collectorTask = Task.Run(async () => await this.CollectorTask(token));
         }
 
         internal int ObservationPeriodMilliseconds { get; } = 1000;
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Metrics
 
             this.observerTask.Wait();
 
-            this.exporterTask.Wait();
+            this.collectorTask.Wait();
 
             this.Collect();
         }
