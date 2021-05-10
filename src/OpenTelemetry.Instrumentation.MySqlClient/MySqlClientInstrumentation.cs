@@ -98,11 +98,7 @@ namespace OpenTelemetry.Instrumentation.MySqlClient
                     activity.DisplayName = command.ConnectionStringBuilder.Database;
                     activity.SetTag(SemanticConventions.AttributeDbName, command.ConnectionStringBuilder.Database);
 
-
-                    if (this.options.EnableConnectionLevelAttributes)
-                    {
-                        this.AddConnectionLevelDetailsToActivity(command.ConnectionStringBuilder, activity);
-                    }
+                    this.AddConnectionLevelDetailsToActivity(command.ConnectionStringBuilder, activity);
                 }
             }
         }
@@ -124,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.MySqlClient
             {
                 if (activity.IsAllDataRequested)
                 {
-                    activity.SetStatus(Status.Ok);
+                    activity.SetStatus(Status.Unset);
                 }
             }
             finally
@@ -185,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.MySqlClient
         {
             if (!this.options.EnableConnectionLevelAttributes)
             {
-                sqlActivity.SetTag(SemanticConventions.AttributePeerService, dataSource.ConnectionString);
+                sqlActivity.SetTag(SemanticConventions.AttributePeerService, dataSource.Server);
             }
             else
             {
