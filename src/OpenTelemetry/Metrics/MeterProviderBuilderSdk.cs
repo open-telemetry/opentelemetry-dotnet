@@ -22,11 +22,16 @@ namespace OpenTelemetry.Metrics
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
         private readonly List<string> meterSources = new List<string>();
-        private int observationPeriodMilliseconds;
+        private int observationPeriodMilliseconds = 1000;
+        private int collectionPeriodMilliseconds = 1000;
 
         internal MeterProviderBuilderSdk()
         {
         }
+
+        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
+
+        internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -54,9 +59,33 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilderSdk SetCollectionPeriod(int periodMilliseconds)
+        {
+            this.collectionPeriodMilliseconds = periodMilliseconds;
+            return this;
+        }
+
+        internal MeterProviderBuilderSdk AddMeasurementProcessor(MeasurementProcessor processor)
+        {
+            this.MeasurementProcessors.Add(processor);
+            return this;
+        }
+
+        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
+        {
+            this.ExportProcessors.Add(processor);
+            return this;
+        }
+
         internal MeterProvider Build()
         {
-            return new MeterProviderSdk(this.meterSources, this.observationPeriodMilliseconds);
+            // TODO: Need to review using a struct for BuildOptions
+            return new MeterProviderSdk(
+                this.meterSources,
+                this.observationPeriodMilliseconds,
+                this.collectionPeriodMilliseconds,
+                this.MeasurementProcessors.ToArray(),
+                this.ExportProcessors.ToArray());
         }
     }
 }

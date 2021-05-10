@@ -25,11 +25,14 @@ namespace Examples.Console
 {
     internal class TestMetrics
     {
-        internal static object Run(int observationInterval)
+        internal static object Run(int observationInterval, int collectionInterval)
         {
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetObservationPeriod(observationInterval)
+                .SetCollectionPeriod(collectionInterval)
+                .AddProcessor(new TagEnrichmentProcessor())
+                .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
@@ -56,7 +59,7 @@ namespace Examples.Console
                 };
             });
 
-            Task.Delay(50).Wait();
+            Task.Delay(5000).Wait();
             System.Console.WriteLine("Press Enter key to exit.");
             return null;
         }

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -28,14 +27,30 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderSdk
         : MeterProvider
     {
-        private ConcurrentDictionary<Meter, int> meters;
-        private MeterListener listener;
-        private CancellationTokenSource cts;
-        private Task observerTask;
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly Task observerTask;
+        private readonly Task collectorTask;
+        private readonly MeterListener listener;
 
-        internal MeterProviderSdk(IEnumerable<string> meterSources, int observationPeriodMilliseconds)
+        internal MeterProviderSdk(
+            IEnumerable<string> meterSources,
+            int observationPeriodMilliseconds,
+            int collectionPeriodMilliseconds,
+            MeasurementProcessor[] measurementProcessors,
+            MetricProcessor[] metricExportProcessors)
         {
-            this.meters = new ConcurrentDictionary<Meter, int>();
+            this.ObservationPeriodMilliseconds = observationPeriodMilliseconds;
+            this.CollectionPeriodMilliseconds = collectionPeriodMilliseconds;
+
+            // Setup our Processors
+
+            this.MeasurementProcessors.AddRange(measurementProcessors);
+
+            this.AggregateProcessors.Add(new AggregateProcessor());
+
+            this.ExportProcessors.AddRange(metricExportProcessors);
+
+            // Setup Listener
 
             var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             foreach (var name in meterSources)
@@ -65,40 +80,112 @@ namespace OpenTelemetry.Metrics
 
             this.listener.Start();
 
-            this.cts = new CancellationTokenSource();
+            // Start our long running Task
 
             var token = this.cts.Token;
-            this.observerTask = Task.Run(async () =>
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Task.Delay(observationPeriodMilliseconds, token);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                    }
-
-                    this.listener.RecordObservableInstruments();
-                }
-            });
+            this.observerTask = Task.Run(async () => await this.ObserverTask(token));
+            this.collectorTask = Task.Run(async () => await this.CollectorTask(token));
         }
+
+        internal int ObservationPeriodMilliseconds { get; } = 1000;
+
+        internal int CollectionPeriodMilliseconds { get; } = 1000;
+
+        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
+
+        internal List<AggregateProcessor> AggregateProcessors { get; } = new List<AggregateProcessor>();
+
+        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
+
+        internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
         internal void MeasurementsCompleted(Instrument instrument, object? state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> attribs, object? state)
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+            where T : unmanaged
         {
-            Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} recorded {value}.");
+            // Run Pre Aggregator Processors
+
+            var measurmentContext = new MeasurementItem(instrument, new DataPoint<T>(value, tags));
+
+            foreach (var processor in this.MeasurementProcessors)
+            {
+                processor.OnEnd(measurmentContext);
+            }
+
+            // Run Aggregator Processors
+
+            foreach (var processor in this.AggregateProcessors)
+            {
+                processor.OnEnd(measurmentContext);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             this.cts.Cancel();
+
             this.observerTask.Wait();
+
+            this.collectorTask.Wait();
+
+            this.Collect();
+        }
+
+        private async Task ObserverTask(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(this.ObservationPeriodMilliseconds, token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
+
+                this.listener.RecordObservableInstruments();
+            }
+        }
+
+        private async Task CollectorTask(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(this.CollectionPeriodMilliseconds, token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
+
+                this.Collect();
+            }
+        }
+
+        private void Collect()
+        {
+            var metricItem = new MetricItem();
+
+            foreach (var processor in this.AggregateProcessors)
+            {
+                var metric = processor.Collect();
+                metricItem.Metrics.Add(metric);
+            }
+
+            foreach (var processor in this.MetricProcessors)
+            {
+                processor.OnEnd(metricItem);
+            }
+
+            foreach (var processor in this.ExportProcessors)
+            {
+                processor.OnEnd(metricItem);
+            }
         }
     }
 }

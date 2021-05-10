@@ -27,12 +27,12 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public sealed class ObservableCounter<T> : ObservableInstrument<T>
-        where T : unmanaged
+        where T : struct
     {
         private Func<IEnumerable<Measurement<T>>> observeValues;
 
-        internal ObservableCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
-            : base(meter, name, description, unit)
+        internal ObservableCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? unit, string? description)
+            : base(meter, name, unit, description)
         {
             this.observeValues = observeValues;
             this.Publish();

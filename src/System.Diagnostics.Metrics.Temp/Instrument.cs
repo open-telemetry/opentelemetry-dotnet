@@ -34,12 +34,12 @@ namespace System.Diagnostics.Metrics
         /// Initializes a new instance of the <see cref="Instrument"/> class.
         /// Protected constructor to initialize the common instrument properties.
         /// </summary>
-        protected Instrument(Meter meter, string name, string? description, string? unit)
+        protected Instrument(Meter meter, string name, string? unit, string? description)
         {
             this.Meter = meter;
             this.Name = name;
-            this.Description = description;
             this.Unit = unit;
+            this.Description = description;
         }
 
         /// <summary>

@@ -27,7 +27,7 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public struct Measurement<T>
-        where T : unmanaged
+        where T : struct
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Measurement{T}"/> struct.

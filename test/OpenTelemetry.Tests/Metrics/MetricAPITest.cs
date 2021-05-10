@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Threading.Tasks;
 using Xunit;
 
 #nullable enable
@@ -29,7 +30,10 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("BasicAllTest")
-                .SetObservationPeriod(1000)
+                .SetObservationPeriod(300)
+                .SetCollectionPeriod(1000)
+                .AddProcessor(new TagEnrichmentProcessor())
+                .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
 
             using var meter = new Meter("BasicAllTest", "0.0.1");
@@ -61,6 +65,8 @@ namespace OpenTelemetry.Metrics.Tests
                 200,
                 new KeyValuePair<string, object?>("label1", "value1"),
                 new KeyValuePair<string, object?>("label2", "value2"));
+
+            Task.Delay(3000).Wait();
         }
     }
 }

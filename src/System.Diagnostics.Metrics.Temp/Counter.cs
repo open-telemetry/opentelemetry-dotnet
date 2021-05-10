@@ -26,10 +26,10 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public sealed class Counter<T> : Instrument<T>
-        where T : unmanaged
+        where T : struct
     {
-        internal Counter(Meter meter, string name, string? description, string? unit)
-            : base(meter, name, description, unit)
+        internal Counter(Meter meter, string name, string? unit, string? description)
+            : base(meter, name, unit, description)
         {
             this.Publish();
         }
@@ -37,62 +37,62 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Add(T measurement)
+        public void Add(T delta)
         {
-            this.RecordMeasurement(measurement);
+            this.RecordMeasurement(delta);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Add(
-            T measurement,
+            T delta,
             KeyValuePair<string, object?> tag1)
         {
-            this.RecordMeasurement(measurement, tag1);
+            this.RecordMeasurement(delta, tag1);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Add(
-            T measurement,
+            T delta,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2)
         {
-            this.RecordMeasurement(measurement, tag1, tag2);
+            this.RecordMeasurement(delta, tag1, tag2);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Add(
-            T measurement,
+            T delta,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2,
             KeyValuePair<string, object?> tag3)
         {
-            this.RecordMeasurement(measurement, tag1, tag2, tag3);
+            this.RecordMeasurement(delta, tag1, tag2, tag3);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Add(
-            T measurement,
+            T delta,
             ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            this.RecordMeasurement(measurement, tags);
+            this.RecordMeasurement(delta, tags);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Add(
-            T measurement,
+            T delta,
             params KeyValuePair<string, object?>[] tags)
         {
-            this.RecordMeasurement(measurement, tags);
+            this.RecordMeasurement(delta, tags);
         }
     }
 }

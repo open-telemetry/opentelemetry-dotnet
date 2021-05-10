@@ -27,10 +27,10 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public sealed class Histogram<T> : Instrument<T>
-        where T : unmanaged
+        where T : struct
     {
-        internal Histogram(Meter meter, string name, string? description, string? unit)
-            : base(meter, name, description, unit)
+        internal Histogram(Meter meter, string name, string? unit, string? description)
+            : base(meter, name, unit, description)
         {
             this.Publish();
         }
@@ -38,62 +38,62 @@ namespace System.Diagnostics.Metrics
         /// <summary>
         /// TBD.
         /// </summary>
-        public void Record(T measurement)
+        public void Record(T value)
         {
-            this.RecordMeasurement(measurement);
+            this.RecordMeasurement(value);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Record(
-            T measurement,
+            T value,
             KeyValuePair<string, object?> tag1)
         {
-            this.RecordMeasurement(measurement, tag1);
+            this.RecordMeasurement(value, tag1);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Record(
-            T measurement,
+            T value,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2)
         {
-            this.RecordMeasurement(measurement, tag1, tag2);
+            this.RecordMeasurement(value, tag1, tag2);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Record(
-            T measurement,
+            T value,
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2,
             KeyValuePair<string, object?> tag3)
         {
-            this.RecordMeasurement(measurement, tag1, tag2, tag3);
+            this.RecordMeasurement(value, tag1, tag2, tag3);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Record(
-            T measurement,
+            T value,
             ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            this.RecordMeasurement(measurement, tags);
+            this.RecordMeasurement(value, tags);
         }
 
         /// <summary>
         /// TBD.
         /// </summary>
         public void Record(
-            T measurement,
+            T value,
             params KeyValuePair<string, object?>[] tags)
         {
-            this.RecordMeasurement(measurement, tags);
+            this.RecordMeasurement(value, tags);
         }
     }
 }

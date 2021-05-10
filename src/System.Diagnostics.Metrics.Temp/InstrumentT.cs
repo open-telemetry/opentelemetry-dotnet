@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 
 #nullable enable
+#pragma warning disable SA1649
 
 namespace System.Diagnostics.Metrics
 {
@@ -26,14 +27,14 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public abstract class Instrument<T> : Instrument
-        where T : unmanaged
+        where T : struct
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Instrument{T}"/> class.
         /// Protected constructor to create the instrument with the common properties.
         /// </summary>
-        protected Instrument(Meter meter, string name, string? description, string? unit)
-            : base(meter, name, description, unit)
+        protected Instrument(Meter meter, string name, string? unit, string? description)
+            : base(meter, name, unit, description)
         {
         }
 
