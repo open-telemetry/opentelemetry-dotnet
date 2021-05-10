@@ -61,11 +61,11 @@ namespace System.Diagnostics.Metrics
         /// <typeparam name="T">TBD.</typeparam>
         public Counter<T> CreateCounter<T>(
             string name,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
-            return new Counter<T>(this, name, description, unit);
+            return new Counter<T>(this, name, unit, description);
         }
 
         /// <summary>
@@ -74,11 +74,11 @@ namespace System.Diagnostics.Metrics
         /// <typeparam name="T">TBD.</typeparam>
         public Histogram<T> CreateHistogram<T>(
             string name,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
-            return new Histogram<T>(this, name, description, unit);
+            return new Histogram<T>(this, name, unit, description);
         }
 
         /// <summary>
@@ -88,9 +88,9 @@ namespace System.Diagnostics.Metrics
         public ObservableCounter<T> CreateObservableCounter<T>(
             string name,
             Func<T> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableCounter<T>(
                 this,
@@ -99,8 +99,8 @@ namespace System.Diagnostics.Metrics
                     {
                         new Measurement<T>(observeValue()),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -110,9 +110,9 @@ namespace System.Diagnostics.Metrics
         public ObservableCounter<T> CreateObservableCounter<T>(
             string name,
             Func<Measurement<T>> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableCounter<T>(
                 this,
@@ -121,8 +121,8 @@ namespace System.Diagnostics.Metrics
                     {
                         observeValue(),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -132,11 +132,11 @@ namespace System.Diagnostics.Metrics
         public ObservableCounter<T> CreateObservableCounter<T>(
             string name,
             Func<IEnumerable<Measurement<T>>> observeValues,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
-            return new ObservableCounter<T>(this, name, observeValues, description, unit);
+            return new ObservableCounter<T>(this, name, observeValues, unit, description);
         }
 
         /// <summary>
@@ -146,9 +146,9 @@ namespace System.Diagnostics.Metrics
         public ObservableGauge<T> CreateObservableGauge<T>(
             string name,
             Func<T> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableGauge<T>(
                 this,
@@ -157,8 +157,8 @@ namespace System.Diagnostics.Metrics
                     {
                         new Measurement<T>(observeValue()),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -168,9 +168,9 @@ namespace System.Diagnostics.Metrics
         public ObservableGauge<T> CreateObservableGauge<T>(
             string name,
             Func<Measurement<T>> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableGauge<T>(
                 this,
@@ -179,8 +179,8 @@ namespace System.Diagnostics.Metrics
                     {
                         observeValue(),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -190,11 +190,11 @@ namespace System.Diagnostics.Metrics
         public ObservableGauge<T> CreateObservableGauge<T>(
             string name,
             Func<IEnumerable<Measurement<T>>> observeValues,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
-            return new ObservableGauge<T>(this, name, observeValues, description, unit);
+            return new ObservableGauge<T>(this, name, observeValues, unit, description);
         }
 
         /// <summary>
@@ -204,9 +204,9 @@ namespace System.Diagnostics.Metrics
         public ObservableUpDownCounter<T> CreateObservableUpDownCounter<T>(
             string name,
             Func<T> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableUpDownCounter<T>(
                 this,
@@ -215,8 +215,8 @@ namespace System.Diagnostics.Metrics
                     {
                         new Measurement<T>(observeValue()),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -226,9 +226,9 @@ namespace System.Diagnostics.Metrics
         public ObservableUpDownCounter<T> CreateObservableUpDownCounter<T>(
             string name,
             Func<Measurement<T>> observeValue,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
             return new ObservableUpDownCounter<T>(
                 this,
@@ -237,8 +237,8 @@ namespace System.Diagnostics.Metrics
                     {
                         observeValue(),
                     },
-                description,
-                unit);
+                unit,
+                description);
         }
 
         /// <summary>
@@ -248,11 +248,11 @@ namespace System.Diagnostics.Metrics
         public ObservableUpDownCounter<T> CreateObservableUpDownCounter<T>(
             string name,
             Func<IEnumerable<Measurement<T>>> observeValues,
-            string? description = null,
-            string? unit = null)
-            where T : unmanaged
+            string? unit = null,
+            string? description = null)
+            where T : struct
         {
-            return new ObservableUpDownCounter<T>(this, name, observeValues, description, unit);
+            return new ObservableUpDownCounter<T>(this, name, observeValues, unit, description);
         }
 
         /// <summary>

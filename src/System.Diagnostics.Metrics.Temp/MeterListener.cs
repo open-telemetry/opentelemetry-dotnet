@@ -31,7 +31,8 @@ namespace System.Diagnostics.Metrics
         Instrument instrument,
         T measurement,
         ReadOnlySpan<KeyValuePair<string, object?>> tags,
-        object? state);
+        object? state)
+        where T : struct;
 
     /// <summary>
     /// The listener class can be used to listen to observable and non-observable instrument
@@ -94,6 +95,7 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         /// <typeparam name="T">TBD.</typeparam>
         public void SetMeasurementEventCallback<T>(MeasurementCallback<T>? measurementCallback)
+            where T : struct
         {
             this.Callbacks.TryAdd(typeof(T), (object?)measurementCallback);
         }
@@ -102,13 +104,6 @@ namespace System.Diagnostics.Metrics
         /// TBD.
         /// </summary>
         public void Start()
-        {
-        }
-
-        /// <summary>
-        /// TBD.
-        /// </summary>
-        public void Stop()
         {
         }
 

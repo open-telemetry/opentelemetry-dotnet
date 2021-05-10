@@ -26,7 +26,7 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public abstract class ObservableInstrument<T> : Instrument
-        where T : unmanaged
+        where T : struct
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableInstrument{T}"/> class.
@@ -35,8 +35,8 @@ namespace System.Diagnostics.Metrics
         protected ObservableInstrument(
             Meter meter,
             string name,
-            string? description,
-            string? unit)
+            string? unit,
+            string? description)
             : base(meter, name, description, unit)
         {
         }

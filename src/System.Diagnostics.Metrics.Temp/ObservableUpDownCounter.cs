@@ -27,12 +27,12 @@ namespace System.Diagnostics.Metrics
     /// </summary>
     /// <typeparam name="T">TBD.</typeparam>
     public sealed class ObservableUpDownCounter<T> : ObservableInstrument<T>
-        where T : unmanaged
+        where T : struct
     {
         private Func<IEnumerable<Measurement<T>>> observeValues;
 
         internal ObservableUpDownCounter(Meter meter, string name, Func<IEnumerable<Measurement<T>>> observeValues, string? description, string? unit)
-            : base(meter, name, description, unit)
+            : base(meter, name, unit, description)
         {
             this.observeValues = observeValues;
             this.Publish();
