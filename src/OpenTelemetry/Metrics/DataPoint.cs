@@ -25,6 +25,11 @@ namespace OpenTelemetry.Metrics
     {
         private KeyValuePair<string, object?>[] tags;
 
+        public DataPoint(params KeyValuePair<string, object?>[] tags)
+        {
+            this.tags = tags;
+        }
+
         public DataPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
             this.tags = tags.ToArray();
@@ -38,12 +43,12 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public void SetTags(KeyValuePair<string, object?>[] tags)
+        public virtual string ValueAsString()
         {
-            this.tags = tags;
+            throw new NotImplementedException();
         }
 
-        public virtual string ValueAsString()
+        public virtual DataPoint NewWithTags(params KeyValuePair<string, object?>[] tags)
         {
             throw new NotImplementedException();
         }

@@ -22,7 +22,7 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Metrics
 {
     internal class DataPoint<T> : DataPoint
-        where T : unmanaged
+        where T : struct
     {
         internal readonly T Value;
 
@@ -36,6 +36,11 @@ namespace OpenTelemetry.Metrics
             : base(tags)
         {
             this.Value = value;
+        }
+
+        public override DataPoint NewWithTags(params KeyValuePair<string, object?>[] tags)
+        {
+            return new DataPoint<T>(this.Value, tags);
         }
 
         public override string ValueAsString()

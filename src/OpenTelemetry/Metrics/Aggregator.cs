@@ -1,4 +1,4 @@
-// <copyright file="MetricConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricConsoleExporter : MetricProcessor
+    public abstract class Aggregator
     {
-        public override void OnEnd(MetricItem data)
+        public virtual void Update(DataPoint? value)
         {
-            foreach (var metric in data.Metrics)
-            {
-                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.ValueAsString()}";
-                Console.WriteLine($"Export: {msg}");
-            }
+        }
+
+        public virtual IEnumerable<Metric> Collect()
+        {
+            return Enumerable.Empty<Metric>();
         }
     }
 }

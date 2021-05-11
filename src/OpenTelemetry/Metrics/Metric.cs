@@ -1,4 +1,4 @@
-// <copyright file="AggregateState.cs" company="OpenTelemetry Authors">
+// <copyright file="DataPoint.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,23 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+
 #nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    internal class AggregateState
+    public struct Metric
     {
-        internal long Count = 0;
-        internal long Sum = 0;
+        internal readonly string Name;
+        internal DataPoint? Point;
 
-        public virtual void Update(DataPoint? value)
+        public Metric(string name, DataPoint? point)
         {
-            long val = 0;
-
-            if (value is DataPoint<int> idp)
-            {
-                val = idp.Value;
-            }
-
-            this.Count++;
-            this.Sum += val;
+            this.Name = name;
+            this.Point = point;
         }
     }
 }

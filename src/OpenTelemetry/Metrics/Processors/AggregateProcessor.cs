@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
 
@@ -24,17 +25,28 @@ namespace OpenTelemetry.Metrics
 {
     internal class AggregateProcessor : MeasurementProcessor
     {
-        private ConcurrentDictionary<Instrument, AggregateState> states = new ConcurrentDictionary<Instrument, AggregateState>();
+        internal List<Aggregator> Aggregators { get; } = new List<Aggregator>();
 
         public override void OnEnd(MeasurementItem data)
         {
-            var state = this.states.GetOrAdd(data.Instrument, (k) => new AggregateState());
-            state.Update(data.Point);
+            data.State.Update(data.Point);
         }
 
-        public ConcurrentDictionary<Instrument, AggregateState> Collect()
+        public void Register(Aggregator aggregator)
         {
-            return Interlocked.Exchange(ref this.states, new ConcurrentDictionary<Instrument, AggregateState>());
+            this.Aggregators.Add(aggregator);
+        }
+
+        public IEnumerable<Metric> Collect()
+        {
+            var metrics = new List<Metric>();
+
+            foreach (var agg in this.Aggregators)
+            {
+                metrics.AddRange(agg.Collect());
+            }
+
+            return metrics.ToArray();
         }
     }
 }

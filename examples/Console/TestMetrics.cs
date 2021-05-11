@@ -31,7 +31,7 @@ namespace Examples.Console
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetObservationPeriod(observationInterval)
                 .SetCollectionPeriod(collectionInterval)
-                .AddProcessor(new TagEnrichmentProcessor())
+                .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
 
@@ -46,7 +46,7 @@ namespace Examples.Console
 
             counter.Add(
                 200,
-                new KeyValuePair<string, object>("tag1", "value1"),
+                new KeyValuePair<string, object>("tag1", "value2"),
                 new KeyValuePair<string, object>("tag2", "value2"));
 
             var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
