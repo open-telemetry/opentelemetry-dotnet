@@ -1,4 +1,4 @@
-// <copyright file="SumAggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="LastValueAggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +25,15 @@ namespace OpenTelemetry.Metrics
 {
     public class LastValueAggregator : Aggregator
     {
-        private int count = 0;
+        private readonly Instrument instrument;
+        private readonly Sequence<string> names;
         private DataPoint? lastValue = null;
-        private Instrument instrument;
+        private int count = 0;
 
-        public LastValueAggregator(Instrument instrument)
+        public LastValueAggregator(Instrument instrument, Sequence<string> names)
         {
             this.instrument = instrument;
+            this.names = names;
         }
 
         public override void Update(DataPoint? value)
@@ -42,23 +44,35 @@ namespace OpenTelemetry.Metrics
 
         public override IEnumerable<Metric> Collect()
         {
+            // TODO: Need to determine how to convert to Metric
+
             if (this.count == 0)
             {
                 return Enumerable.Empty<Metric>();
             }
 
-            var attribs = new KeyValuePair<string, object?>[]
+            var attribs = new List<KeyValuePair<string, object?>>();
+            string? name = null;
+            foreach (var seq in this.names.AsReadOnlySpan())
             {
-                new KeyValuePair<string,object?>("hello", "there"),
-            };
+                if (name == null)
+                {
+                    name = seq;
+                }
+                else
+                {
+                    attribs.Add(new KeyValuePair<string, object?>(name, seq));
+                    name = null;
+                }
+            }
 
-            var tags = new ReadOnlySpan<KeyValuePair<string, object?>>(attribs);
+            var dp = this.lastValue?.NewWithTags(attribs.ToArray());
 
             var metrics = new Metric[]
             {
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:LastValue",
-                    this.lastValue),
+                    dp),
             };
 
             this.count = 0;

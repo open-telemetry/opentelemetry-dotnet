@@ -1,4 +1,4 @@
-// <copyright file="InstrumentState.cs" company="OpenTelemetry Authors">
+// <copyright file="ISequence.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +15,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-
-#nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public class InstrumentState
+    public interface ISequence
     {
-        private readonly AggregatorStore store;
-
-        public InstrumentState(MeterProviderSdk sdk, Instrument instrument)
-        {
-            this.store = new AggregatorStore(sdk, instrument);
-        }
-
-        public void Update(DataPoint? value)
-        {
-            this.store.Update(value);
-        }
     }
 }

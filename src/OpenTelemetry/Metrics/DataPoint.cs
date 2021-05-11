@@ -23,17 +23,21 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class DataPoint
     {
-        private KeyValuePair<string, object?>[] tags;
+        private readonly KeyValuePair<string, object?>[] tags;
 
         public DataPoint(params KeyValuePair<string, object?>[] tags)
         {
+            this.Timestamp = DateTimeOffset.UtcNow;
             this.tags = tags;
         }
 
         public DataPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
+            this.Timestamp = DateTimeOffset.UtcNow;
             this.tags = tags.ToArray();
         }
+
+        public DateTimeOffset Timestamp { get; }
 
         public ReadOnlySpan<KeyValuePair<string, object?>> Tags
         {

@@ -15,8 +15,8 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         private readonly Task observerTask;
         private readonly Task collectorTask;
         private readonly MeterListener listener;
-        private ConcurrentDictionary<Instrument, InstrumentState> instrumentStates = new ConcurrentDictionary<Instrument, InstrumentState>();
+        private readonly ConcurrentDictionary<Instrument, InstrumentState> instrumentStates = new ConcurrentDictionary<Instrument, InstrumentState>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,

@@ -25,25 +25,25 @@ namespace OpenTelemetry.Metrics
 {
     internal class AggregateProcessor : MeasurementProcessor
     {
-        internal List<Aggregator> Aggregators { get; } = new List<Aggregator>();
+        internal ConcurrentDictionary<AggregatorStore, bool> AggregatorStores { get; } = new ConcurrentDictionary<AggregatorStore, bool>();
 
         public override void OnEnd(MeasurementItem data)
         {
             data.State.Update(data.Point);
         }
 
-        public void Register(Aggregator aggregator)
+        public void Register(AggregatorStore store)
         {
-            this.Aggregators.Add(aggregator);
+            this.AggregatorStores.TryAdd(store, true);
         }
 
         public IEnumerable<Metric> Collect()
         {
             var metrics = new List<Metric>();
 
-            foreach (var agg in this.Aggregators)
+            foreach (var kv in this.AggregatorStores)
             {
-                metrics.AddRange(agg.Collect());
+                metrics.AddRange(kv.Key.Collect());
             }
 
             return metrics.ToArray();

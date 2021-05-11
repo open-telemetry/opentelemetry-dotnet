@@ -1,4 +1,4 @@
-// <copyright file="DataPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="Metric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,8 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
+    // TODO: Need to determine what a Metric actually contains
+
     public struct Metric
     {
         internal readonly string Name;
