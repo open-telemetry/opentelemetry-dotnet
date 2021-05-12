@@ -138,7 +138,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         {
             var carrier = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A"),
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A"),
             };
 
             var propagationContext = this.baggage.Extract(default, carrier, GetterList);
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             this.baggage.Inject(propagationContext, carrier, Setter);
 
             Assert.Single(carrier);
-            Assert.Equal("key%201=value%201,key2=%21x_x%2Cx-x%26x%28x%22%29%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
+            Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
         }
     }
 }
