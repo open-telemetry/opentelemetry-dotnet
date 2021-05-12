@@ -21,40 +21,65 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class DataPoint
+    internal struct DataPoint<T> : IDataPoint
+        where T : struct
     {
-        private readonly KeyValuePair<string, object?>[] tags;
+        internal readonly T Value;
 
-        public DataPoint(params KeyValuePair<string, object?>[] tags)
+        [ThreadStatic]
+        private static KeyValuePair<string, object?>[] cachedTags = new KeyValuePair<string, object?>[100];
+
+        private readonly DateTimeOffset timestamp;
+
+        private int cachedTagsLen;
+
+        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            this.Timestamp = DateTimeOffset.UtcNow;
-            this.tags = tags;
-        }
+            if (DataPoint<T>.cachedTags == null)
+            {
+                DataPoint<T>.cachedTags = new KeyValuePair<string, object?>[100];
+            }
 
-        public DataPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        {
-            this.Timestamp = DateTimeOffset.UtcNow;
-            this.tags = tags.ToArray();
-        }
+            this.timestamp = DateTimeOffset.UtcNow;
+            this.Value = value;
 
-        public DateTimeOffset Timestamp { get; }
+            int i = 0;
+            foreach (var tag in tags)
+            {
+                cachedTags[i] = tag;
+                i++;
+            }
+
+            this.cachedTagsLen = i;
+        }
 
         public ReadOnlySpan<KeyValuePair<string, object?>> Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object?>>(this.tags);
+                return new ReadOnlySpan<KeyValuePair<string, object?>>(DataPoint<T>.cachedTags, 0, this.cachedTagsLen);
             }
         }
 
-        public virtual string ValueAsString()
+        public DateTimeOffset Timestamp
         {
-            throw new NotImplementedException();
+            get
+            {
+                return this.timestamp;
+            }
         }
 
-        public virtual DataPoint NewWithTags(params KeyValuePair<string, object?>[] tags)
+        public string ValueAsString
         {
-            throw new NotImplementedException();
+            get
+            {
+                return this.Value.ToString();
+            }
+        }
+
+        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        {
+            return new DataPoint<T>(this.Value, tags);
         }
     }
 }

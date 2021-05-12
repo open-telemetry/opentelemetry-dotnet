@@ -92,7 +92,7 @@ namespace System.Diagnostics.Metrics
             T delta,
             params KeyValuePair<string, object?>[] tags)
         {
-            this.RecordMeasurement(delta, tags);
+            this.RecordMeasurement(delta, new ReadOnlySpan<KeyValuePair<string, object?>>(tags));
         }
     }
 }

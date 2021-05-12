@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Instrument instrument;
         private readonly Sequence<string> names;
-        private DataPoint? lastValue = null;
+        private IDataPoint? lastValue = null;
         private int count = 0;
 
         public LastValueAggregator(Instrument instrument, Sequence<string> names)
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
             this.names = names;
         }
 
-        public override void Update(DataPoint? value)
+        public override void Update(IDataPoint value)
         {
             this.count++;
             this.lastValue = value;

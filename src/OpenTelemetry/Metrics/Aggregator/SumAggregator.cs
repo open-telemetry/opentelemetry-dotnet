@@ -27,8 +27,8 @@ namespace OpenTelemetry.Metrics
     {
         private readonly Instrument instrument;
         private readonly Sequence<string> names;
-        private int sum = 0;
-        private int count = 0;
+        private long sum = 0;
+        private long count = 0;
 
         public SumAggregator(Instrument instrument, Sequence<string> names)
         {
@@ -36,13 +36,24 @@ namespace OpenTelemetry.Metrics
             this.names = names;
         }
 
-        public override void Update(DataPoint? value)
+        public override void Update(IDataPoint value)
         {
             this.count++;
 
-            // TODO: Need to handle DataPoint<T> appropriately instead of using ValueAsString()
+            // TODO: Need to handle DataPoint<T> appropriately
 
-            this.sum += int.Parse(value?.ValueAsString());
+            if (value is DataPoint<int> intV)
+            {
+                this.sum += intV.Value;
+            }
+            else if (value is DataPoint<long> longV)
+            {
+                this.sum += longV.Value;
+            }
+            else
+            {
+                throw new Exception("Unsupported Type");
+            }
         }
 
         public override IEnumerable<Metric> Collect()
@@ -75,10 +86,10 @@ namespace OpenTelemetry.Metrics
             {
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:Count",
-                    new DataPoint<int>(this.count, tags)),
+                    new DataPoint<int>((int)this.count, tags)),
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:Sum",
-                    new DataPoint<int>(this.sum, tags)),
+                    new DataPoint<int>((int)this.sum, tags)),
             };
 
             this.count = 0;

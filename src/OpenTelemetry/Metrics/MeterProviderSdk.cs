@@ -32,7 +32,9 @@ namespace OpenTelemetry.Metrics
         private readonly Task observerTask;
         private readonly Task collectorTask;
         private readonly MeterListener listener;
-        private readonly ConcurrentDictionary<Instrument, InstrumentState> instrumentStates = new ConcurrentDictionary<Instrument, InstrumentState>();
+
+        private readonly object lockInstrumentStates = new object();
+        private readonly Dictionary<Instrument, InstrumentState> instrumentStates = new Dictionary<Instrument, InstrumentState>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
@@ -67,9 +69,14 @@ namespace OpenTelemetry.Metrics
                     Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var instState = new InstrumentState(this, instrument);
-                        this.instrumentStates.TryAdd(instrument, instState);
-                        listener.EnableMeasurementEvents(instrument, instState);
+                        var instrumentState = new InstrumentState(this, instrument);
+
+                        lock (this.lockInstrumentStates)
+                        {
+                            this.instrumentStates.Add(instrument, instrumentState);
+                        }
+
+                        listener.EnableMeasurementEvents(instrument, instrumentState);
                     }
                 },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
@@ -112,25 +119,35 @@ namespace OpenTelemetry.Metrics
             where T : struct
         {
             // Get Instrument State
+
             if (!(state is InstrumentState instrumentState))
             {
-                instrumentState = this.instrumentStates.GetOrAdd(instrument, (k) => new InstrumentState(this, instrument));
+                lock (this.lockInstrumentStates)
+                {
+                    if (!this.instrumentStates.TryGetValue(instrument, out instrumentState))
+                    {
+                        instrumentState = new InstrumentState(this, instrument);
+                        this.instrumentStates.Add(instrument, instrumentState);
+                    }
+                }
             }
 
-            var measurmentContext = new MeasurementItem(instrument, instrumentState, new DataPoint<T>(value, tags));
+            // TODO: Figure out what's taking a 40B allocation here.
+            IDataPoint dp = new DataPoint<T>(value, tags);
+            var measurementContext = new MeasurementItem(instrument, instrumentState, dp);
 
             // Run Pre Aggregator Processors
 
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementContext);
             }
 
             // Run Aggregator Processors
 
             foreach (var processor in this.AggregateProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementContext);
             }
         }
 

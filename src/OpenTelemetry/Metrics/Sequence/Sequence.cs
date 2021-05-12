@@ -95,7 +95,7 @@ namespace OpenTelemetry.Metrics
 
         public override bool Equals(object obj)
         {
-            return obj is Sequence<T> && this.Equals((Sequence<T>)obj);
+            return obj is Sequence<T> seq && this.Equals(seq);
         }
     }
 }

@@ -25,9 +25,15 @@ namespace OpenTelemetry.Metrics
 {
     public class AggregatorStore
     {
+        private static readonly Sequence<string> EmptySeq = new Sequence<string>(new string[0]);
+
         private readonly Instrument instrument;
         private readonly MeterProviderSdk sdk;
-        private readonly ConcurrentDictionary<ISequence, Aggregator[]> aggs = new ConcurrentDictionary<ISequence, Aggregator[]>();
+
+        private readonly object lockMetricAggs = new object();
+        private readonly Dictionary<ISequence, Aggregator[]> metricAggs = new Dictionary<ISequence, Aggregator[]>();
+
+        private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
 
         public AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
@@ -40,10 +46,30 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void Update(DataPoint? point)
+        internal void Update(IDataPoint point)
         {
-            var aggs = this.GetAggregators(point!.Tags);
-            foreach (var agg in aggs)
+            // TODO: View API to configure which Tag/s to use.
+
+            this.aggregators.Clear();
+
+            lock (this.lockMetricAggs)
+            {
+                Sequence<string> seq = AggregatorStore.EmptySeq;
+                if (!this.metricAggs.TryGetValue(seq, out var aggs))
+                {
+                    aggs = new Aggregator[]
+                    {
+                        new SumAggregator(this.instrument, seq),
+                        new LastValueAggregator(this.instrument, seq),
+                    };
+
+                    this.metricAggs.Add(AggregatorStore.EmptySeq, aggs);
+                }
+
+                this.aggregators.AddRange(aggs);
+            }
+
+            foreach (var agg in this.aggregators)
             {
                 agg.Update(point);
             }
@@ -51,82 +77,24 @@ namespace OpenTelemetry.Metrics
 
         internal List<Metric> Collect()
         {
-            var metrics = new List<Metric>();
+            var aggs = new List<Aggregator>();
 
-            foreach (var kv in this.aggs)
+            lock (this.lockMetricAggs)
             {
-                foreach (var aggregator in kv.Value)
+                foreach (var kv in this.metricAggs)
                 {
-                    metrics.AddRange(aggregator.Collect());
+                    aggs.AddRange(kv.Value);
                 }
             }
 
+            var metrics = new List<Metric>();
+
+            foreach (var aggregator in aggs)
+            {
+                metrics.AddRange(aggregator.Collect());
+            }
+
             return metrics;
-        }
-
-        internal List<Aggregator> GetAggregators(ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        {
-            var aggregators = new List<Aggregator>();
-
-            // TODO: Expect View API to configure which Tag/s to use.
-
-            // Dropping all tags
-            {
-                var tagNames = new string[0];
-                var seq0 = new Sequence<string>(tagNames);
-                this.SetupNewAggregators(aggregators, seq0, (seq) =>
-                    new Aggregator[]
-                    {
-                        new SumAggregator(this.instrument, seq),
-                        new LastValueAggregator(this.instrument, seq),
-                    });
-            }
-
-            // Group tag (ignore value) 1D at a time.
-            foreach (var tag in tags)
-            {
-                var tagNames = new string[]
-                {
-                    tag.Key,
-                    "*",
-                };
-                var seq1 = new Sequence<string>(tagNames);
-
-                this.SetupNewAggregators(aggregators, seq1, (seq) =>
-                    new Aggregator[]
-                    {
-                        new SumAggregator(this.instrument, seq),
-                    });
-            }
-
-            // Group tag + value 1D at a time.
-            foreach (var tag in tags)
-            {
-                var tagNames = new string[]
-                {
-                    tag.Key,
-                    tag.Value!.ToString(),
-                };
-                var seq1 = new Sequence<string>(tagNames);
-
-                this.SetupNewAggregators(aggregators, seq1, (seq) =>
-                    new Aggregator[]
-                    {
-                        new SumAggregator(this.instrument, seq),
-                    });
-            }
-
-            return aggregators;
-        }
-
-        private void SetupNewAggregators(List<Aggregator> aggregators, Sequence<string> seq, Func<Sequence<string>, Aggregator[]> func)
-        {
-            var aggs = this.aggs.GetOrAdd(seq, (k) =>
-            {
-                return func(seq);
-            });
-
-            aggregators.AddRange(aggs);
         }
     }
 }

@@ -19,22 +19,24 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class InstrumentState
     {
         private readonly AggregatorStore store;
+        private readonly object lockStore = new object();
 
         public InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
             this.store = new AggregatorStore(sdk, instrument);
         }
 
-        public void Update(DataPoint? value)
+        public void Update(IDataPoint value)
         {
-            this.store.Update(value);
+            lock (this.lockStore)
+            {
+                this.store.Update(value);
+            }
         }
     }
 }

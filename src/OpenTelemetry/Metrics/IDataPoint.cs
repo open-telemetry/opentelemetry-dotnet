@@ -1,4 +1,4 @@
-// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="IDataPoint.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,21 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
+
+#nullable enable
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class Aggregator
+    public interface IDataPoint
     {
-        public virtual void Update(IDataPoint value)
-        {
-        }
+        public DateTimeOffset Timestamp { get; }
 
-        public virtual IEnumerable<Metric> Collect()
-        {
-            return Enumerable.Empty<Metric>();
-        }
+        public ReadOnlySpan<KeyValuePair<string, object?>> Tags { get; }
+
+        public string ValueAsString { get; }
+
+        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object?>> tags);
     }
 }
