@@ -1,0 +1,23 @@
+# Start a mysql container and then run OpenTelemetry sql integration tests.
+# This should be run from the root of the repo:
+#  opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.MySqlClient.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
+version: '3.7'
+
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=Pass@word
+    ports:
+      - "3306:3306"
+
+  tests:
+    build:
+      context: .
+      dockerfile: ./test/OpenTelemetry.Instrumentation.MySqlClient.Tests/dockerfile
+    entrypoint: ["bash", "-c", "/wait && dotnet vstest OpenTelemetry.Instrumentation.MySqlClient.Tests.dll --TestCaseFilter:CategoryName=MySqlIntegrationTests"]
+    environment:
+      - OTEL_MYSQLCONNECTIONSTRING=Database=mysql;Data Source=mysql;User Id=root;Password=Pass@word;port=3306;Pooling=false;
+      - WAIT_HOSTS=mysql:3306
+    depends_on:
+      - mysql

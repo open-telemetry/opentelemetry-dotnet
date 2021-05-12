@@ -33,12 +33,13 @@ namespace OpenTelemetry.Instrumentation.MySqlClient.Tests
 
             To use Docker...
              1) Run: docker run -d --name mysql8 -e "MYSQL_ROOT_PASSWORD=Pass@word" -p 3306:3306 mysql:8
-             2) Set OTEL_MYSQLCONNECTIONSTRING as: Database=mysql;Data Source=127.0.0.1;User Id=root;Password=123456;port=3306;Pooling=false;
+             2) Set OTEL_MYSQLCONNECTIONSTRING as: Database=mysql;Data Source=127.0.0.1;User Id=root;Password=Pass@word;port=3306;Pooling=false;
          */
         private const string MySqlConnectionStringEnvVarName = "OTEL_MYSQLCONNECTIONSTRING";
 
-        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(MySqlConnectionStringEnvVarName);
+        private static readonly string MySqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(MySqlConnectionStringEnvVarName);
 
+        [Trait("CategoryName", "MySqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(MySqlConnectionStringEnvVarName)]
         [InlineData("select 1/1", true, true, true, false)]
         [InlineData("select 1/1", true, true, false, false)]
@@ -65,9 +66,9 @@ namespace OpenTelemetry.Instrumentation.MySqlClient.Tests
                 })
                 .Build();
 
-            var connectionStringBuilder = new MySqlConnectionStringBuilder(SqlConnectionString);
+            var connectionStringBuilder = new MySqlConnectionStringBuilder(MySqlConnectionString);
             connectionStringBuilder.Pooling = false;
-            using MySqlConnection mySqlConnection = new MySqlConnection(SqlConnectionString);
+            using MySqlConnection mySqlConnection = new MySqlConnection(MySqlConnectionString);
             var dataSource = mySqlConnection.DataSource;
             mySqlConnection.Open();
             mySqlConnection.ChangeDatabase("mysql");

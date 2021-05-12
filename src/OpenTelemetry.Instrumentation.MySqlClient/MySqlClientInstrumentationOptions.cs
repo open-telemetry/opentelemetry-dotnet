@@ -1,4 +1,4 @@
-// <copyright file="SqlClientInstrumentationOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="MySqlClientInstrumentationOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.MySqlClient
@@ -40,7 +41,6 @@ namespace OpenTelemetry.Instrumentation.MySqlClient
         /// Gets or sets a value indicating whether or not the <see cref="MySqlClientInstrumentation"/> should add the text as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
         /// </summary>
         public bool SetDbStatement { get; set; }
-
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="MySqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
