@@ -38,7 +38,7 @@ namespace Benchmarks.Helper
             {
                 if (enableTracerProvider)
                 {
-                    this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    this.tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddAspNetCoreInstrumentation()
                         .Build();
                 }

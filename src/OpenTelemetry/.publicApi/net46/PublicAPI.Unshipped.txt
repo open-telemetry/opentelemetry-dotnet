@@ -1,3 +1,4 @@
+OpenTelemetry.OpenTelemetrySdk
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
@@ -8,5 +9,8 @@ OpenTelemetry.Trace.TracerProviderBuilderBase.TracerProviderBuilderBase() -> voi
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.OpenTelemetrySdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.OpenTelemetrySdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void
+static OpenTelemetry.OpenTelemetrySdk.SuppressInstrumentation.get -> bool
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool

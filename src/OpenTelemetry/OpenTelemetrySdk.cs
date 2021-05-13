@@ -1,4 +1,4 @@
-// <copyright file="Sdk.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetrySdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -23,13 +22,11 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry
 {
     /// <summary>
-    /// This class has been deprecated. Use <see cref="OpenTelemetrySdk"/> instead.
     /// OpenTelemetry helper.
     /// </summary>
-    [Obsolete("This class has been deprecated.  Use the OpenTelemetrySdk instead.")]
-    public static class Sdk
+    public static class OpenTelemetrySdk
     {
-        static Sdk()
+        static OpenTelemetrySdk()
         {
             Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(new TextMapPropagator[]
             {

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Logs
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             if (!this.IsEnabled(logLevel)
-                || Sdk.SuppressInstrumentation)
+                || OpenTelemetrySdk.SuppressInstrumentation)
             {
                 return;
             }

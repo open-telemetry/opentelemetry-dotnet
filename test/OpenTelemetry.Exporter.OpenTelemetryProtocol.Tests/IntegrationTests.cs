@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var activitySourceName = "otlp.collector.test";
 
-            var builder = Sdk.CreateTracerProviderBuilder()
+            var builder = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
                 .AddProcessor(exportActivityProcessor);
 

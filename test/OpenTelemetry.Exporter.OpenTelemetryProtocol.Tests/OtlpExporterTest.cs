@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 exporter.SetResource(Resources.Resource.Empty);
             }
 
-            var builder = Sdk.CreateTracerProviderBuilder()
+            var builder = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSource(sources[0].Name)
                 .AddSource(sources[1].Name);
 
@@ -336,7 +336,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            var openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
                             .AddProcessor(testActivityProcessor)
                             .AddOtlpExporter()

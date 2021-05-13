@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             var sampler = new TestSampler();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
                 .AddSqlClientInstrumentation(options =>
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
-            using (Sdk.CreateTracerProviderBuilder()
+            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
                         {
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
-            using (Sdk.CreateTracerProviderBuilder()
+            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = recordException;
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
                 SamplingAction = _ => new SamplingResult(SamplingDecision.Drop),
             };
-            using (Sdk.CreateTracerProviderBuilder()
+            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation()
                 .SetSampler(sampler)
                 .Build())

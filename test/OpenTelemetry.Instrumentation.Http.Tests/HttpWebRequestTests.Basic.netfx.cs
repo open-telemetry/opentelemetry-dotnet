@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -107,8 +107,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     contentFromPropagator = context.ActivityContext;
                 });
 
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(default, contentFromPropagator.SpanId);
 
             parent.Stop();
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
@@ -154,8 +154,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("k1=v1,k2=v2", tracestate);
 
             parent.Stop();
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpWebRequestInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
                     c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
@@ -238,7 +238,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
                     c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public void AddHttpClientInstrumentationUsesHttpWebRequestInstrumentationOptions()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var tracerProviderSdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProviderSdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(options =>
                 {
