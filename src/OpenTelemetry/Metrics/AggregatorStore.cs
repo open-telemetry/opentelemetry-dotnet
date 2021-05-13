@@ -34,6 +34,7 @@ namespace OpenTelemetry.Metrics
         private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
 
         private readonly List<Sequence<string>> metricKeys = new List<Sequence<string>>(100);
+        private readonly List<KeyValuePair<string, object>> sorter = new List<KeyValuePair<string, object>>(100);
 
         public AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
@@ -52,6 +53,8 @@ namespace OpenTelemetry.Metrics
 
             this.metricKeys.Clear();
 
+            /*
+
             // 0D. Dropping all Tags
             this.metricKeys.Add(AggregatorStore.EmptySeq);
 
@@ -65,6 +68,37 @@ namespace OpenTelemetry.Metrics
                 var seq2 = new Sequence<string>(kv.Key, kv.Value.ToString());
                 this.metricKeys.Add(seq2);
             }
+
+            */
+
+            this.sorter.Clear();
+            this.sorter.AddRange(point.Tags.ToArray());
+            this.sorter.Sort((x, y) =>
+            {
+                var c = x.Key.CompareTo(y.Key);
+                if (c > 0)
+                {
+                    return 1;
+                }
+
+                if (c < 0)
+                {
+                    return 1;
+                }
+
+                return 0;
+            });
+
+            var tags = new string[2 * point.Tags.Length];
+            int i = 0;
+            foreach (var item in this.sorter)
+            {
+                tags[i++] = item.Key;
+                tags[i++] = item.Value.ToString();
+            }
+
+            var seqn = new Sequence<string>(tags);
+            this.metricKeys.Add(seqn);
 
             // # Update all metricKeys
 
