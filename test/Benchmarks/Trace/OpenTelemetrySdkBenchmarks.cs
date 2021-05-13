@@ -33,17 +33,17 @@ namespace Benchmarks.Trace
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.tracerProviderAlwaysOnSample = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            this.tracerProviderAlwaysOnSample = Sdk.CreateTracerProviderBuilder()
                 .AddSource("AlwaysOnSample")
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
-            this.tracerProviderAlwaysOffSample = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            this.tracerProviderAlwaysOffSample = Sdk.CreateTracerProviderBuilder()
                 .AddSource("AlwaysOffSample")
                 .SetSampler(new AlwaysOffSampler())
                 .Build();
 
-            using var traceProviderNoop = OpenTelemetrySdk.CreateTracerProviderBuilder().Build();
+            using var traceProviderNoop = Sdk.CreateTracerProviderBuilder().Build();
 
             this.alwaysSampleTracer = TracerProvider.Default.GetTracer("AlwaysOnSample");
             this.neverSampleTracer = TracerProvider.Default.GetTracer("AlwaysOffSample");

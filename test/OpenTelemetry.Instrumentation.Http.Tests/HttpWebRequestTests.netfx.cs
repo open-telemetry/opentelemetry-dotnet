@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(options =>
                 {

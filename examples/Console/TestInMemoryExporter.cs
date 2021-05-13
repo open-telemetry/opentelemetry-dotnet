@@ -50,7 +50,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use InMemory exporter.
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("inmemory-test"))
                     .AddInMemoryExporter(exportedItems)

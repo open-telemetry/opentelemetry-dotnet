@@ -50,7 +50,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             // Need to touch something in HttpWebRequestActivitySource/Sdk to do the static injection.
             GC.KeepAlive(HttpWebRequestActivitySource.Options);
-            _ = OpenTelemetrySdk.SuppressInstrumentation;
+            _ = Sdk.SuppressInstrumentation;
         }
 
         public HttpWebRequestActivitySourceTests()

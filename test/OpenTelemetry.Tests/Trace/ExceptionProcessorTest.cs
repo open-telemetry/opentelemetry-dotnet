@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ActivityStatusSetToErrorWhenExceptionProcessorEnabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .AddProcessor(new ExceptionProcessor())
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Trace.Tests
         public void ActivityStatusNotSetWhenExceptionProcessorNotEnabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .Build();

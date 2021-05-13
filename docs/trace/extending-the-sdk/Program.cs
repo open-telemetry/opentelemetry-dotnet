@@ -24,7 +24,7 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new MySampler())
             .AddSource("OTel.Demo")
             .AddProcessor(new MyProcessor("ProcessorA"))

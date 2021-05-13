@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
                     endCalled = true;
                 };
 
-            using var openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .AddProcessor(testActivityProcessor)
                 .AddZPagesExporter()

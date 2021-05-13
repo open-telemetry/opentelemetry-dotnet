@@ -91,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             //             }
             //         });
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation(o =>
                         {
                             if (shouldEnrich)
@@ -151,9 +151,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation((opt) =>
                    {
                        if (shouldEnrich)
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
-            OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
@@ -218,9 +218,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 parent.TraceStateString = "k1=v1,k2=v2";
                 parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
-                using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+                using (Sdk.CreateTracerProviderBuilder()
                        .AddHttpClientInstrumentation()
                        .AddProcessor(processor.Object)
                        .Build())
@@ -240,7 +240,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
             finally
             {
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -253,7 +253,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
                    .AddProcessor(processor.Object)
                    .Build())
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
                    .AddProcessor(processor.Object)
                    .Build())
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var processor = new Mock<BaseProcessor<Activity>>();
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                                .AddProcessor(processor.Object)
@@ -314,7 +314,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
             var processor = new Mock<BaseProcessor<Activity>>();
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation(
                         (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
                                .AddProcessor(processor.Object)
@@ -344,7 +344,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Baggage.SetBaggage("k2", "v2");
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichment)
                 .AddProcessor(activityProcessor.Object)
                 .Build())
@@ -372,7 +372,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             Baggage.Current.SetBaggage("b1", "v1");
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation()
                         .AddProcessor(processor.Object)
                         .Build())

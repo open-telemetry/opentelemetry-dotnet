@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation(options =>
                     {
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation(options =>
                     {
@@ -163,7 +163,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var parent = new Activity("parent")
                 .Start();
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
                     .AddGrpcClientInstrumentation(o =>
                     {
@@ -231,13 +231,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                         action(message, "customField", "customValue");
                     });
 
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     propagator.Object,
                 }));
 
-                using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+                using (Sdk.CreateTracerProviderBuilder()
                     .AddSource("test-source")
                     .AddGrpcClientInstrumentation(o =>
                     {
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
             finally
             {
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -323,11 +323,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                         isPropagatorCalled = true;
                     });
 
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
                 var headers = new Metadata();
 
-                using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+                using (Sdk.CreateTracerProviderBuilder()
                     .AddSource("test-source")
                     .AddGrpcClientInstrumentation(o =>
                     {
@@ -359,7 +359,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
             finally
             {
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -385,13 +385,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                         isPropagatorCalled = true;
                     });
 
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     propagator.Object,
                 }));
 
-                using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+                using (Sdk.CreateTracerProviderBuilder()
                     .AddSource("test-source")
                     .AddGrpcClientInstrumentation(o =>
                     {
@@ -420,7 +420,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
             finally
             {
-                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),

@@ -272,7 +272,7 @@ namespace OpenTelemetry.Tests.Logs
             var exportedActivityList = new List<Activity>();
             var activitySourceName = "LogRecordTest";
             var activitySource = new ActivitySource(activitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
                 .SetSampler(sampler)
                 .AddInMemoryExporter(exportedActivityList)
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Tests.Logs
             var exportedActivityList = new List<Activity>();
             var activitySourceName = "LogRecordTest";
             var activitySource = new ActivitySource(activitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
                 .SetSampler(sampler)
                 .AddInMemoryExporter(exportedActivityList)

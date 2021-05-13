@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
                             // Legacy activity matches the user configured list.
                             // Call sampler for the legacy activity
                             // unless suppressed.
-                            if (!OpenTelemetrySdk.SuppressInstrumentation)
+                            if (!Sdk.SuppressInstrumentation)
                             {
                                 this.getRequestedDataAction(activity);
                             }
@@ -143,20 +143,20 @@ namespace OpenTelemetry.Trace
             if (sampler is AlwaysOnSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !OpenTelemetrySdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
             else if (sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !OpenTelemetrySdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent.TraceId) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
             }
             else
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !OpenTelemetrySdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 

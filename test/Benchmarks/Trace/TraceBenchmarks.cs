@@ -62,20 +62,20 @@ namespace Benchmarks.Trace
                 Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
             });
 
-            OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithOneProcessor.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
-            OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithTwoProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
-            OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithThreeProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
@@ -83,14 +83,14 @@ namespace Benchmarks.Trace
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
-            OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
                 .AddLegacySource("TestOperationName")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
-            OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
                 .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
                 .AddLegacySource("TestOperationName1")

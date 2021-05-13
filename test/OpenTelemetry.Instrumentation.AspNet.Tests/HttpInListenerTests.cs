@@ -148,8 +148,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
-            using (openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using (openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
@@ -369,8 +369,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activity = new Activity(HttpInListener.ActivityOperationName);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
-            using (var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new TestSampler(samplingDecision))
                 .AddAspNetInstrumentation()
                 .AddProcessor(activityProcessor.Object).Build())
@@ -415,8 +415,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
-            using (var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(options =>
                 {
                     options.Filter = context =>

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Trace.Tests
         public void SetErrorStatusOnExceptionEnabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException(false)
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Trace.Tests
         public void SetErrorStatusOnExceptionDisabled()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException()
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace.Tests
         public void SetErrorStatusOnExceptionDefault()
         {
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .Build();

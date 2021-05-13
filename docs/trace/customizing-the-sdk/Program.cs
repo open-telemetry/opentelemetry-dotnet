@@ -34,7 +34,7 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
             // The following adds subscription to activities from Activity Source
             // named "MyCompany.MyProduct.MyLibrary" only.

@@ -32,7 +32,7 @@ namespace Examples.Console
         {
             System.Console.WriteLine("Hello World!");
 
-            using var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("http-service-example"))
                 .AddSource("http-client-test")

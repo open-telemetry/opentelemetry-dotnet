@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (serverLifeTime)
 
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) =>
                                {
                                    opt.SetHttpFlavor = tc.SetHttpFlavor;
@@ -163,7 +163,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             Counter = 0;
             var processor = new Mock<BaseProcessor<Activity>>();
-            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using (Sdk.CreateTracerProviderBuilder()
                 .SetSampler(sampler)
                 .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
                 .AddProcessor(processor.Object)

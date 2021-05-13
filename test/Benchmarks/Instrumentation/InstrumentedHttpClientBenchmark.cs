@@ -51,7 +51,7 @@ namespace Benchmarks.Instrumentation
                 out var host,
                 out var port);
 
-            this.tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ServiceName))
                 .AddSource(SourceName)

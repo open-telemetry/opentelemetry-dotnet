@@ -51,7 +51,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using IFakeMisbehavingSqlEventSource fakeSqlEventSource = (IFakeMisbehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation()
                 .Build();
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using IFakeMisbehavingSqlEventSource fakeSqlEventSource = (IFakeMisbehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation()
                 .Build();
@@ -190,7 +190,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = OpenTelemetrySdk.CreateTracerProviderBuilder()
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation()
                 .Build();

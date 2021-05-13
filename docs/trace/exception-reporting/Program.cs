@@ -26,7 +26,7 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .SetSampler(new AlwaysOnSampler())
             .SetErrorStatusOnException()
