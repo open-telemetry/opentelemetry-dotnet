@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var sdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(testSampler)
                 .Build();
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Trace.Tests
             };
 
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var sdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(testSampler)
                 .Build();
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var sdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
                     .SetSampler(testSampler)
                     .Build();
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var sdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
                     .SetSampler(testSampler)
                     .Build();
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddLegacySource("random")
                         .AddProcessor(testActivityProcessor)
                         .SetSampler(new AlwaysOnSampler())
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Trace.Tests
                     endCalled = true;
                 };
 
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var openTelemetry = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddSource("random")
                         .AddProcessor(testActivityProcessor)
                         .SetSampler(testSampler)
@@ -307,7 +307,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -315,7 +315,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -324,7 +324,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
 
             // No AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
                         .Build();
 
@@ -364,7 +364,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.True(samplerCalled);
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -372,7 +372,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -383,7 +383,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
 
             // AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(operationNameForLegacyActivity)
@@ -425,7 +425,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.True(samplerCalled);
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -433,7 +433,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -444,7 +444,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
 
             // AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddSource("ABCCompany.XYZProduct.*") // Adding a wild card source
                         .AddProcessor(testActivityProcessor)
@@ -474,7 +474,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -482,7 +482,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -494,7 +494,7 @@ namespace OpenTelemetry.Trace.Tests
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
 
             // AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddLegacySource(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
@@ -523,7 +523,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -531,7 +531,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -543,7 +543,7 @@ namespace OpenTelemetry.Trace.Tests
             var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
 
             // AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddSource(activitySourceForLegacyActvity.Name) // Add the updated ActivitySource as a Source
                         .AddLegacySource(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
@@ -572,7 +572,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.StartAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
@@ -580,7 +580,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessor.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalled = true;
                 };
@@ -588,7 +588,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
 
             // AddLegacyOperationName chained to TracerProviderBuilder
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -610,7 +610,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessorNew.StartAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalledNew = true;
                 };
@@ -618,7 +618,7 @@ namespace OpenTelemetry.Trace.Tests
             testActivityProcessorNew.EndAction =
                 (a) =>
                 {
-                    Assert.False(Sdk.SuppressInstrumentation);
+                    Assert.False(OpenTelemetrySdk.SuppressInstrumentation);
                     Assert.True(a.IsAllDataRequested); // If Processor.OnEnd is called, activity's IsAllDataRequested is set to true
                     endCalledNew = true;
                 };
@@ -637,7 +637,7 @@ namespace OpenTelemetry.Trace.Tests
         public void SdkSamplesLegacyActivityWithAlwaysOnSampler()
         {
             var operationNameForLegacyActivity = "TestOperationName";
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(new AlwaysOnSampler())
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -655,7 +655,7 @@ namespace OpenTelemetry.Trace.Tests
         public void SdkSamplesLegacyActivityWithAlwaysOffSampler()
         {
             var operationNameForLegacyActivity = "TestOperationName";
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(new AlwaysOffSampler())
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -678,7 +678,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
             var sampler = new TestSampler() { SamplingAction = (samplingParameters) => new SamplingResult(samplingDecision) };
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -705,7 +705,7 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -746,7 +746,7 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -777,7 +777,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var operationNameForLegacyActivity = "TestOperationName";
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(new AlwaysOnSampler())
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -807,7 +807,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var operationNameForLegacyActivity = "TestOperationName";
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(new AlwaysOffSampler())
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -850,7 +850,7 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .SetSampler(sampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -868,7 +868,7 @@ namespace OpenTelemetry.Trace.Tests
         public void TracerProvideSdkCreatesAndDiposesInstrumentation()
         {
             TestInstrumentation testInstrumentation = null;
-            var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddInstrumentation(() =>
                         {
                             testInstrumentation = new TestInstrumentation();
@@ -885,7 +885,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerProviderSdkBuildsWithDefaultResource()
         {
-            var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
+            var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder().Build();
             var resource = tracerProvider.GetResource();
             var attributes = resource.Attributes;
 
@@ -902,7 +902,7 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(" ")]
         public void AddLegacyOperationName_BadArgs(string operationName)
         {
-            var builder = Sdk.CreateTracerProviderBuilder();
+            var builder = OpenTelemetrySdk.CreateTracerProviderBuilder();
             Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
         }
 
@@ -910,7 +910,7 @@ namespace OpenTelemetry.Trace.Tests
         public void AddLegacyOperationNameAddsActivityListenerForEmptyActivitySource()
         {
             var emptyActivitySource = new ActivitySource(string.Empty);
-            var builder = Sdk.CreateTracerProviderBuilder();
+            var builder = OpenTelemetrySdk.CreateTracerProviderBuilder();
             builder.AddLegacySource("TestOperationName");
 
             Assert.False(emptyActivitySource.HasListeners());
@@ -921,7 +921,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TracerProviderSdkBuildsWithSDKResource()
         {
-            var tracerProvider = Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+            var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder().SetResourceBuilder(
                 ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build();
             var resource = tracerProvider.GetResource();
             var attributes = resource.Attributes;
@@ -939,7 +939,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = OpenTelemetrySdk.CreateTracerProviderBuilder()
                         .AddProcessor(testActivityProcessor)
                         .Build();
 

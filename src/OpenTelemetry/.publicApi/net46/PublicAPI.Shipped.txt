@@ -55,7 +55,7 @@ OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilderExtensions
-OpenTelemetry.Sdk
+OpenTelemetry.OpenTelemetrySdk
 OpenTelemetry.SimpleActivityExportProcessor
 OpenTelemetry.SimpleActivityExportProcessor.SimpleActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter) -> void
 OpenTelemetry.SimpleExportProcessor<T>
@@ -128,9 +128,9 @@ static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this Open
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, string serviceName, string serviceNamespace = null, string serviceVersion = null, bool autoGenerateServiceInstanceId = true, string serviceInstanceId = null) -> OpenTelemetry.Resources.ResourceBuilder
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddTelemetrySdk(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
-static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
-static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void
-static OpenTelemetry.Sdk.SuppressInstrumentation.get -> bool
+static OpenTelemetry.OpenTelemetrySdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.OpenTelemetrySdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void
+static OpenTelemetry.OpenTelemetrySdk.SuppressInstrumentation.get -> bool
 static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
 static OpenTelemetry.SuppressInstrumentationScope.Enter() -> int
 static OpenTelemetry.Trace.SamplingResult.operator !=(OpenTelemetry.Trace.SamplingResult decision1, OpenTelemetry.Trace.SamplingResult decision2) -> bool

@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+            var tracerProviderBuilder = OpenTelemetrySdk.CreateTracerProviderBuilder();
 
             if (enableGrpcAspNetCoreSupport.HasValue)
             {
@@ -121,9 +121,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             try
             {
                 // B3Propagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
-                Sdk.SetDefaultTextMapPropagator(new B3Propagator());
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new B3Propagator());
                 var processor = new Mock<BaseProcessor<Activity>>();
-                var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+                var tracerProviderBuilder = OpenTelemetrySdk.CreateTracerProviderBuilder();
 
                 if (enableGrpcAspNetCoreSupport.HasValue)
                 {
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             finally
             {
                 // Set the SDK to use the default propagator for other unit tests
-                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                 new TraceContextPropagator(),
                 new BaggagePropagator(),

@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation()
                     .AddProcessor(activityProcessor.Object)
                     .Build();
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation(options =>
                     {
                         if (shouldEnrich)
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
+                        this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
                         .AddProcessor(activityProcessor.Object)
                         .Build();
                     })))
@@ -217,8 +217,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            OpenTelemetrySdk.SetDefaultTextMapPropagator(propagator.Object);
+                            this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                                 .AddAspNetCoreInstrumentation()
                                 .AddProcessor(activityProcessor.Object)
                                 .Build();
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
             finally
             {
-                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -279,7 +279,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessor(activityProcessor.Object)
                     .Build();
@@ -323,7 +323,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
                     {
                         if (ctx.Request.Path == "/api/values/2")
@@ -389,14 +389,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceState = "rojo=1,congo=2";
                 var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
                 var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
-                Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
                 // Arrange
                 using (var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                             .SetSampler(new TestSampler(samplingDecision))
                             .AddAspNetCoreInstrumentation()
                             .Build();
@@ -429,7 +429,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
             finally
             {
-                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -447,7 +447,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceState = "rojo=1,congo=2";
                 var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
                 var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
-                Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
                 // Arrange
                 bool isFilterCalled = false;
@@ -455,7 +455,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                             .AddAspNetCoreInstrumentation(options =>
                             {
                                 options.Filter = context =>
@@ -498,7 +498,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
             finally
             {
-                Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+                OpenTelemetrySdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
                     new BaggagePropagator(),
@@ -516,7 +516,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool enrichCalled = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.openTelemetrySdk = OpenTelemetrySdk.CreateTracerProviderBuilder()
                     .SetSampler(new TestSampler(samplingDecision))
                     .AddAspNetCoreInstrumentation(options =>
                     {

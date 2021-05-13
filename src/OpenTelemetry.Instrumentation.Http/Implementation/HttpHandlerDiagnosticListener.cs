@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation)
+            if (OpenTelemetrySdk.SuppressInstrumentation)
             {
                 return;
             }

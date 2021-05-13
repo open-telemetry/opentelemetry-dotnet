@@ -34,7 +34,7 @@ namespace Examples.AspNet
 
         protected void Application_Start()
         {
-            var builder = Sdk.CreateTracerProviderBuilder()
+            var builder = OpenTelemetrySdk.CreateTracerProviderBuilder()
                  .AddAspNetInstrumentation()
                  .AddHttpClientInstrumentation();
 

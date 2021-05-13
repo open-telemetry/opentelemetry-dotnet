@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             var sampler = new TestSampler();
-            using (Sdk.CreateTracerProviderBuilder()
+            using (OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
                 .AddRedisInstrumentation(connection)
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Assert.Throws<ArgumentNullException>(() =>
-            Sdk.CreateTracerProviderBuilder()
+            OpenTelemetrySdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddRedisInstrumentation(null)
                 .Build());
