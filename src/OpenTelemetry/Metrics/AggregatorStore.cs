@@ -33,8 +33,11 @@ namespace OpenTelemetry.Metrics
 
         private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
 
-        private readonly List<Sequence<string>> metricKeys = new List<Sequence<string>>(100);
-        private readonly List<KeyValuePair<string, object>> sorter = new List<KeyValuePair<string, object>>(100);
+        private readonly string[] tag1Temp = new string[2];
+        private readonly string[] tag2Temp = new string[4];
+        private readonly string[] tag3Temp = new string[6];
+
+        private Aggregator[] tag0Aggregators = null;
 
         public AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
@@ -47,80 +50,135 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void Update(IDataPoint point)
+        internal Aggregator[] GetAggregator(Sequence<string> seq)
         {
-            // TODO: View API to configure which Tag/s to use.
-
-            this.metricKeys.Clear();
-
-            /*
-
-            // 0D. Dropping all Tags
-            this.metricKeys.Add(AggregatorStore.EmptySeq);
-
-            foreach (var kv in point.Tags)
+            return new Aggregator[]
             {
-                // 1D. Tag name only (ignore value)
-                var seq1 = new Sequence<string>(kv.Key, "*");
-                this.metricKeys.Add(seq1);
+                new SumAggregator(this.instrument, seq),
+                new LastValueAggregator(this.instrument, seq),
+            };
+        }
 
-                // 1D. Tag name and value
-                var seq2 = new Sequence<string>(kv.Key, kv.Value.ToString());
-                this.metricKeys.Add(seq2);
+        internal Sequence<string> GetSequence1(IDataPoint point)
+        {
+            int i = 0;
+            foreach (var tag in point.Tags)
+            {
+                this.tag1Temp[i++] = tag.Key;
+                this.tag1Temp[i++] = tag.Value.ToString();
             }
 
-            */
+            return new Sequence<string>(this.tag1Temp);
+        }
 
-            this.sorter.Clear();
-            this.sorter.AddRange(point.Tags.ToArray());
-            this.sorter.Sort((x, y) =>
+        internal Sequence<string> GetSequence2(IDataPoint point)
+        {
+            var len = point.Tags.Length;
+            var sortedTags = this.tag2Temp;
+
+            var tags = point.Tags.ToArray();
+            Array.Sort(tags, (x, y) =>
             {
-                var c = x.Key.CompareTo(y.Key);
-                if (c > 0)
-                {
-                    return 1;
-                }
-
-                if (c < 0)
-                {
-                    return 1;
-                }
-
-                return 0;
+                return x.Key.CompareTo(y.Key);
             });
 
-            var tags = new string[2 * point.Tags.Length];
             int i = 0;
-            foreach (var item in this.sorter)
+            foreach (var tag in tags)
             {
-                tags[i++] = item.Key;
-                tags[i++] = item.Value.ToString();
+                sortedTags[i++] = tag.Key;
+                sortedTags[i++] = tag.Value.ToString();
             }
 
-            var seqn = new Sequence<string>(tags);
-            this.metricKeys.Add(seqn);
+            return new Sequence<string>(sortedTags);
+        }
 
-            // # Update all metricKeys
+        internal Sequence<string> GetSequence3(IDataPoint point)
+        {
+            var len = point.Tags.Length;
+            var sortedTags = this.tag3Temp;
 
+            var tags = point.Tags.ToArray();
+            Array.Sort(tags, (x, y) =>
+            {
+                return x.Key.CompareTo(y.Key);
+            });
+
+            int i = 0;
+            foreach (var tag in tags)
+            {
+                sortedTags[i++] = tag.Key;
+                sortedTags[i++] = tag.Value.ToString();
+            }
+
+            return new Sequence<string>(sortedTags);
+        }
+
+        internal Sequence<string> GetSequenceMany(IDataPoint point)
+        {
+            var len = point.Tags.Length;
+            var sortedTags = new string[2 * len];
+
+            var tags = point.Tags.ToArray();
+            Array.Sort(tags, (x, y) =>
+            {
+                return x.Key.CompareTo(y.Key);
+            });
+
+            int i = 0;
+            foreach (var tag in tags)
+            {
+                sortedTags[i++] = tag.Key;
+                sortedTags[i++] = tag.Value.ToString();
+            }
+
+            return new Sequence<string>(sortedTags);
+        }
+
+        internal void Update(IDataPoint point)
+        {
             this.aggregators.Clear();
 
-            lock (this.lockMetricAggs)
+            if (point.Tags.Length == 0)
             {
-                foreach (var seq in this.metricKeys)
+                if (this.tag0Aggregators == null)
                 {
-                    if (!this.metricAggs.TryGetValue(seq, out var aggs))
-                    {
-                        aggs = new Aggregator[]
-                        {
-                            new SumAggregator(this.instrument, seq),
-                            new LastValueAggregator(this.instrument, seq),
-                        };
+                    this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeq);
+                }
 
+                this.aggregators.AddRange(this.tag0Aggregators);
+            }
+            else
+            {
+                Sequence<string> seq;
+
+                if (point.Tags.Length == 1)
+                {
+                    seq = this.GetSequence1(point);
+                }
+                else if (point.Tags.Length == 2)
+                {
+                    seq = this.GetSequence2(point);
+                }
+                else if (point.Tags.Length == 3)
+                {
+                    seq = this.GetSequence3(point);
+                }
+                else
+                {
+                    seq = this.GetSequenceMany(point);
+                }
+
+                Aggregator[] aggs;
+                lock (this.lockMetricAggs)
+                {
+                    if (!this.metricAggs.TryGetValue(seq, out aggs))
+                    {
+                        aggs = this.GetAggregator(seq);
                         this.metricAggs.Add(seq, aggs);
                     }
-
-                    this.aggregators.AddRange(aggs);
                 }
+
+                this.aggregators.AddRange(aggs);
             }
 
             foreach (var agg in this.aggregators)

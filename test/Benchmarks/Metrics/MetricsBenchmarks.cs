@@ -31,12 +31,14 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 
 |                    Method | WithSDK |       Mean |      Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
 |-------------------------- |-------- |-----------:|-----------:|-----------:|-------:|------:|------:|----------:|
-|            CounterHotPath |   False |   2.792 ns |  0.0801 ns |  0.1223 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   False |  29.774 ns |  0.6162 ns |  0.8012 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   False |  25.034 ns |  0.2330 ns |  0.1819 ns | 0.0249 |     - |     - |     104 B |
-|            CounterHotPath |    True | 349.609 ns |  4.0448 ns |  3.1579 ns | 0.0324 |     - |     - |     136 B |
-| CounterWith3LabelsHotPath |    True | 866.012 ns |  9.7428 ns |  8.1356 ns | 0.0782 |     - |     - |     328 B |
-| CounterWith5LabelsHotPath |    True | 959.240 ns | 16.8357 ns | 14.9244 ns | 0.1259 |     - |     - |     528 B |
+|            CounterHotPath |   False |   2.894 ns |  0.0869 ns |  0.1000 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |   False |  11.353 ns |  0.2526 ns |  0.3007 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   False |  31.101 ns |  0.5654 ns |  0.5012 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   False |  26.852 ns |  0.3308 ns |  0.2762 ns | 0.0249 |     - |     - |     104 B |
+|            CounterHotPath |    True | 260.556 ns |  4.7105 ns |  4.4062 ns | 0.0205 |     - |     - |      88 B |
+| CounterWith1LabelsHotPath |    True | 382.475 ns |  5.2361 ns |  4.8978 ns | 0.0362 |     - |     - |     152 B |
+| CounterWith3LabelsHotPath |    True | 826.877 ns | 16.3701 ns | 41.3694 ns | 0.0610 |     - |     - |     256 B |
+| CounterWith5LabelsHotPath |    True | 981.242 ns | 19.5621 ns | 34.2614 ns | 0.1259 |     - |     - |     528 B |
 */
 
 namespace Benchmarks.Metrics
@@ -86,6 +88,12 @@ namespace Benchmarks.Metrics
         public void CounterHotPath()
         {
             this.counter?.Add(100);
+        }
+
+        [Benchmark]
+        public void CounterWith1LabelsHotPath()
+        {
+            this.counter?.Add(100, this.tag1);
         }
 
         [Benchmark]
