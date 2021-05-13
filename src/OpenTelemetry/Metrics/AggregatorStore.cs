@@ -33,6 +33,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
 
+        private readonly string[] tag0Temp = new string[0];
         private readonly string[] tag1Temp = new string[2];
         private readonly string[] tag2Temp = new string[4];
         private readonly string[] tag3Temp = new string[6];
@@ -59,129 +60,60 @@ namespace OpenTelemetry.Metrics
             };
         }
 
-        internal Sequence<string> GetSequence1(IDataPoint point)
-        {
-            int i = 0;
-            foreach (var tag in point.Tags)
-            {
-                this.tag1Temp[i++] = tag.Key;
-                this.tag1Temp[i++] = tag.Value.ToString();
-            }
-
-            return new Sequence<string>(this.tag1Temp);
-        }
-
-        internal Sequence<string> GetSequence2(IDataPoint point)
-        {
-            var len = point.Tags.Length;
-            var sortedTags = this.tag2Temp;
-
-            var tags = point.Tags.ToArray();
-            Array.Sort(tags, (x, y) =>
-            {
-                return x.Key.CompareTo(y.Key);
-            });
-
-            int i = 0;
-            foreach (var tag in tags)
-            {
-                sortedTags[i++] = tag.Key;
-                sortedTags[i++] = tag.Value.ToString();
-            }
-
-            return new Sequence<string>(sortedTags);
-        }
-
-        internal Sequence<string> GetSequence3(IDataPoint point)
-        {
-            var len = point.Tags.Length;
-            var sortedTags = this.tag3Temp;
-
-            var tags = point.Tags.ToArray();
-            Array.Sort(tags, (x, y) =>
-            {
-                return x.Key.CompareTo(y.Key);
-            });
-
-            int i = 0;
-            foreach (var tag in tags)
-            {
-                sortedTags[i++] = tag.Key;
-                sortedTags[i++] = tag.Value.ToString();
-            }
-
-            return new Sequence<string>(sortedTags);
-        }
-
-        internal Sequence<string> GetSequenceMany(IDataPoint point)
-        {
-            var len = point.Tags.Length;
-            var sortedTags = new string[2 * len];
-
-            var tags = point.Tags.ToArray();
-            Array.Sort(tags, (x, y) =>
-            {
-                return x.Key.CompareTo(y.Key);
-            });
-
-            int i = 0;
-            foreach (var tag in tags)
-            {
-                sortedTags[i++] = tag.Key;
-                sortedTags[i++] = tag.Value.ToString();
-            }
-
-            return new Sequence<string>(sortedTags);
-        }
-
         internal void Update(IDataPoint point)
         {
-            this.aggregators.Clear();
+            Aggregator[] aggs;
 
-            if (point.Tags.Length == 0)
+            int len = point.TagsAsArray.Length;
+
+            if (len == 0)
             {
                 if (this.tag0Aggregators == null)
                 {
                     this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeq);
                 }
 
-                this.aggregators.AddRange(this.tag0Aggregators);
+                aggs = this.tag0Aggregators;
             }
             else
             {
                 Sequence<string> seq;
+                string[] tagKeyValues;
 
-                if (point.Tags.Length == 1)
+                if (len == 1)
                 {
-                    seq = this.GetSequence1(point);
+                    tagKeyValues = this.tag1Temp;
                 }
-                else if (point.Tags.Length == 2)
+                else if (len == 2)
                 {
-                    seq = this.GetSequence2(point);
+                    tagKeyValues = this.tag2Temp;
                 }
-                else if (point.Tags.Length == 3)
+                else if (len == 3)
                 {
-                    seq = this.GetSequence3(point);
+                    tagKeyValues = this.tag3Temp;
                 }
                 else
                 {
-                    seq = this.GetSequenceMany(point);
+                    tagKeyValues = new string[2 * len];
                 }
 
-                Aggregator[] aggs;
-                lock (this.lockMetricAggs)
+                int i = 0;
+                foreach (var tag in point.TagsAsArray)
                 {
-                    if (!this.metricAggs.TryGetValue(seq, out aggs))
-                    {
-                        aggs = this.GetAggregator(seq);
-                        this.metricAggs.Add(seq, aggs);
-                    }
+                    tagKeyValues[i++] = tag.Key;
+                    tagKeyValues[i++] = tag.Value.ToString();
                 }
 
-                this.aggregators.AddRange(aggs);
+                seq = new Sequence<string>(tagKeyValues);
+
+                if (!this.metricAggs.TryGetValue(seq, out aggs))
+                {
+                    aggs = this.GetAggregator(seq);
+                    this.metricAggs.Add(seq, aggs);
+                }
             }
 
-            foreach (var agg in this.aggregators)
+            foreach (var agg in aggs)
             {
                 agg.Update(point);
             }

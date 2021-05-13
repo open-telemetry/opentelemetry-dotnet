@@ -26,20 +26,29 @@ namespace OpenTelemetry.Metrics
 
         private readonly DateTimeOffset timestamp;
 
-        private readonly KeyValuePair<string, object>[] cachedTags;
+        private readonly KeyValuePair<string, object>[] sortedTags;
 
         public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             this.timestamp = DateTimeOffset.UtcNow;
             this.Value = value;
-            this.cachedTags = tags.ToArray();
+            this.sortedTags = tags.ToArray();
+            Array.Sort(this.sortedTags, (x, y) => x.Key.CompareTo(y.Key));
         }
 
         public ReadOnlySpan<KeyValuePair<string, object>> Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object>>(this.cachedTags);
+                return new ReadOnlySpan<KeyValuePair<string, object>>(this.sortedTags);
+            }
+        }
+
+        public KeyValuePair<string, object>[] TagsAsArray
+        {
+            get
+            {
+                return this.sortedTags;
             }
         }
 

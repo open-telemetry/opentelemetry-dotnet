@@ -25,6 +25,8 @@ namespace OpenTelemetry.Metrics
 
         public ReadOnlySpan<KeyValuePair<string, object>> Tags { get; }
 
+        public KeyValuePair<string, object>[] TagsAsArray { get; }
+
         public string ValueAsString { get; }
 
         public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object>> tags);
