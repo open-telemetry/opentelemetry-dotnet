@@ -19,8 +19,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class AggregatorStore
@@ -34,6 +32,8 @@ namespace OpenTelemetry.Metrics
         private readonly Dictionary<ISequence, Aggregator[]> metricAggs = new Dictionary<ISequence, Aggregator[]>();
 
         private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
+
+        private readonly List<Sequence<string>> metricKeys = new List<Sequence<string>>(100);
 
         public AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
@@ -50,23 +50,43 @@ namespace OpenTelemetry.Metrics
         {
             // TODO: View API to configure which Tag/s to use.
 
+            this.metricKeys.Clear();
+
+            // 0D. Dropping all Tags
+            this.metricKeys.Add(AggregatorStore.EmptySeq);
+
+            foreach (var kv in point.Tags)
+            {
+                // 1D. Tag name only (ignore value)
+                var seq1 = new Sequence<string>(kv.Key, "*");
+                this.metricKeys.Add(seq1);
+
+                // 1D. Tag name and value
+                var seq2 = new Sequence<string>(kv.Key, kv.Value.ToString());
+                this.metricKeys.Add(seq2);
+            }
+
+            // # Update all metricKeys
+
             this.aggregators.Clear();
 
             lock (this.lockMetricAggs)
             {
-                Sequence<string> seq = AggregatorStore.EmptySeq;
-                if (!this.metricAggs.TryGetValue(seq, out var aggs))
+                foreach (var seq in this.metricKeys)
                 {
-                    aggs = new Aggregator[]
+                    if (!this.metricAggs.TryGetValue(seq, out var aggs))
                     {
-                        new SumAggregator(this.instrument, seq),
-                        new LastValueAggregator(this.instrument, seq),
-                    };
+                        aggs = new Aggregator[]
+                        {
+                            new SumAggregator(this.instrument, seq),
+                            new LastValueAggregator(this.instrument, seq),
+                        };
 
-                    this.metricAggs.Add(AggregatorStore.EmptySeq, aggs);
+                        this.metricAggs.Add(seq, aggs);
+                    }
+
+                    this.aggregators.AddRange(aggs);
                 }
-
-                this.aggregators.AddRange(aggs);
             }
 
             foreach (var agg in this.aggregators)

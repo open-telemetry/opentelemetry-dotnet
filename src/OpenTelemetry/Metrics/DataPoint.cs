@@ -17,8 +17,6 @@
 using System;
 using System.Collections.Generic;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     internal struct DataPoint<T> : IDataPoint
@@ -26,38 +24,22 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly T Value;
 
-        [ThreadStatic]
-        private static KeyValuePair<string, object?>[] cachedTags = new KeyValuePair<string, object?>[100];
-
         private readonly DateTimeOffset timestamp;
 
-        private int cachedTagsLen;
+        private readonly KeyValuePair<string, object>[] cachedTags;
 
-        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            if (DataPoint<T>.cachedTags == null)
-            {
-                DataPoint<T>.cachedTags = new KeyValuePair<string, object?>[100];
-            }
-
             this.timestamp = DateTimeOffset.UtcNow;
             this.Value = value;
-
-            int i = 0;
-            foreach (var tag in tags)
-            {
-                cachedTags[i] = tag;
-                i++;
-            }
-
-            this.cachedTagsLen = i;
+            this.cachedTags = tags.ToArray();
         }
 
-        public ReadOnlySpan<KeyValuePair<string, object?>> Tags
+        public ReadOnlySpan<KeyValuePair<string, object>> Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object?>>(DataPoint<T>.cachedTags, 0, this.cachedTagsLen);
+                return new ReadOnlySpan<KeyValuePair<string, object>>(this.cachedTags);
             }
         }
 
@@ -77,7 +59,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             return new DataPoint<T>(this.Value, tags);
         }

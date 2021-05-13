@@ -19,8 +19,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class MetricItem

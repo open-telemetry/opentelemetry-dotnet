@@ -19,15 +19,13 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class LastValueAggregator : Aggregator
     {
         private readonly Instrument instrument;
         private readonly Sequence<string> names;
-        private IDataPoint? lastValue = null;
+        private IDataPoint lastValue = null;
         private int count = 0;
 
         public LastValueAggregator(Instrument instrument, Sequence<string> names)
@@ -51,9 +49,9 @@ namespace OpenTelemetry.Metrics
                 return Enumerable.Empty<Metric>();
             }
 
-            var attribs = new List<KeyValuePair<string, object?>>();
-            string? name = null;
-            foreach (var seq in this.names.AsReadOnlySpan())
+            var attribs = new List<KeyValuePair<string, object>>();
+            string name = null;
+            foreach (var seq in this.names.Values)
             {
                 if (name == null)
                 {
@@ -61,7 +59,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    attribs.Add(new KeyValuePair<string, object?>(name, seq));
+                    attribs.Add(new KeyValuePair<string, object>(name, seq));
                     name = null;
                 }
             }

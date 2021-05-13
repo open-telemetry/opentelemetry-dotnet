@@ -17,18 +17,16 @@
 using System;
 using System.Collections.Generic;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public interface IDataPoint
     {
         public DateTimeOffset Timestamp { get; }
 
-        public ReadOnlySpan<KeyValuePair<string, object?>> Tags { get; }
+        public ReadOnlySpan<KeyValuePair<string, object>> Tags { get; }
 
         public string ValueAsString { get; }
 
-        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object?>> tags);
+        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object>> tags);
     }
 }

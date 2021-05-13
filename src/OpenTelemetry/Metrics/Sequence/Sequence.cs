@@ -18,25 +18,20 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public struct Sequence<T> : IEquatable<Sequence<T>>, ISequence<T>
+    public struct Sequence<T> : ISequence, IEquatable<Sequence<T>>
     {
-        private readonly T[] values;
+        internal readonly T[] Values;
 
         public Sequence(params T[] values)
         {
             if (typeof(T) == typeof(string) || typeof(T) == typeof(object))
             {
-                this.values = values;
+                this.Values = values;
             }
             else
             {
                 throw new TypeInitializationException(nameof(T), null);
             }
-        }
-
-        public ReadOnlySpan<T> AsReadOnlySpan()
-        {
-            return new ReadOnlySpan<T>(this.values);
         }
 
         public override int GetHashCode()
@@ -53,9 +48,9 @@ namespace OpenTelemetry.Metrics
 
             unchecked
             {
-                for (int i = 0; i < this.values.Length; i++)
+                for (int i = 0; i < this.Values.Length; i++)
                 {
-                    hash = (hash * 31) + this.values[i].GetHashCode();
+                    hash = (hash * 31) + this.Values[i].GetHashCode();
                 }
             }
 
@@ -64,15 +59,15 @@ namespace OpenTelemetry.Metrics
 
         public bool Equals(Sequence<T> other)
         {
-            if (this.values.Length != other.values.Length)
+            if (this.Values.Length != other.Values.Length)
             {
                 return false;
             }
 
-            for (int i = 0; i < this.values.Length; i++)
+            for (int i = 0; i < this.Values.Length; i++)
             {
-                var value = this.values[i];
-                var value2 = other.values[i];
+                var value = this.Values[i];
+                var value2 = other.Values[i];
 
                 if (value is string str1 && value2 is string str2)
                 {

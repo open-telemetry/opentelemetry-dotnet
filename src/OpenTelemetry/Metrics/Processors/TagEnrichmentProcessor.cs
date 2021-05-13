@@ -16,8 +16,6 @@
 
 using System.Collections.Generic;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -25,11 +23,11 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class TagEnrichmentProcessor : MeasurementProcessor
     {
-        private KeyValuePair<string, object?> extraAttrib;
+        private KeyValuePair<string, object> extraAttrib;
 
         public TagEnrichmentProcessor(string name, string value)
         {
-            this.extraAttrib = new KeyValuePair<string, object?>(name, value);
+            this.extraAttrib = new KeyValuePair<string, object>(name, value);
         }
 
         public override void OnEnd(MeasurementItem data)
@@ -37,7 +35,7 @@ namespace OpenTelemetry.Metrics
             var oldArray = data.Point!.Tags.ToArray();
             int len = oldArray.Length;
 
-            var newArray = new KeyValuePair<string, object?>[len + 1];
+            var newArray = new KeyValuePair<string, object>[len + 1];
             oldArray.CopyTo(newArray, 0);
 
             newArray[len] = this.extraAttrib;

@@ -17,8 +17,6 @@
 using System;
 using System.Linq;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class MetricConsoleExporter : MetricProcessor

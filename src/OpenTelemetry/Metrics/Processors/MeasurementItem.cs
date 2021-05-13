@@ -18,11 +18,10 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public struct MeasurementItem
+    public class MeasurementItem
     {
         internal readonly Instrument Instrument;
         internal readonly InstrumentState State;
-        internal IDataPoint Point;
 
         public MeasurementItem(Instrument instrument, InstrumentState state, IDataPoint point)
         {
@@ -30,5 +29,7 @@ namespace OpenTelemetry.Metrics
             this.State = state;
             this.Point = point;
         }
+
+        public IDataPoint Point { get; set; }
     }
 }

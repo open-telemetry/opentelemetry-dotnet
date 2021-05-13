@@ -18,8 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     // TODO: Need to determine what a Metric actually contains
@@ -27,9 +25,9 @@ namespace OpenTelemetry.Metrics
     public struct Metric
     {
         internal readonly string Name;
-        internal IDataPoint? Point;
+        internal IDataPoint Point;
 
-        public Metric(string name, IDataPoint? point)
+        public Metric(string name, IDataPoint point)
         {
             this.Name = name;
             this.Point = point;

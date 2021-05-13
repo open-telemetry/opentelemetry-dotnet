@@ -19,8 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     internal class AggregateProcessor : MeasurementProcessor

@@ -29,14 +29,14 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
   DefaultJob : .NET Core 3.1.13 (CoreCLR 4.700.21.11102, CoreFX 4.700.21.11602), X64 RyuJIT
 
 
-|                    Method | WithSDK |       Mean |     Error |    StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------- |-------- |-----------:|----------:|----------:|-------:|------:|------:|----------:|
-|            CounterHotPath |   False |   2.834 ns | 0.0780 ns | 0.0987 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   False |  29.885 ns | 0.3146 ns | 0.2789 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   False |  25.846 ns | 0.4292 ns | 0.4015 ns | 0.0249 |     - |     - |     104 B |
-|            CounterHotPath |    True | 291.575 ns | 5.7673 ns | 5.3947 ns | 0.0153 |     - |     - |      64 B |
-| CounterWith3LabelsHotPath |    True | 330.568 ns | 3.4101 ns | 3.0230 ns | 0.0148 |     - |     - |      64 B |
-| CounterWith5LabelsHotPath |    True | 331.767 ns | 5.7939 ns | 5.4197 ns | 0.0401 |     - |     - |     168 B |
+|                    Method | WithSDK |         Mean |      Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------------------------- |-------- |-------------:|-----------:|-----------:|-------:|------:|------:|----------:|
+|            CounterHotPath |   False |     3.054 ns |  0.0288 ns |  0.0225 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   False |    30.465 ns |  0.5132 ns |  0.4007 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   False |    25.598 ns |  0.4087 ns |  0.4197 ns | 0.0249 |     - |     - |     104 B |
+|            CounterHotPath |    True |   308.601 ns |  5.9039 ns |  6.3172 ns | 0.0267 |     - |     - |     112 B |
+| CounterWith3LabelsHotPath |    True | 1,094.017 ns |  9.2916 ns |  7.2543 ns | 0.1354 |     - |     - |     568 B |
+| CounterWith5LabelsHotPath |    True | 1,663.209 ns | 23.1614 ns | 19.3408 ns | 0.2289 |     - |     - |     960 B |
 */
 
 namespace Benchmarks.Metrics

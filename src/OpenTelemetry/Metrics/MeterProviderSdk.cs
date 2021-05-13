@@ -21,8 +21,6 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class MeterProviderSdk
@@ -110,12 +108,12 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
-        internal void MeasurementsCompleted(Instrument instrument, object? state)
+        internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tags, object state)
             where T : struct
         {
             // Get Instrument State
@@ -132,8 +130,8 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            // TODO: Figure out what's taking a 40B allocation here.
             IDataPoint dp = new DataPoint<T>(value, tags);
+
             var measurementContext = new MeasurementItem(instrument, instrumentState, dp);
 
             // Run Pre Aggregator Processors

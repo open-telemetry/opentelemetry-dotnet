@@ -19,8 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class SumAggregator : Aggregator
@@ -65,9 +63,9 @@ namespace OpenTelemetry.Metrics
                 return Enumerable.Empty<Metric>();
             }
 
-            var attribs = new List<KeyValuePair<string, object?>>();
-            string? name = null;
-            foreach (var seq in this.names.AsReadOnlySpan())
+            var attribs = new List<KeyValuePair<string, object>>();
+            string name = null;
+            foreach (var seq in this.names.Values)
             {
                 if (name == null)
                 {
@@ -75,12 +73,12 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    attribs.Add(new KeyValuePair<string, object?>(name, seq));
+                    attribs.Add(new KeyValuePair<string, object>(name, seq));
                     name = null;
                 }
             }
 
-            var tags = new ReadOnlySpan<KeyValuePair<string, object?>>(attribs.ToArray());
+            var tags = new ReadOnlySpan<KeyValuePair<string, object>>(attribs.ToArray());
 
             var metrics = new Metric[]
             {
