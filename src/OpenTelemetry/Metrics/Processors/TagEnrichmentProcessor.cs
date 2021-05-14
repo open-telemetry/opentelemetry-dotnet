@@ -32,15 +32,12 @@ namespace OpenTelemetry.Metrics
 
         public override void OnEnd(MeasurementItem data)
         {
-            var oldArray = data.Point!.Tags.ToArray();
-            int len = oldArray.Length;
+            var newArray = new KeyValuePair<string, object>[data.Point.Tags.Length + 1];
+            data.Point.Tags.CopyTo(newArray, 0);
+            newArray[newArray.Length - 1] = this.extraAttrib;
 
-            var newArray = new KeyValuePair<string, object>[len + 1];
-            oldArray.CopyTo(newArray, 0);
-
-            newArray[len] = this.extraAttrib;
-
-            data.Point = data.Point.NewWithTags(newArray);
+            data.Point = data.Point.NewWithValue();
+            data.Point.ResetTags(newArray);
         }
     }
 }

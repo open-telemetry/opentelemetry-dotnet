@@ -22,32 +22,40 @@ namespace OpenTelemetry.Metrics
     internal struct DataPoint<T> : IDataPoint
         where T : struct
     {
-        internal readonly T Value;
+        internal T Value;
 
-        private readonly DateTimeOffset timestamp;
+        private DateTimeOffset timestamp;
 
-        private readonly KeyValuePair<string, object>[] sortedTags;
+        private KeyValuePair<string, object>[] tags;
+        private KeyValuePair<string, object>[] sortedTags;
 
-        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        public DataPoint(T value, KeyValuePair<string, object>[] tags)
         {
             this.timestamp = DateTimeOffset.UtcNow;
             this.Value = value;
-            this.sortedTags = tags.ToArray();
-            Array.Sort(this.sortedTags, (x, y) => x.Key.CompareTo(y.Key));
+            this.tags = tags;
+            this.sortedTags = null;
         }
 
-        public ReadOnlySpan<KeyValuePair<string, object>> Tags
+        public KeyValuePair<string, object>[] Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object>>(this.sortedTags);
+                return this.tags;
             }
         }
 
-        public KeyValuePair<string, object>[] TagsAsArray
+        public KeyValuePair<string, object>[] SortedTags
         {
             get
             {
+                if (this.sortedTags == null)
+                {
+                    this.sortedTags = new KeyValuePair<string, object>[this.tags.Length];
+                    this.tags.CopyTo(this.sortedTags, 0);
+                    Array.Sort(this.sortedTags, (x, y) => x.Key.CompareTo(y.Key));
+                }
+
                 return this.sortedTags;
             }
         }
@@ -68,9 +76,28 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        public void Reset<T1>(T1 value, KeyValuePair<string, object>[] tags)
+            where T1 : struct
         {
-            return new DataPoint<T>(this.Value, tags);
+            this.timestamp = DateTimeOffset.UtcNow;
+            this.tags = tags;
+            this.sortedTags = null;
+
+            if (typeof(T1) == typeof(T))
+            {
+                this.Value = (T)((object)value);
+            }
+        }
+
+        public void ResetTags(KeyValuePair<string, object>[] tags)
+        {
+            this.tags = tags;
+            this.sortedTags = null;
+        }
+
+        public IDataPoint NewWithValue()
+        {
+            return new DataPoint<T>(this.Value, new KeyValuePair<string, object>[0]);
         }
     }
 }

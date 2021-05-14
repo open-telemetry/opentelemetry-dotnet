@@ -31,14 +31,14 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 
 |                    Method | WithSDK |       Mean |      Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
 |-------------------------- |-------- |-----------:|-----------:|-----------:|-------:|------:|------:|----------:|
-|            CounterHotPath |   False |   2.876 ns |  0.0419 ns |  0.0350 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |   False |  14.066 ns |  0.1522 ns |  0.1423 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   False |  30.440 ns |  0.3823 ns |  0.3192 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   False |  26.532 ns |  0.3703 ns |  0.2891 ns | 0.0249 |     - |     - |     104 B |
-|            CounterHotPath |    True | 208.861 ns |  3.9681 ns |  3.3135 ns | 0.0210 |     - |     - |      88 B |
-| CounterWith1LabelsHotPath |    True | 290.126 ns |  5.0431 ns |  4.7173 ns | 0.0362 |     - |     - |     152 B |
-| CounterWith3LabelsHotPath |    True | 627.953 ns | 11.7519 ns | 10.9927 ns | 0.0439 |     - |     - |     184 B |
-| CounterWith5LabelsHotPath |    True | 735.085 ns | 12.9999 ns | 11.5240 ns | 0.1011 |     - |     - |     424 B |
+|            CounterHotPath |   False |   2.819 ns |  0.0810 ns |  0.0867 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |   False |  10.719 ns |  0.2420 ns |  0.3768 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   False |  39.225 ns |  1.9036 ns |  5.3065 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   False |  29.465 ns |  0.6153 ns |  1.0281 ns | 0.0249 |     - |     - |     104 B |
+|            CounterHotPath |    True | 269.960 ns |  5.3682 ns |  5.9668 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |    True | 410.002 ns |  8.1571 ns | 10.3161 ns | 0.0148 |     - |     - |      64 B |
+| CounterWith3LabelsHotPath |    True | 765.336 ns | 14.3567 ns | 15.3615 ns | 0.0219 |     - |     - |      96 B |
+| CounterWith5LabelsHotPath |    True | 973.179 ns | 18.7349 ns | 48.6944 ns | 0.1049 |     - |     - |     440 B |
 */
 
 namespace Benchmarks.Metrics

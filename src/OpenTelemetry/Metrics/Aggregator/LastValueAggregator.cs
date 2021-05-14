@@ -64,7 +64,8 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            var dp = this.lastValue?.NewWithTags(attribs.ToArray());
+            var dp = this.lastValue.NewWithValue();
+            dp.ResetTags(attribs.ToArray());
 
             var metrics = new Metric[]
             {

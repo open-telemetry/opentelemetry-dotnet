@@ -26,6 +26,24 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderSdk
         : MeterProvider
     {
+        [ThreadStatic]
+        private static MeasurementItem measurementItem;
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object>[] tags0;
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object>[] tags1;
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object>[] tags2;
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object>[] tags3;
+
+        [ThreadStatic]
+        private static Dictionary<Type, IDataPoint> pointT;
+
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task observerTask;
         private readonly Task collectorTask;
@@ -113,9 +131,13 @@ namespace OpenTelemetry.Metrics
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tags, object state)
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
             where T : struct
         {
+            this.InitThreadLocal();
+
+            KeyValuePair<string, object>[] tags = this.GetThreadLocalTags(tagsRos);
+
             // Get Instrument State
 
             if (!(state is InstrumentState instrumentState))
@@ -130,9 +152,10 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            IDataPoint dp = new DataPoint<T>(value, tags);
-
-            var measurementContext = new MeasurementItem(instrument, instrumentState, dp);
+            MeasurementItem measurementContext = MeterProviderSdk.measurementItem;
+            measurementContext.Instrument = instrument;
+            measurementContext.State = instrumentState;
+            measurementContext.Point = this.GetThreadLocalDataPoint(value, tags);
 
             // Run Pre Aggregator Processors
 
@@ -211,6 +234,74 @@ namespace OpenTelemetry.Metrics
             {
                 processor.OnEnd(metricItem);
             }
+        }
+
+        private void InitThreadLocal()
+        {
+            if (MeterProviderSdk.tags0 == null)
+            {
+                MeterProviderSdk.tags0 = new KeyValuePair<string, object>[0];
+                MeterProviderSdk.tags1 = new KeyValuePair<string, object>[1];
+                MeterProviderSdk.tags2 = new KeyValuePair<string, object>[2];
+                MeterProviderSdk.tags3 = new KeyValuePair<string, object>[3];
+
+                MeterProviderSdk.measurementItem = new MeasurementItem();
+
+                MeterProviderSdk.pointT = new Dictionary<Type, IDataPoint>(5);
+            }
+        }
+
+        private KeyValuePair<string, object>[] GetThreadLocalTags(ReadOnlySpan<KeyValuePair<string, object>> tagsRos)
+        {
+            KeyValuePair<string, object>[] tags;
+
+            if (tagsRos.Length == 0)
+            {
+                tags = MeterProviderSdk.tags0;
+            }
+            else if (tagsRos.Length >= 1 && tagsRos.Length <= 3)
+            {
+                if (tagsRos.Length == 1)
+                {
+                    tags = MeterProviderSdk.tags1;
+                }
+                else if (tagsRos.Length == 2)
+                {
+                    tags = MeterProviderSdk.tags2;
+                }
+                else
+                {
+                    tags = MeterProviderSdk.tags3;
+                }
+
+                int i = 0;
+                foreach (var tag in tagsRos)
+                {
+                    tags[i++] = tag;
+                }
+            }
+            else
+            {
+                tags = tagsRos.ToArray();
+            }
+
+            return tags;
+        }
+
+        private IDataPoint GetThreadLocalDataPoint<T>(T value, KeyValuePair<string, object>[] tags)
+            where T : struct
+        {
+            if (!MeterProviderSdk.pointT.TryGetValue(typeof(T), out var dp))
+            {
+                dp = new DataPoint<T>(value, tags);
+                MeterProviderSdk.pointT.Add(typeof(T), dp);
+            }
+            else
+            {
+                dp.Reset<T>(value, tags);
+            }
+
+            return dp;
         }
     }
 }

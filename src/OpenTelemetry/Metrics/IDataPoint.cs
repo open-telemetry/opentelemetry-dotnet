@@ -23,12 +23,17 @@ namespace OpenTelemetry.Metrics
     {
         public DateTimeOffset Timestamp { get; }
 
-        public ReadOnlySpan<KeyValuePair<string, object>> Tags { get; }
+        public KeyValuePair<string, object>[] Tags { get; }
 
-        public KeyValuePair<string, object>[] TagsAsArray { get; }
+        public KeyValuePair<string, object>[] SortedTags { get; }
 
         public string ValueAsString { get; }
 
-        public IDataPoint NewWithTags(ReadOnlySpan<KeyValuePair<string, object>> tags);
+        public void ResetTags(KeyValuePair<string, object>[] tags);
+
+        public void Reset<T>(T value, KeyValuePair<string, object>[] tags)
+            where T : struct;
+
+        public IDataPoint NewWithValue();
     }
 }

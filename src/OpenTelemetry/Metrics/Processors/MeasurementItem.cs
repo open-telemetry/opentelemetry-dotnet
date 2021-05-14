@@ -20,16 +20,8 @@ namespace OpenTelemetry.Metrics
 {
     public class MeasurementItem
     {
-        internal readonly Instrument Instrument;
-        internal readonly InstrumentState State;
-
-        public MeasurementItem(Instrument instrument, InstrumentState state, IDataPoint point)
-        {
-            this.Instrument = instrument;
-            this.State = state;
-            this.Point = point;
-        }
-
-        public IDataPoint Point { get; set; }
+        internal Instrument Instrument;
+        internal InstrumentState State;
+        internal IDataPoint Point;
     }
 }

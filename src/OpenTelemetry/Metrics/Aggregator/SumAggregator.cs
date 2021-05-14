@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            var tags = new ReadOnlySpan<KeyValuePair<string, object>>(attribs.ToArray());
+            var tags = attribs.ToArray();
 
             var metrics = new Metric[]
             {

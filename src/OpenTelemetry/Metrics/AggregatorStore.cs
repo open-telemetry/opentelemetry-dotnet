@@ -25,18 +25,19 @@ namespace OpenTelemetry.Metrics
     {
         private static readonly Sequence<string> EmptySeq = new Sequence<string>(new string[0]);
 
+        [ThreadStatic]
+        private static string[] tag1Temp;
+
+        [ThreadStatic]
+        private static string[] tag2Temp;
+
+        [ThreadStatic]
+        private static string[] tag3Temp;
+
         private readonly Instrument instrument;
         private readonly MeterProviderSdk sdk;
 
-        private readonly object lockMetricAggs = new object();
         private readonly Dictionary<ISequence, Aggregator[]> metricAggs = new Dictionary<ISequence, Aggregator[]>();
-
-        private readonly List<Aggregator> aggregators = new List<Aggregator>(100);
-
-        private readonly string[] tag0Temp = new string[0];
-        private readonly string[] tag1Temp = new string[2];
-        private readonly string[] tag2Temp = new string[4];
-        private readonly string[] tag3Temp = new string[6];
 
         private Aggregator[] tag0Aggregators = null;
 
@@ -62,17 +63,14 @@ namespace OpenTelemetry.Metrics
 
         internal void Update(IDataPoint point)
         {
+            this.InitThreadLocal();
+
             Aggregator[] aggs;
 
-            int len = point.TagsAsArray.Length;
+            int len = point.Tags.Length;
 
             if (len == 0)
             {
-                if (this.tag0Aggregators == null)
-                {
-                    this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeq);
-                }
-
                 aggs = this.tag0Aggregators;
             }
             else
@@ -82,15 +80,15 @@ namespace OpenTelemetry.Metrics
 
                 if (len == 1)
                 {
-                    tagKeyValues = this.tag1Temp;
+                    tagKeyValues = AggregatorStore.tag1Temp;
                 }
                 else if (len == 2)
                 {
-                    tagKeyValues = this.tag2Temp;
+                    tagKeyValues = AggregatorStore.tag2Temp;
                 }
                 else if (len == 3)
                 {
-                    tagKeyValues = this.tag3Temp;
+                    tagKeyValues = AggregatorStore.tag3Temp;
                 }
                 else
                 {
@@ -98,7 +96,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 int i = 0;
-                foreach (var tag in point.TagsAsArray)
+                foreach (var tag in point.SortedTags)
                 {
                     tagKeyValues[i++] = tag.Key;
                     tagKeyValues[i++] = tag.Value.ToString();
@@ -123,12 +121,9 @@ namespace OpenTelemetry.Metrics
         {
             var aggs = new List<Aggregator>();
 
-            lock (this.lockMetricAggs)
+            foreach (var kv in this.metricAggs)
             {
-                foreach (var kv in this.metricAggs)
-                {
-                    aggs.AddRange(kv.Value);
-                }
+                aggs.AddRange(kv.Value);
             }
 
             var metrics = new List<Metric>();
@@ -139,6 +134,21 @@ namespace OpenTelemetry.Metrics
             }
 
             return metrics;
+        }
+
+        private void InitThreadLocal()
+        {
+            if (this.tag0Aggregators == null)
+            {
+                this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeq);
+            }
+
+            if (AggregatorStore.tag1Temp == null)
+            {
+                AggregatorStore.tag1Temp = new string[2];
+                AggregatorStore.tag2Temp = new string[4];
+                AggregatorStore.tag3Temp = new string[6];
+            }
         }
     }
 }
