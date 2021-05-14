@@ -49,6 +49,15 @@ namespace Examples.Console
                 new KeyValuePair<string, object>("tag1", "value2"),
                 new KeyValuePair<string, object>("tag2", "value2"));
 
+            counter.Add(
+                100,
+                new KeyValuePair<string, object>("tag1", "value1"));
+
+            counter.Add(
+                200,
+                new KeyValuePair<string, object>("tag2", "value2"),
+                new KeyValuePair<string, object>("tag1", "value2"));
+
             var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
             {
                 return new List<Measurement<int>>()
