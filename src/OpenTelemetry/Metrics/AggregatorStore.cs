@@ -33,16 +33,25 @@ namespace OpenTelemetry.Metrics
         private static object[] tag1ValueTemp;
 
         [ThreadStatic]
+        private static KeyValuePair<string, object>[] tag1SortTemp;
+
+        [ThreadStatic]
         private static string[] tag2KeyTemp;
 
         [ThreadStatic]
         private static object[] tag2ValueTemp;
 
         [ThreadStatic]
+        private static KeyValuePair<string, object>[] tag2SortTemp;
+
+        [ThreadStatic]
         private static string[] tag3KeyTemp;
 
         [ThreadStatic]
         private static object[] tag3ValueTemp;
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object>[] tag3SortTemp;
 
         private readonly Instrument instrument;
         private readonly MeterProviderSdk sdk;
@@ -89,33 +98,55 @@ namespace OpenTelemetry.Metrics
             {
                 string[] tagKeyTemp;
                 object[] tagValueTemp;
+                KeyValuePair<string, object>[] tagSortTemp;
 
                 if (len == 1)
                 {
                     tagKeyTemp = AggregatorStore.tag1KeyTemp;
                     tagValueTemp = AggregatorStore.tag1ValueTemp;
-                }
-                else if (len == 2)
-                {
-                    tagKeyTemp = AggregatorStore.tag2KeyTemp;
-                    tagValueTemp = AggregatorStore.tag2ValueTemp;
-                }
-                else if (len == 3)
-                {
-                    tagKeyTemp = AggregatorStore.tag3KeyTemp;
-                    tagValueTemp = AggregatorStore.tag3ValueTemp;
+                    tagSortTemp = AggregatorStore.tag1SortTemp;
+
+                    tagSortTemp[0] = point.Tags[0];
                 }
                 else
                 {
-                    tagKeyTemp = new string[len];
-                    tagValueTemp = new object[len];
+                    if (len == 2)
+                    {
+                        tagKeyTemp = AggregatorStore.tag2KeyTemp;
+                        tagValueTemp = AggregatorStore.tag2ValueTemp;
+                        tagSortTemp = AggregatorStore.tag2SortTemp;
+                    }
+                    else if (len == 3)
+                    {
+                        tagKeyTemp = AggregatorStore.tag3KeyTemp;
+                        tagValueTemp = AggregatorStore.tag3ValueTemp;
+                        tagSortTemp = AggregatorStore.tag3SortTemp;
+                    }
+                    else
+                    {
+                        tagKeyTemp = new string[len];
+                        tagValueTemp = new object[len];
+                        tagSortTemp = new KeyValuePair<string, object>[len];
+                    }
+
+                    // Sort by Tag Key
+
+                    for (var n = 0; n < tagSortTemp.Length; n++)
+                    {
+                        tagSortTemp[n] = point.Tags[n];
+                    }
+
+                    Array.Sort(tagSortTemp, (x, y) =>
+                    {
+                        return x.Key.CompareTo(y.Key);
+                    });
                 }
 
                 int i = 0;
-                foreach (var tag in point.SortedTags)
+                foreach (var kvp in tagSortTemp)
                 {
-                    tagKeyTemp[i] = tag.Key;
-                    tagValueTemp[i] = tag.Value;
+                    tagKeyTemp[i] = kvp.Key;
+                    tagValueTemp[i] = kvp.Value;
                     i++;
                 }
 
@@ -182,12 +213,15 @@ namespace OpenTelemetry.Metrics
             {
                 AggregatorStore.tag1KeyTemp = new string[1];
                 AggregatorStore.tag1ValueTemp = new object[1];
+                AggregatorStore.tag1SortTemp = new KeyValuePair<string, object>[1];
 
                 AggregatorStore.tag2KeyTemp = new string[2];
                 AggregatorStore.tag2ValueTemp = new object[2];
+                AggregatorStore.tag2SortTemp = new KeyValuePair<string, object>[2];
 
                 AggregatorStore.tag3KeyTemp = new string[3];
                 AggregatorStore.tag3ValueTemp = new object[3];
+                AggregatorStore.tag3SortTemp = new KeyValuePair<string, object>[3];
             }
         }
     }
