@@ -51,9 +51,16 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.sortedTags == null)
                 {
-                    this.sortedTags = new KeyValuePair<string, object>[this.tags.Length];
-                    this.tags.CopyTo(this.sortedTags, 0);
-                    Array.Sort(this.sortedTags, (x, y) => x.Key.CompareTo(y.Key));
+                    if (this.tags.Length <= 1)
+                    {
+                        this.sortedTags = this.tags;
+                    }
+                    else
+                    {
+                        this.sortedTags = new KeyValuePair<string, object>[this.tags.Length];
+                        this.tags.CopyTo(this.sortedTags, 0);
+                        Array.Sort(this.sortedTags, (x, y) => x.Key.CompareTo(y.Key));
+                    }
                 }
 
                 return this.sortedTags;

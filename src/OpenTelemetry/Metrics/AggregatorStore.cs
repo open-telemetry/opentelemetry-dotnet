@@ -23,21 +23,33 @@ namespace OpenTelemetry.Metrics
 {
     public class AggregatorStore
     {
-        private static readonly Sequence<string> EmptySeq = new Sequence<string>(new string[0]);
+        private static readonly string[] EmptySeqKey = new string[0];
+        private static readonly object[] EmptySeqValue = new object[0];
 
         [ThreadStatic]
-        private static string[] tag1Temp;
+        private static string[] tag1KeyTemp;
 
         [ThreadStatic]
-        private static string[] tag2Temp;
+        private static object[] tag1ValueTemp;
 
         [ThreadStatic]
-        private static string[] tag3Temp;
+        private static string[] tag2KeyTemp;
+
+        [ThreadStatic]
+        private static object[] tag2ValueTemp;
+
+        [ThreadStatic]
+        private static string[] tag3KeyTemp;
+
+        [ThreadStatic]
+        private static object[] tag3ValueTemp;
 
         private readonly Instrument instrument;
         private readonly MeterProviderSdk sdk;
 
-        private readonly Dictionary<ISequence, Aggregator[]> metricAggs = new Dictionary<ISequence, Aggregator[]>();
+        // Two Level lookup. Keys x Values = Aggregators
+        private readonly Dictionary<string[], Dictionary<object[], Aggregator[]>> keyValue2MetricAggs =
+            new Dictionary<string[], Dictionary<object[], Aggregator[]>>(new StringArrayEquaityComparer());
 
         private Aggregator[] tag0Aggregators = null;
 
@@ -52,12 +64,12 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal Aggregator[] GetAggregator(Sequence<string> seq)
+        internal Aggregator[] GetAggregator(string[] seqKey, object[] seqVal)
         {
             return new Aggregator[]
             {
-                new SumAggregator(this.instrument, seq),
-                new LastValueAggregator(this.instrument, seq),
+                new SumAggregator(this.instrument, seqKey, seqVal),
+                new LastValueAggregator(this.instrument, seqKey, seqVal),
             };
         }
 
@@ -75,39 +87,59 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                Sequence<string> seq;
-                string[] tagKeyValues;
+                string[] tagKeyTemp;
+                object[] tagValueTemp;
 
                 if (len == 1)
                 {
-                    tagKeyValues = AggregatorStore.tag1Temp;
+                    tagKeyTemp = AggregatorStore.tag1KeyTemp;
+                    tagValueTemp = AggregatorStore.tag1ValueTemp;
                 }
                 else if (len == 2)
                 {
-                    tagKeyValues = AggregatorStore.tag2Temp;
+                    tagKeyTemp = AggregatorStore.tag2KeyTemp;
+                    tagValueTemp = AggregatorStore.tag2ValueTemp;
                 }
                 else if (len == 3)
                 {
-                    tagKeyValues = AggregatorStore.tag3Temp;
+                    tagKeyTemp = AggregatorStore.tag3KeyTemp;
+                    tagValueTemp = AggregatorStore.tag3ValueTemp;
                 }
                 else
                 {
-                    tagKeyValues = new string[2 * len];
+                    tagKeyTemp = new string[len];
+                    tagValueTemp = new object[len];
                 }
 
                 int i = 0;
                 foreach (var tag in point.SortedTags)
                 {
-                    tagKeyValues[i++] = tag.Key;
-                    tagKeyValues[i++] = tag.Value.ToString();
+                    tagKeyTemp[i] = tag.Key;
+                    tagValueTemp[i] = tag.Value;
+                    i++;
                 }
 
-                seq = new Sequence<string>(tagKeyValues);
+                // Two-Level lookup of Key and Value to get Aggregator[]
 
-                if (!this.metricAggs.TryGetValue(seq, out aggs))
+                if (!this.keyValue2MetricAggs.TryGetValue(tagKeyTemp, out var value2metrics))
                 {
-                    aggs = this.GetAggregator(seq);
-                    this.metricAggs.Add(seq, aggs);
+                    var seq = new string[tagKeyTemp.Length];
+                    tagKeyTemp.CopyTo(seq, 0);
+
+                    value2metrics = new Dictionary<object[], Aggregator[]>(new ObjectArrayEquaityComparer());
+                    this.keyValue2MetricAggs.Add(seq, value2metrics);
+                }
+
+                if (!value2metrics.TryGetValue(tagValueTemp, out aggs))
+                {
+                    var seqKey = new string[tagKeyTemp.Length];
+                    tagKeyTemp.CopyTo(seqKey, 0);
+
+                    var seqVal = new object[tagValueTemp.Length];
+                    tagValueTemp.CopyTo(seqVal, 0);
+
+                    aggs = this.GetAggregator(seqKey, seqVal);
+                    value2metrics.Add(seqVal, aggs);
                 }
             }
 
@@ -121,9 +153,12 @@ namespace OpenTelemetry.Metrics
         {
             var aggs = new List<Aggregator>();
 
-            foreach (var kv in this.metricAggs)
+            foreach (var keys in this.keyValue2MetricAggs)
             {
-                aggs.AddRange(kv.Value);
+                foreach (var values in keys.Value)
+                {
+                    aggs.AddRange(values.Value);
+                }
             }
 
             var metrics = new List<Metric>();
@@ -140,14 +175,19 @@ namespace OpenTelemetry.Metrics
         {
             if (this.tag0Aggregators == null)
             {
-                this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeq);
+                this.tag0Aggregators = this.GetAggregator(AggregatorStore.EmptySeqKey, AggregatorStore.EmptySeqValue);
             }
 
-            if (AggregatorStore.tag1Temp == null)
+            if (AggregatorStore.tag1KeyTemp == null)
             {
-                AggregatorStore.tag1Temp = new string[2];
-                AggregatorStore.tag2Temp = new string[4];
-                AggregatorStore.tag3Temp = new string[6];
+                AggregatorStore.tag1KeyTemp = new string[1];
+                AggregatorStore.tag1ValueTemp = new object[1];
+
+                AggregatorStore.tag2KeyTemp = new string[2];
+                AggregatorStore.tag2ValueTemp = new object[2];
+
+                AggregatorStore.tag3KeyTemp = new string[3];
+                AggregatorStore.tag3ValueTemp = new object[3];
             }
         }
     }

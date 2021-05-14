@@ -64,21 +64,14 @@ namespace OpenTelemetry.Metrics
                 return false;
             }
 
-            for (int i = 0; i < this.Values.Length; i++)
+            if (typeof(T) == typeof(string))
             {
-                var value = this.Values[i];
-                var value2 = other.Values[i];
+                for (int i = 0; i < this.Values.Length; i++)
+                {
+                    var value1 = (string)(object)this.Values[i];
+                    var value2 = (string)(object)other.Values[i];
 
-                if (value is string str1 && value2 is string str2)
-                {
-                    if (str1 != str2)
-                    {
-                        return false;
-                    }
-                }
-                else if (value is object obj1 && value2 is object obj2)
-                {
-                    if (obj1 != obj2)
+                    if (value1 != value2)
                     {
                         return false;
                     }

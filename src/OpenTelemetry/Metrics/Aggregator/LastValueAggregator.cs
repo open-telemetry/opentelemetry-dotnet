@@ -24,14 +24,16 @@ namespace OpenTelemetry.Metrics
     public class LastValueAggregator : Aggregator
     {
         private readonly Instrument instrument;
-        private readonly Sequence<string> names;
+        private readonly string[] names;
+        private readonly object[] values;
         private IDataPoint lastValue = null;
         private int count = 0;
 
-        public LastValueAggregator(Instrument instrument, Sequence<string> names)
+        public LastValueAggregator(Instrument instrument, string[] names, object[] values)
         {
             this.instrument = instrument;
             this.names = names;
+            this.values = values;
         }
 
         public override void Update(IDataPoint value)
@@ -50,18 +52,9 @@ namespace OpenTelemetry.Metrics
             }
 
             var attribs = new List<KeyValuePair<string, object>>();
-            string name = null;
-            foreach (var seq in this.names.Values)
+            for (int i = 0; i < this.names.Length; i++)
             {
-                if (name == null)
-                {
-                    name = seq;
-                }
-                else
-                {
-                    attribs.Add(new KeyValuePair<string, object>(name, seq));
-                    name = null;
-                }
+                attribs.Add(new KeyValuePair<string, object>(this.names[i], this.values[i]));
             }
 
             var dp = this.lastValue.NewWithValue();
