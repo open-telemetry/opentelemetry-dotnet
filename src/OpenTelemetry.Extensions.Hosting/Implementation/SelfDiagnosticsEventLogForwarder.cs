@@ -46,6 +46,10 @@ namespace OpenTelemetry.Internal
             this.loggerFilterOptions = loggerFilterOptions;
             this.defaultMinEventLevel = defaultMinEventLevel;
 
+            // set initial levels on existing event sources
+            this.SetEventSourceLevels();
+
+            // listen to changes to the log levels
             loggerFilterOptions.OnChange(o => this.SetEventSourceLevels());
         }
 
