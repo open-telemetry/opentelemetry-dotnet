@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -25,12 +26,14 @@ namespace Examples.Console
 {
     internal class TestMetrics
     {
-        internal static object Run(int observationInterval, int collectionInterval)
+        internal static object Run(MetricsOptions options, ref bool prompt)
         {
+            prompt = options.Prompt.Value;
+
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .SetObservationPeriod(observationInterval)
-                .SetCollectionPeriod(collectionInterval)
+                .SetObservationPeriod(options.ObservationPeriodMilliseconds)
+                .SetCollectionPeriod(options.CollectionPeriodMilliseconds)
                 .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
@@ -38,38 +41,65 @@ namespace Examples.Console
             using var meter = new Meter("TestMeter", "0.0.1");
 
             var counter = meter.CreateCounter<int>("counter1");
-            counter.Add(10);
 
-            counter.Add(
-                100,
-                new KeyValuePair<string, object>("tag1", "value1"));
-
-            counter.Add(
-                200,
-                new KeyValuePair<string, object>("tag1", "value2"),
-                new KeyValuePair<string, object>("tag2", "value2"));
-
-            counter.Add(
-                100,
-                new KeyValuePair<string, object>("tag1", "value1"));
-
-            counter.Add(
-                200,
-                new KeyValuePair<string, object>("tag2", "value2"),
-                new KeyValuePair<string, object>("tag1", "value2"));
-
-            var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
+            if (options.RunObservable ?? true)
             {
-                return new List<Measurement<int>>()
+                var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
                 {
-                    new Measurement<int>(
-                        (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                        new KeyValuePair<string, object>("tag1", "value1")),
-                };
-            });
+                    return new List<Measurement<int>>()
+                    {
+                        new Measurement<int>(
+                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
+                            new KeyValuePair<string, object>("tag1", "value1")),
+                    };
+                });
+            }
 
-            Task.Delay(5000).Wait();
-            System.Console.WriteLine("Press Enter key to exit.");
+            var cts = new CancellationTokenSource();
+
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < options.NumTasks; i++)
+            {
+                var taskno = i;
+
+                tasks.Add(Task.Run(() =>
+                {
+                    System.Console.WriteLine($"Task started {taskno + 1}/{options.NumTasks}.");
+
+                    while (!cts.IsCancellationRequested)
+                    {
+                        counter.Add(10);
+
+                        counter.Add(
+                            100,
+                            new KeyValuePair<string, object>("tag1", "value1"));
+
+                        counter.Add(
+                            200,
+                            new KeyValuePair<string, object>("tag1", "value2"),
+                            new KeyValuePair<string, object>("tag2", "value2"));
+
+                        counter.Add(
+                            100,
+                            new KeyValuePair<string, object>("tag1", "value1"));
+
+                        counter.Add(
+                            200,
+                            new KeyValuePair<string, object>("tag2", "value2"),
+                            new KeyValuePair<string, object>("tag1", "value2"));
+                    }
+                }));
+            }
+
+            cts.CancelAfter(options.RunTime);
+            Task.WaitAll(tasks.ToArray());
+
+            if (prompt)
+            {
+                System.Console.WriteLine("Press Enter key to exit.");
+            }
+
             return null;
         }
     }

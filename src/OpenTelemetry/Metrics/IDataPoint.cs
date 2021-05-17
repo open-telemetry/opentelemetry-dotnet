@@ -25,8 +25,6 @@ namespace OpenTelemetry.Metrics
 
         public KeyValuePair<string, object>[] Tags { get; }
 
-        public KeyValuePair<string, object>[] SortedTags { get; }
-
         public string ValueAsString { get; }
 
         public void ResetTags(KeyValuePair<string, object>[] tags);

@@ -84,26 +84,25 @@ namespace OpenTelemetry.Metrics
 
             if (len == 1)
             {
-                tagKvp[0] = tags[0];
+                tagKey[0] = tags[0].Key;
+                tagValue[0] = tags[0].Value;
             }
             else
             {
                 // Sort by Tag Key
 
-                for (var n = 0; n < tagKvp.Length; n++)
+                for (var n = 0; n < len; n++)
                 {
                     tagKvp[n] = tags[n];
                 }
 
                 Array.Sort(tagKvp, (x, y) => x.Key.CompareTo(y.Key));
-            }
 
-            int i = 0;
-            foreach (var kvp in tagKvp)
-            {
-                tagKey[i] = kvp.Key;
-                tagValue[i] = kvp.Value;
-                i++;
+                for (var n = 0; n < len; n++)
+                {
+                    tagKey[n] = tagKvp[n].Key;
+                    tagValue[n] = tagKvp[n].Value;
+                }
             }
 
             string[] seqKey = null;
@@ -114,7 +113,7 @@ namespace OpenTelemetry.Metrics
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
 
-                seqKey = new string[tagKey.Length];
+                seqKey = new string[len];
                 tagKey.CopyTo(seqKey, 0);
 
                 value2metrics = new Dictionary<object[], Aggregator[]>(new ObjectArrayEquaityComparer());
@@ -129,11 +128,11 @@ namespace OpenTelemetry.Metrics
 
                 if (seqKey == null)
                 {
-                    seqKey = new string[tagKey.Length];
+                    seqKey = new string[len];
                     tagKey.CopyTo(seqKey, 0);
                 }
 
-                var seqVal = new object[tagValue.Length];
+                var seqVal = new object[len];
                 tagValue.CopyTo(seqVal, 0);
 
                 aggregators = this.GetDefaultAggregator(seqKey, seqVal);

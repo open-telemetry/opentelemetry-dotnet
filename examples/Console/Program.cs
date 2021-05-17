@@ -34,7 +34,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
         /// dotnet run -p Examples.Console.csproj zpages
-        /// dotnet run -p Examples.Console.csproj metrics -p 100 -e 500
+        /// dotnet run -p Examples.Console.csproj metrics --help
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
@@ -42,12 +42,14 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
+            bool prompt = true;
+
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
-                    (MetricsOptions options) => TestMetrics.Run(options.ObservationPeriodMilliseconds, options.CollectionPeriodMilliseconds),
+                    (MetricsOptions options) => TestMetrics.Run(options, ref prompt),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -59,7 +61,10 @@ namespace Examples.Console
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
 
-            System.Console.ReadLine();
+            if (prompt)
+            {
+                System.Console.ReadLine();
+            }
         }
     }
 
@@ -98,11 +103,23 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('p', "observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
+        [Option('p', "prompt", HelpText = "Prompt for exit", Default = false)]
+        public bool? Prompt { get; set; }
+
+        [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
+        public int RunTime { get; set; }
+
+        [Option("observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
         public int ObservationPeriodMilliseconds { get; set; }
 
-        [Option('c', "collectionPeriodMilliseconds", Default = 500, HelpText = "Collection period.", Required = false)]
+        [Option("collectionPeriodMilliseconds", Default = 500, HelpText = "Collection period.", Required = false)]
         public int CollectionPeriodMilliseconds { get; set; }
+
+        [Option('o', "runObservable", Default = true, HelpText = "Run observable counters.", Required = false)]
+        public bool? RunObservable { get; set; }
+
+        [Option('t', "numTasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
+        public int NumTasks { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

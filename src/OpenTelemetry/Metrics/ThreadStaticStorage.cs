@@ -30,7 +30,8 @@ namespace OpenTelemetry.Metrics
 
         private readonly TagStorage[] tagStorage = new TagStorage[MaxTagCacheSize + 1];
 
-        private readonly Dictionary<Type, IDataPoint> pointT = new Dictionary<Type, IDataPoint>(5);
+        // .NET Metrics API allows for byte, short, int, long, float, double, decimal
+        private readonly Dictionary<Type, IDataPoint> pointT = new Dictionary<Type, IDataPoint>();
 
         private readonly MeasurementItem measurementItem = new MeasurementItem();
 
