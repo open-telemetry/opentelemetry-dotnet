@@ -120,6 +120,9 @@ namespace Examples.Console
 
         [Option('t', "numTasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
         public int NumTasks { get; set; }
+
+        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops. 0 = No Limit", Required = false)]
+        public int MaxLoops { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

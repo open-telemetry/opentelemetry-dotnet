@@ -67,8 +67,15 @@ namespace Examples.Console
                 {
                     System.Console.WriteLine($"Task started {taskno + 1}/{options.NumTasks}.");
 
+                    var loops = 0;
+
                     while (!cts.IsCancellationRequested)
                     {
+                        if (options.MaxLoops > 0 && loops >= options.MaxLoops)
+                        {
+                            break;
+                        }
+
                         counter.Add(10);
 
                         counter.Add(
@@ -88,6 +95,8 @@ namespace Examples.Console
                             200,
                             new KeyValuePair<string, object>("tag2", "value2"),
                             new KeyValuePair<string, object>("tag1", "value2"));
+
+                        loops++;
                     }
                 }));
             }
