@@ -143,25 +143,31 @@ namespace OpenTelemetry.Context.Propagation
                         break;
                     }
 
-                    var decodedPair = WebUtility.UrlDecode(pair);
-                    var escapedPair = string.Join("=", decodedPair.Split('=').Select(Uri.EscapeDataString));
-
-                    if (NameValueHeaderValue.TryParse(escapedPair, out NameValueHeaderValue baggageItem))
+                    if (pair.IndexOf('=') < 0)
                     {
-                        if (string.IsNullOrEmpty(baggageItem.Name) || string.IsNullOrEmpty(baggageItem.Value))
-                        {
-                            continue;
-                        }
-
-                        if (baggageDictionary == null)
-                        {
-                            baggageDictionary = new Dictionary<string, string>();
-                        }
-
-                        var key = Uri.UnescapeDataString(baggageItem.Name);
-                        var value = Uri.UnescapeDataString(baggageItem.Value);
-                        baggageDictionary[key] = value;
+                        continue;
                     }
+
+                    var parts = pair.Split(new[] { '=' }, 2);
+                    if (parts.Length != 2)
+                    {
+                        continue;
+                    }
+
+                    var key = WebUtility.UrlDecode(parts[0]);
+                    var value = WebUtility.UrlDecode(parts[1]);
+
+                    if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+                    {
+                        continue;
+                    }
+
+                    if (baggageDictionary == null)
+                    {
+                        baggageDictionary = new Dictionary<string, string>();
+                    }
+
+                    baggageDictionary[key] = value;
                 }
             }
 
