@@ -15,11 +15,7 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
-using System.Diagnostics.Metrics;
-using System.Threading;
-
-#nullable enable
+using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
@@ -27,13 +23,11 @@ namespace OpenTelemetry.Metrics
     {
         public override void OnEnd(MetricItem data)
         {
-            foreach (var exports in data.Metrics)
+            foreach (var metric in data.Metrics)
             {
-                foreach (var item in exports)
-                {
-                    var msg = $"{item.Key.Meter.Name}:{item.Key.Name} = count:{item.Value.Count}, sum:{item.Value.Sum}";
-                    Console.WriteLine($"Export: {msg}");
-                }
+                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.ValueAsString}";
+                Console.WriteLine($"Export: {msg}");
             }
         }
     }

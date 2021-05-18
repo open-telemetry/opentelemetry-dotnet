@@ -1,4 +1,4 @@
-// <copyright file="MeasurementProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="InstrumentState.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,29 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+
 namespace OpenTelemetry.Metrics
 {
-    public abstract class MeasurementProcessor : BaseProcessor<MeasurementItem>
+    public class InstrumentState
     {
+        private readonly AggregatorStore store;
+        private readonly object lockStore = new object();
+
+        public InstrumentState(MeterProviderSdk sdk, Instrument instrument)
+        {
+            this.store = new AggregatorStore(sdk, instrument);
+        }
+
+        public void Update(IDataPoint value)
+        {
+            lock (this.lockStore)
+            {
+                this.store.Update(value);
+            }
+        }
     }
 }

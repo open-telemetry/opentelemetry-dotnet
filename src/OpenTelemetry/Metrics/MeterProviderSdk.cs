@@ -15,12 +15,11 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
-
-#nullable enable
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,6 +30,9 @@ namespace OpenTelemetry.Metrics
         private readonly Task observerTask;
         private readonly Task collectorTask;
         private readonly MeterListener listener;
+
+        private readonly object lockInstrumentStates = new object();
+        private readonly Dictionary<Instrument, InstrumentState> instrumentStates = new Dictionary<Instrument, InstrumentState>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
@@ -61,13 +63,20 @@ namespace OpenTelemetry.Metrics
             this.listener = new MeterListener()
             {
                 InstrumentPublished = (instrument, listener) =>
+                {
+                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
-                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                        var instrumentState = new InstrumentState(this, instrument);
+
+                        lock (this.lockInstrumentStates)
                         {
-                            listener.EnableMeasurementEvents(instrument, null);
+                            this.instrumentStates.Add(instrument, instrumentState);
                         }
-                    },
+
+                        listener.EnableMeasurementEvents(instrument, instrumentState);
+                    }
+                },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
 
@@ -99,28 +108,47 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
-        internal void MeasurementsCompleted(Instrument instrument, object? state)
+        internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-            where T : unmanaged
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+            where T : struct
         {
-            // Run Pre Aggregator Processors
+            var storage = ThreadStaticStorage.GetStorage();
 
-            var measurmentContext = new MeasurementItem(instrument, new DataPoint<T>(value, tags));
+            KeyValuePair<string, object>[] tags = storage.GetTags(tagsRos);
+
+            // Get Instrument State
+
+            if (!(state is InstrumentState instrumentState))
+            {
+                lock (this.lockInstrumentStates)
+                {
+                    if (!this.instrumentStates.TryGetValue(instrument, out instrumentState))
+                    {
+                        instrumentState = new InstrumentState(this, instrument);
+                        this.instrumentStates.Add(instrument, instrumentState);
+                    }
+                }
+            }
+
+            var point = storage.GetDataPoint(value, tags);
+            MeasurementItem measurementContext = storage.GetMeasurementItem(instrument, instrumentState, point);
+
+            // Run Pre Aggregator Processors
 
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementContext);
             }
 
             // Run Aggregator Processors
 
             foreach (var processor in this.AggregateProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementContext);
             }
         }
 
@@ -173,8 +201,8 @@ namespace OpenTelemetry.Metrics
 
             foreach (var processor in this.AggregateProcessors)
             {
-                var metric = processor.Collect();
-                metricItem.Metrics.Add(metric);
+                var metrics = processor.Collect();
+                metricItem.Metrics.AddRange(metrics);
             }
 
             foreach (var processor in this.MetricProcessors)

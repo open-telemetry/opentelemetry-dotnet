@@ -16,36 +16,85 @@
 
 using System;
 using System.Collections.Generic;
-
-#nullable enable
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class DataPoint
+    internal struct DataPoint<T> : IDataPoint
+        where T : struct
     {
-        private KeyValuePair<string, object?>[] tags;
+        internal T Value;
 
-        public DataPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        private static int lastTick = -1;
+        private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
+
+        private DateTimeOffset timestamp;
+
+        private KeyValuePair<string, object>[] tags;
+
+        public DataPoint(T value, KeyValuePair<string, object>[] tags)
         {
-            this.tags = tags.ToArray();
+            this.timestamp = DataPoint<T>.GetDateTimeOffset();
+            this.Value = value;
+            this.tags = tags;
         }
 
-        public ReadOnlySpan<KeyValuePair<string, object?>> Tags
+        public KeyValuePair<string, object>[] Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object?>>(this.tags);
+                return this.tags;
             }
         }
 
-        public void SetTags(KeyValuePair<string, object?>[] tags)
+        public DateTimeOffset Timestamp
+        {
+            get
+            {
+                return this.timestamp;
+            }
+        }
+
+        public string ValueAsString
+        {
+            get
+            {
+                return this.Value.ToString();
+            }
+        }
+
+        public void Reset<T1>(T1 value, KeyValuePair<string, object>[] tags)
+            where T1 : struct
+        {
+            this.timestamp = DataPoint<T>.GetDateTimeOffset();
+            this.tags = tags;
+            this.Value = (T)((object)value);
+        }
+
+        public void ResetTags(KeyValuePair<string, object>[] tags)
         {
             this.tags = tags;
         }
 
-        public virtual string ValueAsString()
+        public IDataPoint NewWithValue()
         {
-            throw new NotImplementedException();
+            return new DataPoint<T>(this.Value, new KeyValuePair<string, object>[0]);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static DateTimeOffset GetDateTimeOffset()
+        {
+            int tick = Environment.TickCount;
+            if (tick == DataPoint<T>.lastTick)
+            {
+                return DataPoint<T>.lastTimestamp;
+            }
+
+            var dt = DateTimeOffset.UtcNow;
+            DataPoint<T>.lastTimestamp = dt;
+            DataPoint<T>.lastTick = tick;
+
+            return dt;
         }
     }
 }

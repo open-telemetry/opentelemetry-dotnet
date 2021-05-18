@@ -16,23 +16,28 @@
 
 using System.Collections.Generic;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Example of a MeasurmentProcessor that adds a new attribute to all measurements.
+    /// </summary>
     public class TagEnrichmentProcessor : MeasurementProcessor
     {
+        private KeyValuePair<string, object> extraAttrib;
+
+        public TagEnrichmentProcessor(string name, string value)
+        {
+            this.extraAttrib = new KeyValuePair<string, object>(name, value);
+        }
+
         public override void OnEnd(MeasurementItem data)
         {
-            var oldArray = data.Point!.Tags.ToArray();
-            int len = oldArray.Length;
+            var newArray = new KeyValuePair<string, object>[data.Point.Tags.Length + 1];
+            data.Point.Tags.CopyTo(newArray, 0);
+            newArray[newArray.Length - 1] = this.extraAttrib;
 
-            var newArray = new KeyValuePair<string, object?>[len + 1];
-            oldArray.CopyTo(newArray, 0);
-
-            newArray[len] = new KeyValuePair<string, object?>("newLabel", "newValue");
-
-            data.Point.SetTags(newArray);
+            data.Point = data.Point.NewWithValue();
+            data.Point.ResetTags(newArray);
         }
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="DataPoint{T}.cs" company="OpenTelemetry Authors">
+// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-
-#nullable enable
+using System.Diagnostics.Metrics;
+using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class DataPoint<T> : DataPoint
-        where T : unmanaged
+    public abstract class Aggregator
     {
-        internal readonly T Value;
-
-        public DataPoint(T value, params KeyValuePair<string, object?>[] tags)
-            : base(new ReadOnlySpan<KeyValuePair<string, object?>>(tags))
+        public virtual void Update(IDataPoint value)
         {
-            this.Value = value;
         }
 
-        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-            : base(tags)
+        public virtual IEnumerable<Metric> Collect()
         {
-            this.Value = value;
-        }
-
-        public override string ValueAsString()
-        {
-            return this.Value.ToString();
+            return Enumerable.Empty<Metric>();
         }
     }
 }

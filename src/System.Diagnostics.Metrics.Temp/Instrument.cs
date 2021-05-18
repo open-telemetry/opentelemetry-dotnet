@@ -29,6 +29,7 @@ namespace System.Diagnostics.Metrics
     public abstract class Instrument
     {
         internal ConcurrentDictionary<MeterListener, bool> Listeners = new ConcurrentDictionary<MeterListener, bool>();
+        internal KeyValuePair<MeterListener, bool>[] CachedListeners = new KeyValuePair<MeterListener, bool>[0];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Instrument"/> class.
@@ -71,6 +72,14 @@ namespace System.Diagnostics.Metrics
         /// A property tells if the instrument is a regular instrument or an observable instrument.
         /// </summary>
         public virtual bool IsObservable => false;
+
+        public void Register(MeterListener listener)
+        {
+            this.Listeners.TryAdd(listener, true);
+
+            // use CachedListener to avoid an alloc when enumerating this.Listener in HotPath
+            this.CachedListeners = this.Listeners.ToArray();
+        }
 
         /// <summary>
         /// Publish is to allow activating the instrument to start recording measurements and to allow

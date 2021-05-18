@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddSource("BasicAllTest")
                 .SetObservationPeriod(300)
                 .SetCollectionPeriod(1000)
-                .AddProcessor(new TagEnrichmentProcessor())
+                .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
 

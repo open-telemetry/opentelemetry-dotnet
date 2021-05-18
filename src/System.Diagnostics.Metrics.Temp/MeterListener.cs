@@ -72,7 +72,7 @@ namespace System.Diagnostics.Metrics
         public void EnableMeasurementEvents(Instrument instrument, object? state = null)
         {
             this.Instruments.TryAdd(instrument, state);
-            instrument.Listeners.TryAdd(this, true);
+            instrument.Register(this);
         }
 
         /// <summary>

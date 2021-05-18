@@ -16,19 +16,12 @@
 
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class MeasurementItem
     {
-        internal readonly Instrument Instrument;
-        internal DataPoint? Point;
-
-        public MeasurementItem(Instrument instrument, DataPoint point)
-        {
-            this.Instrument = instrument;
-            this.Point = point;
-        }
+        internal Instrument Instrument;
+        internal InstrumentState State;
+        internal IDataPoint Point;
     }
 }

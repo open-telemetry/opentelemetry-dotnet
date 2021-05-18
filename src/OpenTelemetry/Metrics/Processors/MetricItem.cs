@@ -19,13 +19,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics
 {
     public class MetricItem
     {
-        internal List<ConcurrentDictionary<Instrument, AggregateState>> Metrics = new List<ConcurrentDictionary<Instrument, AggregateState>>();
+        internal List<Metric> Metrics = new List<Metric>();
 
         public MetricItem()
         {
