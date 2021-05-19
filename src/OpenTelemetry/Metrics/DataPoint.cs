@@ -55,12 +55,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public string ValueAsString
+        public string ValueAsString()
         {
-            get
-            {
-                return this.Value.ToString();
-            }
+            return this.Value.ToString();
         }
 
         public void Reset<T1>(T1 value, KeyValuePair<string, object>[] tags)
@@ -68,17 +65,12 @@ namespace OpenTelemetry.Metrics
         {
             this.timestamp = DataPoint<T>.GetDateTimeOffset();
             this.tags = tags;
-            this.Value = (T)((object)value);
+            this.Value = (T)(object)value;
         }
 
-        public void ResetTags(KeyValuePair<string, object>[] tags)
+        public IDataPoint Clone(KeyValuePair<string, object>[] tags)
         {
-            this.tags = tags;
-        }
-
-        public IDataPoint NewWithValue()
-        {
-            return new DataPoint<T>(this.Value, new KeyValuePair<string, object>[0]);
+            return new DataPoint<T>(this.Value, tags);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

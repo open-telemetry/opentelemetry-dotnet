@@ -25,13 +25,11 @@ namespace OpenTelemetry.Metrics
 
         public KeyValuePair<string, object>[] Tags { get; }
 
-        public string ValueAsString { get; }
+        public string ValueAsString();
 
-        public void ResetTags(KeyValuePair<string, object>[] tags);
+        public IDataPoint Clone(KeyValuePair<string, object>[] tags);
 
         public void Reset<T>(T value, KeyValuePair<string, object>[] tags)
             where T : struct;
-
-        public IDataPoint NewWithValue();
     }
 }

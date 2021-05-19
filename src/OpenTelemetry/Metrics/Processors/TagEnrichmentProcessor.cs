@@ -36,8 +36,7 @@ namespace OpenTelemetry.Metrics
             data.Point.Tags.CopyTo(newArray, 0);
             newArray[newArray.Length - 1] = this.extraAttrib;
 
-            data.Point = data.Point.NewWithValue();
-            data.Point.ResetTags(newArray);
+            data.Point = data.Point.Clone(newArray);
         }
     }
 }

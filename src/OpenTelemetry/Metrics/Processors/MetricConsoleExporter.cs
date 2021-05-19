@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
             foreach (var metric in data.Metrics)
             {
                 var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.ValueAsString}";
+                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.ValueAsString()}";
                 Console.WriteLine($"Export: {msg}");
             }
         }

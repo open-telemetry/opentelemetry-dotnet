@@ -31,6 +31,11 @@ namespace OpenTelemetry.Metrics
 
         public LastValueAggregator(Instrument instrument, string[] names, object[] values)
         {
+            if (names.Length != values.Length)
+            {
+                throw new ArgumentException("Length of names[] and values[] must match.");
+            }
+
             this.instrument = instrument;
             this.names = names;
             this.values = values;
@@ -57,8 +62,7 @@ namespace OpenTelemetry.Metrics
                 attribs.Add(new KeyValuePair<string, object>(this.names[i], this.values[i]));
             }
 
-            var dp = this.lastValue.NewWithValue();
-            dp.ResetTags(attribs.ToArray());
+            var dp = this.lastValue.Clone(attribs.ToArray());
 
             var metrics = new Metric[]
             {

@@ -31,6 +31,11 @@ namespace OpenTelemetry.Metrics
 
         public SumAggregator(Instrument instrument, string[] names, object[] values)
         {
+            if (names.Length != values.Length)
+            {
+                throw new ArgumentException("Length of names[] and values[] must match.");
+            }
+
             this.instrument = instrument;
             this.names = names;
             this.values = values;
