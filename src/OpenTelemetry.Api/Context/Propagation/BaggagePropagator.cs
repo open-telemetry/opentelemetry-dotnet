@@ -33,6 +33,9 @@ namespace OpenTelemetry.Context.Propagation
         private const int MaxBaggageLength = 8192;
         private const int MaxBaggageItems = 180;
 
+        private static readonly char[] EqualSignSeparator = new[] { '=' };
+        private static readonly char[] CommaSignSeparator = new[] { ',' };
+
         /// <inheritdoc/>
         public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
@@ -133,7 +136,7 @@ namespace OpenTelemetry.Context.Propagation
                     continue;
                 }
 
-                foreach (var pair in item.Split(','))
+                foreach (var pair in item.Split(CommaSignSeparator))
                 {
                     baggageLength += pair.Length + 1; // pair and comma
 
@@ -148,7 +151,7 @@ namespace OpenTelemetry.Context.Propagation
                         continue;
                     }
 
-                    var parts = pair.Split(new[] { '=' }, 2);
+                    var parts = pair.Split(EqualSignSeparator, 2);
                     if (parts.Length != 2)
                     {
                         continue;
