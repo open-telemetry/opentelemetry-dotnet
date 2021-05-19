@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
 
         KeyValuePair<string, object>[] Tags { get; }
 
-        string ValueAsString()
+        string ValueAsString();
 
         IDataPoint Clone(KeyValuePair<string, object>[] tags);
 
