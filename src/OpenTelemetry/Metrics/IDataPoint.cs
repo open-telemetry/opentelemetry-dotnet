@@ -21,15 +21,15 @@ namespace OpenTelemetry.Metrics
 {
     public interface IDataPoint
     {
-        public DateTimeOffset Timestamp { get; }
+        DateTimeOffset Timestamp { get; }
 
-        public KeyValuePair<string, object>[] Tags { get; }
+        KeyValuePair<string, object>[] Tags { get; }
 
-        public string ValueAsString();
+        string ValueAsString()
 
-        public IDataPoint Clone(KeyValuePair<string, object>[] tags);
+        IDataPoint Clone(KeyValuePair<string, object>[] tags);
 
-        public void Reset<T>(T value, KeyValuePair<string, object>[] tags)
+        void Reset<T>(T value, KeyValuePair<string, object>[] tags)
             where T : struct;
     }
 }
