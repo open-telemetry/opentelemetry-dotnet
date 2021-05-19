@@ -110,19 +110,25 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void GetKeysValuesKvp(int len, out string[] tagKeys, out object[] tagValues, out KeyValuePair<string, object>[] tagKvps)
+        internal void GetKeysValues(KeyValuePair<string, object>[] tags, out string[] tagKeys, out object[] tagValues)
         {
+            var len = tags.Length;
+
             if (len <= MaxTagCacheSize)
             {
                 tagKeys = this.tagStorage[len].TagKey;
                 tagValues = this.tagStorage[len].TagValue;
-                tagKvps = this.tagStorage[len].TagKvp;
             }
             else
             {
                 tagKeys = new string[len];
                 tagValues = new object[len];
-                tagKvps = new KeyValuePair<string, object>[len];
+            }
+
+            for (var n = 0; n < len; n++)
+            {
+                tagKeys[n] = tags[n].Key;
+                tagValues[n] = tags[n].Value;
             }
         }
 
@@ -134,7 +140,6 @@ namespace OpenTelemetry.Metrics
             // Used to split into Key sequence, Value sequence, and KVPs for Aggregator Processor
             internal readonly string[] TagKey;
             internal readonly object[] TagValue;
-            internal readonly KeyValuePair<string, object>[] TagKvp;
 
             internal TagStorage(int n)
             {
@@ -142,7 +147,6 @@ namespace OpenTelemetry.Metrics
 
                 this.TagKey = new string[n];
                 this.TagValue = new object[n];
-                this.TagKvp = new KeyValuePair<string, object>[n];
             }
         }
     }

@@ -80,29 +80,11 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.GetKeysValuesKvp(len, out var tagKey, out var tagValue, out var tagKvp);
+            storage.GetKeysValues(tags, out var tagKey, out var tagValue);
 
-            if (len == 1)
+            if (len > 1)
             {
-                tagKey[0] = tags[0].Key;
-                tagValue[0] = tags[0].Value;
-            }
-            else
-            {
-                // Sort by Tag Key
-
-                for (var n = 0; n < len; n++)
-                {
-                    tagKvp[n] = tags[n];
-                }
-
-                Array.Sort(tagKvp, (x, y) => x.Key.CompareTo(y.Key));
-
-                for (var n = 0; n < len; n++)
-                {
-                    tagKey[n] = tagKvp[n].Key;
-                    tagValue[n] = tagKvp[n].Value;
-                }
+                Array.Sort<string, object>(tagKey, tagValue);
             }
 
             string[] seqKey = null;
