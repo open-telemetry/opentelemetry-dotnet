@@ -154,6 +154,8 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
+            this.listener.Dispose();
+
             this.cts.Cancel();
 
             this.observerTask.Wait();

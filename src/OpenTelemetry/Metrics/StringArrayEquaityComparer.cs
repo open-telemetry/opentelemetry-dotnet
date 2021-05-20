@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
 
             for (int i = 0; i < len1; i++)
             {
-                if (!strings1[i].Equals(strings2[i]))
+                if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
                 {
                     return false;
                 }
