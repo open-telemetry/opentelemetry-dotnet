@@ -62,6 +62,11 @@
     </PackageReference>-->
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- temporary workaround unsigned Unsafe package, downgrade to Preview3 public build, mark private so that it doesn't leak to consuming projects -->
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.3.21201.4" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ActivityInstrumentationHelper.cs" Link="Includes\ActivityInstrumentationHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs" Link="Includes\DiagnosticSourceListener.cs" />
