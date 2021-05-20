@@ -27,9 +27,13 @@ namespace OpenTelemetry.Metrics
 
         string ValueAsString();
 
+        /// <summary>
+        /// Clone a DataPoint but with different tags.
+        /// </summary>
+        /// <param name="tags">Tags to use in clone.</param>
+        /// <returns>IDataPoint.</returns>
         IDataPoint Clone(KeyValuePair<string, object>[] tags);
 
-        void Reset<T>(T value, KeyValuePair<string, object>[] tags)
-            where T : struct;
+        IDataPoint Clone();
     }
 }

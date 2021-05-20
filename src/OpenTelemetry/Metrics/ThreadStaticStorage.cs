@@ -104,7 +104,10 @@ namespace OpenTelemetry.Metrics
             else
             {
                 // We are resetting/reusing the same DataPoint<T> object to avoid a new alloc in the hot path.
-                dp.Reset<T>(value, tags);
+                if (dp is DataPoint<T> dpT)
+                {
+                    dpT.Reset(value, tags);
+                }
             }
 
             return dp;
