@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Reset (e.g. new Datapoint(...)) this object for reused.
+        /// Reset (e.g. new DataPointT(...)) this object for reused.
         /// This is provided to avoid additional allocation in Hot Path.
         /// </summary>
         /// <typeparam name="T1">T.</typeparam>

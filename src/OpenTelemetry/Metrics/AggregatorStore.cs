@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics
 
         // Two-Level lookup. TagKeys x [ TagValues x Aggregators ]
         private readonly Dictionary<string[], Dictionary<object[], Aggregator[]>> keyValue2MetricAggs =
-            new Dictionary<string[], Dictionary<object[], Aggregator[]>>(new StringArrayEquaityComparer());
+            new Dictionary<string[], Dictionary<object[], Aggregator[]>>(new StringArrayEqualityComparer());
 
         private Aggregator[] tag0Aggregators = null;
 
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Metrics
                 seqKey = new string[len];
                 tagKey.CopyTo(seqKey, 0);
 
-                value2metrics = new Dictionary<object[], Aggregator[]>(new ObjectArrayEquaityComparer());
+                value2metrics = new Dictionary<object[], Aggregator[]>(new ObjectArrayEqualityComparer());
                 this.keyValue2MetricAggs.Add(seqKey, value2metrics);
             }
 

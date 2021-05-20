@@ -1,4 +1,4 @@
-// <copyright file="StringArrayEquaityComparer.cs" company="OpenTelemetry Authors">
+// <copyright file="ObjectArrayEqualityComparer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +20,20 @@ using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
-    public class StringArrayEquaityComparer : IEqualityComparer<string[]>
+    public class ObjectArrayEqualityComparer : IEqualityComparer<object[]>
     {
-        public bool Equals(string[] strings1, string[] strings2)
+        public bool Equals(object[] obj1, object[] obj2)
         {
-            var len1 = strings1.Length;
+            var len1 = obj1.Length;
 
-            if (len1 != strings2.Length)
+            if (len1 != obj2.Length)
             {
                 return false;
             }
 
             for (int i = 0; i < len1; i++)
             {
-                if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
+                if (obj1[i] != obj2[i])
                 {
                     return false;
                 }
@@ -42,15 +42,15 @@ namespace OpenTelemetry.Metrics
             return true;
         }
 
-        public int GetHashCode(string[] strings)
+        public int GetHashCode(object[] objs)
         {
             int hash = 17;
 
             unchecked
             {
-                for (int i = 0; i < strings.Length; i++)
+                for (int i = 0; i < objs.Length; i++)
                 {
-                    hash = (hash * 31) + strings[i].GetHashCode();
+                    hash = (hash * 31) + objs[i].GetHashCode();
                 }
             }
 
