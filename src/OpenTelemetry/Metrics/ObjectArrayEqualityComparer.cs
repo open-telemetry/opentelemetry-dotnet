@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
@@ -24,6 +22,16 @@ namespace OpenTelemetry.Metrics
     {
         public bool Equals(object[] obj1, object[] obj2)
         {
+            if (ReferenceEquals(obj1, obj2))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
+            {
+                return false;
+            }
+
             var len1 = obj1.Length;
 
             if (len1 != obj2.Length)

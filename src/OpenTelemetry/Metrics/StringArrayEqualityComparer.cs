@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
@@ -24,6 +23,16 @@ namespace OpenTelemetry.Metrics
     {
         public bool Equals(string[] strings1, string[] strings2)
         {
+            if (ReferenceEquals(strings1, strings2))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(strings1, null) || ReferenceEquals(strings2, null))
+            {
+                return false;
+            }
+
             var len1 = strings1.Length;
 
             if (len1 != strings2.Length)
