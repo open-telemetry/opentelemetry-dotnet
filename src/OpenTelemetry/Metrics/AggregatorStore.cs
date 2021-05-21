@@ -64,7 +64,7 @@ namespace OpenTelemetry.Metrics
             };
         }
 
-        internal Aggregator[] FindAggregators(KeyValuePair<string, object>[] tags)
+        internal Aggregator[] FindAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
 
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.GetKeysValues(tags, out var tagKey, out var tagValue);
+            storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
 
             if (len > 1)
             {
@@ -125,13 +125,14 @@ namespace OpenTelemetry.Metrics
             return aggregators;
         }
 
-        internal void Update(IDataPoint point)
+        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
         {
-            var aggs = this.FindAggregators(point.Tags);
+            var aggs = this.FindAggregators(tags);
 
             foreach (var agg in aggs)
             {
-                agg.Update(point);
+                agg.Update(dt, value);
             }
         }
 

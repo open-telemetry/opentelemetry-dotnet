@@ -31,11 +31,12 @@ namespace OpenTelemetry.Metrics
             this.store = new AggregatorStore(sdk, instrument);
         }
 
-        public void Update(IDataPoint value)
+        public void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
         {
             lock (this.lockStore)
             {
-                this.store.Update(value);
+                this.store.Update(dt, value, tags);
             }
         }
     }

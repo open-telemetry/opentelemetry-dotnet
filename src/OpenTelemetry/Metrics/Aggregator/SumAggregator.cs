@@ -41,19 +41,22 @@ namespace OpenTelemetry.Metrics
             this.values = values;
         }
 
-        public override void Update(IDataPoint value)
+        public override void Update<T>(DateTimeOffset dt, T value)
+            where T : struct
         {
             this.count++;
 
             // TODO: Need to handle DataPoint<T> appropriately
 
-            if (value is DataPoint<int> intV)
+            var valuetype = value.GetType();
+
+            if (valuetype == typeof(int))
             {
-                this.sum += intV.Value;
+                this.sum += (int)(object)value;
             }
-            else if (value is DataPoint<long> longV)
+            else if (valuetype == typeof(double))
             {
-                this.sum += longV.Value;
+                this.sum += (int)(double)(object)value;
             }
             else
             {
@@ -77,15 +80,16 @@ namespace OpenTelemetry.Metrics
             }
 
             var tags = attribs.ToArray();
+            var dt = MeterProviderSdk.GetDateTimeOffset();
 
             var metrics = new Metric[]
             {
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:Count",
-                    new DataPoint<int>((int)this.count, tags)),
+                    new DataPoint<int>(dt, (int)this.count, tags)),
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:Sum",
-                    new DataPoint<int>((int)this.sum, tags)),
+                    new DataPoint<int>(dt, (int)this.sum, tags)),
             };
 
             this.count = 0;

@@ -23,10 +23,12 @@ namespace OpenTelemetry.Metrics
 {
     public class LastValueAggregator : Aggregator
     {
+        private readonly KeyValuePair<string, object>[] emptyKVP = new KeyValuePair<string, object>[0];
         private readonly Instrument instrument;
         private readonly string[] names;
         private readonly object[] values;
-        private IDataPoint lastValue = null;
+
+        private IDataPoint lastValue;
         private int count = 0;
 
         public LastValueAggregator(Instrument instrument, string[] names, object[] values)
@@ -41,10 +43,11 @@ namespace OpenTelemetry.Metrics
             this.values = values;
         }
 
-        public override void Update(IDataPoint value)
+        public override void Update<T>(DateTimeOffset dt, T value)
+            where T : struct
         {
             this.count++;
-            this.lastValue = value;
+            this.lastValue = new DataPoint<T>(dt, value, this.emptyKVP);
         }
 
         public override IEnumerable<Metric> Collect()
@@ -62,13 +65,11 @@ namespace OpenTelemetry.Metrics
                 attribs.Add(new KeyValuePair<string, object>(this.names[i], this.values[i]));
             }
 
-            var dp = this.lastValue.Clone(attribs.ToArray());
-
             var metrics = new Metric[]
             {
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:LastValue",
-                    dp),
+                    this.lastValue),
             };
 
             this.count = 0;

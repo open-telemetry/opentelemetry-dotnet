@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,13 +32,13 @@ namespace OpenTelemetry.Metrics
             this.extraAttrib = new KeyValuePair<string, object>(name, value);
         }
 
-        public override void OnEnd(MeasurementItem data)
+        public override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
         {
-            var newArray = new KeyValuePair<string, object>[data.Point.Tags.Length + 1];
-            data.Point.Tags.CopyTo(newArray, 0);
-            newArray[newArray.Length - 1] = this.extraAttrib;
+            var list = new List<KeyValuePair<string, object>>(tags.ToArray());
+            list.Add(this.extraAttrib);
 
-            data.Point = data.Point.Clone(newArray);
+            tags = new ReadOnlySpan<KeyValuePair<string, object>>(list.ToArray());
         }
     }
 }
