@@ -12,6 +12,9 @@ please check the latest changes
 * Adds `AddLegacySource()` to `TracerProviderBuilder`
   ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
 
+* Added `IDeferredTracerProviderBuilder` & `ServiceLifetime`.
+  ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2058))
+
 ## 1.1.0-beta2
 
 Released 2021-Apr-23

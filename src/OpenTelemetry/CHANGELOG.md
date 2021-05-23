@@ -20,6 +20,9 @@ please check the latest changes
   `IEnumerator<KeyValuePair<string, object>>` for accessing scope items)
   ([#2026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2026))
 
+* Moved `IDeferredTracerProviderBuilder` to API library.
+  ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2058))
+
 ## 1.1.0-beta2
 
 Released 2021-Apr-23
