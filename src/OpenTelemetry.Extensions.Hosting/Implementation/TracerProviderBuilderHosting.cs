@@ -109,6 +109,24 @@ namespace OpenTelemetry.Trace
             return this.Build();
         }
 
+        IDeferredTracerProviderBuilder IDeferredTracerProviderBuilder.AddService(Type serviceType, object instance)
+        {
+            this.Services.Add(new ServiceDescriptor(serviceType, instance));
+            return this;
+        }
+
+        IDeferredTracerProviderBuilder IDeferredTracerProviderBuilder.AddService(Type serviceType, Type implementationType, ServiceLifetime lifetime)
+        {
+            this.Services.Add(new ServiceDescriptor(serviceType, implementationType, (Microsoft.Extensions.DependencyInjection.ServiceLifetime)(int)lifetime));
+            return this;
+        }
+
+        IDeferredTracerProviderBuilder IDeferredTracerProviderBuilder.AddService(Type serviceType, Func<IServiceProvider, object> factory, ServiceLifetime lifetime)
+        {
+            this.Services.Add(new ServiceDescriptor(serviceType, factory, (Microsoft.Extensions.DependencyInjection.ServiceLifetime)(int)lifetime));
+            return this;
+        }
+
         private readonly struct InstrumentationFactory
         {
             public readonly string Name;

@@ -1,2 +1,11 @@
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.ServiceLifetime
+OpenTelemetry.ServiceLifetime.Scoped = 1 -> OpenTelemetry.ServiceLifetime
+OpenTelemetry.ServiceLifetime.Singleton = 0 -> OpenTelemetry.ServiceLifetime
+OpenTelemetry.ServiceLifetime.Transient = 2 -> OpenTelemetry.ServiceLifetime
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, object instance) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, System.Func<System.IServiceProvider, object> factory, OpenTelemetry.ServiceLifetime lifetime) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, System.Type implementationType, OpenTelemetry.ServiceLifetime lifetime) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void
