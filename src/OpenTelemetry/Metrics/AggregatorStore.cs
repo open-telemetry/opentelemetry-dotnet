@@ -55,6 +55,7 @@ namespace OpenTelemetry.Metrics
                 return new Aggregator[]
                 {
                     new SumAggregator(this.instrument, seqKey, seqVal),
+                    new LastValueAggregator(this.instrument, seqKey, seqVal),
                 };
             }
 
@@ -128,6 +129,11 @@ namespace OpenTelemetry.Metrics
         internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
+            // TODO: We can isolate the cost of each user-added aggregator in
+            // the hot path by queuing the DataPoint, and doing the Update as
+            // part of the Collect() instead. Thus, we only pay for the price
+            // of queueing a DataPoint in the Hot Path
+
             var aggs = this.FindAggregators(tags);
 
             foreach (var agg in aggs)

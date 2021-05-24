@@ -1,4 +1,4 @@
-// <copyright file="DataPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="DataPoint{T}.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,32 +20,20 @@ using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct DataPoint : IDataPoint
+    internal readonly struct DataPoint<T> : IDataPoint
+        where T : struct
     {
-        internal readonly Type ValueType;
-        internal readonly int IntValue;
-        internal readonly double DoubleValue;
+        private readonly T value;
 
         private readonly DateTimeOffset timestamp;
 
         private readonly KeyValuePair<string, object>[] tags;
 
-        public DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
+        public DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
         {
             this.timestamp = timestamp;
+            this.value = value;
             this.tags = tags;
-            this.ValueType = value.GetType();
-            this.IntValue = value;
-            this.DoubleValue = 0;
-        }
-
-        public DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
-        {
-            this.timestamp = timestamp;
-            this.tags = tags;
-            this.ValueType = value.GetType();
-            this.IntValue = 0;
-            this.DoubleValue = value;
         }
 
         public KeyValuePair<string, object>[] Tags
@@ -68,18 +56,7 @@ namespace OpenTelemetry.Metrics
         {
             get
             {
-                if (this.ValueType == typeof(int))
-                {
-                    return this.IntValue;
-                }
-                else if (this.ValueType == typeof(double))
-                {
-                    return this.DoubleValue;
-                }
-                else
-                {
-                    throw new Exception("Unsupported Type");
-                }
+                return (object)this.value;
             }
         }
     }

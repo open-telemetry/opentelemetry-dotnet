@@ -25,6 +25,6 @@ namespace OpenTelemetry.Metrics
 
         KeyValuePair<string, object>[] Tags { get; }
 
-        string ValueAsString();
+        object Value { get; }
     }
 }
