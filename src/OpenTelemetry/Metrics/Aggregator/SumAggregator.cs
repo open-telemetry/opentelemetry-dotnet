@@ -48,13 +48,11 @@ namespace OpenTelemetry.Metrics
 
             // TODO: Need to handle DataPoint<T> appropriately
 
-            var valuetype = value.GetType();
-
-            if (valuetype == typeof(int))
+            if (typeof(T) == typeof(int))
             {
                 this.sum += (int)(object)value;
             }
-            else if (valuetype == typeof(double))
+            else if (typeof(T) == typeof(double))
             {
                 this.sum += (int)(double)(object)value;
             }
