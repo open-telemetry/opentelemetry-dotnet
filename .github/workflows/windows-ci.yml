@@ -17,6 +17,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    # Disable SN temporarily while leveraging daily builds from
+    # dotnet6.
+    - name: Disable SN
+      run: .\build\disable_snv.ps1
+      shell: powershell
+
     - name: Install dependencies
       run: dotnet restore
 
