@@ -41,7 +41,7 @@
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>6.0.0-preview.6.21269.7</SystemDiagnosticSourcePkgVer>
+    <SystemDiagnosticSourcePkgVer>6.0.0-preview.6.21269.9</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
     <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
     <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
@@ -60,11 +60,6 @@
     <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>-->
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- temporary workaround unsigned Unsafe package, downgrade to Preview3 public build, mark private so that it doesn't leak to consuming projects -->
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.3.21201.4" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
