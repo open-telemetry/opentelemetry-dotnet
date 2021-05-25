@@ -82,5 +82,25 @@ namespace OpenTelemetry.Metrics
                 }
             }
         }
+
+        public static DataPoint CreateDataPoint<T>(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        {
+            DataPoint dp;
+
+            if (typeof(T) == typeof(int))
+            {
+                dp = new DataPoint(timestamp, (int)(object)value, tags);
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                dp = new DataPoint(timestamp, (double)(object)value, tags);
+            }
+            else
+            {
+                throw new Exception("Unsupported Type");
+            }
+
+            return dp;
+        }
     }
 }

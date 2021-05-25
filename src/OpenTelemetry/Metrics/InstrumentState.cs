@@ -24,7 +24,6 @@ namespace OpenTelemetry.Metrics
     public class InstrumentState
     {
         private readonly AggregatorStore store;
-        private readonly object lockStore = new object();
 
         public InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
@@ -34,10 +33,7 @@ namespace OpenTelemetry.Metrics
         public void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
-            lock (this.lockStore)
-            {
-                this.store.Update(dt, value, tags);
-            }
+            this.store.Update(dt, value, tags);
         }
     }
 }

@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
         private readonly Instrument instrument;
         private readonly KeyValuePair<string, object>[] tags;
 
-        private readonly object lockLastValue = new object();
+        private readonly object lockUpdate = new object();
         private int count = 0;
         private DataPoint lastDataPoint;
 
@@ -49,21 +49,10 @@ namespace OpenTelemetry.Metrics
         public override void Update<T>(DateTimeOffset dt, T value)
             where T : struct
         {
-            lock (this.lockLastValue)
+            lock (this.lockUpdate)
             {
                 this.count++;
-                if (typeof(T) == typeof(int))
-                {
-                    this.lastDataPoint = new DataPoint(dt, (int)(object)value, this.tags);
-                }
-                else if (typeof(T) == typeof(double))
-                {
-                    this.lastDataPoint = new DataPoint(dt, (double)(object)value, this.tags);
-                }
-                else
-                {
-                    throw new Exception("Unsupported Type");
-                }
+                this.lastDataPoint = DataPoint.CreateDataPoint(dt, value, this.tags);
             }
         }
 
@@ -77,7 +66,7 @@ namespace OpenTelemetry.Metrics
             }
 
             DataPoint lastValue;
-            lock (this.lockLastValue)
+            lock (this.lockUpdate)
             {
                 lastValue = this.lastDataPoint;
                 this.count = 0;
