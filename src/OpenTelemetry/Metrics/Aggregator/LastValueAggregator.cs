@@ -24,27 +24,36 @@ namespace OpenTelemetry.Metrics
     public class LastValueAggregator : Aggregator
     {
         private readonly Instrument instrument;
-        private readonly string[] names;
-        private readonly object[] values;
-        private IDataPoint lastValue = null;
+        private readonly KeyValuePair<string, object>[] tags;
+
+        private readonly object lockUpdate = new object();
         private int count = 0;
+        private DataPoint lastDataPoint;
 
         public LastValueAggregator(Instrument instrument, string[] names, object[] values)
         {
+            this.instrument = instrument;
+
             if (names.Length != values.Length)
             {
                 throw new ArgumentException("Length of names[] and values[] must match.");
             }
 
-            this.instrument = instrument;
-            this.names = names;
-            this.values = values;
+            this.tags = new KeyValuePair<string, object>[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                this.tags[i] = new KeyValuePair<string, object>(names[i], values[i]);
+            }
         }
 
-        public override void Update(IDataPoint value)
+        public override void Update<T>(DateTimeOffset dt, T value)
+            where T : struct
         {
-            this.count++;
-            this.lastValue = value;
+            lock (this.lockUpdate)
+            {
+                this.count++;
+                this.lastDataPoint = DataPoint.CreateDataPoint(dt, value, this.tags);
+            }
         }
 
         public override IEnumerable<Metric> Collect()
@@ -56,22 +65,19 @@ namespace OpenTelemetry.Metrics
                 return Enumerable.Empty<Metric>();
             }
 
-            var attribs = new List<KeyValuePair<string, object>>();
-            for (int i = 0; i < this.names.Length; i++)
+            DataPoint lastValue;
+            lock (this.lockUpdate)
             {
-                attribs.Add(new KeyValuePair<string, object>(this.names[i], this.values[i]));
+                lastValue = this.lastDataPoint;
+                this.count = 0;
             }
-
-            var dp = this.lastValue.Clone(attribs.ToArray());
 
             var metrics = new Metric[]
             {
                 new Metric(
                     $"{this.instrument.Meter.Name}:{this.instrument.Name}:LastValue",
-                    dp),
+                    lastValue),
             };
-
-            this.count = 0;
 
             return metrics;
         }

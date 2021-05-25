@@ -30,11 +30,6 @@ namespace OpenTelemetry.Metrics
 
         private readonly TagStorage[] tagStorage = new TagStorage[MaxTagCacheSize + 1];
 
-        // .NET Metrics API allows for byte, short, int, long, float, double, decimal
-        private readonly Dictionary<Type, IDataPoint> pointT = new Dictionary<Type, IDataPoint>();
-
-        private readonly MeasurementItem measurementItem = new MeasurementItem();
-
         private ThreadStaticStorage()
         {
             for (int i = 0; i <= MaxTagCacheSize; i++)
@@ -55,66 +50,7 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal KeyValuePair<string, object>[] GetTags(ReadOnlySpan<KeyValuePair<string, object>> tagsRos)
-        {
-            var len = tagsRos.Length;
-
-            KeyValuePair<string, object>[] tags;
-
-            if (len == 0)
-            {
-                tags = this.tagStorage[0].Tags;
-            }
-            else if (len <= MaxTagCacheSize)
-            {
-                tags = this.tagStorage[len].Tags;
-
-                int i = 0;
-                foreach (var tag in tagsRos)
-                {
-                    tags[i++] = tag;
-                }
-            }
-            else
-            {
-                tags = tagsRos.ToArray();
-            }
-
-            return tags;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal MeasurementItem GetMeasurementItem(Instrument instrument, InstrumentState state, IDataPoint point)
-        {
-            this.measurementItem.Instrument = instrument;
-            this.measurementItem.State = state;
-            this.measurementItem.Point = point;
-
-            return this.measurementItem;
-        }
-
-        internal IDataPoint GetDataPoint<T>(T value, KeyValuePair<string, object>[] tags)
-            where T : struct
-        {
-            if (!this.pointT.TryGetValue(typeof(T), out var dp))
-            {
-                dp = new DataPoint<T>(value, tags);
-                this.pointT.Add(typeof(T), dp);
-            }
-            else
-            {
-                // We are resetting/reusing the same DataPoint<T> object to avoid a new alloc in the hot path.
-                if (dp is DataPoint<T> dpT)
-                {
-                    dpT.Reset(value, tags);
-                }
-            }
-
-            return dp;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void GetKeysValues(KeyValuePair<string, object>[] tags, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
         {
             var len = tags.Length;
 

@@ -15,9 +15,9 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,6 +26,9 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderSdk
         : MeterProvider
     {
+        private static int lastTick = -1;
+        private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
+
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task observerTask;
         private readonly Task collectorTask;
@@ -108,6 +111,22 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static DateTimeOffset GetDateTimeOffset()
+        {
+            int tick = Environment.TickCount;
+            if (tick == MeterProviderSdk.lastTick)
+            {
+                return MeterProviderSdk.lastTimestamp;
+            }
+
+            var dt = DateTimeOffset.UtcNow;
+            MeterProviderSdk.lastTimestamp = dt;
+            MeterProviderSdk.lastTick = tick;
+
+            return dt;
+        }
+
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
@@ -116,10 +135,6 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
             where T : struct
         {
-            var storage = ThreadStaticStorage.GetStorage();
-
-            KeyValuePair<string, object>[] tags = storage.GetTags(tagsRos);
-
             // Get Instrument State
 
             if (!(state is InstrumentState instrumentState))
@@ -134,21 +149,23 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            var point = storage.GetDataPoint(value, tags);
-            MeasurementItem measurementContext = storage.GetMeasurementItem(instrument, instrumentState, point);
+            var measurementItem = new MeasurementItem(instrument, instrumentState);
+            var dt = MeterProviderSdk.GetDateTimeOffset();
+            var tags = tagsRos;
+            var val = value;
 
             // Run Pre Aggregator Processors
 
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurementContext);
+                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
             }
 
             // Run Aggregator Processors
 
             foreach (var processor in this.AggregateProcessors)
             {
-                processor.OnEnd(measurementContext);
+                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
             }
         }
 

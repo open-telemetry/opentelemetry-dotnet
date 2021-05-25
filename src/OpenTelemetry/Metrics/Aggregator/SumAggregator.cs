@@ -24,40 +24,51 @@ namespace OpenTelemetry.Metrics
     public class SumAggregator : Aggregator
     {
         private readonly Instrument instrument;
-        private readonly string[] names;
-        private readonly object[] values;
+        private readonly KeyValuePair<string, object>[] tags;
+        private readonly object lockUpdate = new object();
+        private Type valueType;
         private long sum = 0;
+        private double dsum = 0;
         private long count = 0;
 
         public SumAggregator(Instrument instrument, string[] names, object[] values)
         {
+            this.instrument = instrument;
+
             if (names.Length != values.Length)
             {
                 throw new ArgumentException("Length of names[] and values[] must match.");
             }
 
-            this.instrument = instrument;
-            this.names = names;
-            this.values = values;
+            this.tags = new KeyValuePair<string, object>[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                this.tags[i] = new KeyValuePair<string, object>(names[i], values[i]);
+            }
         }
 
-        public override void Update(IDataPoint value)
+        public override void Update<T>(DateTimeOffset dt, T value)
+            where T : struct
         {
-            this.count++;
+            lock (this.lockUpdate)
+            {
+                this.count++;
+                this.valueType = typeof(T);
 
-            // TODO: Need to handle DataPoint<T> appropriately
+                // TODO: Need to handle DataPoint<T> appropriately
 
-            if (value is DataPoint<int> intV)
-            {
-                this.sum += intV.Value;
-            }
-            else if (value is DataPoint<long> longV)
-            {
-                this.sum += longV.Value;
-            }
-            else
-            {
-                throw new Exception("Unsupported Type");
+                if (typeof(T) == typeof(int))
+                {
+                    this.sum += (int)(object)value;
+                }
+                else if (typeof(T) == typeof(double))
+                {
+                    this.dsum += (double)(object)value;
+                }
+                else
+                {
+                    throw new Exception("Unsupported Type");
+                }
             }
         }
 
@@ -70,26 +81,37 @@ namespace OpenTelemetry.Metrics
                 return Enumerable.Empty<Metric>();
             }
 
-            var attribs = new List<KeyValuePair<string, object>>();
-            for (int i = 0; i < this.names.Length; i++)
-            {
-                attribs.Add(new KeyValuePair<string, object>(this.names[i], this.values[i]));
-            }
+            var dt = MeterProviderSdk.GetDateTimeOffset();
 
-            var tags = attribs.ToArray();
+            IDataPoint datapointSum;
+            IDataPoint datapointCount;
+            lock (this.lockUpdate)
+            {
+                datapointCount = new DataPoint<int>(dt, (int)this.count, this.tags);
+
+                if (this.valueType == typeof(int))
+                {
+                    datapointSum = new DataPoint<int>(dt, (int)this.sum, this.tags);
+                    this.sum = 0;
+                }
+                else if (this.valueType == typeof(double))
+                {
+                    datapointSum = new DataPoint<double>(dt, (double)this.dsum, this.tags);
+                    this.dsum = 0;
+                }
+                else
+                {
+                    throw new Exception("Unsupported Type");
+                }
+
+                this.count = 0;
+            }
 
             var metrics = new Metric[]
             {
-                new Metric(
-                    $"{this.instrument.Meter.Name}:{this.instrument.Name}:Count",
-                    new DataPoint<int>((int)this.count, tags)),
-                new Metric(
-                    $"{this.instrument.Meter.Name}:{this.instrument.Name}:Sum",
-                    new DataPoint<int>((int)this.sum, tags)),
+                new Metric($"{this.instrument.Meter.Name}:{this.instrument.Name}:Count", datapointCount),
+                new Metric($"{this.instrument.Meter.Name}:{this.instrument.Name}:Sum", datapointSum),
             };
-
-            this.count = 0;
-            this.sum = 0;
 
             return metrics;
         }

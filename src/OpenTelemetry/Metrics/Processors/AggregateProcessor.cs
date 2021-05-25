@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,9 +25,10 @@ namespace OpenTelemetry.Metrics
     {
         internal ConcurrentDictionary<AggregatorStore, bool> AggregatorStores { get; } = new ConcurrentDictionary<AggregatorStore, bool>();
 
-        public override void OnEnd(MeasurementItem data)
+        public override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
         {
-            data.State.Update(data.Point);
+            measurementItem.State.Update(dt, value, tags);
         }
 
         public void Register(AggregatorStore store)

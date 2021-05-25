@@ -25,15 +25,6 @@ namespace OpenTelemetry.Metrics
 
         KeyValuePair<string, object>[] Tags { get; }
 
-        string ValueAsString();
-
-        /// <summary>
-        /// Clone a DataPoint but with different tags.
-        /// </summary>
-        /// <param name="tags">Tags to use in clone.</param>
-        /// <returns>IDataPoint.</returns>
-        IDataPoint Clone(KeyValuePair<string, object>[] tags);
-
-        IDataPoint Clone();
+        object Value { get; }
     }
 }

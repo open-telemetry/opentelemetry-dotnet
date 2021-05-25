@@ -14,15 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
     public abstract class Aggregator
     {
-        public virtual void Update(IDataPoint value)
+        public virtual void Update<T>(DateTimeOffset dt, T value)
+            where T : struct
         {
         }
 
