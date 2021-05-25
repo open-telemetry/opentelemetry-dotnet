@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         // Disable this test to see if GitHub build works
-        [Fact (Skip = "Get around GitHub failure")]
+        [Fact(Skip = "Get around GitHub failure")]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
