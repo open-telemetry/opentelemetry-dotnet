@@ -57,6 +57,29 @@ This instrumentation can be configured to change the default behavior by using
 `AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
+// TODO: This section could be refined.
+When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
+all configurations to `AspNetCoreInstrumentationOptions` can be done in the `ConfigureServices`
+method of you applications `Startup` class as shown below.
+
+```csharp
+// Configure
+services.Configure<AspNetCoreInstrumentationOptions>(options =>
+        {
+            options.Filter = (httpContext) =>
+            {
+                // only collect telemetry about HTTP GET requests
+                return httpContext.Request.Method.Equals("GET");
+            };
+        });
+
+services.AddOpenTelemetryTracing(
+        (builder) => builder
+            .AddAspNetCoreInstrumentation()
+            .AddJaegerExporter()
+            );
+```
+
 ### Filter
 
 This instrumentation by default collects all the incoming http requests. It
@@ -129,6 +152,13 @@ services.AddOpenTelemetryTracing((builder) =>
 is the general extensibility point to add additional properties to any activity.
 The `Enrich` option is specific to this instrumentation, and is provided to
 get access to `HttpRequest` and `HttpResponse`.
+
+### RecordException
+
+This instrumentation automatically sets Activity Status to Error if the
+Http StatusCode is >= 400.
+Additionally, `RecordException` feature may be turned on, to store the exception
+to the Activity itself as ActivityEvent.
 
 ## References
 

@@ -5,8 +5,17 @@
 * Enabling endpoint configuration in ZipkinExporterOptions via
   `OTEL_EXPORTER_ZIPKIN_ENDPOINT` environment variable.
   ([#1453](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1453))
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
-  `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
+  `ZipkinExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
   `services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));`).
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))

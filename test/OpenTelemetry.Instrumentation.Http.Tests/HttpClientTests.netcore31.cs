@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1
+#if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -60,6 +60,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                {
                                    opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
+                                   opt.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
                                })
                                .AddProcessor(processor.Object)
                                .Build())
@@ -115,6 +116,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             foreach (var kv in normalizedAttributesTestCase)
             {
                 Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+            }
+
+            if (tc.RecordException.HasValue && tc.RecordException.Value)
+            {
+                Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             }
         }
 
