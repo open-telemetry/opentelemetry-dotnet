@@ -112,7 +112,7 @@ namespace OpenTelemetry.Metrics
         internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static DateTimeOffset GetDateTimeOffset()
+        internal static DateTimeOffset GetDateTimeOffset()
         {
             int tick = Environment.TickCount;
             if (tick == MeterProviderSdk.lastTick)

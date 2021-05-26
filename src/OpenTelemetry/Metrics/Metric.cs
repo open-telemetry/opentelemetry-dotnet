@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
         internal readonly string Name;
         internal IDataPoint Point;
 
-        public Metric(string name, IDataPoint point)
+        internal Metric(string name, IDataPoint point)
         {
             this.Name = name;
             this.Point = point;
