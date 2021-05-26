@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
 
             if (names.Length != values.Length)
             {
-                throw new ArgumentException("Length of names[] and values[] must match.");
+                throw new ArgumentException($"Length of {nameof(names)} and {nameof(values)} must match.");
             }
 
             this.tags = new KeyValuePair<string, object>[names.Length];
