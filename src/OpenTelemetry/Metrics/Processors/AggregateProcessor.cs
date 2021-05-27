@@ -25,18 +25,18 @@ namespace OpenTelemetry.Metrics
     {
         internal ConcurrentDictionary<AggregatorStore, bool> AggregatorStores { get; } = new ConcurrentDictionary<AggregatorStore, bool>();
 
-        public override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             measurementItem.State.Update(dt, value, tags);
         }
 
-        public void Register(AggregatorStore store)
+        internal void Register(AggregatorStore store)
         {
             this.AggregatorStores.TryAdd(store, true);
         }
 
-        public IEnumerable<Metric> Collect()
+        internal IEnumerable<Metric> Collect()
         {
             var metrics = new List<Metric>();
 

@@ -18,7 +18,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class ObjectArrayEqualityComparer : IEqualityComparer<object[]>
+    internal class ObjectArrayEqualityComparer : IEqualityComparer<object[]>
     {
         public bool Equals(object[] obj1, object[] obj2)
         {

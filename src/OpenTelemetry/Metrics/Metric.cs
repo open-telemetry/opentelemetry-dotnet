@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
 {
     // TODO: Need to determine what a Metric actually contains
 
-    public struct Metric
+    internal struct Metric
     {
         internal readonly string Name;
         internal IDataPoint Point;

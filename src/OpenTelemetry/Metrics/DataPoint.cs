@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly KeyValuePair<string, object>[] tags;
 
-        public DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
+        internal DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
         {
             this.timestamp = timestamp;
             this.tags = tags;
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
             this.DoubleValue = 0;
         }
 
-        public DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
+        internal DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
         {
             this.timestamp = timestamp;
             this.tags = tags;
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public static DataPoint CreateDataPoint<T>(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        internal static DataPoint CreateDataPoint<T>(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
         {
             DataPoint dp;
 

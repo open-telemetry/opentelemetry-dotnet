@@ -21,7 +21,7 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class AggregatorStore
+    internal class AggregatorStore
     {
         private static readonly string[] EmptySeqKey = new string[0];
         private static readonly object[] EmptySeqValue = new object[0];
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
 
         private Aggregator[] tag0Aggregators = null;
 
-        public AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
+        internal AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
             this.sdk = sdk;
             this.instrument = instrument;

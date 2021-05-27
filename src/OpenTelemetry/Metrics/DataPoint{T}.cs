@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly KeyValuePair<string, object>[] tags;
 
-        public DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        internal DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
         {
             this.timestamp = timestamp;
             this.value = value;

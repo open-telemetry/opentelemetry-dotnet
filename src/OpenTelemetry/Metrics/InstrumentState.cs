@@ -21,16 +21,16 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class InstrumentState
+    internal class InstrumentState
     {
         private readonly AggregatorStore store;
 
-        public InstrumentState(MeterProviderSdk sdk, Instrument instrument)
+        internal InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
             this.store = new AggregatorStore(sdk, instrument);
         }
 
-        public void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             this.store.Update(dt, value, tags);

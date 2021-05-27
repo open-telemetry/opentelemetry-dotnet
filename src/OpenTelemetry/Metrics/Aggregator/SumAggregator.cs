@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
-    public class SumAggregator : Aggregator
+    internal class SumAggregator : Aggregator
     {
         private readonly Instrument instrument;
         private readonly KeyValuePair<string, object>[] tags;
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics
         private double dsum = 0;
         private long count = 0;
 
-        public SumAggregator(Instrument instrument, string[] names, object[] values)
+        internal SumAggregator(Instrument instrument, string[] names, object[] values)
         {
             this.instrument = instrument;
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override void Update<T>(DateTimeOffset dt, T value)
+        internal override void Update<T>(DateTimeOffset dt, T value)
             where T : struct
         {
             lock (this.lockUpdate)
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public override IEnumerable<Metric> Collect()
+        internal override IEnumerable<Metric> Collect()
         {
             // TODO: Need to determine how to convert to Metric
 

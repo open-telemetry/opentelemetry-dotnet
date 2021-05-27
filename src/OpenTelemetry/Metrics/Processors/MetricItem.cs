@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     {
         internal List<Metric> Metrics = new List<Metric>();
 
-        public MetricItem()
+        internal MetricItem()
         {
         }
     }

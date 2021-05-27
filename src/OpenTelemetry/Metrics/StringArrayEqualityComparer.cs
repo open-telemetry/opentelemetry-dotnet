@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class StringArrayEqualityComparer : IEqualityComparer<string[]>
+    internal class StringArrayEqualityComparer : IEqualityComparer<string[]>
     {
         public bool Equals(string[] strings1, string[] strings2)
         {

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
         internal readonly Instrument Instrument;
         internal readonly InstrumentState State;
 
-        public MeasurementItem(Instrument instrument, InstrumentState state)
+        internal MeasurementItem(Instrument instrument, InstrumentState state)
         {
             this.Instrument = instrument;
             this.State = state;

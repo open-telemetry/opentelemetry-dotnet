@@ -20,14 +20,14 @@ using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class Aggregator
+    internal abstract class Aggregator
     {
-        public virtual void Update<T>(DateTimeOffset dt, T value)
+        internal virtual void Update<T>(DateTimeOffset dt, T value)
             where T : struct
         {
         }
 
-        public virtual IEnumerable<Metric> Collect()
+        internal virtual IEnumerable<Metric> Collect()
         {
             return Enumerable.Empty<Metric>();
         }
