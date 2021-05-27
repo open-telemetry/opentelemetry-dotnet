@@ -14,11 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
     public abstract class MeasurementProcessor : BaseProcessor<MeasurementItem>
     {
+        internal abstract void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct;
     }
 }

@@ -17,20 +17,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
-#nullable enable
 
 namespace OpenTelemetry.Metrics
 {
     public class MeterProviderSdk
         : MeterProvider
     {
+        private static int lastTick = -1;
+        private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
+
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task observerTask;
         private readonly Task collectorTask;
         private readonly MeterListener listener;
+
+        private readonly object lockInstrumentStates = new object();
+        private readonly Dictionary<Instrument, InstrumentState> instrumentStates = new Dictionary<Instrument, InstrumentState>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
@@ -61,13 +66,20 @@ namespace OpenTelemetry.Metrics
             this.listener = new MeterListener()
             {
                 InstrumentPublished = (instrument, listener) =>
+                {
+                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
-                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                        var instrumentState = new InstrumentState(this, instrument);
+
+                        lock (this.lockInstrumentStates)
                         {
-                            listener.EnableMeasurementEvents(instrument, null);
+                            this.instrumentStates.Add(instrument, instrumentState);
                         }
-                    },
+
+                        listener.EnableMeasurementEvents(instrument, instrumentState);
+                    }
+                },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
 
@@ -99,33 +111,68 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
 
-        internal void MeasurementsCompleted(Instrument instrument, object? state)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static DateTimeOffset GetDateTimeOffset()
+        {
+            int tick = Environment.TickCount;
+            if (tick == MeterProviderSdk.lastTick)
+            {
+                return MeterProviderSdk.lastTimestamp;
+            }
+
+            var dt = DateTimeOffset.UtcNow;
+            MeterProviderSdk.lastTimestamp = dt;
+            MeterProviderSdk.lastTick = tick;
+
+            return dt;
+        }
+
+        internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-            where T : unmanaged
+        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+            where T : struct
         {
-            // Run Pre Aggregator Processors
+            // Get Instrument State
 
-            var measurmentContext = new MeasurementItem(instrument, new DataPoint<T>(value, tags));
+            if (!(state is InstrumentState instrumentState))
+            {
+                lock (this.lockInstrumentStates)
+                {
+                    if (!this.instrumentStates.TryGetValue(instrument, out instrumentState))
+                    {
+                        instrumentState = new InstrumentState(this, instrument);
+                        this.instrumentStates.Add(instrument, instrumentState);
+                    }
+                }
+            }
+
+            var measurementItem = new MeasurementItem(instrument, instrumentState);
+            var dt = MeterProviderSdk.GetDateTimeOffset();
+            var tags = tagsRos;
+            var val = value;
+
+            // Run Pre Aggregator Processors
 
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
             }
 
             // Run Aggregator Processors
 
             foreach (var processor in this.AggregateProcessors)
             {
-                processor.OnEnd(measurmentContext);
+                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
             }
         }
 
         protected override void Dispose(bool disposing)
         {
+            this.listener.Dispose();
+
             this.cts.Cancel();
 
             this.observerTask.Wait();
@@ -173,8 +220,8 @@ namespace OpenTelemetry.Metrics
 
             foreach (var processor in this.AggregateProcessors)
             {
-                var metric = processor.Collect();
-                metricItem.Metrics.Add(metric);
+                var metrics = processor.Collect();
+                metricItem.Metrics.AddRange(metrics);
             }
 
             foreach (var processor in this.MetricProcessors)

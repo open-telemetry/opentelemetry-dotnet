@@ -16,31 +16,48 @@
 
 using System;
 using System.Collections.Generic;
-
-#nullable enable
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class DataPoint<T> : DataPoint
-        where T : unmanaged
+    internal readonly struct DataPoint<T> : IDataPoint
+        where T : struct
     {
-        internal readonly T Value;
+        private readonly T value;
 
-        public DataPoint(T value, params KeyValuePair<string, object?>[] tags)
-            : base(new ReadOnlySpan<KeyValuePair<string, object?>>(tags))
+        private readonly DateTimeOffset timestamp;
+
+        private readonly KeyValuePair<string, object>[] tags;
+
+        internal DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
         {
-            this.Value = value;
+            this.timestamp = timestamp;
+            this.value = value;
+            this.tags = tags;
         }
 
-        public DataPoint(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-            : base(tags)
+        public KeyValuePair<string, object>[] Tags
         {
-            this.Value = value;
+            get
+            {
+                return this.tags;
+            }
         }
 
-        public override string ValueAsString()
+        public DateTimeOffset Timestamp
         {
-            return this.Value.ToString();
+            get
+            {
+                return this.timestamp;
+            }
+        }
+
+        public object Value
+        {
+            get
+            {
+                return (object)this.value;
+            }
         }
     }
 }

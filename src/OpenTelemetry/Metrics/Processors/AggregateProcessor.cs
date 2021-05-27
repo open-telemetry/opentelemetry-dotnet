@@ -14,27 +14,38 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
-
-#nullable enable
 
 namespace OpenTelemetry.Metrics
 {
     internal class AggregateProcessor : MeasurementProcessor
     {
-        private ConcurrentDictionary<Instrument, AggregateState> states = new ConcurrentDictionary<Instrument, AggregateState>();
+        internal ConcurrentDictionary<AggregatorStore, bool> AggregatorStores { get; } = new ConcurrentDictionary<AggregatorStore, bool>();
 
-        public override void OnEnd(MeasurementItem data)
+        internal override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
         {
-            var state = this.states.GetOrAdd(data.Instrument, (k) => new AggregateState());
-            state.Update(data.Point);
+            measurementItem.State.Update(dt, value, tags);
         }
 
-        public ConcurrentDictionary<Instrument, AggregateState> Collect()
+        internal void Register(AggregatorStore store)
         {
-            return Interlocked.Exchange(ref this.states, new ConcurrentDictionary<Instrument, AggregateState>());
+            this.AggregatorStores.TryAdd(store, true);
+        }
+
+        internal IEnumerable<Metric> Collect()
+        {
+            var metrics = new List<Metric>();
+
+            foreach (var kv in this.AggregatorStores)
+            {
+                metrics.AddRange(kv.Key.Collect());
+            }
+
+            return metrics.ToArray();
         }
     }
 }

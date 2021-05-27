@@ -1,4 +1,4 @@
-// <copyright file="MetricConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="IDataPoint.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,16 @@
 // </copyright>
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricConsoleExporter : MetricProcessor
+    internal interface IDataPoint
     {
-        public override void OnEnd(MetricItem data)
-        {
-            foreach (var metric in data.Metrics)
-            {
-                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.Value.ToString()}";
-                Console.WriteLine($"Export: {msg}");
-            }
-        }
+        DateTimeOffset Timestamp { get; }
+
+        KeyValuePair<string, object>[] Tags { get; }
+
+        object Value { get; }
     }
 }

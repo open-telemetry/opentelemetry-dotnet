@@ -29,6 +29,17 @@ namespace System.Diagnostics.Metrics
     public abstract class Instrument<T> : Instrument
         where T : struct
     {
+        private static readonly KeyValuePair<string, object?>[] Tags0 = new KeyValuePair<string, object?>[0];
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object?>[] tags1 = new KeyValuePair<string, object?>[1];
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object?>[] tags2 = new KeyValuePair<string, object?>[2];
+
+        [ThreadStatic]
+        private static KeyValuePair<string, object?>[] tags3 = new KeyValuePair<string, object?>[3];
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Instrument{T}"/> class.
         /// Protected constructor to create the instrument with the common properties.
@@ -43,8 +54,9 @@ namespace System.Diagnostics.Metrics
         /// </summary>
         protected void RecordMeasurement(T measurement)
         {
-            var ros = new KeyValuePair<string, object?>[0];
-            this.RecordMeasurement(measurement, new ReadOnlySpan<KeyValuePair<string, object?>>(ros));
+            var ros = new ReadOnlySpan<KeyValuePair<string, object?>>(Instrument<T>.Tags0);
+
+            this.RecordMeasurement(measurement, ros);
         }
 
         /// <summary>
@@ -54,9 +66,15 @@ namespace System.Diagnostics.Metrics
             T measurement,
             KeyValuePair<string, object?> tag1)
         {
-            var ros = new KeyValuePair<string, object?>[1];
-            ros[0] = tag1;
-            this.RecordMeasurement(measurement, new ReadOnlySpan<KeyValuePair<string, object?>>(ros));
+            if (Instrument<T>.tags1 == null)
+            {
+                Instrument<T>.tags1 = new KeyValuePair<string, object?>[1];
+            }
+
+            Instrument<T>.tags1[0] = tag1;
+            var ros = new ReadOnlySpan<KeyValuePair<string, object?>>(Instrument<T>.tags1);
+
+            this.RecordMeasurement(measurement, ros);
         }
 
         /// <summary>
@@ -67,10 +85,16 @@ namespace System.Diagnostics.Metrics
             KeyValuePair<string, object?> tag1,
             KeyValuePair<string, object?> tag2)
         {
-            var ros = new KeyValuePair<string, object?>[2];
-            ros[0] = tag1;
-            ros[1] = tag2;
-            this.RecordMeasurement(measurement, new ReadOnlySpan<KeyValuePair<string, object?>>(ros));
+            if (Instrument<T>.tags2 == null)
+            {
+                Instrument<T>.tags2 = new KeyValuePair<string, object?>[2];
+            }
+
+            Instrument<T>.tags2[0] = tag1;
+            Instrument<T>.tags2[1] = tag2;
+            var ros = new ReadOnlySpan<KeyValuePair<string, object?>>(Instrument<T>.tags2);
+
+            this.RecordMeasurement(measurement, ros);
         }
 
         /// <summary>
@@ -82,11 +106,17 @@ namespace System.Diagnostics.Metrics
             KeyValuePair<string, object?> tag2,
             KeyValuePair<string, object?> tag3)
         {
-            var ros = new KeyValuePair<string, object?>[3];
-            ros[0] = tag1;
-            ros[1] = tag2;
-            ros[2] = tag3;
-            this.RecordMeasurement(measurement, new ReadOnlySpan<KeyValuePair<string, object?>>(ros));
+            if (Instrument<T>.tags3 == null)
+            {
+                Instrument<T>.tags3 = new KeyValuePair<string, object?>[3];
+            }
+
+            Instrument<T>.tags3[0] = tag1;
+            Instrument<T>.tags3[1] = tag2;
+            Instrument<T>.tags3[2] = tag3;
+            var ros = new ReadOnlySpan<KeyValuePair<string, object?>>(Instrument<T>.tags3);
+
+            this.RecordMeasurement(measurement, ros);
         }
 
         /// <summary>
@@ -96,7 +126,7 @@ namespace System.Diagnostics.Metrics
             T measurement,
             ReadOnlySpan<KeyValuePair<string, object?>> tags)
         {
-            foreach (var listener in this.Listeners)
+            foreach (var listener in this.CachedListeners)
             {
                 if (listener.Key.Instruments.TryGetValue(this, out var state))
                 {

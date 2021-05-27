@@ -1,4 +1,4 @@
-// <copyright file="MetricConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="InstrumentState.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,25 @@
 // </copyright>
 
 using System;
-using System.Linq;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricConsoleExporter : MetricProcessor
+    internal class InstrumentState
     {
-        public override void OnEnd(MetricItem data)
+        private readonly AggregatorStore store;
+
+        internal InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
-            foreach (var metric in data.Metrics)
-            {
-                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.Value.ToString()}";
-                Console.WriteLine($"Export: {msg}");
-            }
+            this.store = new AggregatorStore(sdk, instrument);
+        }
+
+        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            where T : struct
+        {
+            this.store.Update(dt, value, tags);
         }
     }
 }

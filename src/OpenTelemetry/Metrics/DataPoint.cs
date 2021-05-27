@@ -16,36 +16,91 @@
 
 using System;
 using System.Collections.Generic;
-
-#nullable enable
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class DataPoint
+    internal readonly struct DataPoint : IDataPoint
     {
-        private KeyValuePair<string, object?>[] tags;
+        internal readonly Type ValueType;
+        internal readonly int IntValue;
+        internal readonly double DoubleValue;
 
-        public DataPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        private readonly DateTimeOffset timestamp;
+
+        private readonly KeyValuePair<string, object>[] tags;
+
+        internal DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
         {
-            this.tags = tags.ToArray();
+            this.timestamp = timestamp;
+            this.tags = tags;
+            this.ValueType = value.GetType();
+            this.IntValue = value;
+            this.DoubleValue = 0;
         }
 
-        public ReadOnlySpan<KeyValuePair<string, object?>> Tags
+        internal DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
+        {
+            this.timestamp = timestamp;
+            this.tags = tags;
+            this.ValueType = value.GetType();
+            this.IntValue = 0;
+            this.DoubleValue = value;
+        }
+
+        public KeyValuePair<string, object>[] Tags
         {
             get
             {
-                return new ReadOnlySpan<KeyValuePair<string, object?>>(this.tags);
+                return this.tags;
             }
         }
 
-        public void SetTags(KeyValuePair<string, object?>[] tags)
+        public DateTimeOffset Timestamp
         {
-            this.tags = tags;
+            get
+            {
+                return this.timestamp;
+            }
         }
 
-        public virtual string ValueAsString()
+        public object Value
         {
-            throw new NotImplementedException();
+            get
+            {
+                if (this.ValueType == typeof(int))
+                {
+                    return this.IntValue;
+                }
+                else if (this.ValueType == typeof(double))
+                {
+                    return this.DoubleValue;
+                }
+                else
+                {
+                    throw new Exception("Unsupported Type");
+                }
+            }
+        }
+
+        internal static DataPoint CreateDataPoint<T>(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        {
+            DataPoint dp;
+
+            if (typeof(T) == typeof(int))
+            {
+                dp = new DataPoint(timestamp, (int)(object)value, tags);
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                dp = new DataPoint(timestamp, (double)(object)value, tags);
+            }
+            else
+            {
+                throw new Exception("Unsupported Type");
+            }
+
+            return dp;
         }
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="MetricConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="Metric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,22 @@
 // </copyright>
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricConsoleExporter : MetricProcessor
+    // TODO: Need to determine what a Metric actually contains
+
+    internal struct Metric
     {
-        public override void OnEnd(MetricItem data)
+        internal readonly string Name;
+        internal IDataPoint Point;
+
+        internal Metric(string name, IDataPoint point)
         {
-            foreach (var metric in data.Metrics)
-            {
-                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.Value.ToString()}";
-                Console.WriteLine($"Export: {msg}");
-            }
+            this.Name = name;
+            this.Point = point;
         }
     }
 }
