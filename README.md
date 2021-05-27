@@ -2,9 +2,12 @@
 
 [![Slack](https://img.shields.io/badge/slack-@cncf/otel/dotnet-brightgreen.svg?logo=slack)](https://cloud-native.slack.com/archives/C01N3BC2W7Q)
 [![codecov.io](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/branch/main/graphs/badge.svg?)](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/)
-[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
-[![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
+[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
+[![Nuget](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
+
+[![Windows](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/windows-ci.yml/badge.svg?branch=main)](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/windows-ci.yml)
+[![Linux](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml/badge.svg?branch=main)](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
@@ -97,6 +100,7 @@ Approvers
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 *Find more about the approver role in [community
 repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*

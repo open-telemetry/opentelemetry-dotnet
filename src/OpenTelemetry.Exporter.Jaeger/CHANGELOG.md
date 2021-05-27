@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
