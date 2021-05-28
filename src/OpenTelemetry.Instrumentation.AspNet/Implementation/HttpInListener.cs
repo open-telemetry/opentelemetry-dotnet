@@ -131,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
                 var path = requestValues.Path;
                 activity.DisplayName = path;
 
