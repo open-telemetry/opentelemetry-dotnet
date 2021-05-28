@@ -21,7 +21,7 @@ namespace OpenTelemetry
     /// <summary>
     /// Describes a service with its service type, implementation, and lifetime.
     /// </summary>
-    public class DeferredServiceDescriptor
+    public sealed class DeferredServiceDescriptor
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DeferredServiceDescriptor"/>
