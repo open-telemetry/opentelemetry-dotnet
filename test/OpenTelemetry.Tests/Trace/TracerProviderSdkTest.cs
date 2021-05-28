@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         }
 
-        [Fact(Skip="Get around GitHub test failure")]
+        [Fact(Skip = "Get around GitHub failure")]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
