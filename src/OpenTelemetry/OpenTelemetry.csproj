@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePkgVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
@@ -26,7 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\System.Diagnostics.Metrics.Temp\System.Diagnostics.Metrics.Temp.csproj" />
   </ItemGroup>
 
 </Project>
