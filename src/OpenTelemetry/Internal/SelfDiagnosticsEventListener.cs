@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -40,6 +39,8 @@ namespace OpenTelemetry.Internal
         private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
         private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
 
+        private bool disposedValue = false;
+
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
@@ -60,6 +61,13 @@ namespace OpenTelemetry.Internal
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
 #endif
             }
+        }
+
+        /// <inheritdoc/>
+        public override void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -315,6 +323,24 @@ namespace OpenTelemetry.Internal
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             this.WriteEvent(eventData.Message, eventData.Payload);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposedValue)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.writeBuffer.Dispose();
+            }
+
+            this.disposedValue = true;
+
+            // Should call base.Dispose(disposing) here, but EventListener doesn't have Dispose(bool).
+            base.Dispose();
         }
     }
 }
