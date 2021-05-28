@@ -207,8 +207,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-reporting", "docs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\trace\customizing-the-sdk\customizing-the-sdk.csproj", "{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Diagnostics.Metrics.Temp", "src\System.Diagnostics.Metrics.Temp\System.Diagnostics.Metrics.Temp.csproj", "{4481390E-52F5-46A6-8510-3B1433ABAFE6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
