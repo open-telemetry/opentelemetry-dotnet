@@ -26,31 +26,9 @@ namespace OpenTelemetry.Trace
     public interface IDeferredTracerProviderBuilder
     {
         /// <summary>
-        /// Adds a service registration for the given instance as a <see
-        /// cref="ServiceLifetime.Singleton"/>.
+        /// Gets the services registered with the provider.
         /// </summary>
-        /// <param name="serviceType">The <see cref="Type"/> of the service.</param>
-        /// <param name="instance">The instance implementing the service.</param>
-        /// <returns>Provided <see cref="IDeferredTracerProviderBuilder"/> for chaining.</returns>
-        IDeferredTracerProviderBuilder AddService(Type serviceType, object instance);
-
-        /// <summary>
-        /// Adds a service registration using a type.
-        /// </summary>
-        /// <param name="serviceType">The <see cref="Type"/> of the service.</param>
-        /// <param name="implementationType">The <see cref="Type"/> implementing the service.</param>
-        /// <param name="lifetime">The <see cref="ServiceLifetime"/> of created instances.</param>
-        /// <returns>Provided <see cref="IDeferredTracerProviderBuilder"/> for chaining.</returns>
-        IDeferredTracerProviderBuilder AddService(Type serviceType, Type implementationType, ServiceLifetime lifetime);
-
-        /// <summary>
-        /// Adds a service registration using a factory method.
-        /// </summary>
-        /// <param name="serviceType">The <see cref="Type"/> of the service.</param>
-        /// <param name="factory">The factory used for creating service instances.</param>
-        /// <param name="lifetime">The <see cref="ServiceLifetime"/> of created instances.</param>
-        /// <returns>Provided <see cref="IDeferredTracerProviderBuilder"/> for chaining.</returns>
-        IDeferredTracerProviderBuilder AddService(Type serviceType, Func<IServiceProvider, object> factory, ServiceLifetime lifetime);
+        IDeferredServiceCollection Services { get; }
 
         /// <summary>
         /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.

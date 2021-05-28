@@ -1,11 +1,19 @@
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.ServiceLifetime
-OpenTelemetry.ServiceLifetime.Scoped = 1 -> OpenTelemetry.ServiceLifetime
-OpenTelemetry.ServiceLifetime.Singleton = 0 -> OpenTelemetry.ServiceLifetime
-OpenTelemetry.ServiceLifetime.Transient = 2 -> OpenTelemetry.ServiceLifetime
+OpenTelemetry.DeferredServiceDescriptor
+OpenTelemetry.DeferredServiceDescriptor.DeferredServiceDescriptor(System.Type serviceType, object instance) -> void
+OpenTelemetry.DeferredServiceDescriptor.DeferredServiceDescriptor(System.Type serviceType, System.Func<System.IServiceProvider, object> factory, OpenTelemetry.DeferredServiceLifetime lifetime) -> void
+OpenTelemetry.DeferredServiceDescriptor.DeferredServiceDescriptor(System.Type serviceType, System.Type implementationType, OpenTelemetry.DeferredServiceLifetime lifetime) -> void
+OpenTelemetry.DeferredServiceDescriptor.ImplementationFactory.get -> System.Func<System.IServiceProvider, object>
+OpenTelemetry.DeferredServiceDescriptor.ImplementationInstance.get -> object
+OpenTelemetry.DeferredServiceDescriptor.ImplementationType.get -> System.Type
+OpenTelemetry.DeferredServiceDescriptor.Lifetime.get -> OpenTelemetry.DeferredServiceLifetime
+OpenTelemetry.DeferredServiceDescriptor.ServiceType.get -> System.Type
+OpenTelemetry.DeferredServiceLifetime
+OpenTelemetry.DeferredServiceLifetime.Scoped = 1 -> OpenTelemetry.DeferredServiceLifetime
+OpenTelemetry.DeferredServiceLifetime.Singleton = 0 -> OpenTelemetry.DeferredServiceLifetime
+OpenTelemetry.DeferredServiceLifetime.Transient = 2 -> OpenTelemetry.DeferredServiceLifetime
+OpenTelemetry.IDeferredServiceCollection
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder
-OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, object instance) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
-OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, System.Func<System.IServiceProvider, object> factory, OpenTelemetry.ServiceLifetime lifetime) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
-OpenTelemetry.Trace.IDeferredTracerProviderBuilder.AddService(System.Type serviceType, System.Type implementationType, OpenTelemetry.ServiceLifetime lifetime) -> OpenTelemetry.Trace.IDeferredTracerProviderBuilder
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Services.get -> OpenTelemetry.IDeferredServiceCollection
 OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void

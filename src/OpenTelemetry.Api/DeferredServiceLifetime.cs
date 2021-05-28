@@ -1,4 +1,4 @@
-// <copyright file="ServiceLifetime.cs" company="OpenTelemetry Authors">
+// <copyright file="DeferredServiceLifetime.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry
     /// <summary>
     /// Describes the lifetime of a service.
     /// </summary>
-    public enum ServiceLifetime
+    public enum DeferredServiceLifetime
     {
         /// <summary>
         /// Specifies that a single instance of the service will be created.
