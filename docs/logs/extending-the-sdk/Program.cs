@@ -15,9 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-#if NETCOREAPP2_1
-using Microsoft.Extensions.DependencyInjection;
-#endif
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
@@ -26,11 +23,7 @@ public class Program
 {
     public static void Main()
     {
-#if NETCOREAPP2_1
-        var serviceCollection = new ServiceCollection().AddLogging(builder =>
-#else
         using var loggerFactory = LoggerFactory.Create(builder =>
-#endif
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
@@ -40,12 +33,7 @@ public class Program
                        .AddMyExporter();
             }));
 
-#if NETCOREAPP2_1
-        using var serviceProvider = serviceCollection.BuildServiceProvider();
-        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-#else
         var logger = loggerFactory.CreateLogger<Program>();
-#endif
 
         // unstructured log
         logger.LogInformation("Hello, World!");

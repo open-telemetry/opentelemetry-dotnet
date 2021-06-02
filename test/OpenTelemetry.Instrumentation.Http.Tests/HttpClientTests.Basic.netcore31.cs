@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1
+#if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -392,7 +392,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
-            Assert.True(request.Headers.TryGetValues("Baggage", out var baggages));
+            Assert.True(request.Headers.TryGetValues("baggage", out var baggages));
             Assert.Single(traceparents);
             Assert.Single(tracestates);
             Assert.Single(baggages);

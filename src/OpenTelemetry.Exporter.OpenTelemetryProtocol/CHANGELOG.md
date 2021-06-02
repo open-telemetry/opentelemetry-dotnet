@@ -9,6 +9,34 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* Resolves `System.TypeInitializationException` exception when using the
+  exporter with an application that references Google.Protobuf 3.15. The OTLP
+  exporter now depends on Google.Protobuf 3.15.5 enabling the use of the new
+  `UnsafeByteOperations.UnsafeWrap` to avoid unnecessary allocations.
+  ([#1873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1873))
+
+* Null values in string arrays are preserved according to
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)) and
+  ([#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945)).
+
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:
+  `services.Configure<OtlpExporterOptions>(this.Configuration.GetSection("Otlp"));`).
+  ([#1942](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1942))
+
+## 1.1.0-beta1
+
+Released 2021-Mar-19
+
 ## 1.0.1
 
 Released 2021-Feb-10
