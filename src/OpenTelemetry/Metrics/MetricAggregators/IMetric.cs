@@ -1,4 +1,4 @@
-// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
+// <copyright file="IMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,21 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricItem
+    internal interface IMetric
     {
-        internal List<IMetric> Metrics = new List<IMetric>();
+        string Name { get; }
 
-        internal MetricItem()
-        {
-        }
+        DateTimeOffset StartTimeExclusive { get; }
+
+        DateTimeOffset EndTimeInclusive { get; }
+
+        KeyValuePair<string, object>[] Attributes { get; }
+
+        string ToDisplayString();
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
+// <copyright file="IMetricBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricItem
+    internal interface IMetricBuilder
     {
-        internal List<IMetric> Metrics = new List<IMetric>();
+        void Update<T>(DateTimeOffset dt, T value)
+            where T : struct;
 
-        internal MetricItem()
-        {
-        }
+        IMetric Collect(DateTimeOffset dt);
     }
 }

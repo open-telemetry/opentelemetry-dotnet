@@ -23,11 +23,20 @@ namespace OpenTelemetry.Metrics
     internal readonly struct DataPoint<T> : IDataPoint
         where T : struct
     {
+        private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
+
         private readonly T value;
 
         private readonly DateTimeOffset timestamp;
 
         private readonly KeyValuePair<string, object>[] tags;
+
+        internal DataPoint(DateTimeOffset timestamp, T value)
+        {
+            this.timestamp = timestamp;
+            this.value = value;
+            this.tags = DataPoint<T>.EmptyTag;
+        }
 
         internal DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
         {

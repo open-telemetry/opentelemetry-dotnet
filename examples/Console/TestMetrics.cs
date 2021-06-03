@@ -34,13 +34,17 @@ namespace Examples.Console
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetObservationPeriod(options.ObservationPeriodMilliseconds)
                 .SetCollectionPeriod(options.CollectionPeriodMilliseconds)
-                .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
-                .AddExportProcessor(new MetricConsoleExporter())
+                .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
+                .AddExportProcessor(new MetricConsoleExporter("A"))
+                .SetCollectionPeriod(5 * options.CollectionPeriodMilliseconds)
+                .AddExportProcessor(new MetricConsoleExporter("B"))
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
             var counter = meter.CreateCounter<int>("counter1");
+
+            var histogram = meter.CreateHistogram<int>("histogram");
 
             if (options.RunObservable ?? true)
             {
@@ -76,6 +80,26 @@ namespace Examples.Console
                             break;
                         }
 
+                        histogram.Record(10);
+
+                        histogram.Record(
+                            100,
+                            new KeyValuePair<string, object>("tag1", "value1"));
+
+                        histogram.Record(
+                            200,
+                            new KeyValuePair<string, object>("tag1", "value2"),
+                            new KeyValuePair<string, object>("tag2", "value2"));
+
+                        histogram.Record(
+                            100,
+                            new KeyValuePair<string, object>("tag1", "value1"));
+
+                        histogram.Record(
+                            200,
+                            new KeyValuePair<string, object>("tag2", "value2"),
+                            new KeyValuePair<string, object>("tag1", "value2"));
+
                         counter.Add(10);
 
                         counter.Add(
@@ -102,6 +126,12 @@ namespace Examples.Console
             }
 
             cts.CancelAfter(options.RunTime);
+            System.Console.WriteLine($"Wait for {options.RunTime} milliseconds.");
+            while (!cts.IsCancellationRequested)
+            {
+                Task.Delay(1000).Wait();
+            }
+
             Task.WaitAll(tasks.ToArray());
 
             if (prompt)

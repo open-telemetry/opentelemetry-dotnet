@@ -1,4 +1,4 @@
-// <copyright file="Metric.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramBucket.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-
 namespace OpenTelemetry.Metrics
 {
-    // TODO: Need to determine what a Metric actually contains
-
-    internal struct Metric
+    internal struct HistogramBucket
     {
-        internal readonly string Name;
-        internal IDataPoint Point;
-
-        internal Metric(string name, IDataPoint point)
-        {
-            this.Name = name;
-            this.Point = point;
-        }
+        internal double LowBoundary;
+        internal double HighBoundary;
+        internal long Count;
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="IHistogramMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
-    internal abstract class Aggregator
+    internal interface IHistogramMetric : IMetric
     {
-        internal virtual void Update<T>(DateTimeOffset dt, T value)
-            where T : struct
-        {
-        }
+        bool IsDeltaTemporality { get; }
 
-        internal virtual IEnumerable<Metric> Collect()
-        {
-            return Enumerable.Empty<Metric>();
-        }
+        IEnumerable<IDataPoint> Exemplars { get; }
+
+        long PopulationCount { get; }
+
+        double PopulationSum { get; }
+
+        IEnumerable<HistogramBucket> Buckets { get; }
     }
 }

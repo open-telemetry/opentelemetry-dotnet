@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .SetObservationPeriod(300)
                 .SetCollectionPeriod(1000)
                 .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
-                .AddExportProcessor(new MetricConsoleExporter())
+                .AddExportProcessor(new MetricConsoleExporter("Test"))
                 .Build();
 
             using var meter = new Meter("BasicAllTest", "0.0.1");
