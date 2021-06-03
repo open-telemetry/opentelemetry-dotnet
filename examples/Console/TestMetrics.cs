@@ -32,12 +32,11 @@ namespace Examples.Console
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
+                .SetDefaultCollectionPeriod(options.CollectionPeriodMilliseconds)
                 .SetObservationPeriod(options.ObservationPeriodMilliseconds)
-                .SetCollectionPeriod(options.CollectionPeriodMilliseconds)
                 .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
                 .AddExportProcessor(new MetricConsoleExporter("A"))
-                .SetCollectionPeriod(5 * options.CollectionPeriodMilliseconds)
-                .AddExportProcessor(new MetricConsoleExporter("B"))
+                .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.CollectionPeriodMilliseconds)
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");

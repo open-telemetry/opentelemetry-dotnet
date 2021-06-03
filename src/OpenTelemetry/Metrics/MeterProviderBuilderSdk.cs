@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk SetCollectionPeriod(int periodMilliseconds)
+        internal MeterProviderBuilderSdk SetDefaultCollectionPeriod(int periodMilliseconds)
         {
             this.collectionPeriodMilliseconds = periodMilliseconds;
             return this;
@@ -74,6 +74,12 @@ namespace OpenTelemetry.Metrics
         internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
         {
             this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, this.collectionPeriodMilliseconds));
+            return this;
+        }
+
+        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor, int periodMilliseconds)
+        {
+            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, periodMilliseconds));
             return this;
         }
 
