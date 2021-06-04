@@ -24,15 +24,15 @@ namespace OpenTelemetry.Metrics
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
 
         private readonly Type valueType;
-        private readonly int intValue;
+        private readonly long longValue;
         private readonly double doubleValue;
 
-        internal DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
+        internal DataPoint(DateTimeOffset timestamp, long value, KeyValuePair<string, object>[] tags)
         {
             this.Timestamp = timestamp;
             this.Tags = tags;
-            this.valueType = value.GetType();
-            this.intValue = value;
+            this.valueType = typeof(long);
+            this.longValue = value;
             this.doubleValue = 0;
         }
 
@@ -40,12 +40,12 @@ namespace OpenTelemetry.Metrics
         {
             this.Timestamp = timestamp;
             this.Tags = tags;
-            this.valueType = value.GetType();
-            this.intValue = 0;
+            this.valueType = typeof(double);
+            this.longValue = 0;
             this.doubleValue = value;
         }
 
-        internal DataPoint(DateTimeOffset timestamp, int value)
+        internal DataPoint(DateTimeOffset timestamp, long value)
             : this(timestamp, value, DataPoint.EmptyTag)
         {
         }
@@ -63,9 +63,9 @@ namespace OpenTelemetry.Metrics
         {
             get
             {
-                if (this.valueType == typeof(int))
+                if (this.valueType == typeof(long))
                 {
-                    return this.intValue;
+                    return this.longValue;
                 }
                 else if (this.valueType == typeof(double))
                 {
@@ -84,7 +84,12 @@ namespace OpenTelemetry.Metrics
 
             if (typeof(T) == typeof(int))
             {
+                // Promoted to Long
                 dp = new DataPoint(timestamp, (int)(object)value, tags);
+            }
+            else if (typeof(T) == typeof(long))
+            {
+                dp = new DataPoint(timestamp, (long)(object)value, tags);
             }
             else if (typeof(T) == typeof(double))
             {

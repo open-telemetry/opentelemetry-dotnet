@@ -21,7 +21,6 @@ namespace OpenTelemetry.Metrics
 {
     internal class SummaryMetricAggregator : ISummaryMetric, IMetricBuilder
     {
-        internal readonly bool IsMonotonic;
         private readonly object lockUpdate = new object();
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
@@ -42,6 +41,8 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset EndTimeInclusive { get; private set; }
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
+
+        public bool IsMonotonic { get; }
 
         public long PopulationCount { get; private set; }
 
@@ -64,6 +65,16 @@ namespace OpenTelemetry.Metrics
                     if (val > 0 || !this.IsMonotonic)
                     {
                         this.PopulationSum += (double)val;
+                        this.PopulationCount++;
+                    }
+                }
+                else if (typeof(T) == typeof(long))
+                {
+                    var val = (long)(object)value;
+                    if (val > 0 || !this.IsMonotonic)
+                    {
+                        this.PopulationSum += (double)val;
+                        this.PopulationCount++;
                     }
                 }
                 else if (typeof(T) == typeof(double))
@@ -72,10 +83,9 @@ namespace OpenTelemetry.Metrics
                     if (val > 0 || !this.IsMonotonic)
                     {
                         this.PopulationSum += (double)val;
+                        this.PopulationCount++;
                     }
                 }
-
-                this.PopulationCount++;
             }
         }
 

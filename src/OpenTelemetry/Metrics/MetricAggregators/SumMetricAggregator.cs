@@ -23,9 +23,12 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
-        private long sum = 0;
-        private double dsum = 0;
-        private long count = 0;
+        private long sumPos = 0;
+        private double dsumPos = 0;
+        private long countPos = 0;
+        private long sumNeg = 0;
+        private double dsumNeg = 0;
+        private long countNeg = 0;
 
         internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta, bool isMonotonic)
         {
@@ -55,16 +58,30 @@ namespace OpenTelemetry.Metrics
         {
             get
             {
-                if (this.valueType == typeof(int))
+                if (this.valueType == typeof(long))
                 {
-                    return this.sum;
+                    if (this.IsMonotonic)
+                    {
+                        return this.sumPos + (long)this.dsumPos;
+                    }
+                    else
+                    {
+                        return this.sumPos + (long)this.dsumPos + this.sumNeg + (long)this.dsumNeg;
+                    }
                 }
                 else if (this.valueType == typeof(double))
                 {
-                    return this.dsum;
+                    if (this.IsMonotonic)
+                    {
+                        return this.dsumPos + (double)this.sumPos;
+                    }
+                    else
+                    {
+                        return this.dsumPos + (double)this.sumPos + this.dsumNeg + (double)this.sumNeg;
+                    }
                 }
 
-                return "Unknown";
+                throw new Exception("Unsupported Type");
             }
         }
 
@@ -75,31 +92,54 @@ namespace OpenTelemetry.Metrics
             {
                 this.EndTimeInclusive = dt;
 
-                this.valueType = typeof(T);
-
                 if (typeof(T) == typeof(int))
                 {
-                    var val = (int)(object)value;
+                    // Promote to Long
+                    this.valueType = typeof(long);
+                    var val = (long)(int)(object)value;
 
-                    if (this.IsMonotonic && val < 0)
+                    if (val >= 0)
                     {
-                        return;
+                        this.sumPos += val;
+                        this.countPos++;
                     }
+                    else
+                    {
+                        this.sumNeg += val;
+                        this.countNeg++;
+                    }
+                }
+                else if (typeof(T) == typeof(long))
+                {
+                    this.valueType = typeof(T);
+                    var val = (long)(object)value;
 
-                    this.sum += val;
-                    this.count++;
+                    if (val >= 0)
+                    {
+                        this.sumPos += val;
+                        this.countPos++;
+                    }
+                    else
+                    {
+                        this.sumNeg += val;
+                        this.countNeg++;
+                    }
                 }
                 else if (typeof(T) == typeof(double))
                 {
+                    this.valueType = typeof(T);
                     var val = (double)(object)value;
 
-                    if (this.IsMonotonic && val < 0)
+                    if (val >= 0)
                     {
-                        return;
+                        this.dsumPos += val;
+                        this.countPos++;
                     }
-
-                    this.dsum += val;
-                    this.count++;
+                    else
+                    {
+                        this.dsumNeg += val;
+                        this.countNeg++;
+                    }
                 }
                 else
                 {
@@ -117,16 +157,22 @@ namespace OpenTelemetry.Metrics
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.valueType = this.valueType;
-                cloneItem.count = this.count;
-                cloneItem.sum = this.sum;
-                cloneItem.dsum = this.dsum;
+                cloneItem.countPos = this.countPos;
+                cloneItem.sumPos = this.sumPos;
+                cloneItem.dsumPos = this.dsumPos;
+                cloneItem.countNeg = this.countNeg;
+                cloneItem.sumNeg = this.sumNeg;
+                cloneItem.dsumNeg = this.dsumNeg;
 
                 if (this.IsDeltaTemporality)
                 {
                     this.StartTimeExclusive = dt;
-                    this.count = 0;
-                    this.sum = 0;
-                    this.dsum = 0;
+                    this.countPos = 0;
+                    this.sumPos = 0;
+                    this.dsumPos = 0;
+                    this.countNeg = 0;
+                    this.sumNeg = 0;
+                    this.dsumNeg = 0;
                 }
             }
 
@@ -135,7 +181,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Count={this.count},Sum={this.Sum}";
+            return $"Delta={this.IsDeltaTemporality},Count={this.countPos},Sum={this.Sum}";
         }
     }
 }

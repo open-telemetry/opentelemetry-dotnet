@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
-        private int intValue;
+        private long longValue;
         private double doubleValue;
 
         internal GaugeMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
@@ -51,9 +51,9 @@ namespace OpenTelemetry.Metrics
         {
             get
             {
-                if (this.valueType == typeof(int))
+                if (this.valueType == typeof(long))
                 {
-                    return DataPoint.CreateDataPoint(this.EndTimeInclusive, this.intValue, this.Attributes);
+                    return DataPoint.CreateDataPoint(this.EndTimeInclusive, this.longValue, this.Attributes);
                 }
                 else if (this.valueType == typeof(double))
                 {
@@ -72,13 +72,20 @@ namespace OpenTelemetry.Metrics
             lock (this.lockUpdate)
             {
                 this.EndTimeInclusive = dt;
-                this.valueType = typeof(T);
                 if (typeof(T) == typeof(int))
                 {
-                    this.intValue = (int)(object)value;
+                    // Promote to Long
+                    this.valueType = typeof(long);
+                    this.longValue = (int)(object)value;
+                }
+                else if (typeof(T) == typeof(long))
+                {
+                    this.valueType = typeof(T);
+                    this.longValue = (long)(object)value;
                 }
                 else if (typeof(T) == typeof(double))
                 {
+                    this.valueType = typeof(T);
                     this.doubleValue = (double)(object)value;
                 }
             }
@@ -93,7 +100,7 @@ namespace OpenTelemetry.Metrics
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.valueType = this.valueType;
-                cloneItem.intValue = this.intValue;
+                cloneItem.longValue = this.longValue;
                 cloneItem.doubleValue = this.doubleValue;
             }
 

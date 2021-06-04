@@ -25,17 +25,17 @@ namespace OpenTelemetry.Metrics
         private static readonly byte[] EmptyId = new byte[0];
 
         private readonly Type valueType;
-        private readonly int intValue;
+        private readonly long longValue;
         private readonly double doubleValue;
 
-        internal Exemplar(DateTimeOffset timestamp, int value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
+        internal Exemplar(DateTimeOffset timestamp, long value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
             this.FilteredTags = filteredTags;
             this.SpanId = spanId;
             this.TraceId = traceId;
-            this.valueType = value.GetType();
-            this.intValue = value;
+            this.valueType = typeof(long);
+            this.longValue = value;
             this.doubleValue = 0;
         }
 
@@ -45,12 +45,12 @@ namespace OpenTelemetry.Metrics
             this.FilteredTags = filteredTags;
             this.SpanId = spanId;
             this.TraceId = traceId;
-            this.valueType = value.GetType();
-            this.intValue = 0;
+            this.valueType = typeof(double);
+            this.longValue = 0;
             this.doubleValue = value;
         }
 
-        internal Exemplar(DateTimeOffset timestamp, int value)
+        internal Exemplar(DateTimeOffset timestamp, long value)
             : this(timestamp, value, Exemplar.EmptyId, Exemplar.EmptyId, Exemplar.EmptyTag)
         {
         }
@@ -72,9 +72,9 @@ namespace OpenTelemetry.Metrics
         {
             get
             {
-                if (this.valueType == typeof(int))
+                if (this.valueType == typeof(long))
                 {
-                    return this.intValue;
+                    return this.longValue;
                 }
                 else if (this.valueType == typeof(double))
                 {
@@ -93,7 +93,12 @@ namespace OpenTelemetry.Metrics
 
             if (typeof(T) == typeof(int))
             {
+                // Promoted to Long
                 dp = new Exemplar(timestamp, (int)(object)value, spanId, traceId, filteredTags);
+            }
+            else if (typeof(T) == typeof(long))
+            {
+                dp = new Exemplar(timestamp, (long)(object)value, spanId, traceId, filteredTags);
             }
             else if (typeof(T) == typeof(double))
             {
