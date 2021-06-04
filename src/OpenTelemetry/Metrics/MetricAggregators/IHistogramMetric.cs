@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     {
         bool IsDeltaTemporality { get; }
 
-        IEnumerable<IDataPoint> Exemplars { get; }
+        IEnumerable<IExemplar> Exemplars { get; }
 
         long PopulationCount { get; }
 

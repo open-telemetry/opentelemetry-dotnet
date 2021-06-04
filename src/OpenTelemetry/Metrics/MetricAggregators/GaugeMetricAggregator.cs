@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
 
         public bool IsDeltaTemporality { get; }
 
-        public IEnumerable<IDataPoint> Exemplars { get; private set; } = new List<IDataPoint>();
+        public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
         public IDataPoint LastValue
         {

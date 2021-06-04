@@ -1,4 +1,4 @@
-// <copyright file="DataPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="Exemplar.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,45 +19,54 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct DataPoint : IDataPoint
+    internal readonly struct Exemplar : IExemplar
     {
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
+        private static readonly byte[] EmptyId = new byte[0];
 
         private readonly Type valueType;
         private readonly int intValue;
         private readonly double doubleValue;
 
-        internal DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
+        internal Exemplar(DateTimeOffset timestamp, int value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
-            this.Tags = tags;
+            this.FilteredTags = filteredTags;
+            this.SpanId = spanId;
+            this.TraceId = traceId;
             this.valueType = value.GetType();
             this.intValue = value;
             this.doubleValue = 0;
         }
 
-        internal DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
+        internal Exemplar(DateTimeOffset timestamp, double value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
-            this.Tags = tags;
+            this.FilteredTags = filteredTags;
+            this.SpanId = spanId;
+            this.TraceId = traceId;
             this.valueType = value.GetType();
             this.intValue = 0;
             this.doubleValue = value;
         }
 
-        internal DataPoint(DateTimeOffset timestamp, int value)
-            : this(timestamp, value, DataPoint.EmptyTag)
+        internal Exemplar(DateTimeOffset timestamp, int value)
+            : this(timestamp, value, Exemplar.EmptyId, Exemplar.EmptyId, Exemplar.EmptyTag)
         {
         }
 
-        internal DataPoint(DateTimeOffset timestamp, double value)
-            : this(timestamp, value, DataPoint.EmptyTag)
+        internal Exemplar(DateTimeOffset timestamp, double value)
+            : this(timestamp, value, Exemplar.EmptyId, Exemplar.EmptyId, Exemplar.EmptyTag)
         {
         }
 
         public DateTimeOffset Timestamp { get; }
 
-        public readonly KeyValuePair<string, object>[] Tags { get; }
+        public readonly KeyValuePair<string, object>[] FilteredTags { get; }
+
+        public readonly byte[] SpanId { get; }
+
+        public readonly byte[] TraceId { get; }
 
         public object Value
         {
@@ -78,17 +87,17 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal static DataPoint CreateDataPoint<T>(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        internal static Exemplar CreateExemplar<T>(DateTimeOffset timestamp, T value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
-            DataPoint dp;
+            Exemplar dp;
 
             if (typeof(T) == typeof(int))
             {
-                dp = new DataPoint(timestamp, (int)(object)value, tags);
+                dp = new Exemplar(timestamp, (int)(object)value, spanId, traceId, filteredTags);
             }
             else if (typeof(T) == typeof(double))
             {
-                dp = new DataPoint(timestamp, (double)(object)value, tags);
+                dp = new Exemplar(timestamp, (double)(object)value, spanId, traceId, filteredTags);
             }
             else
             {

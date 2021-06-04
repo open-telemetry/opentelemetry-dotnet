@@ -1,4 +1,4 @@
-// <copyright file="DataPoint{T}.cs" company="OpenTelemetry Authors">
+// <copyright file="Exemplar{T}.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,28 +19,35 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct DataPoint<T> : IDataPoint
+    internal readonly struct Exemplar<T> : IExemplar
         where T : struct
     {
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
+        private static readonly byte[] EmptyId = new byte[0];
 
         private readonly T value;
 
-        internal DataPoint(DateTimeOffset timestamp, T value, KeyValuePair<string, object>[] tags)
+        internal Exemplar(DateTimeOffset timestamp, T value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
-            this.Tags = tags;
+            this.FilteredTags = filteredTags;
+            this.SpanId = spanId;
+            this.TraceId = traceId;
             this.value = value;
         }
 
-        internal DataPoint(DateTimeOffset timestamp, T value)
-            : this(timestamp, value, DataPoint<T>.EmptyTag)
+        internal Exemplar(DateTimeOffset timestamp, T value)
+            : this(timestamp, value, Exemplar<T>.EmptyId, Exemplar<T>.EmptyId, Exemplar<T>.EmptyTag)
         {
         }
 
         public DateTimeOffset Timestamp { get; }
 
-        public readonly KeyValuePair<string, object>[] Tags { get; }
+        public readonly KeyValuePair<string, object>[] FilteredTags { get; }
+
+        public readonly byte[] SpanId { get; }
+
+        public readonly byte[] TraceId { get; }
 
         public object Value => (object)this.value;
     }

@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
         public bool IsMonotonic { get; }
 
-        public IEnumerable<IDataPoint> Exemplars { get; private set; } = new List<IDataPoint>();
+        public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
         public object Sum
         {

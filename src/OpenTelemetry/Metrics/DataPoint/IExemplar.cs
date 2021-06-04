@@ -1,4 +1,4 @@
-// <copyright file="IGaugeMetric.cs" company="OpenTelemetry Authors">
+// <copyright file="IExemplar.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,21 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IGaugeMetric : IMetric
+    internal interface IExemplar
     {
-        bool IsDeltaTemporality { get; }
+        DateTimeOffset Timestamp { get; }
 
-        IEnumerable<IExemplar> Exemplars { get; }
+        KeyValuePair<string, object>[] FilteredTags { get; }
 
-        IDataPoint LastValue { get; }
+        byte[] SpanId { get; }
+
+        byte[] TraceId { get; }
+
+        object Value { get; }
     }
 }
