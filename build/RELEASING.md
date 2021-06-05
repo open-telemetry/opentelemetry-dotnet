@@ -18,7 +18,7 @@ Only for Maintainers.
      $ended = $false
      foreach ($line in $lines)
          {
-            if($line -like "## *" -and $started -ne $true)
+            if($line -like "## Unreleased" -and $started -ne $true)
             {
               $started = $true
             }
@@ -121,3 +121,7 @@ and contents of combinedchangelog from Step2.
 
 TODO: Add tagging for Metrics release.
 TODO: Separate version for instrumention/hosting/OTshim package.
+
+16.Update the OpenTelemetry.io document
+[here](https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/net)
+by sending a Pull Request.

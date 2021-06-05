@@ -2,11 +2,21 @@
 
 ## Unreleased
 
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
   `services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));`).
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
+* Fixed data corruption when creating Jaeger Batch messages
+  ([#1372](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1372))
 
 ## 1.1.0-beta1
 
