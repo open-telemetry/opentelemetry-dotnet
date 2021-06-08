@@ -15,12 +15,7 @@
 // </copyright>
 
 #if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -36,9 +31,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
-        private static readonly ConcurrentBag<OtlpLogs.InstrumentationLibraryLogs> LogListPool = new ConcurrentBag<OtlpLogs.InstrumentationLibraryLogs>();
-        private static readonly Action<RepeatedField<OtlpLogs.LogRecord>, int> RepeatedFieldOfLogSetCountAction = CreateRepeatedFieldOfLogSetCountAction();
-
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
@@ -51,6 +43,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
             request.ResourceLogs.Add(resourceLogs);
 
+            var instrumentationLibraryLogs = new OtlpLogs.InstrumentationLibraryLogs();
+            resourceLogs.InstrumentationLibraryLogs.Add(instrumentationLibraryLogs);
+
             foreach (var item in logRecordBatch)
             {
                 var logRecord = item.ToOtlpLog();
@@ -62,57 +57,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     continue;
                 }
 
-                // TODO: Record source/version correctly
-                var logRecordSourceName = "OpenTelemetry Logs";
-                if (!logRecordsByLibrary.TryGetValue(logRecordSourceName, out var logRecords))
-                {
-                    logRecords = GetLogListFromPool(logRecordSourceName, "1.2.3");
-
-                    logRecordsByLibrary.Add(logRecordSourceName, logRecords);
-                    resourceLogs.InstrumentationLibraryLogs.Add(logRecords);
-                }
-
-                logRecords.Logs.Add(logRecord);
+                instrumentationLibraryLogs.Logs.Add(logRecord);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Return(this OtlpCollector.ExportLogsServiceRequest request)
-        {
-            var resourceLogs = request.ResourceLogs.FirstOrDefault();
-            if (resourceLogs == null)
-            {
-                return;
-            }
-
-            foreach (var libraryLogs in resourceLogs.InstrumentationLibraryLogs)
-            {
-                RepeatedFieldOfLogSetCountAction(libraryLogs.Logs, 0);
-                LogListPool.Add(libraryLogs);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpLogs.InstrumentationLibraryLogs GetLogListFromPool(string name, string version)
-        {
-            if (!LogListPool.TryTake(out var logs))
-            {
-                logs = new OtlpLogs.InstrumentationLibraryLogs
-                {
-                    InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
-                    {
-                        Name = name, // Name is enforced to not be null, but it can be empty.
-                        Version = version ?? string.Empty, // NRE throw by proto
-                    },
-                };
-            }
-            else
-            {
-                logs.InstrumentationLibrary.Name = name;
-                logs.InstrumentationLibrary.Version = version ?? string.Empty;
-            }
-
-            return logs;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -171,27 +117,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Key = key,
                 Value = new OtlpCommon.AnyValue { StringValue = value },
             });
-        }
-
-        private static Action<RepeatedField<OtlpLogs.LogRecord>, int> CreateRepeatedFieldOfLogSetCountAction()
-        {
-            FieldInfo repeatedFieldOfLogCountField = typeof(RepeatedField<OtlpLogs.LogRecord>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            DynamicMethod dynamicMethod = new DynamicMethod(
-                "CreateSetCountAction",
-                null,
-                new[] { typeof(RepeatedField<OtlpLogs.LogRecord>), typeof(int) },
-                typeof(LogRecordExtensions).Module,
-                skipVisibility: true);
-
-            var generator = dynamicMethod.GetILGenerator();
-
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Stfld, repeatedFieldOfLogCountField);
-            generator.Emit(OpCodes.Ret);
-
-            return (Action<RepeatedField<OtlpLogs.LogRecord>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpLogs.LogRecord>, int>));
         }
     }
 }
