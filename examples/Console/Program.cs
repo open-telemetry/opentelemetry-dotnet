@@ -59,7 +59,11 @@ namespace Examples.Console
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
-                    errs => 1);
+                    errs =>
+                    {
+                        prompt = false;
+                        return 1;
+                    });
 
             if (prompt)
             {
@@ -103,31 +107,31 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('g', "Gauge", HelpText = "Observable Gauge.", Required = false)]
+        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
         public bool? FlagGauge { get; set; }
 
-        [Option('u', "UpDownCounter", HelpText = "Observable Up/Down Counter.", Required = false)]
+        [Option('u', "UpDownCounter", HelpText = "Include Observable Up/Down Counter.", Required = false)]
         public bool? FlagUpDownCounter { get; set; }
 
-        [Option('c', "Counter", HelpText = "Counter.", Required = false)]
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false)]
         public bool? FlagCounter { get; set; }
 
-        [Option('h', "Histogram", HelpText = "Histogram.", Required = false)]
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false)]
         public bool? FlagHistogram { get; set; }
 
-        [Option("defaultCollectionPeriodMilliseconds", Default = 500, HelpText = "Default Collection period.", Required = false)]
+        [Option("defaultCollection", Default = 500, HelpText = "Default collection period in milliseconds.", Required = false)]
         public int DefaultCollectionPeriodMilliseconds { get; set; }
 
         [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
         public int RunTime { get; set; }
 
-        [Option("tasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
+        [Option("tasks", Default = 1, HelpText = "Run # of concurrent tasks.", Required = false)]
         public int NumTasks { get; set; }
 
-        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops. 0 = No Limit", Required = false)]
+        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
         public int MaxLoops { get; set; }
 
-        [Option('p', "prompt", HelpText = "Do not Prompt for exit", Required = false)]
+        [Option('p', "prompt", HelpText = "Do not prompt for exit.", Required = false)]
         public bool? Prompt { get; set; }
     }
 
