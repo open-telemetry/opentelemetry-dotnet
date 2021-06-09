@@ -26,10 +26,8 @@ namespace Examples.Console
 {
     internal class TestMetrics
     {
-        internal static object Run(MetricsOptions options, ref bool prompt)
+        internal static object Run(MetricsOptions options)
         {
-            prompt = options.Prompt ?? false;
-
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
@@ -152,11 +150,6 @@ namespace Examples.Console
             }
 
             Task.WaitAll(tasks.ToArray());
-
-            if (prompt)
-            {
-                System.Console.WriteLine("Press Enter key to exit.");
-            }
 
             return null;
         }

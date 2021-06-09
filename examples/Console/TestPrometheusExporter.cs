@@ -43,6 +43,8 @@ namespace Examples.Console
                 - targets: ['localhost:9184']
             */
             System.Console.WriteLine("Press Enter key to exit.");
+            System.Console.ReadLine();
+
             return null;
         }
     }

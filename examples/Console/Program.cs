@@ -42,14 +42,12 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            bool prompt = true;
-
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
-                    (MetricsOptions options) => TestMetrics.Run(options, ref prompt),
+                    (MetricsOptions options) => TestMetrics.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -59,16 +57,7 @@ namespace Examples.Console
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
-                    errs =>
-                    {
-                        prompt = false;
-                        return 1;
-                    });
-
-            if (prompt)
-            {
-                System.Console.ReadLine();
-            }
+                    errs => 1);
         }
     }
 
@@ -130,9 +119,6 @@ namespace Examples.Console
 
         [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
         public int MaxLoops { get; set; }
-
-        [Option('p', "prompt", HelpText = "Do not prompt for exit.", Required = false)]
-        public bool? Prompt { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
