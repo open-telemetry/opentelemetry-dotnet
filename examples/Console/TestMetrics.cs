@@ -28,26 +28,46 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options, ref bool prompt)
         {
-            prompt = options.Prompt.Value;
+            prompt = options.Prompt ?? false;
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .SetDefaultCollectionPeriod(options.CollectionPeriodMilliseconds)
-                .SetObservationPeriod(options.ObservationPeriodMilliseconds)
+                .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
                 .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
                 .AddExportProcessor(new MetricConsoleExporter("A"))
-                .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.CollectionPeriodMilliseconds)
+                .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds)
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
-            var counter = meter.CreateCounter<int>("counter1");
-
-            var histogram = meter.CreateHistogram<int>("histogram");
-
-            if (options.RunObservable ?? true)
+            Counter<int> counter = null;
+            if (options.FlagCounter ?? true)
             {
-                var observableCounter = meter.CreateObservableGauge<int>("CurrentMemoryUsage", () =>
+                counter = meter.CreateCounter<int>("counter");
+            }
+
+            Histogram<int> histogram = null;
+            if (options.FlagHistogram ?? true)
+            {
+                histogram = meter.CreateHistogram<int>("histogram");
+            }
+
+            if (options.FlagGauge ?? true)
+            {
+                var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
+                {
+                    return new List<Measurement<int>>()
+                    {
+                        new Measurement<int>(
+                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
+                            new KeyValuePair<string, object>("tag1", "value1")),
+                    };
+                });
+            }
+
+            if (options.FlagUpDownCounter ?? true)
+            {
+                var observableCounter = meter.CreateObservableCounter<int>("updown", () =>
                 {
                     return new List<Measurement<int>>()
                     {
@@ -79,42 +99,42 @@ namespace Examples.Console
                             break;
                         }
 
-                        histogram.Record(10);
+                        histogram?.Record(10);
 
-                        histogram.Record(
+                        histogram?.Record(
                             100,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
-                        histogram.Record(
+                        histogram?.Record(
                             200,
                             new KeyValuePair<string, object>("tag1", "value2"),
                             new KeyValuePair<string, object>("tag2", "value2"));
 
-                        histogram.Record(
+                        histogram?.Record(
                             100,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
-                        histogram.Record(
+                        histogram?.Record(
                             200,
                             new KeyValuePair<string, object>("tag2", "value2"),
                             new KeyValuePair<string, object>("tag1", "value2"));
 
-                        counter.Add(10);
+                        counter?.Add(10);
 
-                        counter.Add(
+                        counter?.Add(
                             100,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
-                        counter.Add(
+                        counter?.Add(
                             200,
                             new KeyValuePair<string, object>("tag1", "value2"),
                             new KeyValuePair<string, object>("tag2", "value2"));
 
-                        counter.Add(
+                        counter?.Add(
                             100,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
-                        counter.Add(
+                        counter?.Add(
                             200,
                             new KeyValuePair<string, object>("tag2", "value2"),
                             new KeyValuePair<string, object>("tag1", "value2"));

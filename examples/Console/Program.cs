@@ -103,26 +103,32 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('p', "prompt", HelpText = "Prompt for exit", Default = false)]
-        public bool? Prompt { get; set; }
+        [Option('g', "Gauge", HelpText = "Observable Gauge.", Required = false)]
+        public bool? FlagGauge { get; set; }
+
+        [Option('u', "UpDownCounter", HelpText = "Observable Up/Down Counter.", Required = false)]
+        public bool? FlagUpDownCounter { get; set; }
+
+        [Option('c', "Counter", HelpText = "Counter.", Required = false)]
+        public bool? FlagCounter { get; set; }
+
+        [Option('h', "Histogram", HelpText = "Histogram.", Required = false)]
+        public bool? FlagHistogram { get; set; }
+
+        [Option("defaultCollectionPeriodMilliseconds", Default = 500, HelpText = "Default Collection period.", Required = false)]
+        public int DefaultCollectionPeriodMilliseconds { get; set; }
 
         [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
         public int RunTime { get; set; }
 
-        [Option("observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
-        public int ObservationPeriodMilliseconds { get; set; }
-
-        [Option("collectionPeriodMilliseconds", Default = 500, HelpText = "Collection period.", Required = false)]
-        public int CollectionPeriodMilliseconds { get; set; }
-
-        [Option('o', "runObservable", Default = true, HelpText = "Run observable counters.", Required = false)]
-        public bool? RunObservable { get; set; }
-
-        [Option('t', "numTasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
+        [Option("tasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
         public int NumTasks { get; set; }
 
         [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops. 0 = No Limit", Required = false)]
         public int MaxLoops { get; set; }
+
+        [Option('p', "prompt", HelpText = "Do not Prompt for exit", Required = false)]
+        public bool? Prompt { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

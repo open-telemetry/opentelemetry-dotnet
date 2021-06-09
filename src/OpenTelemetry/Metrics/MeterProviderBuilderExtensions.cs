@@ -22,22 +22,6 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Sets observation period.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="periodMilliseconds">Perion in milliseconds.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder SetObservationPeriod(this MeterProviderBuilder meterProviderBuilder, int periodMilliseconds)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                return meterProviderBuilderSdk.SetObservationPeriod(periodMilliseconds);
-            }
-
-            return meterProviderBuilder;
-        }
-
-        /// <summary>
         /// Sets default collection period.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
@@ -90,13 +74,13 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="processor">Measurement Processors.</param>
-        /// <param name="periodMilliseconds">Perion in milliseconds.</param>
+        /// <param name="collectionPeriodMilliseconds">Period in milliseconds between Collections.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor, int periodMilliseconds)
+        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor, int collectionPeriodMilliseconds)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddExporter(processor, periodMilliseconds);
+                return meterProviderBuilderSdk.AddExporter(processor, collectionPeriodMilliseconds);
             }
 
             return meterProviderBuilder;

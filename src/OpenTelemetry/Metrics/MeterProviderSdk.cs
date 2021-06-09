@@ -34,7 +34,6 @@ namespace OpenTelemetry.Metrics
         private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        private readonly Task observerTask;
         private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
 
@@ -43,14 +42,9 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
-            int observationPeriodMilliseconds,
-            int collectionPeriodMilliseconds,
             MeasurementProcessor[] measurementProcessors,
             KeyValuePair<MetricProcessor, int>[] metricExportProcessors)
         {
-            this.ObservationPeriodMilliseconds = observationPeriodMilliseconds;
-            this.CollectionPeriodMilliseconds = collectionPeriodMilliseconds;
-
             // Setup our Processors
 
             this.MeasurementProcessors.AddRange(measurementProcessors);
@@ -97,7 +91,6 @@ namespace OpenTelemetry.Metrics
             // Start our long running Task
 
             var token = this.cts.Token;
-            this.observerTask = Task.Run(async () => await this.ObserverTask(token));
 
             // Group Export processors by their collectionPeriod.
             var groups = this.ExportProcessors.GroupBy(k => k.Value, v => v.Key);
@@ -106,10 +99,6 @@ namespace OpenTelemetry.Metrics
                 this.collectorTasks.Add(Task.Run(async () => await this.CollectorTask(token, group.Key, group.ToArray())));
             }
         }
-
-        internal int ObservationPeriodMilliseconds { get; } = 1000;
-
-        internal int CollectionPeriodMilliseconds { get; } = 1000;
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
@@ -175,27 +164,9 @@ namespace OpenTelemetry.Metrics
 
             this.cts.Cancel();
 
-            this.observerTask.Wait();
-
             foreach (var collectorTask in this.collectorTasks)
             {
                 collectorTask.Wait();
-            }
-        }
-
-        private async Task ObserverTask(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(this.ObservationPeriodMilliseconds, token);
-                }
-                catch (TaskCanceledException)
-                {
-                }
-
-                this.listener.RecordObservableInstruments();
             }
         }
 
@@ -217,6 +188,9 @@ namespace OpenTelemetry.Metrics
 
         private void Collect(int collectionPeriodMilliseconds, MetricProcessor[] processors)
         {
+            // Record all observable instruments
+            this.listener.RecordObservableInstruments();
+
             var metricItem = new MetricItem();
 
             foreach (var kv in this.AggregatorStores)
