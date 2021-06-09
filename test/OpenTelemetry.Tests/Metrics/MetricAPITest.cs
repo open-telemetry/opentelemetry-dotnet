@@ -38,9 +38,26 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meter = new Meter("BasicAllTest", "0.0.1");
 
-            var counter = meter.CreateCounter<int>("counter1");
+            var counter = meter.CreateCounter<int>("counter");
 
-            var observableCounter = meter.CreateObservableGauge<int>("MemoryUsage", () =>
+            var histogram = meter.CreateHistogram<double>("histogram");
+
+            var observableCounter = meter.CreateObservableCounter<double>("asynccounter", () =>
+            {
+                return new List<Measurement<double>>()
+                {
+                    new Measurement<double>(
+                        30,
+                        new KeyValuePair<string, object?>("attrb1", "value1")),
+
+                    new Measurement<double>(
+                        40,
+                        new KeyValuePair<string, object?>("label1", "value1"),
+                        new KeyValuePair<string, object?>("label2", "value2")),
+                };
+            });
+
+            var observableGauge = meter.CreateObservableGauge<int>("asyncgauge", () =>
             {
                 return new List<Measurement<int>>()
                 {
@@ -62,6 +79,17 @@ namespace OpenTelemetry.Metrics.Tests
                 new KeyValuePair<string, object?>("label1", "value1"));
 
             counter.Add(
+                200,
+                new KeyValuePair<string, object?>("label1", "value1"),
+                new KeyValuePair<string, object?>("label2", "value2"));
+
+            histogram.Record(10);
+
+            histogram.Record(
+                100,
+                new KeyValuePair<string, object?>("label1", "value1"));
+
+            histogram.Record(
                 200,
                 new KeyValuePair<string, object?>("label1", "value1"),
                 new KeyValuePair<string, object?>("label2", "value2"));
