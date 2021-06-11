@@ -3,32 +3,30 @@ param([string]$package, [string]$version)
 $workDir = "..\LastMajorVersionBinaries"
 if (-Not (Test-Path $workDir))
 {
-    Write-Host "Directory not found, creating..."
-    New-Item -Path $workDir -ItemType "directory"
+    Write-Host "Working directory for previous package versions not found, creating..."
+    New-Item -Path $workDir -ItemType "directory" | Out-Null
 }
 
-$lockFile = "$workDir\$package.$version.txt"
-$retryCount = 0
-while ((Test-Path -Path $lockFile) -and ($retryCount -Lt 10))
-{
-    Write-Host "Previous version retrieval in progress, waiting..."
-    $retryCount++
-    Start-Sleep -s 1
-}
 if (Test-Path -Path "$workDir\$package.$version.zip")
 {
-    Write-Debug "Previous package version already exists"
+    Write-Debug "Previous package version already downloaded"
 }
 else
 {
-    New-Item -Path $lockFile
-    Write-Host "Retrieving $package @$version for compatibility check"
-
-    Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/$package/$version -Outfile "$workDir\$package.$version.zip"
-    Expand-Archive -LiteralPath "$workDir\$package.$version.zip" -DestinationPath "$workDir\$package\$version"
+    # because this script will be hit for each target framework in each project, there might be several copies running simultaneously
+    # wait a random couple of seconds before continuing, checking again for the zip file
+    Start-Sleep -Seconds (Get-Random -Minimum 0 -Maximum 3)
+    if (Test-Path -Path "$workDir\$package.$version.zip")
+    {
+        Write-Host "Retrieving $package @$version for compatibility check"
+        Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/$package/$version -Outfile "$workDir\$package.$version.zip"
+    }
 }
-
-if (Test-Path -Path $lockFile)
+if (Test-Path -Path "$workDir\$package\$version")
 {
-    Remove-Item -Path $lockFile
+    Write-Debug "Previous package version already extracted"
+}
+else
+{
+    Expand-Archive -LiteralPath "$workDir\$package.$version.zip" -DestinationPath "$workDir\$package\$version" -Force
 }
