@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class SumMetricAggregator : ISumMetric, IMetricBuilder
+    internal class SumMetricAggregator : ISumMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
         private Type valueType;

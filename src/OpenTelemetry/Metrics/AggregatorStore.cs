@@ -69,12 +69,10 @@ namespace OpenTelemetry.Metrics
                 {
                     metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, false, true)));
                     metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true, true)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
                 }
                 else if (this.instrument.GetType().Name.Contains("Gauge"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags, false)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags)));
                 }
                 else if (this.instrument.GetType().Name.Contains("Histogram"))
                 {
@@ -82,11 +80,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags, false)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, false, true)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true, true)));
                     metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new HistogramMetricAggregator(name, dt, tags, false)));
                 }
             }
 
@@ -205,9 +199,9 @@ namespace OpenTelemetry.Metrics
         internal class MetricAgg
         {
             internal int TimePeriod;
-            internal IMetricBuilder Metric;
+            internal IAggregator Metric;
 
-            internal MetricAgg(int timePeriod, IMetricBuilder metric)
+            internal MetricAgg(int timePeriod, IAggregator metric)
             {
                 this.TimePeriod = timePeriod;
                 this.Metric = metric;

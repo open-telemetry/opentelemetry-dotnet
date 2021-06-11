@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class HistogramMetricAggregator : IHistogramMetric, IMetricBuilder
+    internal class HistogramMetricAggregator : IHistogramMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();

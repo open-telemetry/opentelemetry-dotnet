@@ -20,8 +20,6 @@ namespace OpenTelemetry.Metrics
 {
     internal interface IGaugeMetric : IMetric
     {
-        bool IsDeltaTemporality { get; }
-
         IEnumerable<IExemplar> Exemplars { get; }
 
         IDataPoint LastValue { get; }

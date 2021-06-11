@@ -19,20 +19,19 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class GaugeMetricAggregator : IGaugeMetric, IMetricBuilder
+    internal class GaugeMetricAggregator : IGaugeMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
         private long longValue;
         private double doubleValue;
 
-        internal GaugeMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        internal GaugeMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
-            this.IsDeltaTemporality = isDelta;
         }
 
         public string Name { get; private set; }
@@ -42,8 +41,6 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset EndTimeInclusive { get; private set; }
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
-
-        public bool IsDeltaTemporality { get; }
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
@@ -93,7 +90,7 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt)
         {
-            var cloneItem = new GaugeMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new GaugeMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {

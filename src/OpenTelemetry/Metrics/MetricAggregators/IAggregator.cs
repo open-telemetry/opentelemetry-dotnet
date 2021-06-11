@@ -1,4 +1,4 @@
-// <copyright file="IMetricBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="IAggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IMetricBuilder
+    internal interface IAggregator
     {
         void Update<T>(DateTimeOffset dt, T value)
             where T : struct;
