@@ -55,7 +55,14 @@ namespace OpenTelemetry.Metrics
         /// <param name="mark">Timer state.</param>
         public void Stop(TimerMarkWithTag<T> mark)
         {
-            mark.Dispose();
+            if (mark.TimerMark.Timer == this)
+            {
+                mark.Dispose();
+            }
+            else
+            {
+                throw new Exception("Mismatched Timer!");
+            }
         }
 
         /// <summary>
@@ -74,26 +81,31 @@ namespace OpenTelemetry.Metrics
         /// <param name="tags">Attributes.</param>
         public void Stop(TimerMark<T> mark, params KeyValuePair<string, object>[] tags)
         {
-            mark.Watch.Stop();
-            this.Record(mark.Watch.Elapsed, tags);
-            mark.Watch = null;
+            if (mark.Timer == this)
+            {
+                this.Record(mark.ElapsedMilliseconds, tags);
+            }
+            else
+            {
+                throw new Exception("Mismatched Timer!");
+            }
         }
 
-        internal void Record(TimeSpan elapsed, KeyValuePair<string, object>[] tags)
+        internal void Record(int elapsed, KeyValuePair<string, object>[] tags)
         {
             T value;
 
             if (typeof(T) == typeof(int))
             {
-                value = (T)(object)(int)elapsed.TotalMilliseconds;
+                value = (T)(object)(int)elapsed;
             }
             else if (typeof(T) == typeof(long))
             {
-                value = (T)(object)(long)elapsed.TotalMilliseconds;
+                value = (T)(object)(long)elapsed;
             }
             else if (typeof(T) == typeof(double))
             {
-                value = (T)(object)(double)elapsed.TotalMilliseconds;
+                value = (T)(object)(double)elapsed;
             }
             else
             {
@@ -107,16 +119,32 @@ namespace OpenTelemetry.Metrics
         /// TimerMark records the start state of a Timer instrument.
         /// </summary>
         /// <typeparam name="T1">Support <c>int</c>, <c>long</c>, <c>double</c>.</typeparam>
-        public class TimerMark<T1>
+        public struct TimerMark<T1>
             where T1 : struct
         {
-            internal Timer<T1> Timer;
-            internal Stopwatch Watch = new Stopwatch();
+            internal readonly Timer<T1> Timer;
+
+            private readonly int ticks;
 
             internal TimerMark(Timer<T1> timer)
             {
                 this.Timer = timer;
-                this.Watch.Start();
+                this.ticks = Environment.TickCount;
+            }
+
+            internal int ElapsedMilliseconds
+            {
+                get
+                {
+                    var ticks = Environment.TickCount;
+                    var elapsed = ticks - this.ticks;
+                    if (elapsed < 0)
+                    {
+                        elapsed += int.MaxValue - this.ticks;
+                    }
+
+                    return elapsed;
+                }
             }
         }
 
@@ -124,15 +152,16 @@ namespace OpenTelemetry.Metrics
         /// TimerMarkWithTag records the start state of a Timer instrument.
         /// </summary>
         /// <typeparam name="T1">Support <c>int</c>, <c>long</c>, <c>double</c>.</typeparam>
-        public class TimerMarkWithTag<T1> : TimerMark<T1>, IDisposable
+        public struct TimerMarkWithTag<T1> : IDisposable
             where T1 : struct
         {
-            internal KeyValuePair<string, object>[] Tags;
+            internal readonly TimerMark<T1> TimerMark;
+            private readonly KeyValuePair<string, object>[] tags;
 
             internal TimerMarkWithTag(Timer<T1> timer, params KeyValuePair<string, object>[] tags)
-                : base(timer)
             {
-                this.Tags = tags;
+                this.TimerMark = new TimerMark<T1>(timer);
+                this.tags = tags;
             }
 
             /// <summary>
@@ -140,9 +169,7 @@ namespace OpenTelemetry.Metrics
             /// </summary>
             public void Dispose()
             {
-                this.Watch.Stop();
-                this.Timer.Record(this.Watch.Elapsed, this.Tags);
-                this.Watch = null;
+                this.TimerMark.Timer.Record(this.TimerMark.ElapsedMilliseconds, this.tags);
             }
         }
     }
