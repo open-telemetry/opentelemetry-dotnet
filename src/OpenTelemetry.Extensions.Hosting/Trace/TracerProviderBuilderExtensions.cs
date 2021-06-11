@@ -76,7 +76,9 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
+        /// Register a callback action to configure the <see
+        /// cref="TracerProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
         /// </summary>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>

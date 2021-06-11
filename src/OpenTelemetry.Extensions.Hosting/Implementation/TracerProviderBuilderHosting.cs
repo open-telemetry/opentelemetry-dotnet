@@ -30,6 +30,7 @@ namespace OpenTelemetry.Trace
         private readonly List<Type> processorTypes = new List<Type>();
         private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
         private Type samplerType;
+        private bool completed;
 
         public TracerProviderBuilderHosting(IServiceCollection services)
         {
@@ -47,6 +48,8 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
+            this.EnsureSupported();
+
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
                     typeof(TInstrumentation).Name,
@@ -59,6 +62,8 @@ namespace OpenTelemetry.Trace
         public TracerProviderBuilder AddProcessor<T>()
             where T : BaseProcessor<Activity>
         {
+            this.EnsureSupported();
+
             this.processorTypes.Add(typeof(T));
             return this;
         }
@@ -66,6 +71,8 @@ namespace OpenTelemetry.Trace
         public TracerProviderBuilder SetSampler<T>()
             where T : Sampler
         {
+            this.EnsureSupported();
+
             this.samplerType = typeof(T);
             return this;
         }
@@ -77,12 +84,21 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(configure));
             }
 
+            this.EnsureSupported();
+
             this.configurationActions.Add(configure);
             return this;
         }
 
         public TracerProvider Build(IServiceProvider serviceProvider)
         {
+            foreach (Action<IServiceProvider, TracerProviderBuilder> configureAction in this.configurationActions)
+            {
+                configureAction(serviceProvider, this);
+            }
+
+            this.completed = true;
+
             foreach (InstrumentationFactory instrumentationFactory in this.instrumentationFactories)
             {
                 this.AddInstrumentation(
@@ -101,12 +117,15 @@ namespace OpenTelemetry.Trace
                 this.SetSampler((Sampler)serviceProvider.GetRequiredService(this.samplerType));
             }
 
-            foreach (Action<IServiceProvider, TracerProviderBuilder> configureAction in this.configurationActions)
-            {
-                configureAction(serviceProvider, this);
-            }
-
             return this.Build();
+        }
+
+        private void EnsureSupported()
+        {
+            if (this.completed)
+            {
+                throw new NotSupportedException("A deferred action cannot be registered after the application IServiceProvider has been constructed.");
+            }
         }
 
         private readonly struct InstrumentationFactory
