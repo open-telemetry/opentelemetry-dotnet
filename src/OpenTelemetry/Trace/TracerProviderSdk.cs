@@ -32,10 +32,9 @@ namespace OpenTelemetry.Trace
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly Dictionary<string, bool> legacyActivityOperationNames;
+        private readonly Action<Activity> getRequestedDataAction;
+        private readonly bool supportLegacyActivity;
         private BaseProcessor<Activity> processor;
-        private Action<Activity> getRequestedDataAction;
-        private bool supportLegacyActivity;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -47,7 +46,6 @@ namespace OpenTelemetry.Trace
         {
             this.Resource = resource;
             this.sampler = sampler;
-            this.legacyActivityOperationNames = legacyActivityOperationNames;
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             foreach (var processor in processors)
@@ -221,6 +219,12 @@ namespace OpenTelemetry.Trace
         }
 
         internal Resource Resource { get; }
+
+        internal List<object> Instrumentations => this.instrumentations;
+
+        internal BaseProcessor<Activity> Processor => this.processor;
+
+        internal Sampler Sampler => this.sampler;
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
