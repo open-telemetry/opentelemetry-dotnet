@@ -118,6 +118,28 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 }));
         }
 
+        [Fact]
+        public void AddOpenTelemetryTracerProvider_NestedConfigureCallbacks()
+        {
+            int configureCalls = 0;
+            var services = new ServiceCollection();
+            services.AddOpenTelemetryTracing(builder => builder
+                .Configure((sp1, builder1) =>
+                {
+                    configureCalls++;
+                    builder1.Configure((sp2, builder2) =>
+                    {
+                        configureCalls++;
+                    });
+                }));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(2, configureCalls);
+        }
+
         [Fact(Skip = "Known limitation. See issue 1215.")]
         public void AddOpenTelemetryTracerProvider_Idempotent()
         {
