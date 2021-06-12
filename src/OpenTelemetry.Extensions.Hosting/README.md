@@ -75,7 +75,8 @@ public static class MyLibraryExtensions
     {
         if (!(tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder))
         {
-            throw new NotSupportedException("MyFeature requires an IDeferredTracerProviderBuilder instance.");
+            throw new NotSupportedException(
+                "MyFeature requires an IDeferredTracerProviderBuilder instance.");
         }
 
         deferredTracerProviderBuilder.Services
