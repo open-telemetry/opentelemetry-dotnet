@@ -43,17 +43,17 @@ namespace OpenTelemetry.Metrics
         /// Start a timer for a Timer instrument.
         /// </summary>
         /// <param name="tags">Attributes.</param>
-        /// <returns>Timer (<see cref="TimerMarkWithTag{T}"/>) state.</returns>
-        public TimerMarkWithTag<T> Start(params KeyValuePair<string, object>[] tags)
+        /// <returns>Timer (<see cref="TimeMarkerWithTag{T}"/>) state.</returns>
+        public TimeMarkerWithTag<T> Start(params KeyValuePair<string, object>[] tags)
         {
-            return new TimerMarkWithTag<T>(this, tags);
+            return new TimeMarkerWithTag<T>(this, tags);
         }
 
         /// <summary>
         /// Stop and record time for a Timer instrument.
         /// </summary>
         /// <param name="mark">Timer state.</param>
-        public void Stop(TimerMarkWithTag<T> mark)
+        public void Stop(TimeMarkerWithTag<T> mark)
         {
             if (mark.TimerMark.Timer == this)
             {
@@ -68,10 +68,10 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Start a timer for a Timer instrument.
         /// </summary>
-        /// <returns>Timer (<see cref="TimerMark{T}"/>) state.</returns>
-        public TimerMark<T> Start()
+        /// <returns>Timer (<see cref="TimeMarker{T}"/>) state.</returns>
+        public TimeMarker<T> Start()
         {
-            return new TimerMark<T>(this);
+            return new TimeMarker<T>(this);
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="mark">Timer state.</param>
         /// <param name="tags">Attributes.</param>
-        public void Stop(TimerMark<T> mark, params KeyValuePair<string, object>[] tags)
+        public void Stop(TimeMarker<T> mark, params KeyValuePair<string, object>[] tags)
         {
             if (mark.Timer == this)
             {
@@ -116,17 +116,17 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// TimerMark records the start state of a Timer instrument.
+        /// TimeMarker records the start state of a Timer instrument.
         /// </summary>
         /// <typeparam name="T1">Support <c>int</c>, <c>long</c>, <c>double</c>.</typeparam>
-        public struct TimerMark<T1>
+        public struct TimeMarker<T1>
             where T1 : struct
         {
             internal readonly Timer<T1> Timer;
 
             private readonly int ticks;
 
-            internal TimerMark(Timer<T1> timer)
+            internal TimeMarker(Timer<T1> timer)
             {
                 this.Timer = timer;
                 this.ticks = Environment.TickCount;
@@ -149,18 +149,18 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// TimerMarkWithTag records the start state of a Timer instrument.
+        /// TimeMarkerWithTag records the start state of a Timer instrument.
         /// </summary>
         /// <typeparam name="T1">Support <c>int</c>, <c>long</c>, <c>double</c>.</typeparam>
-        public struct TimerMarkWithTag<T1> : IDisposable
+        public struct TimeMarkerWithTag<T1> : IDisposable
             where T1 : struct
         {
-            internal readonly TimerMark<T1> TimerMark;
+            internal readonly TimeMarker<T1> TimerMark;
             private readonly KeyValuePair<string, object>[] tags;
 
-            internal TimerMarkWithTag(Timer<T1> timer, params KeyValuePair<string, object>[] tags)
+            internal TimeMarkerWithTag(Timer<T1> timer, params KeyValuePair<string, object>[] tags)
             {
-                this.TimerMark = new TimerMark<T1>(timer);
+                this.TimerMark = new TimeMarker<T1>(timer);
                 this.tags = tags;
             }
 
