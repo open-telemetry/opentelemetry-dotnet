@@ -340,3 +340,5 @@ ASALocalRun/
 
 # SonarQube folder
 /.sonarqube
+
+/src/LastMajorVersionBinaries

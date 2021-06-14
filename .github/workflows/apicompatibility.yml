@@ -1,0 +1,21 @@
+name: API Compatibility
+
+on:
+  pull_request:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    env:
+      CheckAPICompatibility: true
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore

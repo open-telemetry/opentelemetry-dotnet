@@ -38,6 +38,7 @@
     <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <NewtonsoftJsonPkgVer>[12.0.2,13.0)</NewtonsoftJsonPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
+    <OTelPreviousStableVer>1.0.1</OTelPreviousStableVer>
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
