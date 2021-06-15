@@ -22,8 +22,7 @@ namespace OpenTelemetry.Metrics
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
         private readonly List<string> meterSources = new List<string>();
-        private int observationPeriodMilliseconds = 1000;
-        private int collectionPeriodMilliseconds = 1000;
+        private int defaultCollectionPeriodMilliseconds = 1000;
 
         internal MeterProviderBuilderSdk()
         {
@@ -31,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
-        internal List<MetricProcessor> ExportProcessors { get; } = new List<MetricProcessor>();
+        internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -53,15 +52,9 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk SetObservationPeriod(int periodMilliseconds)
+        internal MeterProviderBuilderSdk SetDefaultCollectionPeriod(int periodMilliseconds)
         {
-            this.observationPeriodMilliseconds = periodMilliseconds;
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk SetCollectionPeriod(int periodMilliseconds)
-        {
-            this.collectionPeriodMilliseconds = periodMilliseconds;
+            this.defaultCollectionPeriodMilliseconds = periodMilliseconds;
             return this;
         }
 
@@ -73,17 +66,20 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
         {
-            this.ExportProcessors.Add(processor);
+            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, this.defaultCollectionPeriodMilliseconds));
+            return this;
+        }
+
+        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor, int periodMilliseconds)
+        {
+            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, periodMilliseconds));
             return this;
         }
 
         internal MeterProvider Build()
         {
-            // TODO: Need to review using a struct for BuildOptions
             return new MeterProviderSdk(
                 this.meterSources,
-                this.observationPeriodMilliseconds,
-                this.collectionPeriodMilliseconds,
                 this.MeasurementProcessors.ToArray(),
                 this.ExportProcessors.ToArray());
         }

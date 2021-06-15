@@ -42,14 +42,12 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            bool prompt = true;
-
             Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
-                    (MetricsOptions options) => TestMetrics.Run(options, ref prompt),
+                    (MetricsOptions options) => TestMetrics.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -60,11 +58,6 @@ namespace Examples.Console
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
-
-            if (prompt)
-            {
-                System.Console.ReadLine();
-            }
         }
     }
 
@@ -103,25 +96,28 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('p', "prompt", HelpText = "Prompt for exit", Default = false)]
-        public bool? Prompt { get; set; }
+        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
+        public bool? FlagGauge { get; set; }
+
+        [Option('u', "UpDownCounter", HelpText = "Include Observable Up/Down Counter.", Required = false)]
+        public bool? FlagUpDownCounter { get; set; }
+
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false)]
+        public bool? FlagCounter { get; set; }
+
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false)]
+        public bool? FlagHistogram { get; set; }
+
+        [Option("defaultCollection", Default = 500, HelpText = "Default collection period in milliseconds.", Required = false)]
+        public int DefaultCollectionPeriodMilliseconds { get; set; }
 
         [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
         public int RunTime { get; set; }
 
-        [Option("observationPeriodMilliseconds", Default = 100, HelpText = "Observation period.", Required = false)]
-        public int ObservationPeriodMilliseconds { get; set; }
-
-        [Option("collectionPeriodMilliseconds", Default = 500, HelpText = "Collection period.", Required = false)]
-        public int CollectionPeriodMilliseconds { get; set; }
-
-        [Option('o', "runObservable", Default = true, HelpText = "Run observable counters.", Required = false)]
-        public bool? RunObservable { get; set; }
-
-        [Option('t', "numTasks", Default = 1, HelpText = "Run # of tasks.", Required = false)]
+        [Option("tasks", Default = 1, HelpText = "Run # of concurrent tasks.", Required = false)]
         public int NumTasks { get; set; }
 
-        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops. 0 = No Limit", Required = false)]
+        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
         public int MaxLoops { get; set; }
     }
 

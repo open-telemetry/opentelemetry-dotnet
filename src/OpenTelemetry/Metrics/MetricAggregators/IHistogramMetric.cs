@@ -1,4 +1,4 @@
-// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
+// <copyright file="IHistogramMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,16 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricItem
+    internal interface IHistogramMetric : IMetric
     {
-        internal List<IMetric> Metrics = new List<IMetric>();
+        bool IsDeltaTemporality { get; }
 
-        internal MetricItem()
-        {
-        }
+        IEnumerable<IExemplar> Exemplars { get; }
+
+        long PopulationCount { get; }
+
+        double PopulationSum { get; }
+
+        IEnumerable<HistogramBucket> Buckets { get; }
     }
 }

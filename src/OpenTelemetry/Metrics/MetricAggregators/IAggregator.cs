@@ -1,4 +1,4 @@
-// <copyright file="Aggregator.cs" company="OpenTelemetry Authors">
+// <copyright file="IAggregator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,14 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
-    internal abstract class Aggregator
+    internal interface IAggregator
     {
-        internal virtual void Update<T>(DateTimeOffset dt, T value)
-            where T : struct
-        {
-        }
+        void Update<T>(DateTimeOffset dt, T value)
+            where T : struct;
 
-        internal virtual IEnumerable<Metric> Collect()
-        {
-            return Enumerable.Empty<Metric>();
-        }
+        IMetric Collect(DateTimeOffset dt);
     }
 }

@@ -16,65 +16,60 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
     internal readonly struct DataPoint : IDataPoint
     {
-        internal readonly Type ValueType;
-        internal readonly int IntValue;
-        internal readonly double DoubleValue;
+        private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
 
-        private readonly DateTimeOffset timestamp;
+        private readonly Type valueType;
+        private readonly long longValue;
+        private readonly double doubleValue;
 
-        private readonly KeyValuePair<string, object>[] tags;
-
-        internal DataPoint(DateTimeOffset timestamp, int value, KeyValuePair<string, object>[] tags)
+        internal DataPoint(DateTimeOffset timestamp, long value, KeyValuePair<string, object>[] tags)
         {
-            this.timestamp = timestamp;
-            this.tags = tags;
-            this.ValueType = value.GetType();
-            this.IntValue = value;
-            this.DoubleValue = 0;
+            this.Timestamp = timestamp;
+            this.Tags = tags;
+            this.valueType = typeof(long);
+            this.longValue = value;
+            this.doubleValue = 0;
         }
 
         internal DataPoint(DateTimeOffset timestamp, double value, KeyValuePair<string, object>[] tags)
         {
-            this.timestamp = timestamp;
-            this.tags = tags;
-            this.ValueType = value.GetType();
-            this.IntValue = 0;
-            this.DoubleValue = value;
+            this.Timestamp = timestamp;
+            this.Tags = tags;
+            this.valueType = typeof(double);
+            this.longValue = 0;
+            this.doubleValue = value;
         }
 
-        public KeyValuePair<string, object>[] Tags
+        internal DataPoint(DateTimeOffset timestamp, long value)
+            : this(timestamp, value, DataPoint.EmptyTag)
         {
-            get
-            {
-                return this.tags;
-            }
         }
 
-        public DateTimeOffset Timestamp
+        internal DataPoint(DateTimeOffset timestamp, double value)
+            : this(timestamp, value, DataPoint.EmptyTag)
         {
-            get
-            {
-                return this.timestamp;
-            }
         }
+
+        public DateTimeOffset Timestamp { get; }
+
+        public readonly KeyValuePair<string, object>[] Tags { get; }
 
         public object Value
         {
             get
             {
-                if (this.ValueType == typeof(int))
+                if (this.valueType == typeof(long))
                 {
-                    return this.IntValue;
+                    return this.longValue;
                 }
-                else if (this.ValueType == typeof(double))
+                else if (this.valueType == typeof(double))
                 {
-                    return this.DoubleValue;
+                    return this.doubleValue;
                 }
                 else
                 {
@@ -89,7 +84,12 @@ namespace OpenTelemetry.Metrics
 
             if (typeof(T) == typeof(int))
             {
+                // Promoted to Long
                 dp = new DataPoint(timestamp, (int)(object)value, tags);
+            }
+            else if (typeof(T) == typeof(long))
+            {
+                dp = new DataPoint(timestamp, (long)(object)value, tags);
             }
             else if (typeof(T) == typeof(double))
             {

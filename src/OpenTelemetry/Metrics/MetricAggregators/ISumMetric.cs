@@ -1,4 +1,4 @@
-// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
+// <copyright file="ISumMetric.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,14 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MetricItem
+    internal interface ISumMetric : IMetric
     {
-        internal List<IMetric> Metrics = new List<IMetric>();
+        bool IsDeltaTemporality { get; }
 
-        internal MetricItem()
-        {
-        }
+        bool IsMonotonic { get; }
+
+        IEnumerable<IExemplar> Exemplars { get; }
+
+        object Sum { get; }
     }
 }

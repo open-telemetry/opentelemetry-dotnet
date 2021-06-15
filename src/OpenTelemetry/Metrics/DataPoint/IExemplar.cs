@@ -1,4 +1,4 @@
-// <copyright file="Metric.cs" company="OpenTelemetry Authors">
+// <copyright file="IExemplar.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,19 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    // TODO: Need to determine what a Metric actually contains
-
-    internal struct Metric
+    internal interface IExemplar
     {
-        internal readonly string Name;
-        internal IDataPoint Point;
+        DateTimeOffset Timestamp { get; }
 
-        internal Metric(string name, IDataPoint point)
-        {
-            this.Name = name;
-            this.Point = point;
-        }
+        KeyValuePair<string, object>[] FilteredTags { get; }
+
+        byte[] SpanId { get; }
+
+        byte[] TraceId { get; }
+
+        object Value { get; }
     }
 }

@@ -21,13 +21,26 @@ namespace OpenTelemetry.Metrics
 {
     public class MetricConsoleExporter : MetricProcessor
     {
+        private string name;
+
+        public MetricConsoleExporter(string name)
+        {
+            this.name = name;
+        }
+
         public override void OnEnd(MetricItem data)
         {
             foreach (var metric in data.Metrics)
             {
-                var tags = metric.Point?.Tags.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-                var msg = $"{metric.Name}[{string.Join(";", tags)}] = {metric.Point?.Value.ToString()}";
-                Console.WriteLine($"Export: {msg}");
+                var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+
+                var kind = metric.GetType().Name;
+                var value = metric.ToDisplayString();
+
+                string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
+
+                var msg = $"Export[{this.name}] {time} {metric.Name} [{string.Join(";", tags)}] {kind} {value}";
+                Console.WriteLine(msg);
             }
         }
     }

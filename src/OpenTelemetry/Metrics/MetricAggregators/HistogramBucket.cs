@@ -1,4 +1,4 @@
-// <copyright file="MetricItem.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramBucket.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Metrics
 {
-    public class MetricItem
+    internal struct HistogramBucket
     {
-        internal List<IMetric> Metrics = new List<IMetric>();
-
-        internal MetricItem()
-        {
-        }
+        internal double LowBoundary;
+        internal double HighBoundary;
+        internal long Count;
     }
 }
