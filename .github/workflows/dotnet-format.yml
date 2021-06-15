@@ -1,6 +1,11 @@
 name: dotnet format
 
 on:
+  push:
+    branches: [ main, metrics ]
+    paths:
+    - '**.cs'
+    - '.editorconfig'
   pull_request:
     branches: [ main, metrics ]
     paths:

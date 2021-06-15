@@ -1,6 +1,10 @@
 name: Linux
 
 on:
+  push:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
   pull_request:
     branches: [ main, metrics ]
     paths-ignore:

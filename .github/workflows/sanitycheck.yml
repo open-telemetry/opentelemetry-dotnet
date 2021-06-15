@@ -1,6 +1,8 @@
 name: sanitycheck
 
 on:
+  push:
+    branches: [ main, metrics ]
   pull_request:
     branches: [ main, metrics ]
 
