@@ -37,6 +37,7 @@ namespace OpenTelemetry.Metrics
         public Timer(Meter meter, string name, string description)
             : base(meter, name, "ms", description)
         {
+            this.Publish();
         }
 
         /// <summary>
@@ -83,36 +84,12 @@ namespace OpenTelemetry.Metrics
         {
             if (mark.Timer == this)
             {
-                this.Record(mark.ElapsedMilliseconds, tags);
+                this.RecordMeasurement(mark.ElapsedMilliseconds, tags);
             }
             else
             {
                 throw new Exception("Mismatched Timer!");
             }
-        }
-
-        internal void Record(int elapsed, KeyValuePair<string, object>[] tags)
-        {
-            T value;
-
-            if (typeof(T) == typeof(int))
-            {
-                value = (T)(object)(int)elapsed;
-            }
-            else if (typeof(T) == typeof(long))
-            {
-                value = (T)(object)(long)elapsed;
-            }
-            else if (typeof(T) == typeof(double))
-            {
-                value = (T)(object)(double)elapsed;
-            }
-            else
-            {
-                throw new Exception("Unsupported Type");
-            }
-
-            this.RecordMeasurement(value, tags);
         }
 
         /// <summary>
@@ -124,23 +101,39 @@ namespace OpenTelemetry.Metrics
         {
             internal readonly Timer<T1> Timer;
 
-            private readonly int ticks;
+            private static long ticksPerMilliseconds = Stopwatch.Frequency / 1000;
+
+            private readonly long ticks;
 
             internal TimeMarker(Timer<T1> timer)
             {
                 this.Timer = timer;
-                this.ticks = Environment.TickCount;
+                this.ticks = Stopwatch.GetTimestamp();
             }
 
-            internal int ElapsedMilliseconds
+            internal T1 ElapsedMilliseconds
             {
                 get
                 {
-                    var ticks = Environment.TickCount;
-                    var elapsed = ticks - this.ticks;
-                    if (elapsed < 0)
+                    var ticks = Stopwatch.GetTimestamp();
+                    var elapsedTicks = ticks - this.ticks;
+
+                    T1 elapsed;
+                    if (typeof(T1) == typeof(int))
                     {
-                        elapsed += int.MaxValue - this.ticks;
+                        elapsed = (T1)(object)(int)(elapsedTicks / TimeMarker<T1>.ticksPerMilliseconds);
+                    }
+                    else if (typeof(T1) == typeof(long))
+                    {
+                        elapsed = (T1)(object)(long)(elapsedTicks / TimeMarker<T1>.ticksPerMilliseconds);
+                    }
+                    else if (typeof(T1) == typeof(double))
+                    {
+                        elapsed = (T1)(object)(double)(elapsedTicks / TimeMarker<T1>.ticksPerMilliseconds);
+                    }
+                    else
+                    {
+                        throw new Exception("Unsupported Type");
                     }
 
                     return elapsed;
@@ -169,7 +162,7 @@ namespace OpenTelemetry.Metrics
             /// </summary>
             public void Dispose()
             {
-                this.TimerMark.Timer.Record(this.TimerMark.ElapsedMilliseconds, this.tags);
+                this.TimerMark.Timer.RecordMeasurement(this.TimerMark.ElapsedMilliseconds, this.tags);
             }
         }
     }
