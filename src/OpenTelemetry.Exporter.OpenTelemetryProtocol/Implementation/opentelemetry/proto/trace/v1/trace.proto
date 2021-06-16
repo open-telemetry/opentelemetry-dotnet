@@ -32,6 +32,11 @@ message ResourceSpans {
 
   // A list of InstrumentationLibrarySpans that originate from a resource.
   repeated InstrumentationLibrarySpans instrumentation_library_spans = 2;
+
+  // This schema_url applies to the data in the "resource" field. It does not apply
+  // to the data in the "instrumentation_library_spans" field which have their own
+  // schema_url field.
+  string schema_url = 3;
 }
 
 // A collection of Spans produced by an InstrumentationLibrary.
@@ -43,6 +48,9 @@ message InstrumentationLibrarySpans {
 
   // A list of Spans that originate from an instrumentation library.
   repeated Span spans = 2;
+
+  // This schema_url applies to all spans and span events in the "spans" field.
+  string schema_url = 3;
 }
 
 // Span represents a single operation within a trace. Spans can be
@@ -107,7 +115,7 @@ message Span {
     SPAN_KIND_UNSPECIFIED = 0;
 
     // Indicates that the span represents an internal operation within an application,
-    // as opposed to an operations happening at the boundaries. Default value.
+    // as opposed to an operation happening at the boundaries. Default value.
     SPAN_KIND_INTERNAL = 1;
 
     // Indicates that the span covers server-side handling of an RPC or other
@@ -300,7 +308,7 @@ message Status {
   string message = 2;
 
   // For the semantics of status codes see
-  // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#set-status
+  // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status
   enum StatusCode {
     // The default status.
     STATUS_CODE_UNSET               = 0;
