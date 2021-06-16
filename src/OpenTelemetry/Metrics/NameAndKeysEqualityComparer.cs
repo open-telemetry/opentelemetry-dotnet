@@ -1,4 +1,4 @@
-// <copyright file="StringArrayEqualityComparer.cs" company="OpenTelemetry Authors">
+// <copyright file="NameAndKeysEqualityComparer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,30 +19,35 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class StringArrayEqualityComparer : IEqualityComparer<string[]>
+    internal class NameAndKeysEqualityComparer : IEqualityComparer<AggregatorStore.NameAndKeys>
     {
-        public bool Equals(string[] strings1, string[] strings2)
+        public bool Equals(AggregatorStore.NameAndKeys item1, AggregatorStore.NameAndKeys item2)
         {
-            if (ReferenceEquals(strings1, strings2))
+            if (ReferenceEquals(item1, item2))
             {
                 return true;
             }
 
-            if (ReferenceEquals(strings1, null) || ReferenceEquals(strings2, null))
+            if (ReferenceEquals(item1, null) || ReferenceEquals(item2, null))
             {
                 return false;
             }
 
-            var len1 = strings1.Length;
+            if (!item1.Name.Equals(item2.Name, StringComparison.Ordinal))
+            {
+                return false;
+            }
 
-            if (len1 != strings2.Length)
+            var len1 = item1.Keys.Length;
+
+            if (len1 != item2.Keys.Length)
             {
                 return false;
             }
 
             for (int i = 0; i < len1; i++)
             {
-                if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
+                if (!item1.Keys[i].Equals(item2.Keys[i], StringComparison.Ordinal))
                 {
                     return false;
                 }
@@ -51,15 +56,17 @@ namespace OpenTelemetry.Metrics
             return true;
         }
 
-        public int GetHashCode(string[] strings)
+        public int GetHashCode(AggregatorStore.NameAndKeys item)
         {
             int hash = 17;
 
             unchecked
             {
-                for (int i = 0; i < strings.Length; i++)
+                hash = (hash * 31) + item.Name.GetHashCode();
+
+                for (int i = 0; i < item.Keys.Length; i++)
                 {
-                    hash = (hash * 31) + strings[i].GetHashCode();
+                    hash = (hash * 31) + item.Keys[i].GetHashCode();
                 }
             }
 

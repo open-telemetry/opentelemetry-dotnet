@@ -96,5 +96,38 @@ namespace OpenTelemetry.Metrics.Tests
 
             Task.Delay(3000).Wait();
         }
+
+        [Fact]
+        public void ViewTest()
+        {
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("BasicAllTest")
+                .SetDefaultCollectionPeriod(1000)
+                .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
+                .AddView(
+                    (inst) => true,
+                    new MetricAggregatorType[] { MetricAggregatorType.SUMMARY },
+                    "test",
+                    new IncludeTagRule((tag) => tag != "label1"),
+                    new RequireTagRule("label2", "defaultValue"))
+                .AddExportProcessor(new MetricConsoleExporter("Test1"))
+                .Build();
+
+            using var meter = new Meter("BasicAllTest", "0.0.1");
+
+            var counter = meter.CreateCounter<int>("counter");
+
+            counter.Add(
+                100,
+                new KeyValuePair<string, object?>("label1", "value1"),
+                new KeyValuePair<string, object?>("label2", "value2"));
+
+            counter.Add(
+                100,
+                new KeyValuePair<string, object?>("label1", "value1"),
+                new KeyValuePair<string, object?>("label3", "value3"));
+
+            Task.Delay(3000).Wait();
+        }
     }
 }

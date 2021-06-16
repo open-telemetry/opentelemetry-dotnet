@@ -42,9 +42,12 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
+            MetricView[] metricViews,
             MeasurementProcessor[] measurementProcessors,
             KeyValuePair<MetricProcessor, int>[] metricExportProcessors)
         {
+            this.MetricViews = metricViews;
+
             // Setup our Processors
 
             this.MeasurementProcessors.AddRange(measurementProcessors);
@@ -99,6 +102,8 @@ namespace OpenTelemetry.Metrics
                 this.collectorTasks.Add(Task.Run(async () => await this.CollectorTask(token, group.Key, group.ToArray())));
             }
         }
+
+        internal MetricView[] MetricViews { get; }
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 

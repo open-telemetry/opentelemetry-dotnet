@@ -16,13 +16,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
     internal class ThreadStaticStorage
     {
+        internal readonly MetricViewBuilder ViewBuilder;
+
+        internal readonly AggregatorStore.NameAndKeys LocalNameAndKeys;
+
         private const int MaxTagCacheSize = 3;
 
         [ThreadStatic]
@@ -36,6 +39,10 @@ namespace OpenTelemetry.Metrics
             {
                 this.tagStorage[i] = new TagStorage(i);
             }
+
+            this.ViewBuilder = new MetricViewBuilder();
+
+            this.LocalNameAndKeys = new AggregatorStore.NameAndKeys(null, null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

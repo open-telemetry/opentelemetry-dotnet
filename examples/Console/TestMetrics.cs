@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -32,8 +33,35 @@ namespace Examples.Console
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
                 .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
+
+                // Add multiple exporters
                 .AddExportProcessor(new MetricConsoleExporter("A"))
                 .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds)
+
+                // Add multiple Views
+
+                .AddView(
+                    (inst) => true,
+                    new MetricAggregatorType[] { MetricAggregatorType.SUM, MetricAggregatorType.SUMMARY })
+
+                .AddView(
+                    (inst) => true,
+                    new MetricAggregatorType[] { MetricAggregatorType.HISTOGRAM },
+                    "view1")
+
+                .AddView(
+                    (inst) => true,
+                    new MetricAggregatorType[] { MetricAggregatorType.GAUGE },
+                    "view2",
+                    new RequireTagRule("tag1", "Default"))
+
+                .AddView(
+                    (inst) => true,
+                    new MetricAggregatorType[] { MetricAggregatorType.SUM_DELTA },
+                    "view3",
+                    new IncludeTagRule((tag) => tag == "tag1"),
+                    new RequireTagRule("tag2", "Default"))
+
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
@@ -56,9 +84,9 @@ namespace Examples.Console
                 {
                     return new List<Measurement<int>>()
                     {
-                        new Measurement<int>(
-                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                            new KeyValuePair<string, object>("tag1", "value1")),
+                        new Measurement<int>((int)600, new KeyValuePair<string, object>("tag1", "value1")),
+                        new Measurement<int>((int)600, new KeyValuePair<string, object>("tag2", "value2")),
+                        new Measurement<int>((int)600, new KeyValuePair<string, object>("tag1", "value3"), new KeyValuePair<string, object>("tag2", "value3")),
                     };
                 });
             }
@@ -69,9 +97,9 @@ namespace Examples.Console
                 {
                     return new List<Measurement<int>>()
                     {
-                        new Measurement<int>(
-                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                            new KeyValuePair<string, object>("tag1", "value1")),
+                        new Measurement<int>((int)500, new KeyValuePair<string, object>("tag1", "value1")),
+                        new Measurement<int>((int)500, new KeyValuePair<string, object>("tag2", "value2")),
+                        new Measurement<int>((int)500, new KeyValuePair<string, object>("tag1", "value3"), new KeyValuePair<string, object>("tag2", "value3")),
                     };
                 });
             }
@@ -97,45 +125,39 @@ namespace Examples.Console
                             break;
                         }
 
-                        histogram?.Record(10);
+                        // Histogram
+
+                        histogram?.Record(100);
 
                         histogram?.Record(
                             100,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
                         histogram?.Record(
-                            200,
-                            new KeyValuePair<string, object>("tag1", "value2"),
+                            100,
                             new KeyValuePair<string, object>("tag2", "value2"));
 
                         histogram?.Record(
                             100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
+                            new KeyValuePair<string, object>("tag1", "value3"),
+                            new KeyValuePair<string, object>("tag2", "value3"));
 
-                        histogram?.Record(
-                            200,
-                            new KeyValuePair<string, object>("tag2", "value2"),
-                            new KeyValuePair<string, object>("tag1", "value2"));
+                        // Counter
 
-                        counter?.Add(10);
+                        counter?.Add(200);
 
                         counter?.Add(
-                            100,
+                            200,
                             new KeyValuePair<string, object>("tag1", "value1"));
 
                         counter?.Add(
                             200,
-                            new KeyValuePair<string, object>("tag1", "value2"),
                             new KeyValuePair<string, object>("tag2", "value2"));
 
                         counter?.Add(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
-
-                        counter?.Add(
                             200,
-                            new KeyValuePair<string, object>("tag2", "value2"),
-                            new KeyValuePair<string, object>("tag1", "value2"));
+                            new KeyValuePair<string, object>("tag1", "value3"),
+                            new KeyValuePair<string, object>("tag2", "value3"));
 
                         loops++;
                     }

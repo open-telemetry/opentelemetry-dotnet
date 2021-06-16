@@ -181,7 +181,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Count={this.countPos},Sum={this.Sum}";
+            return $"Delta={this.IsDeltaTemporality},Mon={this.IsMonotonic},Count={this.countPos},Sum={this.Sum}";
         }
     }
 }

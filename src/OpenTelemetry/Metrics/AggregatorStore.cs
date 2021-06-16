@@ -31,9 +31,11 @@ namespace OpenTelemetry.Metrics
 
         private readonly object lockKeyValue2MetricAggs = new object();
 
-        // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly Dictionary<string[], Dictionary<object[], MetricAgg[]>> keyValue2MetricAggs =
-            new Dictionary<string[], Dictionary<object[], MetricAgg[]>>(new StringArrayEqualityComparer());
+        // Two-Level lookup. [ NameAndKeys ] x [ [ TagValues ] x [ Metrics[] ] ]
+        // First Level: Lookup by NameAndKeys (name + TagKeys). Return 2nd Level dictionary
+        // Second Level: Lookup by TagValues. Return Array of MetricAggs
+        private readonly Dictionary<NameAndKeys, Dictionary<object[], MetricAgg[]>> keyValue2MetricAggs =
+            new Dictionary<NameAndKeys, Dictionary<object[], MetricAgg[]>>(new NameAndKeysEqualityComparer());
 
         private MetricAgg[] tag0Metrics = null;
 
@@ -47,11 +49,9 @@ namespace OpenTelemetry.Metrics
             this.timePeriods = this.sdk.ExportProcessors.Select(k => k.Value).Distinct();
         }
 
-        internal MetricAgg[] MapToMetrics(string[] seqKey, object[] seqVal)
+        internal MetricAgg[] MapToMetrics(string viewname, MetricAggregatorType[] aggregators, string[] seqKey, object[] seqVal)
         {
             var metricpairs = new List<MetricAgg>();
-
-            var name = $"{this.instrument.Meter.Name}:{this.instrument.Name}";
 
             var tags = new KeyValuePair<string, object>[seqKey.Length];
             for (int i = 0; i < seqKey.Length; i++)
@@ -61,33 +61,109 @@ namespace OpenTelemetry.Metrics
 
             var dt = DateTimeOffset.UtcNow;
 
-            foreach (var timeperiod in this.timePeriods)
-            {
-                // TODO: Need to map each instrument to metrics (based on View API)
+            var name = $"{this.instrument.Meter.Name}:{viewname}";
 
-                if (this.instrument.GetType().Name.Contains("Counter"))
+            if (aggregators == null)
+            {
+                var instType = this.instrument.GetType().Name;
+
+                if (instType.StartsWith("Counter"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, false, true)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true, true)));
+                    aggregators = new MetricAggregatorType[]
+                    {
+                        MetricAggregatorType.SUM_DELTA,
+                    };
                 }
-                else if (this.instrument.GetType().Name.Contains("Gauge"))
+                else if (instType.StartsWith("ObservableCounter"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags)));
+                    aggregators = new MetricAggregatorType[]
+                    {
+                        MetricAggregatorType.SUM,
+                    };
                 }
-                else if (this.instrument.GetType().Name.Contains("Histogram"))
+                else if (instType.StartsWith("ObservableGauge"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new HistogramMetricAggregator(name, dt, tags, false)));
+                    aggregators = new MetricAggregatorType[]
+                    {
+                        MetricAggregatorType.GAUGE,
+                    };
+                }
+                else if (instType.StartsWith("Histogram"))
+                {
+                    aggregators = new MetricAggregatorType[]
+                    {
+                        MetricAggregatorType.HISTOGRAM,
+                    };
                 }
                 else
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
+                    aggregators = new MetricAggregatorType[]
+                    {
+                        MetricAggregatorType.SUMMARY,
+                    };
+                }
+            }
+
+            foreach (var timeperiod in this.timePeriods)
+            {
+                foreach (var aggType in aggregators)
+                {
+                    IAggregator agg = null;
+
+                    switch (aggType)
+                    {
+                        case MetricAggregatorType.GAUGE:
+                            agg = new GaugeMetricAggregator(name, dt, tags);
+                            break;
+
+                        case MetricAggregatorType.SUM:
+                            agg = new SumMetricAggregator(name, dt, tags, false, false);
+                            break;
+
+                        case MetricAggregatorType.SUM_MONOTONIC:
+                            agg = new SumMetricAggregator(name, dt, tags, false, true);
+                            break;
+
+                        case MetricAggregatorType.SUM_DELTA:
+                            agg = new SumMetricAggregator(name, dt, tags, true, false);
+                            break;
+
+                        case MetricAggregatorType.SUM_DELTA_MONOTONIC:
+                            agg = new SumMetricAggregator(name, dt, tags, true, true);
+                            break;
+
+                        case MetricAggregatorType.SUMMARY:
+                            agg = new SummaryMetricAggregator(name, dt, tags, false);
+                            break;
+
+                        case MetricAggregatorType.SUMMARY_MONOTONIC:
+                            agg = new SummaryMetricAggregator(name, dt, tags, true);
+                            break;
+
+                        case MetricAggregatorType.HISTOGRAM:
+                            agg = new HistogramMetricAggregator(name, dt, tags, false);
+                            break;
+
+                        case MetricAggregatorType.HISTOGRAM_DELTA:
+                            agg = new HistogramMetricAggregator(name, dt, tags, true);
+                            break;
+                    }
+
+                    if (agg != null)
+                    {
+                        metricpairs.Add(new MetricAgg(timeperiod, agg));
+                    }
                 }
             }
 
             return metricpairs.ToArray();
         }
 
-        internal MetricAgg[] FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal MetricAgg[] FindMetricAggregators(
+            ThreadStaticStorage storage,
+            string name,
+            MetricAggregatorType[] aggregators,
+            ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
 
@@ -95,13 +171,11 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.tag0Metrics == null)
                 {
-                    this.tag0Metrics = this.MapToMetrics(AggregatorStore.EmptySeqKey, AggregatorStore.EmptySeqValue);
+                    this.tag0Metrics = this.MapToMetrics(name, aggregators, AggregatorStore.EmptySeqKey, AggregatorStore.EmptySeqValue);
                 }
 
                 return this.tag0Metrics;
             }
-
-            var storage = ThreadStaticStorage.GetStorage();
 
             storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
 
@@ -116,17 +190,23 @@ namespace OpenTelemetry.Metrics
             {
                 string[] seqKey = null;
 
-                // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+                var localKey = storage.LocalNameAndKeys;
+                localKey.Name = name;
+                localKey.Keys = tagKey;
+
+                // GetOrAdd by NameAndKeys(name, TagKey) at 1st Level of 2-level dictionary structure.
+                // Get back a Dictionary of [ TagValues x Metrics[] ].
+                if (!this.keyValue2MetricAggs.TryGetValue(localKey, out var value2metrics))
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
 
                     seqKey = new string[len];
                     tagKey.CopyTo(seqKey, 0);
 
+                    var cloneKey = new AggregatorStore.NameAndKeys(name, seqKey);
+
                     value2metrics = new Dictionary<object[], MetricAgg[]>(new ObjectArrayEqualityComparer());
-                    this.keyValue2MetricAggs.Add(seqKey, value2metrics);
+                    this.keyValue2MetricAggs.Add(cloneKey, value2metrics);
                 }
 
                 // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
@@ -144,7 +224,7 @@ namespace OpenTelemetry.Metrics
                     var seqVal = new object[len];
                     tagValue.CopyTo(seqVal, 0);
 
-                    metrics = this.MapToMetrics(seqKey, seqVal);
+                    metrics = this.MapToMetrics(name, aggregators, seqKey, seqVal);
 
                     value2metrics.Add(seqVal, metrics);
                 }
@@ -156,16 +236,50 @@ namespace OpenTelemetry.Metrics
         internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
-            // TODO: We can isolate the cost of each user-added aggregator in
-            // the hot path by queuing the DataPoint, and doing the Update as
-            // part of the Collect() instead. Thus, we only pay for the price
-            // of queueing a DataPoint in the Hot Path
+            var storage = ThreadStaticStorage.GetStorage();
 
-            var metricPairs = this.FindMetricAggregators(tags);
+            var hasMatchingInstrument = false;
 
-            foreach (var pair in metricPairs)
+            if (this.sdk.MetricViews != null && this.sdk.MetricViews.Length > 0)
             {
-                pair.Metric.Update(dt, value);
+                // Build all Views
+
+                storage.ViewBuilder.Clear();
+
+                foreach (var view in this.sdk.MetricViews)
+                {
+                    if (storage.ViewBuilder.ApplyView(view, this.instrument, tags))
+                    {
+                        hasMatchingInstrument = true;
+                    }
+                }
+            }
+
+            if (hasMatchingInstrument)
+            {
+                var count = storage.ViewBuilder.Count;
+                for (int pos = 0; pos < count; pos++)
+                {
+                    var ros = storage.ViewBuilder.GetViewAt(pos, out var view);
+
+                    var metricPairs = this.FindMetricAggregators(storage, view.Name ?? this.instrument.Name, view.Aggregators, ros);
+
+                    foreach (var pair in metricPairs)
+                    {
+                        pair.Metric.Update(dt, value);
+                    }
+                }
+            }
+            else
+            {
+                // No Views defined
+
+                var metricPairs = this.FindMetricAggregators(storage, this.instrument.Name, null, tags);
+
+                foreach (var pair in metricPairs)
+                {
+                    pair.Metric.Update(dt, value);
+                }
             }
         }
 
@@ -194,6 +308,19 @@ namespace OpenTelemetry.Metrics
             }
 
             return collectedMetrics;
+        }
+
+        internal class NameAndKeys
+        {
+            internal NameAndKeys(string name, string[] keys)
+            {
+                this.Name = name;
+                this.Keys = keys;
+            }
+
+            internal string Name { get; set; }
+
+            internal string[] Keys { get; set; }
         }
 
         internal class MetricAgg

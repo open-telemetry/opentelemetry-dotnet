@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,6 +32,8 @@ namespace OpenTelemetry.Metrics
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
         internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
+
+        internal List<MetricView> ViewConfigs { get; } = new List<MetricView>();
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -76,10 +79,18 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilderSdk AddView(string viewname, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, params IViewRule[] rules)
+        {
+            var viewConfig = new MetricView(viewname, selector, aggregators, rules);
+            this.ViewConfigs.Add(viewConfig);
+            return this;
+        }
+
         internal MeterProvider Build()
         {
             return new MeterProviderSdk(
                 this.meterSources,
+                this.ViewConfigs.ToArray(),
                 this.MeasurementProcessors.ToArray(),
                 this.ExportProcessors.ToArray());
         }

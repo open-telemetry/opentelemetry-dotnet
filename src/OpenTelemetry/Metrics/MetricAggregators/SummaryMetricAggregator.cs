@@ -116,7 +116,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+            return $"Mon={this.IsMonotonic},Count={this.PopulationCount},Sum={this.PopulationSum}";
         }
     }
 }

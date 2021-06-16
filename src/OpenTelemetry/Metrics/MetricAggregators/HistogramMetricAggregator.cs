@@ -91,7 +91,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+            return $"Delta={this.IsDeltaTemporality},Count={this.PopulationCount},Sum={this.PopulationSum}";
         }
     }
 }

@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics.Metrics;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -81,6 +84,43 @@ namespace OpenTelemetry.Metrics
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
                 return meterProviderBuilderSdk.AddExporter(processor, collectionPeriodMilliseconds);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add view configuration.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="selector">Selector.</param>
+        /// <param name="aggregators">Aggregators.</param>
+        /// <param name="viewname">View Config.</param>
+        /// <param name="rules">View Rules.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, string viewname, params IViewRule[] rules)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                return meterProviderBuilderSdk.AddView(viewname, selector, aggregators, rules);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add view configuration.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="selector">Selector.</param>
+        /// <param name="aggregators">Aggregators.</param>
+        /// <param name="rules">View Rules.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, params IViewRule[] rules)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                return meterProviderBuilderSdk.AddView(null, selector, aggregators, rules);
             }
 
             return meterProviderBuilder;
