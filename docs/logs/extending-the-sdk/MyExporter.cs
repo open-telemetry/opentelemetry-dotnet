@@ -44,12 +44,21 @@ internal class MyExporter : BaseExporter<LogRecord>
 
             sb.Append($"{record}(");
 
+            int scopeDepth = -1;
+
             record.ForEachScope(ProcessScope, sb);
 
-            static void ProcessScope(object scope, StringBuilder builder)
-                => builder.Append($"{scope}");
+            void ProcessScope(LogRecordScope scope, StringBuilder builder)
+            {
+                if (++scopeDepth > 0)
+                {
+                    builder.Append(", ");
+                }
 
-            sb.Append($")");
+                builder.Append($"{scope.Scope}");
+            }
+
+            sb.Append(')');
         }
 
         Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");

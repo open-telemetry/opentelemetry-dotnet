@@ -33,6 +33,9 @@ namespace OpenTelemetry.Context.Propagation
         private const int MaxBaggageLength = 8192;
         private const int MaxBaggageItems = 180;
 
+        private static readonly char[] EqualSignSeparator = new[] { '=' };
+        private static readonly char[] CommaSignSeparator = new[] { ',' };
+
         /// <inheritdoc/>
         public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
@@ -133,7 +136,7 @@ namespace OpenTelemetry.Context.Propagation
                     continue;
                 }
 
-                foreach (var pair in item.Split(','))
+                foreach (var pair in item.Split(CommaSignSeparator))
                 {
                     baggageLength += pair.Length + 1; // pair and comma
 
@@ -143,20 +146,31 @@ namespace OpenTelemetry.Context.Propagation
                         break;
                     }
 
-                    if (NameValueHeaderValue.TryParse(pair, out NameValueHeaderValue baggageItem))
+                    if (pair.IndexOf('=') < 0)
                     {
-                        if (string.IsNullOrEmpty(baggageItem.Name) || string.IsNullOrEmpty(baggageItem.Value))
-                        {
-                            continue;
-                        }
-
-                        if (baggageDictionary == null)
-                        {
-                            baggageDictionary = new Dictionary<string, string>();
-                        }
-
-                        baggageDictionary[baggageItem.Name] = baggageItem.Value;
+                        continue;
                     }
+
+                    var parts = pair.Split(EqualSignSeparator, 2);
+                    if (parts.Length != 2)
+                    {
+                        continue;
+                    }
+
+                    var key = WebUtility.UrlDecode(parts[0]);
+                    var value = WebUtility.UrlDecode(parts[1]);
+
+                    if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+                    {
+                        continue;
+                    }
+
+                    if (baggageDictionary == null)
+                    {
+                        baggageDictionary = new Dictionary<string, string>();
+                    }
+
+                    baggageDictionary[key] = value;
                 }
             }
 
