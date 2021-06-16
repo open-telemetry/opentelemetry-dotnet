@@ -98,8 +98,8 @@ Such an extension method can be consumed like this:
 services.AddOpenTelemetryTracing((builder) => builder
     .AddAspNetCoreInstrumentation()
     .AddHttpClientInstrumentation()
-    .AddZipkinExporter()
-    .AddMyFeature());
+    .AddMyFeature()
+    .AddZipkinExporter());
 ```
 
 ## References
