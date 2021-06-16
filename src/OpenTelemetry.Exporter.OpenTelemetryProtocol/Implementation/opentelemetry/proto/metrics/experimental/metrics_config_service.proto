@@ -70,7 +70,7 @@ message MetricConfigResponse {
     // match against metric names. It should not exceed 100k characters.
     message Pattern {
       oneof match {
-        string equals = 1;       // matches the metric name exactly
+        string equal_to = 1;       // matches the metric name exactly
         string starts_with = 2;  // prefix-matches the metric name
       }
     }
