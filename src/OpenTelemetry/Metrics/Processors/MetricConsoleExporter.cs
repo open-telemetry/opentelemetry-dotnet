@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace OpenTelemetry.Metrics
@@ -32,29 +33,29 @@ namespace OpenTelemetry.Metrics
         {
             foreach (var metric in data.Metrics)
             {
-                var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString(CultureInfo.InvariantCulture)}");
 
                 string valueDisplay = string.Empty;
                 if (metric is ISumMetric sumMetric)
                 {
                     if (sumMetric.Sum is double doubleSum)
                     {
-                        valueDisplay = ((double)doubleSum).ToString();
+                        valueDisplay = ((double)doubleSum).ToString(CultureInfo.InvariantCulture);
                     }
                     else if (sumMetric.Sum is long longSum)
                     {
-                        valueDisplay = ((long)longSum).ToString();
+                        valueDisplay = ((long)longSum).ToString(CultureInfo.InvariantCulture);
                     }
                 }
                 else if (metric is IGaugeMetric gaugeMetric)
                 {
                     if (gaugeMetric.LastValue.Value is double doubleValue)
                     {
-                        valueDisplay = ((double)doubleValue).ToString();
+                        valueDisplay = ((double)doubleValue).ToString(CultureInfo.InvariantCulture);
                     }
                     else if (gaugeMetric.LastValue.Value is long longValue)
                     {
-                        valueDisplay = ((long)longValue).ToString();
+                        valueDisplay = ((long)longValue).ToString(CultureInfo.InvariantCulture);
                     }
 
                     // Qn: tags again ? gaugeMetric.LastValue.Tags
