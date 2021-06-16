@@ -172,16 +172,19 @@ but using the
 method. These are referred to as "legacy Activity" in this repo. These libraries
 already create activities but they do so by using the `Activity` constructor
 directly, rather than using `ActivitySource.StartActivity` method. These
-activities does not by default runs though the samplers, and will have their
+activities does not by default runs through the sampler, and will have their
 `Kind` set to internal and they'll have empty ActivitySource name associated
 with it.
 
-Some common examples of such libraries include ASP.NET, ASP.NET Core, HttpClient
-(.NET Core). Instrumentation libraries for these are already provided in this
-repo. The OpenTelemetry .NET Contrib Repo also has instrumentations for
-libraries like
-[ElasticSearch](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.Elasticsearch),
-[EntityFramework](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.EntityFrameworkCore)
+Some common examples of such libraries include
+[ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET
+Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md), [HTTP
+client .NET Core](../../../src/OpenTelemetry.Instrumentation.Http/README.md) .
+Instrumentation libraries for these are already provided in this repo. The
+[OpenTelemetry .NET
+Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+repostory also has instrumentations for libraries like
+[ElasticSearchClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient)
 etc. which fall in this category.
 
 If you are writing instrumentation for such library, it is recommended to refer
