@@ -23,57 +23,76 @@ namespace OpenTelemetry.Metrics
 {
     internal class MetricViewBuilder
     {
-        internal readonly KeyValuePair<string, object>[] Tags;
-        internal readonly ViewSet[] TagSpans;
+        private static int capacity = 10;
+
+        private KeyValuePair<string, object>[] tags;
+        private ViewSet[] viewSets;
 
         private int tagsStartPos = 0;
         private int tagsLen = 0;
-        private int spanPos = 0;
+        private int viewPos = 0;
 
         public MetricViewBuilder()
         {
-            this.Tags = new KeyValuePair<string, object>[100];
-            this.TagSpans = new ViewSet[100];
+            this.tags = new KeyValuePair<string, object>[MetricViewBuilder.capacity];
+            this.viewSets = new ViewSet[MetricViewBuilder.capacity];
         }
 
-        public int Count => this.spanPos;
+        public int Count => this.viewPos;
 
         public void Clear()
         {
             this.tagsStartPos = 0;
             this.tagsLen = 0;
-            this.spanPos = 0;
+            this.viewPos = 0;
         }
 
         public ReadOnlySpan<KeyValuePair<string, object>> GetViewAt(int pos, out MetricView view)
         {
-            var viewSet = this.TagSpans[pos];
+            var viewSet = this.viewSets[pos];
 
             view = viewSet.View;
-            return new ReadOnlySpan<KeyValuePair<string, object>>(this.Tags, viewSet.Pos, viewSet.Len);
+            return new ReadOnlySpan<KeyValuePair<string, object>>(this.tags, viewSet.Pos, viewSet.Len);
         }
 
         internal void Add(string name, object value)
         {
-            this.Tags[this.tagsStartPos + this.tagsLen] = new KeyValuePair<string, object>(name, value);
+            var newPos = this.tagsStartPos + this.tagsLen;
+            if (newPos >= this.tags.Length)
+            {
+                // Need to grow!
+                var oldTags = this.tags;
+                this.tags = new KeyValuePair<string, object>[newPos + MetricViewBuilder.capacity];
+                oldTags.CopyTo(this.tags, 0);
+            }
+
+            this.tags[newPos] = new KeyValuePair<string, object>(name, value);
             this.tagsLen++;
         }
 
         internal void Commit(MetricView view)
         {
-            this.TagSpans[this.spanPos] = new ViewSet(view, this.tagsStartPos, this.tagsLen);
+            if (this.viewPos >= this.viewSets.Length)
+            {
+                // Need to grow!
+                var oldSpanPos = this.viewSets;
+                this.viewSets = new ViewSet[this.viewPos + MetricViewBuilder.capacity];
+                oldSpanPos.CopyTo(this.viewSets, 0);
+            }
+
+            this.viewSets[this.viewPos] = new ViewSet(view, this.tagsStartPos, this.tagsLen);
 
             this.tagsStartPos += this.tagsLen;
             this.tagsLen = 0;
 
-            this.spanPos++;
+            this.viewPos++;
         }
 
         internal KeyValuePair<string, object>? FindInCurrentSet(string key)
         {
             for (int i = 0; i < this.tagsLen; i++)
             {
-                var kv = this.Tags[this.tagsStartPos + i];
+                var kv = this.tags[this.tagsStartPos + i];
                 if (kv.Key == key)
                 {
                     return kv;
