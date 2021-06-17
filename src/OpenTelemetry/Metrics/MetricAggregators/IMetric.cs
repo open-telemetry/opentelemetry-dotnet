@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IMetric
+    public interface IMetric
     {
         string Name { get; }
 
