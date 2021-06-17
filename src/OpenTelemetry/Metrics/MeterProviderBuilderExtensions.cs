@@ -98,7 +98,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="viewname">View Config.</param>
         /// <param name="rules">View Rules.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, string viewname, params IViewRule[] rules)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, string viewname, params IViewRule[] rules)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="aggregators">Aggregators.</param>
         /// <param name="rules">View Rules.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, params IViewRule[] rules)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {

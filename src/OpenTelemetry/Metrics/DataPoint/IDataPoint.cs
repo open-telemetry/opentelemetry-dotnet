@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IDataPoint
+    public interface IDataPoint
     {
         DateTimeOffset Timestamp { get; }
 

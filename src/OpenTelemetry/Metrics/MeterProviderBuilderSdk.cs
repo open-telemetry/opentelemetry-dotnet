@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddView(string viewname, Func<Instrument, bool> selector, MetricAggregatorType[] aggregators, params IViewRule[] rules)
+        internal MeterProviderBuilderSdk AddView(string viewname, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
         {
             var viewConfig = new MetricView(viewname, selector, aggregators, rules);
             this.ViewConfigs.Add(viewConfig);

@@ -41,24 +41,27 @@ namespace Examples.Console
                 // Add multiple Views
 
                 .AddView(
-                    (inst) => true,
-                    new MetricAggregatorType[] { MetricAggregatorType.SUM, MetricAggregatorType.SUMMARY })
+                    (inst) => inst.Name == "counter",
+                    () =>
+                    {
+                        return new OpenTelemetry.Metrics.IAggregator[]
+                        {
+                            new SumMetricAggregator(false, true),
+                            new SummaryMetricAggregator(false),
+                        };
+                    })
 
                 .AddView(
                     (inst) => true,
-                    new MetricAggregatorType[] { MetricAggregatorType.HISTOGRAM },
-                    "view1")
-
-                .AddView(
-                    (inst) => true,
-                    new MetricAggregatorType[] { MetricAggregatorType.GAUGE },
-                    "view2",
-                    new RequireTagRule("tag1", "Default"))
-
-                .AddView(
-                    (inst) => true,
-                    new MetricAggregatorType[] { MetricAggregatorType.SUM_DELTA },
-                    "view3",
+                    () =>
+                    {
+                        return new OpenTelemetry.Metrics.IAggregator[]
+                        {
+                            new HistogramMetricAggregator(false),
+                            new GaugeMetricAggregator(),
+                        };
+                    },
+                    "view1",
                     new IncludeTagRule((tag) => tag == "tag1"),
                     new RequireTagRule("tag2", "Default"))
 

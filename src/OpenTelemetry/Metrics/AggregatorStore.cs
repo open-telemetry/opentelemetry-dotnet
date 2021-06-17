@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
             this.timePeriods = this.sdk.ExportProcessors.Select(k => k.Value).Distinct();
         }
 
-        internal MetricAgg[] MapToMetrics(string viewname, MetricAggregatorType[] aggregators, string[] seqKey, object[] seqVal)
+        internal MetricAgg[] MapToMetrics(string viewname, Func<IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
         {
             var metricpairs = new List<MetricAgg>();
 
@@ -69,90 +69,63 @@ namespace OpenTelemetry.Metrics
 
                 if (instType.StartsWith("Counter"))
                 {
-                    aggregators = new MetricAggregatorType[]
+                    aggregators = () =>
                     {
-                        MetricAggregatorType.SUM_DELTA,
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(true, false),
+                        };
                     };
                 }
                 else if (instType.StartsWith("ObservableCounter"))
                 {
-                    aggregators = new MetricAggregatorType[]
+                    aggregators = () =>
                     {
-                        MetricAggregatorType.SUM,
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(false, false),
+                        };
                     };
                 }
                 else if (instType.StartsWith("ObservableGauge"))
                 {
-                    aggregators = new MetricAggregatorType[]
+                    aggregators = () =>
                     {
-                        MetricAggregatorType.GAUGE,
+                        return new IAggregator[]
+                        {
+                            new GaugeMetricAggregator(),
+                        };
                     };
                 }
                 else if (instType.StartsWith("Histogram"))
                 {
-                    aggregators = new MetricAggregatorType[]
+                    aggregators = () =>
                     {
-                        MetricAggregatorType.HISTOGRAM,
+                        return new IAggregator[]
+                        {
+                            new HistogramMetricAggregator(true),
+                        };
                     };
                 }
                 else
                 {
-                    aggregators = new MetricAggregatorType[]
+                    aggregators = () =>
                     {
-                        MetricAggregatorType.SUMMARY,
+                        return new IAggregator[]
+                        {
+                            new SummaryMetricAggregator(false),
+                        };
                     };
                 }
             }
 
             foreach (var timeperiod in this.timePeriods)
             {
-                foreach (var aggType in aggregators)
+                var aggs = aggregators();
+                foreach (var agg in aggs)
                 {
-                    IAggregator agg = null;
-
-                    switch (aggType)
-                    {
-                        case MetricAggregatorType.GAUGE:
-                            agg = new GaugeMetricAggregator(name, dt, tags);
-                            break;
-
-                        case MetricAggregatorType.SUM:
-                            agg = new SumMetricAggregator(name, dt, tags, false, false);
-                            break;
-
-                        case MetricAggregatorType.SUM_MONOTONIC:
-                            agg = new SumMetricAggregator(name, dt, tags, false, true);
-                            break;
-
-                        case MetricAggregatorType.SUM_DELTA:
-                            agg = new SumMetricAggregator(name, dt, tags, true, false);
-                            break;
-
-                        case MetricAggregatorType.SUM_DELTA_MONOTONIC:
-                            agg = new SumMetricAggregator(name, dt, tags, true, true);
-                            break;
-
-                        case MetricAggregatorType.SUMMARY:
-                            agg = new SummaryMetricAggregator(name, dt, tags, false);
-                            break;
-
-                        case MetricAggregatorType.SUMMARY_MONOTONIC:
-                            agg = new SummaryMetricAggregator(name, dt, tags, true);
-                            break;
-
-                        case MetricAggregatorType.HISTOGRAM:
-                            agg = new HistogramMetricAggregator(name, dt, tags, false);
-                            break;
-
-                        case MetricAggregatorType.HISTOGRAM_DELTA:
-                            agg = new HistogramMetricAggregator(name, dt, tags, true);
-                            break;
-                    }
-
-                    if (agg != null)
-                    {
-                        metricpairs.Add(new MetricAgg(timeperiod, agg));
-                    }
+                    agg.Init(name, dt, tags);
+                    metricpairs.Add(new MetricAgg(timeperiod, agg));
                 }
             }
 
@@ -162,7 +135,7 @@ namespace OpenTelemetry.Metrics
         internal MetricAgg[] FindMetricAggregators(
             ThreadStaticStorage storage,
             string name,
-            MetricAggregatorType[] aggregators,
+            Func<IAggregator[]> aggregators,
             ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;

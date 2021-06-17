@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class SumMetricAggregator : ISumMetric, IAggregator
+    public class SumMetricAggregator : ISumMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
@@ -30,12 +30,8 @@ namespace OpenTelemetry.Metrics
         private double dsumNeg = 0;
         private long countNeg = 0;
 
-        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta, bool isMonotonic)
+        public SumMetricAggregator(bool isDelta, bool isMonotonic)
         {
-            this.Name = name;
-            this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
-            this.Attributes = attributes;
             this.IsDeltaTemporality = isDelta;
             this.IsMonotonic = isMonotonic;
         }
@@ -83,6 +79,14 @@ namespace OpenTelemetry.Metrics
 
                 throw new Exception("Unsupported Type");
             }
+        }
+
+        public void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        {
+            this.Name = name;
+            this.StartTimeExclusive = startTimeExclusive;
+            this.EndTimeInclusive = startTimeExclusive;
+            this.Attributes = attributes;
         }
 
         public void Update<T>(DateTimeOffset dt, T value)
@@ -150,10 +154,11 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality, this.IsMonotonic);
+            var cloneItem = new SumMetricAggregator(this.IsDeltaTemporality, this.IsMonotonic);
 
             lock (this.lockUpdate)
             {
+                cloneItem.Init(this.Name, this.StartTimeExclusive, this.Attributes);
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.valueType = this.valueType;

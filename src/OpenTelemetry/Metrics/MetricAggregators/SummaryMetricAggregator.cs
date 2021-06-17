@@ -19,18 +19,14 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class SummaryMetricAggregator : ISummaryMetric, IAggregator
+    public class SummaryMetricAggregator : ISummaryMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
 
-        internal SummaryMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic)
+        public SummaryMetricAggregator(bool isMonotonic)
         {
-            this.Name = name;
-            this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
-            this.Attributes = attributes;
             this.IsMonotonic = isMonotonic;
         }
 
@@ -49,6 +45,14 @@ namespace OpenTelemetry.Metrics
         public double PopulationSum { get; private set; }
 
         public IEnumerable<ValueAtQuantile> Quantiles => this.quantiles;
+
+        public void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        {
+            this.Name = name;
+            this.StartTimeExclusive = startTimeExclusive;
+            this.EndTimeInclusive = startTimeExclusive;
+            this.Attributes = attributes;
+        }
 
         public void Update<T>(DateTimeOffset dt, T value)
             where T : struct
@@ -97,10 +101,11 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new SummaryMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsMonotonic);
+            var cloneItem = new SummaryMetricAggregator(this.IsMonotonic);
 
             lock (this.lockUpdate)
             {
+                cloneItem.Init(this.Name, this.StartTimeExclusive, this.Attributes);
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;

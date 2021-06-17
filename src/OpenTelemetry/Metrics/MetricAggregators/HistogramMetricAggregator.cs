@@ -19,17 +19,13 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class HistogramMetricAggregator : IHistogramMetric, IAggregator
+    public class HistogramMetricAggregator : IHistogramMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();
 
-        internal HistogramMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        public HistogramMetricAggregator(bool isDelta)
         {
-            this.Name = name;
-            this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
-            this.Attributes = attributes;
             this.IsDeltaTemporality = isDelta;
         }
 
@@ -51,6 +47,14 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
+        public void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        {
+            this.Name = name;
+            this.StartTimeExclusive = startTimeExclusive;
+            this.EndTimeInclusive = startTimeExclusive;
+            this.Attributes = attributes;
+        }
+
         public void Update<T>(DateTimeOffset dt, T value)
             where T : struct
         {
@@ -71,10 +75,11 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new HistogramMetricAggregator(this.IsDeltaTemporality);
 
             lock (this.lockUpdate)
             {
+                cloneItem.Init(this.Name, this.StartTimeExclusive, this.Attributes);
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.PopulationCount = this.PopulationCount;

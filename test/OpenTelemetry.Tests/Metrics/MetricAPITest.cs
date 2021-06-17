@@ -106,7 +106,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
                 .AddView(
                     (inst) => true,
-                    new MetricAggregatorType[] { MetricAggregatorType.SUMMARY },
+                    () => new IAggregator[] { new SummaryMetricAggregator(false) },
                     "test",
                     new IncludeTagRule((tag) => tag != "label1"),
                     new RequireTagRule("label2", "defaultValue"))
