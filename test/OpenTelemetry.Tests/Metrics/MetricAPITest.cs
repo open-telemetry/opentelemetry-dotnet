@@ -105,11 +105,10 @@ namespace OpenTelemetry.Metrics.Tests
                 .SetDefaultCollectionPeriod(1000)
                 .AddProcessor(new TagEnrichmentProcessor("newAttrib", "newAttribValue"))
                 .AddView(
-                    (inst) => true,
-                    () => new IAggregator[] { new SummaryMetricAggregator(false) },
-                    "test",
-                    new IncludeTagRule((tag) => tag != "label1"),
-                    new RequireTagRule("label2", "defaultValue"))
+                    meterName: "BasicAllTest",
+                    aggregator: Aggregator.SUMMARY,
+                    attributeKeys: new string[] { "label1", "label2" },
+                    viewName: "test")
                 .AddExportProcessor(new MetricConsoleExporter("Test1"))
                 .Build();
 

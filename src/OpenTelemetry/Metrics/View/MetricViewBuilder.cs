@@ -122,16 +122,19 @@ namespace OpenTelemetry.Metrics
                     bool found = false;
                     bool hasRule = false;
 
-                    foreach (var rule in view.ViewRules)
+                    if (view.ViewRules != null)
                     {
-                        if (rule is IncludeTagRule valid)
+                        foreach (var rule in view.ViewRules)
                         {
-                            hasRule = true;
-
-                            if (valid.ValidFunc(tag.Key))
+                            if (rule is IncludeTagRule valid)
                             {
-                                found = true;
-                                break;
+                                hasRule = true;
+
+                                if (valid.ValidFunc(tag.Key))
+                                {
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -143,13 +146,16 @@ namespace OpenTelemetry.Metrics
                 }
 
                 // Put back any required tags with default values.
-                foreach (var rule in view.ViewRules)
+                if (view.ViewRules != null)
                 {
-                    if (rule is RequireTagRule require)
+                    foreach (var rule in view.ViewRules)
                     {
-                        if (this.FindInCurrentSet(require.Name) == null)
+                        if (rule is RequireTagRule require)
                         {
-                            this.Add(require.Name, require.DefaultValue);
+                            if (this.FindInCurrentSet(require.Name) == null)
+                            {
+                                this.Add(require.Name, require.DefaultValue);
+                            }
                         }
                     }
                 }

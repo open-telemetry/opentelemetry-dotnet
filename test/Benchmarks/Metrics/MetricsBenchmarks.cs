@@ -103,11 +103,11 @@ namespace Benchmarks.Metrics
                         .AddSource("TestMeter") // All instruments from this meter are enabled.
                         .SetDefaultCollectionPeriod(10000)
                         .AddView(
-                            (inst) => true,
-                            () => new IAggregator[] { new HistogramMetricAggregator(false) },
-                            "test",
-                            new IncludeTagRule((tag) => tag != "attrib1"),
-                            new RequireTagRule("attrib0", "defaultValue"))
+                            meterName: "TestMeter",
+                            aggregator: Aggregator.HISTOGRAM,
+                            aggregatorParam: false,
+                            attributeKeys: new string[] { "attrib1", "label2" },
+                            viewName: "test")
                         .Build();
                     break;
             }

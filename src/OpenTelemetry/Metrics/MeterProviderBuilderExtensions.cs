@@ -93,34 +93,43 @@ namespace OpenTelemetry.Metrics
         /// Add view configuration.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="selector">Selector.</param>
-        /// <param name="aggregators">Aggregators.</param>
-        /// <param name="viewname">View Config.</param>
-        /// <param name="rules">View Rules.</param>
+        /// <param name="meterName">Meter name.</param>
+        /// <param name="meterVersion">Meter version.</param>
+        /// <param name="instrumentName">Instrument name.</param>
+        /// <param name="instrumentKind">Instrument version.</param>
+        /// <param name="aggregator">Aggregator to use.</param>
+        /// <param name="aggregatorParam">Aggregator parameter (Optional).</param>
+        /// <param name="viewName">View name (Optional).</param>
+        /// <param name="viewDescription">View description (Optional).</param>
+        /// <param name="attributeKeys">Attribute keys to include (Optional).</param>
+        /// <param name="extraDimensions">Attribute keys from baggage/context to include (Optional).</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, string viewname, params IViewRule[] rules)
+        public static MeterProviderBuilder AddView(
+            this MeterProviderBuilder meterProviderBuilder,
+            string meterName = null,
+            string meterVersion = null,
+            string instrumentName = null,
+            string instrumentKind = null,
+            Aggregator aggregator = Aggregator.SUMMARY,
+            object aggregatorParam = null,
+            string viewName = null,
+            string viewDescription = null,
+            string[] attributeKeys = null,
+            string[] extraDimensions = null)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddView(viewname, selector, aggregators, rules);
-            }
-
-            return meterProviderBuilder;
-        }
-
-        /// <summary>
-        /// Add view configuration.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="selector">Selector.</param>
-        /// <param name="aggregators">Aggregators.</param>
-        /// <param name="rules">View Rules.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                return meterProviderBuilderSdk.AddView(null, selector, aggregators, rules);
+                return meterProviderBuilderSdk.AddView(
+                    meterName,
+                    meterVersion,
+                    instrumentName,
+                    instrumentKind,
+                    aggregator,
+                    aggregatorParam,
+                    viewName,
+                    viewDescription,
+                    attributeKeys,
+                    extraDimensions);
             }
 
             return meterProviderBuilder;

@@ -40,30 +40,26 @@ namespace Examples.Console
 
                 // Add multiple Views
 
+                // Change Default Aggregator
                 .AddView(
-                    (inst) => inst.Name == "counter",
-                    () =>
-                    {
-                        return new OpenTelemetry.Metrics.IAggregator[]
-                        {
-                            new SumMetricAggregator(false, true),
-                            new SummaryMetricAggregator(false),
-                        };
-                    })
+                    meterName: "TestMeter",
+                    instrumentName: "counter",
+                    aggregator: Aggregator.SUMMARY,
+                    aggregatorParam: true,
+                    viewName: "counter-summary")
 
+                // Select attributes
                 .AddView(
-                    (inst) => true,
-                    () =>
-                    {
-                        return new OpenTelemetry.Metrics.IAggregator[]
-                        {
-                            new HistogramMetricAggregator(false),
-                            new GaugeMetricAggregator(),
-                        };
-                    },
-                    "view1",
-                    new IncludeTagRule((tag) => tag == "tag1"),
-                    new RequireTagRule("tag2", "Default"))
+                    meterName: "TestMeter",
+                    instrumentName: "updown",
+                    attributeKeys: new string[] { "tag1", "tag2" },
+                    viewName: "updown-attrib")
+
+                // Remove all instrument name "gauge"
+                .AddView(
+                    meterName: "TestMeter",
+                    instrumentName: "gauge",
+                    aggregator: Aggregator.NONE)
 
                 .Build();
 

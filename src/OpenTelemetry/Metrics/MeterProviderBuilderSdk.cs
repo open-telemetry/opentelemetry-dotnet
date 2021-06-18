@@ -79,9 +79,160 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddView(string viewname, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
+        internal MeterProviderBuilderSdk AddView(string viewName, string viewDescription, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
         {
-            var viewConfig = new MetricView(viewname, selector, aggregators, rules);
+            var viewConfig = new MetricView(viewName, viewDescription, selector, aggregators, rules);
+            this.ViewConfigs.Add(viewConfig);
+            return this;
+        }
+
+        internal MeterProviderBuilderSdk AddView(
+            string meterName,
+            string meterVersion,
+            string instrumentName,
+            string instrumentKind,
+            Aggregator aggregator,
+            object aggregatorParam,
+            string viewName,
+            string viewDescription,
+            string[] attributeKeys,
+            string[] extraDimensions)
+        {
+            Func<Instrument, bool> selectorFunc = (inst) =>
+            {
+                if (meterName != null && meterName != inst.Meter.Name)
+                {
+                    return false;
+                }
+
+                if (meterVersion != null && meterVersion != inst.Meter.Version)
+                {
+                    return false;
+                }
+
+                if (instrumentName != null && instrumentName != inst.Name)
+                {
+                    return false;
+                }
+
+                if (instrumentKind != null && inst.GetType().Name.StartsWith(instrumentKind))
+                {
+                    return false;
+                }
+
+                return true;
+            };
+
+            IAggregator[] aggs;
+            switch (aggregator)
+            {
+                default:
+                case Aggregator.NONE:
+                    aggs = new IAggregator[0];
+                    break;
+
+                case Aggregator.GAUGE:
+                    {
+                        aggs = new IAggregator[]
+                        {
+                            new GaugeMetricAggregator(),
+                        };
+
+                        break;
+                    }
+
+                case Aggregator.SUM:
+                    {
+                        var mon = false;
+
+                        if (aggregatorParam is bool b)
+                        {
+                            mon = b;
+                        }
+
+                        aggs = new IAggregator[]
+                        {
+                            new SumMetricAggregator(true, mon),
+                        };
+
+                        break;
+                    }
+
+                case Aggregator.UPDOWN:
+                    {
+                        var mon = false;
+
+                        if (aggregatorParam is bool b)
+                        {
+                            mon = b;
+                        }
+
+                        aggs = new IAggregator[]
+                        {
+                            new SumMetricAggregator(false, mon),
+                        };
+
+                        break;
+                    }
+
+                case Aggregator.SUMMARY:
+                    {
+                        var mon = false;
+
+                        if (aggregatorParam is bool b)
+                        {
+                            mon = b;
+                        }
+
+                        aggs = new IAggregator[]
+                        {
+                            new SummaryMetricAggregator(mon),
+                        };
+
+                        break;
+                    }
+
+                case Aggregator.HISTOGRAM:
+                    {
+                        var cum = false;
+
+                        if (aggregatorParam is bool b)
+                        {
+                            cum = b;
+                        }
+
+                        aggs = new IAggregator[]
+                        {
+                            new HistogramMetricAggregator(cum),
+                        };
+
+                        break;
+                    }
+            }
+
+            IViewRule[] rules = null;
+            if (attributeKeys != null)
+            {
+                var rule = new IncludeTagRule((tag) =>
+                {
+                    foreach (var key in attributeKeys)
+                    {
+                        if (tag == key)
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+
+                rules = new IViewRule[]
+                {
+                    rule,
+                };
+            }
+
+            var viewConfig = new MetricView(viewName, viewDescription, selectorFunc, () => aggs, rules);
             this.ViewConfigs.Add(viewConfig);
             return this;
         }
