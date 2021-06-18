@@ -44,16 +44,17 @@ namespace Examples.Console
                 .AddView(
                     meterName: "TestMeter",
                     instrumentName: "counter",
-                    aggregator: Aggregator.SUMMARY,
-                    aggregatorParam: true,
-                    viewName: "counter-summary")
+                    aggregator: Aggregator.SUM_DELTA_MONOTONIC,
+                    viewName: "counter-1")
 
                 // Select attributes
                 .AddView(
                     meterName: "TestMeter",
-                    instrumentName: "updown",
+                    instrumentName: "counter",
+                    aggregator: Aggregator.HISTOGRAM,
+                    aggregatorParam: new double[] { 0.0, 100 },
                     attributeKeys: new string[] { "tag1", "tag2" },
-                    viewName: "updown-attrib")
+                    viewName: "counter-2")
 
                 // Remove all instrument name "gauge"
                 .AddView(

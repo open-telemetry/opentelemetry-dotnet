@@ -103,7 +103,7 @@ namespace OpenTelemetry.Metrics
                     {
                         return new IAggregator[]
                         {
-                            new HistogramMetricAggregator(true),
+                            new HistogramMetricAggregator(true, new double[] { 0.0 }),
                         };
                     };
                 }
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Metrics
                     {
                         return new IAggregator[]
                         {
-                            new SummaryMetricAggregator(false),
+                            new SummaryMetricAggregator(),
                         };
                     };
                 }

@@ -25,9 +25,8 @@ namespace OpenTelemetry.Metrics
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
 
-        public SummaryMetricAggregator(bool isMonotonic)
+        public SummaryMetricAggregator()
         {
-            this.IsMonotonic = isMonotonic;
         }
 
         public string Name { get; private set; }
@@ -37,8 +36,6 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset EndTimeInclusive { get; private set; }
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
-
-        public bool IsMonotonic { get; }
 
         public long PopulationCount { get; private set; }
 
@@ -66,29 +63,20 @@ namespace OpenTelemetry.Metrics
                 if (typeof(T) == typeof(int))
                 {
                     var val = (int)(object)value;
-                    if (val > 0 || !this.IsMonotonic)
-                    {
-                        this.PopulationSum += (double)val;
-                        this.PopulationCount++;
-                    }
+                    this.PopulationSum += (double)val;
+                    this.PopulationCount++;
                 }
                 else if (typeof(T) == typeof(long))
                 {
                     var val = (long)(object)value;
-                    if (val > 0 || !this.IsMonotonic)
-                    {
-                        this.PopulationSum += (double)val;
-                        this.PopulationCount++;
-                    }
+                    this.PopulationSum += (double)val;
+                    this.PopulationCount++;
                 }
                 else if (typeof(T) == typeof(double))
                 {
                     var val = (double)(object)value;
-                    if (val > 0 || !this.IsMonotonic)
-                    {
-                        this.PopulationSum += (double)val;
-                        this.PopulationCount++;
-                    }
+                    this.PopulationSum += (double)val;
+                    this.PopulationCount++;
                 }
             }
         }
@@ -101,7 +89,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new SummaryMetricAggregator(this.IsMonotonic);
+            var cloneItem = new SummaryMetricAggregator();
 
             lock (this.lockUpdate)
             {
@@ -121,7 +109,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Mon={this.IsMonotonic},Count={this.PopulationCount},Sum={this.PopulationSum}";
+            return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
         }
     }
 }

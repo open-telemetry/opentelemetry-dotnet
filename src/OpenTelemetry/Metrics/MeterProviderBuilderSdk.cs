@@ -124,90 +124,14 @@ namespace OpenTelemetry.Metrics
             };
 
             IAggregator[] aggs;
-            switch (aggregator)
+            var agg = this.CreateAggregator(aggregator, aggregatorParam);
+            if (agg != null)
             {
-                default:
-                case Aggregator.NONE:
-                    aggs = new IAggregator[0];
-                    break;
-
-                case Aggregator.GAUGE:
-                    {
-                        aggs = new IAggregator[]
-                        {
-                            new GaugeMetricAggregator(),
-                        };
-
-                        break;
-                    }
-
-                case Aggregator.SUM:
-                    {
-                        var mon = false;
-
-                        if (aggregatorParam is bool b)
-                        {
-                            mon = b;
-                        }
-
-                        aggs = new IAggregator[]
-                        {
-                            new SumMetricAggregator(true, mon),
-                        };
-
-                        break;
-                    }
-
-                case Aggregator.UPDOWN:
-                    {
-                        var mon = false;
-
-                        if (aggregatorParam is bool b)
-                        {
-                            mon = b;
-                        }
-
-                        aggs = new IAggregator[]
-                        {
-                            new SumMetricAggregator(false, mon),
-                        };
-
-                        break;
-                    }
-
-                case Aggregator.SUMMARY:
-                    {
-                        var mon = false;
-
-                        if (aggregatorParam is bool b)
-                        {
-                            mon = b;
-                        }
-
-                        aggs = new IAggregator[]
-                        {
-                            new SummaryMetricAggregator(mon),
-                        };
-
-                        break;
-                    }
-
-                case Aggregator.HISTOGRAM:
-                    {
-                        var cum = false;
-
-                        if (aggregatorParam is bool b)
-                        {
-                            cum = b;
-                        }
-
-                        aggs = new IAggregator[]
-                        {
-                            new HistogramMetricAggregator(cum),
-                        };
-
-                        break;
-                    }
+                aggs = new IAggregator[] { agg };
+            }
+            else
+            {
+                aggs = new IAggregator[0];
             }
 
             IViewRule[] rules = null;
@@ -244,6 +168,63 @@ namespace OpenTelemetry.Metrics
                 this.ViewConfigs.ToArray(),
                 this.MeasurementProcessors.ToArray(),
                 this.ExportProcessors.ToArray());
+        }
+
+        internal IAggregator CreateAggregator(Aggregator aggregator, object aggregatorParam)
+        {
+            IAggregator agg = null;
+
+            switch (aggregator)
+            {
+                default:
+                case Aggregator.NONE:
+                    break;
+
+                case Aggregator.GAUGE:
+                    agg = new GaugeMetricAggregator();
+                    break;
+
+                case Aggregator.SUM:
+                    agg = new SumMetricAggregator(false, false);
+                    break;
+
+                case Aggregator.SUM_MONOTONIC:
+                    agg = new SumMetricAggregator(false, true);
+                    break;
+
+                case Aggregator.SUM_DELTA:
+                    agg = new SumMetricAggregator(true, false);
+                    break;
+
+                case Aggregator.SUM_DELTA_MONOTONIC:
+                    agg = new SumMetricAggregator(true, true);
+                    break;
+
+                case Aggregator.SUMMARY:
+                    agg = new SummaryMetricAggregator();
+                    break;
+
+                case Aggregator.HISTOGRAM:
+                case Aggregator.HISTOGRAM_DELTA:
+                    {
+                        var delta = aggregator == Aggregator.HISTOGRAM_DELTA;
+
+                        double[] bounds;
+                        if (aggregatorParam is double[] b)
+                        {
+                            bounds = b;
+                        }
+                        else
+                        {
+                            bounds = new double[] { 0.0 };
+                        }
+
+                        agg = new HistogramMetricAggregator(delta, bounds);
+                        break;
+                    }
+            }
+
+            return agg;
         }
     }
 }

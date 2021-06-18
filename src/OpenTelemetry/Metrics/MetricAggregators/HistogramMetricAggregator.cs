@@ -23,10 +23,12 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();
+        private double[] bounds;
 
-        public HistogramMetricAggregator(bool isDelta)
+        public HistogramMetricAggregator(bool isDelta, double[] bounds)
         {
             this.IsDeltaTemporality = isDelta;
+            this.bounds = bounds;
         }
 
         public string Name { get; private set; }
@@ -75,7 +77,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.IsDeltaTemporality);
+            var cloneItem = new HistogramMetricAggregator(this.IsDeltaTemporality, this.bounds);
 
             lock (this.lockUpdate)
             {
@@ -96,7 +98,8 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Count={this.PopulationCount},Sum={this.PopulationSum}";
+            var b = string.Join(";", this.bounds);
+            return $"Delta={this.IsDeltaTemporality},Bounds=[{b}],Count={this.PopulationCount},Sum={this.PopulationSum}";
         }
     }
 }

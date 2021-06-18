@@ -24,28 +24,45 @@ namespace OpenTelemetry.Metrics
         NONE,
 
         /// <summary>
-        /// Gauge.
-        /// </summary>
-        GAUGE,
-
-        /// <summary>
-        /// Sum.
+        /// Sum Aggregator (Cummulative, Non-Monotonic).
         /// </summary>
         SUM,
 
         /// <summary>
-        /// UpDown.
+        /// Sum Aggregator (Cummulative, Monotonic).
         /// </summary>
-        UPDOWN,
+        SUM_MONOTONIC,
 
         /// <summary>
-        /// Summary.
+        /// Sum Aggregator (Delta, Non-Monotonic).
+        /// </summary>
+        SUM_DELTA,
+
+        /// <summary>
+        /// Sum Aggregator (Delta, Monotonic).
+        /// </summary>
+        SUM_DELTA_MONOTONIC,
+
+        /// <summary>
+        /// Gauge Aggregator.
+        /// </summary>
+        GAUGE,
+
+        /// <summary>
+        /// Summary Aggregator.
         /// </summary>
         SUMMARY,
 
         /// <summary>
-        /// Histogram.
+        /// Histogram Aggregator (Cummulative).
+        /// AggregatorParam: double[] // optional explicit bounds.
         /// </summary>
         HISTOGRAM,
+
+        /// <summary>
+        /// Histogram Aggregator (Delta).
+        /// AggregatorParam: double[] // optional explicit bounds.
+        /// </summary>
+        HISTOGRAM_DELTA,
     }
 }
