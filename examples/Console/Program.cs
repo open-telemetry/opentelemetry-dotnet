@@ -119,6 +119,9 @@ namespace Examples.Console
 
         [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
         public int MaxLoops { get; set; }
+
+        [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
+        public string UseExporter { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]

@@ -14,12 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 
 namespace Examples.Console
@@ -28,13 +30,50 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
-            using var provider = Sdk.CreateMeterProviderBuilder()
+            var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
                 .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
-                .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
-                .AddExportProcessor(new MetricConsoleExporter("A"))
-                .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds)
-                .Build();
+                .AddProcessor(new TagEnrichmentProcessor("resource", "here"));
+
+            if (options.UseExporter.ToLower() == "otlp")
+            {
+                /*
+                 * Prerequisite to run this example:
+                 * Set up an OpenTelemetry Collector to run on local docker.
+                 *
+                 * Open a terminal window at the examples/Console/ directory and
+                 * launch the OpenTelemetry Collector with an OTLP receiver, by running:
+                 *
+                 *  - On Unix based systems use:
+                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *
+                 *  - On Windows use:
+                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *
+                 * Open another terminal window at the examples/Console/ directory and
+                 * launch the OTLP example by running:
+                 *
+                 *     dotnet run metrics --useExporter otlp
+                 *
+                 * The OpenTelemetry Collector will output all received metrics to the stdout of its terminal.
+                 *
+                 */
+
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+                providerBuilder.AddExportProcessor(new OtlpMetricsExporter(new OtlpExporterOptions()));
+            }
+            else
+            {
+                providerBuilder
+                    .AddExportProcessor(new MetricConsoleExporter("A"))
+                    .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds);
+            }
+
+            using var provider = providerBuilder.Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
