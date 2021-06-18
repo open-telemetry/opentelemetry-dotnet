@@ -1,4 +1,4 @@
-// <copyright file="IExemplar.cs" company="OpenTelemetry Authors">
+// <copyright file="DataValue.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +15,34 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public interface IExemplar : IDataValue
+    public readonly struct DataValue : IDataValue
     {
-        DateTimeOffset Timestamp { get; }
+        private readonly IDataValue value;
 
-        KeyValuePair<string, object>[] FilteredTags { get; }
+        internal DataValue(int value)
+        {
+            // Promote to long
+            this.value = new DataValue<int>(value);
+        }
 
-        byte[] SpanId { get; }
+        internal DataValue(long value)
+        {
+            this.value = new DataValue<long>(value);
+        }
 
-        byte[] TraceId { get; }
+        internal DataValue(double value)
+        {
+            this.value = new DataValue<double>(value);
+        }
+
+        internal DataValue(IDataValue value)
+        {
+            this.value = value;
+        }
+
+        public object Value => this.value.Value;
     }
 }

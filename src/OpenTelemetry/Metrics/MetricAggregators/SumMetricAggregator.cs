@@ -54,31 +54,39 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
-        public object Sum
+        public IDataValue Sum
         {
             get
             {
                 if (this.valueType == typeof(long))
                 {
+                    long sum;
+
                     if (this.IsMonotonic)
                     {
-                        return this.sumPos + (long)this.dsumPos;
+                        sum = this.sumPos + (long)this.dsumPos;
                     }
                     else
                     {
-                        return this.sumPos + (long)this.dsumPos + this.sumNeg + (long)this.dsumNeg;
+                        sum = this.sumPos + (long)this.dsumPos + this.sumNeg + (long)this.dsumNeg;
                     }
+
+                    return new DataValue(sum);
                 }
                 else if (this.valueType == typeof(double))
                 {
+                    double sum;
+
                     if (this.IsMonotonic)
                     {
-                        return this.dsumPos + (double)this.sumPos;
+                        sum = this.dsumPos + (double)this.sumPos;
                     }
                     else
                     {
-                        return this.dsumPos + (double)this.sumPos + this.dsumNeg + (double)this.sumNeg;
+                        sum = this.dsumPos + (double)this.sumPos + this.dsumNeg + (double)this.sumNeg;
                     }
+
+                    return new DataValue(sum);
                 }
 
                 throw new Exception("Unsupported Type");
@@ -181,7 +189,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Count={this.countPos},Sum={this.Sum}";
+            return $"Delta={this.IsDeltaTemporality},Mon={this.IsMonotonic},Count={this.countPos},Sum={this.Sum.Value}";
         }
     }
 }

@@ -25,9 +25,18 @@ namespace OpenTelemetry.Metrics
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
         private static readonly byte[] EmptyId = new byte[0];
 
-        private readonly T value;
+        private readonly IDataValue value;
 
         internal Exemplar(DateTimeOffset timestamp, T value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
+        {
+            this.Timestamp = timestamp;
+            this.FilteredTags = filteredTags;
+            this.SpanId = spanId;
+            this.TraceId = traceId;
+            this.value = new DataValue<T>(value);
+        }
+
+        internal Exemplar(DateTimeOffset timestamp, IDataValue value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
             this.FilteredTags = filteredTags;
@@ -41,6 +50,11 @@ namespace OpenTelemetry.Metrics
         {
         }
 
+        internal Exemplar(DateTimeOffset timestamp, IDataValue value)
+            : this(timestamp, value, Exemplar<T>.EmptyId, Exemplar<T>.EmptyId, Exemplar<T>.EmptyTag)
+        {
+        }
+
         public DateTimeOffset Timestamp { get; }
 
         public readonly KeyValuePair<string, object>[] FilteredTags { get; }
@@ -49,6 +63,6 @@ namespace OpenTelemetry.Metrics
 
         public readonly byte[] TraceId { get; }
 
-        public object Value => (object)this.value;
+        public object Value => this.value.Value;
     }
 }
