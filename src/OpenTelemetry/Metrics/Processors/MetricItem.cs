@@ -20,7 +20,7 @@ namespace OpenTelemetry.Metrics
 {
     public class MetricItem
     {
-        public List<IMetric> Metrics = new List<IMetric>();
+        internal List<IMetric> Metrics = new List<IMetric>();
 
         internal MetricItem()
         {
