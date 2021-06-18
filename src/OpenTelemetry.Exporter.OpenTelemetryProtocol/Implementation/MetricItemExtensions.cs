@@ -115,10 +115,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static OtlpMetrics.Metric ToOtlpMetric(this IMetric metric)
         {
-            var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
-
-            string valueDisplay = string.Empty;
-
             var otlpMetric = new OtlpMetrics.Metric
             {
                 Name = metric.Name,
