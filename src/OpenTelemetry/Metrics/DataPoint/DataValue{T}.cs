@@ -1,4 +1,4 @@
-// <copyright file="IDataPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="DataValue{T}.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Metrics
 {
-    public interface IDataPoint : IDataValue
+    internal readonly struct DataValue<T> : IDataValue
+        where T : struct
     {
-        DateTimeOffset Timestamp { get; }
+        private readonly T value;
 
-        KeyValuePair<string, object>[] Tags { get; }
+        internal DataValue(T value)
+        {
+            this.value = value;
+        }
+
+        public object Value => (object)this.value;
     }
 }

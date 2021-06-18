@@ -26,6 +26,6 @@ namespace OpenTelemetry.Metrics
 
         IEnumerable<IExemplar> Exemplars { get; }
 
-        object Sum { get; }
+        IDataValue Sum { get; }
     }
 }

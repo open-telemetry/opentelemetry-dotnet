@@ -22,9 +22,7 @@ namespace OpenTelemetry.Metrics
     internal class GaugeMetricAggregator : IGaugeMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
-        private Type valueType;
-        private long longValue;
-        private double doubleValue;
+        private IDataValue value;
 
         public GaugeMetricAggregator()
         {
@@ -40,24 +38,7 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
-        public IDataPoint LastValue
-        {
-            get
-            {
-                if (this.valueType == typeof(long))
-                {
-                    return DataPoint.CreateDataPoint(this.EndTimeInclusive, this.longValue, this.Attributes);
-                }
-                else if (this.valueType == typeof(double))
-                {
-                    return DataPoint.CreateDataPoint(this.EndTimeInclusive, this.doubleValue, this.Attributes);
-                }
-                else
-                {
-                    throw new Exception("Unsupported Type");
-                }
-            }
-        }
+        public IDataValue LastValue => this.value;
 
         public void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
@@ -73,22 +54,7 @@ namespace OpenTelemetry.Metrics
             lock (this.lockUpdate)
             {
                 this.EndTimeInclusive = dt;
-                if (typeof(T) == typeof(int))
-                {
-                    // Promote to Long
-                    this.valueType = typeof(long);
-                    this.longValue = (int)(object)value;
-                }
-                else if (typeof(T) == typeof(long))
-                {
-                    this.valueType = typeof(T);
-                    this.longValue = (long)(object)value;
-                }
-                else if (typeof(T) == typeof(double))
-                {
-                    this.valueType = typeof(T);
-                    this.doubleValue = (double)(object)value;
-                }
+                this.value = new DataValue<T>(value);
             }
         }
 
@@ -101,9 +67,7 @@ namespace OpenTelemetry.Metrics
                 cloneItem.Init(this.Name, this.StartTimeExclusive, this.Attributes);
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
-                cloneItem.valueType = this.valueType;
-                cloneItem.longValue = this.longValue;
-                cloneItem.doubleValue = this.doubleValue;
+                cloneItem.value = this.LastValue;
             }
 
             return cloneItem;

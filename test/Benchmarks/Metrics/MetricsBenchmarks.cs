@@ -27,20 +27,20 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
   [Host]     : .NET Core 3.1.13 (CoreCLR 4.700.21.11102, CoreFX 4.700.21.11602), X64 RyuJIT
   DefaultJob : .NET Core 3.1.13 (CoreCLR 4.700.21.11102, CoreFX 4.700.21.11602), X64 RyuJIT
 
-|                    Method |  Mode |         Mean |      Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------- |------ |-------------:|-----------:|-----------:|-------:|------:|------:|----------:|
-|            CounterHotPath | NoSDK |    15.975 ns |  0.3493 ns |  0.6208 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath | NoSDK |     9.855 ns |  0.2172 ns |  0.4812 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath | NoSDK |    25.570 ns |  0.5311 ns |  0.6905 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath | NoSDK |    37.721 ns |  0.7728 ns |  1.3936 ns | 0.0249 |     - |     - |     104 B |
-|            CounterHotPath |   SDK |    58.688 ns |  0.9150 ns |  0.8559 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |   SDK |   129.334 ns |  2.5663 ns |  4.2164 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   SDK |   479.547 ns |  8.5865 ns | 14.5806 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   SDK |   625.457 ns |  7.4830 ns |  6.9996 ns | 0.0553 |     - |     - |     232 B |
-|            CounterHotPath |  View |   190.994 ns |  3.4499 ns |  5.0569 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |  View |   198.916 ns |  3.7446 ns |  4.0067 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |  View |   607.863 ns | 11.9418 ns | 20.5990 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |  View | 1,052.530 ns | 21.0554 ns | 51.6493 ns | 0.0553 |     - |     - |     232 B |
+|                    Method |  Mode |       Mean |     Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------------------------- |------ |-----------:|----------:|-----------:|-------:|------:|------:|----------:|
+|            CounterHotPath | NoSDK |  14.183 ns | 0.3129 ns |  0.3478 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath | NoSDK |   8.917 ns | 0.1507 ns |  0.1258 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath | NoSDK |  23.664 ns | 0.3484 ns |  0.3259 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath | NoSDK |  36.362 ns | 0.7434 ns |  0.7954 ns | 0.0249 |     - |     - |     104 B |
+|            CounterHotPath |   SDK |  56.031 ns | 1.0774 ns |  0.9551 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |   SDK | 134.472 ns | 2.4319 ns |  2.1558 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   SDK | 445.190 ns | 8.8090 ns | 11.4542 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   SDK | 580.113 ns | 8.2307 ns |  9.4785 ns | 0.0553 |     - |     - |     232 B |
+|            CounterHotPath |  View | 100.290 ns | 1.7791 ns |  1.5771 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |  View | 190.740 ns | 3.7800 ns |  6.1040 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |  View | 221.304 ns | 4.3939 ns |  4.1101 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |  View | 258.565 ns | 5.1648 ns |  5.0725 ns | 0.0248 |     - |     - |     104 B |
 
 
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
@@ -50,18 +50,18 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 
 |                    Method |  Mode |        Mean |     Error |    StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
 |-------------------------- |------ |------------:|----------:|----------:|-------:|------:|------:|----------:|
-|            CounterHotPath | NoSDK |    24.34 ns |  0.491 ns |  0.525 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath | NoSDK |    29.63 ns |  0.240 ns |  0.225 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath | NoSDK |    46.41 ns |  0.917 ns |  0.942 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath | NoSDK |    52.80 ns |  1.062 ns |  0.993 ns | 0.0249 |     - |     - |     104 B |
-|            CounterHotPath |   SDK |    79.59 ns |  1.570 ns |  1.986 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |   SDK |   160.64 ns |  3.060 ns |  2.862 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   SDK |   903.80 ns | 17.879 ns | 16.724 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   SDK | 2,012.27 ns | 38.694 ns | 36.195 ns | 0.0534 |     - |     - |     233 B |
-|            CounterHotPath |  View |   236.99 ns |  4.707 ns |  6.899 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |  View |   242.43 ns |  4.732 ns |  7.905 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |  View | 1,082.05 ns | 18.868 ns | 17.649 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |  View | 2,290.68 ns | 41.679 ns | 38.986 ns | 0.0534 |     - |     - |     233 B |
+|            CounterHotPath | NoSDK |    22.22 ns |  0.332 ns |  0.294 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath | NoSDK |    27.62 ns |  0.471 ns |  0.691 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath | NoSDK |    42.27 ns |  0.870 ns |  0.813 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath | NoSDK |    50.45 ns |  0.985 ns |  0.921 ns | 0.0249 |     - |     - |     104 B |
+|            CounterHotPath |   SDK |    76.33 ns |  1.526 ns |  1.353 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |   SDK |   154.49 ns |  3.106 ns |  3.050 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   SDK |   858.37 ns | 17.108 ns | 16.003 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   SDK | 1,873.38 ns | 36.182 ns | 38.714 ns | 0.0534 |     - |     - |     233 B |
+|            CounterHotPath |  View |   119.13 ns |  1.774 ns |  1.573 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |  View |   223.74 ns |  3.621 ns |  3.210 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |  View |   255.62 ns |  4.904 ns |  4.095 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |  View |   297.44 ns |  5.024 ns |  5.159 ns | 0.0248 |     - |     - |     104 B |
 */
 
 namespace Benchmarks.Metrics

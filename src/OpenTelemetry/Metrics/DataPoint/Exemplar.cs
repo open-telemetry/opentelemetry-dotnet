@@ -24,9 +24,7 @@ namespace OpenTelemetry.Metrics
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
         private static readonly byte[] EmptyId = new byte[0];
 
-        private readonly Type valueType;
-        private readonly long longValue;
-        private readonly double doubleValue;
+        private readonly IDataValue value;
 
         internal Exemplar(DateTimeOffset timestamp, long value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
         {
@@ -34,9 +32,7 @@ namespace OpenTelemetry.Metrics
             this.FilteredTags = filteredTags;
             this.SpanId = spanId;
             this.TraceId = traceId;
-            this.valueType = typeof(long);
-            this.longValue = value;
-            this.doubleValue = 0;
+            this.value = new DataValue<long>(value);
         }
 
         internal Exemplar(DateTimeOffset timestamp, double value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
@@ -45,9 +41,16 @@ namespace OpenTelemetry.Metrics
             this.FilteredTags = filteredTags;
             this.SpanId = spanId;
             this.TraceId = traceId;
-            this.valueType = typeof(double);
-            this.longValue = 0;
-            this.doubleValue = value;
+            this.value = new DataValue<double>(value);
+        }
+
+        internal Exemplar(DateTimeOffset timestamp, IDataValue value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
+        {
+            this.Timestamp = timestamp;
+            this.FilteredTags = filteredTags;
+            this.SpanId = spanId;
+            this.TraceId = traceId;
+            this.value = value;
         }
 
         internal Exemplar(DateTimeOffset timestamp, long value)
@@ -60,6 +63,11 @@ namespace OpenTelemetry.Metrics
         {
         }
 
+        internal Exemplar(DateTimeOffset timestamp, IDataValue value)
+            : this(timestamp, value, Exemplar.EmptyId, Exemplar.EmptyId, Exemplar.EmptyTag)
+        {
+        }
+
         public DateTimeOffset Timestamp { get; }
 
         public readonly KeyValuePair<string, object>[] FilteredTags { get; }
@@ -68,48 +76,6 @@ namespace OpenTelemetry.Metrics
 
         public readonly byte[] TraceId { get; }
 
-        public object Value
-        {
-            get
-            {
-                if (this.valueType == typeof(long))
-                {
-                    return this.longValue;
-                }
-                else if (this.valueType == typeof(double))
-                {
-                    return this.doubleValue;
-                }
-                else
-                {
-                    throw new Exception("Unsupported Type");
-                }
-            }
-        }
-
-        internal static Exemplar CreateExemplar<T>(DateTimeOffset timestamp, T value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
-        {
-            Exemplar dp;
-
-            if (typeof(T) == typeof(int))
-            {
-                // Promoted to Long
-                dp = new Exemplar(timestamp, (int)(object)value, spanId, traceId, filteredTags);
-            }
-            else if (typeof(T) == typeof(long))
-            {
-                dp = new Exemplar(timestamp, (long)(object)value, spanId, traceId, filteredTags);
-            }
-            else if (typeof(T) == typeof(double))
-            {
-                dp = new Exemplar(timestamp, (double)(object)value, spanId, traceId, filteredTags);
-            }
-            else
-            {
-                throw new Exception("Unsupported Type");
-            }
-
-            return dp;
-        }
+        public object Value => this.value.Value;
     }
 }
