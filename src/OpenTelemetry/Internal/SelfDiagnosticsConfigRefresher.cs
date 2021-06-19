@@ -274,6 +274,11 @@ namespace OpenTelemetry.Internal
                         this.cancellationTokenSource.Dispose();
                     }
 
+                    if (this.eventListener != null)
+                    {
+                        this.eventListener.Dispose();
+                    }
+
                     // Ensure worker thread properly finishes.
                     // Or it might have created another MemoryMappedFile in that thread
                     // after the CloseLogFile() below is called.
