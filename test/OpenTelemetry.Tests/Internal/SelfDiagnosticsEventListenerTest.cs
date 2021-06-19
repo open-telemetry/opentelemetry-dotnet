@@ -31,7 +31,6 @@ namespace OpenTelemetry.Internal.Tests
         private const string EllipsesWithBrackets = "{...}\n";
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_constructor_Invalid_Input()
         {
             // no configRefresher object
@@ -42,7 +41,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
         {
             var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
@@ -54,7 +52,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EventSourceSetup_HigherSeverity()
         {
             var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
@@ -68,7 +65,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_WriteEvent()
         {
             // Arrange
@@ -94,7 +90,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_DateTimeGetBytes()
         {
             var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
@@ -133,7 +128,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
         {
             // Arrange
@@ -159,7 +153,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EmitEvent_CaptureAsConfigured()
         {
             // Arrange
@@ -183,7 +176,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_Null()
         {
             byte[] buffer = new byte[20];
@@ -193,7 +185,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_Empty()
         {
             byte[] buffer = new byte[20];
@@ -204,7 +195,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_EnoughSpace()
         {
             byte[] buffer = new byte[20];
@@ -218,7 +208,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_NotEnoughSpaceForFullString()
         {
             byte[] buffer = new byte[20];
@@ -232,7 +221,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_NotEvenSpaceForTruncatedString()
         {
             byte[] buffer = new byte[20];
@@ -243,7 +231,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_NotEvenSpaceForTruncationEllipses()
         {
             byte[] buffer = new byte[20];
@@ -253,7 +240,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_IsParameter_EnoughSpace()
         {
             byte[] buffer = new byte[20];
@@ -264,7 +250,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_IsParameter_NotEnoughSpaceForFullString()
         {
             byte[] buffer = new byte[20];
@@ -275,7 +260,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_IsParameter_NotEvenSpaceForTruncatedString()
         {
             byte[] buffer = new byte[20];
@@ -286,7 +270,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsEventListener_EncodeInBuffer_IsParameter_NotEvenSpaceForTruncationEllipses()
         {
             byte[] buffer = new byte[20];
