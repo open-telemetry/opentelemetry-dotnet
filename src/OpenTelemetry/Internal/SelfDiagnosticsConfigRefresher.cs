@@ -274,10 +274,18 @@ namespace OpenTelemetry.Internal
                         this.cancellationTokenSource.Dispose();
                     }
 
+                    // Dispose EventListner before files, because EventListner writes to files.
+                    if (this.eventListener != null)
+                    {
+                        this.eventListener.Dispose();
+                    }
+
                     // Ensure worker thread properly finishes.
                     // Or it might have created another MemoryMappedFile in that thread
                     // after the CloseLogFile() below is called.
                     this.CloseLogFile();
+
+                    // Dispose ThreadLocal variables after the file handles are disposed.
                     this.viewStream.Dispose();
                     this.memoryMappedFileCache.Dispose();
                 }
