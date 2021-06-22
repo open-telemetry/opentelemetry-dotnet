@@ -29,11 +29,16 @@ namespace OpenTelemetry.Trace
     public interface IDeferredTracerProviderBuilder
     {
 #if NET461_OR_GREATER || NETSTANDARD2_0
+        /// <summary>
+        /// Gets the application <see cref="IServiceCollection"/>.
+        /// </summary>
         IServiceCollection Services { get; }
 #endif
 
         /// <summary>
-        /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
+        /// Register a callback action to configure the <see
+        /// cref="TracerProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
         /// </summary>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
