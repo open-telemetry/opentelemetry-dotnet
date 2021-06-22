@@ -57,7 +57,6 @@
     <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <!--When updating the Microsoft.CodeCoverage package, update the version number in .\build\process-codecoverage.ps1 as well-->
     <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" Condition="'$(Configuration)'=='Release'"/>
     <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
