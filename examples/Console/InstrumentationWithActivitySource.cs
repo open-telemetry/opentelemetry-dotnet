@@ -136,7 +136,7 @@ namespace Examples.Console
                                 using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
                                 activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
-                                activity?.SetTag("http.status_code", $"{response.StatusCode:D}");
+                                activity?.SetTag("http.status_code", (int)response.StatusCode);
 
                                 var responseContent = await response.Content.ReadAsStringAsync();
                                 activity?.SetTag("response.content", responseContent);
