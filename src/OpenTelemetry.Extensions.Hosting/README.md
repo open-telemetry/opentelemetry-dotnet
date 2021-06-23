@@ -65,8 +65,9 @@ from the application `IServiceCollection` so any services registered in the
 
 Library authors may want to configure the OpenTelemetry `TracerProvider` and
 register application services to provide more complex features. This can be
-accomplished concisely by using the `GetServices` extension inside of an
-`TracerProviderBuilder` extension method like this:
+accomplished concisely by using the `TracerProviderBuilder.GetServices`
+extension method inside of a more general `TracerProviderBuilder` configuration
+extension like this:
 
 ```csharp
 public static class MyLibraryExtensions
