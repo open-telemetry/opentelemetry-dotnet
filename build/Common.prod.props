@@ -10,9 +10,9 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  
+
   <PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
-    <ApiCompatExcludeAttributeList>$(MSBuildThisFileDirectory)ApiCompatExcludeAttributeList.txt</ApiCompatExcludeAttributeList>
+    <ApiCompatExcludeAttributeList>$(RepoRoot)\build\ApiCompatExcludeAttributeList.txt</ApiCompatExcludeAttributeList>
   </PropertyGroup>
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
