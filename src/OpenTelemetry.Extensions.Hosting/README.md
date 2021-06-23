@@ -74,7 +74,8 @@ public static class MyLibraryExtensions
     public static TracerProviderBuilder AddMyFeature(this TracerProviderBuilder tracerProviderBuilder)
     {
         (tracerProviderBuilder.GetServices()
-            ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
+            ?? throw new NotSupportedException(
+                "MyFeature requires a hosting TracerProviderBuilder instance."))
             .AddHostedService<MyHostedService>()
             .AddSingleton<MyService>()
             .AddSingleton<MyProcessor>()
