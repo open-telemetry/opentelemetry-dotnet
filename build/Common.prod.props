@@ -11,14 +11,12 @@
     </PackageReference>
   </ItemGroup>
 
-  <!--<PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
-    <ApiCompatExcludeAttributeList>$(RepoRoot)\build\ApiCompatExcludeAttributeList.txt</ApiCompatExcludeAttributeList>
-  </PropertyGroup>-->
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
     <_ReferencePathDirectories Include="@(ReferencePath -> '%(RootDir)%(Directory)')" />
-    <ResolvedMatchingContract Include="..\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
-    <DependencyPaths>@(_ReferencePathDirectories->Distinct(), ',')</DependencyPaths>
+    <ResolvedMatchingContract Include="..\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll">
+      <DependencyPaths>@(_ReferencePathDirectories->Distinct(), ',')</DependencyPaths>
+    </ResolvedMatchingContract>
   </ItemGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot;" />
