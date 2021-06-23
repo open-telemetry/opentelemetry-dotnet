@@ -121,6 +121,19 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
+        public void AddOpenTelemetryTracerProvider_GetServicesExtension()
+        {
+            var services = new ServiceCollection();
+            services.AddOpenTelemetryTracing(builder => AddMyFeature(builder));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.True(tracerProvider.Sampler is TestSampler);
+        }
+
+        [Fact]
         public void AddOpenTelemetryTracerProvider_NestedConfigureCallbacks()
         {
             int configureCalls = 0;
@@ -197,6 +210,14 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             serviceProvider.Dispose();
             Assert.True(testInstrumentation1.Disposed);
             Assert.True(testInstrumentation2.Disposed);
+        }
+
+        private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
+        {
+            (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
+                .AddSingleton<TestSampler>();
+
+            return tracerProviderBuilder.SetSampler<TestSampler>();
         }
 
         internal class TestInstrumentation : IDisposable
