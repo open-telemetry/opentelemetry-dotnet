@@ -15,6 +15,9 @@
     <ResolvedMatchingContract Include="..\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+    <PropertyGroup>
+      <ApiCompatExcludeAttributeList>$(MSBuildThisFileDirectory)ApiCompatExcludeAttributeList.txt</ApiCompatExcludeAttributeList>
+    </PropertyGroup>
     <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot;" />
   </Target>
 
