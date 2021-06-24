@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task TestDiConfig()
+        public void TestDiConfig()
         {
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
