@@ -72,6 +72,7 @@ namespace OpenTelemetry
         /// If suppression mode is not enabled (slot is zero), enter reference-counting suppression mode.
         /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
         /// </summary>
+        /// <param name="temp">For testing purposes only.</param>
         /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Enter(int temp = 0)
