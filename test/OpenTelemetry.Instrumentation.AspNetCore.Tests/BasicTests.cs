@@ -618,7 +618,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {

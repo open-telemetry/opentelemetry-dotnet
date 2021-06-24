@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     /// </summary>
     internal static class ZPagesActivityTracker
     {
-        private static long startTime;
+        private static readonly long startTime;
 
         /// <summary>
         /// Initializes static members of the <see cref="ZPagesActivityTracker"/> class.

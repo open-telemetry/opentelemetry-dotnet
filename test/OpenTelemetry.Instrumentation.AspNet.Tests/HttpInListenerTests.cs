@@ -494,7 +494,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {
