@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Tests
 {

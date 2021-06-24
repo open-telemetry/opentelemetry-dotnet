@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
