@@ -8,3 +8,4 @@ override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string op
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.SuppressInstrumentationScope.Enter(int temp = 0) -> int

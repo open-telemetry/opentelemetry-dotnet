@@ -74,7 +74,7 @@ namespace OpenTelemetry
         /// </summary>
         /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Enter()
+        public static int Enter(int temp = 0)
         {
             var value = Slot.Get();
 
