@@ -217,13 +217,5 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 return new SamplingResult(SamplingDecision.RecordAndSample);
             }
         }
-
-        internal class AnotherTestSampler : Sampler
-        {
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                return new SamplingResult(SamplingDecision.RecordAndSample);
-            }
-        }
     }
 }
