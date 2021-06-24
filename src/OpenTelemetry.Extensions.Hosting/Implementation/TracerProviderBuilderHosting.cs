@@ -47,6 +47,12 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build(IServiceProvider serviceProvider)
         {
+            var sampler = serviceProvider.GetService<Sampler>();
+            if (sampler != null)
+            {
+                this.SetSampler(sampler);
+            }
+
             int i = 0;
             while (i < this.configurationActions.Count)
             {

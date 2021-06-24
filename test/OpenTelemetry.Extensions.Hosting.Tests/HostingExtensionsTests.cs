@@ -162,54 +162,66 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             services.AddSingleton<TestInstrumentation>();
             services.AddSingleton<TestProcessor>();
-            services.AddSingleton<TestSampler>();
+            services.AddSingleton<Sampler>(new TestSampler());
 
             services.AddOpenTelemetryTracing(builder => builder
                 .Configure((sp1, builder1) =>
                 {
                     builder1
                         .AddInstrumentation<TestInstrumentation>()
-                        .AddProcessor<TestProcessor>()
-                        .SetSampler<TestSampler>();
+                        .AddProcessor<TestProcessor>();
+
+                        // .SetSampler<TestSampler>();
                 }));
 
             using var serviceProvider = services.BuildServiceProvider();
 
             var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
-
+            var sampler = serviceProvider.GetService<Sampler>();
             Assert.True(tracerProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
             Assert.True(tracerProvider.Processor is TestProcessor);
             Assert.True(tracerProvider.Sampler is TestSampler);
         }
 
-        [Fact(Skip = "Known limitation. See issue 1215.")]
-        public void AddOpenTelemetryTracerProvider_Idempotent()
+        [Fact]
+        public async Task AddOpenTelemetryTracerProvider_Idempotent()
         {
             var testInstrumentation1 = new TestInstrumentation();
             var testInstrumentation2 = new TestInstrumentation();
 
-            var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation1);
-            services.AddOpenTelemetryTracing(builder =>
+            var builder = new HostBuilder().ConfigureServices(services =>
             {
-                builder.AddInstrumentation(() => testInstrumentation1);
+                services.AddSingleton(testInstrumentation1);
+                services.AddSingleton<Sampler>(new TestSampler());
+                services.AddOpenTelemetryTracing(builder =>
+                {
+                    builder.AddInstrumentation(() => testInstrumentation1);
+                });
+
+                services.AddSingleton<AnotherTestSampler>();
+                services.AddOpenTelemetryTracing(builder =>
+                {
+                    builder.AddInstrumentation(() => testInstrumentation2);
+                    builder.SetSampler<AnotherTestSampler>();
+                });
             });
 
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation2);
-            });
-
-            var serviceProvider = services.BuildServiceProvider();
-
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var host = builder.Build();
+            await host.StartAsync();
+            var tracerProviders = host.Services.GetServices<TracerProvider>().ToArray();
+            var tracerProviderSdk1 = tracerProviders[0] as TracerProviderSdk;
+            var tracerProviderSdk2 = tracerProviders[1] as TracerProviderSdk;
+            Assert.NotNull(tracerProviderSdk1);
+            Assert.NotNull(tracerProviderSdk2);
+            Assert.True(tracerProviderSdk1.Sampler is TestSampler);
+            Assert.True(tracerProviderSdk2.Sampler is AnotherTestSampler);
 
             Assert.False(testInstrumentation1.Disposed);
             Assert.False(testInstrumentation2.Disposed);
-            serviceProvider.Dispose();
-            Assert.True(testInstrumentation1.Disposed);
+            await host.StopAsync();
+            host.Dispose();
             Assert.True(testInstrumentation2.Disposed);
+            Assert.True(testInstrumentation1.Disposed);
         }
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
@@ -235,6 +247,14 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         internal class TestSampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return new SamplingResult(SamplingDecision.RecordAndSample);
+            }
+        }
+
+        internal class AnotherTestSampler : Sampler
         {
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
