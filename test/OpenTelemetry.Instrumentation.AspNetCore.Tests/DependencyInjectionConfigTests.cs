@@ -32,10 +32,9 @@ using Xunit;
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class DependencyInjectionConfigTests
-        : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+        : IClassFixture<WebApplicationFactory<Startup>>
     {
         private readonly WebApplicationFactory<Startup> factory;
-        private TracerProvider openTelemetrySdk = null;
 
         public DependencyInjectionConfigTests(WebApplicationFactory<Startup> factory)
         {
@@ -43,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public void TestDiConfig()
+        public void TestDIConfig()
         {
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
@@ -69,11 +68,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.True(optionsPickedFromDI);
-        }
-
-        public void Dispose()
-        {
-            this.openTelemetrySdk?.Dispose();
         }
     }
 }
