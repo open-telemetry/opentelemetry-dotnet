@@ -44,42 +44,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds a processor to the provider.
-        /// </summary>
-        /// <typeparam name="T">Processor type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : BaseProcessor<Activity>
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                tracerProviderBuilderHosting.Configure((sp, builder) => builder
-                    .AddProcessor(sp.GetRequiredService<T>()));
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Sets the sampler on the provider.
-        /// </summary>
-        /// <typeparam name="T">Sampler type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : Sampler
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                tracerProviderBuilderHosting.Configure((sp, builder) => builder
-                    .SetSampler(sp.GetRequiredService<T>()));
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
         /// Register a callback action to configure the <see
         /// cref="TracerProviderBuilder"/> once the application <see
         /// cref="IServiceProvider"/> is available.

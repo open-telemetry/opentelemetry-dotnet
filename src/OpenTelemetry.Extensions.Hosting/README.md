@@ -29,20 +29,23 @@ services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"
 
 #### Using Dependency Injection
 
-The following example registers a processor of the type "MyProcessor" which has
-been registered as a singleton with the `IServiceCollection`:
+The following example adds a processor instance
+as a singleton to the `IServiceCollection` which will
+be picked up by the TracerProvider.
 
 ```csharp
-services.AddSingleton<MyProcessor>();
+services.AddSingleton<BaseProcessor<Activity>>(new MyProcessor());
 
 services.AddOpenTelemetryTracing((builder) => builder
     .AddAspNetCoreInstrumentation()
-    .AddHttpClientInstrumentation()
-    .AddProcessor<MyProcessor>());
+    .AddHttpClientInstrumentation());
 ```
 
-Similar methods exist for registering instrumentation (`AddInstrumentation<T>`)
-and setting a sampler (`SetSampler<T>`).
+Similarly, sampler can also be set of the `IServiceCollection`.
+
+```csharp
+services.AddSingleton<Sampler>(new TestSampler());
+```
 
 You can also access the application `IServiceProvider` directly and accomplish
 the same registration using the `Configure` extension like this:

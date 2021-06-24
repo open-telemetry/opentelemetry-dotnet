@@ -161,17 +161,14 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var services = new ServiceCollection();
 
             services.AddSingleton<TestInstrumentation>();
-            services.AddSingleton<TestProcessor>();
+            services.AddSingleton<BaseProcessor<Activity>>(new TestProcessor());
             services.AddSingleton<Sampler>(new TestSampler());
 
             services.AddOpenTelemetryTracing(builder => builder
                 .Configure((sp1, builder1) =>
                 {
                     builder1
-                        .AddInstrumentation<TestInstrumentation>()
-                        .AddProcessor<TestProcessor>();
-
-                        // .SetSampler<TestSampler>();
+                        .AddInstrumentation<TestInstrumentation>();
                 }));
 
             using var serviceProvider = services.BuildServiceProvider();
@@ -184,52 +181,19 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public async Task AddOpenTelemetryTracerProvider_Idempotent()
+        public void AddOpenTelemetryTracerProviderThrowsWhenCalledMoreThanOnce()
         {
-            var testInstrumentation1 = new TestInstrumentation();
-            var testInstrumentation2 = new TestInstrumentation();
-
-            var builder = new HostBuilder().ConfigureServices(services =>
-            {
-                services.AddSingleton(testInstrumentation1);
-                services.AddSingleton<Sampler>(new TestSampler());
-                services.AddOpenTelemetryTracing(builder =>
-                {
-                    builder.AddInstrumentation(() => testInstrumentation1);
-                });
-
-                services.AddSingleton<AnotherTestSampler>();
-                services.AddOpenTelemetryTracing(builder =>
-                {
-                    builder.AddInstrumentation(() => testInstrumentation2);
-                    builder.SetSampler<AnotherTestSampler>();
-                });
-            });
-
-            var host = builder.Build();
-            await host.StartAsync();
-            var tracerProviders = host.Services.GetServices<TracerProvider>().ToArray();
-            var tracerProviderSdk1 = tracerProviders[0] as TracerProviderSdk;
-            var tracerProviderSdk2 = tracerProviders[1] as TracerProviderSdk;
-            Assert.NotNull(tracerProviderSdk1);
-            Assert.NotNull(tracerProviderSdk2);
-            Assert.True(tracerProviderSdk1.Sampler is TestSampler);
-            Assert.True(tracerProviderSdk2.Sampler is AnotherTestSampler);
-
-            Assert.False(testInstrumentation1.Disposed);
-            Assert.False(testInstrumentation2.Disposed);
-            await host.StopAsync();
-            host.Dispose();
-            Assert.True(testInstrumentation2.Disposed);
-            Assert.True(testInstrumentation1.Disposed);
+            var services = new ServiceCollection();
+            services.AddOpenTelemetryTracing();
+            Assert.Throws<InvalidOperationException>(() => services.AddOpenTelemetryTracing());
         }
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
         {
             (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
-                .AddSingleton<TestSampler>();
+                .AddSingleton<Sampler>(new TestSampler());
 
-            return tracerProviderBuilder.SetSampler<TestSampler>();
+            return tracerProviderBuilder;
         }
 
         internal class TestInstrumentation : IDisposable

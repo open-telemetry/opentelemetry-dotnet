@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -48,6 +49,11 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configure is null)
             {
                 throw new ArgumentNullException(nameof(configure));
+            }
+
+            if (services.Any(service => service.ImplementationType == typeof(TelemetryHostedService)))
+            {
+                throw new InvalidOperationException("AddOpenTelemetryTracing must be only called once.");
             }
 
             var builder = new TracerProviderBuilderHosting(services);

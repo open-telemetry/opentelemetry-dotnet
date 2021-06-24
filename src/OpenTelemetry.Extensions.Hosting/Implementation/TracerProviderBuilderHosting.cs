@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenTelemetry.Trace
@@ -51,6 +52,12 @@ namespace OpenTelemetry.Trace
             if (sampler != null)
             {
                 this.SetSampler(sampler);
+            }
+
+            var processors = serviceProvider.GetServices<BaseProcessor<Activity>>();
+            foreach (var p in processors)
+            {
+                this.AddProcessor(p);
             }
 
             int i = 0;
