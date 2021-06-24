@@ -156,7 +156,7 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 * Make sure the PR title reflects the contribution.
 * Write a summary that helps understand the change.
 * Include usage examples in the summary, where applicable.
-* Include benchmarks (before/after) in the summar, for contributions that are
+* Include benchmarks (before/after) in the summary, for contributions that are
   performance enhancements.
 
 ### How to Get PRs Merged
