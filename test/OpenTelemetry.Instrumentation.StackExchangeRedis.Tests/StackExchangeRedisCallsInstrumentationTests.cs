@@ -214,6 +214,9 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [Fact]
         public void StackExchangeRedis_DependencyInjection_Success()
         {
+            bool connectionMultiplexerPickedFromDI = false;
+            bool optionsPickedFromDI = false;
+
             var connectionOptions = new ConfigurationOptions
             {
                 AbortOnConnectFail = false,
@@ -221,13 +224,23 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             connectionOptions.EndPoints.Add("localhost");
 
             var services = new ServiceCollection();
-            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(connectionOptions));
-
+            services.AddSingleton<IConnectionMultiplexer>((sp) =>
+            {
+                connectionMultiplexerPickedFromDI = true;
+                return ConnectionMultiplexer.Connect(connectionOptions);
+            });
+            services.Configure<StackExchangeRedisCallsInstrumentationOptions>(options =>
+            {
+                optionsPickedFromDI = true;
+            });
             services.AddOpenTelemetryTracing(builder => builder.AddRedisInstrumentation());
 
             using var serviceProvider = services.BuildServiceProvider();
 
             var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.True(connectionMultiplexerPickedFromDI);
+            Assert.True(optionsPickedFromDI);
         }
 
         [Fact]
