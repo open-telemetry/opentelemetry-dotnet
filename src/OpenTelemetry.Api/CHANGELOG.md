@@ -9,6 +9,9 @@ please check the latest changes
 
 ## Unreleased
 
+* Added `IDeferredTracerProviderBuilder`.
+  ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2100))
+
 ## 1.1.0-beta4
 
 Released 2021-Jun-09
