@@ -15,21 +15,10 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Newtonsoft.Json;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP2_1
 using TestApp.AspNetCore._2._1;
@@ -77,8 +66,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(ConfigureTestServices))
                 .CreateClient())
             {
-                // Act
-                var response = await client.GetAsync("/api/values");
             }
 
             Assert.True(optionsPickedFromDI);
