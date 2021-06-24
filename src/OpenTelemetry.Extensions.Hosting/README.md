@@ -65,21 +65,18 @@ from the application `IServiceCollection` so any services registered in the
 
 Library authors may want to configure the OpenTelemetry `TracerProvider` and
 register application services to provide more complex features. This can be
-accomplished concisely by casting the `TracerProviderBuilder` into an
-`IDeferredTracerProviderBuilder` instance in an extension method like this:
+accomplished concisely by using the `TracerProviderBuilder.GetServices`
+extension method inside of a more general `TracerProviderBuilder` configuration
+extension like this:
 
 ```csharp
 public static class MyLibraryExtensions
 {
     public static TracerProviderBuilder AddMyFeature(this TracerProviderBuilder tracerProviderBuilder)
     {
-        if (!(tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder))
-        {
-            throw new NotSupportedException(
-                "MyFeature requires an IDeferredTracerProviderBuilder instance.");
-        }
-
-        deferredTracerProviderBuilder.Services
+        (tracerProviderBuilder.GetServices()
+            ?? throw new NotSupportedException(
+                "MyFeature requires a hosting TracerProviderBuilder instance."))
             .AddHostedService<MyHostedService>()
             .AddSingleton<MyService>()
             .AddSingleton<MyProcessor>()

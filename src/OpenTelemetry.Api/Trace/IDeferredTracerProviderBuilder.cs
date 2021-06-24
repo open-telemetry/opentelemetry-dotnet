@@ -15,9 +15,6 @@
 // </copyright>
 
 using System;
-#if NET461_OR_GREATER || NETSTANDARD2_0
-using Microsoft.Extensions.DependencyInjection;
-#endif
 
 namespace OpenTelemetry.Trace
 {
@@ -28,13 +25,6 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public interface IDeferredTracerProviderBuilder
     {
-#if NET461_OR_GREATER || NETSTANDARD2_0
-        /// <summary>
-        /// Gets the application <see cref="IServiceCollection"/>.
-        /// </summary>
-        IServiceCollection Services { get; }
-#endif
-
         /// <summary>
         /// Register a callback action to configure the <see
         /// cref="TracerProviderBuilder"/> once the application <see
