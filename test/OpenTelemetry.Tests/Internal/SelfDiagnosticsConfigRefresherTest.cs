@@ -36,7 +36,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
         {
             try
@@ -63,7 +62,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
         {
             try
