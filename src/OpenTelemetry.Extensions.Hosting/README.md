@@ -34,14 +34,15 @@ as a singleton to the `IServiceCollection` which will
 be picked up by the TracerProvider.
 
 ```csharp
-services.AddSingleton<BaseProcessor<Activity>>(new MyProcessor());
+services.AddSingleton<BaseProcessor<Activity>>(new MyProcessor1());
+services.AddSingleton<BaseProcessor<Activity>>(new MyProcessor2());
 
 services.AddOpenTelemetryTracing((builder) => builder
     .AddAspNetCoreInstrumentation()
     .AddHttpClientInstrumentation());
 ```
 
-Similarly, sampler can also be set of the `IServiceCollection`.
+Similarly, sampler can also be set on the `IServiceCollection`.
 
 ```csharp
 services.AddSingleton<Sampler>(new TestSampler());
@@ -82,12 +83,10 @@ public static class MyLibraryExtensions
                 "MyFeature requires a hosting TracerProviderBuilder instance."))
             .AddHostedService<MyHostedService>()
             .AddSingleton<MyService>()
-            .AddSingleton<MyProcessor>()
-            .AddSingleton<MySampler>();
+            .AddSingleton<BaseProcessor<Activity>>(new MyProcessor());
+            .AddSingleton<Sampler>(new MySampler());
 
-        return tracerProviderBuilder
-            .AddProcessor<MyProcessor>()
-            .SetSampler<MySampler>();
+        return tracerProviderBuilder();
     }
 }
 ```

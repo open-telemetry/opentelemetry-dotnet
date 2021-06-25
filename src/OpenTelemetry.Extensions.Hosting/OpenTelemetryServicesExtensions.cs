@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (services.Any(service => service.ImplementationType == typeof(TelemetryHostedService)))
             {
-                throw new InvalidOperationException("AddOpenTelemetryTracing must be only called once.");
+                throw new NotSupportedException("Registering multiple TracerProviders via AddOpenTelemetryTracing is not supported.");
             }
 
             var builder = new TracerProviderBuilderHosting(services);
