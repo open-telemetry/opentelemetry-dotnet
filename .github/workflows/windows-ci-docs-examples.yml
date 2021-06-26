@@ -16,13 +16,13 @@ jobs:
 
     strategy:
       matrix:
-        version: [net452,net46,net461,netcoreapp2.1,netcoreapp3.1,net5.0]
+        version: [net461,net5.0]
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Build
-      run: dotnet msbuild OpenTelemetry.proj -target:BuildDocsAndExamples --configuration Release
+      run: dotnet msbuild OpenTelemetry.proj -target:BuildDocsAndExamples -property:Configuration=Release
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
