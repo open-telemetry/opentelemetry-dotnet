@@ -9,7 +9,7 @@ please check the latest changes
 
 ## Unreleased
 
-## 1.1.0-beta5
+## 1.1.0-rc1
 
 Released 2021-Jun-25
 
