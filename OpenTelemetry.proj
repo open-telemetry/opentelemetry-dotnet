@@ -1,6 +1,9 @@
 <Project>
   <ItemGroup>
-    <SolutionProjects Include="**\*.csproj" />
+    <SolutionProjects Include="src\**\*.csproj" />
+	  <SolutionProjects Include="test\**\*.csproj" />
+	  <DocsAndExamples Include="docs\**\*.csproj" />
+	  <DocsAndExamples Include="examples\**\*.csproj" />
 
     <!-- Windows specific projects -->
     <SolutionProjects Remove="examples\AspNet\OpenTelemetry.Exporter.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
@@ -15,6 +18,10 @@
 
   <Target Name="Build">
     <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="BuildDocsAndExamples">
+    <MSBuild Projects="@(DocsAndExamples)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" />
   </Target>
 
   <Target Name="Pack">

@@ -11,7 +11,7 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
+  build-docs-examples:
     runs-on: windows-latest
 
     strategy:
@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build
-      run: dotnet build OpenTelemetry.proj --configuration Release
+      run: dotnet msbuild OpenTelemetry.proj -target:BuildDocsAndExamples --configuration Release
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
