@@ -21,11 +21,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: dotnet restore
-
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build OpenTelemetry.proj --configuration Release
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
