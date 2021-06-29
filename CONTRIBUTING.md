@@ -150,7 +150,14 @@ Open a pull request against the main `opentelemetry-dotnet` repo.
 
 * If the PR is not ready for review, please mark it as
   [`draft`](https://github.blog/2019-02-14-introducing-draft-pull-requests/).
-* Make sure CLA is signed and CI is clear.
+* Make sure CLA is signed and all required CI checks are clear.
+* Submit small, focused PRs addressing a single
+  concern/issue.
+* Make sure the PR title reflects the contribution.
+* Write a summary that helps understand the change.
+* Include usage examples in the summary, where applicable.
+* Include benchmarks (before/after) in the summary, for contributions that are
+  performance enhancements.
 
 ### How to Get PRs Merged
 
@@ -169,6 +176,22 @@ A PR is considered to be **ready to merge** when:
 Any Maintainer can merge the PR once it is **ready to merge**. Note, that some
 PR may not be merged immediately if repo is being in process of a major release
 and the new feature doesn't fit it.
+
+If a PR has been stuck (e.g. there are lots of debates and people couldn't agree
+on each other), the owner should try to get people aligned by:
+
+* Consolidating the perspectives and putting a summary in the PR. It is
+  recommended to add a link into the PR description, which points to a comment
+  with a summary in the PR conversation.
+* Tagging subdomain experts (by looking at the change history) in the PR asking
+  for suggestion.
+* Reaching out to more people on the [CNCF OpenTelemetry .NET Slack
+  channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
+* Stepping back to see if it makes sense to narrow down the scope of the PR or
+  split it up.
+* If none of the above worked and the PR has been stuck for more than 2 weeks,
+  the owner should bring it to the OpenTelemetry .NET SIG
+  [meeting](README.md#contributing).
 
 ## Design Choices
 
