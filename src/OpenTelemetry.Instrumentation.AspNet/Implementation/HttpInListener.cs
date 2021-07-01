@@ -25,7 +25,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
-    internal class HttpInListener : ListenerHandler
+    internal sealed class HttpInListener : ListenerHandler
     {
         internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal const string ActivityOperationName = "Microsoft.AspNet.HttpReqIn";

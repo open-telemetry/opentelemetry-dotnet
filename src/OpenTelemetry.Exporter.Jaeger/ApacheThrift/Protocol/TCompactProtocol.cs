@@ -28,7 +28,7 @@ using Thrift.Transport;
 namespace Thrift.Protocol
 {
     // ReSharper disable once InconsistentNaming
-    internal class TCompactProtocol : TProtocol
+    internal sealed class TCompactProtocol : TProtocol
     {
         private const byte ProtocolId = 0x82;
         private const byte Version = 1;
@@ -193,7 +193,7 @@ namespace Thrift.Protocol
             Trans.Write(PreAllocatedBuffer, 0, 1);
         }
 
-        protected void WriteCollectionBegin(TType elemType, int size)
+        public void WriteCollectionBegin(TType elemType, int size)
         {
             /*
             Abstract method for writing the start of lists and sets. List and sets on

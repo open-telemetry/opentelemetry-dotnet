@@ -28,7 +28,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
-    internal class HttpInListener : ListenerHandler
+    internal sealed class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
