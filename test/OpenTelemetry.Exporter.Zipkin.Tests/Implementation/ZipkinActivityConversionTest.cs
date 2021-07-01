@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal;

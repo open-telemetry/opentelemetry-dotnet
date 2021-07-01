@@ -43,15 +43,14 @@ namespace OpenTelemetry.Internal
         private readonly SelfDiagnosticsConfigParser configParser;
 
         /// <summary>
-        /// t_memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
-        /// t_viewStream is created from the current m_memoryMappedFile.
+        /// memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
+        /// viewStream is created from the current m_memoryMappedFile.
         /// </summary>
         private readonly ThreadLocal<MemoryMappedFile> memoryMappedFileCache = new ThreadLocal<MemoryMappedFile>(true);
         private readonly ThreadLocal<MemoryMappedViewStream> viewStream = new ThreadLocal<MemoryMappedViewStream>(true);
         private bool disposedValue;
 
         // Once the configuration file is valid, an eventListener object will be created.
-        // Commented out for now to avoid the "field was never used" compiler error.
         private SelfDiagnosticsEventListener eventListener;
         private volatile FileStream underlyingFileStreamForMemoryMappedFile;
         private volatile MemoryMappedFile memoryMappedFile;
@@ -275,10 +274,20 @@ namespace OpenTelemetry.Internal
                         this.cancellationTokenSource.Dispose();
                     }
 
+                    // Dispose EventListner before files, because EventListner writes to files.
+                    if (this.eventListener != null)
+                    {
+                        this.eventListener.Dispose();
+                    }
+
                     // Ensure worker thread properly finishes.
                     // Or it might have created another MemoryMappedFile in that thread
                     // after the CloseLogFile() below is called.
                     this.CloseLogFile();
+
+                    // Dispose ThreadLocal variables after the file handles are disposed.
+                    this.viewStream.Dispose();
+                    this.memoryMappedFileCache.Dispose();
                 }
 
                 this.disposedValue = true;

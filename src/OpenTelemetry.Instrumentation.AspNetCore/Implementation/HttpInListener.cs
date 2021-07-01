@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
 
                 if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
@@ -327,7 +327,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
