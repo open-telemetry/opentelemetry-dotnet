@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests
@@ -134,6 +135,46 @@ namespace OpenTelemetry.Context.Propagation.Tests
         }
 
         [Fact]
+        public void ValidateSpecialCharsBaggageExtraction()
+        {
+            var encodedKey = WebUtility.UrlEncode("key2");
+            var encodedValue = WebUtility.UrlEncode("!x_x,x-x&x(x\");:");
+            var escapedKey = Uri.EscapeDataString("key()3");
+            var escapedValue = Uri.EscapeDataString("value()!&;:");
+
+            Assert.Equal("key2", encodedKey);
+            Assert.Equal("!x_x%2Cx-x%26x(x%22)%3B%3A", encodedValue);
+            Assert.Equal("key%28%293", escapedKey);
+            Assert.Equal("value%28%29%21%26%3B%3A", escapedValue);
+
+            var initialBaggage = $"key+1=value+1,{encodedKey}={encodedValue},{escapedKey}={escapedValue}";
+            var carrier = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, initialBaggage),
+            };
+
+            var propagationContext = this.baggage.Extract(default, carrier, GetterList);
+
+            Assert.False(propagationContext == default);
+            Assert.True(propagationContext.ActivityContext == default);
+
+            Assert.Equal(3, propagationContext.Baggage.Count);
+
+            var actualBaggage = propagationContext.Baggage.GetBaggage();
+
+            Assert.Equal(3, actualBaggage.Count);
+
+            Assert.True(actualBaggage.ContainsKey("key 1"));
+            Assert.Equal("value 1", actualBaggage["key 1"]);
+
+            Assert.True(actualBaggage.ContainsKey("key2"));
+            Assert.Equal("!x_x,x-x&x(x\");:", actualBaggage["key2"]);
+
+            Assert.True(actualBaggage.ContainsKey("key()3"));
+            Assert.Equal("value()!&;:", actualBaggage["key()3"]);
+        }
+
+        [Fact]
         public void ValidateEmptyBaggageInjection()
         {
             var carrier = new Dictionary<string, string>();
@@ -158,6 +199,24 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             Assert.Single(carrier);
             Assert.Equal("key1=value1,key2=value2", carrier[BaggagePropagator.BaggageHeaderName]);
+        }
+
+        [Fact]
+        public void ValidateSpecialCharsBaggageInjection()
+        {
+            var carrier = new Dictionary<string, string>();
+            var propagationContext = new PropagationContext(
+                default,
+                new Baggage(new Dictionary<string, string>
+                {
+                    { "key 1", "value 1" },
+                    { "key2", "!x_x,x-x&x(x\");:" },
+                }));
+
+            this.baggage.Inject(propagationContext, carrier, Setter);
+
+            Assert.Single(carrier);
+            Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
         }
     }
 }

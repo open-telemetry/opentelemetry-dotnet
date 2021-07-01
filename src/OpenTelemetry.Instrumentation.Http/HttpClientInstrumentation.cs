@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
 {

@@ -13,6 +13,14 @@
     logging of `CommandType.Text` and `CommandType.StoredProcedure` as it's
     impossible to distinguish them.
 
+## 1.0.0-rc6
+
+Released 2021-Jun-25
+
+## 1.0.0-rc5
+
+Released 2021-Jun-09
+
 ## 1.0.0-rc4
 
 Released 2021-Apr-23

@@ -126,3 +126,6 @@ csharp_preserve_single_line_blocks = true
 visual_basic_preferred_modifier_order = Partial,Default,Private,Protected,Public,Friend,NotOverridable,Overridable,MustOverride,Overloads,Overrides,MustInherit,NotInheritable,Static,Shared,Shadows,ReadOnly,WriteOnly,Dim,Const,WithEvents,Widening,Narrowing,Custom,Async:suggestion 
 [obj/**.cs]
 generated_code = true
+
+[*.csproj]
+indent_size = 2

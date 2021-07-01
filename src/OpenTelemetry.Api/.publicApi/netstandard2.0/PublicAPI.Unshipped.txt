@@ -1,2 +1,4 @@
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void
