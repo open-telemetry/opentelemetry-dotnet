@@ -38,11 +38,11 @@ namespace OpenTelemetry.Metrics
                 string valueDisplay = string.Empty;
                 if (metric is ISumMetric sumMetric)
                 {
-                    if (sumMetric.Sum is double doubleSum)
+                    if (sumMetric.Sum.Value is double doubleSum)
                     {
                         valueDisplay = ((double)doubleSum).ToString(CultureInfo.InvariantCulture);
                     }
-                    else if (sumMetric.Sum is long longSum)
+                    else if (sumMetric.Sum.Value is long longSum)
                     {
                         valueDisplay = ((long)longSum).ToString();
                     }
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Metrics
 
                 string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                var msg = $"Export[{this.name}] {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}";
+                var msg = $"Export[{this.name}] {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}, Details: {metric.ToDisplayString()}";
                 Console.WriteLine(msg);
             }
         }

@@ -22,6 +22,6 @@ namespace OpenTelemetry.Metrics
     {
         IEnumerable<IExemplar> Exemplars { get; }
 
-        IDataPoint LastValue { get; }
+        IDataValue LastValue { get; }
     }
 }
