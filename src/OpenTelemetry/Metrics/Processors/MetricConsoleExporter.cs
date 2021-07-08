@@ -17,6 +17,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
@@ -73,7 +74,28 @@ namespace OpenTelemetry.Metrics
 
                 string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                var msg = $"Export[{this.name}] {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}, Details: {metric.ToDisplayString()}";
+                var msg = new StringBuilder($"Export[{this.name}] {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}, Details: {metric.ToDisplayString()}");
+
+                if (!string.IsNullOrEmpty(metric.Instrument.Description))
+                {
+                    msg.Append($", Description: {metric.Instrument.Description}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Instrument.Unit))
+                {
+                    msg.Append($", Unit: {metric.Instrument.Unit}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Instrument.Meter.Name))
+                {
+                    msg.Append($", Meter: {metric.Instrument.Meter.Name}");
+
+                    if (!string.IsNullOrEmpty(metric.Instrument.Meter.Version))
+                    {
+                        msg.Append($"/{metric.Instrument.Meter.Version}");
+                    }
+                }
+
                 Console.WriteLine(msg);
             }
         }

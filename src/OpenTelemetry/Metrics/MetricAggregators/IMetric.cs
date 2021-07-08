@@ -16,12 +16,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
     internal interface IMetric
     {
         string Name { get; }
+
+        Instrument Instrument { get; }
 
         DateTimeOffset StartTimeExclusive { get; }
 

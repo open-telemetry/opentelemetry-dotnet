@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,9 +26,10 @@ namespace OpenTelemetry.Metrics
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
 
-        internal SummaryMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic)
+        internal SummaryMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic)
         {
             this.Name = name;
+            this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
@@ -35,6 +37,8 @@ namespace OpenTelemetry.Metrics
         }
 
         public string Name { get; private set; }
+
+        public Instrument Instrument { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -97,7 +101,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new SummaryMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsMonotonic);
+            var cloneItem = new SummaryMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes, this.IsMonotonic);
 
             lock (this.lockUpdate)
             {

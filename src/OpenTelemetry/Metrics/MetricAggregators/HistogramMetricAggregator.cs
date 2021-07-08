@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -24,9 +25,10 @@ namespace OpenTelemetry.Metrics
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();
 
-        internal HistogramMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        internal HistogramMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
         {
             this.Name = name;
+            this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
@@ -34,6 +36,8 @@ namespace OpenTelemetry.Metrics
         }
 
         public string Name { get; private set; }
+
+        public Instrument Instrument { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -71,7 +75,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new HistogramMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
 
             lock (this.lockUpdate)
             {

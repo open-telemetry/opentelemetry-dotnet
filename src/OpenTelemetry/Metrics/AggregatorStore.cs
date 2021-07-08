@@ -67,20 +67,20 @@ namespace OpenTelemetry.Metrics
 
                 if (this.instrument.GetType().Name.Contains("Counter"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, false, true)));
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true, true)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, this.instrument, dt, tags, false, true)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, this.instrument, dt, tags, true, true)));
                 }
                 else if (this.instrument.GetType().Name.Contains("Gauge"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, this.instrument, dt, tags)));
                 }
                 else if (this.instrument.GetType().Name.Contains("Histogram"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new HistogramMetricAggregator(name, dt, tags, false)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new HistogramMetricAggregator(name, this.instrument, dt, tags, false)));
                 }
                 else
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, this.instrument, dt, tags, false)));
                 }
             }
 

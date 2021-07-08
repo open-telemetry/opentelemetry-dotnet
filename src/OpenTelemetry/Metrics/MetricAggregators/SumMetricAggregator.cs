@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,9 +31,10 @@ namespace OpenTelemetry.Metrics
         private double dsumNeg = 0;
         private long countNeg = 0;
 
-        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta, bool isMonotonic)
+        internal SumMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta, bool isMonotonic)
         {
             this.Name = name;
+            this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
@@ -41,6 +43,8 @@ namespace OpenTelemetry.Metrics
         }
 
         public string Name { get; private set; }
+
+        public Instrument Instrument { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -158,7 +162,7 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality, this.IsMonotonic);
+            var cloneItem = new SumMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality, this.IsMonotonic);
 
             lock (this.lockUpdate)
             {
