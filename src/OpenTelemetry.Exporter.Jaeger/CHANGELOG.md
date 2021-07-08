@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* The `JaegerExporterOptions` defaults can be overriden using
+  `OTEL_EXPORTER_JAEGER_AGENT_HOST` and `OTEL_EXPORTER_JAEGER_AGENT_PORT`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#jaeger-exporter).
+  ([#2123](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2123))
+
 ## 1.1.0-rc1
 
 Released 2021-Jun-25

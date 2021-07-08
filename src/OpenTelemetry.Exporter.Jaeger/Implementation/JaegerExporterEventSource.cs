@@ -42,5 +42,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             this.WriteEvent(1, exception);
         }
+
+        [Event(2, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(2, name, value);
+        }
     }
 }
