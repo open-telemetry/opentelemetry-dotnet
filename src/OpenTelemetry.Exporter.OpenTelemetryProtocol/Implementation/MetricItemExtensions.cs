@@ -284,15 +284,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpExemplar.FilteredAttributes.Add(tag.ToOtlpAttribute());
             }
 
-            // TODO: exemplar.TraceId/SpanId should be of type ActivityTraceId/ActivitySpanId
-            if (exemplar.TraceId != null && exemplar.TraceId.Length > 0)
+            if (exemplar.TraceId != default)
             {
-                otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(exemplar.TraceId);
+                byte[] traceIdBytes = new byte[16];
+                exemplar.TraceId.CopyTo(traceIdBytes);
+                otlpExemplar.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
             }
 
-            if (exemplar.SpanId != null && exemplar.SpanId.Length > 0)
+            if (exemplar.SpanId != default)
             {
-                otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(exemplar.SpanId);
+                byte[] spanIdBytes = new byte[8];
+                exemplar.SpanId.CopyTo(spanIdBytes);
+                otlpExemplar.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
             }
 
             return otlpExemplar;
