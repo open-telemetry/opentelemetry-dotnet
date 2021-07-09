@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
         internal DataValue(int value)
         {
             // Promote to long
-            this.value = new DataValue<int>(value);
+            this.value = new DataValue<long>(value);
         }
 
         internal DataValue(long value)
