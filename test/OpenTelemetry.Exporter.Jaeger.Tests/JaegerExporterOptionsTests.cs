@@ -45,8 +45,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerExporterOptions_EnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_JAEGER_AGENT_HOST", "jeager-host");
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_JAEGER_AGENT_PORT", "123");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jeager-host");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "123");
 
             var options = new JaegerExporterOptions();
 
@@ -57,17 +57,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerExporterOptions_InvalidPortEnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_JAEGER_AGENT_PORT", "invalid");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "invalid");
 
             var options = new JaegerExporterOptions();
 
             Assert.Equal(6831, options.AgentPort); // use default
         }
 
+        [Fact]
+        public void JaegerExporterOptions_EnvironmentVariableNames()
+        {
+            Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_HOST", JaegerExporterOptions.OTelAgentHostEnvVarKey);
+            Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_PORT", JaegerExporterOptions.OTelAgentPortEnvVarKey);
+        }
+
         private void ClearEnvVars()
         {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_JAEGER_AGENT_HOST", null);
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_JAEGER_AGENT_PORT", null);
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, null);
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, null);
         }
     }
 }

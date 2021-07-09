@@ -24,8 +24,8 @@ namespace OpenTelemetry.Exporter
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 
-        private const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
-        private const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
+        internal const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
+        internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
 
         public JaegerExporterOptions()
         {
