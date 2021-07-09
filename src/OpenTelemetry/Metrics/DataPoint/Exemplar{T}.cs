@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -23,11 +24,10 @@ namespace OpenTelemetry.Metrics
         where T : struct
     {
         private static readonly KeyValuePair<string, object>[] EmptyTag = new KeyValuePair<string, object>[0];
-        private static readonly byte[] EmptyId = new byte[0];
 
         private readonly IDataValue value;
 
-        internal Exemplar(DateTimeOffset timestamp, T value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
+        internal Exemplar(DateTimeOffset timestamp, T value, ActivityTraceId traceId, ActivitySpanId spanId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
             this.FilteredTags = filteredTags;
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
             this.value = new DataValue<T>(value);
         }
 
-        internal Exemplar(DateTimeOffset timestamp, IDataValue value, byte[] spanId, byte[] traceId, KeyValuePair<string, object>[] filteredTags)
+        internal Exemplar(DateTimeOffset timestamp, IDataValue value, ActivityTraceId traceId, ActivitySpanId spanId, KeyValuePair<string, object>[] filteredTags)
         {
             this.Timestamp = timestamp;
             this.FilteredTags = filteredTags;
@@ -46,12 +46,12 @@ namespace OpenTelemetry.Metrics
         }
 
         internal Exemplar(DateTimeOffset timestamp, T value)
-            : this(timestamp, value, Exemplar<T>.EmptyId, Exemplar<T>.EmptyId, Exemplar<T>.EmptyTag)
+            : this(timestamp, value, default, default, Exemplar<T>.EmptyTag)
         {
         }
 
         internal Exemplar(DateTimeOffset timestamp, IDataValue value)
-            : this(timestamp, value, Exemplar<T>.EmptyId, Exemplar<T>.EmptyId, Exemplar<T>.EmptyTag)
+            : this(timestamp, value, default, default, Exemplar<T>.EmptyTag)
         {
         }
 
@@ -59,9 +59,9 @@ namespace OpenTelemetry.Metrics
 
         public readonly KeyValuePair<string, object>[] FilteredTags { get; }
 
-        public readonly byte[] SpanId { get; }
+        public readonly ActivityTraceId TraceId { get; }
 
-        public readonly byte[] TraceId { get; }
+        public readonly ActivitySpanId SpanId { get; }
 
         public object Value => this.value.Value;
     }
