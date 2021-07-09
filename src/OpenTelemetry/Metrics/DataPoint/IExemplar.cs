@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,8 +26,8 @@ namespace OpenTelemetry.Metrics
 
         KeyValuePair<string, object>[] FilteredTags { get; }
 
-        byte[] SpanId { get; }
+        ActivityTraceId TraceId { get; }
 
-        byte[] TraceId { get; }
+        ActivitySpanId SpanId { get; }
     }
 }
