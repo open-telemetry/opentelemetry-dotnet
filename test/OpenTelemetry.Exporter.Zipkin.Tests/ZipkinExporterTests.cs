@@ -134,28 +134,55 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         [Fact]
         public void EndpointConfigurationUsingEnvironmentVariable()
         {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://urifromenvironmentvariable");
+            try
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "http://urifromenvironmentvariable");
 
-            var exporterOptions = new ZipkinExporterOptions();
+                var exporterOptions = new ZipkinExporterOptions();
 
-            Assert.Equal(new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT")).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
-
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", null);
+                Assert.Equal(new Uri(Environment.GetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar)).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
         }
 
         [Fact]
         public void IncodeEndpointConfigTakesPrecedenceOverEnvironmentVariable()
         {
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://urifromenvironmentvariable");
-
-            var exporterOptions = new ZipkinExporterOptions
+            try
             {
-                Endpoint = new Uri("http://urifromcode"),
-            };
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "http://urifromenvironmentvariable");
 
-            Assert.Equal(new Uri("http://urifromcode").AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+                var exporterOptions = new ZipkinExporterOptions
+                {
+                    Endpoint = new Uri("http://urifromcode"),
+                };
 
-            Environment.SetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT", null);
+                Assert.Equal(new Uri("http://urifromcode").AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
+        }
+
+        [Fact]
+        public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "InvalidUri");
+
+                var exporterOptions = new ZipkinExporterOptions();
+
+                Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
         }
 
         [Theory]

@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter
 #if !NET452
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 #endif
+        internal const string ZipkinEndpointEnvVar = "OTEL_EXPORTER_ZIPKIN_ENDPOINT";
+        internal const string DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
@@ -37,10 +39,11 @@ namespace OpenTelemetry.Exporter
         {
             try
             {
-                this.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_ZIPKIN_ENDPOINT") ?? "http://localhost:9411/api/v2/spans");
+                this.Endpoint = new Uri(Environment.GetEnvironmentVariable(ZipkinEndpointEnvVar) ?? DefaultZipkinEndpoint);
             }
             catch (Exception ex)
             {
+                this.Endpoint = new Uri(DefaultZipkinEndpoint);
                 ZipkinExporterEventSource.Log.FailedEndpointInitialization(ex);
             }
         }
