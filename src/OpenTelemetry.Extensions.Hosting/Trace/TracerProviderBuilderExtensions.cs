@@ -98,6 +98,23 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Gets the application <see cref="IServiceCollection"/> attached to
+        /// the <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns><see cref="IServiceCollection"/> or <see langword="null"/>
+        /// if services are unavailable.</returns>
+        public static IServiceCollection GetServices(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
+            {
+                return tracerProviderBuilderHosting.Services;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
         /// </summary>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
