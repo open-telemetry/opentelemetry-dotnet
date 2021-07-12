@@ -42,6 +42,14 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(exportedItems));
             }
 
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+                });
+            }
+
             return builder.AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
         }
     }
