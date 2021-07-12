@@ -34,7 +34,7 @@ take precedence over the environment variables.
 
 ## Options Properties
 
-The `JaegerExporter` can be configuring using the `JaegerExporterOptions`
+The `JaegerExporter` can be configured using the `JaegerExporterOptions`
 properties:
 
 * `AgentHost`: The Jaeger Agent host (default `localhost`).
