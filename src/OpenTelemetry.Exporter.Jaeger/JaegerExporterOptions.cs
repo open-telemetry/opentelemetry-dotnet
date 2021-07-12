@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Security;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 
 namespace OpenTelemetry.Exporter
@@ -29,23 +30,32 @@ namespace OpenTelemetry.Exporter
 
         public JaegerExporterOptions()
         {
-            string agentHostEnvVar = Environment.GetEnvironmentVariable(OTelAgentHostEnvVarKey);
-            if (!string.IsNullOrEmpty(agentHostEnvVar))
+            try
             {
-                this.AgentHost = agentHostEnvVar;
-            }
+                string agentHostEnvVar = Environment.GetEnvironmentVariable(OTelAgentHostEnvVarKey);
+                if (!string.IsNullOrEmpty(agentHostEnvVar))
+                {
+                    this.AgentHost = agentHostEnvVar;
+                }
 
-            string agentPortEnvVar = Environment.GetEnvironmentVariable(OTelAgentPortEnvVarKey);
-            if (!string.IsNullOrEmpty(agentPortEnvVar))
+                string agentPortEnvVar = Environment.GetEnvironmentVariable(OTelAgentPortEnvVarKey);
+                if (!string.IsNullOrEmpty(agentPortEnvVar))
+                {
+                    if (int.TryParse(agentPortEnvVar, out var agentPortValue))
+                    {
+                        this.AgentPort = agentPortValue;
+                    }
+                    else
+                    {
+                        JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
+                    }
+                }
+            }
+            catch (SecurityException ex)
             {
-                if (int.TryParse(agentPortEnvVar, out var agentPortValue))
-                {
-                    this.AgentPort = agentPortValue;
-                }
-                else
-                {
-                    JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
-                }
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                JaegerExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
             }
         }
 
