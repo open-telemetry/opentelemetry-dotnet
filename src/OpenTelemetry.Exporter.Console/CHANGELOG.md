@@ -9,6 +9,9 @@ please check the latest changes
 
 ## Unreleased
 
+* Supports OpenTelemetry.Extensions.Hosting based configuration for
+  of `ConsoleExporterOptions`.
+
 ## 1.1.0-rc1
 
 Released 2021-Jun-25

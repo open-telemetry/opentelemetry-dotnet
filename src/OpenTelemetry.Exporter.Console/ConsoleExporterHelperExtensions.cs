@@ -35,7 +35,19 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var options = new ConsoleExporterOptions();
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), configure);
+                });
+            }
+
+            return AddConsoleExporter(builder, new ConsoleExporterOptions(), configure);
+        }
+
+        private static TracerProviderBuilder AddConsoleExporter(TracerProviderBuilder builder, ConsoleExporterOptions options, Action<ConsoleExporterOptions> configure = null)
+        {
             configure?.Invoke(options);
             return builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
         }
