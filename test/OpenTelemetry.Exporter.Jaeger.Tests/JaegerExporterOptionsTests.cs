@@ -65,6 +65,19 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
+        public void JaegerExporterOptions_SetterOverridesEnvironmentVariable()
+        {
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "envvar-host");
+
+            var options = new JaegerExporterOptions
+            {
+                AgentHost = "incode-host"
+            };
+
+            Assert.Equal("incode-host", options.AgentHost);
+        }
+
+        [Fact]
         public void JaegerExporterOptions_EnvironmentVariableNames()
         {
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_HOST", JaegerExporterOptions.OTelAgentHostEnvVarKey);
