@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.WriteEvent(1, exception);
         }
 
-        [Event(2, Message = "Error initializing zipkin endpoint, falling back to default value: '{0}'", Level = EventLevel.Error)]
+        [Event(2, Message = "Error initializing Zipkin endpoint, falling back to default value: '{0}'", Level = EventLevel.Error)]
         public void FailedEndpointInitialization(string exception)
         {
             this.WriteEvent(2, exception);
