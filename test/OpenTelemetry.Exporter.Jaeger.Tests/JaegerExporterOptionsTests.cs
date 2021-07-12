@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             var options = new JaegerExporterOptions
             {
-                AgentHost = "incode-host"
+                AgentHost = "incode-host",
             };
 
             Assert.Equal("incode-host", options.AgentHost);
