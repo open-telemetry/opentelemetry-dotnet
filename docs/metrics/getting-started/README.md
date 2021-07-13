@@ -18,66 +18,41 @@ Hello World!
 ```
 
 Install the
-[OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+[OpenTelemetry](../../../src/OpenTelemetry/README.md)
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console
+dotnet add package OpenTelemetry
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
 
-Run the application again (using `dotnet run`) and you should see the trace
-output from the console.
+Run the application again (using `dotnet run`) and you should see the metric
+output from the console, similar to shown below:
 
+<!-- markdownlint-disable MD013 -->
 ```text
-Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
-Activity.DisplayName: SayHello
-Activity.Kind:        Internal
-Activity.StartTime:   2020-08-12T15:59:10.4461835Z
-Activity.Duration:    00:00:00.0066039
-Activity.TagObjects:
-    foo: 1
-    bar: Hello, World!
-    baz: [1, 2, 3]
-Resource associated with Activity:
-    service.name: unknown_service:getting-started
+Export[] 14:54:56.162 14:54:57.155 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 15977610, Details: Delta=True,Mon=True,Count=1597761,Sum=15977610
+Export[] 14:54:57.155 14:54:58.184 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 21656160, Details: Delta=True,Mon=True,Count=2165616,Sum=21656160
+Export[] 14:54:58.184 14:54:59.195 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 20273630, Details: Delta=True,Mon=True,Count=2027363,Sum=20273630
+Export[] 14:54:59.195 14:55:00.209 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 19113300, Details: Delta=True,Mon=True,Count=1911330,Sum=19113300
+Export[] 14:55:00.209 14:55:01.220 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 17327600, Details: Delta=True,Mon=True,Count=1732760,Sum=17327600
 ```
+<!-- markdownlint-enable MD013 -->
 
-Congratulations! You are now collecting traces using OpenTelemetry.
+Congratulations! You are now collecting metrics using OpenTelemetry.
 
 What does the above program do?
 
-The program creates an `ActivitySource` which represents an [OpenTelemetry
-Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer).
-The `ActivitySource` instance is used to start an `Activity` which represents an
-[OpenTelemetry
-Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
+The program creates a
+[Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
+instance named "TestMeter" and then creates a
+[Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
+instrument from it. This counter is used to report metric measurements.
+
 An OpenTelemetry
-[TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracerprovider)
-is configured to subscribe to the activities from the source
-`MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
-`ConsoleExporter` simply displays it on the console.
-
-## OpenTelemetry .NET and relation with .NET Activity API
-
-If you tried the above program, you may have already noticed that the terms
-`ActivitySource` and `Activity` were used instead of `Tracer` and `Span` from
-OpenTelemetry specification. This results from the fact that, OpenTelemetry .NET
-is a somewhat unique implementation of the OpenTelemetry project, as parts of
-the tracing API are incorporated directly into the .NET runtime itself. From a
-high level, what this means is that the `Activity` and `ActivitySource` classes
-from .NET runtime represent the OpenTelemetry concepts of
-[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
-and
-[Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer)
-respectively. Read
-[this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
-to learn more.
-
-## Learn more
-
-* If you want to customize the Sdk, refer to [customizing
-  the SDK](../customizing-the-sdk/README.md).
-* If you want to build a custom exporter/processor/sampler, refer to [extending
-  the SDK](../extending-the-sdk/README.md).
+[MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
+is configured to subscribe to instruments from the Meter `TestMeter`, and
+aggregate the measurements in-memory. The pre-aggregated metrics are exported
+every 1 second to a `ConsoleExporter`. `ConsoleExporter` simply displays it on
+the console.

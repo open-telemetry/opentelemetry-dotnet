@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -33,17 +35,21 @@ public class Program
 
         Counter<int> counter = meter.CreateCounter<int>("counter");
 
-        while (true)
+        var token = new CancellationTokenSource();
+        Task writeMetricTask = new Task(() =>
         {
-            counter.Add(
-                        200,
-                        new KeyValuePair<string, object>("tag1", "value2"),
-                        new KeyValuePair<string, object>("tag2", "value2"));
-
-            if (Console.ReadKey().KeyChar == 'q')
+            while (!token.IsCancellationRequested)
             {
-                break;
+                counter.Add(
+                            10,
+                            new KeyValuePair<string, object>("tag1", "value1"),
+                            new KeyValuePair<string, object>("tag2", "value2"));
             }
-        }
+        });
+        writeMetricTask.Start();
+
+        Console.WriteLine("Press enter to exit.");
+        Console.ReadLine();
+        token.Cancel();
     }
 }
