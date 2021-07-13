@@ -24,7 +24,7 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
@@ -44,6 +44,7 @@ public class Program
                             10,
                             new KeyValuePair<string, object>("tag1", "value1"),
                             new KeyValuePair<string, object>("tag2", "value2"));
+                Task.Delay(10).Wait();
             }
         });
         writeMetricTask.Start();
@@ -51,5 +52,6 @@ public class Program
         Console.WriteLine("Press enter to exit.");
         Console.ReadLine();
         token.Cancel();
+        await writeMetricTask;
     }
 }
