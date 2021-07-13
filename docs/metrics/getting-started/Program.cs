@@ -24,23 +24,22 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
+    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+
     public static async Task Main(string[] args)
     {
-        using var provider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
-
-        using var meter = new Meter("TestMeter", "0.0.1");
-
-        Counter<int> counter = meter.CreateCounter<int>("counter");
 
         var token = new CancellationTokenSource();
         Task writeMetricTask = new Task(() =>
         {
             while (!token.IsCancellationRequested)
             {
-                counter.Add(
+                Counter.Add(
                             10,
                             new KeyValuePair<string, object>("tag1", "value1"),
                             new KeyValuePair<string, object>("tag2", "value2"));
