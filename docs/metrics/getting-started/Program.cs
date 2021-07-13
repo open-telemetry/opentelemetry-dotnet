@@ -34,7 +34,7 @@ public class Program
                 .AddExportProcessor(new MetricConsoleExporter())
                 .Build();
 
-        var token = new CancellationTokenSource();
+        using var token = new CancellationTokenSource();
         Task writeMetricTask = new Task(() =>
         {
             while (!token.IsCancellationRequested)
