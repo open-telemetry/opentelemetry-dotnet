@@ -48,7 +48,8 @@ The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
 instance named "TestMeter" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to repeatedly report metric measurements until exited.
+instrument from it. This counter is used to repeatedly report metric
+measurements until exited.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
