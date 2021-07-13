@@ -48,9 +48,7 @@ public class Program
         });
         writeMetricTask.Start();
 
-        Console.WriteLine("Press enter to exit.");
-        Console.ReadLine();
-        token.Cancel();
+        token.CancelAfter(10000);
         await writeMetricTask;
     }
 }

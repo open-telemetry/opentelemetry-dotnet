@@ -32,11 +32,11 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export[] 14:54:56.162 14:54:57.155 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 15977610, Details: Delta=True,Mon=True,Count=1597761,Sum=15977610
-Export[] 14:54:57.155 14:54:58.184 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 21656160, Details: Delta=True,Mon=True,Count=2165616,Sum=21656160
-Export[] 14:54:58.184 14:54:59.195 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 20273630, Details: Delta=True,Mon=True,Count=2027363,Sum=20273630
-Export[] 14:54:59.195 14:55:00.209 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 19113300, Details: Delta=True,Mon=True,Count=1911330,Sum=19113300
-Export[] 14:55:00.209 14:55:01.220 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 17327600, Details: Delta=True,Mon=True,Count=1732760,Sum=17327600
+Export[] 16:38:36.241 16:38:37.233 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 590, Details: Delta=True,Mon=True,Count=59,Sum=590
+Export[] 16:38:37.233 16:38:38.258 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
+Export[] 16:38:38.258 16:38:39.261 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
+Export[] 16:38:39.261 16:38:40.266 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 630, Details: Delta=True,Mon=True,Count=63,Sum=630
+Export[] 16:38:40.266 16:38:41.271 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -49,7 +49,7 @@ The program creates a
 instance named "TestMeter" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
 instrument from it. This counter is used to repeatedly report metric
-measurements until exited.
+measurements until exited after 10 seconds.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
