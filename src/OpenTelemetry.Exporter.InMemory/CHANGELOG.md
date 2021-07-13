@@ -9,6 +9,10 @@ please check the latest changes
 
 ## Unreleased
 
+## 1.1.0
+
+Released 2021-Jul-12
+
 * Supports OpenTelemetry.Extensions.Hosting based configuration for `InMemoryExporter`
   ([#2129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2129))
 
