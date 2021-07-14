@@ -37,9 +37,6 @@ namespace OpenTelemetry.Metrics
         private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
 
-        private readonly object lockInstrumentStates = new object();
-        private readonly Dictionary<Instrument, InstrumentState> instrumentStates = new Dictionary<Instrument, InstrumentState>();
-
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
             MeasurementProcessor[] measurementProcessors,
@@ -66,12 +63,6 @@ namespace OpenTelemetry.Metrics
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var instrumentState = new InstrumentState(this, instrument);
-
-                        lock (this.lockInstrumentStates)
-                        {
-                            this.instrumentStates.Add(instrument, instrumentState);
-                        }
-
                         listener.EnableMeasurementEvents(instrument, instrumentState);
                     }
                 },
@@ -130,17 +121,12 @@ namespace OpenTelemetry.Metrics
             where T : struct
         {
             // Get Instrument State
+            var instrumentState = state as InstrumentState;
 
-            if (!(state is InstrumentState instrumentState))
+            if (instrument == null)
             {
-                lock (this.lockInstrumentStates)
-                {
-                    if (!this.instrumentStates.TryGetValue(instrument, out instrumentState))
-                    {
-                        instrumentState = new InstrumentState(this, instrument);
-                        this.instrumentStates.Add(instrument, instrumentState);
-                    }
-                }
+                // TODO: log
+                return;
             }
 
             var measurementItem = new MeasurementItem(instrument, instrumentState);
