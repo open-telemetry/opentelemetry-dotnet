@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics
 
                 if (this.instrument.GetType().Name.Contains("Counter"))
                 {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true, true)));
+                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true)));
                 }
                 else if (this.instrument.GetType().Name.Contains("Gauge"))
                 {

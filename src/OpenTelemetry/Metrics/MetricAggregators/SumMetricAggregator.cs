@@ -23,21 +23,17 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
-        private long sumPos = 0;
-        private double dsumPos = 0;
-        private long countPos = 0;
-        private long sumNeg = 0;
-        private double dsumNeg = 0;
-        private long countNeg = 0;
+        private long sumLong = 0;
+        private double sumDouble = 0;
 
-        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta, bool isMonotonic)
+        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
         {
             this.Name = name;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsDeltaTemporality = isDelta;
-            this.IsMonotonic = isMonotonic;
+            this.IsMonotonic = true;
         }
 
         public string Name { get; private set; }
@@ -60,33 +56,11 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.valueType == typeof(long))
                 {
-                    long sum;
-
-                    if (this.IsMonotonic)
-                    {
-                        sum = this.sumPos + (long)this.dsumPos;
-                    }
-                    else
-                    {
-                        sum = this.sumPos + (long)this.dsumPos + this.sumNeg + (long)this.dsumNeg;
-                    }
-
-                    return new DataValue(sum);
+                    return new DataValue(this.sumLong);
                 }
                 else if (this.valueType == typeof(double))
                 {
-                    double sum;
-
-                    if (this.IsMonotonic)
-                    {
-                        sum = this.dsumPos + (double)this.sumPos;
-                    }
-                    else
-                    {
-                        sum = this.dsumPos + (double)this.sumPos + this.dsumNeg + (double)this.sumNeg;
-                    }
-
-                    return new DataValue(sum);
+                    return new DataValue(this.sumDouble);
                 }
 
                 throw new Exception("Unsupported Type");
@@ -100,53 +74,32 @@ namespace OpenTelemetry.Metrics
             {
                 this.EndTimeInclusive = dt;
 
-                if (typeof(T) == typeof(int))
-                {
-                    // Promote to Long
-                    this.valueType = typeof(long);
-                    var val = (long)(int)(object)value;
-
-                    if (val >= 0)
-                    {
-                        this.sumPos += val;
-                        this.countPos++;
-                    }
-                    else
-                    {
-                        this.sumNeg += val;
-                        this.countNeg++;
-                    }
-                }
-                else if (typeof(T) == typeof(long))
+                if (typeof(T) == typeof(long))
                 {
                     this.valueType = typeof(T);
                     var val = (long)(object)value;
-
-                    if (val >= 0)
+                    if (val < 0)
                     {
-                        this.sumPos += val;
-                        this.countPos++;
+                        // TODO: log?
+                        // Also, this validation can be done in earlier stage.
                     }
                     else
                     {
-                        this.sumNeg += val;
-                        this.countNeg++;
+                        this.sumLong += val;
                     }
                 }
                 else if (typeof(T) == typeof(double))
                 {
                     this.valueType = typeof(T);
                     var val = (double)(object)value;
-
-                    if (val >= 0)
+                    if (val < 0)
                     {
-                        this.dsumPos += val;
-                        this.countPos++;
+                        // TODO: log?
+                        // Also, this validation can be done in earlier stage.
                     }
                     else
                     {
-                        this.dsumNeg += val;
-                        this.countNeg++;
+                        this.sumDouble += val;
                     }
                 }
                 else
@@ -158,29 +111,21 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality, this.IsMonotonic);
+            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
 
             lock (this.lockUpdate)
             {
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.valueType = this.valueType;
-                cloneItem.countPos = this.countPos;
-                cloneItem.sumPos = this.sumPos;
-                cloneItem.dsumPos = this.dsumPos;
-                cloneItem.countNeg = this.countNeg;
-                cloneItem.sumNeg = this.sumNeg;
-                cloneItem.dsumNeg = this.dsumNeg;
+                cloneItem.sumLong = this.sumLong;
+                cloneItem.sumDouble = this.sumDouble;
 
                 if (this.IsDeltaTemporality)
                 {
                     this.StartTimeExclusive = dt;
-                    this.countPos = 0;
-                    this.sumPos = 0;
-                    this.dsumPos = 0;
-                    this.countNeg = 0;
-                    this.sumNeg = 0;
-                    this.dsumNeg = 0;
+                    this.sumLong = 0;
+                    this.sumDouble = 0;
                 }
             }
 
@@ -189,7 +134,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Mon={this.IsMonotonic},Count={this.countPos},Sum={this.Sum.Value}";
+            return $"Delta={this.IsDeltaTemporality},Monotonic={this.IsMonotonic},Sum={this.Sum.Value}";
         }
     }
 }
