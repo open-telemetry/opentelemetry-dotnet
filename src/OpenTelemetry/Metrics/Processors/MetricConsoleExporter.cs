@@ -24,6 +24,11 @@ namespace OpenTelemetry.Metrics
     {
         private string name;
 
+        public MetricConsoleExporter()
+            : this(string.Empty)
+        {
+        }
+
         public MetricConsoleExporter(string name)
         {
             this.name = name;

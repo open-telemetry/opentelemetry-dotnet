@@ -63,7 +63,6 @@ namespace OpenTelemetry.Metrics
             {
                 InstrumentPublished = (instrument, listener) =>
                 {
-                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var instrumentState = new InstrumentState(this, instrument);
