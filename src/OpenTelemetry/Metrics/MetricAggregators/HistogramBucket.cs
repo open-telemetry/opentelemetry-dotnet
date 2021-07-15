@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal struct HistogramBucket
+    public struct HistogramBucket
     {
         internal double LowBoundary;
         internal double HighBoundary;

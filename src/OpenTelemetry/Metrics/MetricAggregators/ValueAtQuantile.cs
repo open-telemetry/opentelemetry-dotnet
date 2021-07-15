@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal struct ValueAtQuantile
+    public struct ValueAtQuantile
     {
         internal double Quantile;
         internal double Value;

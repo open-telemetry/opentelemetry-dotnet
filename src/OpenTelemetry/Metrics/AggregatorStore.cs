@@ -25,31 +25,22 @@ namespace OpenTelemetry.Metrics
     {
         private static readonly string[] EmptySeqKey = new string[0];
         private static readonly object[] EmptySeqValue = new object[0];
-
         private readonly Instrument instrument;
-        private readonly MeterProviderSdk sdk;
-
         private readonly object lockKeyValue2MetricAggs = new object();
+        private IAggregator[] tag0Metrics = null;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly Dictionary<string[], Dictionary<object[], MetricAgg[]>> keyValue2MetricAggs =
-            new Dictionary<string[], Dictionary<object[], MetricAgg[]>>(new StringArrayEqualityComparer());
+        private readonly Dictionary<string[], Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
+            new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
 
-        private MetricAgg[] tag0Metrics = null;
-
-        private IEnumerable<int> timePeriods;
-
-        internal AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
+        internal AggregatorStore(Instrument instrument)
         {
-            this.sdk = sdk;
             this.instrument = instrument;
-
-            this.timePeriods = this.sdk.ExportProcessors.Select(k => k.Value).Distinct();
         }
 
-        internal MetricAgg[] MapToMetrics(string[] seqKey, object[] seqVal)
+        internal IAggregator[] MapToMetrics(string[] seqKey, object[] seqVal)
         {
-            var metricpairs = new List<MetricAgg>();
+            var aggregators = new List<IAggregator>();
 
             var name = $"{this.instrument.Meter.Name}:{this.instrument.Name}";
 
@@ -61,32 +52,28 @@ namespace OpenTelemetry.Metrics
 
             var dt = DateTimeOffset.UtcNow;
 
-            foreach (var timeperiod in this.timePeriods)
+            // TODO: Need to map each instrument to metrics (based on View API)
+            if (this.instrument.GetType().Name.Contains("Counter"))
             {
-                // TODO: Need to map each instrument to metrics (based on View API)
-
-                if (this.instrument.GetType().Name.Contains("Counter"))
-                {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SumMetricAggregator(name, dt, tags, true)));
-                }
-                else if (this.instrument.GetType().Name.Contains("Gauge"))
-                {
-                    metricpairs.Add(new MetricAgg(timeperiod, new GaugeMetricAggregator(name, dt, tags)));
-                }
-                else if (this.instrument.GetType().Name.Contains("Histogram"))
-                {
-                    metricpairs.Add(new MetricAgg(timeperiod, new HistogramMetricAggregator(name, dt, tags, false)));
-                }
-                else
-                {
-                    metricpairs.Add(new MetricAgg(timeperiod, new SummaryMetricAggregator(name, dt, tags, false)));
-                }
+                aggregators.Add(new SumMetricAggregator(name, dt, tags, true));
+            }
+            else if (this.instrument.GetType().Name.Contains("Gauge"))
+            {
+                aggregators.Add(new GaugeMetricAggregator(name, dt, tags));
+            }
+            else if (this.instrument.GetType().Name.Contains("Histogram"))
+            {
+                aggregators.Add(new HistogramMetricAggregator(name, dt, tags, false));
+            }
+            else
+            {
+                aggregators.Add(new SummaryMetricAggregator(name, dt, tags, false));
             }
 
-            return metricpairs.ToArray();
+            return aggregators.ToArray();
         }
 
-        internal MetricAgg[] FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal IAggregator[] FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
 
@@ -109,7 +96,7 @@ namespace OpenTelemetry.Metrics
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
-            MetricAgg[] metrics;
+            IAggregator[] metrics;
 
             lock (this.lockKeyValue2MetricAggs)
             {
@@ -124,7 +111,7 @@ namespace OpenTelemetry.Metrics
                     seqKey = new string[len];
                     tagKey.CopyTo(seqKey, 0);
 
-                    value2metrics = new Dictionary<object[], MetricAgg[]>(new ObjectArrayEqualityComparer());
+                    value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
                     this.keyValue2MetricAggs.Add(seqKey, value2metrics);
                 }
 
@@ -160,15 +147,15 @@ namespace OpenTelemetry.Metrics
             // part of the Collect() instead. Thus, we only pay for the price
             // of queueing a DataPoint in the Hot Path
 
-            var metricPairs = this.FindMetricAggregators(tags);
+            var metricAggregators = this.FindMetricAggregators(tags);
 
-            foreach (var pair in metricPairs)
+            foreach (var metricAggregator in metricAggregators)
             {
-                pair.Metric.Update(value);
+                metricAggregator.Update(value);
             }
         }
 
-        internal List<IMetric> Collect(int periodMilliseconds)
+        internal List<IMetric> Collect()
         {
             var collectedMetrics = new List<IMetric>();
 
@@ -180,31 +167,16 @@ namespace OpenTelemetry.Metrics
                 {
                     foreach (var metric in values.Value)
                     {
-                        if (metric.TimePeriod == periodMilliseconds)
+                        var m = metric.Collect(dt);
+                        if (m != null)
                         {
-                            var m = metric.Metric.Collect(dt);
-                            if (m != null)
-                            {
-                                collectedMetrics.Add(m);
-                            }
+                            collectedMetrics.Add(m);
                         }
                     }
                 }
             }
 
             return collectedMetrics;
-        }
-
-        internal class MetricAgg
-        {
-            internal int TimePeriod;
-            internal IAggregator Metric;
-
-            internal MetricAgg(int timePeriod, IAggregator metric)
-            {
-                this.TimePeriod = timePeriod;
-                this.Metric = metric;
-            }
         }
     }
 }

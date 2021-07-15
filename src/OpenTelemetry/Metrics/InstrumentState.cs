@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
 
         internal InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
-            this.store = new AggregatorStore(sdk, instrument);
+            this.store = new AggregatorStore(instrument);
             sdk.AggregatorStores.TryAdd(this.store, true);
         }
 
