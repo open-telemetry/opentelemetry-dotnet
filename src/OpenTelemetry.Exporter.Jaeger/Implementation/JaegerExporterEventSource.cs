@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
+using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -37,10 +38,31 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
+        [NonEvent]
+        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Failed to send spans: '{0}'", Level = EventLevel.Error)]
         public void FailedExport(string exception)
         {
             this.WriteEvent(1, exception);
+        }
+
+        [Event(2, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(2, name, value);
+        }
+
+        [Event(3, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
+        public void MissingPermissionsToReadEnvironmentVariable(string exception)
+        {
+            this.WriteEvent(3, exception);
         }
     }
 }
