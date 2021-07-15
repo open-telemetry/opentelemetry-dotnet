@@ -20,19 +20,16 @@ method on `TracerProviderBuilder`.
 
 ## Configuration
 
-You can configure the `ZipkinExporter` through
-`ZipkinExporterOptions` properties:
+You can configure the `ZipkinExporter` through `ZipkinExporterOptions`
+and environment variables. The `ZipkinExporterOptions` setters
+take precedence over the environment variables.
+
+### Configuration using Properties
 
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
    associated with the telemetry has "service.name" defined, then it'll be
    preferred over this option.
 * `Endpoint`: URI address to receive telemetry (default `http://localhost:9411/api/v2/spans`).
-
-   The endpoint configuration can be provided either [via code](../../examples/Console/TestZipkinExporter.cs)
-    or
-   [via environment variable](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#zipkin-exporter),
-    with code taking precedence over environment variable.
-
 * `UseShortTraceIds`: Whether the trace's ID should be shortened before
    sending to Zipkin (default false).
 * `MaxPayloadSizeInBytes`: Maximum payload size - for .NET versions
@@ -47,7 +44,7 @@ See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
 for example use.
 
-## Configuration using Dependency Injection
+### Configuration using Dependency Injection
 
 This exporter allows easy configuration of `ZipkinExporterOptions` from
 dependency injection container, when used in conjunction with
@@ -55,6 +52,15 @@ dependency injection container, when used in conjunction with
 
 See the [Startup](../../examples/AspNetCore/Startup.cs) class of the ASP.NET
 Core application for example use.
+
+### Configuration using Environment Variables
+
+The following environment variables can be used to override the default
+values of the `ZipkinExporterOptions`.
+
+| Environment variable            | `ZipkinExporterOptions` property |
+| --------------------------------| -------------------------------- |
+| `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | `Endpoint`                       |
 
 ## References
 
