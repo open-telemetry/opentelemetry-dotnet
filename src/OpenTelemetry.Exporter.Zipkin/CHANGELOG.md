@@ -6,6 +6,10 @@
   `OTEL_EXPORTER_ZIPKIN_ENDPOINT` environment variable.
   ([#1453](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1453))
 
+## 1.1.0
+
+Released 2021-Jul-12
+
 ## 1.1.0-rc1
 
 Released 2021-Jun-25
