@@ -99,22 +99,6 @@ namespace OpenTelemetry.Metrics
 
         internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static DateTimeOffset GetDateTimeOffset()
-        {
-            int tick = Environment.TickCount;
-            if (tick == MeterProviderSdk.lastTick)
-            {
-                return MeterProviderSdk.lastTimestamp;
-            }
-
-            var dt = DateTimeOffset.UtcNow;
-            MeterProviderSdk.lastTimestamp = dt;
-            MeterProviderSdk.lastTick = tick;
-
-            return dt;
-        }
-
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
@@ -126,24 +110,23 @@ namespace OpenTelemetry.Metrics
             // Get Instrument State
             var instrumentState = state as InstrumentState;
 
-            if (instrument == null)
+            if (instrumentState == null)
             {
                 // TODO: log
                 return;
             }
 
             var measurementItem = new MeasurementItem(instrument, instrumentState);
-            var dt = MeterProviderSdk.GetDateTimeOffset();
             var tags = tagsRos;
             var val = value;
 
             // Run Pre Aggregator Processors
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
+                processor.OnEnd(measurementItem, ref val, ref tags);
             }
 
-            instrumentState.Update(dt, val, tags);
+            instrumentState.Update(val, tags);
         }
 
         protected override void Dispose(bool disposing)

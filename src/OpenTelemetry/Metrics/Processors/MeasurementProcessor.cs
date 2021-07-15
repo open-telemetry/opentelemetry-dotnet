@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class MeasurementProcessor : BaseProcessor<MeasurementItem>
     {
-        internal abstract void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal abstract void OnEnd<T>(MeasurementItem measurementItem, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct;
     }
 }

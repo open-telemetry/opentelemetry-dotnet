@@ -152,7 +152,7 @@ namespace OpenTelemetry.Metrics
             return metrics;
         }
 
-        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             // TODO: We can isolate the cost of each user-added aggregator in
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var pair in metricPairs)
             {
-                pair.Metric.Update(dt, value);
+                pair.Metric.Update(value);
             }
         }
 

@@ -31,10 +31,10 @@ namespace OpenTelemetry.Metrics
             sdk.AggregatorStores.TryAdd(this.store, true);
         }
 
-        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
-            this.store.Update(dt, value, tags);
+            this.store.Update(value, tags);
         }
     }
 }

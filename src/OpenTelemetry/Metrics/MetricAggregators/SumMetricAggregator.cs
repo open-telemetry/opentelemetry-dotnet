@@ -30,7 +30,6 @@ namespace OpenTelemetry.Metrics
         {
             this.Name = name;
             this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsDeltaTemporality = isDelta;
             this.IsMonotonic = true;
@@ -67,13 +66,11 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
-
                 if (typeof(T) == typeof(long))
                 {
                     this.valueType = typeof(T);

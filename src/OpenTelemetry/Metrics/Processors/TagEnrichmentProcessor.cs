@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
             this.extraAttrib = new KeyValuePair<string, object>(name, value);
         }
 
-        internal override void OnEnd<T>(MeasurementItem measurementItem, ref DateTimeOffset dt, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal override void OnEnd<T>(MeasurementItem measurementItem, ref T value, ref ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             var list = new List<KeyValuePair<string, object>>(tags.ToArray());
