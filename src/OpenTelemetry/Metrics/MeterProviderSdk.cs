@@ -30,9 +30,6 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
 
-        private static int lastTick = -1;
-        private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
-
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
@@ -110,7 +107,7 @@ namespace OpenTelemetry.Metrics
             // Get Instrument State
             var instrumentState = state as InstrumentState;
 
-            if (instrumentState == null)
+            if (instrument == null || instrumentState == null)
             {
                 // TODO: log
                 return;
