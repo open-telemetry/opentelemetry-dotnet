@@ -30,15 +30,9 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
 
-        private static int lastTick = -1;
-        private static DateTimeOffset lastTimestamp = DateTimeOffset.MinValue;
-
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
-
-        private readonly object lockInstrumentStates = new object();
-        private readonly Dictionary<Instrument, InstrumentState> instrumentStates = new Dictionary<Instrument, InstrumentState>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
@@ -63,28 +57,24 @@ namespace OpenTelemetry.Metrics
             {
                 InstrumentPublished = (instrument, listener) =>
                 {
-                    Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} published.");
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var instrumentState = new InstrumentState(this, instrument);
-
-                        lock (this.lockInstrumentStates)
-                        {
-                            this.instrumentStates.Add(instrument, instrumentState);
-                        }
-
                         listener.EnableMeasurementEvents(instrument, instrumentState);
                     }
                 },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
             };
 
+            // Everything double
             this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
+            this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, (double)m, l, c));
+
+            // Everything long
             this.listener.SetMeasurementEventCallback<long>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<int>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<short>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
+            this.listener.SetMeasurementEventCallback<int>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
+            this.listener.SetMeasurementEventCallback<short>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
+            this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
 
             this.listener.Start();
 
@@ -106,22 +96,6 @@ namespace OpenTelemetry.Metrics
 
         internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static DateTimeOffset GetDateTimeOffset()
-        {
-            int tick = Environment.TickCount;
-            if (tick == MeterProviderSdk.lastTick)
-            {
-                return MeterProviderSdk.lastTimestamp;
-            }
-
-            var dt = DateTimeOffset.UtcNow;
-            MeterProviderSdk.lastTimestamp = dt;
-            MeterProviderSdk.lastTick = tick;
-
-            return dt;
-        }
-
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
@@ -131,31 +105,25 @@ namespace OpenTelemetry.Metrics
             where T : struct
         {
             // Get Instrument State
+            var instrumentState = state as InstrumentState;
 
-            if (!(state is InstrumentState instrumentState))
+            if (instrument == null || instrumentState == null)
             {
-                lock (this.lockInstrumentStates)
-                {
-                    if (!this.instrumentStates.TryGetValue(instrument, out instrumentState))
-                    {
-                        instrumentState = new InstrumentState(this, instrument);
-                        this.instrumentStates.Add(instrument, instrumentState);
-                    }
-                }
+                // TODO: log
+                return;
             }
 
             var measurementItem = new MeasurementItem(instrument, instrumentState);
-            var dt = MeterProviderSdk.GetDateTimeOffset();
             var tags = tagsRos;
             var val = value;
 
             // Run Pre Aggregator Processors
             foreach (var processor in this.MeasurementProcessors)
             {
-                processor.OnEnd(measurementItem, ref dt, ref val, ref tags);
+                processor.OnEnd(measurementItem, ref val, ref tags);
             }
 
-            instrumentState.Update(dt, val, tags);
+            instrumentState.Update(val, tags);
         }
 
         protected override void Dispose(bool disposing)

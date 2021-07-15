@@ -4,6 +4,7 @@ abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelem
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.ActivityContextExtensions
 OpenTelemetry.Baggage
@@ -50,6 +51,8 @@ OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> v
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
 OpenTelemetry.Trace.ActivityExtensions
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder
+OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
 OpenTelemetry.Trace.Link
 OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Trace.Link.Context.get -> OpenTelemetry.Trace.SpanContext
@@ -127,6 +130,7 @@ OpenTelemetry.Trace.TracerProvider
 OpenTelemetry.Trace.TracerProvider.GetTracer(string name, string version = null) -> OpenTelemetry.Trace.Tracer
 OpenTelemetry.Trace.TracerProvider.TracerProvider() -> void
 OpenTelemetry.Trace.TracerProviderBuilder
+OpenTelemetry.Trace.TracerProviderBuilder.TracerProviderBuilder() -> void
 override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
 override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext

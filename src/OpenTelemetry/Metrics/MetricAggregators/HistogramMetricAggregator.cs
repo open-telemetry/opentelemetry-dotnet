@@ -30,7 +30,6 @@ namespace OpenTelemetry.Metrics
             this.Name = name;
             this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsDeltaTemporality = isDelta;
         }
@@ -55,14 +54,13 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             // TODO: Implement Histogram!
 
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
                 this.PopulationCount++;
             }
         }

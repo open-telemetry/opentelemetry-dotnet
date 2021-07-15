@@ -31,7 +31,6 @@ namespace OpenTelemetry.Metrics
             this.Name = name;
             this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsMonotonic = isMonotonic;
         }
@@ -54,25 +53,14 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<ValueAtQuantile> Quantiles => this.quantiles;
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             // TODO: Implement Summary!
 
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
-
-                if (typeof(T) == typeof(int))
-                {
-                    var val = (int)(object)value;
-                    if (val > 0 || !this.IsMonotonic)
-                    {
-                        this.PopulationSum += (double)val;
-                        this.PopulationCount++;
-                    }
-                }
-                else if (typeof(T) == typeof(long))
+                if (typeof(T) == typeof(long))
                 {
                     var val = (long)(object)value;
                     if (val > 0 || !this.IsMonotonic)
