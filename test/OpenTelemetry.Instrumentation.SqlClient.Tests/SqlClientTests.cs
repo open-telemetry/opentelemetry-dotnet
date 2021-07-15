@@ -352,14 +352,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             }
 
             Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-            if (shouldEnrich)
-            {
-                Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
-            }
-            else
-            {
-                Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
-            }
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));

@@ -141,16 +141,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            if (shouldEnrich)
-            {
-                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-                Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
-            }
-            else
-            {
-                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-                Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
-            }
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
