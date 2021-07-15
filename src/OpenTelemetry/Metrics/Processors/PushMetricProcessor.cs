@@ -63,7 +63,7 @@ namespace OpenTelemetry.Metrics
                     this.token.Cancel();
                     this.exporter.Dispose();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // TODO: Log
                 }

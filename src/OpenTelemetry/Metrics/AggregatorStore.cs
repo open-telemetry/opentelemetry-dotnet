@@ -27,11 +27,12 @@ namespace OpenTelemetry.Metrics
         private static readonly object[] EmptySeqValue = new object[0];
         private readonly Instrument instrument;
         private readonly object lockKeyValue2MetricAggs = new object();
-        private IAggregator[] tag0Metrics = null;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly Dictionary<string[], Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
             new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
+
+        private IAggregator[] tag0Metrics = null;
 
         internal AggregatorStore(Instrument instrument)
         {

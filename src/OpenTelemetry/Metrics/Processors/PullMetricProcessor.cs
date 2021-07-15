@@ -57,7 +57,7 @@ namespace OpenTelemetry.Metrics
                 {
                     this.exporter.Dispose();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // TODO: Log
                 }
@@ -65,6 +65,5 @@ namespace OpenTelemetry.Metrics
                 this.disposed = true;
             }
         }
-
     }
 }
