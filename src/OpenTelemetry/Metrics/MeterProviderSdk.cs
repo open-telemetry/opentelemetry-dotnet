@@ -127,7 +127,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private MetricItem Collect()
+        private MetricItem Collect(bool isDelta)
         {
             lock (this.collectLock)
             {
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Metrics
 
                 foreach (var kv in this.AggregatorStores)
                 {
-                    var metrics = kv.Key.Collect();
+                    var metrics = kv.Key.Collect(isDelta);
                     metricItem.Metrics.AddRange(metrics);
                 }
 

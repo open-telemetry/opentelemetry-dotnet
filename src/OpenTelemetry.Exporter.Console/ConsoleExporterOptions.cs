@@ -27,5 +27,11 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the metric export interval.
         /// </summary>
         public int MetricExportInterval { get; set; } = 1000;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to export Delta
+        /// values or not (Cumulative).
+        /// </summary>
+        public bool IsDelta { get; set; } = true;
     }
 }

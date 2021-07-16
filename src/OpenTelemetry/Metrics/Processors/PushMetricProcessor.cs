@@ -25,11 +25,11 @@ namespace OpenTelemetry.Metrics
         private Task exportTask;
         private CancellationTokenSource token;
         private int exportIntervalMs;
-        private Func<MetricItem> getMetrics;
+        private Func<bool, MetricItem> getMetrics;
         private BaseExporter<MetricItem> exporter;
         private bool disposed;
 
-        public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs)
+        public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs, bool isDelta)
         {
             this.exportIntervalMs = exportIntervalMs;
             this.exporter = exporter;
@@ -39,14 +39,14 @@ namespace OpenTelemetry.Metrics
                 while (!this.token.IsCancellationRequested)
                 {
                     Task.Delay(this.exportIntervalMs).Wait();
-                    this.Export();
+                    this.Export(isDelta);
                 }
             });
 
             this.exportTask.Start();
         }
 
-        public override void SetGetMetricFunction(Func<MetricItem> getMetrics)
+        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
         {
             this.getMetrics = getMetrics;
         }
@@ -72,11 +72,11 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void Export()
+        private void Export(bool isDelta)
         {
             if (this.getMetrics != null)
             {
-                var metricsToExport = this.getMetrics();
+                var metricsToExport = this.getMetrics(isDelta);
                 Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
                 this.exporter.Export(batch);
             }

@@ -77,7 +77,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
             if (this.PopulationCount == 0)
             {

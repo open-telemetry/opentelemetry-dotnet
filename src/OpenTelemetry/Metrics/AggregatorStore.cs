@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
             // TODO: Need to map each instrument to metrics (based on View API)
             if (this.instrument.GetType().Name.Contains("Counter"))
             {
-                aggregators.Add(new SumMetricAggregator(name, dt, tags, true));
+                aggregators.Add(new SumMetricAggregator(name, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Gauge"))
             {
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Metrics
             }
             else if (this.instrument.GetType().Name.Contains("Histogram"))
             {
-                aggregators.Add(new HistogramMetricAggregator(name, dt, tags, false));
+                aggregators.Add(new HistogramMetricAggregator(name, dt, tags));
             }
             else
             {
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal List<IMetric> Collect()
+        internal List<IMetric> Collect(bool isDelta)
         {
             var collectedMetrics = new List<IMetric>();
 
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Metrics
                 {
                     foreach (var metric in values.Value)
                     {
-                        var m = metric.Collect(dt);
+                        var m = metric.Collect(dt, isDelta);
                         if (m != null)
                         {
                             collectedMetrics.Add(m);
