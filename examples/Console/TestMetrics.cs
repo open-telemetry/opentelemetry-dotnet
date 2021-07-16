@@ -62,8 +62,12 @@ namespace Examples.Console
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
-                // TODO: Fix this
-                // providerBuilder.AddExportProcessor(new OtlpMetricsExporter(new OtlpExporterOptions()));
+                providerBuilder
+                    .AddOtlpExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    });
             }
             else
             {
