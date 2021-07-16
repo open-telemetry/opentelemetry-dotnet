@@ -17,6 +17,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
@@ -74,7 +75,28 @@ namespace OpenTelemetry.Exporter
 
                     string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                    var msg = $"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}";
+                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}");
+
+                    if (!string.IsNullOrEmpty(metric.Description))
+                    {
+                        msg.Append($", Description: {metric.Description}");
+                    }
+
+                    if (!string.IsNullOrEmpty(metric.Unit))
+                    {
+                        msg.Append($", Unit: {metric.Unit}");
+                    }
+
+                    if (!string.IsNullOrEmpty(metric.Meter.Name))
+                    {
+                        msg.Append($", Meter: {metric.Meter.Name}");
+
+                        if (!string.IsNullOrEmpty(metric.Meter.Version))
+                        {
+                            msg.Append($"/{metric.Meter.Version}");
+                        }
+                    }
+
                     Console.WriteLine(msg);
                 }
             }
