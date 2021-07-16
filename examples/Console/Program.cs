@@ -96,6 +96,9 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
+        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = true)]
+        public bool IsDelta { get; set; }
+
         [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
         public bool? FlagGauge { get; set; }
 

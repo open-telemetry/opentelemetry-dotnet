@@ -18,11 +18,11 @@ Hello World!
 ```
 
 Install the
-[OpenTelemetry](../../../src/OpenTelemetry/README.md)
+[OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
-dotnet add package OpenTelemetry
+dotnet add package OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):

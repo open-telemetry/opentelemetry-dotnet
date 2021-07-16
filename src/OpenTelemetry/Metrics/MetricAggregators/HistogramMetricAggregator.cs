@@ -25,13 +25,12 @@ namespace OpenTelemetry.Metrics
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();
 
-        internal HistogramMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        internal HistogramMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
             this.Instrument = instrument;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
-            this.IsDeltaTemporality = isDelta;
         }
 
         public string Name { get; private set; }
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Metrics
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
 
-        public bool IsDeltaTemporality { get; }
+        public bool IsDeltaTemporality { get; private set; }
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
@@ -65,7 +64,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
             if (this.PopulationCount == 0)
             {
@@ -73,7 +72,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new HistogramMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {
@@ -82,10 +81,14 @@ namespace OpenTelemetry.Metrics
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;
                 cloneItem.buckets = this.buckets;
+                cloneItem.IsDeltaTemporality = isDelta;
 
-                this.StartTimeExclusive = dt;
-                this.PopulationCount = 0;
-                this.PopulationSum = 0;
+                if (isDelta)
+                {
+                    this.StartTimeExclusive = dt;
+                    this.PopulationCount = 0;
+                    this.PopulationSum = 0;
+                }
             }
 
             return cloneItem;

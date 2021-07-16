@@ -22,7 +22,6 @@ namespace OpenTelemetry.Metrics
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
         private readonly List<string> meterSources = new List<string>();
-        private int defaultCollectionPeriodMilliseconds = 1000;
 
         internal MeterProviderBuilderSdk()
         {
@@ -30,7 +29,7 @@ namespace OpenTelemetry.Metrics
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
-        internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
+        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -52,27 +51,15 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk SetDefaultCollectionPeriod(int periodMilliseconds)
-        {
-            this.defaultCollectionPeriodMilliseconds = periodMilliseconds;
-            return this;
-        }
-
         internal MeterProviderBuilderSdk AddMeasurementProcessor(MeasurementProcessor processor)
         {
             this.MeasurementProcessors.Add(processor);
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
+        internal MeterProviderBuilderSdk AddMetricProcessor(MetricProcessor processor)
         {
-            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, this.defaultCollectionPeriodMilliseconds));
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor, int periodMilliseconds)
-        {
-            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, periodMilliseconds));
+            this.MetricProcessors.Add(processor);
             return this;
         }
 
@@ -81,7 +68,7 @@ namespace OpenTelemetry.Metrics
             return new MeterProviderSdk(
                 this.meterSources,
                 this.MeasurementProcessors.ToArray(),
-                this.ExportProcessors.ToArray());
+                this.MetricProcessors.ToArray());
         }
     }
 }
