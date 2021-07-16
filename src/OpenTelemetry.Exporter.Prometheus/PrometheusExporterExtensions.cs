@@ -60,7 +60,6 @@ namespace OpenTelemetry.Exporter
                         {
                             WriteSum(writer, builder, metric.Attributes, longSum);
                         }
-
                     }
                 }
             }
