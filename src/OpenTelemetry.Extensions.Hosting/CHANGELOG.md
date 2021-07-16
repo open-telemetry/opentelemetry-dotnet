@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0-rc7
+
+Released 2021-Jul-12
+
+## 1.0.0-rc6
+
+Released 2021-Jun-25
+
 * Added `GetServices` extension.
   ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2100))
 
