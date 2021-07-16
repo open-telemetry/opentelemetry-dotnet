@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="MetricItem"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpMetricsExporter : MetricProcessor
+    public class OtlpMetricsExporter : BaseExporter<MetricItem>
     {
         private readonly OtlpExporterOptions options;
 #if NETSTANDARD2_1
@@ -101,8 +101,7 @@ namespace OpenTelemetry.Exporter
 
         internal OtlpResource.Resource ProcessResource { get; private set; }
 
-        /// <inheritdoc/>
-        public override void OnEnd(MetricItem metricItem)
+        public override ExportResult Export(in Batch<MetricItem> batch)
         {
             if (this.ProcessResource == null)
             {
@@ -114,7 +113,7 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.ProcessResource, metricItem);
+            request.AddBatch(this.ProcessResource, batch);
             var deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
 
             try
@@ -124,15 +123,19 @@ namespace OpenTelemetry.Exporter
             catch (RpcException ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
+                return ExportResult.Failure;
             }
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
+                return ExportResult.Failure;
             }
             finally
             {
                 request.Return();
             }
+
+            return ExportResult.Success;
         }
 
         internal void SetResource(Resource resource)

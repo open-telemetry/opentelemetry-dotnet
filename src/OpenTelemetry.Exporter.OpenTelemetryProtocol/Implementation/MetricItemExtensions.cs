@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         internal static void AddBatch(
             this OtlpCollector.ExportMetricsServiceRequest request,
             OtlpResource.Resource processResource,
-            in MetricItem metricItem)
+            in Batch<MetricItem> batch)
         {
             var metricsByLibrary = new Dictionary<string, OtlpMetrics.InstrumentationLibraryMetrics>();
             var resourceMetrics = new OtlpMetrics.ResourceMetrics
@@ -48,28 +48,31 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
             request.ResourceMetrics.Add(resourceMetrics);
 
-            foreach (var metric in metricItem.Metrics)
+            foreach (var metricItem in batch)
             {
-                var otlpMetric = metric.ToOtlpMetric();
-                if (otlpMetric == null)
+                foreach (var metric in metricItem.Metrics)
                 {
-                    OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
-                        nameof(MetricItemExtensions),
-                        nameof(AddBatch));
-                    continue;
+                    var otlpMetric = metric.ToOtlpMetric();
+                    if (otlpMetric == null)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
+                            nameof(MetricItemExtensions),
+                            nameof(AddBatch));
+                        continue;
+                    }
+
+                    var instrumentationLibraryName = "TODO: We need instrumentation library info";
+                    var instrumentationLibraryVersion = "0.0.1";
+                    if (!metricsByLibrary.TryGetValue(instrumentationLibraryName, out var metrics))
+                    {
+                        metrics = GetMetricListFromPool(instrumentationLibraryName, instrumentationLibraryVersion);
+
+                        metricsByLibrary.Add(instrumentationLibraryName, metrics);
+                        resourceMetrics.InstrumentationLibraryMetrics.Add(metrics);
+                    }
+
+                    metrics.Metrics.Add(otlpMetric);
                 }
-
-                var instrumentationLibraryName = "TODO: We need instrumentation library info";
-                var instrumentationLibraryVersion = "0.0.1";
-                if (!metricsByLibrary.TryGetValue(instrumentationLibraryName, out var metrics))
-                {
-                    metrics = GetMetricListFromPool(instrumentationLibraryName, instrumentationLibraryVersion);
-
-                    metricsByLibrary.Add(instrumentationLibraryName, metrics);
-                    resourceMetrics.InstrumentationLibraryMetrics.Add(metrics);
-                }
-
-                metrics.Metrics.Add(otlpMetric);
             }
         }
 
