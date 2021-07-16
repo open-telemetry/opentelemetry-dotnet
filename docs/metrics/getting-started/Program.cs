@@ -31,8 +31,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                // .AddConsoleExporter()
-                .AddPrometheusExporter()
+                .AddConsoleExporter()
                 .Build();
 
         using var token = new CancellationTokenSource();
@@ -49,7 +48,7 @@ public class Program
         });
         writeMetricTask.Start();
 
-        token.CancelAfter(1000000);
+        token.CancelAfter(10000);
         await writeMetricTask;
     }
 }
