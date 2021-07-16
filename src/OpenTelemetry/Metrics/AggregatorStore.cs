@@ -56,19 +56,19 @@ namespace OpenTelemetry.Metrics
             // TODO: Need to map each instrument to metrics (based on View API)
             if (this.instrument.GetType().Name.Contains("Counter"))
             {
-                aggregators.Add(new SumMetricAggregator(name, this.instrument, dt, tags));
+                aggregators.Add(new SumMetricAggregator(name, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Gauge"))
             {
-                aggregators.Add(new GaugeMetricAggregator(name, this.instrument, dt, tags));
+                aggregators.Add(new GaugeMetricAggregator(name, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Histogram"))
             {
-                aggregators.Add(new HistogramMetricAggregator(name, this.instrument, dt, tags));
+                aggregators.Add(new HistogramMetricAggregator(name, this.instrument.Meter, dt, tags));
             }
             else
             {
-                aggregators.Add(new SummaryMetricAggregator(name, this.instrument, dt, tags, false));
+                aggregators.Add(new SummaryMetricAggregator(name, this.instrument.Meter, dt, tags, false));
             }
 
             return aggregators.ToArray();

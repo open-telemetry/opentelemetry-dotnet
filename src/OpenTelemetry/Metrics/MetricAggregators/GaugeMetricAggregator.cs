@@ -25,17 +25,17 @@ namespace OpenTelemetry.Metrics
         private readonly object lockUpdate = new object();
         private IDataValue value;
 
-        internal GaugeMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        internal GaugeMetricAggregator(string name, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
-            this.Instrument = instrument;
+            this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
         }
 
         public string Name { get; private set; }
 
-        public Instrument Instrument { get; private set; }
+        public Meter Meter { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            var cloneItem = new GaugeMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes);
+            var cloneItem = new GaugeMetricAggregator(this.Name, this.Meter, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {

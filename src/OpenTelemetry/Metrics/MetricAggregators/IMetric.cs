@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
     {
         string Name { get; }
 
-        Instrument Instrument { get; }
+        Meter Meter { get; }
 
         DateTimeOffset StartTimeExclusive { get; }
 

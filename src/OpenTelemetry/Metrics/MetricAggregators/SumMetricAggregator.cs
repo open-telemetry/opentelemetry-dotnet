@@ -27,10 +27,10 @@ namespace OpenTelemetry.Metrics
         private long sumLong = 0;
         private double sumDouble = 0;
 
-        internal SumMetricAggregator(string name, Instrument instrument, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        internal SumMetricAggregator(string name, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
-            this.Instrument = instrument;
+            this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsMonotonic = true;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics
 
         public string Name { get; private set; }
 
-        public Instrument Instrument { get; private set; }
+        public Meter Meter { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Metrics
 
         public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.Instrument, this.StartTimeExclusive, this.Attributes);
+            var cloneItem = new SumMetricAggregator(this.Name, this.Meter, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {
