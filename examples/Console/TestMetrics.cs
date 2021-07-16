@@ -42,7 +42,7 @@ namespace Examples.Console
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
             {
-                counter = meter.CreateCounter<int>("counter");
+                counter = meter.CreateCounter<int>("counter", "things", "A count of things");
             }
 
             Histogram<int> histogram = null;
