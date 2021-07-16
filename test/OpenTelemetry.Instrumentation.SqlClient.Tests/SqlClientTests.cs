@@ -18,11 +18,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-#if NET452
-using System.Data.SqlClient;
-#else
 using Microsoft.Data.SqlClient;
-#endif
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
