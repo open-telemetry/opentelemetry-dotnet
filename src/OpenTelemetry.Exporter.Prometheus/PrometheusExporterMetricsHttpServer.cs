@@ -138,8 +138,15 @@ namespace OpenTelemetry.Exporter
             }
             finally
             {
-                this.httpListener.Stop();
-                this.httpListener.Close();
+                try
+                {
+                    this.httpListener.Stop();
+                    this.httpListener.Close();
+                }
+                catch (Exception exFromFinally)
+                {
+                    PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
+                }
             }
         }
     }

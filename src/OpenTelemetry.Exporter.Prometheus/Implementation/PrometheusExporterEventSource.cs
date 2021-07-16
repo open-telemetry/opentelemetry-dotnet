@@ -38,6 +38,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         }
 
         [NonEvent]
+        public void FailedShutdown(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.FailedShutdown(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void CanceledExport(Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
@@ -56,6 +65,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         public void CanceledExport(string exception)
         {
             this.WriteEvent(2, exception);
+        }
+
+        [Event(3, Message = "Failed to shutdown Metrics server '{0}'", Level = EventLevel.Error)]
+        public void FailedShutdown(string exception)
+        {
+            this.WriteEvent(3, exception);
         }
     }
 }
