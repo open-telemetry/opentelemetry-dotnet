@@ -111,6 +111,7 @@ namespace OpenTelemetry.Exporter
 
             try
             {
+                using var scope = SuppressInstrumentationScope.Begin();
                 while (!this.tokenSource.IsCancellationRequested)
                 {
                     var ctxTask = this.httpListener.GetContextAsync();
