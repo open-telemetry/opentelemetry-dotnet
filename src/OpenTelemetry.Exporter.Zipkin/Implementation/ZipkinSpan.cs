@@ -19,12 +19,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
-#if NET452
-using Newtonsoft.Json;
-#else
 using System.Text.Json;
-#endif
+using System.Threading;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
@@ -103,126 +99,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.Tags.Return();
         }
 
-#if NET452
-        public void Write(JsonWriter writer)
-        {
-            writer.WriteStartObject();
-
-            writer.WritePropertyName("traceId");
-            writer.WriteValue(this.TraceId);
-
-            if (this.Name != null)
-            {
-                writer.WritePropertyName("name");
-                writer.WriteValue(this.Name);
-            }
-
-            if (this.ParentId != null)
-            {
-                writer.WritePropertyName("parentId");
-                writer.WriteValue(this.ParentId);
-            }
-
-            writer.WritePropertyName("id");
-            writer.WriteValue(this.Id);
-
-            if (this.Kind != null)
-            {
-                writer.WritePropertyName("kind");
-                writer.WriteValue(this.Kind);
-            }
-
-            if (this.Timestamp.HasValue)
-            {
-                writer.WritePropertyName("timestamp");
-                writer.WriteValue(this.Timestamp.Value);
-            }
-
-            if (this.Duration.HasValue)
-            {
-                writer.WritePropertyName("duration");
-                writer.WriteValue(this.Duration.Value);
-            }
-
-            if (this.Debug.HasValue)
-            {
-                writer.WritePropertyName("debug");
-                writer.WriteValue(this.Debug.Value);
-            }
-
-            if (this.Shared.HasValue)
-            {
-                writer.WritePropertyName("shared");
-                writer.WriteValue(this.Shared.Value);
-            }
-
-            if (this.LocalEndpoint != null)
-            {
-                writer.WritePropertyName("localEndpoint");
-                this.LocalEndpoint.Write(writer);
-            }
-
-            if (this.RemoteEndpoint != null)
-            {
-                writer.WritePropertyName("remoteEndpoint");
-                this.RemoteEndpoint.Write(writer);
-            }
-
-            if (!this.Annotations.IsEmpty)
-            {
-                writer.WritePropertyName("annotations");
-                writer.WriteStartArray();
-
-                foreach (var annotation in this.Annotations)
-                {
-                    writer.WriteStartObject();
-
-                    writer.WritePropertyName("timestamp");
-                    writer.WriteValue(annotation.Timestamp);
-
-                    writer.WritePropertyName("value");
-                    writer.WriteValue(annotation.Value);
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            if (!this.Tags.IsEmpty || this.LocalEndpoint.Tags != null)
-            {
-                writer.WritePropertyName("tags");
-                writer.WriteStartObject();
-
-                // this will be used when we convert int, double, int[], double[] to string
-                var originalUICulture = Thread.CurrentThread.CurrentUICulture;
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-
-                try
-                {
-                    foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
-                    {
-                        writer.WritePropertyName(tag.Key);
-                        writer.WriteValue(ConvertObjectToString(tag.Value));
-                    }
-
-                    foreach (var tag in this.Tags)
-                    {
-                        writer.WritePropertyName(tag.Key);
-                        writer.WriteValue(ConvertObjectToString(tag.Value));
-                    }
-                }
-                finally
-                {
-                    Thread.CurrentThread.CurrentUICulture = originalUICulture;
-                }
-
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndObject();
-        }
-#else
         public void Write(Utf8JsonWriter writer)
         {
             writer.WriteStartObject();
@@ -328,8 +204,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             writer.WriteEndObject();
         }
-
-#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string ConvertObjectToString(object obj)

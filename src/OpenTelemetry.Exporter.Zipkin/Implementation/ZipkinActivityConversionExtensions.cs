@@ -30,11 +30,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
-#if !NET452
         private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<(string, int), ZipkinEndpoint>();
-#else
-        private static readonly ConcurrentDictionary<string, ZipkinEndpoint> RemoteEndpointCache = new ConcurrentDictionary<string, ZipkinEndpoint>();
-#endif
 
         internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
         {
@@ -68,11 +64,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                 if (peerServiceName != null)
                 {
-#if !NET452
                     remoteEndpoint = RemoteEndpointCache.GetOrAdd((peerServiceName, default), ZipkinEndpoint.Create);
-#else
-                    remoteEndpoint = RemoteEndpointCache.GetOrAdd(peerServiceName, ZipkinEndpoint.Create);
-#endif
                     if (addAsTag)
                     {
                         PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>(SemanticConventions.AttributePeerService, peerServiceName));
