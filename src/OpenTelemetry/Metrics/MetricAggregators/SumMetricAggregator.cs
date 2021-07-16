@@ -26,12 +26,11 @@ namespace OpenTelemetry.Metrics
         private long sumLong = 0;
         private double sumDouble = 0;
 
-        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        internal SumMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
-            this.IsDeltaTemporality = isDelta;
             this.IsMonotonic = true;
         }
 
@@ -43,7 +42,7 @@ namespace OpenTelemetry.Metrics
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
 
-        public bool IsDeltaTemporality { get; }
+        public bool IsDeltaTemporality { get; private set; }
 
         public bool IsMonotonic { get; }
 
@@ -106,9 +105,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new SumMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {
@@ -117,8 +116,9 @@ namespace OpenTelemetry.Metrics
                 cloneItem.valueType = this.valueType;
                 cloneItem.sumLong = this.sumLong;
                 cloneItem.sumDouble = this.sumDouble;
+                cloneItem.IsDeltaTemporality = isDelta;
 
-                if (this.IsDeltaTemporality)
+                if (isDelta)
                 {
                     this.StartTimeExclusive = dt;
                     this.sumLong = 0;
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Metrics
 
         public string ToDisplayString()
         {
-            return $"Delta={this.IsDeltaTemporality},Monotonic={this.IsMonotonic},Sum={this.Sum.Value}";
+            return $"Sum={this.Sum.Value}";
         }
     }
 }

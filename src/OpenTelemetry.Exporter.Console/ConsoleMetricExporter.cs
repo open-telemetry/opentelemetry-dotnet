@@ -74,7 +74,7 @@ namespace OpenTelemetry.Exporter
 
                     string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                    var msg = $"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}, Details: {metric.ToDisplayString()}";
+                    var msg = $"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}";
                     Console.WriteLine(msg);
                 }
             }

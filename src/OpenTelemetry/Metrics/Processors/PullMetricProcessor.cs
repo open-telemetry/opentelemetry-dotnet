@@ -22,16 +22,18 @@ namespace OpenTelemetry.Metrics
 {
     public class PullMetricProcessor : MetricProcessor, IDisposable
     {
-        private Func<MetricItem> getMetrics;
+        private Func<bool, MetricItem> getMetrics;
         private BaseExporter<MetricItem> exporter;
         private bool disposed;
+        private bool isDelta;
 
-        public PullMetricProcessor(BaseExporter<MetricItem> exporter)
+        public PullMetricProcessor(BaseExporter<MetricItem> exporter, bool isDelta)
         {
             this.exporter = exporter;
+            this.isDelta = isDelta;
         }
 
-        public override void SetGetMetricFunction(Func<MetricItem> getMetrics)
+        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
         {
             this.getMetrics = getMetrics;
         }
@@ -40,7 +42,7 @@ namespace OpenTelemetry.Metrics
         {
             if (this.getMetrics != null)
             {
-                var metricsToExport = this.getMetrics();
+                var metricsToExport = this.getMetrics(this.isDelta);
                 Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
                 this.exporter.Export(batch);
             }

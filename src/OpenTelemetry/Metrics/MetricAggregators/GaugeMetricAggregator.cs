@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
             var cloneItem = new GaugeMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes);
 
