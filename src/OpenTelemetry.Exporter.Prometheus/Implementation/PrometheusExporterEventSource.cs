@@ -46,13 +46,13 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             }
         }
 
-        [Event(1, Message = "Failed to export activities: '{0}'", Level = EventLevel.Error)]
+        [Event(1, Message = "Failed to export metrics: '{0}'", Level = EventLevel.Error)]
         public void FailedExport(string exception)
         {
             this.WriteEvent(1, exception);
         }
 
-        [Event(2, Message = "Canceled to export activities: '{0}'", Level = EventLevel.Error)]
+        [Event(2, Message = "Canceled to export metrics: '{0}'", Level = EventLevel.Error)]
         public void CanceledExport(string exception)
         {
             this.WriteEvent(2, exception);
