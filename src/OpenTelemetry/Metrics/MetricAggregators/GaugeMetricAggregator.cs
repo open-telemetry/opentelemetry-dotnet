@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
         private readonly object lockUpdate = new object();
         private IDataValue value;
 
-        internal GaugeMetricAggregator(string name, string description, string unit, Meter meter,  DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        internal GaugeMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
             this.Description = description;
