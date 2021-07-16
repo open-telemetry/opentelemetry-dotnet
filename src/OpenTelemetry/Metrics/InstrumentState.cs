@@ -27,14 +27,14 @@ namespace OpenTelemetry.Metrics
 
         internal InstrumentState(MeterProviderSdk sdk, Instrument instrument)
         {
-            this.store = new AggregatorStore(sdk, instrument);
+            this.store = new AggregatorStore(instrument);
             sdk.AggregatorStores.TryAdd(this.store, true);
         }
 
-        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
-            this.store.Update(dt, value, tags);
+            this.store.Update(value, tags);
         }
     }
 }

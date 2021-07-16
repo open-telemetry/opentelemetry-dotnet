@@ -18,7 +18,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface ISumMetric : IMetric
+    public interface ISumMetric : IMetric
     {
         bool IsDeltaTemporality { get; }
 

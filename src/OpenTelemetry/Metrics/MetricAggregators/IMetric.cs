@@ -16,12 +16,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IMetric
+    public interface IMetric
     {
         string Name { get; }
+
+        string Description { get; }
+
+        string Unit { get; }
+
+        Meter Meter { get; }
 
         DateTimeOffset StartTimeExclusive { get; }
 

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -24,16 +25,23 @@ namespace OpenTelemetry.Metrics
         private readonly object lockUpdate = new object();
         private List<HistogramBucket> buckets = new List<HistogramBucket>();
 
-        internal HistogramMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDelta)
+        internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
+            this.Description = description;
+            this.Unit = unit;
+            this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
-            this.IsDeltaTemporality = isDelta;
         }
 
         public string Name { get; private set; }
+
+        public string Description { get; private set; }
+
+        public string Unit { get; private set; }
+
+        public Meter Meter { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -41,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
         public KeyValuePair<string, object>[] Attributes { get; private set; }
 
-        public bool IsDeltaTemporality { get; }
+        public bool IsDeltaTemporality { get; private set; }
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
@@ -51,19 +59,18 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             // TODO: Implement Histogram!
 
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
                 this.PopulationCount++;
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
             if (this.PopulationCount == 0)
             {
@@ -71,7 +78,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsDeltaTemporality);
+            var cloneItem = new HistogramMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes);
 
             lock (this.lockUpdate)
             {
@@ -80,10 +87,14 @@ namespace OpenTelemetry.Metrics
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;
                 cloneItem.buckets = this.buckets;
+                cloneItem.IsDeltaTemporality = isDelta;
 
-                this.StartTimeExclusive = dt;
-                this.PopulationCount = 0;
-                this.PopulationSum = 0;
+                if (isDelta)
+                {
+                    this.StartTimeExclusive = dt;
+                    this.PopulationCount = 0;
+                    this.PopulationSum = 0;
+                }
             }
 
             return cloneItem;

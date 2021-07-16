@@ -31,9 +31,7 @@ namespace Examples.Console
         internal static object Run(MetricsOptions options)
         {
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
-                .AddProcessor(new TagEnrichmentProcessor("resource", "here"));
+                .AddSource("TestMeter"); // All instruments from this meter are enabled.
 
             if (options.UseExporter.ToLower() == "otlp")
             {
@@ -64,13 +62,17 @@ namespace Examples.Console
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
-                providerBuilder.AddExportProcessor(new OtlpMetricsExporter(new OtlpExporterOptions()));
+                // TODO: Fix this
+                // providerBuilder.AddExportProcessor(new OtlpMetricsExporter(new OtlpExporterOptions()));
             }
             else
             {
                 providerBuilder
-                    .AddExportProcessor(new MetricConsoleExporter("A"))
-                    .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds);
+                    .AddConsoleExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    });
             }
 
             using var provider = providerBuilder.Build();
@@ -80,16 +82,16 @@ namespace Examples.Console
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
             {
-                counter = meter.CreateCounter<int>("counter");
+                counter = meter.CreateCounter<int>("counter", "things", "A count of things");
             }
 
             Histogram<int> histogram = null;
-            if (options.FlagHistogram ?? true)
+            if (options.FlagHistogram ?? false)
             {
                 histogram = meter.CreateHistogram<int>("histogram");
             }
 
-            if (options.FlagGauge ?? true)
+            if (options.FlagGauge ?? false)
             {
                 var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
                 {

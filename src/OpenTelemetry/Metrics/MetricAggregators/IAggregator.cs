@@ -20,9 +20,9 @@ namespace OpenTelemetry.Metrics
 {
     internal interface IAggregator
     {
-        void Update<T>(DateTimeOffset dt, T value)
+        void Update<T>(T value)
             where T : struct;
 
-        IMetric Collect(DateTimeOffset dt);
+        IMetric Collect(DateTimeOffset dt, bool isDelta);
     }
 }

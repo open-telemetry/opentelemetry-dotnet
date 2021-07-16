@@ -18,7 +18,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface IGaugeMetric : IMetric
+    public interface IGaugeMetric : IMetric
     {
         IEnumerable<IExemplar> Exemplars { get; }
 

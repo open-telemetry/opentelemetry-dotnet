@@ -83,9 +83,6 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource("TestMeter") // All instruments from this meter are enabled.
-                    .SetDefaultCollectionPeriod(10000)
-
-                    // .AddExportProcessor(new MetricConsoleExporter())
                     .Build();
             }
 

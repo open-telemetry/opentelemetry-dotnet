@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,16 +26,24 @@ namespace OpenTelemetry.Metrics
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
 
-        internal SummaryMetricAggregator(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic)
+        internal SummaryMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic)
         {
             this.Name = name;
+            this.Description = description;
+            this.Unit = unit;
+            this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
-            this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsMonotonic = isMonotonic;
         }
 
         public string Name { get; private set; }
+
+        public string Description { get; private set; }
+
+        public string Unit { get; private set; }
+
+        public Meter Meter { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -50,25 +59,14 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<ValueAtQuantile> Quantiles => this.quantiles;
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             // TODO: Implement Summary!
 
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
-
-                if (typeof(T) == typeof(int))
-                {
-                    var val = (int)(object)value;
-                    if (val > 0 || !this.IsMonotonic)
-                    {
-                        this.PopulationSum += (double)val;
-                        this.PopulationCount++;
-                    }
-                }
-                else if (typeof(T) == typeof(long))
+                if (typeof(T) == typeof(long))
                 {
                     var val = (long)(object)value;
                     if (val > 0 || !this.IsMonotonic)
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public IMetric Collect(DateTimeOffset dt)
+        public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
             if (this.PopulationCount == 0)
             {
@@ -97,7 +95,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new SummaryMetricAggregator(this.Name, this.StartTimeExclusive, this.Attributes, this.IsMonotonic);
+            var cloneItem = new SummaryMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes, this.IsMonotonic);
 
             lock (this.lockUpdate)
             {

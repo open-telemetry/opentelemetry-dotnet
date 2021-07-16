@@ -46,7 +46,7 @@ namespace Examples.Console
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.PushIntervalInSecs, options.DurationInMins),
+                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
                     (MetricsOptions options) => TestMetrics.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
@@ -83,19 +83,19 @@ namespace Examples.Console
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
-        [Option('i', "pushIntervalInSecs", Default = 15, HelpText = "The interval at which Push controller pushes metrics.", Required = false)]
-        public int PushIntervalInSecs { get; set; }
-
         [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
         public int Port { get; set; }
 
-        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo. Run atleast for a min to see metrics flowing.", Required = false)]
+        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo.", Required = false)]
         public int DurationInMins { get; set; }
     }
 
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
+        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = true)]
+        public bool IsDelta { get; set; }
+
         [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
         public bool? FlagGauge { get; set; }
 
