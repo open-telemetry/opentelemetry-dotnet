@@ -30,8 +30,11 @@ namespace Examples.Console
         {
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .AddMeasurementProcessor(new TagEnrichmentProcessor("resource", "here"))
-                .AddConsoleExporter(o => o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds)
+                .AddConsoleExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    })
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
@@ -43,12 +46,12 @@ namespace Examples.Console
             }
 
             Histogram<int> histogram = null;
-            if (options.FlagHistogram ?? true)
+            if (options.FlagHistogram ?? false)
             {
                 histogram = meter.CreateHistogram<int>("histogram");
             }
 
-            if (options.FlagGauge ?? true)
+            if (options.FlagGauge ?? false)
             {
                 var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
                 {

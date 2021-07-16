@@ -22,6 +22,6 @@ namespace OpenTelemetry.Metrics
     {
         // GetMetric or GetMemoryState or GetAggregatedMetrics..
         // ...or some other names
-        public abstract void SetGetMetricFunction(Func<MetricItem> getMetrics);
+        public abstract void SetGetMetricFunction(Func<bool, MetricItem> getMetrics);
     }
 }
