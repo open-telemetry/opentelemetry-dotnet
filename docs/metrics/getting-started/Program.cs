@@ -31,7 +31,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddExportProcessor(new MetricConsoleExporter())
+                .AddConsoleExporter()
                 .Build();
 
         using var token = new CancellationTokenSource();

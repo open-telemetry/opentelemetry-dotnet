@@ -14,9 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
     public abstract class MetricProcessor : BaseProcessor<MetricItem>
     {
+        // GetMetric or GetMemoryState or GetAggregatedMetrics..
+        // ...or some other names
+        public abstract void SetGetMetricFunction(Func<MetricItem> getMetrics);
     }
 }

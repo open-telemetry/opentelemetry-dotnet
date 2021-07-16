@@ -18,7 +18,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    internal interface ISummaryMetric : IMetric
+    public interface ISummaryMetric : IMetric
     {
         long PopulationCount { get; }
 

@@ -30,23 +30,27 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
 
+        private readonly object collectLock = new object();
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
+        private readonly List<MeasurementProcessor> measurementProcessors = new List<MeasurementProcessor>();
+        private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
 
         internal MeterProviderSdk(
             IEnumerable<string> meterSources,
             MeasurementProcessor[] measurementProcessors,
-            KeyValuePair<MetricProcessor, int>[] metricExportProcessors)
+            MetricProcessor[] metricProcessors)
         {
-            // Setup our Processors
+            this.measurementProcessors.AddRange(measurementProcessors);
+            this.metricProcessors.AddRange(metricProcessors);
 
-            this.MeasurementProcessors.AddRange(measurementProcessors);
-
-            this.ExportProcessors.AddRange(metricExportProcessors);
+            foreach (var processor in this.metricProcessors)
+            {
+                processor.SetGetMetricFunction(this.Collect);
+            }
 
             // Setup Listener
-
             var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             foreach (var name in meterSources)
             {
@@ -77,24 +81,7 @@ namespace OpenTelemetry.Metrics
             this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
 
             this.listener.Start();
-
-            // Start our long running Task
-
-            var token = this.cts.Token;
-
-            // Group Export processors by their collectionPeriod.
-            var groups = this.ExportProcessors.GroupBy(k => k.Value, v => v.Key);
-            foreach (var group in groups)
-            {
-                this.collectorTasks.Add(Task.Run(async () => await this.CollectorTask(token, group.Key, group.ToArray())));
-            }
         }
-
-        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
-
-        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
-
-        internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
@@ -117,12 +104,14 @@ namespace OpenTelemetry.Metrics
             var tags = tagsRos;
             var val = value;
 
-            // Run Pre Aggregator Processors
-            foreach (var processor in this.MeasurementProcessors)
+            // Run measurement Processors
+            foreach (var processor in this.measurementProcessors)
             {
                 processor.OnEnd(measurementItem, ref val, ref tags);
             }
 
+            // TODO: Replace the following with a built-in MeasurementProcessor
+            // that knows how to aggregate and produce Metrics.
             instrumentState.Update(val, tags);
         }
 
@@ -138,43 +127,21 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private async Task CollectorTask(CancellationToken token, int collectionPeriodMilliseconds, MetricProcessor[] processors)
+        private MetricItem Collect()
         {
-            while (!token.IsCancellationRequested)
+            lock (this.collectLock)
             {
-                try
+                // Record all observable instruments
+                this.listener.RecordObservableInstruments();
+                var metricItem = new MetricItem();
+
+                foreach (var kv in this.AggregatorStores)
                 {
-                    await Task.Delay(collectionPeriodMilliseconds, token);
-                }
-                catch (TaskCanceledException)
-                {
+                    var metrics = kv.Key.Collect();
+                    metricItem.Metrics.AddRange(metrics);
                 }
 
-                this.Collect(collectionPeriodMilliseconds, processors);
-            }
-        }
-
-        private void Collect(int collectionPeriodMilliseconds, MetricProcessor[] processors)
-        {
-            // Record all observable instruments
-            this.listener.RecordObservableInstruments();
-
-            var metricItem = new MetricItem();
-
-            foreach (var kv in this.AggregatorStores)
-            {
-                var metrics = kv.Key.Collect(collectionPeriodMilliseconds);
-                metricItem.Metrics.AddRange(metrics);
-            }
-
-            foreach (var processor in this.MetricProcessors)
-            {
-                processor.OnEnd(metricItem);
-            }
-
-            foreach (var processor in processors)
-            {
-                processor.OnEnd(metricItem);
+                return metricItem;
             }
         }
     }
