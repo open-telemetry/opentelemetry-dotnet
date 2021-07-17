@@ -16,12 +16,14 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
         private readonly List<string> meterSources = new List<string>();
+        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         internal MeterProviderBuilderSdk()
         {
@@ -63,9 +65,16 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
+        {
+            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            return this;
+        }
+
         internal MeterProvider Build()
         {
             return new MeterProviderSdk(
+                this.resourceBuilder.Build(),
                 this.meterSources,
                 this.MeasurementProcessors.ToArray(),
                 this.MetricProcessors.ToArray());

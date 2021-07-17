@@ -21,8 +21,8 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace Examples.Console
 {
@@ -31,6 +31,7 @@ namespace Examples.Console
         internal static object Run(MetricsOptions options)
         {
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
                 .AddSource("TestMeter"); // All instruments from this meter are enabled.
 
             if (options.UseExporter.ToLower() == "otlp")

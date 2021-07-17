@@ -18,10 +18,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
@@ -38,16 +37,19 @@ namespace OpenTelemetry.Metrics
         private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
 
         internal MeterProviderSdk(
+            Resource resource,
             IEnumerable<string> meterSources,
             MeasurementProcessor[] measurementProcessors,
             MetricProcessor[] metricProcessors)
         {
+            this.Resource = resource;
             this.measurementProcessors.AddRange(measurementProcessors);
             this.metricProcessors.AddRange(metricProcessors);
 
             foreach (var processor in this.metricProcessors)
             {
                 processor.SetGetMetricFunction(this.Collect);
+                processor.SetParentProvider(this);
             }
 
             // Setup Listener
@@ -82,6 +84,8 @@ namespace OpenTelemetry.Metrics
 
             this.listener.Start();
         }
+
+        internal Resource Resource { get; }
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
