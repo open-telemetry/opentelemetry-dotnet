@@ -21,9 +21,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
-#if NET452
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Exporter.ZPages
 {
@@ -169,11 +166,7 @@ namespace OpenTelemetry.Exporter.ZPages
 
                         DateTimeOffset dateTimeOffset;
 
-#if NET452
-                        dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
-#else
                         dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(hourSpanInformation.LastUpdated);
-#endif
 
                         writer.WriteLine("<tr><td>" + hourSpanInformation.Name + "</td><td>" + ZPagesActivityTracker.TotalCount[spanName] + "</td><td>" + countInLastMinute + "</td><td>" + countInLastHour + "</td>" +
                                          "<td>" + totalAverageLatency + "</td><td>" + averageLatencyInLastMinute + "</td><td>" + averageLatencyInLastHour + "</td>" +

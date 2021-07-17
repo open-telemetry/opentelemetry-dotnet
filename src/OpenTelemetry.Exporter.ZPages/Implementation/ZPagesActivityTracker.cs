@@ -18,9 +18,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Timers;
-#if NET452
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation
 {
