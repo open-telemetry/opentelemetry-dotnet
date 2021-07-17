@@ -101,6 +101,7 @@ namespace OpenTelemetry.Exporter
 
         internal OtlpResource.Resource ProcessResource { get; private set; }
 
+        /// <inheritdoc />
         public override ExportResult Export(in Batch<MetricItem> batch)
         {
             if (this.ProcessResource == null)
