@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Includes\DateTimeOffsetExtensions.net452.cs" />
+    <!-- TODO: Much of the metrics SDK is currently internal.
+         In the meantime the OpenTelemetry SDK project has set InternalsVisibleTo for the OpenTelemetry.Exporter.OpenTelemetryProtocol project.
+        These include conflict with the exposed internal types, so they need to be commented out for now. -->
+    <!--<Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Includes\DateTimeOffsetExtensions.net452.cs" />-->
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingTestExporter.cs" Link="Includes\DelegatingTestExporter.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundFactAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundFactAttribute.cs" />
