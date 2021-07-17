@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET452 && !NET46
+#if !NET461
 #if NETCOREAPP2_1
 using Microsoft.Extensions.DependencyInjection;
 #endif
