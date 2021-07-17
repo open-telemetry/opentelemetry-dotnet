@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net452;net46;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Description>In-memory exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags)</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
