@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net452;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Description>Zipkin exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -23,12 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" Condition="'$(TargetFramework)' != 'net452'" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Includes\DateTimeOffsetExtensions.net452.cs" />
-    <Reference Include="System.Net.Http" />
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPkgVer)" />
   </ItemGroup>
 
 </Project>
