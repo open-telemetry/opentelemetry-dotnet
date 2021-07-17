@@ -61,13 +61,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         continue;
                     }
 
-                    var instrumentationLibraryName = "TODO: We need instrumentation library info";
-                    var instrumentationLibraryVersion = "0.0.1";
-                    if (!metricsByLibrary.TryGetValue(instrumentationLibraryName, out var metrics))
+                    var meterName = metric.Meter.Name;
+                    if (!metricsByLibrary.TryGetValue(meterName, out var metrics))
                     {
-                        metrics = GetMetricListFromPool(instrumentationLibraryName, instrumentationLibraryVersion);
+                        metrics = GetMetricListFromPool(meterName, metric.Meter.Version);
 
-                        metricsByLibrary.Add(instrumentationLibraryName, metrics);
+                        metricsByLibrary.Add(meterName, metrics);
                         resourceMetrics.InstrumentationLibraryMetrics.Add(metrics);
                     }
 
@@ -121,10 +120,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpMetric = new OtlpMetrics.Metric
             {
                 Name = metric.Name,
-
-                // TODO: Add description and unit to IMetric.
-                Description = string.Empty,
-                Unit = string.Empty,
+                Description = metric.Description,
+                Unit = metric.Unit,
             };
 
             if (metric is ISumMetric sumMetric)
