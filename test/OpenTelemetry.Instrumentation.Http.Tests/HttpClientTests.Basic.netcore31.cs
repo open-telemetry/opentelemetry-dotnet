@@ -62,6 +62,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -96,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         {
                             if (shouldEnrich)
                             {
-                                o.Enrich = ActivityEnrichment;
+                                o.Enrich = ActivityEnrichmentSetTag;
                             }
                         })
                         .AddProcessor(processor.Object)
@@ -122,6 +123,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
         }
 
         [Theory]
@@ -406,6 +410,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+        }
+
+        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
+        {
+            ActivityEnrichment(activity, method, obj);
+            activity.SetTag("enriched", "yes");
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)

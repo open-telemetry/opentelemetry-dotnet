@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
@@ -110,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
             var processor = new Mock<BaseProcessor<Activity>>();
-
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             var parent = new Activity("parent")
                 .Start();
 
@@ -150,6 +151,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, grpcSpan.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
+
+            Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
         }
 
         [Theory]
@@ -458,6 +462,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 default:
                     break;
             }
+
+            activity.SetTag("enriched", "yes");
         }
 
         private static Predicate<IInvocation> GeneratePredicateForMoqProcessorActivity(string methodName, string activityOperationName)
