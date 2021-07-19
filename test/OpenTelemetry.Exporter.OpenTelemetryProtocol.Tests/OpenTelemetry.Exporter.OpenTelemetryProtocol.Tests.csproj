@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net452;net46</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\DateTimeOffsetExtensions.net452.cs" Link="Includes\DateTimeOffsetExtensions.net452.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingTestExporter.cs" Link="Includes\DelegatingTestExporter.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundFactAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundFactAttribute.cs" />
