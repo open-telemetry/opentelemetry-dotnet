@@ -1,10 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;net46</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <Description>ASP.NET instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;MVC;WebAPI</PackageTags>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
   </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Remove=".publicApi\net461\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Remove=".publicApi\net461\PublicAPI.Unshipped.txt" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.Web" />
