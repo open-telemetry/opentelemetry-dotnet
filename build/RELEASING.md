@@ -127,5 +127,5 @@ TODO: Separate version for instrumention/hosting/OTshim package.
 by sending a Pull Request.
 
 17.If a new stable version of the core packages were released,
-   update `OTelPreviousStableVer` in [Common.props](./Common.props)
+   update `OTelPreviousStableVer` in Common.props
    to the just released stable version.
