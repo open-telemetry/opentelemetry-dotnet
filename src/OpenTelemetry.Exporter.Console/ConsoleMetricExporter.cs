@@ -19,11 +19,14 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
     public class ConsoleMetricExporter : ConsoleExporter<MetricItem>
     {
+        private Resource resource;
+
         public ConsoleMetricExporter(ConsoleExporterOptions options)
             : base(options)
         {
@@ -31,6 +34,21 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<MetricItem> batch)
         {
+            if (this.resource == null)
+            {
+                this.resource = this.ParentProvider.GetResource();
+                if (this.resource != Resource.Empty)
+                {
+                    foreach (var resourceAttribute in this.resource.Attributes)
+                    {
+                        if (resourceAttribute.Key.Equals("service.name"))
+                        {
+                            Console.WriteLine("Service.Name" + resourceAttribute.Value);
+                        }
+                    }
+                }
+            }
+
             foreach (var metricItem in batch)
             {
                 foreach (var metric in metricItem.Metrics)

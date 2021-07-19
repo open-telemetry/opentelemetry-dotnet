@@ -23,13 +23,12 @@ namespace OpenTelemetry.Metrics
     public class PullMetricProcessor : MetricProcessor, IDisposable
     {
         private Func<bool, MetricItem> getMetrics;
-        private BaseExporter<MetricItem> exporter;
         private bool disposed;
         private bool isDelta;
 
         public PullMetricProcessor(BaseExporter<MetricItem> exporter, bool isDelta)
+            : base(exporter)
         {
-            this.exporter = exporter;
             this.isDelta = isDelta;
         }
 

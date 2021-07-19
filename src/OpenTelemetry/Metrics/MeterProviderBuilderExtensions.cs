@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Resources;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -48,6 +50,23 @@ namespace OpenTelemetry.Metrics
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
                 return meterProviderBuilderSdk.AddMetricProcessor(processor);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                meterProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;

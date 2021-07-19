@@ -20,8 +20,22 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class MetricProcessor : BaseProcessor<MetricItem>
     {
+        protected readonly BaseExporter<MetricItem> exporter;
+
+        protected MetricProcessor(BaseExporter<MetricItem> exporter)
+        {
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+        }
+
         // GetMetric or GetMemoryState or GetAggregatedMetrics..
         // ...or some other names
         public abstract void SetGetMetricFunction(Func<bool, MetricItem> getMetrics);
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+
+            this.exporter.ParentProvider = parentProvider;
+        }
     }
 }

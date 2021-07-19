@@ -26,13 +26,12 @@ namespace OpenTelemetry.Metrics
         private CancellationTokenSource token;
         private int exportIntervalMs;
         private Func<bool, MetricItem> getMetrics;
-        private BaseExporter<MetricItem> exporter;
         private bool disposed;
 
         public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs, bool isDelta)
+            : base(exporter)
         {
             this.exportIntervalMs = exportIntervalMs;
-            this.exporter = exporter;
             this.token = new CancellationTokenSource();
             this.exportTask = new Task(() =>
             {
