@@ -24,9 +24,6 @@ using Google.Protobuf.Collections;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Resources;
-#if NET452
-using OpenTelemetry.Internal;
-#endif
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -194,11 +191,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var startTime = new DateTime(2020, 02, 20, 20, 20, 20, DateTimeKind.Utc);
 
             DateTimeOffset dateTimeOffset;
-#if NET452
-            dateTimeOffset = DateTimeOffsetExtensions.FromUnixTimeMilliseconds(0);
-#else
             dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(0);
-#endif
 
             var expectedUnixTimeTicks = (ulong)(startTime.Ticks - dateTimeOffset.Ticks);
             var duration = TimeSpan.FromMilliseconds(1555);

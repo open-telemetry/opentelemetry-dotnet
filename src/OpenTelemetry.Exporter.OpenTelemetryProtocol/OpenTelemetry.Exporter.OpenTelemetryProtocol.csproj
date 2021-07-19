@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net452;net46</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
 
     <!--
         There is an integration test for the OTLP exporter that runs a test targeting netcoreapp2.1, netcoreapp3.1 and net5.0.
@@ -24,6 +24,12 @@
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <!--Do not run ApiCopmat for net461 as this is newly added. There is no existing contract for net461 against which we could compare the implementation.
+  Remove this property once we have released a stable net461 version.-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net461'">
+    <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
