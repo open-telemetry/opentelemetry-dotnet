@@ -5,10 +5,6 @@
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;MVC;WebAPI</PackageTags>
     <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
   </PropertyGroup>
-  <ItemGroup>
-    <AdditionalFiles Remove=".publicApi\net461\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Remove=".publicApi\net461\PublicAPI.Unshipped.txt" />
-  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.Web" />
