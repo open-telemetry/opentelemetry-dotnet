@@ -125,3 +125,7 @@ TODO: Separate version for instrumention/hosting/OTshim package.
 16.Update the OpenTelemetry.io document
 [here](https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/net)
 by sending a Pull Request.
+
+17.If a new stable version of the core packages were released,
+   update `OTelPreviousStableVer` in Common.props
+   to the just released stable version.
