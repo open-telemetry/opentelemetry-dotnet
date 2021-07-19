@@ -93,8 +93,6 @@ namespace OpenTelemetry.Exporter
 
                     string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-
-
                     var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}");
 
                     if (!string.IsNullOrEmpty(metric.Description))
