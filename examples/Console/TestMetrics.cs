@@ -52,7 +52,7 @@ namespace Examples.Console
                     attributeKeys: new string[] { "tag1", "tag2" },
                     viewName: "counter-2");
 
-                // Remove all instrument name "gauge"
+                // Remove all instruments named "gauge"
                 providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "gauge",

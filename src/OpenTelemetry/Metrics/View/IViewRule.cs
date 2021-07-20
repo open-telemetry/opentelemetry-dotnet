@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public interface IViewRule
+    internal interface IViewRule
     {
     }
 }

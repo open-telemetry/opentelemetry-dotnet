@@ -81,7 +81,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterName">Meter name.</param>
         /// <param name="meterVersion">Meter version.</param>
         /// <param name="instrumentName">Instrument name.</param>
-        /// <param name="instrumentKind">Instrument version.</param>
+        /// <param name="instrumentKind">Instrument kind.</param>
         /// <param name="aggregator">Aggregator to use.</param>
         /// <param name="aggregatorParam">Aggregator parameter (Optional).</param>
         /// <param name="viewName">View name (Optional).</param>

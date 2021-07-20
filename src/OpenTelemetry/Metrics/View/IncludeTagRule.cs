@@ -18,7 +18,7 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public struct IncludeTagRule : IViewRule
+    internal struct IncludeTagRule : IViewRule
     {
         internal Func<string, bool> ValidFunc;
 
