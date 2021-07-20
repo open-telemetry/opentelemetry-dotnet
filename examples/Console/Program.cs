@@ -123,7 +123,7 @@ namespace Examples.Console
         [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
 
-        [Option("useView", Default = "console", HelpText = "Options include View.", Required = false)]
+        [Option("useView", HelpText = "Options include View.", Required = false)]
         public string UseView { get; set; }
     }
 
