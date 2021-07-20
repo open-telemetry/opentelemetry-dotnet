@@ -24,15 +24,10 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private Type valueType;
-        private long sumLong = 0;
-        private double sumDouble = 0;
-
         private long sumPos = 0;
         private double dsumPos = 0;
-        private long countPos = 0;
         private long sumNeg = 0;
         private double dsumNeg = 0;
-        private long countNeg = 0;
 
         internal SumMetricAggregator(bool isDelta, bool isMonotonic)
         {
@@ -66,11 +61,33 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.valueType == typeof(long))
                 {
-                    return new DataValue(this.sumLong);
+                    long sum;
+
+                    if (this.IsMonotonic)
+                    {
+                        sum = this.sumPos + (long)this.dsumPos;
+                    }
+                    else
+                    {
+                        sum = this.sumPos + (long)this.dsumPos + this.sumNeg + (long)this.dsumNeg;
+                    }
+
+                    return new DataValue(sum);
                 }
                 else if (this.valueType == typeof(double))
                 {
-                    return new DataValue(this.sumDouble);
+                    double sum;
+
+                    if (this.IsMonotonic)
+                    {
+                        sum = (double)this.sumPos + this.dsumPos;
+                    }
+                    else
+                    {
+                        sum = (double)this.sumPos + this.dsumPos + (double)this.sumNeg + this.dsumNeg;
+                    }
+
+                    return new DataValue(sum);
                 }
 
                 throw new Exception("Unsupported Type");
@@ -99,12 +116,11 @@ namespace OpenTelemetry.Metrics
                     var val = (long)(object)value;
                     if (val < 0)
                     {
-                        // TODO: log?
-                        // Also, this validation can be done in earlier stage.
+                        this.sumNeg += val;
                     }
                     else
                     {
-                        this.sumLong += val;
+                        this.sumPos += val;
                     }
                 }
                 else if (typeof(T) == typeof(double))
@@ -113,12 +129,11 @@ namespace OpenTelemetry.Metrics
                     var val = (double)(object)value;
                     if (val < 0)
                     {
-                        // TODO: log?
-                        // Also, this validation can be done in earlier stage.
+                        this.dsumNeg += val;
                     }
                     else
                     {
-                        this.sumDouble += val;
+                        this.dsumPos += val;
                     }
                 }
                 else
@@ -138,15 +153,18 @@ namespace OpenTelemetry.Metrics
                 cloneItem.Exemplars = this.Exemplars;
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.valueType = this.valueType;
-                cloneItem.sumLong = this.sumLong;
-                cloneItem.sumDouble = this.sumDouble;
-                cloneItem.IsDeltaTemporality = this.IsDeltaTemporality;
+                cloneItem.sumPos = this.sumPos;
+                cloneItem.sumNeg = this.sumNeg;
+                cloneItem.dsumPos = this.dsumPos;
+                cloneItem.dsumNeg = this.dsumNeg;
 
                 if (this.IsDeltaTemporality)
                 {
                     this.StartTimeExclusive = dt;
-                    this.sumLong = 0;
-                    this.sumDouble = 0;
+                    this.sumPos = 0;
+                    this.sumNeg = 0;
+                    this.dsumPos = 0;
+                    this.dsumNeg = 0;
                 }
             }
 

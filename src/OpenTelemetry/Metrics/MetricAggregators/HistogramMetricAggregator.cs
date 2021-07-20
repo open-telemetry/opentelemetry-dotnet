@@ -96,7 +96,6 @@ namespace OpenTelemetry.Metrics
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;
                 cloneItem.buckets = this.buckets;
-                cloneItem.IsDeltaTemporality = this.IsDeltaTemporality;
 
                 if (this.IsDeltaTemporality)
                 {
