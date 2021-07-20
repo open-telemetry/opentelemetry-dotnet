@@ -38,7 +38,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void SpanProcessorException(string evnt, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.SpanProcessorException(evnt, ex.ToInvariantString());
             }
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateExtractException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateExtractError(ex.ToInvariantString());
             }
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void MetricObserverCallbackException(string metricName, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.MetricObserverCallbackError(metricName, ex.ToInvariantString());
             }
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateKeyIsInvalid(key.ToString());
             }
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateValueIsInvalid(value.ToString());
             }
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void MetricControllerException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.MetricControllerException(ex.ToInvariantString());
             }
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void ActivityStarted(Activity activity)
         {
-            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
             {
                 this.ActivityStarted(activity.OperationName, activity.Id);
             }
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void ActivityStopped(Activity activity)
         {
-            if (this.IsEnabled(EventLevel.Verbose, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
             {
                 this.ActivityStopped(activity.OperationName, activity.Id);
             }
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
             }
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracerProviderException(string evnt, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.TracerProviderException(evnt, ex.ToInvariantString());
             }
@@ -307,7 +307,7 @@ namespace OpenTelemetry.Internal
                 if (eventSource?.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase) == true)
                 {
                     this.eventSources.Add(eventSource);
-                    this.EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)(-1));
+                    this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
                 }
 
                 base.OnEventSourceCreated(eventSource);
