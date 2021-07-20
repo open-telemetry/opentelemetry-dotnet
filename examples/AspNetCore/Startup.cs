@@ -34,7 +34,7 @@ namespace Examples.AspNetCore
 {
     public class Startup
     {
-        private MeterProvider metricsProvider;
+        private MeterProvider meterProvider;
 
         public Startup(IConfiguration configuration)
         {
@@ -124,7 +124,7 @@ namespace Examples.AspNetCore
             providerBuilder
                 .AddConsoleExporter();
 
-            this.metricsProvider = providerBuilder.Build();
+            this.meterProvider = providerBuilder.Build();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
