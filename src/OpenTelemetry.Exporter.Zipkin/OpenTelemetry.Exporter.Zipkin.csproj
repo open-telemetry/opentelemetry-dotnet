@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" Condition="'$(TargetFramework)' != 'net452'" />
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" />
   </ItemGroup>
 
 </Project>

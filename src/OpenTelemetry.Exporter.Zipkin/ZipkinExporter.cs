@@ -22,11 +22,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
-#if NET452
-using Newtonsoft.Json;
-#else
 using System.Text.Json;
-#endif
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
@@ -40,9 +36,7 @@ namespace OpenTelemetry.Exporter
     public class ZipkinExporter : BaseExporter<Activity>
     {
         private readonly ZipkinExporterOptions options;
-#if !NET452
         private readonly int maxPayloadSizeInBytes;
-#endif
         private readonly HttpClient httpClient;
 
         /// <summary>
@@ -53,9 +47,7 @@ namespace OpenTelemetry.Exporter
         public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-#if !NET452
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-#endif
             this.httpClient = client ?? new HttpClient();
         }
 
@@ -196,12 +188,7 @@ namespace OpenTelemetry.Exporter
 
             private readonly ZipkinExporter exporter;
             private readonly Batch<Activity> batch;
-
-#if NET452
-            private JsonWriter writer;
-#else
             private Utf8JsonWriter writer;
-#endif
 
             public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
             {
@@ -213,10 +200,6 @@ namespace OpenTelemetry.Exporter
 
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
             {
-#if NET452
-                StreamWriter streamWriter = new StreamWriter(stream);
-                this.writer = new JsonTextWriter(streamWriter);
-#else
                 if (this.writer == null)
                 {
                     this.writer = new Utf8JsonWriter(stream);
@@ -225,7 +208,6 @@ namespace OpenTelemetry.Exporter
                 {
                     this.writer.Reset(stream);
                 }
-#endif
 
                 this.writer.WriteStartArray();
 
@@ -236,23 +218,16 @@ namespace OpenTelemetry.Exporter
                     zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
-#if !NET452
                     if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
                     {
                         this.writer.Flush();
                     }
-#endif
                 }
 
                 this.writer.WriteEndArray();
 
                 this.writer.Flush();
-
-#if NET452
-                return Task.FromResult(true);
-#else
                 return Task.CompletedTask;
-#endif
             }
 
             protected override bool TryComputeLength(out long length)

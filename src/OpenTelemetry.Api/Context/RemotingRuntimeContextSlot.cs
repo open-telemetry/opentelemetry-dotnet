@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NET452
+#if NET461
 using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;

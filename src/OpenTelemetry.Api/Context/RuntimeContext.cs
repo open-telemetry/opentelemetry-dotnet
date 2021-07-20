@@ -30,11 +30,7 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
-#if !NET452
         public static Type ContextSlotType { get; set; } = typeof(AsyncLocalRuntimeContextSlot<>);
-#else
-        public static Type ContextSlotType { get; set; } = typeof(RemotingRuntimeContextSlot<>);
-#endif
 
         /// <summary>
         /// Register a named context slot.
