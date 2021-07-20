@@ -31,7 +31,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         [NonEvent]
         public void FailedInitialize(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedInitialize(ex.ToInvariantString());
             }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         [NonEvent]
         public void FailedOpenTelemetrySDK(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedOpenTelemetrySDK(ex.ToInvariantString());
             }
