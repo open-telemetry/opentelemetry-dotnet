@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
-        /// Gets or sets the export processor type to be used with Zipkin Exporter.
+        /// Gets or sets the export processor type to be used with Zipkin Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
