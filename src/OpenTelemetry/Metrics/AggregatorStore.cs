@@ -61,9 +61,9 @@ namespace OpenTelemetry.Metrics
 
             if (aggregators == null)
             {
-                var instType = this.instrument.GetType().Name;
+                Type instType = this.instrument.GetType().GetGenericTypeDefinition();
 
-                if (instType.StartsWith("Counter"))
+                if (instType == typeof(Counter<>))
                 {
                     aggregators = () =>
                     {
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Metrics
                         };
                     };
                 }
-                else if (instType.StartsWith("ObservableCounter"))
+                else if (instType == typeof(ObservableCounter<>))
                 {
                     aggregators = () =>
                     {
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Metrics
                         };
                     };
                 }
-                else if (instType.StartsWith("ObservableGauge"))
+                else if (instType == typeof(ObservableGauge<>))
                 {
                     aggregators = () =>
                     {
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Metrics
                         };
                     };
                 }
-                else if (instType.StartsWith("Histogram"))
+                else if (instType == typeof(Histogram<>))
                 {
                     aggregators = () =>
                     {
