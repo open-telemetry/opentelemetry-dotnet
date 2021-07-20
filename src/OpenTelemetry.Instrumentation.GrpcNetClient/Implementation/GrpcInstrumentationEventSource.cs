@@ -37,7 +37,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         [NonEvent]
         public void EnrichmentException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.EnrichmentException(ex.ToInvariantString());
             }

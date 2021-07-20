@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void FailedToConvertToProtoDefinitionError(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToConvertToProtoDefinitionError(ex.ToInvariantString());
             }
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void FailedToReachCollector(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToReachCollector(ex.ToInvariantString());
             }
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void ExportMethodException(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.ExportMethodException(ex.ToInvariantString());
             }

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         [NonEvent]
         public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
             }
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         [NonEvent]
         public void EnrichmentException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.EnrichmentException(ex.ToInvariantString());
             }

@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [NonEvent]
         public void FailedProcessResult(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedProcessResult(ex.ToInvariantString());
             }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [NonEvent]
         public void RequestFilterException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.RequestFilterException(ex.ToInvariantString());
             }
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [NonEvent]
         public void ExceptionInitializingInstrumentation(string instrumentationType, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.ExceptionInitializingInstrumentation(instrumentationType, ex.ToInvariantString());
             }
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         [NonEvent]
         public void EnrichmentException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.EnrichmentException(ex.ToInvariantString());
             }

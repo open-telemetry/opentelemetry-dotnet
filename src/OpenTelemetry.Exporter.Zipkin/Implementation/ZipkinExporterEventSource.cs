@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         [NonEvent]
         public void FailedExport(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedExport(ex.ToInvariantString());
             }
