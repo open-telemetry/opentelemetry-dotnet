@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
+        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
@@ -35,6 +36,22 @@ namespace OpenTelemetry.Metrics
         internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
 
         internal List<MetricView> ViewConfigs { get; } = new List<MetricView>();
+
+        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            if (instrumentationFactory == null)
+            {
+                throw new ArgumentNullException(nameof(instrumentationFactory));
+            }
+
+            this.instrumentationFactories.Add(
+                new InstrumentationFactory(
+                    typeof(TInstrumentation).Name,
+                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
+                    instrumentationFactory));
+
+            return this;
+        }
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
@@ -162,6 +179,7 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.ViewConfigs.ToArray(),
+                this.instrumentationFactories,
                 this.MeasurementProcessors.ToArray(),
                 this.MetricProcessors.ToArray());
         }
@@ -221,6 +239,21 @@ namespace OpenTelemetry.Metrics
             }
 
             return agg;
+        }
+
+        // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.
+        internal readonly struct InstrumentationFactory
+        {
+            public readonly string Name;
+            public readonly string Version;
+            public readonly Func<object> Factory;
+
+            internal InstrumentationFactory(string name, string version, Func<object> factory)
+            {
+                this.Name = name;
+                this.Version = version;
+                this.Factory = factory;
+            }
         }
     }
 }

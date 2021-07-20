@@ -30,6 +30,16 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Adds instrumentation to the provider.
+        /// </summary>
+        /// <typeparam name="TInstrumentation">Type of instrumentation class.</typeparam>
+        /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public abstract MeterProviderBuilder AddInstrumentation<TInstrumentation>(
+            Func<TInstrumentation> instrumentationFactory)
+            where TInstrumentation : class;
+
+        /// <summary>
         /// Adds given Meter names to the list of subscribed sources.
         /// </summary>
         /// <param name="names">Meter source names.</param>

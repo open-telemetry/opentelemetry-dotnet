@@ -100,7 +100,6 @@ namespace Benchmarks.Metrics
                 case "View":
                     this.provider = Sdk.CreateMeterProviderBuilder()
                         .AddSource("TestMeter") // All instruments from this meter are enabled.
-                        // .SetDefaultCollectionPeriod(10000)
                         .AddView(
                             meterName: "TestMeter",
                             aggregator: Aggregator.HISTOGRAM,

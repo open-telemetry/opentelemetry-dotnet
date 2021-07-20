@@ -18,6 +18,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Resources;
@@ -29,6 +30,7 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
 
+        private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly List<Task> collectorTasks = new List<Task>();
@@ -40,6 +42,7 @@ namespace OpenTelemetry.Metrics
             Resource resource,
             IEnumerable<string> meterSources,
             MetricView[] metricViews,
+            List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
             MeasurementProcessor[] measurementProcessors,
             MetricProcessor[] metricProcessors)
         {
@@ -55,6 +58,14 @@ namespace OpenTelemetry.Metrics
             {
                 processor.SetGetMetricFunction(this.Collect);
                 processor.SetParentProvider(this);
+            }
+
+            if (instrumentationFactories.Any())
+            {
+                foreach (var instrumentationFactory in instrumentationFactories)
+                {
+                    this.instrumentations.Add(instrumentationFactory.Factory());
+                }
             }
 
             // Setup Listener
@@ -128,6 +139,16 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
+            if (this.instrumentations != null)
+            {
+                foreach (var item in this.instrumentations)
+                {
+                    (item as IDisposable)?.Dispose();
+                }
+
+                this.instrumentations.Clear();
+            }
+
             this.listener.Dispose();
 
             this.cts.Cancel();
