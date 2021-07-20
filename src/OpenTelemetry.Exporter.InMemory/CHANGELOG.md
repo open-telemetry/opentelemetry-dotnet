@@ -9,6 +9,16 @@ please check the latest changes
 
 ## Unreleased
 
+* Removes support for .NET Framework 4.5.2 and 4.6. The minimum .NET Framework version
+  supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+* Supports OpenTelemetry.Extensions.Hosting based configuration for `InMemoryExporter`
+  ([#2129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2129))
+
 ## 1.1.0-rc1
 
 Released 2021-Jun-25

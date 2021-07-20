@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         [NonEvent]
         public void FailedExport(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedExport(ex.ToInvariantString());
             }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         [NonEvent]
         public void CanceledExport(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.CanceledExport(ex.ToInvariantString());
             }
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
         [NonEvent]
         public void FailedProcess(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedProcess(ex.ToInvariantString());
             }

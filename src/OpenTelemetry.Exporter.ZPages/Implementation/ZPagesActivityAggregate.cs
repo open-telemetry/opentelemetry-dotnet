@@ -16,9 +16,6 @@
 
 using System;
 using System.Diagnostics;
-#if NET452
-using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation
 {
