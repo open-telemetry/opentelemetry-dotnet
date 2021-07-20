@@ -234,13 +234,6 @@ namespace OpenTelemetry.Internal
                     null,
                     newFileSize,
                     MemoryMappedFileAccess.ReadWrite,
-#if NET452
-                    // Only .NET Framework 4.5.2 among all .NET Framework versions is lacking a method omitting this
-                    // default value for MemoryMappedFileSecurity.
-                    // https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=netframework-4.5.2
-                    // .NET Core simply doesn't support this parameter.
-                    null,
-#endif
                     HandleInheritability.None,
                     false);
                 this.logDirectory = newLogDirectory;

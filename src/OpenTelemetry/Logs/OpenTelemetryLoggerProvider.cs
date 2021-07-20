@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections;
 using Microsoft.Extensions.Logging;
@@ -142,4 +141,3 @@ namespace OpenTelemetry.Logs
         }
     }
 }
-#endif

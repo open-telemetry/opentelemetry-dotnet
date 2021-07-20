@@ -55,11 +55,7 @@ namespace OpenTelemetry.Internal
 
             foreach (var eventSource in eventSources)
             {
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
         }
 
@@ -310,11 +306,7 @@ namespace OpenTelemetry.Internal
                     }
                 }
 
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
 
             base.OnEventSourceCreated(eventSource);
