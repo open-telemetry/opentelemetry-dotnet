@@ -34,24 +34,20 @@ namespace OpenTelemetry.Metrics
         // Two-Level lookup. [ NameAndKeys ] x [ [ TagValues ] x [ Metrics[] ] ]
         // First Level: Lookup by NameAndKeys (name + TagKeys). Return 2nd Level dictionary
         // Second Level: Lookup by TagValues. Return Array of MetricAggs
-        private readonly Dictionary<NameAndKeys, Dictionary<object[], MetricAgg[]>> keyValue2MetricAggs =
-            new Dictionary<NameAndKeys, Dictionary<object[], MetricAgg[]>>(new NameAndKeysEqualityComparer());
+        private readonly Dictionary<NameAndKeys, Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
+            new Dictionary<NameAndKeys, Dictionary<object[], IAggregator[]>>(new NameAndKeysEqualityComparer());
 
-        private MetricAgg[] tag0Metrics = null;
-
-        private IEnumerable<int> timePeriods;
+        private IAggregator[] tag0Metrics = null;
 
         internal AggregatorStore(MeterProviderSdk sdk, Instrument instrument)
         {
             this.sdk = sdk;
             this.instrument = instrument;
-
-            this.timePeriods = new List<int> () { 30 };
         }
 
-        internal MetricAgg[] MapToMetrics(string viewname, Func<IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
+        internal IAggregator[] MapToMetrics(string viewname, Func<IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
         {
-            var metricpairs = new List<MetricAgg>();
+            var metricpairs = new List<IAggregator>();
 
             var tags = new KeyValuePair<string, object>[seqKey.Length];
             for (int i = 0; i < seqKey.Length; i++)
@@ -119,20 +115,17 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            foreach (var timeperiod in this.timePeriods)
+            var aggs = aggregators();
+            foreach (var agg in aggs)
             {
-                var aggs = aggregators();
-                foreach (var agg in aggs)
-                {
-                    agg.Init(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags);
-                    metricpairs.Add(new MetricAgg(timeperiod, agg));
-                }
+                agg.Init(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags);
+                metricpairs.Add(agg);
             }
 
             return metricpairs.ToArray();
         }
 
-        internal MetricAgg[] FindMetricAggregators(
+        internal IAggregator[] FindMetricAggregators(
             ThreadStaticStorage storage,
             string name,
             Func<IAggregator[]> aggregators,
@@ -157,7 +150,7 @@ namespace OpenTelemetry.Metrics
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
-            MetricAgg[] metrics;
+            IAggregator[] metrics;
 
             lock (this.lockKeyValue2MetricAggs)
             {
@@ -178,7 +171,7 @@ namespace OpenTelemetry.Metrics
 
                     var cloneKey = new AggregatorStore.NameAndKeys(name, seqKey);
 
-                    value2metrics = new Dictionary<object[], MetricAgg[]>(new ObjectArrayEqualityComparer());
+                    value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
                     this.keyValue2MetricAggs.Add(cloneKey, value2metrics);
                 }
 
@@ -239,7 +232,7 @@ namespace OpenTelemetry.Metrics
 
                     foreach (var pair in metricPairs)
                     {
-                        pair.Metric.Update(value);
+                        pair.Update(value);
                     }
                 }
             }
@@ -251,16 +244,13 @@ namespace OpenTelemetry.Metrics
 
                 foreach (var pair in metricPairs)
                 {
-                    pair.Metric.Update(value);
+                    pair.Update(value);
                 }
             }
         }
 
         internal List<IMetric> Collect(bool isDelta)
         {
-            // TODO: Need to pass this in somehow!
-            int periodMilliseconds = 30;
-
             var collectedMetrics = new List<IMetric>();
 
             var dt = DateTimeOffset.UtcNow;
@@ -271,13 +261,10 @@ namespace OpenTelemetry.Metrics
                 {
                     foreach (var metric in values.Value)
                     {
-                        if (metric.TimePeriod == periodMilliseconds)
+                        var m = metric.Collect(dt);
+                        if (m != null)
                         {
-                            var m = metric.Metric.Collect(dt);
-                            if (m != null)
-                            {
-                                collectedMetrics.Add(m);
-                            }
+                            collectedMetrics.Add(m);
                         }
                     }
                 }
@@ -297,18 +284,6 @@ namespace OpenTelemetry.Metrics
             internal string Name { get; set; }
 
             internal string[] Keys { get; set; }
-        }
-
-        internal class MetricAgg
-        {
-            internal int TimePeriod;
-            internal IAggregator Metric;
-
-            internal MetricAgg(int timePeriod, IAggregator metric)
-            {
-                this.TimePeriod = timePeriod;
-                this.Metric = metric;
-            }
         }
     }
 }
