@@ -324,7 +324,8 @@ namespace OpenTelemetry.Internal
                 {
                     message = e.Message;
                 }
-Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+
+                Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
             }
         }
 #endif
