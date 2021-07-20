@@ -324,11 +324,8 @@ namespace OpenTelemetry.Internal
                 {
                     message = e.Message;
                 }
-#if NET452
-                Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], Message: [{message}]");
-#else
+
                 Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
-#endif
             }
         }
 #endif
