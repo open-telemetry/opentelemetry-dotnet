@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET452
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -53,4 +52,3 @@ namespace OpenTelemetry.Context
         }
     }
 }
-#endif

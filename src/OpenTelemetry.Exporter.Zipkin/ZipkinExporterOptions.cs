@@ -24,9 +24,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public sealed class ZipkinExporterOptions
     {
-#if !NET452
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
-#endif
 
         /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
@@ -39,12 +37,10 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public bool UseShortTraceIds { get; set; }
 
-#if !NET452
         /// <summary>
         /// Gets or sets the maximum payload size in bytes. Default value: 4096.
         /// </summary>
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
-#endif
 
         /// <summary>
         /// Gets or sets the export processor type to be used with Zipkin Exporter.
