@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,28 +26,12 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Sets default collection period.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="periodMilliseconds">Perion in milliseconds.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder SetDefaultCollectionPeriod(this MeterProviderBuilder meterProviderBuilder, int periodMilliseconds)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                return meterProviderBuilderSdk.SetDefaultCollectionPeriod(periodMilliseconds);
-            }
-
-            return meterProviderBuilder;
-        }
-
-        /// <summary>
         /// Add measurement processor.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="processor">Measurement Processors.</param>
+        /// <param name="processor">Measurement Processor.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddProcessor(this MeterProviderBuilder meterProviderBuilder, MeasurementProcessor processor)
+        public static MeterProviderBuilder AddMeasurementProcessor(this MeterProviderBuilder meterProviderBuilder, MeasurementProcessor processor)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
@@ -57,33 +42,33 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Add export processor.
+        /// Add metric processor.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="processor">Measurement Processors.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor)
+        public static MeterProviderBuilder AddMetricProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddExporter(processor);
+                return meterProviderBuilderSdk.AddMetricProcessor(processor);
             }
 
             return meterProviderBuilder;
         }
 
         /// <summary>
-        /// Add export processor.
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="processor">Measurement Processors.</param>
-        /// <param name="collectionPeriodMilliseconds">Period in milliseconds between Collections.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddExportProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor, int collectionPeriodMilliseconds)
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddExporter(processor, collectionPeriodMilliseconds);
+                meterProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;

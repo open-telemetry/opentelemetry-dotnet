@@ -21,7 +21,6 @@ namespace OpenTelemetry.Internal.Tests
     public class SelfDiagnosticsConfigParserTest
     {
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseFilePath_Success()
         {
             string configJson = "{ \t \n "
@@ -33,7 +32,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseFilePath_MissingField()
         {
             string configJson = @"{
@@ -44,7 +42,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseFileSize()
         {
             string configJson = @"{
@@ -56,7 +53,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseFileSize_CaseInsensitive()
         {
             string configJson = @"{
@@ -69,7 +65,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseFileSize_MissingField()
         {
             string configJson = @"{
@@ -80,7 +75,6 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         [Fact]
-        [Trait("Platform", "Any")]
         public void SelfDiagnosticsConfigParser_TryParseLogLevel()
         {
             string configJson = @"{

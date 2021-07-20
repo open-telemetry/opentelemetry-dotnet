@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace Examples.Console
 {
@@ -29,56 +30,98 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
-            using var provider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter") // All instruments from this meter are enabled.
-                .SetDefaultCollectionPeriod(options.DefaultCollectionPeriodMilliseconds)
-                .AddProcessor(new TagEnrichmentProcessor("resource", "here"))
+            var providerBuilder = Sdk.CreateMeterProviderBuilder()
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
+                .AddSource("TestMeter"); // All instruments from this meter are enabled.
 
-                // Add multiple exporters
-                .AddExportProcessor(new MetricConsoleExporter("A"))
-                .AddExportProcessor(new MetricConsoleExporter("B"), 5 * options.DefaultCollectionPeriodMilliseconds)
-
-                // Add multiple Views
-
+            if (!string.IsNullOrEmpty(options.UseView))
+            {
                 // Change Default Aggregator
-                .AddView(
+                providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "counter",
                     aggregator: Aggregator.SUM_DELTA_MONOTONIC,
-                    viewName: "counter-1")
+                    viewName: "counter-1");
 
                 // Select attributes
-                .AddView(
+                providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "counter",
                     aggregator: Aggregator.HISTOGRAM,
                     aggregatorParam: new double[] { 0.0, 100 },
                     attributeKeys: new string[] { "tag1", "tag2" },
-                    viewName: "counter-2")
+                    viewName: "counter-2");
 
                 // Remove all instrument name "gauge"
-                .AddView(
+                providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "gauge",
-                    aggregator: Aggregator.NONE)
+                    aggregator: Aggregator.NONE);
+            }
 
-                .Build();
+            if (options.UseExporter.ToLower() == "otlp")
+            {
+                /*
+                 * Prerequisite to run this example:
+                 * Set up an OpenTelemetry Collector to run on local docker.
+                 *
+                 * Open a terminal window at the examples/Console/ directory and
+                 * launch the OpenTelemetry Collector with an OTLP receiver, by running:
+                 *
+                 *  - On Unix based systems use:
+                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *
+                 *  - On Windows use:
+                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *
+                 * Open another terminal window at the examples/Console/ directory and
+                 * launch the OTLP example by running:
+                 *
+                 *     dotnet run metrics --useExporter otlp
+                 *
+                 * The OpenTelemetry Collector will output all received metrics to the stdout of its terminal.
+                 *
+                 */
+
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+                providerBuilder
+                    .AddOtlpExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    });
+            }
+            else
+            {
+                providerBuilder
+                    .AddConsoleExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    });
+            }
+
+            using var provider = providerBuilder.Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
             {
-                counter = meter.CreateCounter<int>("counter");
+                counter = meter.CreateCounter<int>("counter", "things", "A count of things");
             }
 
             Histogram<int> histogram = null;
-            if (options.FlagHistogram ?? true)
+            if (options.FlagHistogram ?? false)
             {
                 histogram = meter.CreateHistogram<int>("histogram");
             }
 
-            if (options.FlagGauge ?? true)
+            if (options.FlagGauge ?? false)
             {
                 var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
                 {

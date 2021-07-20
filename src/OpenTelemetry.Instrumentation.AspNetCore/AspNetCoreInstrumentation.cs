@@ -15,7 +15,6 @@
 // </copyright>
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {

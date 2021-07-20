@@ -17,6 +17,7 @@
 #if NET461 || NETSTANDARD2_0
 using OpenTelemetry.Logs;
 #endif
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -44,6 +45,10 @@ namespace OpenTelemetry
                 return otelLoggerProvider.Resource;
             }
 #endif
+            else if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.Resource;
+            }
 
             return Resource.Empty;
         }

@@ -26,24 +26,63 @@ namespace OpenTelemetry.Trace
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Enables the outgoing requests automatic data collection for Redis.
+        /// Enables automatic data collection of outgoing requests to Redis.
         /// </summary>
+        /// <remarks>
+        /// Note: If an <see cref="IConnectionMultiplexer"/> is not supplied
+        /// using the <paramref name="connection"/> parameter it will be
+        /// resolved using the application <see cref="IServiceProvider"/>.
+        /// </remarks>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="connection"><see cref="IConnectionMultiplexer"/> to instrument.</param>
-        /// <param name="configureOptions">Redis configuration options.</param>
+        /// <param name="connection">Optional <see cref="IConnectionMultiplexer"/> to instrument.</param>
+        /// <param name="configure">Optional callback to configure options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddRedisInstrumentation(
             this TracerProviderBuilder builder,
-            IConnectionMultiplexer connection,
-            Action<StackExchangeRedisCallsInstrumentationOptions> configureOptions = null)
+            IConnectionMultiplexer connection = null,
+            Action<StackExchangeRedisCallsInstrumentationOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            StackExchangeRedisCallsInstrumentationOptions options = new StackExchangeRedisCallsInstrumentationOptions();
-            configureOptions?.Invoke(options);
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    if (connection == null)
+                    {
+                        connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
+                        if (connection == null)
+                        {
+                            throw new InvalidOperationException("StackExchange.Redis IConnectionMultiplexer could not be resolved through application IServiceProvider.");
+                        }
+                    }
+
+                    AddRedisInstrumentation(
+                        builder,
+                        connection,
+                        sp.GetOptions<StackExchangeRedisCallsInstrumentationOptions>(),
+                        configure);
+                });
+            }
+
+            if (connection == null)
+            {
+                throw new NotSupportedException("StackExchange.Redis IConnectionMultiplexer must be supplied when dependency injection is unavailable. To enable dependency injection use the OpenTelemetry.Extensions.Hosting package.");
+            }
+
+            return AddRedisInstrumentation(builder, connection, new StackExchangeRedisCallsInstrumentationOptions(), configure);
+        }
+
+        private static TracerProviderBuilder AddRedisInstrumentation(
+            TracerProviderBuilder builder,
+            IConnectionMultiplexer connection,
+            StackExchangeRedisCallsInstrumentationOptions options,
+            Action<StackExchangeRedisCallsInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
 
             return builder
                 .AddInstrumentation(() => new StackExchangeRedisCallsInstrumentation(connection, options))

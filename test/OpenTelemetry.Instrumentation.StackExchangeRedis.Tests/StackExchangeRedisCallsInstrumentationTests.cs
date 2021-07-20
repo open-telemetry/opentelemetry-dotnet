@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -203,11 +204,55 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddRedisInstrumentation(null));
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Assert.Throws<ArgumentNullException>(() =>
+            Assert.Throws<NotSupportedException>(() =>
             Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddRedisInstrumentation(null)
                 .Build());
+        }
+
+        [Fact]
+        public void StackExchangeRedis_DependencyInjection_Success()
+        {
+            bool connectionMultiplexerPickedFromDI = false;
+            bool optionsPickedFromDI = false;
+
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = false,
+            };
+            connectionOptions.EndPoints.Add("localhost");
+
+            var services = new ServiceCollection();
+            services.AddSingleton<IConnectionMultiplexer>((sp) =>
+            {
+                connectionMultiplexerPickedFromDI = true;
+                return ConnectionMultiplexer.Connect(connectionOptions);
+            });
+            services.Configure<StackExchangeRedisCallsInstrumentationOptions>(options =>
+            {
+                optionsPickedFromDI = true;
+            });
+            services.AddOpenTelemetryTracing(builder => builder.AddRedisInstrumentation());
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.True(connectionMultiplexerPickedFromDI);
+            Assert.True(optionsPickedFromDI);
+        }
+
+        [Fact]
+        public void StackExchangeRedis_DependencyInjection_Failure()
+        {
+            var services = new ServiceCollection();
+
+            services.AddOpenTelemetryTracing(builder => builder.AddRedisInstrumentation());
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<TracerProvider>());
         }
 
         private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)

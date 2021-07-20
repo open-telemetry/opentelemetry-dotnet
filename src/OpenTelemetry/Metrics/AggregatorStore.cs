@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics
             this.sdk = sdk;
             this.instrument = instrument;
 
-            this.timePeriods = this.sdk.ExportProcessors.Select(k => k.Value).Distinct();
+            this.timePeriods = new List<int> () { 30 };
         }
 
         internal MetricAgg[] MapToMetrics(string viewname, Func<IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Metrics
                 var aggs = aggregators();
                 foreach (var agg in aggs)
                 {
-                    agg.Init(name, dt, tags);
+                    agg.Init(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags);
                     metricpairs.Add(new MetricAgg(timeperiod, agg));
                 }
             }
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Metrics
             return metrics;
         }
 
-        internal void Update<T>(DateTimeOffset dt, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             var storage = ThreadStaticStorage.GetStorage();
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Metrics
 
                     foreach (var pair in metricPairs)
                     {
-                        pair.Metric.Update(dt, value);
+                        pair.Metric.Update(value);
                     }
                 }
             }
@@ -251,13 +251,16 @@ namespace OpenTelemetry.Metrics
 
                 foreach (var pair in metricPairs)
                 {
-                    pair.Metric.Update(dt, value);
+                    pair.Metric.Update(value);
                 }
             }
         }
 
-        internal List<IMetric> Collect(int periodMilliseconds)
+        internal List<IMetric> Collect(bool isDelta)
         {
+            // TODO: Need to pass this in somehow!
+            int periodMilliseconds = 30;
+
             var collectedMetrics = new List<IMetric>();
 
             var dt = DateTimeOffset.UtcNow;

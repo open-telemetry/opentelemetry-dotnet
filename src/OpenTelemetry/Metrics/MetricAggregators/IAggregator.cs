@@ -16,14 +16,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
     public interface IAggregator
     {
-        void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes);
+        void Init(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes);
 
-        void Update<T>(DateTimeOffset dt, T value)
+        void Update<T>(T value)
             where T : struct;
 
         IMetric Collect(DateTimeOffset dt);

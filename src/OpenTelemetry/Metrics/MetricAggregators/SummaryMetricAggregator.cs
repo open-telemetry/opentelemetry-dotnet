@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,11 +26,17 @@ namespace OpenTelemetry.Metrics
 
         private List<ValueAtQuantile> quantiles = new List<ValueAtQuantile>();
 
-        public SummaryMetricAggregator()
+        internal SummaryMetricAggregator()
         {
         }
 
         public string Name { get; private set; }
+
+        public string Description { get; private set; }
+
+        public string Unit { get; private set; }
+
+        public Meter Meter { get; private set; }
 
         public DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -43,30 +50,25 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<ValueAtQuantile> Quantiles => this.quantiles;
 
-        public void Init(string name, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        public void Init(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
         {
             this.Name = name;
+            this.Description = description;
+            this.Unit = unit;
+            this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.EndTimeInclusive = startTimeExclusive;
             this.Attributes = attributes;
         }
 
-        public void Update<T>(DateTimeOffset dt, T value)
+        public void Update<T>(T value)
             where T : struct
         {
             // TODO: Implement Summary!
 
             lock (this.lockUpdate)
             {
-                this.EndTimeInclusive = dt;
-
-                if (typeof(T) == typeof(int))
-                {
-                    var val = (int)(object)value;
-                    this.PopulationSum += (double)val;
-                    this.PopulationCount++;
-                }
-                else if (typeof(T) == typeof(long))
+                if (typeof(T) == typeof(long))
                 {
                     var val = (long)(object)value;
                     this.PopulationSum += (double)val;
@@ -93,7 +95,7 @@ namespace OpenTelemetry.Metrics
 
             lock (this.lockUpdate)
             {
-                cloneItem.Init(this.Name, this.StartTimeExclusive, this.Attributes);
+                cloneItem.Init(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes);
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;

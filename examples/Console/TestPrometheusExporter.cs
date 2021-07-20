@@ -17,18 +17,22 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {
-        internal static object Run(int port, int pushIntervalInSecs, int totalDurationInMins)
-        {
-            System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
+        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
 
+        internal static object Run(int port, int totalDurationInMins)
+        {
             /*
             Following is sample prometheus.yml config. Adjust port,interval as needed.
 
@@ -42,9 +46,37 @@ namespace Examples.Console
                 static_configs:
                 - targets: ['localhost:9184']
             */
-            System.Console.WriteLine("Press Enter key to exit.");
-            System.Console.ReadLine();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestMeter")
+                .AddPrometheusExporter(opt => opt.Url = $"http://localhost:{port}/metrics/")
+                .Build();
 
+            using var token = new CancellationTokenSource();
+            Task writeMetricTask = new Task(() =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    Counter.Add(
+                                10,
+                                new KeyValuePair<string, object>("tag1", "value1"),
+                                new KeyValuePair<string, object>("tag2", "value2"));
+
+                    Counter.Add(
+                                100,
+                                new KeyValuePair<string, object>("tag1", "anothervalue"),
+                                new KeyValuePair<string, object>("tag2", "somethingelse"));
+                    Task.Delay(10).Wait();
+                }
+            });
+            writeMetricTask.Start();
+
+            token.CancelAfter(totalDurationInMins * 60 * 1000);
+
+            System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
+            System.Console.WriteLine($"Press Enter key to exit now or will exit automatically after {totalDurationInMins} minutes.");
+            System.Console.ReadLine();
+            token.Cancel();
+            System.Console.WriteLine("Exiting...");
             return null;
         }
     }

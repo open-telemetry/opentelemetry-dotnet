@@ -17,13 +17,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
         private readonly List<string> meterSources = new List<string>();
-        private int defaultCollectionPeriodMilliseconds = 1000;
+        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         internal MeterProviderBuilderSdk()
         {
@@ -31,7 +32,7 @@ namespace OpenTelemetry.Metrics
 
         internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
 
-        internal List<KeyValuePair<MetricProcessor, int>> ExportProcessors { get; } = new List<KeyValuePair<MetricProcessor, int>>();
+        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
 
         internal List<MetricView> ViewConfigs { get; } = new List<MetricView>();
 
@@ -55,27 +56,21 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk SetDefaultCollectionPeriod(int periodMilliseconds)
-        {
-            this.defaultCollectionPeriodMilliseconds = periodMilliseconds;
-            return this;
-        }
-
         internal MeterProviderBuilderSdk AddMeasurementProcessor(MeasurementProcessor processor)
         {
             this.MeasurementProcessors.Add(processor);
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor)
+        internal MeterProviderBuilderSdk AddMetricProcessor(MetricProcessor processor)
         {
-            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, this.defaultCollectionPeriodMilliseconds));
+            this.MetricProcessors.Add(processor);
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddExporter(MetricProcessor processor, int periodMilliseconds)
+        internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            this.ExportProcessors.Add(new KeyValuePair<MetricProcessor, int>(processor, periodMilliseconds));
+            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
             return this;
         }
 
@@ -164,10 +159,11 @@ namespace OpenTelemetry.Metrics
         internal MeterProvider Build()
         {
             return new MeterProviderSdk(
+                this.resourceBuilder.Build(),
                 this.meterSources,
                 this.ViewConfigs.ToArray(),
                 this.MeasurementProcessors.ToArray(),
-                this.ExportProcessors.ToArray());
+                this.MetricProcessors.ToArray());
         }
 
         internal IAggregator CreateAggregator(Aggregator aggregator, object aggregatorParam)

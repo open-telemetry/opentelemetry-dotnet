@@ -94,14 +94,13 @@ namespace Benchmarks.Metrics
                 case "SDK":
                     this.provider = Sdk.CreateMeterProviderBuilder()
                         .AddSource("TestMeter") // All instruments from this meter are enabled.
-                        .SetDefaultCollectionPeriod(10000)
                         .Build();
                     break;
 
                 case "View":
                     this.provider = Sdk.CreateMeterProviderBuilder()
                         .AddSource("TestMeter") // All instruments from this meter are enabled.
-                        .SetDefaultCollectionPeriod(10000)
+                        // .SetDefaultCollectionPeriod(10000)
                         .AddView(
                             meterName: "TestMeter",
                             aggregator: Aggregator.HISTOGRAM,
