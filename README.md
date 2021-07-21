@@ -24,7 +24,7 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started.md)
+* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started/README.md)
   (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
