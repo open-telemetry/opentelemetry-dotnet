@@ -32,8 +32,6 @@ namespace OpenTelemetry.Metrics
         private readonly Dictionary<string[], Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
             new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
 
-        private IAggregator[] tag0Metrics = null;
-
         internal AggregatorStore(Instrument instrument)
         {
             this.instrument = instrument;
@@ -54,15 +52,21 @@ namespace OpenTelemetry.Metrics
             var dt = DateTimeOffset.UtcNow;
 
             // TODO: Need to map each instrument to metrics (based on View API)
-            if (this.instrument.GetType().Name.Contains("Counter"))
+
+            var type = this.instrument.GetType().GetGenericTypeDefinition();
+            if (type == typeof(Counter<>))
             {
-                aggregators.Add(new SumMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
             }
-            else if (this.instrument.GetType().Name.Contains("Gauge"))
+            else if (type == typeof(ObservableCounter<>))
+            {
+                aggregators.Add(new SumMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, false));
+            }
+            else if (type == typeof(ObservableGauge<>))
             {
                 aggregators.Add(new GaugeMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
-            else if (this.instrument.GetType().Name.Contains("Histogram"))
+            else if (type == typeof(Histogram<>))
             {
                 aggregators.Add(new HistogramMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
@@ -78,23 +82,24 @@ namespace OpenTelemetry.Metrics
         {
             int len = tags.Length;
 
+            string[] tagKey;
+            object[] tagValue;
+
             if (len == 0)
             {
-                if (this.tag0Metrics == null)
-                {
-                    this.tag0Metrics = this.MapToMetrics(AggregatorStore.EmptySeqKey, AggregatorStore.EmptySeqValue);
-                }
-
-                return this.tag0Metrics;
+                tagKey = AggregatorStore.EmptySeqKey;
+                tagValue = AggregatorStore.EmptySeqValue;
             }
-
-            var storage = ThreadStaticStorage.GetStorage();
-
-            storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
-
-            if (len > 1)
+            else
             {
-                Array.Sort<string, object>(tagKey, tagValue);
+                var storage = ThreadStaticStorage.GetStorage();
+
+                storage.SplitToKeysAndValues(tags, out tagKey, out tagValue);
+
+                if (len > 1)
+                {
+                    Array.Sort<string, object>(tagKey, tagValue);
+                }
             }
 
             IAggregator[] metrics;

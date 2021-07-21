@@ -23,11 +23,18 @@ namespace OpenTelemetry.Metrics
     internal class SumMetricAggregator : ISumMetric, IAggregator
     {
         private readonly object lockUpdate = new object();
-        private Type valueType;
+        private long countLong = 0;
+        private long countDouble = 0;
         private long sumLong = 0;
         private double sumDouble = 0;
 
-        internal SumMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        private DateTimeOffset lastStartTime;
+        private long lastCountLong = 0;
+        private long lastCountDouble = 0;
+        private long lastSumLong = 0;
+        private double lastSumDouble = 0;
+
+        internal SumMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isMonotonic, bool isDelta)
         {
             this.Name = name;
             this.Description = description;
@@ -35,7 +42,10 @@ namespace OpenTelemetry.Metrics
             this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
-            this.IsMonotonic = true;
+            this.IsMonotonic = isMonotonic;
+            this.IsDeltaTemporality = isDelta;
+
+            this.lastStartTime = startTimeExclusive;
         }
 
         public string Name { get; private set; }
@@ -58,81 +68,138 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
+        public long Count => this.countLong + this.countDouble;
+
         public IDataValue Sum
         {
             get
             {
-                if (this.valueType == typeof(long))
+                if (this.countDouble == 0)
                 {
                     return new DataValue(this.sumLong);
                 }
-                else if (this.valueType == typeof(double))
+                else
                 {
-                    return new DataValue(this.sumDouble);
+                    return new DataValue(this.sumDouble + this.sumLong);
                 }
-
-                throw new Exception("Unsupported Type");
             }
         }
 
         public void Update<T>(T value)
             where T : struct
         {
-            lock (this.lockUpdate)
+            if (typeof(T) == typeof(long))
             {
-                if (typeof(T) == typeof(long))
+                var val = (long)(object)value;
+
+                if (this.IsDeltaTemporality)
                 {
-                    this.valueType = typeof(T);
-                    var val = (long)(object)value;
-                    if (val < 0)
-                    {
-                        // TODO: log?
-                        // Also, this validation can be done in earlier stage.
-                    }
-                    else
-                    {
-                        this.sumLong += val;
-                    }
-                }
-                else if (typeof(T) == typeof(double))
-                {
-                    this.valueType = typeof(T);
-                    var val = (double)(object)value;
-                    if (val < 0)
-                    {
-                        // TODO: log?
-                        // Also, this validation can be done in earlier stage.
-                    }
-                    else
-                    {
-                        this.sumDouble += val;
-                    }
+                    this.UpdateDeltaLong(val);
                 }
                 else
                 {
-                    throw new Exception("Unsupported Type");
+                    this.UpdateCumulativeLong(val);
                 }
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                var val = (double)(object)value;
+
+                if (this.IsDeltaTemporality)
+                {
+                    this.UpdateDeltaDouble(val);
+                }
+                else
+                {
+                    this.UpdateCumulativeDouble(val);
+                }
+            }
+            else
+            {
+                throw new Exception("Unsupported Type!");
             }
         }
 
         public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            var cloneItem = new SumMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes);
+            var cloneItem = new SumMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes, this.IsMonotonic, this.IsDeltaTemporality);
+            cloneItem.Exemplars = this.Exemplars;
 
             lock (this.lockUpdate)
             {
-                cloneItem.Exemplars = this.Exemplars;
-                cloneItem.EndTimeInclusive = dt;
-                cloneItem.valueType = this.valueType;
-                cloneItem.sumLong = this.sumLong;
-                cloneItem.sumDouble = this.sumDouble;
-                cloneItem.IsDeltaTemporality = isDelta;
-
-                if (isDelta)
+                if (this.IsDeltaTemporality == isDelta)
                 {
-                    this.StartTimeExclusive = dt;
+                    if (this.IsDeltaTemporality)
+                    {
+                        cloneItem.StartTimeExclusive = this.lastStartTime;
+                        cloneItem.EndTimeInclusive = dt;
+                    }
+                    else
+                    {
+                        cloneItem.StartTimeExclusive = this.StartTimeExclusive;
+                        cloneItem.EndTimeInclusive = dt;
+                    }
+
+                    cloneItem.sumLong = this.sumLong;
+                    cloneItem.sumDouble = this.sumDouble;
+
+                    cloneItem.countLong = this.countLong;
+                    cloneItem.countDouble = this.countDouble;
+                }
+                else
+                {
+                    // Need to convert Temporality!
+                    if (this.IsDeltaTemporality && !isDelta)
+                    {
+                        // Convert DELTA -> CUM
+
+                        cloneItem.IsDeltaTemporality = false;
+                        cloneItem.StartTimeExclusive = this.StartTimeExclusive;
+                        cloneItem.EndTimeInclusive = dt;
+
+                        cloneItem.sumLong = this.lastSumLong + this.sumLong;
+                        cloneItem.sumDouble = this.lastSumDouble + this.sumDouble;
+
+                        cloneItem.countLong = this.lastCountLong + this.countLong;
+                        cloneItem.countDouble = this.lastCountDouble + this.countDouble;
+                    }
+                    else if (!this.IsDeltaTemporality && isDelta)
+                    {
+                        // Convert CUM -> DELTA
+
+                        cloneItem.IsDeltaTemporality = true;
+                        cloneItem.StartTimeExclusive = this.lastStartTime;
+                        cloneItem.EndTimeInclusive = dt;
+
+                        cloneItem.sumLong = this.sumLong - this.lastSumLong;
+                        cloneItem.sumDouble = this.sumDouble - this.lastSumDouble;
+
+                        cloneItem.countLong = this.countLong - this.lastCountLong;
+                        cloneItem.countDouble = this.countDouble - this.lastCountDouble;
+                    }
+                }
+
+                // Update Last Sum/Count
+                if (this.IsDeltaTemporality)
+                {
+                    this.lastStartTime = dt;
+                    this.lastSumLong += this.sumLong;
+                    this.lastSumDouble += this.sumDouble;
+                    this.lastCountLong += this.countLong;
+                    this.lastCountDouble += this.countDouble;
+
                     this.sumLong = 0;
                     this.sumDouble = 0;
+                    this.countLong = 0;
+                    this.countDouble = 0;
+                }
+                else
+                {
+                    this.lastStartTime = dt;
+                    this.lastSumLong = this.sumLong;
+                    this.lastSumDouble = this.sumDouble;
+                    this.lastCountLong = this.countLong;
+                    this.lastCountDouble = this.countDouble;
                 }
             }
 
@@ -142,6 +209,74 @@ namespace OpenTelemetry.Metrics
         public string ToDisplayString()
         {
             return $"Sum={this.Sum.Value}";
+        }
+
+        private void UpdateDeltaLong(long val)
+        {
+            lock (this.lockUpdate)
+            {
+                if (val < 0 && this.IsMonotonic)
+                {
+                    // TODO: log?
+                    // Also, this validation can be done in earlier stage.
+                }
+                else
+                {
+                    this.sumLong += val;
+                    this.countLong++;
+                }
+            }
+        }
+
+        private void UpdateDeltaDouble(double val)
+        {
+            lock (this.lockUpdate)
+            {
+                if (val < 0 && this.IsMonotonic)
+                {
+                    // TODO: log?
+                    // Also, this validation can be done in earlier stage.
+                }
+                else
+                {
+                    this.sumDouble += val;
+                    this.countDouble++;
+                }
+            }
+        }
+
+        private void UpdateCumulativeLong(long val)
+        {
+            lock (this.lockUpdate)
+            {
+                if (val < this.sumLong && this.countLong > 0 && this.IsMonotonic)
+                {
+                    // TODO: log?
+                    // Also, this validation can be done in earlier stage.
+                }
+                else
+                {
+                    this.sumLong = val;
+                    this.countLong++;
+                }
+            }
+        }
+
+        private void UpdateCumulativeDouble(double val)
+        {
+            lock (this.lockUpdate)
+            {
+                if (val < this.sumLong && this.countLong > 0 && this.IsMonotonic)
+                {
+                    // TODO: log?
+                    // Also, this validation can be done in earlier stage.
+                }
+                else
+                {
+                    this.sumDouble = val;
+                    this.countDouble++;
+                }
+            }
         }
     }
 }
