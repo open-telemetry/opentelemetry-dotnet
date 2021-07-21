@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Removes .NET Framework 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
 * The `JaegerExporterOptions` defaults can be overridden using
   `OTEL_EXPORTER_JAEGER_AGENT_HOST` and `OTEL_EXPORTER_JAEGER_AGENT_PORT`
   envionmental variables as defined in the
