@@ -16,7 +16,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <!--Temp workaround to allow using daily dotnet 6 builds-->
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.4.21253.7" />
+    <!--<PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.4.21253.7" />-->
 </ItemGroup>
 
   <PropertyGroup Label="Package versions used by test and example projects">
