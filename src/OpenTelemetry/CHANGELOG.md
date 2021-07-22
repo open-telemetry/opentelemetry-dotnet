@@ -7,6 +7,9 @@ branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
 please check the latest changes
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
 
+* Removed existing Metrics code as the spec is completely being re-written.
+  ([#2030](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2030))
+
 ## Unreleased
 
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework

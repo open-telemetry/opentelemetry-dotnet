@@ -7,6 +7,9 @@ branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
 please check the latest changes
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Api/CHANGELOG.md#experimental---metrics).
 
+* Removed existing Metrics code as the spec is completely being re-written.
+  ([#2030](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2030))
+
 ## Unreleased
 
 * Removes .NET Framework 4.5.2 support. The minimum .NET Framework
@@ -81,9 +84,6 @@ Released 2021-Jan-29
 * `Status.WithDescription` will now ignore the provided description if the
   `Status.StatusCode` is anything other than `ERROR`.
   ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
-* Metrics removed as it is not part 1.0.0 release. See issue
-  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
-  details on Metric release plans.
 * Relax System.Diagnostics.DiagnosticSource version requirement to allow
   versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
   allowed.

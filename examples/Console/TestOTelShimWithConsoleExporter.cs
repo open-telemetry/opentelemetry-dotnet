@@ -51,6 +51,7 @@ namespace Examples.Console
             }
 
             System.Console.WriteLine("Press Enter key to exit.");
+            System.Console.ReadLine();
 
             return null;
         }
