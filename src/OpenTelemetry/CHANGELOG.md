@@ -1,16 +1,8 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
-
-* Removed existing Metrics code as the spec is completely being re-written.
-  ([#2030](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2030))
-
 ## Unreleased
+
+* Add Metrics support.
 
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
   version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
@@ -164,6 +156,9 @@ Released 2021-Jan-29
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for details on Metric release plans.
 * Fix Resource attribute telemetry.sdk.version to have correct file version.
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 
