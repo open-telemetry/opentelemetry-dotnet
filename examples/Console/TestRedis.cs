@@ -70,6 +70,9 @@ namespace Examples.Console
                 }
             }
 
+            System.Console.Write("Press ENTER to stop.");
+            System.Console.ReadLine();
+
             return null;
         }
 

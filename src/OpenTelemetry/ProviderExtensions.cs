@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -39,6 +40,10 @@ namespace OpenTelemetry
             else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
             {
                 return otelLoggerProvider.Resource;
+            }
+            else if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.Resource;
             }
 
             return Resource.Empty;
