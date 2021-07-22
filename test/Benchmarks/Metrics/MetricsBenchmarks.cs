@@ -110,6 +110,11 @@ namespace Benchmarks.Metrics
         }
 
         [Benchmark]
+        public void CounterWith1LabelLocal()
+        {
+            this.counter?.Add(100, new KeyValuePair<string, object>("key", "value"));
+        }
+
         public void CounterWith3LabelsHotPath()
         {
             this.counter?.Add(100, this.tag1, this.tag2, this.tag3);
