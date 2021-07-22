@@ -8,6 +8,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Temporarily disable public API check till metrics get close to Release
+  <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
+      <PrivateAssets>All</PrivateAssets>
+  </PackageReference>
+  -->
+
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
     <ResolvedMatchingContract Include="..\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
