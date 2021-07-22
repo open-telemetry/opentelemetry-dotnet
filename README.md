@@ -24,8 +24,7 @@ Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started/README.md)
-  (experimental)
+* [metrics](./docs/metrics/getting-started/README.md) (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
@@ -58,6 +57,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
