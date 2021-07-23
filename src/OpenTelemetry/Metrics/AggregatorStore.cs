@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
@@ -154,22 +153,25 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal List<IMetric> Collect(bool isDelta)
+        internal List<IMetric> Collect(bool isDelta, DateTimeOffset dt)
         {
             var collectedMetrics = new List<IMetric>();
 
-            var dt = DateTimeOffset.UtcNow;
-
-            foreach (var keys in this.keyValue2MetricAggs)
+            // Lock to prevent new time series from being added
+            // until collect is done.
+            lock (this.lockKeyValue2MetricAggs)
             {
-                foreach (var values in keys.Value)
+                foreach (var keys in this.keyValue2MetricAggs)
                 {
-                    foreach (var metric in values.Value)
+                    foreach (var values in keys.Value)
                     {
-                        var m = metric.Collect(dt, isDelta);
-                        if (m != null)
+                        foreach (var metric in values.Value)
                         {
-                            collectedMetrics.Add(m);
+                            var m = metric.Collect(dt, isDelta);
+                            if (m != null)
+                            {
+                                collectedMetrics.Add(m);
+                            }
                         }
                     }
                 }
