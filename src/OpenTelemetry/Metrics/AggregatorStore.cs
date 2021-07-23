@@ -43,8 +43,6 @@ namespace OpenTelemetry.Metrics
         {
             var aggregators = new List<IAggregator>();
 
-            var name = $"{this.instrument.Meter.Name}:{this.instrument.Name}";
-
             var tags = new KeyValuePair<string, object>[seqKey.Length];
             for (int i = 0; i < seqKey.Length; i++)
             {
@@ -56,19 +54,19 @@ namespace OpenTelemetry.Metrics
             // TODO: Need to map each instrument to metrics (based on View API)
             if (this.instrument.GetType().Name.Contains("Counter"))
             {
-                aggregators.Add(new SumMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Gauge"))
             {
-                aggregators.Add(new GaugeMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new GaugeMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Histogram"))
             {
-                aggregators.Add(new HistogramMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new HistogramMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else
             {
-                aggregators.Add(new SummaryMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
+                aggregators.Add(new SummaryMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
             }
 
             return aggregators.ToArray();
