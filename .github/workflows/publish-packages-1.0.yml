@@ -2,7 +2,7 @@
 ################### IMPORTANT ###################
 # DON'T RENAME THIS FILE UNLESS WE START
 # RELEASING THE VERSION 2.*
-################### IMPORTANT ################### 
+################### IMPORTANT ###################
 #################################################
 
 name: Pack and publish to Myget
@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        branches: [main,metrics]
+        branches: [main]
 
     steps:
     - uses: actions/checkout@v2
