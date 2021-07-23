@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
 * Add Metrics support.
 
 * Removes .NET Framework 4.5.2 support. The minimum .NET Framework

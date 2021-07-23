@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
 * Add basic Metrics support with a single pipeline, and supporting Counter
   (sync) instrument. Push and Pull exporters are supported.
 
