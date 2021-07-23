@@ -72,8 +72,14 @@ namespace OpenTelemetry.Metrics
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var aggregatorStore = new AggregatorStore(instrument);
-                        this.AggregatorStores.TryAdd(aggregatorStore, true);
-                        listener.EnableMeasurementEvents(instrument, aggregatorStore);
+
+                        // Lock to prevent new instrument (aggregatorstore)
+                        // from being added while Collect is going on.
+                        lock (this.collectLock)
+                        {
+                            this.AggregatorStores.TryAdd(aggregatorStore, true);
+                            listener.EnableMeasurementEvents(instrument, aggregatorStore);
+                        }
                     }
                 },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
@@ -143,11 +149,11 @@ namespace OpenTelemetry.Metrics
                 {
                     // Record all observable instruments
                     this.listener.RecordObservableInstruments();
+                    var dt = DateTimeOffset.UtcNow;
                     metricItem = new MetricItem();
-
                     foreach (var kv in this.AggregatorStores)
                     {
-                        var metrics = kv.Key.Collect(isDelta);
+                        var metrics = kv.Key.Collect(isDelta, dt);
                         metricItem.Metrics.AddRange(metrics);
                     }
                 }
