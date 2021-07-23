@@ -70,6 +70,11 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddMetricProcessor(MetricProcessor processor)
         {
+            if (this.MetricProcessors.Count >= 1)
+            {
+                throw new InvalidOperationException("Only one MetricProcessor is allowed.");
+            }
+
             this.MetricProcessors.Add(processor);
             return this;
         }
