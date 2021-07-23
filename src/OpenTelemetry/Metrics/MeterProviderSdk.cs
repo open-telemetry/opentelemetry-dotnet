@@ -19,8 +19,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -140,14 +138,22 @@ namespace OpenTelemetry.Metrics
         {
             lock (this.collectLock)
             {
-                // Record all observable instruments
-                this.listener.RecordObservableInstruments();
-                var metricItem = new MetricItem();
-
-                foreach (var kv in this.AggregatorStores)
+                MetricItem metricItem = null;
+                try
                 {
-                    var metrics = kv.Key.Collect(isDelta);
-                    metricItem.Metrics.AddRange(metrics);
+                    // Record all observable instruments
+                    this.listener.RecordObservableInstruments();
+                    metricItem = new MetricItem();
+
+                    foreach (var kv in this.AggregatorStores)
+                    {
+                        var metrics = kv.Key.Collect(isDelta);
+                        metricItem.Metrics.AddRange(metrics);
+                    }
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
                 }
 
                 return metricItem;
