@@ -6,9 +6,9 @@
 
 Released 2021-Jul-23
 
-* Add Metrics support.
+* Add Metrics support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
 
-* Removes .NET Framework 4.5.2 support. The minimum .NET Framework
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
   version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.1.0
