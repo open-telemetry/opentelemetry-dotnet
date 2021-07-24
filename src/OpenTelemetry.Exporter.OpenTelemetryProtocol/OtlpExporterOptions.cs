@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter
         public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
-        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
+        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
@@ -52,5 +52,16 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
+
+        /// <summary>
+        /// Gets or sets the metric export interval.
+        /// </summary>
+        public int MetricExportInterval { get; set; } = 1000;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to export Delta
+        /// values or not (Cumulative).
+        /// </summary>
+        public bool IsDelta { get; set; } = true;
     }
 }

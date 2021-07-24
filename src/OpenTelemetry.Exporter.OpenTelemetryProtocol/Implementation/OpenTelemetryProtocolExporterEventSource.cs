@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void FailedToConvertToProtoDefinitionError(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToConvertToProtoDefinitionError(ex.ToInvariantString());
             }
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void FailedToReachCollector(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToReachCollector(ex.ToInvariantString());
             }
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void ExportMethodException(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.ExportMethodException(ex.ToInvariantString());
             }
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(1, ex);
         }
 
-        [Event(2, Message = "Exporter failed send spans to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        [Event(2, Message = "Exporter failed send data to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
         public void FailedToReachCollector(string ex)
         {
             this.WriteEvent(2, ex);
@@ -74,6 +74,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void ExportMethodException(string ex)
         {
             this.WriteEvent(4, ex);
+        }
+
+        [Event(5, Message = "Could not translate metric from class '{0}' and method '{1}', metric will not be recorded.", Level = EventLevel.Informational)]
+        public void CouldNotTranslateMetric(string className, string methodName)
+        {
+            this.WriteEvent(5, className, methodName);
         }
     }
 }

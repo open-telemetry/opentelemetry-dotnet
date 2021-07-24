@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -40,6 +39,8 @@ namespace OpenTelemetry.Internal
         private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
         private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
 
+        private bool disposedValue = false;
+
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
@@ -54,12 +55,16 @@ namespace OpenTelemetry.Internal
 
             foreach (var eventSource in eventSources)
             {
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
+        }
+
+        /// <inheritdoc/>
+        public override void Dispose()
+        {
+            this.Dispose(true);
+            base.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -77,6 +82,11 @@ namespace OpenTelemetry.Internal
         /// <returns>The position of the buffer after the last byte of the resulting sequence.</returns>
         internal static int EncodeInBuffer(string str, bool isParameter, byte[] buffer, int position)
         {
+            if (string.IsNullOrEmpty(str))
+            {
+                return position;
+            }
+
             int charCount = str.Length;
             int ellipses = isParameter ? "{...}\n".Length : "...\n".Length;
 
@@ -296,11 +306,7 @@ namespace OpenTelemetry.Internal
                     }
                 }
 
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
 
             base.OnEventSourceCreated(eventSource);
@@ -315,6 +321,21 @@ namespace OpenTelemetry.Internal
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             this.WriteEvent(eventData.Message, eventData.Payload);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposedValue)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.writeBuffer.Dispose();
+            }
+
+            this.disposedValue = true;
         }
     }
 }

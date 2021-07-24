@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
@@ -35,6 +34,12 @@ namespace OpenTelemetry
                 maxExportBatchSize)
         {
         }
+
+        public override void OnEnd(LogRecord data)
+        {
+            data.BufferLogScopes();
+
+            base.OnEnd(data);
+        }
     }
 }
-#endif
