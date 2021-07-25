@@ -9,7 +9,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
   },
@@ -23,7 +23,7 @@
     "spanAttributes": {
       "http.method": "POST",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
   },
@@ -38,7 +38,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource/"
     }
   },
@@ -53,7 +53,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
   },
@@ -68,7 +68,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
   },
@@ -113,7 +113,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
   },
@@ -128,7 +128,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
   },
@@ -295,7 +295,7 @@
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
-      "http.status_code": "200",
+      "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
   }

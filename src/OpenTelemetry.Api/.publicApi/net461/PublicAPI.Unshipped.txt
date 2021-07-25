@@ -1,0 +1,4 @@
+override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
+override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.AsyncLocalRuntimeContextSlot(string name) -> void

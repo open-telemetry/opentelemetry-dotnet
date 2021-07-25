@@ -37,7 +37,8 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
-                tracerProviderBuilderHosting.AddInstrumentation<T>();
+                tracerProviderBuilderHosting.Configure((sp, builder) => builder
+                    .AddInstrumentation(() => sp.GetRequiredService<T>()));
             }
 
             return tracerProviderBuilder;
@@ -69,7 +70,8 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
-                tracerProviderBuilderHosting.AddProcessor<T>();
+                tracerProviderBuilderHosting.Configure((sp, builder) => builder
+                    .AddProcessor(sp.GetRequiredService<T>()));
             }
 
             return tracerProviderBuilder;
@@ -86,14 +88,17 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
             {
-                tracerProviderBuilderHosting.SetSampler<T>();
+                tracerProviderBuilderHosting.Configure((sp, builder) => builder
+                    .SetSampler(sp.GetRequiredService<T>()));
             }
 
             return tracerProviderBuilder;
         }
 
         /// <summary>
-        /// Register a callback action to configure the <see cref="TracerProviderBuilder"/> during initialization.
+        /// Register a callback action to configure the <see
+        /// cref="TracerProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
         /// </summary>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
@@ -106,6 +111,23 @@ namespace OpenTelemetry.Trace
             }
 
             return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Gets the application <see cref="IServiceCollection"/> attached to
+        /// the <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns><see cref="IServiceCollection"/> or <see langword="null"/>
+        /// if services are unavailable.</returns>
+        public static IServiceCollection GetServices(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
+            {
+                return tracerProviderBuilderHosting.Services;
+            }
+
+            return null;
         }
 
         /// <summary>
