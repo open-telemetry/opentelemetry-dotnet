@@ -1,12 +1,5 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Exporter.InMemory/CHANGELOG.md#experimental---metrics).
-
 ## Unreleased
 
 ## 1.2.0-alpha1
