@@ -30,6 +30,7 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
+            ICollection<MetricItem> exportedItems = null;
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
                 .AddSource("TestMeter"); // All instruments from this meter are enabled.
@@ -65,6 +66,16 @@ namespace Examples.Console
 
                 providerBuilder
                     .AddOtlpExporter(o =>
+                    {
+                        o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
+                        o.IsDelta = options.IsDelta;
+                    });
+            }
+            else if (options.UseExporter.ToLower() == "inmemory")
+            {
+                exportedItems = new List<MetricItem>();
+                providerBuilder
+                    .AddInMemoryExporter(exportedItems, o =>
                     {
                         o.MetricExportInterval = options.DefaultCollectionPeriodMilliseconds;
                         o.IsDelta = options.IsDelta;
@@ -196,6 +207,17 @@ namespace Examples.Console
             }
 
             Task.WaitAll(tasks.ToArray());
+
+            if (options.UseExporter.ToLower() == "inmemory")
+            {
+                foreach (var metricItem in exportedItems)
+                {
+                    foreach (var metric in metricItem.Metrics)
+                    {
+                        System.Console.WriteLine($"MeterSource: {metric.Meter.Name} emitted metric: {metric.Name} with the description: {metric.Description}");
+                    }
+                }
+            }
 
             return null;
         }
