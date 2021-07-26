@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterOptionsTests
+    public class OtlpExporterOptionsTests : IDisposable
     {
         public OtlpExporterOptionsTests()
         {
