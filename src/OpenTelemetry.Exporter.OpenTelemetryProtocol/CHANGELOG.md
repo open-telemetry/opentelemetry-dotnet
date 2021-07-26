@@ -6,7 +6,7 @@
   `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
   envionmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
-  ([#????](https://github.com/open-telemetry/opentelemetry-dotnet/pull/????) <- Add PR)
+  ([#2188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2188))
 
 ## 1.2.0-alpha1
 
