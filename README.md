@@ -16,8 +16,8 @@ Packages shipped from this repository generally support all the officially
 supported versions of [.NET
 Core](https://dotnet.microsoft.com/download/dotnet-core), and [.NET
 Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
-`.NET Framework 3.5 SP1`. Any exceptions to this are noted in the individual
-`README.md` files.
+versions lower than `.NET Framework 4.6.1`.
+Any exceptions to this are noted in the individual `README.md` files.
 
 ## Getting Started
 
