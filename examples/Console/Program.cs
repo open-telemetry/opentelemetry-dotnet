@@ -34,7 +34,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
         /// dotnet run -p Examples.Console.csproj zpages
-        /// dotnet run -p Examples.Console.csproj metrics --useExporter InMemory
+        /// dotnet run -p Examples.Console.csproj metrics --help
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
