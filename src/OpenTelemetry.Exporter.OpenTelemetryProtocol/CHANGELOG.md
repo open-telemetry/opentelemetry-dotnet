@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* The `OtlpExporterOptions` defaults can be overriden using
+* The `OtlpExporterOptions` defaults can be overridden using
   `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
   envionmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
