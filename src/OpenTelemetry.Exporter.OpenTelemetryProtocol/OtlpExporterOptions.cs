@@ -54,9 +54,9 @@ namespace OpenTelemetry.Exporter
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
 
         /// <summary>
-        /// Gets or sets the metric export interval.
+        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
         /// </summary>
-        public int MetricExportInterval { get; set; } = 1000;
+        public int MetricExportIntervalMilliSeconds { get; set; } = 1000;
 
         /// <summary>
         /// Gets or sets a value indicating whether to export Delta
