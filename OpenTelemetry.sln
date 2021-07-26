@@ -158,6 +158,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\trace\getting-started\getting-started.csproj", "{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
+	ProjectSection(SolutionItems) = preProject
+		docs\metrics\building-your-own-exporter.md = docs\metrics\building-your-own-exporter.md
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
@@ -199,6 +204,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "exception-reporting", "docs\trace\exception-reporting\exception-reporting.csproj", "{08D29501-F0A3-468F-B18D-BD1821A72383}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\trace\customizing-the-sdk\customizing-the-sdk.csproj", "{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\metrics\getting-started\getting-started.csproj", "{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus", "src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj", "{52158A12-E7EF-45A1-859F-06F9B17410CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -394,6 +403,14 @@ Global
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -411,6 +428,7 @@ Global
 		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{BE60E3D5-DE30-4BAB-8E7A-63B21D0E80D7} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{3862190B-E2C5-418E-AFDC-DB281FB5C705} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{4D492D62-5150-45F9-817F-C99562E364E2} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{07336602-860B-4975-95DD-405D19C00901} = {4D492D62-5150-45F9-817F-C99562E364E2}
@@ -424,6 +442,7 @@ Global
 		{972396A8-E35B-499C-9BA1-765E9B8822E1} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{08D29501-F0A3-468F-B18D-BD1821A72383} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
