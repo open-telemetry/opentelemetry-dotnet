@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
 
             var options = new OtlpExporterOptions();
             configure?.Invoke(options);
-            return builder.AddMetricProcessor(new PushMetricProcessor(new OtlpMetricsExporter(options), options.MetricExportIntervalMilliSeconds, options.IsDelta));
+            return builder.AddMetricProcessor(new PushMetricProcessor(new OtlpMetricsExporter(options), options.MetricExportIntervalMilliseconds, options.IsDelta));
         }
     }
 }
