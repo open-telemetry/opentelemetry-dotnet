@@ -60,11 +60,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 foreach (var metricItem in batch)
                 {
-                    // The exporter is invoked even when there are no metrics
-                    if (metricItem.Metrics.Count > 0)
-                    {
-                        metricItems.Add(metricItem);
-                    }
+                    metricItems.Add(metricItem);
                 }
             }
 
@@ -85,8 +81,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.meterProvider.Dispose();
 
             // There should be more than one result here since we waited for at least two exporter invocations.
-            // Is this what we should expect?
-            // Since we've configured delta aggregation does it make sense to continue to export zero values?
+            // The exporter continues to receive a metric even if it has not changed since the last export.
             var requestMetrics = metricItems
                 .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.request_count"))
                 .ToArray();
