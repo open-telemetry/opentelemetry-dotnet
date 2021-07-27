@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics
 
             var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
-            return builder.AddMetricProcessor(new PushMetricProcessor(new InMemoryExporter<MetricItem>(exportedItems), options.MetricExportIntervalMilliSeconds, options.IsDelta));
+            return builder.AddMetricProcessor(new PushMetricProcessor(new InMemoryExporter<MetricItem>(exportedItems), options.MetricExportIntervalMilliseconds, options.IsDelta));
         }
     }
 }

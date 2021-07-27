@@ -66,7 +66,7 @@ namespace Examples.Console
                 providerBuilder
                     .AddOtlpExporter(o =>
                     {
-                        o.MetricExportIntervalMilliSeconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.IsDelta = options.IsDelta;
                     });
             }
@@ -75,7 +75,7 @@ namespace Examples.Console
                 providerBuilder
                     .AddConsoleExporter(o =>
                     {
-                        o.MetricExportIntervalMilliSeconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.IsDelta = options.IsDelta;
                     });
             }
