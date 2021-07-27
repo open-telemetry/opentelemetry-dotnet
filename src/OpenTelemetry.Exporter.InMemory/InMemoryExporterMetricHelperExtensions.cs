@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporterMetricHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="InMemoryExporterMetricHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +15,36 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Metrics
 {
-    public static class ConsoleExporterMetricHelperExtensions
+    public static class InMemoryExporterMetricHelperExtensions
     {
         /// <summary>
-        /// Adds Console exporter to the TracerProvider.
+        /// Adds InMemory exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<MetricItem> exportedItems, Action<InMemoryExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var options = new ConsoleExporterOptions();
+            if (exportedItems == null)
+            {
+                throw new ArgumentNullException(nameof(exportedItems));
+            }
+
+            var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
-            return builder.AddMetricProcessor(new PushMetricProcessor(new ConsoleMetricExporter(options), options.MetricExportIntervalMilliseconds, options.IsDelta));
+            return builder.AddMetricProcessor(new PushMetricProcessor(new InMemoryExporter<MetricItem>(exportedItems), options.MetricExportIntervalMilliseconds, options.IsDelta));
         }
     }
 }
