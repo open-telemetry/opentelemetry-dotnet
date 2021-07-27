@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Removes upper constraint for Microsoft.Extensions.Logging
+  dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23
