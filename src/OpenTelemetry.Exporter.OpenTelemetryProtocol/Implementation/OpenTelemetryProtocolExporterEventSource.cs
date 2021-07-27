@@ -101,7 +101,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [Event(7, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
         public void MissingPermissionsToReadEnvironmentVariable(string exception)
         {
-            this.WriteEvent(3, exception);
+            this.WriteEvent(7, exception);
         }
     }
 }
