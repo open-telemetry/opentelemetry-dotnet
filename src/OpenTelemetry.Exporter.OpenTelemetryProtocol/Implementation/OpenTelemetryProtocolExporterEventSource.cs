@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [Event(6, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
         public void FailedToParseEnvironmentVariable(string name, string value)
         {
-            this.WriteEvent(2, name, value);
+            this.WriteEvent(6, name, value);
         }
 
         [Event(7, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
