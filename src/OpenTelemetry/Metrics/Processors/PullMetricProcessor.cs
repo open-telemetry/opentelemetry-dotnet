@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
             if (this.getMetrics != null)
             {
                 var metricsToExport = this.getMetrics(this.isDelta);
-                if (metricsToExport != null)
+                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
                 {
                     Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
                     this.exporter.Export(batch);
