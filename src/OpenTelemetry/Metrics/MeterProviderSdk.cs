@@ -32,8 +32,6 @@ namespace OpenTelemetry.Metrics
 
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        private readonly List<Task> collectorTasks = new List<Task>();
         private readonly MeterListener listener;
         private readonly List<MeasurementProcessor> measurementProcessors = new List<MeasurementProcessor>();
         private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
@@ -46,6 +44,8 @@ namespace OpenTelemetry.Metrics
             MetricProcessor[] metricProcessors)
         {
             this.Resource = resource;
+
+            // TODO: Replace with single CompositeProcessor.
             this.measurementProcessors.AddRange(measurementProcessors);
             this.metricProcessors.AddRange(metricProcessors);
 
@@ -142,14 +142,17 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            this.listener.Dispose();
-
-            this.cts.Cancel();
-
-            foreach (var collectorTask in this.collectorTasks)
+            foreach (var processor in this.metricProcessors)
             {
-                collectorTask.Wait();
+                processor.Dispose();
             }
+
+            foreach (var processor in this.measurementProcessors)
+            {
+                processor.Dispose();
+            }
+
+            this.listener.Dispose();
         }
 
         private MetricItem Collect(bool isDelta)
