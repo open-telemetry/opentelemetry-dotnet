@@ -27,7 +27,12 @@ namespace OpenTelemetry.Internal
 
         public static string Format(EventWrittenEventArgs eventData)
         {
-            var payloadCollection = eventData.Payload.ToArray() ?? EmptyPayload;
+            if (eventData == null)
+            {
+                return string.Empty;
+            }
+
+            var payloadCollection = eventData.Payload?.ToArray() ?? EmptyPayload;
 
             ProcessPayloadArray(payloadCollection);
 
