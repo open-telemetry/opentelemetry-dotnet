@@ -31,10 +31,10 @@
     <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.10.0]</MicrosoftCodeCoveragePkgVer>
-    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingConfigurationPkgVer>
-    <MicrosoftExtensionsOptionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsOptionsPkgVer>
+    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[2.1.0,)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>
+    <MicrosoftExtensionsOptionsPkgVer>[2.1.0,)</MicrosoftExtensionsOptionsPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
     <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
