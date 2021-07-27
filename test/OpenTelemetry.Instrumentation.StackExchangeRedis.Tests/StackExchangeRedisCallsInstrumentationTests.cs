@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
         [Trait("CategoryName", "RedisIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(RedisEndPointEnvVarName)]
         [InlineData("value1")]
-        public void SuccessfulCommandTest(string value)
+        public void SuccessfulCommandTestWithKey(string value)
         {
             var connectionOptions = new ConfigurationOptions
             {
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
-                .AddRedisInstrumentation(connection)
+                .AddRedisInstrumentation(connection, c => c.SetCommandKey = true)
                 .Build())
             {
                 var db = connection.GetDatabase();
@@ -78,8 +78,50 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             Assert.Equal(7, activityProcessor.Invocations.Count);
 
-            VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0]);
-            VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0]);
+            VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0], true);
+            VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0], true);
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
+        }
+
+        [Trait("CategoryName", "RedisIntegrationTests")]
+        [SkipUnlessEnvVarFoundTheory(RedisEndPointEnvVarName)]
+        [InlineData("value1")]
+        public void SuccessfulCommandTest(string value)
+        {
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = true,
+            };
+            connectionOptions.EndPoints.Add(RedisEndPoint);
+
+            using var connection = ConnectionMultiplexer.Connect(connectionOptions);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var sampler = new TestSampler();
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .SetSampler(sampler)
+                .AddRedisInstrumentation(connection, c => c.SetCommandKey = false)
+                .Build())
+            {
+                var db = connection.GetDatabase();
+
+                bool set = db.StringSet("key1", value, TimeSpan.FromSeconds(60));
+
+                Assert.True(set);
+
+                var redisValue = db.StringGet("key1");
+
+                Assert.True(redisValue.HasValue);
+                Assert.Equal(value, redisValue.ToString());
+            }
+
+            // Disposing SDK should flush the Redis profiling session immediately.
+
+            Assert.Equal(7, activityProcessor.Invocations.Count);
+
+            VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0], false);
+            VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0], false);
             VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
@@ -255,17 +297,31 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<TracerProvider>());
         }
 
-        private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint)
+        private static void VerifyActivityData(Activity activity, bool isSet, EndPoint endPoint, bool setCommandKey = false)
         {
             if (isSet)
             {
                 Assert.Equal("SETEX", activity.DisplayName);
-                Assert.Equal("SETEX", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                if (setCommandKey)
+                {
+                    Assert.Equal("SETEX key1", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                }
+                else
+                {
+                    Assert.Equal("SETEX", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                }
             }
             else
             {
                 Assert.Equal("GET", activity.DisplayName);
-                Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                if (setCommandKey)
+                {
+                    Assert.Equal("GET key1", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                }
+                else
+                {
+                    Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeDbStatement));
+                }
             }
 
             Assert.Equal(Status.Unset, activity.GetStatus());

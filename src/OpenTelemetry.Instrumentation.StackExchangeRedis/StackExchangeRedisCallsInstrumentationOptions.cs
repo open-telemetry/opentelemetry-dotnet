@@ -15,7 +15,10 @@
 // </copyright>
 
 using System;
+using System.Data;
 using System.Diagnostics;
+using OpenTelemetry.Trace;
+using StackExchange.Redis.Profiling;
 
 namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 {
@@ -28,5 +31,15 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// Gets or sets the maximum time that should elapse between flushing the internal buffer of Redis profiling sessions and creating <see cref="Activity"/> objects. Default value: 00:00:10.
         /// </summary>
         public TimeSpan FlushInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see cref="StackExchangeRedisCallsInstrumentation"/> should add the command key to the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
+        /// </summary>
+        public bool SetCommandKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets.
+        /// </summary>
+        public Action<Activity, IProfiledCommand> Enrich { get; set; }
     }
 }

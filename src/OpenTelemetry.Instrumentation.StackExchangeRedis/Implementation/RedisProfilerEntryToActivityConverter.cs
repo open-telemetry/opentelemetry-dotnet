@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using Fasterflect;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
@@ -23,7 +25,38 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToActivityConverter
     {
-        public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command)
+        private static readonly Lazy<Func<object, string>> CommandAndKeyGetter = new Lazy<Func<object, string>>(() =>
+        {
+            var redisAssembly = typeof(IProfiledCommand).Assembly;
+            Type profiledCommandType = redisAssembly.GetType("StackExchange.Redis.Profiling.ProfiledCommand");
+            Type messageType = redisAssembly.GetType("StackExchange.Redis.Message");
+
+            var messageDelegate = profiledCommandType.DelegateForGetFieldValue("Message", Flags.NonPublic | Flags.Instance);
+            var commandAndKeyDelegate = messageType.DelegateForGetPropertyValue("CommandAndKey");
+
+            if (messageDelegate == null || commandAndKeyDelegate == null)
+            {
+                return new Func<object, string>(source => null);
+            }
+
+            return new Func<object, string>(source =>
+            {
+                if (source == null)
+                {
+                    return null;
+                }
+
+                var message = messageDelegate(source);
+                if (message == null)
+                {
+                    return null;
+                }
+
+                return commandAndKeyDelegate(message) as string;
+            });
+        });
+
+        public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command, StackExchangeRedisCallsInstrumentationOptions options)
         {
             var name = command.Command; // Example: SET;
             if (string.IsNullOrEmpty(name))
@@ -42,6 +75,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             {
                 return null;
             }
+
+            activity.SetEndTime(command.CommandCreated + command.ElapsedTime);
 
             if (activity.IsAllDataRequested == true)
             {
@@ -62,7 +97,21 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
-                if (command.Command != null)
+                if (options.SetCommandKey)
+                {
+                    var commandAndKey = CommandAndKeyGetter.Value.Invoke(command);
+
+                    if (!string.IsNullOrEmpty(commandAndKey))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, commandAndKey);
+                    }
+                    else if (command.Command != null)
+                    {
+                        // Example: "db.statement": SET;
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
+                    }
+                }
+                else if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
                     activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
@@ -100,7 +149,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 activity.AddEvent(new ActivityEvent("Sent", send));
                 activity.AddEvent(new ActivityEvent("ResponseReceived", response));
 
-                activity.SetEndTime(command.CommandCreated + command.ElapsedTime);
+                options.Enrich?.Invoke(activity, command);
             }
 
             activity.Stop();
@@ -108,11 +157,11 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             return activity;
         }
 
-        public static void DrainSession(Activity parentActivity, IEnumerable<IProfiledCommand> sessionCommands)
+        public static void DrainSession(Activity parentActivity, IEnumerable<IProfiledCommand> sessionCommands, StackExchangeRedisCallsInstrumentationOptions options)
         {
             foreach (var command in sessionCommands)
             {
-                ProfilerCommandToActivity(parentActivity, command);
+                ProfilerCommandToActivity(parentActivity, command, options);
             }
         }
     }
