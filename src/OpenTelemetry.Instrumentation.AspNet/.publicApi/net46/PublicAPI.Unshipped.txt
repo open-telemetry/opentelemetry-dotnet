@@ -1,8 +1,0 @@
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.AspNetInstrumentationOptions() -> void
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Enrich.set -> void
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.get -> System.Func<System.Web.HttpContext, bool>
-OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.set -> void
-OpenTelemetry.Trace.TracerProviderBuilderExtensions
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddAspNetInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

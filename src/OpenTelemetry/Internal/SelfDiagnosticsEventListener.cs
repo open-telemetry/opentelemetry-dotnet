@@ -55,11 +55,7 @@ namespace OpenTelemetry.Internal
 
             foreach (var eventSource in eventSources)
             {
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
         }
 
@@ -67,6 +63,7 @@ namespace OpenTelemetry.Internal
         public override void Dispose()
         {
             this.Dispose(true);
+            base.Dispose();
             GC.SuppressFinalize(this);
         }
 
@@ -85,6 +82,11 @@ namespace OpenTelemetry.Internal
         /// <returns>The position of the buffer after the last byte of the resulting sequence.</returns>
         internal static int EncodeInBuffer(string str, bool isParameter, byte[] buffer, int position)
         {
+            if (string.IsNullOrEmpty(str))
+            {
+                return position;
+            }
+
             int charCount = str.Length;
             int ellipses = isParameter ? "{...}\n".Length : "...\n".Length;
 
@@ -304,11 +306,7 @@ namespace OpenTelemetry.Internal
                     }
                 }
 
-#if NET452
-                this.EnableEvents(eventSource, this.logLevel, (EventKeywords)(-1));
-#else
                 this.EnableEvents(eventSource, this.logLevel, EventKeywords.All);
-#endif
             }
 
             base.OnEventSourceCreated(eventSource);
@@ -338,9 +336,6 @@ namespace OpenTelemetry.Internal
             }
 
             this.disposedValue = true;
-
-            // Should call base.Dispose(disposing) here, but EventListener doesn't have Dispose(bool).
-            base.Dispose();
         }
     }
 }

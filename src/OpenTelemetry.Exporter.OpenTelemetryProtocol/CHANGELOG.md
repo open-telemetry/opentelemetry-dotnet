@@ -1,13 +1,33 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/CHANGELOG.md#experimental---metrics).
-
 ## Unreleased
+
+* The `OtlpExporterOptions` defaults can be overridden using
+  `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
+  ([#2188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2188))
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+* Add Metrics support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
 
 ## 1.1.0-beta3
 
