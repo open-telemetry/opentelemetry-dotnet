@@ -18,7 +18,9 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 
 ## Configuration
 
-You can configure the `OtlpExporter` through `OtlpExporterOptions` properties and environment variables. The `OtlpExporterOptions` setters take precedence over the environment variables.
+You can configure the `OtlpExporter` through `OtlpExporterOptions`
+properties and environment variables. The `OtlpExporterOptions`
+setters take precedence over the environment variables.
 
 ## Options Properties
 
@@ -40,7 +42,8 @@ an example of how to use the exporter.
 ## Environment Variables
 
 The following environment variables can be used to override the default
-values of the `OtlpExporterOptions` (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
+values of the `OtlpExporterOptions`
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
 
 | Environment variable          | `OtlpExporterOptions` property |
 | ------------------------------| -------------------------------|
