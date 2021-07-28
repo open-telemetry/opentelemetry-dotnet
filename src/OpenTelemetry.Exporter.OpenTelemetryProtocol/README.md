@@ -40,7 +40,7 @@ an example of how to use the exporter.
 ## Environment Variables
 
 The following environment variables can be used to override the default
-values of the `OtlpExporterOptions` (See [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
+values of the `OtlpExporterOptions` (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
 
 | Environment variable          | `OtlpExporterOptions` property |
 | ------------------------------| -------------------------------|
