@@ -14,20 +14,74 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using Xunit;
-
-#nullable enable
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricApiTest
     {
         [Fact]
-        public void SimpleTest()
+        public void HistogramDistributeToAllBuckets()
         {
+            using var meter = new Meter("TestMeter", "0.0.1");
+
+            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string,object>[0]);
+
+            hist.Update<long>(-1);
+            hist.Update<long>(0);
+            hist.Update<long>(5);
+            hist.Update<long>(10);
+            hist.Update<long>(25);
+            hist.Update<long>(50);
+            hist.Update<long>(75);
+            hist.Update<long>(100);
+            hist.Update<long>(250);
+            hist.Update<long>(500);
+            hist.Update<long>(1000);
+            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+
+            Assert.NotNull(metric);
+            Assert.IsType<HistogramMetricAggregator>(metric);
+
+            if (metric is HistogramMetricAggregator agg)
+            {
+                int len = 0;
+                foreach (var bucket in agg.Buckets)
+                {
+                    Assert.Equal(1, bucket.Count);
+                    len++;
+                }
+                Assert.Equal(11, len);
+            }
+        }
+
+        [Fact]
+        public void HistogramCustomBoundaries()
+        {
+            using var meter = new Meter("TestMeter", "0.0.1");
+
+            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string,object>[0], new double[] { 0 });
+
+            hist.Update<long>(-1);
+            hist.Update<long>(0);
+            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+
+            Assert.NotNull(metric);
+            Assert.IsType<HistogramMetricAggregator>(metric);
+
+            if (metric is HistogramMetricAggregator agg)
+            {
+                int len = 0;
+                foreach (var bucket in agg.Buckets)
+                {
+                    Assert.Equal(1, bucket.Count);
+                    len++;
+                }
+                Assert.Equal(2, len);
+            }
         }
     }
 }
