@@ -96,41 +96,48 @@ namespace OpenTelemetry.Metrics
 
             IAggregator[] metrics;
 
-            lock (this.lockKeyValue2MetricAggs)
+            string[] seqKey = null;
+
+            // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
+            // Get back a Dictionary of [ Values x Metrics[] ].
+            if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
             {
-                string[] seqKey = null;
-
-                // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+                lock (this.lockKeyValue2MetricAggs)
                 {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-
-                    seqKey = new string[len];
-                    tagKey.CopyTo(seqKey, 0);
-
-                    value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
-                    this.keyValue2MetricAggs.Add(seqKey, value2metrics);
-                }
-
-                // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
-                // Get back Metrics[].
-                if (!value2metrics.TryGetValue(tagValue, out metrics))
-                {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-
-                    if (seqKey == null)
+                    if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out value2metrics))
                     {
+                        value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
+
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                         seqKey = new string[len];
                         tagKey.CopyTo(seqKey, 0);
+                        this.keyValue2MetricAggs.Add(seqKey, value2metrics);
                     }
+                }
+            }
 
-                    var seqVal = new object[len];
-                    tagValue.CopyTo(seqVal, 0);
+            // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
+            // Get back Metrics[].
+            if (!value2metrics.TryGetValue(tagValue, out metrics))
+            {
+                lock (this.lockKeyValue2MetricAggs)
+                {
+                    if (!value2metrics.TryGetValue(tagValue, out metrics))
+                    {
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        if (seqKey == null)
+                        {
+                            seqKey = new string[len];
+                            tagKey.CopyTo(seqKey, 0);
+                        }
 
-                    metrics = this.MapToMetrics(seqKey, seqVal);
+                        var seqVal = new object[len];
+                        tagValue.CopyTo(seqVal, 0);
 
-                    value2metrics.Add(seqVal, metrics);
+                        metrics = this.MapToMetrics(seqKey, seqVal);
+
+                        value2metrics.Add(seqVal, metrics);
+                    }
                 }
             }
 
