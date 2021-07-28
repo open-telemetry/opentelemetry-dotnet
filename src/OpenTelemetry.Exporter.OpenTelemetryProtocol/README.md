@@ -33,6 +33,7 @@ You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
   Only used if ExportProcessorType is set to Batch.
 
 Some of these can also be set by environment variables following [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md). For now we support following variables:
+
 * `OTEL_EXPORTER_OTLP_ENDPOINT`
 * `OTEL_EXPORTER_OTLP_HEADERS`
 * `OTEL_EXPORTER_OTLP_TIMEOUT`
