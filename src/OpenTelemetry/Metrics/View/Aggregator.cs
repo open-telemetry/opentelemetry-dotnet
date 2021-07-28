@@ -33,8 +33,8 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         SUM,
 
-#region For future release
         /*
+        For future release when we want more aggregators.
 
         /// <summary>
         /// Sum Aggregator (Cummulative, Monotonic).
@@ -74,6 +74,5 @@ namespace OpenTelemetry.Metrics
         HISTOGRAM_DELTA,
 
         */
-#endregion        
     }
 }

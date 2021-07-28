@@ -156,8 +156,9 @@ namespace OpenTelemetry.Metrics
                     };
                     break;
 
-#region For future release
                 /*
+                For future release when we want more aggregators.
+
                 case Aggregator.SUM_MONOTONIC:
                     aggregatorFunc = (inst) =>
                     {
@@ -228,7 +229,6 @@ namespace OpenTelemetry.Metrics
                     };
                     break;
                 */
-#endregion
 
                 case Aggregator.DEFAULT:
                 default:
