@@ -157,6 +157,18 @@ namespace OpenTelemetry.Metrics
         {
             var collectedMetrics = new List<IMetric>();
 
+            if (this.tag0Metrics != null)
+            {
+                foreach (var aggregator in this.tag0Metrics)
+                {
+                    var m = aggregator.Collect(dt, isDelta);
+                    if (m != null)
+                    {
+                        collectedMetrics.Add(m);
+                    }
+                }
+            }
+
             // Lock to prevent new time series from being added
             // until collect is done.
             lock (this.lockKeyValue2MetricAggs)
