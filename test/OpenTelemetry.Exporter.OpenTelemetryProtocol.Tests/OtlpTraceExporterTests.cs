@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterTest.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpTraceExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,9 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterTest
+    public class OtlpTraceExporterTests
     {
-        static OtlpExporterTest()
+        static OtlpTraceExporterTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
