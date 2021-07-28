@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter
 #else
         private readonly Channel channel;
 #endif
-        private readonly OtlpCollector.MetricsService.MetricsServiceClient metricsClient;
+        private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
         private readonly Metadata headers;
 
         /// <summary>
@@ -59,8 +59,8 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.MetricsServiceClient"/>.</param>
-        internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.MetricsServiceClient metricsServiceClient = null)
+        /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
+        internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.headers = GetMetadataFromHeaders(options.Headers);
