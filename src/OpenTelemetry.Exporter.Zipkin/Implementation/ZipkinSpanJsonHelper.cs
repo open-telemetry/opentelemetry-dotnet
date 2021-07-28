@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET452
 using System.Text.Json;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
@@ -58,4 +57,3 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public static readonly JsonEncodedText PortPropertyName = JsonEncodedText.Encode("port");
     }
 }
-#endif
