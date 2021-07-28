@@ -131,6 +131,60 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Assert.Equal(1, endCalledCount);
         }
 
+        [Fact]
+        public void EndpointConfigurationUsingEnvironmentVariable()
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "http://urifromenvironmentvariable");
+
+                var exporterOptions = new ZipkinExporterOptions();
+
+                Assert.Equal(new Uri(Environment.GetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar)).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
+        }
+
+        [Fact]
+        public void IncodeEndpointConfigTakesPrecedenceOverEnvironmentVariable()
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "http://urifromenvironmentvariable");
+
+                var exporterOptions = new ZipkinExporterOptions
+                {
+                    Endpoint = new Uri("http://urifromcode"),
+                };
+
+                Assert.Equal(new Uri("http://urifromcode").AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
+        }
+
+        [Fact]
+        public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "InvalidUri");
+
+                var exporterOptions = new ZipkinExporterOptions();
+
+                Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
+            }
+        }
+
         [Theory]
         [InlineData(true, false, false)]
         [InlineData(false, false, false)]
