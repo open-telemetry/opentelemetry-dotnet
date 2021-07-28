@@ -40,17 +40,16 @@ namespace Examples.Console
                 providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "counter",
-                    aggregator: Aggregator.SUM_DELTA_MONOTONIC,
-                    viewName: "counter-1");
+                    viewName: "counter-1",
+                    aggregator: Aggregator.SUM);
 
                 // Select attributes
                 providerBuilder.AddView(
                     meterName: "TestMeter",
                     instrumentName: "counter",
-                    aggregator: Aggregator.HISTOGRAM,
-                    aggregatorParam: new double[] { 0.0, 100 },
                     attributeKeys: new string[] { "tag1", "tag2" },
-                    viewName: "counter-2");
+                    viewName: "counter-2",
+                    aggregator: Aggregator.DEFAULT);
 
                 // Remove all instruments named "gauge"
                 providerBuilder.AddView(

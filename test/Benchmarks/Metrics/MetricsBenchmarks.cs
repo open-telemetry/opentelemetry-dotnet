@@ -102,8 +102,7 @@ namespace Benchmarks.Metrics
                         .AddSource("TestMeter") // All instruments from this meter are enabled.
                         .AddView(
                             meterName: "TestMeter",
-                            aggregator: Aggregator.HISTOGRAM,
-                            aggregatorParam: false,
+                            aggregator: Aggregator.SUM,
                             attributeKeys: new string[] { "attrib1", "label2" },
                             viewName: "test")
                         .Build();

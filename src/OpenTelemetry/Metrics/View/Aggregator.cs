@@ -19,6 +19,11 @@ namespace OpenTelemetry.Metrics
     public enum Aggregator
     {
         /// <summary>
+        /// Default.
+        /// </summary>
+        DEFAULT,
+
+        /// <summary>
         /// None.
         /// </summary>
         NONE,
@@ -27,6 +32,9 @@ namespace OpenTelemetry.Metrics
         /// Sum Aggregator (Cummulative, Non-Monotonic).
         /// </summary>
         SUM,
+
+#region For future release
+        /*
 
         /// <summary>
         /// Sum Aggregator (Cummulative, Monotonic).
@@ -64,5 +72,8 @@ namespace OpenTelemetry.Metrics
         /// AggregatorParam: double[] // optional explicit bounds.
         /// </summary>
         HISTOGRAM_DELTA,
+
+        */
+#endregion        
     }
 }

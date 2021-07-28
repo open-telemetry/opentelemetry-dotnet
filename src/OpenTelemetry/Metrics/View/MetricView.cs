@@ -25,9 +25,9 @@ namespace OpenTelemetry.Metrics
         internal readonly string Description;
         internal readonly Func<Instrument, bool> Selector;
         internal readonly IViewRule[] ViewRules;
-        internal readonly Func<IAggregator[]> Aggregators;
+        internal readonly Func<Instrument, IAggregator[]> Aggregators;
 
-        public MetricView(string name, string description, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, IViewRule[] rules)
+        public MetricView(string name, string description, Func<Instrument, bool> selector, Func<Instrument, IAggregator[]> aggregators, IViewRule[] rules)
         {
             this.Name = name;
             this.Description = description;

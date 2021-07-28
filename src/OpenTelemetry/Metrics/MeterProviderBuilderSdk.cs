@@ -23,6 +23,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilder
     {
+        private static IAggregator[] EmptyAggregators = new IAggregator[0];
+
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
@@ -91,9 +93,9 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddView(string viewName, string viewDescription, Func<Instrument, bool> selector, Func<IAggregator[]> aggregators, params IViewRule[] rules)
+        internal MeterProviderBuilderSdk AddView(string viewName, string viewDescription, Func<Instrument, bool> selectorFunc, Func<Instrument, IAggregator[]> aggregatorFunc, params IViewRule[] rules)
         {
-            var viewConfig = new MetricView(viewName, viewDescription, selector, aggregators, rules);
+            var viewConfig = new MetricView(viewName, viewDescription, selectorFunc, aggregatorFunc, rules);
             this.ViewConfigs.Add(viewConfig);
             return this;
         }
@@ -104,7 +106,6 @@ namespace OpenTelemetry.Metrics
             string instrumentName,
             string instrumentKind,
             Aggregator aggregator,
-            object aggregatorParam,
             string viewName,
             string viewDescription,
             string[] attributeKeys,
@@ -135,15 +136,104 @@ namespace OpenTelemetry.Metrics
                 return true;
             };
 
-            IAggregator[] aggs;
-            var agg = this.CreateAggregator(aggregator, aggregatorParam);
-            if (agg != null)
+            Func<Instrument, IAggregator[]> aggregatorFunc;
+            switch (aggregator)
             {
-                aggs = new IAggregator[] { agg };
-            }
-            else
-            {
-                aggs = new IAggregator[0];
+                case Aggregator.NONE:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return EmptyAggregators;
+                    };
+                    break;
+
+                case Aggregator.SUM:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(false, false),
+                        };
+                    };
+                    break;
+
+#region For future release
+                /*
+                case Aggregator.SUM_MONOTONIC:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(false, true),
+                        };
+                    };
+                    break;
+
+                case Aggregator.SUM_DELTA_MONOTONIC:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(true, true),
+                        };
+                    };
+                    break;
+
+                case Aggregator.SUM_DELTA:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new SumMetricAggregator(true, false),
+                        };
+                    };
+                    break;
+
+                case Aggregator.GAUGE:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new GaugeMetricAggregator(),
+                        };
+                    };
+                    break;
+
+                case Aggregator.HISTOGRAM:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new HistogramMetricAggregator(false, new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 }),
+                        };
+                    };
+                    break;
+
+                case Aggregator.HISTOGRAM_DELTA:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new HistogramMetricAggregator(true, new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 }),
+                        };
+                    };
+                    break;
+
+                case Aggregator.SUMMARY:
+                    aggregatorFunc = (inst) =>
+                    {
+                        return new IAggregator[]
+                        {
+                            new SummaryMetricAggregator(),
+                        };
+                    };
+                    break;
+                */
+#endregion
+
+                case Aggregator.DEFAULT:
+                default:
+                    aggregatorFunc = DefaultAggregatorFunc;
+                    break;
             }
 
             IViewRule[] rules = null;
@@ -168,7 +258,7 @@ namespace OpenTelemetry.Metrics
                 };
             }
 
-            var viewConfig = new MetricView(viewName, viewDescription, selectorFunc, () => aggs, rules);
+            var viewConfig = new MetricView(viewName, viewDescription, selectorFunc, aggregatorFunc, rules);
             this.ViewConfigs.Add(viewConfig);
             return this;
         }
@@ -184,61 +274,34 @@ namespace OpenTelemetry.Metrics
                 this.MetricProcessors.ToArray());
         }
 
-        internal IAggregator CreateAggregator(Aggregator aggregator, object aggregatorParam)
+        static internal IAggregator[] DefaultAggregatorFunc(Instrument instrument)
         {
-            IAggregator agg = null;
+            var aggregators = new List<IAggregator>();
 
-            switch (aggregator)
+            Type instType = instrument.GetType().GetGenericTypeDefinition();
+
+            if (instType == typeof(Counter<>))
             {
-                default:
-                case Aggregator.NONE:
-                    break;
-
-                case Aggregator.GAUGE:
-                    agg = new GaugeMetricAggregator();
-                    break;
-
-                case Aggregator.SUM:
-                    agg = new SumMetricAggregator(false, false);
-                    break;
-
-                case Aggregator.SUM_MONOTONIC:
-                    agg = new SumMetricAggregator(false, true);
-                    break;
-
-                case Aggregator.SUM_DELTA:
-                    agg = new SumMetricAggregator(true, false);
-                    break;
-
-                case Aggregator.SUM_DELTA_MONOTONIC:
-                    agg = new SumMetricAggregator(true, true);
-                    break;
-
-                case Aggregator.SUMMARY:
-                    agg = new SummaryMetricAggregator();
-                    break;
-
-                case Aggregator.HISTOGRAM:
-                case Aggregator.HISTOGRAM_DELTA:
-                    {
-                        var delta = aggregator == Aggregator.HISTOGRAM_DELTA;
-
-                        double[] bounds;
-                        if (aggregatorParam is double[] b)
-                        {
-                            bounds = b;
-                        }
-                        else
-                        {
-                            bounds = new double[] { 0.0 };
-                        }
-
-                        agg = new HistogramMetricAggregator(delta, bounds);
-                        break;
-                    }
+                var agg = new SumMetricAggregator(true, false);
+                aggregators.Add(agg);
+            }
+            else if (instType == typeof(ObservableCounter<>))
+            {
+                var agg = new SumMetricAggregator(false, false);
+                aggregators.Add(agg);
+            }
+            else if (instType == typeof(ObservableGauge<>))
+            {
+                var agg = new GaugeMetricAggregator();
+                aggregators.Add(agg);
+            }
+            else if (instType == typeof(Histogram<>))
+            {
+                var agg = new HistogramMetricAggregator(true, new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 });
+                aggregators.Add(agg);
             }
 
-            return agg;
+            return aggregators.ToArray();
         }
 
         // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.

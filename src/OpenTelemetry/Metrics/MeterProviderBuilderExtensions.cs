@@ -82,12 +82,11 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterVersion">Meter version.</param>
         /// <param name="instrumentName">Instrument name.</param>
         /// <param name="instrumentKind">Instrument kind.</param>
-        /// <param name="aggregator">Aggregator to use.</param>
-        /// <param name="aggregatorParam">Aggregator parameter (Optional).</param>
         /// <param name="viewName">View name (Optional).</param>
         /// <param name="viewDescription">View description (Optional).</param>
         /// <param name="attributeKeys">Attribute keys to include (Optional).</param>
         /// <param name="extraDimensions">Attribute keys from baggage/context to include (Optional).</param>
+        /// <param name="aggregator"><see cref="Aggregator"/> (Optional).</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
         public static MeterProviderBuilder AddView(
             this MeterProviderBuilder meterProviderBuilder,
@@ -95,12 +94,11 @@ namespace OpenTelemetry.Metrics
             string meterVersion = null,
             string instrumentName = null,
             string instrumentKind = null,
-            Aggregator aggregator = Aggregator.SUMMARY,
-            object aggregatorParam = null,
             string viewName = null,
             string viewDescription = null,
             string[] attributeKeys = null,
-            string[] extraDimensions = null)
+            string[] extraDimensions = null,
+            Aggregator aggregator = Aggregator.DEFAULT)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
@@ -110,7 +108,6 @@ namespace OpenTelemetry.Metrics
                     instrumentName,
                     instrumentKind,
                     aggregator,
-                    aggregatorParam,
                     viewName,
                     viewDescription,
                     attributeKeys,

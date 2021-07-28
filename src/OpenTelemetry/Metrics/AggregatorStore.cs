@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
             this.instrument = instrument;
         }
 
-        internal IAggregator[] MapToMetrics(string viewname, Func<IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
+        internal IAggregator[] MapToMetrics(string viewname, Func<Instrument, IAggregator[]> aggregators, string[] seqKey, object[] seqVal)
         {
             var metricpairs = new List<IAggregator>();
 
@@ -61,61 +61,10 @@ namespace OpenTelemetry.Metrics
 
             if (aggregators == null)
             {
-                Type instType = this.instrument.GetType().GetGenericTypeDefinition();
-
-                if (instType == typeof(Counter<>))
-                {
-                    aggregators = () =>
-                    {
-                        return new IAggregator[]
-                        {
-                            new SumMetricAggregator(true, false),
-                        };
-                    };
-                }
-                else if (instType == typeof(ObservableCounter<>))
-                {
-                    aggregators = () =>
-                    {
-                        return new IAggregator[]
-                        {
-                            new SumMetricAggregator(false, false),
-                        };
-                    };
-                }
-                else if (instType == typeof(ObservableGauge<>))
-                {
-                    aggregators = () =>
-                    {
-                        return new IAggregator[]
-                        {
-                            new GaugeMetricAggregator(),
-                        };
-                    };
-                }
-                else if (instType == typeof(Histogram<>))
-                {
-                    aggregators = () =>
-                    {
-                        return new IAggregator[]
-                        {
-                            new HistogramMetricAggregator(true, new double[] { 0.0 }),
-                        };
-                    };
-                }
-                else
-                {
-                    aggregators = () =>
-                    {
-                        return new IAggregator[]
-                        {
-                            new SummaryMetricAggregator(),
-                        };
-                    };
-                }
+                aggregators = MeterProviderBuilderSdk.DefaultAggregatorFunc;
             }
 
-            var aggs = aggregators();
+            var aggs = aggregators(this.instrument);
             foreach (var agg in aggs)
             {
                 agg.Init(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags);
@@ -128,7 +77,7 @@ namespace OpenTelemetry.Metrics
         internal IAggregator[] FindMetricAggregators(
             ThreadStaticStorage storage,
             string name,
-            Func<IAggregator[]> aggregators,
+            Func<Instrument, IAggregator[]> aggregators,
             ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
