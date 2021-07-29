@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
             {
-                counter.Add(deltaValueUpdatedByEachCall, new KeyValuePair<string, object?>("verb", "GET"));
+                counter.Add(deltaValueUpdatedByEachCall, new KeyValuePair<string, object>("verb", "GET"));
             }
         }
 
