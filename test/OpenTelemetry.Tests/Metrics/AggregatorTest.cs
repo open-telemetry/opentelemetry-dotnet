@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var meter = new Meter("TestMeter", "0.0.1");
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string,object>[0]);
+            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0]);
 
             hist.Update<long>(-1);
             hist.Update<long>(0);
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var meter = new Meter("TestMeter", "0.0.1");
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string,object>[0], new double[] { 0 });
+            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0], new double[] { 0 });
 
             hist.Update<long>(-1);
             hist.Update<long>(0);
