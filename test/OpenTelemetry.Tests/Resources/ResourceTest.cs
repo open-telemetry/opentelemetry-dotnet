@@ -39,7 +39,7 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public static void CreateResource_NullAttributeCollection()
+        public void CreateResource_NullAttributeCollection()
         {
             // Act and Assert
             var resource = new Resource(null);
@@ -486,7 +486,7 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("service.name", "from-code"), attributes);
         }
 
-        private void ClearEnvVars()
+        private static void ClearEnvVars()
         {
             Environment.SetEnvironmentVariable(ResourceAttributesEnvVarKey, null);
             Environment.SetEnvironmentVariable(ServiceNameEnvVarKey, null);
