@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         // TODO: Read view config for this instrument instead of hardcode
-                        HashSet<string> interestingTagKeys = new HashSet<string> { "success"};
+                        HashSet<string> interestingTagKeys = new HashSet<string> { "success" };
                         var aggregatorStore = new AggregatorStore(instrument, interestingTagKeys);
 
                         // Lock to prevent new instrument (aggregatorstore)
