@@ -53,7 +53,7 @@ namespace OpenTelemetry.Logs
                     this.categoryName,
                     logLevel,
                     eventId,
-                    options.IncludeFormattedMessage ? formatter(state, exception) : null,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
                     options.ParseStateValues ? null : (object)state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
