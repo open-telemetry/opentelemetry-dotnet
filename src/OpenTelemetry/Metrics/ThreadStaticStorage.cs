@@ -65,10 +65,15 @@ namespace OpenTelemetry.Metrics
                 tagValues = new object[len];
             }
 
-            for (var n = 0; n < len; n++)
+            int i = 0;
+            for (var n = 0; n < tags.Length; n++)
             {
-                tagKeys[n] = tags[n].Key;
-                tagValues[n] = tags[n].Value;
+                if (interestingTagKeys.Contains(tags[n].Key))
+                {
+                    tagKeys[i] = tags[n].Key;
+                    tagValues[i] = tags[n].Value;
+                    i++;
+                }
             }
         }
 
