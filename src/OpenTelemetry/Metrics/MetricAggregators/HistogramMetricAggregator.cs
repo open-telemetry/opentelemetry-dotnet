@@ -56,7 +56,8 @@ namespace OpenTelemetry.Metrics
             var buckets = new HistogramBucket[boundaries.Length + 1];
 
             var lastBoundary = boundaries[0];
-            for (int i = 0; i <= boundaries.Length; i++)
+            
+            for (int i = 0; i < buckets.Length; i++)
             {
                 if (boundaries[i] < lastBoundary)
                 {
@@ -134,7 +135,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                val = (double)(object)value;
+                throw new Exception("Unsupported Type!");
             }
 
             // Determine the bucket index
