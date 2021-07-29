@@ -41,8 +41,27 @@ public class Program
             {
                 Counter.Add(
                             10,
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
+                            new KeyValuePair<string, object>("success", "true"),
+                            new KeyValuePair<string, object>("verb", "GET"),
+                            new KeyValuePair<string, object>("user", "A"));
+
+                Counter.Add(
+                            4,
+                            new KeyValuePair<string, object>("success", "true"),
+                            new KeyValuePair<string, object>("verb", "GET"),
+                            new KeyValuePair<string, object>("user", "B"));
+
+                Counter.Add(
+                            5,
+                            new KeyValuePair<string, object>("success", "false"),
+                            new KeyValuePair<string, object>("verb", "GET"),
+                            new KeyValuePair<string, object>("user", "A"));
+
+                Counter.Add(
+                            25,
+                            new KeyValuePair<string, object>("success", "false"),
+                            new KeyValuePair<string, object>("verb", "GET"),
+                            new KeyValuePair<string, object>("user", "B"));
                 Task.Delay(10).Wait();
             }
         });

@@ -119,6 +119,7 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
+            Console.WriteLine("=======================================");
             return ExportResult.Success;
         }
     }

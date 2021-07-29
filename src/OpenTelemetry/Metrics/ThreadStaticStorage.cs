@@ -50,9 +50,9 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, HashSet<string> interestingTagKeys, out string[] tagKeys, out object[] tagValues)
         {
-            var len = tags.Length;
+            var len = interestingTagKeys.Count;
 
             if (len <= MaxTagCacheSize)
             {

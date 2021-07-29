@@ -32,10 +32,12 @@ namespace OpenTelemetry.Metrics
             new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
 
         private IAggregator[] tag0Metrics = null;
+        private HashSet<string> interestingTagKeys;
 
-        internal AggregatorStore(Instrument instrument)
+        internal AggregatorStore(Instrument instrument, HashSet<string> interestingTagKeys)
         {
             this.instrument = instrument;
+            this.interestingTagKeys = interestingTagKeys;
         }
 
         internal IAggregator[] MapToMetrics(string[] seqKey, object[] seqVal)
@@ -73,9 +75,7 @@ namespace OpenTelemetry.Metrics
 
         internal IAggregator[] FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            int len = tags.Length;
-
-            if (len == 0)
+            if (tags.Length == 0)
             {
                 if (this.tag0Metrics == null)
                 {
@@ -86,8 +86,8 @@ namespace OpenTelemetry.Metrics
             }
 
             var storage = ThreadStaticStorage.GetStorage();
-
-            storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
+            int len = this.interestingTagKeys.Count;
+            storage.SplitToKeysAndValues(tags, this.interestingTagKeys, out var tagKey, out var tagValue);
 
             if (len > 1)
             {
