@@ -47,22 +47,13 @@ namespace OpenTelemetry.Logs
             {
                 var options = this.provider.Options;
 
-                string formattedMessage = null;
-                if (options.IncludeFormattedMessage)
-                {
-                    if (formatter != null)
-                    {
-                        formattedMessage = formatter(state, exception);
-                    }
-                }
-
                 var record = new LogRecord(
                     options.IncludeScopes ? this.ScopeProvider : null,
                     DateTime.UtcNow,
                     this.categoryName,
                     logLevel,
                     eventId,
-                    formattedMessage,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
                     options.ParseStateValues ? null : (object)state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);

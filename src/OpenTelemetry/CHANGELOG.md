@@ -5,8 +5,8 @@
 * Removes upper constraint for Microsoft.Extensions.Logging
   dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
-* Fix bug which caused ILogger.Log calls to throw exception, when the
-  formatter supplied is null.
+* OpenTelemetryLogger modified to not throw, when the
+  formatter supplied in ILogger.Log call is null. ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
 
 ## 1.2.0-alpha1
 
