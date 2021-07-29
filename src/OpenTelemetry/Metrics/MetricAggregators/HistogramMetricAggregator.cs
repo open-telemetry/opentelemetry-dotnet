@@ -56,13 +56,8 @@ namespace OpenTelemetry.Metrics
             var buckets = new HistogramBucket[boundaries.Length + 1];
 
             var lastBoundary = boundaries[0];
-            for (int i = 0; i <= boundaries.Length; i++)
+            for (int i = 0; i < buckets.Length; i++)
             {
-                if (boundaries[i] < lastBoundary)
-                {
-                    throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
-                }
-
                 if (i == 0)
                 {
                     // LowBoundary is inclusive
@@ -88,7 +83,15 @@ namespace OpenTelemetry.Metrics
 
                 buckets[i].Count = 0;
 
-                lastBoundary = boundaries[i];
+                if (i < boundaries.Length)
+                {
+                    if (boundaries[i] < lastBoundary)
+                    {
+                        throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
+                    }
+
+                    lastBoundary = boundaries[i];
+                }
             }
 
             return buckets;
@@ -134,7 +137,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                val = (double)(object)value;
+                throw new Exception("Unsupported Type!");
             }
 
             // Determine the bucket index
