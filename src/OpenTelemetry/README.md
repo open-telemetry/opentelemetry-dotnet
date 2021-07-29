@@ -248,10 +248,12 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 It is also to configure the resource by using `AddEnvironmentVariableDetector`
 together with following environmental variables:
 
+<!-- markdownlint-disable MD013 -->
 | Environment variable     | Description                                        |
 | ------------------------ | -------------------------------------------------  |
 | OTEL_RESOURCE_ATTRIBUTES | Key-value pairs to be used as resource attributes. |
 | OTEL_SERVICE_NAME        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+<!-- markdownlint-enable MD013 -->
 
 ### Sampler
 
