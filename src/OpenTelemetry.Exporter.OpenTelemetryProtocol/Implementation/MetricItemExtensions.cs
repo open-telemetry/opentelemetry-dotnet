@@ -120,9 +120,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var otlpMetric = new OtlpMetrics.Metric
             {
                 Name = metric.Name,
-                Description = metric.Description,
-                Unit = metric.Unit,
             };
+
+            if (metric.Description != null)
+            {
+                otlpMetric.Description = metric.Description;
+            }
+
+            if (metric.Unit != null)
+            {
+                otlpMetric.Unit = metric.Unit;
+            }
 
             if (metric is ISumMetric sumMetric)
             {
@@ -133,7 +141,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         ? OtlpMetrics.AggregationTemporality.Delta
                         : OtlpMetrics.AggregationTemporality.Cumulative,
                 };
-                var dataPoint = metric.ToNumberDataPoint(sumMetric.Sum, sumMetric.Exemplars);
+                var dataPoint = metric.ToNumberDataPoint(sumMetric.Sum.Value, sumMetric.Exemplars);
                 sum.DataPoints.Add(dataPoint);
                 otlpMetric.Sum = sum;
             }
@@ -238,7 +246,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 // TODO: Determine how we want to handle exceptions here.
                 // Do we want to just skip this metric and move on?
-                throw new ArgumentException();
+                throw new ArgumentException($"Value must be a long or a double.", nameof(value));
             }
 
             // TODO: Do TagEnumerationState thing.

@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterTest.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpTraceExporterTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,9 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterTest
+    public class OtlpTraceExporterTests
     {
-        static OtlpExporterTest()
+        static OtlpTraceExporterTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(otlpSpan.Status);
             Assert.Empty(otlpSpan.Events);
             Assert.Empty(otlpSpan.Links);
-            AssertOtlpAttributes(attributes, otlpSpan.Attributes);
+            OtlpTestHelpers.AssertOtlpAttributes(attributes, otlpSpan.Attributes);
 
             var expectedStartTimeUnixNano = 100 * expectedUnixTimeTicks;
             Assert.Equal(expectedStartTimeUnixNano, otlpSpan.StartTimeUnixNano);
@@ -254,14 +254,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             for (var i = 0; i < childEvents.Count; i++)
             {
                 Assert.Equal(childEvents[i].Name, otlpSpan.Events[i].Name);
-                AssertOtlpAttributes(childEvents[i].Tags.ToList(), otlpSpan.Events[i].Attributes);
+                OtlpTestHelpers.AssertOtlpAttributes(childEvents[i].Tags.ToList(), otlpSpan.Events[i].Attributes);
             }
 
             childLinks.Reverse();
             Assert.Equal(childLinks.Count, otlpSpan.Links.Count);
             for (var i = 0; i < childLinks.Count; i++)
             {
-                AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
+                OtlpTestHelpers.AssertOtlpAttributes(childLinks[i].Tags.ToList(), otlpSpan.Links[i].Attributes);
             }
         }
 
@@ -387,98 +387,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             throw new XunitException("GetMetadataFromHeaders did not throw an exception for invalid input headers");
-        }
-
-        private static void AssertOtlpAttributes(
-            List<KeyValuePair<string, object>> expectedAttributes,
-            RepeatedField<OtlpCommon.KeyValue> otlpAttributes)
-        {
-            int expectedSize = 0;
-            for (int i = 0; i < expectedAttributes.Count; i++)
-            {
-                var current = expectedAttributes[i].Value;
-
-                if (current.GetType().IsArray)
-                {
-                    if (current is bool[] boolArray)
-                    {
-                        int index = 0;
-                        foreach (var item in boolArray)
-                        {
-                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
-                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
-                            index++;
-                            expectedSize++;
-                        }
-                    }
-                    else if (current is int[] intArray)
-                    {
-                        int index = 1;
-                        foreach (var item in intArray)
-                        {
-                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
-                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
-                            index++;
-                            expectedSize++;
-                        }
-                    }
-                    else if (current is double[] doubleArray)
-                    {
-                        int index = 2;
-                        foreach (var item in doubleArray)
-                        {
-                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
-                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
-                            index++;
-                            expectedSize++;
-                        }
-                    }
-                    else if (current is string[] stringArray)
-                    {
-                        int index = 3;
-                        foreach (var item in stringArray)
-                        {
-                            Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i + index].Key);
-                            AssertOtlpAttributeValue(item, otlpAttributes[i + index]);
-                            index++;
-                            expectedSize++;
-                        }
-                    }
-                }
-                else
-                {
-                    Assert.Equal(expectedAttributes[i].Key, otlpAttributes[i].Key);
-                    AssertOtlpAttributeValue(current, otlpAttributes[i]);
-                    expectedSize++;
-                }
-            }
-
-            Assert.Equal(expectedSize, otlpAttributes.Count);
-        }
-
-        private static void AssertOtlpAttributeValue(object originalValue, OtlpCommon.KeyValue akv)
-        {
-            switch (originalValue)
-            {
-                case string s:
-                    Assert.Equal(s, akv.Value.StringValue);
-                    break;
-                case bool b:
-                    Assert.Equal(b, akv.Value.BoolValue);
-                    break;
-                case long l:
-                    Assert.Equal(l, akv.Value.IntValue);
-                    break;
-                case double d:
-                    Assert.Equal(d, akv.Value.DoubleValue);
-                    break;
-                case int i:
-                    Assert.Equal(i, akv.Value.IntValue);
-                    break;
-                default:
-                    Assert.Equal(originalValue.ToString(), akv.Value.StringValue);
-                    break;
-            }
         }
 
         private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
