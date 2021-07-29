@@ -22,7 +22,7 @@ namespace OpenTelemetry.Resources
     internal class OtelServiceNameEnvVarDetector : IResourceDetector
     {
         private const string EnvVarKey = "OTEL_SERVICE_NAME";
-        
+
         public Resource Detect()
         {
             var resource = Resource.Empty;
