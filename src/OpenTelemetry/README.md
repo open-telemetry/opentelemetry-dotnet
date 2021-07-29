@@ -5,10 +5,10 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Getting started with Logs](#getting-started-with-logging)
-* [Getting started with Traces](#getting-started-with-tracing)
-* [Tracing Configuration](#tracing-configuration)
-  * [ActivitySource](#activity-source)
+* [Getting started with Logging](#getting-started-with-logging)
+* [Getting started with Tracing](#getting-started-with-tracing)
+* [Tracing configuration](#tracing-configuration)
+  * [Activity Source](#activity-source)
   * [Instrumentation](#instrumentation)
   * [Processor](#processor)
   * [Resource](#resource)
@@ -16,6 +16,8 @@
 * [Advanced topics](#advanced-topics)
   * [Propagators](#propagators)
 * [Troubleshooting](#troubleshooting)
+  * [Configuration Parameters](#configuration-parameters)
+  * [Remarks](#remarks)
 * [References](#references)
 
 ## Installation
@@ -242,6 +244,14 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
     .Build();
 ```
+
+It is also to configure the resource by using `AddEnvironmentVariableDetector`
+together with following environmental variables:
+
+| Environment variable     | Description                                        |
+| ------------------------ | -------------------------------------------------  |
+| OTEL_RESOURCE_ATTRIBUTES | Key-value pairs to be used as resource attributes. |
+| OTEL_SERVICE_NAME        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
 
 ### Sampler
 
