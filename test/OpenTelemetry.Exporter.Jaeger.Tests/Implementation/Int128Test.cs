@@ -15,10 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 {
     public class Int128Test
     {

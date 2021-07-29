@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Exporter.Jaeger.Tests.Implementation;
+using OpenTelemetry.Exporter.Jaeger.Implementation.Tests;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Thrift.Protocol;

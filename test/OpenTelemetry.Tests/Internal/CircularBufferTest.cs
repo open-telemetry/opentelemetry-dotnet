@@ -15,10 +15,9 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Internal
+namespace OpenTelemetry.Internal.Tests
 {
     public class CircularBufferTest
     {
