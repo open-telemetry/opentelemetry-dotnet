@@ -32,7 +32,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             ClearEnvVars();
         }
-        
+
         public void Dispose()
         {
             ClearEnvVars();
