@@ -23,10 +23,11 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Logs
+namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest : IDisposable
     {
