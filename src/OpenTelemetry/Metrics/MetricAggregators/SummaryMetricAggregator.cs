@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsMonotonic = isMonotonic;
-            this.MetricType = MetricType.Histogram;
+            this.MetricType = MetricType.Summary;
         }
 
         public string Name { get; private set; }
