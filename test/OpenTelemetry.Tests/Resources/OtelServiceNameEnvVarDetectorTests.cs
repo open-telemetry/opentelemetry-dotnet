@@ -22,16 +22,24 @@ namespace OpenTelemetry.Resources.Tests
 {
     public class OtelServiceNameEnvVarDetectorTests : IDisposable
     {
-        private const string OtelEnvVarKey = "OTEL_SERVICE_NAME";
-
         public OtelServiceNameEnvVarDetectorTests()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
         }
 
         public void Dispose()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
+        }
+
+        [Fact]
+        public void OtelServiceNameEnvVar_EnvVarKey()
+        {
+            // Act
+            var resource = new OtelServiceNameEnvVarDetector().Detect();
+
+            // Assert
+            Assert.Equal("OTEL_SERVICE_NAME", OtelServiceNameEnvVarDetector.EnvVarKey);
         }
 
         [Fact]
@@ -49,7 +57,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var envVarValue = "my-service";
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, envVarValue);
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, envVarValue);
 
             // Act
             var resource = new OtelServiceNameEnvVarDetector().Detect();

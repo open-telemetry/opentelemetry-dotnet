@@ -25,8 +25,6 @@ namespace OpenTelemetry.Resources.Tests
     {
         private const string KeyName = "key";
         private const string ValueName = "value";
-        private const string ResourceAttributesEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-        private const string ServiceNameEnvVarKey = "OTEL_SERVICE_NAME";
 
         public ResourceTest()
         {
@@ -430,7 +428,7 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_WithResourceEnvVar()
         {
             // Arrange
-            Environment.SetEnvironmentVariable(ResourceAttributesEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
             var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
@@ -446,7 +444,7 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResource_WithServiceEnvVar()
         {
             // Arrange
-            Environment.SetEnvironmentVariable(ServiceNameEnvVarKey, "some-service");
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "some-service");
             var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
@@ -460,8 +458,8 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResource_WithServiceNameSetWithTwoEnvVars()
         {
             // Arrange
-            Environment.SetEnvironmentVariable(ResourceAttributesEnvVarKey, "service.name=from-resource-attr");
-            Environment.SetEnvironmentVariable(ServiceNameEnvVarKey, "from-service-name");
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
             var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
@@ -475,8 +473,8 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResource_WithServiceNameSetWithTwoEnvVarsAndCode()
         {
             // Arrange
-            Environment.SetEnvironmentVariable(ResourceAttributesEnvVarKey, "service.name=from-resource-attr");
-            Environment.SetEnvironmentVariable(ServiceNameEnvVarKey, "from-service-name");
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
             var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddService("from-code").AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
@@ -488,8 +486,8 @@ namespace OpenTelemetry.Resources.Tests
 
         private static void ClearEnvVars()
         {
-            Environment.SetEnvironmentVariable(ResourceAttributesEnvVarKey, null);
-            Environment.SetEnvironmentVariable(ServiceNameEnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
         }
 
         private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)
