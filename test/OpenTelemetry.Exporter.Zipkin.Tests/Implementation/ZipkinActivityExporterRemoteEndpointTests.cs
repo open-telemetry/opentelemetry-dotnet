@@ -15,11 +15,11 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
+namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 {
     public class ZipkinActivityExporterRemoteEndpointTests
     {

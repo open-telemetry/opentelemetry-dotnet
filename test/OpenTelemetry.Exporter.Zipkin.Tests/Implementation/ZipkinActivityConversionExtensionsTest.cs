@@ -19,7 +19,7 @@ using OpenTelemetry.Internal;
 using Xunit;
 using static OpenTelemetry.Exporter.Zipkin.Implementation.ZipkinActivityConversionExtensions;
 
-namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
+namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 {
     public class ZipkinActivityConversionExtensionsTest
     {

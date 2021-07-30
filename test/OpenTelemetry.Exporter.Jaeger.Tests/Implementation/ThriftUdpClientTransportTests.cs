@@ -18,11 +18,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
 using Thrift.Transport;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 {
     public class ThriftUdpClientTransportTests : IDisposable
     {
