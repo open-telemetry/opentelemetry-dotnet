@@ -33,6 +33,7 @@ namespace OpenTelemetry.Metrics
             this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
+            this.MetricType = MetricType.Histogram;
         }
 
         public string Name { get; private set; }
@@ -56,6 +57,8 @@ namespace OpenTelemetry.Metrics
         public long PopulationCount { get; private set; }
 
         public double PopulationSum { get; private set; }
+
+        public MetricType MetricType { get; private set; }
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
