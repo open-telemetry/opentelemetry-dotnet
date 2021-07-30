@@ -41,7 +41,7 @@ namespace OpenTelemetry.Resources
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed("OtelEnvResourceDetector", ex.Message);
+                OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed(nameof(OtelEnvResourceDetector), ex.Message);
             }
 
             return resource;
