@@ -47,54 +47,9 @@ namespace OpenTelemetry.Metrics
             {
                 boundaries = DefaultBoundaries;
             }
+
             this.boundaries = boundaries;
             this.buckets = this.InitializeBucket(boundaries);
-        }
-
-        internal HistogramBucket[] InitializeBucket(double[] boundaries)
-        {
-            var buckets = new HistogramBucket[boundaries.Length + 1];
-
-            var lastBoundary = boundaries[0];
-            for (int i = 0; i < buckets.Length; i++)
-            {
-                if (i == 0)
-                {
-                    // LowBoundary is inclusive
-                    buckets[i].LowBoundary = double.NegativeInfinity;
-
-                    // HighBoundary is exclusive
-                    buckets[i].HighBoundary = boundaries[i];
-                }
-                else if (i < boundaries.Length)
-                {
-                    // LowBoundary is inclusive
-                    buckets[i].LowBoundary = lastBoundary;
-
-                    // HighBoundary is exclusive
-                    buckets[i].HighBoundary = boundaries[i];
-                }
-                else
-                {
-                    // LowBoundary and HighBoundary are inclusive
-                    buckets[i].LowBoundary = lastBoundary;
-                    buckets[i].HighBoundary = double.PositiveInfinity;
-                }
-
-                buckets[i].Count = 0;
-
-                if (i < boundaries.Length)
-                {
-                    if (boundaries[i] < lastBoundary)
-                    {
-                        throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
-                    }
-
-                    lastBoundary = boundaries[i];
-                }
-            }
-
-            return buckets;
         }
 
         public string Name { get; private set; }
@@ -197,6 +152,52 @@ namespace OpenTelemetry.Metrics
         public string ToDisplayString()
         {
             return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+        }
+
+        private HistogramBucket[] InitializeBucket(double[] boundaries)
+        {
+            var buckets = new HistogramBucket[boundaries.Length + 1];
+
+            var lastBoundary = boundaries[0];
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                if (i == 0)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = double.NegativeInfinity;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else if (i < boundaries.Length)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else
+                {
+                    // LowBoundary and HighBoundary are inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+                    buckets[i].HighBoundary = double.PositiveInfinity;
+                }
+
+                buckets[i].Count = 0;
+
+                if (i < boundaries.Length)
+                {
+                    if (boundaries[i] < lastBoundary)
+                    {
+                        throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
+                    }
+
+                    lastBoundary = boundaries[i];
+                }
+            }
+
+            return buckets;
         }
     }
 }

@@ -83,5 +83,38 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(2, len);
             }
         }
+
+        [Fact]
+        public void HistogramWithEmptyBuckets()
+        {
+            using var meter = new Meter("TestMeter", "0.0.1");
+
+            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0], new double[] { 0, 5, 10 });
+
+            hist.Update<long>(-3);
+            hist.Update<long>(-2);
+            hist.Update<long>(-1);
+            hist.Update<long>(6);
+            hist.Update<long>(7);
+            hist.Update<long>(12);
+            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+
+            Assert.NotNull(metric);
+            Assert.IsType<HistogramMetricAggregator>(metric);
+
+            if (metric is HistogramMetricAggregator agg)
+            {
+                var expectedCounts = new int[] { 3, 0, 2, 1 };
+                int len = 0;
+                foreach (var bucket in agg.Buckets)
+                {
+                    if (len < expectedCounts.Length) {
+                        Assert.Equal(expectedCounts[len], bucket.Count);
+                        len++;
+                    }
+                }
+                Assert.Equal(4, len);
+            }
+        }
     }
 }
