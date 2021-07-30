@@ -245,7 +245,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-It is also to configure the resource by using `AddEnvironmentVariableDetector`
+It is also possible to configure the `Resource` by using `AddEnvironmentVariableDetector`
 together with following environmental variables:
 
 <!-- markdownlint-disable MD013 -->
