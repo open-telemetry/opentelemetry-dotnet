@@ -1,4 +1,4 @@
-// <copyright file="MetricAPITest.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregatorTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +54,7 @@ namespace OpenTelemetry.Metrics.Tests
                     Assert.Equal(1, bucket.Count);
                     len++;
                 }
+
                 Assert.Equal(11, len);
             }
         }
@@ -80,6 +81,7 @@ namespace OpenTelemetry.Metrics.Tests
                     Assert.Equal(1, bucket.Count);
                     len++;
                 }
+
                 Assert.Equal(2, len);
             }
         }
@@ -108,11 +110,13 @@ namespace OpenTelemetry.Metrics.Tests
                 int len = 0;
                 foreach (var bucket in agg.Buckets)
                 {
-                    if (len < expectedCounts.Length) {
+                    if (len < expectedCounts.Length)
+                    {
                         Assert.Equal(expectedCounts[len], bucket.Count);
                         len++;
                     }
                 }
+
                 Assert.Equal(4, len);
             }
         }
