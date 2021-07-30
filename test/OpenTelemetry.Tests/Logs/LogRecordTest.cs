@@ -13,11 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
 #if !NET461
-#if NETCOREAPP2_1
-using Microsoft.Extensions.DependencyInjection;
-#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,11 +32,7 @@ namespace OpenTelemetry.Tests.Logs
     {
         private readonly ILogger logger;
         private readonly List<LogRecord> exportedItems = new List<LogRecord>();
-#if NETCOREAPP2_1
-        private readonly ServiceProvider serviceProvider;
-#else
         private readonly ILoggerFactory loggerFactory;
-#endif
         private readonly BaseExportProcessor<LogRecord> processor;
         private readonly BaseExporter<LogRecord> exporter;
         private OpenTelemetryLoggerOptions options;
@@ -49,11 +41,7 @@ namespace OpenTelemetry.Tests.Logs
         {
             this.exporter = new InMemoryExporter<LogRecord>(this.exportedItems);
             this.processor = new TestLogRecordProcessor(this.exporter);
-#if NETCOREAPP2_1
-            var serviceCollection = new ServiceCollection().AddLogging(builder =>
-#else
             this.loggerFactory = LoggerFactory.Create(builder =>
-#endif
             {
                 builder.AddOpenTelemetry(options =>
                 {
@@ -64,12 +52,7 @@ namespace OpenTelemetry.Tests.Logs
                 builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
 
-#if NETCOREAPP2_1
-            this.serviceProvider = serviceCollection.BuildServiceProvider();
-            this.logger = this.serviceProvider.GetRequiredService<ILogger<LogRecordTest>>();
-#else
             this.logger = this.loggerFactory.CreateLogger<LogRecordTest>();
-#endif
         }
 
         [Fact]
@@ -340,6 +323,32 @@ namespace OpenTelemetry.Tests.Logs
         }
 
         [Fact]
+        public void IncludeFormattedMessageTestWhenFormatterNull()
+        {
+            this.logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+            var logRecord = this.exportedItems[0];
+            Assert.Null(logRecord.FormattedMessage);
+
+            this.options.IncludeFormattedMessage = true;
+            try
+            {
+                // Pass null as formatter function
+                this.logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+                logRecord = this.exportedItems[1];
+                Assert.Null(logRecord.FormattedMessage);
+
+                var expectedFormattedMessage = "formatted message";
+                this.logger.Log(LogLevel.Information, default, "Hello World!", null, (state, ex) => expectedFormattedMessage);
+                logRecord = this.exportedItems[2];
+                Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+            }
+            finally
+            {
+                this.options.IncludeFormattedMessage = false;
+            }
+        }
+
+        [Fact]
         public void IncludeScopesTest()
         {
             using var scope = this.logger.BeginScope("string_scope");
@@ -598,11 +607,7 @@ namespace OpenTelemetry.Tests.Logs
 
         public void Dispose()
         {
-#if NETCOREAPP2_1
-            this.serviceProvider?.Dispose();
-#else
             this.loggerFactory?.Dispose();
-#endif
         }
 
         internal struct Food
