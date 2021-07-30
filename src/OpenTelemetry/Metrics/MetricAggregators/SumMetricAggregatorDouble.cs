@@ -79,6 +79,9 @@ namespace OpenTelemetry.Metrics
             // TODO: Confirm that this approach of
             // re-using the same instance is correct.
             // This avoids allocating a new instance.
+            // It is read only for Exporters,
+            // and also there is no parallel
+            // Collect allowed.
             return this.sumMetricDouble;
         }
 

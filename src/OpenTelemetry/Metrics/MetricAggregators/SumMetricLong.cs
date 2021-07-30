@@ -1,4 +1,4 @@
-// <copyright file="SumMetric.cs" company="OpenTelemetry Authors">
+// <copyright file="SumMetricLong.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
-        public long LongSum { get; internal set;  }
+        public long LongSum { get; internal set; }
 
         public MetricType MetricType { get; private set; }
 
