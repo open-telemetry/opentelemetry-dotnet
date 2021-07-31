@@ -50,6 +50,7 @@ namespace OpenTelemetry.Metrics
 
             this.boundaries = boundaries;
             this.buckets = this.InitializeBucket(boundaries);
+            this.MetricType = MetricType.Summary;
         }
 
         public string Name { get; private set; }
