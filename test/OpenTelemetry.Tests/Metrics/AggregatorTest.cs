@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void HistogramWithEmptyBuckets()
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            using var meter = new Meter("TestMeter", "0.0.2");
 
             var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0], new double[] { 0, 5, 10 });
 
