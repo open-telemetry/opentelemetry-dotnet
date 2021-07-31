@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Exporter.Zipkin.Implementation;
 
 namespace OpenTelemetry.Exporter
 {
@@ -25,12 +26,31 @@ namespace OpenTelemetry.Exporter
     public sealed class ZipkinExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
+        internal const string ZipkinEndpointEnvVar = "OTEL_EXPORTER_ZIPKIN_ENDPOINT";
+        internal const string DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
+        /// Initializes zipkin endpoint.
+        /// </summary>
+        public ZipkinExporterOptions()
+        {
+            try
+            {
+                this.Endpoint = new Uri(Environment.GetEnvironmentVariable(ZipkinEndpointEnvVar) ?? DefaultZipkinEndpoint);
+            }
+            catch (Exception ex)
+            {
+                this.Endpoint = new Uri(DefaultZipkinEndpoint);
+                ZipkinExporterEventSource.Log.FailedEndpointInitialization(ex);
+            }
+        }
 
         /// <summary>
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:9411/api/v2/spans");
+        public Uri Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.

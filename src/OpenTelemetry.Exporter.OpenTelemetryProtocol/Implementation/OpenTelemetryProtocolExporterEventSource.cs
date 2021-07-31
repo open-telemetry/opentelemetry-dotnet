@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
+using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
@@ -24,6 +25,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal class OpenTelemetryProtocolExporterEventSource : EventSource
     {
         public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
+
+        [NonEvent]
+        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
+            }
+        }
 
         [NonEvent]
         public void FailedToConvertToProtoDefinitionError(Exception ex)
@@ -80,6 +90,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void CouldNotTranslateMetric(string className, string methodName)
         {
             this.WriteEvent(5, className, methodName);
+        }
+
+        [Event(6, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(6, name, value);
+        }
+
+        [Event(7, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
+        public void MissingPermissionsToReadEnvironmentVariable(string exception)
+        {
+            this.WriteEvent(7, exception);
         }
     }
 }

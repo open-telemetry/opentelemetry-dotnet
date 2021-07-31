@@ -2,18 +2,23 @@
 
 ## Unreleased
 
+* Add Metrics
+  support.([#2192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2192))
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23
 
-* Removes support for .NET Framework 4.5.2 and 4.6. The minimum .NET Framework version
-  supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+* Removes support for .NET Framework 4.5.2 and 4.6. The minimum .NET Framework
+  version supported is .NET 4.6.1.
+  ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.1.0
 
 Released 2021-Jul-12
 
-* Supports OpenTelemetry.Extensions.Hosting based configuration for `InMemoryExporter`
+* Supports OpenTelemetry.Extensions.Hosting based configuration for
+  `InMemoryExporter`
   ([#2129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2129))
 
 ## 1.1.0-rc1
@@ -52,8 +57,8 @@ Released 2021-Feb-04
 
 Released 2021-Jan-29
 
-* `AddInMemoryExporter` extension method for traces moved from
-  `OpenTelemetry` namespace to `OpenTelemetry.Trace` namespace.
+* `AddInMemoryExporter` extension method for traces moved from `OpenTelemetry`
+  namespace to `OpenTelemetry.Trace` namespace.
   ([#1576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1576))
 * `AddInMemoryExporter` extension method for logs moved from
   `Microsoft.Extensions.Logging` namespace to `OpenTelemetry.Logs` namespace.
