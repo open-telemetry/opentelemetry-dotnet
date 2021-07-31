@@ -22,10 +22,19 @@ namespace OpenTelemetry.Metrics
 {
     internal class HistogramMetricAggregator : IHistogramMetric, IAggregator
     {
+        private static readonly double[] DefaultBoundaries = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+
         private readonly object lockUpdate = new object();
-        private List<HistogramBucket> buckets = new List<HistogramBucket>();
+        private HistogramBucket[] buckets;
+
+        private double[] boundaries;
 
         internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+            : this(name, description, unit, meter, startTimeExclusive, attributes, DefaultBoundaries)
+        {
+        }
+
+        internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, double[] boundaries)
         {
             this.Name = name;
             this.Description = description;
@@ -33,6 +42,14 @@ namespace OpenTelemetry.Metrics
             this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
+
+            if (boundaries.Length == 0)
+            {
+                boundaries = DefaultBoundaries;
+            }
+
+            this.boundaries = boundaries;
+            this.buckets = this.InitializeBucket(boundaries);
         }
 
         public string Name { get; private set; }
@@ -62,11 +79,38 @@ namespace OpenTelemetry.Metrics
         public void Update<T>(T value)
             where T : struct
         {
-            // TODO: Implement Histogram!
+            // promote value to be a double
+
+            double val;
+            if (typeof(T) == typeof(long))
+            {
+                val = (long)(object)value;
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                val = (double)(object)value;
+            }
+            else
+            {
+                throw new Exception("Unsupported Type!");
+            }
+
+            // Determine the bucket index
+
+            int i;
+            for (i = 0; i < this.boundaries.Length; i++)
+            {
+                if (val < this.boundaries[i])
+                {
+                    break;
+                }
+            }
 
             lock (this.lockUpdate)
             {
                 this.PopulationCount++;
+                this.PopulationSum += val;
+                this.buckets[i].Count++;
             }
         }
 
@@ -78,7 +122,7 @@ namespace OpenTelemetry.Metrics
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes);
+            var cloneItem = new HistogramMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes, this.boundaries);
 
             lock (this.lockUpdate)
             {
@@ -86,7 +130,8 @@ namespace OpenTelemetry.Metrics
                 cloneItem.EndTimeInclusive = dt;
                 cloneItem.PopulationCount = this.PopulationCount;
                 cloneItem.PopulationSum = this.PopulationSum;
-                cloneItem.buckets = this.buckets;
+                cloneItem.boundaries = this.boundaries;
+                this.buckets.CopyTo(cloneItem.buckets, 0);
                 cloneItem.IsDeltaTemporality = isDelta;
 
                 if (isDelta)
@@ -94,6 +139,10 @@ namespace OpenTelemetry.Metrics
                     this.StartTimeExclusive = dt;
                     this.PopulationCount = 0;
                     this.PopulationSum = 0;
+                    for (int i = 0; i < this.buckets.Length; i++)
+                    {
+                        this.buckets[i].Count = 0;
+                    }
                 }
             }
 
@@ -103,6 +152,52 @@ namespace OpenTelemetry.Metrics
         public string ToDisplayString()
         {
             return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+        }
+
+        private HistogramBucket[] InitializeBucket(double[] boundaries)
+        {
+            var buckets = new HistogramBucket[boundaries.Length + 1];
+
+            var lastBoundary = boundaries[0];
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                if (i == 0)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = double.NegativeInfinity;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else if (i < boundaries.Length)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else
+                {
+                    // LowBoundary and HighBoundary are inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+                    buckets[i].HighBoundary = double.PositiveInfinity;
+                }
+
+                buckets[i].Count = 0;
+
+                if (i < boundaries.Length)
+                {
+                    if (boundaries[i] < lastBoundary)
+                    {
+                        throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
+                    }
+
+                    lastBoundary = boundaries[i];
+                }
+            }
+
+            return buckets;
         }
     }
 }
