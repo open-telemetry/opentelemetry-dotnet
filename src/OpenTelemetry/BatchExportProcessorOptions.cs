@@ -16,6 +16,7 @@
 
 using System;
 using System.Security;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
 {
@@ -56,12 +57,11 @@ namespace OpenTelemetry
                     this.ScheduledDelayMilliseconds = value;
                 }
             }
-            catch (SecurityException)
+            catch (SecurityException ex)
             {
-                // TODO:
                 // The caller does not have the required permission to
                 // retrieve the value of an environment variable from the current process.
-                // JaegerExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
             }
         }
 
@@ -85,23 +85,22 @@ namespace OpenTelemetry
         /// </summary>
         public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
 
-        private static bool TryLoadEnvVarInt(string envVarKey, out int field)
+        private static bool TryLoadEnvVarInt(string envVarKey, out int result)
         {
-            field = 0;
-            string exporterTimeoutEnvVar = Environment.GetEnvironmentVariable(envVarKey);
-            if (string.IsNullOrEmpty(exporterTimeoutEnvVar))
+            result = 0;
+            string value = Environment.GetEnvironmentVariable(envVarKey);
+            if (string.IsNullOrEmpty(value))
             {
                 return false;
             }
 
-            if (!int.TryParse(exporterTimeoutEnvVar, out var exporterTimeoutValue))
+            if (!int.TryParse(value, out var parsedValue))
             {
-                // TODO:
-                // JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
+                OpenTelemetrySdkEventSource.Log.FailedToParseEnvironmentVariable(envVarKey, value);
                 return false;
             }
 
-            field = exporterTimeoutValue;
+            result = parsedValue;
             return true;
         }
     }
