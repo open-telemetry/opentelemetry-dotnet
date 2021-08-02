@@ -93,6 +93,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var openTelemetrySdk = builder.Build();
 
+            exporter.ParentProvider = openTelemetrySdk;
+
             var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
             bool isEven;

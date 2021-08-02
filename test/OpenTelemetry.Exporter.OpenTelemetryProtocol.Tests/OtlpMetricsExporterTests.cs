@@ -67,6 +67,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddMetricProcessor(processor)
                 .Build();
 
+            exporter.ParentProvider = provider;
+
             using var meter = new Meter("TestMeter", "0.0.1");
 
             var counter = meter.CreateCounter<int>("counter");
