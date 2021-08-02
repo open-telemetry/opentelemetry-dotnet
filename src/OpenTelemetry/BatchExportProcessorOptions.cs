@@ -14,11 +14,57 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Security;
+
 namespace OpenTelemetry
 {
     public class BatchExportProcessorOptions<T>
         where T : class
     {
+        internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
+
+        internal const string MaxExportBatchSizeEnvVarKey = "OTEL_BSP_MAX_EXPORT_BATCH_SIZE";
+
+        internal const string ExporterTimeoutEnvVarKey = "OTEL_BSP_EXPORT_TIMEOUT";
+
+        internal const string ScheduledDelayEnvVarKey = "OTEL_BSP_SCHEDULE_DELAY";
+
+        public BatchExportProcessorOptions()
+        {
+            try
+            {
+                int value;
+
+                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ExporterTimeoutEnvVarKey, out value))
+                {
+                    this.ExporterTimeoutMilliseconds = value;
+                }
+
+                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxExportBatchSizeEnvVarKey, out value))
+                {
+                    this.MaxExportBatchSize = value;
+                }
+
+                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxQueueSizeEnvVarKey, out value))
+                {
+                    this.MaxQueueSize = value;
+                }
+
+                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ScheduledDelayEnvVarKey, out value))
+                {
+                    this.ScheduledDelayMilliseconds = value;
+                }
+            }
+            catch (SecurityException)
+            {
+                // TODO:
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                // JaegerExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+            }
+        }
+
         /// <summary>
         /// Gets or sets the maximum queue size. The queue drops the data if the maximum size is reached. The default value is 2048.
         /// </summary>
@@ -38,5 +84,25 @@ namespace OpenTelemetry
         /// Gets or sets the maximum batch size of every export. It must be smaller or equal to MaxQueueLength. The default value is 512.
         /// </summary>
         public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
+
+        private static bool TryLoadEnvVarInt(string envVarKey, out int field)
+        {
+            field = 0;
+            string exporterTimeoutEnvVar = Environment.GetEnvironmentVariable(envVarKey);
+            if (string.IsNullOrEmpty(exporterTimeoutEnvVar))
+            {
+                return false;
+            }
+
+            if (!int.TryParse(exporterTimeoutEnvVar, out var exporterTimeoutValue))
+            {
+                // TODO:
+                // JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
+                return false;
+            }
+
+            field = exporterTimeoutValue;
+            return true;
+        }
     }
 }
