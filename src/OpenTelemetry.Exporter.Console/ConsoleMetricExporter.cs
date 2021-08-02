@@ -56,44 +56,53 @@ namespace OpenTelemetry.Exporter
                     var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
 
                     string valueDisplay = string.Empty;
-                    if (metric is ISumMetric sumMetric)
-                    {
-                        if (sumMetric.Sum.Value is double doubleSum)
-                        {
-                            valueDisplay = ((double)doubleSum).ToString(CultureInfo.InvariantCulture);
-                        }
-                        else if (sumMetric.Sum.Value is long longSum)
-                        {
-                            valueDisplay = ((long)longSum).ToString();
-                        }
-                    }
-                    else if (metric is IGaugeMetric gaugeMetric)
-                    {
-                        if (gaugeMetric.LastValue.Value is double doubleValue)
-                        {
-                            valueDisplay = ((double)doubleValue).ToString();
-                        }
-                        else if (gaugeMetric.LastValue.Value is long longValue)
-                        {
-                            valueDisplay = ((long)longValue).ToString();
-                        }
 
-                        // Qn: tags again ? gaugeMetric.LastValue.Tags
-                    }
-                    else if (metric is ISummaryMetric summaryMetric)
+                    // Switch would be faster than the if.else ladder
+                    // of try and cast.
+                    switch (metric.MetricType)
                     {
-                        valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
-                    }
-                    else if (metric is IHistogramMetric histogramMetric)
-                    {
-                        valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
-                    }
+                        case MetricType.LongSum:
+                            {
+                                valueDisplay = (metric as ISumMetricLong).LongSum.ToString(CultureInfo.InvariantCulture);
+                                break;
+                            }
 
-                    var kind = metric.GetType().Name;
+                        case MetricType.DoubleSum:
+                            {
+                                valueDisplay = (metric as ISumMetricDouble).DoubleSum.ToString(CultureInfo.InvariantCulture);
+                                break;
+                            }
+
+                        case MetricType.LongGauge:
+                            {
+                                // TODOs
+                                break;
+                            }
+
+                        case MetricType.DoubleGauge:
+                            {
+                                // TODOs
+                                break;
+                            }
+
+                        case MetricType.Histogram:
+                            {
+                                var histogramMetric = metric as IHistogramMetric;
+                                valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
+                                break;
+                            }
+
+                        case MetricType.Summary:
+                            {
+                                var summaryMetric = metric as ISummaryMetric;
+                                valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
+                                break;
+                            }
+                    }
 
                     string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}");
+                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {metric.MetricType} Value: {valueDisplay}");
 
                     if (!string.IsNullOrEmpty(metric.Description))
                     {
