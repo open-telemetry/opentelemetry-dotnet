@@ -1,4 +1,4 @@
-// <copyright file="IMetric.cs" company="OpenTelemetry Authors">
+// <copyright file="ISumMetricDouble.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,30 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-
 namespace OpenTelemetry.Metrics
 {
-    public interface IMetric
+    public interface ISumMetricDouble : ISumMetric
     {
-        string Name { get; }
-
-        string Description { get; }
-
-        string Unit { get; }
-
-        Meter Meter { get; }
-
-        DateTimeOffset StartTimeExclusive { get; }
-
-        DateTimeOffset EndTimeInclusive { get; }
-
-        KeyValuePair<string, object>[] Attributes { get; }
-
-        MetricType MetricType { get; }
-
-        string ToDisplayString();
+        double DoubleSum { get; }
     }
 }

@@ -50,6 +50,7 @@ namespace OpenTelemetry.Metrics
 
             this.boundaries = boundaries;
             this.buckets = this.InitializeBucket(boundaries);
+            this.MetricType = MetricType.Summary;
         }
 
         public string Name { get; private set; }
@@ -73,6 +74,8 @@ namespace OpenTelemetry.Metrics
         public long PopulationCount { get; private set; }
 
         public double PopulationSum { get; private set; }
+
+        public MetricType MetricType { get; private set; }
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
