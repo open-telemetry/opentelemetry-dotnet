@@ -64,9 +64,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
+            var processor = new PullMetricProcessor(metricExporter, true);
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricProcessor(new PushMetricProcessor(exporter: metricExporter, exportIntervalMs: 10, isDelta: true))
+                .AddMetricProcessor(processor)
                 .Build();
 
             using (var client = this.factory.CreateClient())
@@ -75,22 +76,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response.EnsureSuccessStatusCode();
             }
 
-            // Wait for at least two exporter invocations
-            WaitForMetricItems(metricItems, 2);
+            // Invokes the TestExporter which will invoke ProcessExport
+            processor.PullRequest();
 
             this.meterProvider.Dispose();
 
-            // There should be more than one result here since we waited for at least two exporter invocations.
-            // The exporter continues to receive a metric even if it has not changed since the last export.
             var requestMetrics = metricItems
                 .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.request_count"))
                 .ToArray();
 
-            Assert.True(requestMetrics.Length > 1);
+            Assert.True(requestMetrics.Length == 1);
 
-            var metric = requestMetrics[0] as ISumMetric;
+            var metric = requestMetrics[0] as ISumMetricLong;
             Assert.NotNull(metric);
-            Assert.Equal(1L, metric.Sum.Value);
+            Assert.Equal(1L, metric.LongSum);
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
@@ -101,13 +100,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Contains(statusCode, metric.Attributes);
             Assert.Contains(flavor, metric.Attributes);
             Assert.Equal(4, metric.Attributes.Length);
-
-            for (var i = 1; i < requestMetrics.Length; ++i)
-            {
-                metric = requestMetrics[i] as ISumMetric;
-                Assert.NotNull(metric);
-                Assert.Equal(0L, metric.Sum.Value);
-            }
         }
 
         public void Dispose()

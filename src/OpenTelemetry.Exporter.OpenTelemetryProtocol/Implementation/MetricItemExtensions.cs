@@ -132,95 +132,135 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpMetric.Unit = metric.Unit;
             }
 
-            if (metric is ISumMetric sumMetric)
+            switch (metric.MetricType)
             {
-                var sum = new OtlpMetrics.Sum
-                {
-                    IsMonotonic = sumMetric.IsMonotonic,
-                    AggregationTemporality = sumMetric.IsDeltaTemporality
-                        ? OtlpMetrics.AggregationTemporality.Delta
-                        : OtlpMetrics.AggregationTemporality.Cumulative,
-                };
-                var dataPoint = metric.ToNumberDataPoint(sumMetric.Sum.Value, sumMetric.Exemplars);
-                sum.DataPoints.Add(dataPoint);
-                otlpMetric.Sum = sum;
-            }
-            else if (metric is IGaugeMetric gaugeMetric)
-            {
-                var gauge = new OtlpMetrics.Gauge();
-                var dataPoint = metric.ToNumberDataPoint(gaugeMetric.LastValue.Value, gaugeMetric.Exemplars);
-                gauge.DataPoints.Add(dataPoint);
-                otlpMetric.Gauge = gauge;
-            }
-            else if (metric is ISummaryMetric summaryMetric)
-            {
-                var summary = new OtlpMetrics.Summary();
-
-                var dataPoint = new OtlpMetrics.SummaryDataPoint
-                {
-                    StartTimeUnixNano = (ulong)metric.StartTimeExclusive.ToUnixTimeNanoseconds(),
-                    TimeUnixNano = (ulong)metric.EndTimeInclusive.ToUnixTimeNanoseconds(),
-                    Count = (ulong)summaryMetric.PopulationCount,
-                    Sum = summaryMetric.PopulationSum,
-                };
-
-                // TODO: Do TagEnumerationState thing.
-                foreach (var attribute in metric.Attributes)
-                {
-                    dataPoint.Attributes.Add(attribute.ToOtlpAttribute());
-                }
-
-                foreach (var quantile in summaryMetric.Quantiles)
-                {
-                    var quantileValue = new OtlpMetrics.SummaryDataPoint.Types.ValueAtQuantile
+                case MetricType.LongSum:
                     {
-                        Quantile = quantile.Quantile,
-                        Value = quantile.Value,
-                    };
-                    dataPoint.QuantileValues.Add(quantileValue);
-                }
-
-                otlpMetric.Summary = summary;
-            }
-            else if (metric is IHistogramMetric histogramMetric)
-            {
-                var histogram = new OtlpMetrics.Histogram
-                {
-                    AggregationTemporality = histogramMetric.IsDeltaTemporality
+                        var sumMetric = metric as ISumMetricLong;
+                        var sum = new OtlpMetrics.Sum
+                        {
+                            IsMonotonic = sumMetric.IsMonotonic,
+                            AggregationTemporality = sumMetric.IsDeltaTemporality
                         ? OtlpMetrics.AggregationTemporality.Delta
                         : OtlpMetrics.AggregationTemporality.Cumulative,
-                };
+                        };
+                        var dataPoint = metric.ToNumberDataPoint(sumMetric.LongSum, sumMetric.Exemplars);
+                        sum.DataPoints.Add(dataPoint);
+                        otlpMetric.Sum = sum;
+                        break;
+                    }
 
-                var dataPoint = new OtlpMetrics.HistogramDataPoint
-                {
-                    StartTimeUnixNano = (ulong)metric.StartTimeExclusive.ToUnixTimeNanoseconds(),
-                    TimeUnixNano = (ulong)metric.EndTimeInclusive.ToUnixTimeNanoseconds(),
-                    Count = (ulong)histogramMetric.PopulationCount,
-                    Sum = histogramMetric.PopulationSum,
-                };
+                case MetricType.DoubleSum:
+                    {
+                        var sumMetric = metric as ISumMetricDouble;
+                        var sum = new OtlpMetrics.Sum
+                        {
+                            IsMonotonic = sumMetric.IsMonotonic,
+                            AggregationTemporality = sumMetric.IsDeltaTemporality
+                        ? OtlpMetrics.AggregationTemporality.Delta
+                        : OtlpMetrics.AggregationTemporality.Cumulative,
+                        };
+                        var dataPoint = metric.ToNumberDataPoint(sumMetric.DoubleSum, sumMetric.Exemplars);
+                        sum.DataPoints.Add(dataPoint);
+                        otlpMetric.Sum = sum;
+                        break;
+                    }
 
-                foreach (var bucket in histogramMetric.Buckets)
-                {
-                    dataPoint.BucketCounts.Add((ulong)bucket.Count);
+                case MetricType.LongGauge:
+                    {
+                        var gaugeMetric = metric as IGaugeMetric;
+                        var gauge = new OtlpMetrics.Gauge();
+                        var dataPoint = metric.ToNumberDataPoint(gaugeMetric.LastValue.Value, gaugeMetric.Exemplars);
+                        gauge.DataPoints.Add(dataPoint);
+                        otlpMetric.Gauge = gauge;
+                        break;
+                    }
 
-                    // TODO: Verify how to handle the bounds. We've modeled things with
-                    // a LowBoundary and HighBoundary. OTLP data model has modeled this
-                    // differently: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/metrics/v1/metrics.proto#L554-L568
-                    dataPoint.ExplicitBounds.Add(bucket.HighBoundary);
-                }
+                case MetricType.DoubleGauge:
+                    {
+                        var gaugeMetric = metric as IGaugeMetric;
+                        var gauge = new OtlpMetrics.Gauge();
+                        var dataPoint = metric.ToNumberDataPoint(gaugeMetric.LastValue.Value, gaugeMetric.Exemplars);
+                        gauge.DataPoints.Add(dataPoint);
+                        otlpMetric.Gauge = gauge;
+                        break;
+                    }
 
-                // TODO: Do TagEnumerationState thing.
-                foreach (var attribute in metric.Attributes)
-                {
-                    dataPoint.Attributes.Add(attribute.ToOtlpAttribute());
-                }
+                case MetricType.Histogram:
+                    {
+                        var histogramMetric = metric as IHistogramMetric;
+                        var histogram = new OtlpMetrics.Histogram
+                        {
+                            AggregationTemporality = histogramMetric.IsDeltaTemporality
+                        ? OtlpMetrics.AggregationTemporality.Delta
+                        : OtlpMetrics.AggregationTemporality.Cumulative,
+                        };
 
-                foreach (var exemplar in histogramMetric.Exemplars)
-                {
-                    dataPoint.Exemplars.Add(exemplar.ToOtlpExemplar());
-                }
+                        var dataPoint = new OtlpMetrics.HistogramDataPoint
+                        {
+                            StartTimeUnixNano = (ulong)metric.StartTimeExclusive.ToUnixTimeNanoseconds(),
+                            TimeUnixNano = (ulong)metric.EndTimeInclusive.ToUnixTimeNanoseconds(),
+                            Count = (ulong)histogramMetric.PopulationCount,
+                            Sum = histogramMetric.PopulationSum,
+                        };
 
-                otlpMetric.Histogram = histogram;
+                        foreach (var bucket in histogramMetric.Buckets)
+                        {
+                            dataPoint.BucketCounts.Add((ulong)bucket.Count);
+
+                            // TODO: Verify how to handle the bounds. We've modeled things with
+                            // a LowBoundary and HighBoundary. OTLP data model has modeled this
+                            // differently: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/metrics/v1/metrics.proto#L554-L568
+                            dataPoint.ExplicitBounds.Add(bucket.HighBoundary);
+                        }
+
+                        // TODO: Do TagEnumerationState thing.
+                        foreach (var attribute in metric.Attributes)
+                        {
+                            dataPoint.Attributes.Add(attribute.ToOtlpAttribute());
+                        }
+
+                        foreach (var exemplar in histogramMetric.Exemplars)
+                        {
+                            dataPoint.Exemplars.Add(exemplar.ToOtlpExemplar());
+                        }
+
+                        otlpMetric.Histogram = histogram;
+                        break;
+                    }
+
+                case MetricType.Summary:
+                    {
+                        var summaryMetric = metric as ISummaryMetric;
+                        var summary = new OtlpMetrics.Summary();
+
+                        var dataPoint = new OtlpMetrics.SummaryDataPoint
+                        {
+                            StartTimeUnixNano = (ulong)metric.StartTimeExclusive.ToUnixTimeNanoseconds(),
+                            TimeUnixNano = (ulong)metric.EndTimeInclusive.ToUnixTimeNanoseconds(),
+                            Count = (ulong)summaryMetric.PopulationCount,
+                            Sum = summaryMetric.PopulationSum,
+                        };
+
+                        // TODO: Do TagEnumerationState thing.
+                        foreach (var attribute in metric.Attributes)
+                        {
+                            dataPoint.Attributes.Add(attribute.ToOtlpAttribute());
+                        }
+
+                        foreach (var quantile in summaryMetric.Quantiles)
+                        {
+                            var quantileValue = new OtlpMetrics.SummaryDataPoint.Types.ValueAtQuantile
+                            {
+                                Quantile = quantile.Quantile,
+                                Value = quantile.Value,
+                            };
+                            dataPoint.QuantileValues.Add(quantileValue);
+                        }
+
+                        otlpMetric.Summary = summary;
+                        break;
+                    }
             }
 
             return otlpMetric;

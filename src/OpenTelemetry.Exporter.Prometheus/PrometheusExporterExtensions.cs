@@ -50,16 +50,14 @@ namespace OpenTelemetry.Exporter
                     .WithName(metric.Name)
                     .WithDescription(metric.Name);
 
-                    if (metric is ISumMetric sumMetric)
+                    // TODO: Use switch case for higher perf.
+                    if (metric.MetricType == MetricType.LongSum)
                     {
-                        if (sumMetric.Sum.Value is double doubleSum)
-                        {
-                            WriteSum(writer, builder, metric.Attributes, doubleSum);
-                        }
-                        else if (sumMetric.Sum.Value is long longSum)
-                        {
-                            WriteSum(writer, builder, metric.Attributes, longSum);
-                        }
+                        WriteSum(writer, builder, metric.Attributes, (metric as ISumMetricLong).LongSum);
+                    }
+                    else if (metric.MetricType == MetricType.DoubleSum)
+                    {
+                        WriteSum(writer, builder, metric.Attributes, (metric as ISumMetricDouble).DoubleSum);
                     }
                 }
             }
