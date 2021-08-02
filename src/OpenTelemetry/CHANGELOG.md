@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* The `BatchExportProcessorOptions` defaults can be overridden using
+  `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
 * Removes upper constraint for Microsoft.Extensions.Logging
   dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
