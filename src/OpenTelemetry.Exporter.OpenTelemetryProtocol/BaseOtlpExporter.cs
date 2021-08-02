@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
@@ -24,8 +22,6 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using Grpc.Net.Client;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Resources;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
@@ -53,7 +49,7 @@ namespace OpenTelemetry.Exporter
             }
         }
 
-        internal OtlpResource.Resource ProcessResource => this.processResource ?? (this.processResource = this.CreateOtlpResource(this.ParentProvider.GetResource()));
+        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
 #if NETSTANDARD2_1
         internal GrpcChannel Channel { get; set; }
@@ -74,33 +70,6 @@ namespace OpenTelemetry.Exporter
             }
 
             return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
-        }
-
-        private OtlpResource.Resource CreateOtlpResource(Resource resource)
-        {
-            OtlpResource.Resource processResource = new OtlpResource.Resource();
-
-            foreach (KeyValuePair<string, object> attribute in resource.Attributes)
-            {
-                var oltpAttribute = attribute.ToOtlpAttribute();
-                if (oltpAttribute != null)
-                {
-                    processResource.Attributes.Add(oltpAttribute);
-                }
-            }
-
-            if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
-            {
-                var serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
-                processResource.Attributes.Add(new OtlpCommon.KeyValue
-                {
-                    Key = ResourceSemanticConventions.AttributeServiceName,
-                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
-                });
-            }
-
-            return processResource;
         }
     }
 }
