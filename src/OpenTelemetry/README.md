@@ -205,7 +205,7 @@ purposes, the SDK provides the following built-in processors:
   values of the `BatchExportProcessorOptions<T>`.
 
   <!-- markdownlint-disable MD013 -->
-  | Environment variable             | `BatchExportProcessorOption<T>` property |
+  | Environment variable             | `BatchExportProcessorOptions<T>` property |
   | -------------------------------- | ---------------------------------------------- |
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
   | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
