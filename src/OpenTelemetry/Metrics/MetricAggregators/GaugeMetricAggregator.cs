@@ -33,6 +33,9 @@ namespace OpenTelemetry.Metrics
             this.Meter = meter;
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
+
+            // TODO: Split this class into two or leverage generic
+            this.MetricType = MetricType.LongGauge;
         }
 
         public string Name { get; private set; }
@@ -52,6 +55,8 @@ namespace OpenTelemetry.Metrics
         public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
 
         public IDataValue LastValue => this.value;
+
+        public MetricType MetricType { get; private set; }
 
         public void Update<T>(T value)
             where T : struct

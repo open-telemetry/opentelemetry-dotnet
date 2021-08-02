@@ -16,18 +16,26 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricApiTest
     {
-        private static int numberOfThreads = 10;
+        private static int numberOfThreads = Environment.ProcessorCount;
         private static long deltaValueUpdatedByEachCall = 10;
-        private static int numberOfMetricUpdateByEachThread = 1000000;
+        private static int numberOfMetricUpdateByEachThread = 100000;
+        private readonly ITestOutputHelper output;
+
+        public MetricApiTest(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
 
         [Fact]
         public void SimpleTest()
@@ -42,11 +50,13 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
+            var pullProcessor = new PullMetricProcessor(metricExporter, true);
+
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricProcessor(new PushMetricProcessor(metricExporter, 100, isDelta: true))
+                .AddMetricProcessor(pullProcessor)
                 .Build();
 
             // setup args to threads.
@@ -69,6 +79,9 @@ namespace OpenTelemetry.Metrics.Tests
             // Block until all threads started.
             mreToEnsureAllThreadsStarted.WaitOne();
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             // unblock all the threads.
             // (i.e let them start counter.Add)
             mreToBlockUpdateThreads.Set();
@@ -79,11 +92,11 @@ namespace OpenTelemetry.Metrics.Tests
                 t[i].Join();
             }
 
-            meterProvider.Dispose();
+            var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
+            this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
-            // TODO: Once Dispose does flush, we may not need this
-            // unknown sleep below.
-            Thread.Sleep(1000);
+            meterProvider.Dispose();
+            pullProcessor.PullRequest();
 
             long sumReceived = 0;
             foreach (var metricItem in metricItems)
@@ -91,7 +104,7 @@ namespace OpenTelemetry.Metrics.Tests
                 var metrics = metricItem.Metrics;
                 foreach (var metric in metrics)
                 {
-                    sumReceived += (long)(metric as ISumMetric).Sum.Value;
+                    sumReceived += (metric as ISumMetricLong).LongSum;
                 }
             }
 
