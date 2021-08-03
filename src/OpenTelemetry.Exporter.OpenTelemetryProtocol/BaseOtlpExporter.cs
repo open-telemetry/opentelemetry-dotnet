@@ -69,7 +69,15 @@ namespace OpenTelemetry.Exporter
                 return true;
             }
 
-            return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+            if (timeoutMilliseconds == -1)
+            {
+                this.Channel.ShutdownAsync().Wait();
+                return true;
+            }
+            else
+            {
+                return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+            }
         }
     }
 }
