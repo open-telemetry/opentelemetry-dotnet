@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Removes .NET Framework 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+* The `JaegerExporterOptions` defaults can be overridden using
+  `OTEL_EXPORTER_JAEGER_AGENT_HOST` and `OTEL_EXPORTER_JAEGER_AGENT_PORT`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#jaeger-exporter).
+  ([#2123](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2123))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:

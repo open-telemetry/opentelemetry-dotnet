@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -118,6 +120,68 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 }));
         }
 
+        [Fact]
+        public void AddOpenTelemetryTracerProvider_GetServicesExtension()
+        {
+            var services = new ServiceCollection();
+            services.AddOpenTelemetryTracing(builder => AddMyFeature(builder));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.True(tracerProvider.Sampler is TestSampler);
+        }
+
+        [Fact]
+        public void AddOpenTelemetryTracerProvider_NestedConfigureCallbacks()
+        {
+            int configureCalls = 0;
+            var services = new ServiceCollection();
+            services.AddOpenTelemetryTracing(builder => builder
+                .Configure((sp1, builder1) =>
+                {
+                    configureCalls++;
+                    builder1.Configure((sp2, builder2) =>
+                    {
+                        configureCalls++;
+                    });
+                }));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(2, configureCalls);
+        }
+
+        [Fact]
+        public void AddOpenTelemetryTracerProvider_ConfigureCallbacksUsingExtensions()
+        {
+            var services = new ServiceCollection();
+
+            services.AddSingleton<TestInstrumentation>();
+            services.AddSingleton<TestProcessor>();
+            services.AddSingleton<TestSampler>();
+
+            services.AddOpenTelemetryTracing(builder => builder
+                .Configure((sp1, builder1) =>
+                {
+                    builder1
+                        .AddInstrumentation<TestInstrumentation>()
+                        .AddProcessor<TestProcessor>()
+                        .SetSampler<TestSampler>();
+                }));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.True(tracerProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
+            Assert.True(tracerProvider.Processor is TestProcessor);
+            Assert.True(tracerProvider.Sampler is TestSampler);
+        }
+
         [Fact(Skip = "Known limitation. See issue 1215.")]
         public void AddOpenTelemetryTracerProvider_Idempotent()
         {
@@ -148,6 +212,14 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.True(testInstrumentation2.Disposed);
         }
 
+        private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
+        {
+            (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
+                .AddSingleton<TestSampler>();
+
+            return tracerProviderBuilder.SetSampler<TestSampler>();
+        }
+
         internal class TestInstrumentation : IDisposable
         {
             public bool Disposed { get; private set; }
@@ -155,6 +227,18 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             public void Dispose()
             {
                 this.Disposed = true;
+            }
+        }
+
+        internal class TestProcessor : BaseProcessor<Activity>
+        {
+        }
+
+        internal class TestSampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return new SamplingResult(SamplingDecision.RecordAndSample);
             }
         }
     }

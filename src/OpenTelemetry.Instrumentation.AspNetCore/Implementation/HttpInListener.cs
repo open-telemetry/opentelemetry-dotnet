@@ -31,7 +31,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
-        internal const string ActivityNameByHttpInListener = "ActivityCreatedByHttpInListener";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -92,9 +91,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
-                    Activity newOne = new Activity(ActivityNameByHttpInListener);
+                    Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
+
+                    newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
 
                     // Starting the new activity make it the Activity.Current one.
                     newOne.Start();
@@ -138,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/data-semantic-conventions.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
 
                 if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
                 {
@@ -185,7 +186,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
@@ -214,10 +215,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
-            if (activity.OperationName.Equals(ActivityNameByHttpInListener, StringComparison.Ordinal))
+            if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
+                activity.SetTag("IsCreatedByInstrumentation", null);
                 activity.Stop();
 
                 // After the activity.Stop() code, Activity.Current becomes null.
@@ -325,7 +327,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {

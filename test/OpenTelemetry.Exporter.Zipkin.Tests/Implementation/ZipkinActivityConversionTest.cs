@@ -14,14 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Linq;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation
+namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 {
     public class ZipkinActivityConversionTest
     {
