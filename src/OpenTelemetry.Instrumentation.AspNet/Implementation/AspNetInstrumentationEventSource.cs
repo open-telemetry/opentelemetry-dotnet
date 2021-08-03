@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         [NonEvent]
         public void RequestFilterException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.RequestFilterException(ex.ToInvariantString());
             }
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         [NonEvent]
         public void EnrichmentException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.EnrichmentException(ex.ToInvariantString());
             }

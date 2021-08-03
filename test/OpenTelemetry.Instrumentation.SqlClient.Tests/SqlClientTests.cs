@@ -18,11 +18,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-#if NET452
-using System.Data.SqlClient;
-#else
 using Microsoft.Data.SqlClient;
-#endif
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
@@ -86,6 +82,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool shouldEnrich = true)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             var sampler = new TestSampler();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
@@ -133,7 +130,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, dataSource, activity);
+            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
             VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
@@ -161,6 +158,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
@@ -211,6 +209,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 captureTextCommandContent,
                 false,
                 false,
+                shouldEnrich,
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
@@ -228,6 +227,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -277,6 +277,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 false,
                 true,
                 recordException,
+                shouldEnrich,
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
@@ -313,6 +314,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureTextCommandContent,
             bool isFailure,
             bool recordException,
+            bool shouldEnrich,
             string dataSource,
             Activity activity)
         {
@@ -341,6 +343,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     Assert.Empty(activity.Events);
                 }
             }
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
@@ -386,6 +391,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            activity.SetTag("enriched", "yes");
+
             switch (method)
             {
                 case "OnCustom":

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Removes .NET Framework 4.5.2 support. The minimum .NET Framework version
+  supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 * SqlClientInstrumentationOptions API changes: `SetDbStatementForStoredProcedure`,
   `SetDbStatementForText` and `RecordException`
   are available on all platforms. `SetDbStatement` has been removed.
@@ -12,6 +14,10 @@
   * When using `Microsoft.Data.SqlClient`: `SetDbStatementForText` controls
     logging of `CommandType.Text` and `CommandType.StoredProcedure` as it's
     impossible to distinguish them.
+
+## 1.0.0-rc7
+
+Released 2021-Jul-12
 
 ## 1.0.0-rc6
 
