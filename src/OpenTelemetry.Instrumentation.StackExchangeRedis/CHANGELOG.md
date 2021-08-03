@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* Removes upper constraint for Microsoft.Extensions.Options
+  dependency. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+
+## 1.0.0-rc7
+
+Released 2021-Jul-12
+
+## 1.0.0-rc6
+
+Released 2021-Jun-25
+
+* `AddRedisInstrumentation` extension will now resolve `IConnectionMultiplexer`
+  & `StackExchangeRedisCallsInstrumentationOptions` through DI when
+  OpenTelemetry.Extensions.Hosting is in use.
+  ([#2110](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2110))
+
 ## 1.0.0-rc5
 
 Released 2021-Jun-09

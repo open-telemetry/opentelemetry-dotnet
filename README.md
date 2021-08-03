@@ -16,16 +16,15 @@ Packages shipped from this repository generally support all the officially
 supported versions of [.NET
 Core](https://dotnet.microsoft.com/download/dotnet-core), and [.NET
 Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
-`.NET Framework 3.5 SP1`. Any exceptions to this are noted in the individual
-`README.md` files.
+versions lower than `.NET Framework 4.6.1`.
+Any exceptions to this are noted in the individual `README.md` files.
 
 ## Getting Started
 
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started.md)
-  (experimental)
+* [metrics](./docs/metrics/getting-started/README.md) (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
@@ -58,6 +57,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.

@@ -34,6 +34,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
         /// dotnet run -p Examples.Console.csproj zpages
+        /// dotnet run -p Examples.Console.csproj metrics --help
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
@@ -41,10 +42,12 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
+                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
+                    (MetricsOptions options) => TestMetrics.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -55,8 +58,6 @@ namespace Examples.Console
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
-
-            System.Console.ReadLine();
         }
     }
 
@@ -77,6 +78,50 @@ namespace Examples.Console
     {
         [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
         public string Uri { get; set; }
+    }
+
+    [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
+    internal class PrometheusOptions
+    {
+        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        public int Port { get; set; }
+
+        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo.", Required = false)]
+        public int DurationInMins { get; set; }
+    }
+
+    [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
+    internal class MetricsOptions
+    {
+        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = true)]
+        public bool IsDelta { get; set; }
+
+        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
+        public bool? FlagGauge { get; set; }
+
+        [Option('u', "UpDownCounter", HelpText = "Include Observable Up/Down Counter.", Required = false)]
+        public bool? FlagUpDownCounter { get; set; }
+
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false)]
+        public bool? FlagCounter { get; set; }
+
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false)]
+        public bool? FlagHistogram { get; set; }
+
+        [Option("defaultCollection", Default = 500, HelpText = "Default collection period in milliseconds.", Required = false)]
+        public int DefaultCollectionPeriodMilliseconds { get; set; }
+
+        [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
+        public int RunTime { get; set; }
+
+        [Option("tasks", Default = 1, HelpText = "Run # of concurrent tasks.", Required = false)]
+        public int NumTasks { get; set; }
+
+        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
+        public int MaxLoops { get; set; }
+
+        [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
+        public string UseExporter { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
