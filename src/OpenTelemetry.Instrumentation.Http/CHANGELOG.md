@@ -4,6 +4,7 @@
 
 * Removes .NET Framework 4.5.2 support. The minimum .NET Framework
   version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+* Unify API for netstandard and .NET Framework
 
 ## 1.0.0-rc7
 
@@ -23,11 +24,12 @@ Released 2021-Apr-23
 
 * Sanitize `http.url` attribute.
   ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
-* Added `RecordException` to HttpClientInstrumentationOptions which allows Exception
-  to be reported as ActivityEvent.
-* Update `AddHttpClientInstrumentation` extension method to only use `HttpClientInstrumentationOptions`
-  on .NET Framework and .NET Core
-  ([#2005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2005))
+* Added `RecordException` to HttpClientInstrumentationOptions and
+  HttpWebRequestInstrumentationOptions which allows Exception to be reported as
+  ActivityEvent.
+* Update `AddHttpClientInstrumentation` extension method for .NET Framework to
+  use only use `HttpWebRequestInstrumentationOptions`
+  ([#1982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1982))
 
 ## 1.0.0-rc3
 
