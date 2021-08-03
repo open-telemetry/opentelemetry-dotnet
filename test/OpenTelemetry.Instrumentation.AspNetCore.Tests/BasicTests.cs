@@ -31,9 +31,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#elif NETCOREAPP3_1
+#if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #else
 using TestApp.AspNetCore._5._0;
@@ -108,6 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
@@ -139,6 +138,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
@@ -590,6 +592,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 default:
                     break;
             }
+
+            activity.SetTag("enriched", "yes");
         }
 
         private class ExtractOnlyPropagator : TextMapPropagator

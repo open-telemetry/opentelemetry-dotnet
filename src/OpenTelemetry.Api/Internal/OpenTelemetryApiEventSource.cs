@@ -31,7 +31,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void ActivityContextExtractException(string format, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.FailedToExtractActivityContext(format, ex.ToInvariantString());
             }

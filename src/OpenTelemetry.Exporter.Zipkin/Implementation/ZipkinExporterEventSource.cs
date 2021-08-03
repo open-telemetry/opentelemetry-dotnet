@@ -31,9 +31,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         [NonEvent]
         public void FailedExport(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedExport(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void FailedEndpointInitialization(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            {
+                this.FailedEndpointInitialization(ex.ToInvariantString());
             }
         }
 
@@ -41,6 +50,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         public void FailedExport(string exception)
         {
             this.WriteEvent(1, exception);
+        }
+
+        [Event(2, Message = "Error initializing Zipkin endpoint, falling back to default value: '{0}'", Level = EventLevel.Error)]
+        public void FailedEndpointInitialization(string exception)
+        {
+            this.WriteEvent(2, exception);
         }
     }
 }
