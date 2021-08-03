@@ -39,8 +39,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
             {
-                var serviceName = (string)ResourceBuilder.CreateDefault().Build().Attributes.Where(
-                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+                var serviceName = (string)ResourceBuilder.CreateDefault().Build().Attributes.FirstOrDefault(
+                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).Value;
                 processResource.Attributes.Add(new OtlpCommon.KeyValue
                 {
                     Key = ResourceSemanticConventions.AttributeServiceName,
