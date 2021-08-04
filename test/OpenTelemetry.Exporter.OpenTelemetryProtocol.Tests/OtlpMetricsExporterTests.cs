@@ -36,25 +36,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ToOtlpResourceMetricsTest(bool addResource)
+        public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
         {
             using var exporter = new OtlpMetricsExporter(
                 new OtlpExporterOptions(),
                 new NoopMetricsServiceClient());
 
-            if (addResource)
+            var resourceBuilder = ResourceBuilder.CreateEmpty();
+            if (includeServiceNameInResource)
             {
-                exporter.SetResource(
-                    ResourceBuilder.CreateEmpty().AddAttributes(
-                        new List<KeyValuePair<string, object>>
-                        {
-                            new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service-name"),
-                            new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                        }).Build());
-            }
-            else
-            {
-                exporter.SetResource(Resource.Empty);
+                resourceBuilder.AddAttributes(
+                    new List<KeyValuePair<string, object>>
+                    {
+                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service-name"),
+                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
+                    });
             }
 
             var tags = new KeyValuePair<string, object>[]
@@ -66,9 +62,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var processor = new PullMetricProcessor(new TestExporter<MetricItem>(RunTest), true);
 
             using var provider = Sdk.CreateMeterProviderBuilder()
+                .SetResourceBuilder(resourceBuilder)
                 .AddSource("TestMeter")
                 .AddMetricProcessor(processor)
                 .Build();
+
+            exporter.ParentProvider = provider;
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
@@ -92,7 +91,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var resourceMetric = request.ResourceMetrics.First();
                 var oltpResource = resourceMetric.Resource;
 
-                if (addResource)
+                if (includeServiceNameInResource)
                 {
                     Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
                     Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
