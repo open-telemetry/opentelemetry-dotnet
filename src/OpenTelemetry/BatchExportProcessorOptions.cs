@@ -14,11 +14,83 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Security;
+
 namespace OpenTelemetry
 {
     public class BatchExportProcessorOptions<T>
         where T : class
     {
+        internal const string ScheduleDelayEnvVarName = "OTEL_BSP_SCHEDULE_DELAY";
+        internal const string ExportTimeoutEnvVarName = "OTEL_BSP_EXPORT_TIMEOUT";
+        internal const string MaxQueueSizeEnvVarName = "OTEL_BSP_MAX_QUEUE_SIZE";
+        internal const string MaxExportBatchSizeEnvVarName = "OTEL_BSP_MAX_EXPORT_BATCH_SIZE";
+
+        public BatchExportProcessorOptions()
+        {
+            try
+            {
+                var scheduleDelayEnvVar = Environment.GetEnvironmentVariable(ScheduleDelayEnvVarName);
+                if (!string.IsNullOrEmpty(scheduleDelayEnvVar))
+                {
+                    if (int.TryParse(scheduleDelayEnvVar, out var scheduleDelay))
+                    {
+                        this.ScheduledDelayMilliseconds = scheduleDelay;
+                    }
+                    else
+                    {
+                        BatchExportProcessorEventSource.Log.FailedToParseEnvironmentVariable(ScheduleDelayEnvVarName, scheduleDelayEnvVar);
+                    }
+                }
+
+                var exportTimeoutEnvVar = Environment.GetEnvironmentVariable(ExportTimeoutEnvVarName);
+                if (!string.IsNullOrEmpty(exportTimeoutEnvVar))
+                {
+                    if (int.TryParse(exportTimeoutEnvVar, out var exportTimeout))
+                    {
+                        this.ExporterTimeoutMilliseconds = exportTimeout;
+                    }
+                    else
+                    {
+                        BatchExportProcessorEventSource.Log.FailedToParseEnvironmentVariable(ExportTimeoutEnvVarName, exportTimeoutEnvVar);
+                    }
+                }
+
+                var maxQueueSizeEnvVar = Environment.GetEnvironmentVariable(MaxQueueSizeEnvVarName);
+                if (!string.IsNullOrEmpty(maxQueueSizeEnvVar))
+                {
+                    if (int.TryParse(maxQueueSizeEnvVar, out var maxQueueSize))
+                    {
+                        this.MaxQueueSize = maxQueueSize;
+                    }
+                    else
+                    {
+                        BatchExportProcessorEventSource.Log.FailedToParseEnvironmentVariable(MaxQueueSizeEnvVarName, maxQueueSizeEnvVar);
+                    }
+                }
+
+                var maxExportBatchSizeEnvVar = Environment.GetEnvironmentVariable(MaxExportBatchSizeEnvVarName);
+                if (!string.IsNullOrEmpty(maxExportBatchSizeEnvVar))
+                {
+                    if (int.TryParse(maxExportBatchSizeEnvVar, out var maxExportBatchSize))
+                    {
+                        this.MaxExportBatchSize = maxExportBatchSize;
+                    }
+                    else
+                    {
+                        BatchExportProcessorEventSource.Log.FailedToParseEnvironmentVariable(MaxExportBatchSizeEnvVarName, maxExportBatchSizeEnvVar);
+                    }
+                }
+            }
+            catch (SecurityException ex)
+            {
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                BatchExportProcessorEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+            }
+        }
+
         /// <summary>
         /// Gets or sets the maximum queue size. The queue drops the data if the maximum size is reached. The default value is 2048.
         /// </summary>
