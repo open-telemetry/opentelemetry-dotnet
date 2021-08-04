@@ -11,7 +11,7 @@
 * The `BatchExportProcessor` defaults can be overridden using
   envionmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#batch-span-processor).
-  ([#??](https://github.com/open-telemetry/opentelemetry-dotnet/pull/??))
+  ([#2228](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2228))
 
 ## 1.2.0-alpha1
 
