@@ -29,7 +29,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationWhenNonGlobalLocationTagExists()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
+                    <configuration>
                       <location path=""a.aspx"">
                         <system.webServer>
                           <modules>
@@ -70,7 +70,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationWhenGlobalAndNonGlobalLocationTagExists()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
+                    <configuration>
                         <location path=""a.aspx"">
                             <system.webServer>
                                 <modules>
@@ -78,7 +78,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                                 </modules>
                             </system.webServer>
                         </location>
-                        <location path="".""> 
+                        <location path=""."">
                             <system.web>
                               <httpModules>
                                 <add name=""abc"" type=""type"" />
@@ -89,7 +89,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                                     <add name=""abc"" type=""type""/>
                                 </modules>
                             </system.webServer>
-                        </location> 
+                        </location>
                     </configuration>";
 
             const string ExpectedWebConfigContent = @"
@@ -129,8 +129,8 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithDotPathAndExistingModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
-                        <location path="".""> 
+                    <configuration>
+                        <location path=""."">
                             <system.web>
                               <httpModules>
                                 <add name=""abc"" type=""type"" />
@@ -141,7 +141,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                                     <add name=""abc"" type=""type""/>
                                 </modules>
                             </system.webServer>
-                        </location> 
+                        </location>
                         <system.webServer>
                         </system.webServer>
                     </configuration>";
@@ -176,7 +176,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithEmptyPathAndExistingModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
+                    <configuration>
                         <location>
                             <system.web>
                               <httpModules>
@@ -188,7 +188,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                                     <add name=""abc"" type=""type""/>
                                 </modules>
                             </system.webServer>
-                        </location> 
+                        </location>
                     </configuration>";
 
             const string ExpectedWebConfigContent = @"
@@ -221,15 +221,15 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithDotPathWithNoModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
-                        <location path="".""> 
-                            <system.web> 
-                            </system.web> 
+                    <configuration>
+                        <location path=""."">
+                            <system.web>
+                            </system.web>
                             <system.webServer>
                             </system.webServer>
-                        </location> 
-                        <system.web> 
-                        </system.web> 
+                        </location>
+                        <system.web>
+                        </system.web>
                         <system.webServer>
                         </system.webServer>
                     </configuration>";
@@ -237,11 +237,11 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
             const string ExpectedWebConfigContent = @"
                     <configuration>
                       <location path=""."">
-                        <system.web> 
+                        <system.web>
                           <httpModules>
                             <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
                           </httpModules>
-                        </system.web> 
+                        </system.web>
                         <system.webServer>
                           <validation validateIntegratedModeConfiguration=""false"" />
                           <modules>
@@ -264,13 +264,13 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithEmptyPathWithNoModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
-                        <location> 
-                            <system.web> 
-                            </system.web> 
+                    <configuration>
+                        <location>
+                            <system.web>
+                            </system.web>
                             <system.webServer>
                             </system.webServer>
-                        </location> 
+                        </location>
                     </configuration>";
 
             const string ExpectedWebConfigContent = @"
@@ -303,18 +303,18 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithDotPathWithGlobalModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
-                        <location path="".""> 
-                            <system.web> 
-                            </system.web> 
+                    <configuration>
+                        <location path=""."">
+                            <system.web>
+                            </system.web>
                             <system.webServer>
                             </system.webServer>
-                        </location> 
-                        <system.web> 
-                            <httpModules> 
-                                <add name=""abc"" type=""type"" /> 
-                            </httpModules> 
-                        </system.web> 
+                        </location>
+                        <system.web>
+                            <httpModules>
+                                <add name=""abc"" type=""type"" />
+                            </httpModules>
+                        </system.web>
                         <system.webServer>
                             <modules>
                                 <add name=""abc"" type=""type""/>
@@ -331,12 +331,12 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                             <validation validateIntegratedModeConfiguration=""false"" />
                         </system.webServer>
                       </location>
-                      <system.web> 
-                          <httpModules> 
-                              <add name=""abc"" type=""type"" /> 
+                      <system.web>
+                          <httpModules>
+                              <add name=""abc"" type=""type"" />
                               <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
-                          </httpModules> 
-                      </system.web> 
+                          </httpModules>
+                      </system.web>
                       <system.webServer>
                         <modules>
                           <add name=""abc"" type=""type"" />
@@ -354,14 +354,14 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
         public void VerifyInstallationToLocationTagWithEmptyPathWithGlobalModules()
         {
             const string OriginalWebConfigContent = @"
-                    <configuration> 
-                        <location> 
-                        </location> 
-                        <system.web> 
-                          <httpModules> 
-                            <add name=""abc"" type=""type"" /> 
-                          </httpModules> 
-                        </system.web> 
+                    <configuration>
+                        <location>
+                        </location>
+                        <system.web>
+                          <httpModules>
+                            <add name=""abc"" type=""type"" />
+                          </httpModules>
+                        </system.web>
                         <system.webServer>
                             <modules>
                                 <add name=""abc"" type=""type""/>
@@ -373,12 +373,12 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
                     <configuration>
                       <location>
                       </location>
-                      <system.web> 
-                          <httpModules> 
-                              <add name=""abc"" type=""type"" /> 
+                      <system.web>
+                          <httpModules>
+                              <add name=""abc"" type=""type"" />
                               <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
-                          </httpModules> 
-                      </system.web> 
+                          </httpModules>
+                      </system.web>
                       <system.webServer>
                         <modules>
                           <add name=""abc"" type=""type"" />
