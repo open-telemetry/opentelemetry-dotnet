@@ -35,29 +35,29 @@ namespace Microsoft.AspNet.TelemetryCorrelation
             //  Accept: text/plain; q=0.2
             if (string.IsNullOrEmpty(value) || (index == value.Length))
             {
-                return SupportsMultipleValues;
+                return this.SupportsMultipleValues;
             }
 
             var separatorFound = false;
-            var current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, index, SupportsMultipleValues, out separatorFound);
+            var current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, index, this.SupportsMultipleValues, out separatorFound);
 
-            if (separatorFound && !SupportsMultipleValues)
+            if (separatorFound && !this.SupportsMultipleValues)
             {
                 return false; // leading separators not allowed if we don't support multiple values.
             }
 
             if (current == value.Length)
             {
-                if (SupportsMultipleValues)
+                if (this.SupportsMultipleValues)
                 {
                     index = current;
                 }
 
-                return SupportsMultipleValues;
+                return this.SupportsMultipleValues;
             }
 
             T result;
-            var length = GetParsedValueLength(value, current, out result);
+            var length = this.GetParsedValueLength(value, current, out result);
 
             if (length == 0)
             {
@@ -65,10 +65,10 @@ namespace Microsoft.AspNet.TelemetryCorrelation
             }
 
             current = current + length;
-            current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, current, SupportsMultipleValues, out separatorFound);
+            current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, current, this.SupportsMultipleValues, out separatorFound);
 
             // If we support multiple values and we've not reached the end of the string, then we must have a separator.
-            if ((separatorFound && !SupportsMultipleValues) || (!separatorFound && (current < value.Length)))
+            if ((separatorFound && !this.SupportsMultipleValues) || (!separatorFound && (current < value.Length)))
             {
                 return false;
             }

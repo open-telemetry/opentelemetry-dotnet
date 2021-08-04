@@ -1,4 +1,4 @@
-﻿// <copyright file="NamValueHeaderValue.cs" company="OpenTelemetry Authors">
+﻿// <copyright file="NameValueHeaderValue.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,12 +38,12 @@ namespace Microsoft.AspNet.TelemetryCorrelation
 
         public string Name
         {
-            get { return name; }
+            get { return this.name; }
         }
 
         public string Value
         {
-            get { return value; }
+            get { return this.value; }
         }
 
         public static bool TryParse(string input, out NameValueHeaderValue parsedValue)

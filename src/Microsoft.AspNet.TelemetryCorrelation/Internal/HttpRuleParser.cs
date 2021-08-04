@@ -133,7 +133,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
                 return HttpParseResult.NotParsed;
             }
 
-            // Quoted-char has 2 characters. Check wheter there are 2 chars left ('\' + char)
+            // Quoted-char has 2 characters. Check whether there are 2 chars left ('\' + char)
             // If so, check whether the character is in the range 0-127. If not, it's an invalid value.
             if ((startIndex + 2 > input.Length) || (input[startIndex + 1] > 127))
             {
