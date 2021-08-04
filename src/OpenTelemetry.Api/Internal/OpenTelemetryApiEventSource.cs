@@ -40,7 +40,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void BaggageExtractException(string format, Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.FailedToExtractBaggage(format, ex.ToInvariantString());
             }
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateExtractException(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateExtractError(ex.ToInvariantString());
             }
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateKeyIsInvalid(key.ToString());
             }
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
         {
-            if (this.IsEnabled(EventLevel.Warning, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateValueIsInvalid(value.ToString());
             }
