@@ -25,7 +25,5 @@ namespace OpenTelemetry.Metrics
         bool IsMonotonic { get; }
 
         IEnumerable<IExemplar> Exemplars { get; }
-
-        IDataValue Sum { get; }
     }
 }
