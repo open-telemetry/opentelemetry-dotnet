@@ -20,7 +20,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
     internal enum HttpParseResult
     {
         /// <summary>
-        /// Parsed succesfully.
+        /// Parsed successfully.
         /// </summary>
         Parsed,
 
