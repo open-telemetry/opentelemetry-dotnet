@@ -27,7 +27,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
 
         public bool SupportsMultipleValues
         {
-            get { return supportsMultipleValues; }
+            get { return this.supportsMultipleValues; }
         }
 
         // If a parser supports multiple values, a call to ParseValue/TryParseValue should return a value for 'index'

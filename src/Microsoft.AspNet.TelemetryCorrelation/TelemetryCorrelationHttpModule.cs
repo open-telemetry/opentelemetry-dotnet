@@ -56,9 +56,9 @@ namespace Microsoft.AspNet.TelemetryCorrelation
         /// <inheritdoc />
         public void Init(HttpApplication context)
         {
-            context.BeginRequest += Application_BeginRequest;
-            context.EndRequest += Application_EndRequest;
-            context.Error += Application_Error;
+            context.BeginRequest += this.Application_BeginRequest;
+            context.EndRequest += this.Application_EndRequest;
+            context.Error += this.Application_Error;
 
             // OnExecuteRequestStep is availabile starting with 4.7.1
             // If this is executed in 4.7.1 runtime (regardless of targeted .NET version),
@@ -67,7 +67,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
             {
                 try
                 {
-                    onStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)OnExecuteRequestStep });
+                    onStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
                 }
                 catch (Exception e)
                 {
@@ -76,7 +76,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
             }
             else
             {
-                context.PreRequestHandlerExecute += Application_PreRequestHandlerExecute;
+                context.PreRequestHandlerExecute += this.Application_PreRequestHandlerExecute;
             }
         }
 
@@ -106,7 +106,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
         {
             var context = ((HttpApplication)sender).Context;
             AspNetTelemetryCorrelationEventSource.Log.TraceCallback("Application_BeginRequest");
-            ActivityHelper.CreateRootActivity(context, ParseHeaders);
+            ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
             context.Items[BeginCalledFlag] = true;
         }
 
@@ -141,7 +141,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
                 else
                 {
                     // Activity has never been started
-                    ActivityHelper.CreateRootActivity(context, ParseHeaders);
+                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
                 }
             }
 
@@ -162,7 +162,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation
             {
                 if (!context.Items.Contains(BeginCalledFlag))
                 {
-                    ActivityHelper.CreateRootActivity(context, ParseHeaders);
+                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
                 }
 
                 ActivityHelper.WriteActivityException(context.Items, exception);
