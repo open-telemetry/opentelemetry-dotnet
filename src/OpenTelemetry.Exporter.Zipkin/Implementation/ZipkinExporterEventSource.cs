@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         [NonEvent]
         public void FailedEndpointInitialization(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedEndpointInitialization(ex.ToInvariantString());
             }
