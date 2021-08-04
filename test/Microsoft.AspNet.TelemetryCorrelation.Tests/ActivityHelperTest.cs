@@ -42,7 +42,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
             {
                 new KeyValuePair<string, string>("TestKey1", "123"),
                 new KeyValuePair<string, string>("TestKey2", "456"),
-                new KeyValuePair<string, string>("TestKey1", "789")
+                new KeyValuePair<string, string>("TestKey1", "789"),
             };
 
             this.baggageInHeader = "TestKey1=123,TestKey2=456,TestKey1=789";
@@ -331,7 +331,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
             var requestHeaders = new Dictionary<string, string>
             {
                 { ActivityExtensions.RequestIdHeaderName, "|aba2f1e978b2cab6.1." },
-                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader }
+                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader },
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
@@ -401,7 +401,7 @@ namespace Microsoft.AspNet.TelemetryCorrelation.Tests
             var requestHeaders = new Dictionary<string, string>
             {
                 { ActivityExtensions.RequestIdHeaderName, "|aba2f1e978b2cab6.1." },
-                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader }
+                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader },
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
