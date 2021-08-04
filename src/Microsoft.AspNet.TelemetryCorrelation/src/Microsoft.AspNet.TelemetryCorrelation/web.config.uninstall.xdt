@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+  <system.web xdt:Locator="XPath(//system.web[(count(parent::location) = 0) or (count(parent::location[@path != '.' and count(@path) != 0]) = 0)])">
+    <httpModules>
+      <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation" preCondition="managedHandler" xdt:Transform="Remove" xdt:Locator="Match(type)"/>
+    </httpModules>
+  </system.web>
+
+  <system.webServer>
+    <modules>
+      <remove name="TelemetryCorrelationHttpModule" xdt:Transform="Remove" xdt:Locator="Match(name)"/>
+      <add name="TelemetryCorrelationHttpModule" 
+           type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"
+           preCondition="managedHandler" xdt:Transform="Remove" xdt:Locator="Match(type)"/>
+    </modules>
+  </system.webServer>
+</configuration>

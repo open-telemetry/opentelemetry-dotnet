@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{258D5057-81B9-40EC-A872-D21E27452749}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.AspNet.TelemetryCorrelation", "src\Microsoft.AspNet.TelemetryCorrelation\Microsoft.AspNet.TelemetryCorrelation.csproj", "{4C8E592C-C532-4CF2-80EF-3BDD0D788D12}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.AspNet.TelemetryCorrelation.Tests", "test\Microsoft.AspNet.TelemetryCorrelation.Tests\Microsoft.AspNet.TelemetryCorrelation.Tests.csproj", "{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{504D7010-38CC-4B07-BC57-D7030209D631}"
+	ProjectSection(SolutionItems) = preProject
+		tools\Common.props = tools\Common.props
+		NuGet.Config = NuGet.Config
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4C8E592C-C532-4CF2-80EF-3BDD0D788D12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C8E592C-C532-4CF2-80EF-3BDD0D788D12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C8E592C-C532-4CF2-80EF-3BDD0D788D12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C8E592C-C532-4CF2-80EF-3BDD0D788D12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4C8E592C-C532-4CF2-80EF-3BDD0D788D12} = {CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}
+		{9FAE5C43-F56C-4D87-A23C-6D2D57B4ABED} = {258D5057-81B9-40EC-A872-D21E27452749}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6E28F11C-A0D8-461B-B71F-70F348C1BB53}
+	EndGlobalSection
+EndGlobal

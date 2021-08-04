@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+
+  <!-- Insert global system.web node in any case -->
+  <system.web xdt:Transform="InsertIfMissing">
+  </system.web>
+
+  <!-- Search for system.web nodes:
+        - globally
+        - under location[@path='.']
+        - under location[count(@path)=0]
+        If any of above contains httpModules section - it will be reused. 
+        Otherwise it will be created under /configuration/system.web (globally)
+  -->
+  <system.web xdt:Locator="XPath(//system.web[(count(parent::location) = 0) or (count(parent::location[@path != '.' and count(@path) != 0]) = 0)])">
+    <httpModules xdt:Transform="InsertIfMissing">
+      <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation" xdt:Transform="Remove" xdt:Locator="Match(type)"/>
+      <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation" xdt:Transform="InsertIfMissing" xdt:Locator="Match(type)"/>
+    </httpModules>
+  </system.web>
+
+  <system.webServer xdt:Transform="InsertIfMissing">
+  </system.webServer>
+
+  <!-- Only one validation node is allowed to be deinfed globally or in global location tags. See explanaition above for httpModules on how it works -->
+  <system.webServer xdt:Locator="XPath(//system.webServer[(count(parent::location) = 0) or (count(parent::location[@path != '.' and count(@path) != 0]) = 0)])">
+    <validation validateIntegratedModeConfiguration="false" xdt:Transform="InsertIfMissing" />
+  </system.webServer>
+
+  <!-- Search for system.web nodes:
+        - globally
+        - under location[@path='.']
+        - under location[count(@path)=0]
+        If any of above contains httpModules section - it will be reused. 
+        Otherwise it will be created under /configuration/system.web (globally)
+        
+        see https://github.com/Microsoft/ApplicationInsights-dotnet-server/blob/develop/Src/Web/Web.Nuget/Resources/web.config.install.xdt
+  -->
+  <system.webServer xdt:Locator="XPath(//system.webServer[(count(parent::location) = 0) or (count(parent::location[@path != '.' and count(@path) != 0]) = 0)])">
+    <modules xdt:Transform="InsertIfMissing">
+      <remove name="TelemetryCorrelationHttpModule" xdt:Transform="InsertIfMissing" xdt:Locator="Match(name)"/>
+      <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"
+           preCondition="managedHandler" xdt:Transform="Remove" xdt:Locator="Match(type)"/>
+      <add name="TelemetryCorrelationHttpModule" type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"
+           preCondition="managedHandler" xdt:Transform="InsertIfMissing" xdt:Locator="Match(type)"/>
+    </modules>
+  </system.webServer>
+</configuration>
