@@ -221,8 +221,8 @@ namespace Microsoft.AspNet.TelemetryCorrelation
                     (GetQuotedPairLength(input, current, out quotedPairLength) == HttpParseResult.Parsed))
                 {
                     // We ignore invalid quoted-pairs. Invalid quoted-pairs may mean that it looked like a quoted pair,
-                    // but we actually have a quoted-string: e.g. "\ü" ('\' followed by a char >127 - quoted-pair only
-                    // allows ASCII chars after '\'; qdtext allows both '\' and >127 chars).
+                    // but we actually have a quoted-string: e.g. '\' followed by a char >127 - quoted-pair only
+                    // allows ASCII chars after '\'; qdtext allows both '\' and >127 chars.
                     current = current + quotedPairLength;
                     continue;
                 }
