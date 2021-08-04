@@ -15,19 +15,11 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Grpc.Core;
-#if NETSTANDARD2_1
-using Grpc.Net.Client;
-#endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Resources;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -35,16 +27,9 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpTraceExporter : BaseExporter<Activity>
+    public class OtlpTraceExporter : BaseOtlpExporter<Activity>
     {
-        private readonly OtlpExporterOptions options;
-#if NETSTANDARD2_1
-        private readonly GrpcChannel channel;
-#else
-        private readonly Channel channel;
-#endif
         private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
-        private readonly Metadata headers;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -61,65 +46,33 @@ namespace OpenTelemetry.Exporter
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
         internal OtlpTraceExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
+            : base(options)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.headers = GetMetadataFromHeaders(options.Headers);
-            if (this.options.TimeoutMilliseconds <= 0)
-            {
-                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.options.TimeoutMilliseconds));
-            }
-
             if (traceServiceClient != null)
             {
                 this.traceClient = traceServiceClient;
             }
             else
             {
-                if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
-                {
-                    throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
-                }
-
-#if NETSTANDARD2_1
-                this.channel = GrpcChannel.ForAddress(options.Endpoint);
-#else
-                ChannelCredentials channelCredentials;
-                if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
-                {
-                    channelCredentials = new SslCredentials();
-                }
-                else
-                {
-                    channelCredentials = ChannelCredentials.Insecure;
-                }
-
-                this.channel = new Channel(options.Endpoint.Authority, channelCredentials);
-#endif
-                this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.channel);
+                this.Channel = options.CreateChannel();
+                this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.Channel);
             }
         }
-
-        internal OtlpResource.Resource ProcessResource { get; private set; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
-            if (this.ProcessResource == null)
-            {
-                this.SetResource(this.ParentProvider.GetResource());
-            }
-
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.options.TimeoutMilliseconds);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.headers, deadline: deadline);
+                this.traceClient.Export(request, headers: this.Headers, deadline: deadline);
             }
             catch (RpcException ex)
             {
@@ -139,70 +92,6 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
-        }
-
-        internal void SetResource(Resource resource)
-        {
-            OtlpResource.Resource processResource = new OtlpResource.Resource();
-
-            foreach (KeyValuePair<string, object> attribute in resource.Attributes)
-            {
-                var oltpAttribute = attribute.ToOtlpAttribute();
-                if (oltpAttribute != null)
-                {
-                    processResource.Attributes.Add(oltpAttribute);
-                }
-            }
-
-            if (!processResource.Attributes.Any(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName))
-            {
-                var serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                    kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
-                processResource.Attributes.Add(new OtlpCommon.KeyValue
-                {
-                    Key = ResourceSemanticConventions.AttributeServiceName,
-                    Value = new OtlpCommon.AnyValue { StringValue = serviceName },
-                });
-            }
-
-            this.ProcessResource = processResource;
-        }
-
-        /// <inheritdoc/>
-        protected override bool OnShutdown(int timeoutMilliseconds)
-        {
-            if (this.channel == null)
-            {
-                return true;
-            }
-
-            return Task.WaitAny(new Task[] { this.channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
-        }
-
-        private static Metadata GetMetadataFromHeaders(string headers)
-        {
-            var metadata = new Metadata();
-            if (!string.IsNullOrEmpty(headers))
-            {
-                Array.ForEach(
-                    headers.Split(','),
-                    (pair) =>
-                    {
-                        // Specify the maximum number of substrings to return to 2
-                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
-                        var keyValueData = pair.Split(new char[] { '=' }, 2);
-                        if (keyValueData.Length != 2)
-                        {
-                            throw new ArgumentException("Headers provided in an invalid format.");
-                        }
-
-                        var key = keyValueData[0].Trim();
-                        var value = keyValueData[1].Trim();
-                        metadata.Add(key, value);
-                    });
-            }
-
-            return metadata;
         }
     }
 }
