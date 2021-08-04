@@ -22,7 +22,7 @@ using System.Web;
 namespace Microsoft.AspNet.TelemetryCorrelation
 {
     /// <summary>
-    /// Activity helper class
+    /// Activity helper class.
     /// </summary>
     internal static class ActivityHelper
     {

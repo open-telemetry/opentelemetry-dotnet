@@ -22,7 +22,7 @@ using System.Diagnostics;
 namespace Microsoft.AspNet.TelemetryCorrelation
 {
     /// <summary>
-    /// Extensions of Activity class
+    /// Extensions of Activity class.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class ActivityExtensions
