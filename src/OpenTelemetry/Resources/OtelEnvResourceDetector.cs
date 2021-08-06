@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -39,7 +40,7 @@ namespace OpenTelemetry.Resources
                     resource = new Resource(attributes);
                 }
             }
-            catch (Exception ex)
+            catch (SecurityException ex)
             {
                 OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed(nameof(OtelEnvResourceDetector), ex.Message);
             }
