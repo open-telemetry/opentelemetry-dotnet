@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace Microsoft.AspNet.TelemetryCorrelation.Tests
+namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
     using System;
     using System.Collections.Generic;

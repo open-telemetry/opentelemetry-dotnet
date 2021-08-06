@@ -19,7 +19,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Web;
 
-namespace Microsoft.AspNet.TelemetryCorrelation
+namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
     /// Activity helper class.
