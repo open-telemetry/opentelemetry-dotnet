@@ -53,22 +53,29 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             connectionOptions.EndPoints.Add(RedisEndPoint);
 
             using var connection = ConnectionMultiplexer.Connect(connectionOptions);
+            var db = connection.GetDatabase();
+            db.KeyDelete("key1");
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             var sampler = new TestSampler();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
-                .AddRedisInstrumentation(connection, c => c.SetCommandKey = true)
+                .AddRedisInstrumentation(connection, c => c.SetVerboseDatabaseStatements = true)
                 .Build())
             {
-                var db = connection.GetDatabase();
+                var prepared = LuaScript.Prepare("redis.call('set', @key, @value)");
+                db.ScriptEvaluate(prepared, new { key = (RedisKey)"mykey", value = 123 });
+
+                var redisValue = db.StringGet("key1");
+
+                Assert.False(redisValue.HasValue);
 
                 bool set = db.StringSet("key1", value, TimeSpan.FromSeconds(60));
 
                 Assert.True(set);
 
-                var redisValue = db.StringGet("key1");
+                redisValue = db.StringGet("key1");
 
                 Assert.True(redisValue.HasValue);
                 Assert.Equal(value, redisValue.ToString());
@@ -76,10 +83,15 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
 
             // Disposing SDK should flush the Redis profiling session immediately.
 
-            Assert.Equal(7, activityProcessor.Invocations.Count);
+            Assert.Equal(11, activityProcessor.Invocations.Count);
 
-            VerifyActivityData((Activity)activityProcessor.Invocations[1].Arguments[0], true, connection.GetEndPoints()[0], true);
+            var scriptActivity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal("EVAL", scriptActivity.DisplayName);
+            Assert.Equal("EVAL redis.call('set', ARGV[1], ARGV[2])", scriptActivity.GetTagValue(SemanticConventions.AttributeDbStatement));
+
             VerifyActivityData((Activity)activityProcessor.Invocations[3].Arguments[0], false, connection.GetEndPoints()[0], true);
+            VerifyActivityData((Activity)activityProcessor.Invocations[5].Arguments[0], true, connection.GetEndPoints()[0], true);
+            VerifyActivityData((Activity)activityProcessor.Invocations[7].Arguments[0], false, connection.GetEndPoints()[0], true);
             VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
@@ -101,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             using (Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
-                .AddRedisInstrumentation(connection, c => c.SetCommandKey = false)
+                .AddRedisInstrumentation(connection, c => c.SetVerboseDatabaseStatements = false)
                 .Build())
             {
                 var db = connection.GetDatabase();
