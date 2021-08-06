@@ -33,35 +33,26 @@ namespace OpenTelemetry
 
         public BatchExportProcessorOptions()
         {
-            try
+            int value;
+
+            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ExporterTimeoutEnvVarKey, out value))
             {
-                int value;
-
-                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ExporterTimeoutEnvVarKey, out value))
-                {
-                    this.ExporterTimeoutMilliseconds = value;
-                }
-
-                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxExportBatchSizeEnvVarKey, out value))
-                {
-                    this.MaxExportBatchSize = value;
-                }
-
-                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxQueueSizeEnvVarKey, out value))
-                {
-                    this.MaxQueueSize = value;
-                }
-
-                if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ScheduledDelayEnvVarKey, out value))
-                {
-                    this.ScheduledDelayMilliseconds = value;
-                }
+                this.ExporterTimeoutMilliseconds = value;
             }
-            catch (SecurityException ex)
+
+            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxExportBatchSizeEnvVarKey, out value))
             {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+                this.MaxExportBatchSize = value;
+            }
+
+            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxQueueSizeEnvVarKey, out value))
+            {
+                this.MaxQueueSize = value;
+            }
+
+            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ScheduledDelayEnvVarKey, out value))
+            {
+                this.ScheduledDelayMilliseconds = value;
             }
         }
 
@@ -88,7 +79,20 @@ namespace OpenTelemetry
         private static bool TryLoadEnvVarInt(string envVarKey, out int result)
         {
             result = 0;
-            string value = Environment.GetEnvironmentVariable(envVarKey);
+
+            string value;
+            try
+            {
+                value = Environment.GetEnvironmentVariable(envVarKey);
+            }
+            catch (SecurityException ex)
+            {
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+                return false;
+            }
+
             if (string.IsNullOrEmpty(value))
             {
                 return false;
