@@ -1,6 +1,6 @@
 # Telemetry correlation http module
 
-[![NuGet](https://img.shields.io/nuget/v/Microsoft.AspNet.TelemetryCorrelation.svg)](https://www.nuget.org/packages/Microsoft.AspNet.TelemetryCorrelation/)
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule/)
 
 Telemetry correlation http module enables cross tier telemetry tracking.
 

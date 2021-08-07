@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// </summary>
     public class TelemetryCorrelationHttpModule : IHttpModule
     {
-        private const string BeginCalledFlag = "Microsoft.AspNet.TelemetryCorrelation.BeginCalled";
+        private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
 
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
         private const string URLRewriteRewrittenRequest = "IIS_WasUrlRewritten";
