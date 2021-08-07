@@ -1,4 +1,4 @@
-// <copyright file="PropertyExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpParseResult.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-namespace Microsoft.AspNet.TelemetryCorrelation.Tests
+namespace OpenTelemetry.Instrumentation.AspNet
 {
-    using System.Reflection;
-
-    internal static class PropertyExtensions
+    // Adoptation of code from https://github.com/aspnet/HttpAbstractions/blob/07d115400e4f8c7a66ba239f230805f03a14ee3d/src/Microsoft.Net.Http.Headers/HttpParseResult.cs
+    internal enum HttpParseResult
     {
-        public static object GetProperty(this object obj, string propertyName)
-        {
-            return obj.GetType().GetTypeInfo().GetDeclaredProperty(propertyName)?.GetValue(obj);
-        }
+        /// <summary>
+        /// Parsed successfully.
+        /// </summary>
+        Parsed,
+
+        /// <summary>
+        /// Was not parsed.
+        /// </summary>
+        NotParsed,
+
+        /// <summary>
+        /// Invalid format.
+        /// </summary>
+        InvalidFormat,
     }
 }

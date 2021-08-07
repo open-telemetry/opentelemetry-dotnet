@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Web;
 
-namespace Microsoft.AspNet.TelemetryCorrelation
+namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
     /// Http Module sets ambient state using Activity API from DiagnosticsSource package.

@@ -19,16 +19,8 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 
-[assembly: InternalsVisibleTo("Microsoft.AspNet.TelemetryCorrelation.Tests" + AssemblyInfo.PublicKey)]
-
 #if SIGNED
-internal static class AssemblyInfo
-{
-    public const string PublicKey = ", PublicKey=002400000480000094000000060200000024000052534131000400000100010051C1562A090FB0C9F391012A32198B5E5D9A60E9B80FA2D7B434C9E5CCB7259BD606E66F9660676AFC6692B8CDC6793D190904551D2103B7B22FA636DCBB8208839785BA402EA08FC00C8F1500CCEF28BBF599AA64FFB1E1D5DC1BF3420A3777BADFE697856E9D52070A50C3EA5821C80BEF17CA3ACFFA28F89DD413F096F898";
-}
+[assembly: InternalsVisibleTo("OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests, PublicKey=002400000480000094000000060200000024000052534131000400000100010051c1562a090fb0c9f391012a32198b5e5d9a60e9b80fa2d7b434c9e5ccb7259bd606e66f9660676afc6692b8cdc6793d190904551d2103b7b22fa636dcbb8208839785ba402ea08fc00c8f1500ccef28bbf599aa64ffb1e1d5dc1bf3420a3777badfe697856e9d52070a50c3ea5821c80bef17ca3acffa28f89dd413f096f898")]
 #else
-internal static class AssemblyInfo
-{
-    public const string PublicKey = "";
-}
+[assembly: InternalsVisibleTo("OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests")]
 #endif

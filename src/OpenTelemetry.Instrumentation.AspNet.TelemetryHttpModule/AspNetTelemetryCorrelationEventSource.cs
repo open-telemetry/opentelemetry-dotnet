@@ -18,7 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 #pragma warning disable SA1600 // Elements must be documented
 
-namespace Microsoft.AspNet.TelemetryCorrelation
+namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
     /// ETW EventSource tracing class.

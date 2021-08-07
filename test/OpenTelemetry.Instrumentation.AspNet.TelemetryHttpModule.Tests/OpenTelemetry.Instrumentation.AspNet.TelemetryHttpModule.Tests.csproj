@@ -19,14 +19,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\Microsoft.AspNet.TelemetryCorrelation\Microsoft.AspNet.TelemetryCorrelation.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="$(RepoRoot)\src\Microsoft.AspNet.TelemetryCorrelation\web.config.install.xdt">
+    <EmbeddedResource Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\web.config.install.xdt">
       <Link>Resources\web.config.install.xdt</Link>
     </EmbeddedResource>
-    <EmbeddedResource Include="$(RepoRoot)\src\Microsoft.AspNet.TelemetryCorrelation\web.config.uninstall.xdt">
+    <EmbeddedResource Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\web.config.uninstall.xdt">
       <Link>Resources\web.config.uninstall.xdt</Link>
     </EmbeddedResource>
   </ItemGroup>

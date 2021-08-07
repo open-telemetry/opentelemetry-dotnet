@@ -24,17 +24,18 @@ dotnet add package OpenTelemetry.Instrumentation.AspNet
 
 `OpenTelemetry.Instrumentation.AspNet` requires adding an additional HttpModule
 to your web server. This additional HttpModule is shipped as part of
-[`Microsoft.AspNet.TelemetryCorrelation`](https://www.nuget.org/packages/Microsoft.AspNet.TelemetryCorrelation/)
+[`OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule`](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule/)
 which is implicitly brought by `OpenTelemetry.Instrumentation.AspNet`. The
 following shows changes required to your `Web.config` when using IIS web server.
 
 ```xml
 <system.webServer>
     <modules>
-    <add name="TelemetryCorrelationHttpModule"
-    type="Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule,
-    Microsoft.AspNet.TelemetryCorrelation"
-    preCondition="integratedMode,managedHandler" />
+    <add 
+        name="TelemetryCorrelationHttpModule"
+        type="OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule,
+            OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"
+        preCondition="integratedMode,managedHandler" />
     </modules>
 </system.webServer>
 ```
@@ -44,8 +45,8 @@ following shows changes required to your `Web.config` when using IIS web server.
 ASP.NET instrumentation must be enabled at application startup. This is
 typically done in the `Global.asax.cs` as shown below. This example also sets up
 the OpenTelemetry Jaeger exporter, which requires adding the package
-[`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md)
-to the application.
+[`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md) to
+the application.
 
 ```csharp
 using OpenTelemetry;
@@ -71,18 +72,19 @@ public class WebApiApplication : HttpApplication
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`AspNetInstrumentationOptions`, which allows configuring `Filter` as explained below.
+`AspNetInstrumentationOptions`, which allows configuring `Filter` as explained
+below.
 
 ### Filter
 
-This instrumentation by default collects all the incoming http requests. It allows
-filtering of requests by using the `Filter` function in `AspNetInstrumentationOptions`.
-This defines the condition for allowable requests. The Filter
-receives the `HttpContext` of the incoming request, and does not collect telemetry
- about the request if the Filter returns false or throws exception.
+This instrumentation by default collects all the incoming http requests. It
+allows filtering of requests by using the `Filter` function in
+`AspNetInstrumentationOptions`. This defines the condition for allowable
+requests. The Filter receives the `HttpContext` of the incoming request, and
+does not collect telemetry about the request if the Filter returns false or
+throws exception.
 
-The following code snippet shows how to use `Filter` to only allow GET
-requests.
+The following code snippet shows how to use `Filter` to only allow GET requests.
 
 ```csharp
 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -103,13 +105,13 @@ and the `Filter` option does the filtering *before* the Sampler is invoked.
 
 ### Enrich
 
-This option allows one to enrich the activity with additional information
-from the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is
-called only when `activity.IsAllDataRequested` is `true`. It contains the
-activity itself (which can be enriched), the name of the event, and the
-actual raw object.
-For event name "OnStartActivity", the actual object will be `HttpRequest`.
-For event name "OnStopActivity", the actual object will be `HttpResponse`
+This option allows one to enrich the activity with additional information from
+the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched), the name of the event, and the actual raw
+object. For event name "OnStartActivity", the actual object will be
+`HttpRequest`. For event name "OnStopActivity", the actual object will be
+`HttpResponse`
 
 The following code snippet shows how to add additional tags using `Enrich`.
 
@@ -136,10 +138,10 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
-is the general extensibility point to add additional properties to any activity.
-The `Enrich` option is specific to this instrumentation, and is provided to
-get access to `HttpRequest` and `HttpResponse`.
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the
+general extensibility point to add additional properties to any activity. The
+`Enrich` option is specific to this instrumentation, and is provided to get
+access to `HttpRequest` and `HttpResponse`.
 
 ## References
 
