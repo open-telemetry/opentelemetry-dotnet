@@ -16,7 +16,7 @@
 
 using System.Diagnostics.Contracts;
 
-namespace Microsoft.AspNet.TelemetryCorrelation
+namespace OpenTelemetry.Instrumentation.AspNet
 {
     // Adoptation of code from https://github.com/aspnet/HttpAbstractions/blob/07d115400e4f8c7a66ba239f230805f03a14ee3d/src/Microsoft.Net.Http.Headers/HttpRuleParser.cs
     internal static class HttpRuleParser
