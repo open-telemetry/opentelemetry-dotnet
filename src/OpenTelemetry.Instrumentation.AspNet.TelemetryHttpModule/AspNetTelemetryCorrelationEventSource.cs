@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics.Tracing;
-#pragma warning disable SA1600 // Elements must be documented
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -107,4 +106,3 @@ namespace OpenTelemetry.Instrumentation.AspNet
         }
     }
 }
-#pragma warning restore SA1600 // Elements must be documented

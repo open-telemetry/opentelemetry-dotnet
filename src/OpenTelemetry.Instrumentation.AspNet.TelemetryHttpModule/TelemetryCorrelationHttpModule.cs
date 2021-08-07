@@ -16,7 +16,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Reflection;
 using System.Web;
 
@@ -35,12 +34,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         // ServerVariable set on every request if URL module is registered in HttpModule pipeline.
         private const string URLRewriteModuleVersion = "IIS_UrlRewriteModule";
 
-        private static MethodInfo onStepMethodInfo = null;
-
-        static TelemetryCorrelationHttpModule()
-        {
-            onStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
-        }
+        private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
         /// <summary>
         /// Gets or sets a value indicating whether TelemetryCorrelationHttpModule should parse headers to get correlation ids.
@@ -63,11 +57,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
             // OnExecuteRequestStep is availabile starting with 4.7.1
             // If this is executed in 4.7.1 runtime (regardless of targeted .NET version),
             // we will use it to restore lost activity, otherwise keep PreRequestHandlerExecute
-            if (onStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
+            if (OnStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
             {
                 try
                 {
-                    onStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
+                    OnStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
                 }
                 catch (Exception e)
                 {
