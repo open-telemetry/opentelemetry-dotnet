@@ -19,7 +19,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace Microsoft.AspNet.TelemetryCorrelation
+namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
     /// Extensions of Activity class.
