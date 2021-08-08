@@ -126,7 +126,8 @@ Writing an instrumentation library typically involves 3 steps.
    .NET Framework, which publishes events using `EventSource`. The [SqlClient
    instrumentation
    library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks
+   in this case subscribes to the `EventSource` callbacks.
+     * [Context Propgation](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Api/README.md#context-propagation): If your library initiates out of process requests or accepts them, the library needs to [inject the `PropagationContext`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/6b7f2dd77cf9d37260a853fcc95f7b77e296065d/examples/MicroserviceExample/Utils/Messaging/MessageSender.cs) to outgoing requests and [extract the context](https://github.com/open-telemetry/opentelemetry-dotnet/blob/6b7f2dd77cf9d37260a853fcc95f7b77e296065d/examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs) and hydrate the Activity/Baggage upon receiving incoming requests. This is only required if you're using your own protocol to communicate over the wire. (i.e. If you're using an already instrumented HttpClient or GrpcClient, this is already provided to you and **do not require** injecting/extracting `PropagationContext` explicitly again.)
 
 2. Second step is to emit activities using the [ActivitySource
    API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
