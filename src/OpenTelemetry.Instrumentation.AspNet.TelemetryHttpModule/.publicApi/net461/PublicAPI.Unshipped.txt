@@ -1,9 +1,9 @@
 OpenTelemetry.Instrumentation.AspNet.ActivityExtensions
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule.Dispose() -> void
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule.Init(System.Web.HttpApplication context) -> void
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule.ParseHeaders.get -> bool
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule.ParseHeaders.set -> void
-OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule.TelemetryCorrelationHttpModule() -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Dispose() -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Init(System.Web.HttpApplication context) -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.ParseHeaders.get -> bool
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.ParseHeaders.set -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.TelemetryHttpModule() -> void
 static OpenTelemetry.Instrumentation.AspNet.ActivityExtensions.Extract(this System.Diagnostics.Activity activity, System.Collections.Specialized.NameValueCollection requestHeaders) -> bool
 static OpenTelemetry.Instrumentation.AspNet.ActivityExtensions.TryParse(this System.Diagnostics.Activity activity, System.Collections.Specialized.NameValueCollection requestHeaders) -> bool
