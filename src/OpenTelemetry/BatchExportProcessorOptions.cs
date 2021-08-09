@@ -35,22 +35,22 @@ namespace OpenTelemetry
         {
             int value;
 
-            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ExporterTimeoutEnvVarKey, out value))
+            if (TryLoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxExportBatchSizeEnvVarKey, out value))
+            if (TryLoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.MaxQueueSizeEnvVarKey, out value))
+            if (TryLoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (TryLoadEnvVarInt(BatchExportProcessorOptions<T>.ScheduledDelayEnvVarKey, out value))
+            if (TryLoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }
