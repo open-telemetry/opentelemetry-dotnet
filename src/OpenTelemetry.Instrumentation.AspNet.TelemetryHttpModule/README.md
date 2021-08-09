@@ -30,8 +30,7 @@ Telemetry correlation http module enables cross tier telemetry tracking.
 
         public void OnNext(DiagnosticListener listener)
         {
-            if (listener.Name == "Microsoft.AspNet.TelemetryCorrelation" ||
-                listener.Name == "System.Net.Http" )
+            if (listener.Name == "OpenTelemetry.Instrumentation.AspNet.Telemetry")
             {
                 listener.Subscribe(new NoopDiagnosticsListener());
             }

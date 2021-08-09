@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Listener name.
         /// </summary>
-        public const string AspNetListenerName = "Microsoft.AspNet.TelemetryCorrelation";
+        public const string AspNetListenerName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
 
         /// <summary>
         /// Activity name for http request.
