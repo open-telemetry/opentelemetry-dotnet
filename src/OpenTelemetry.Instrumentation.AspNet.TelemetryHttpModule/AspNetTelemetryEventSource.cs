@@ -22,13 +22,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// <summary>
     /// ETW EventSource tracing class.
     /// </summary>
-    [EventSource(Name = "Microsoft-AspNet-Telemetry-Correlation", Guid = "ace2021e-e82c-5502-d81d-657f27612673")]
-    internal sealed class AspNetTelemetryCorrelationEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Instrumentation-AspNet-Telemetry", Guid = "1de158cc-f7ce-4293-bd19-2358c93c8186")]
+    internal sealed class AspNetTelemetryEventSource : EventSource
     {
         /// <summary>
         /// Instance of the PlatformEventSource class.
         /// </summary>
-        public static readonly AspNetTelemetryCorrelationEventSource Log = new AspNetTelemetryCorrelationEventSource();
+        public static readonly AspNetTelemetryEventSource Log = new AspNetTelemetryEventSource();
 
         [NonEvent]
         public void ActivityException(string id, string eventName, Exception ex)

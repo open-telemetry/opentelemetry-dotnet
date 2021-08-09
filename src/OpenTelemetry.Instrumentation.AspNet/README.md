@@ -32,8 +32,8 @@ following shows changes required to your `Web.config` when using IIS web server.
 <system.webServer>
     <modules>
     <add 
-        name="TelemetryCorrelationHttpModule"
-        type="OpenTelemetry.Instrumentation.AspNet.TelemetryCorrelationHttpModule,
+        name="TelemetryHttpModule"
+        type="OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule,
             OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"
         preCondition="integratedMode,managedHandler" />
     </modules>
