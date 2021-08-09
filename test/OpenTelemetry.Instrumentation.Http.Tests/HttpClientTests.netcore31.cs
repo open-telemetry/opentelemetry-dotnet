@@ -186,6 +186,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""method"": ""GET"",
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 399,
+    ""responseExpected"": true,
     ""spanName"": ""HTTP GET"",
     ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
