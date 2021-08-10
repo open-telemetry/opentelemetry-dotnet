@@ -67,10 +67,10 @@ This instrumentation can be configured to change the default behavior by using
 
 ### FlushInterval
 
-StackExchange.Redis has its own internal profiler. OpenTelmetry converts each
+StackExchange.Redis has its own internal profiler. OpenTelemetry converts each
 profiled command from the internal profiler to an Activity for collection. By
 default, this conversion process flushes profiled commands on a 10 second
-interval. The `FlushInterval` option can be used to adjust this internval.
+interval. The `FlushInterval` option can be used to adjust this interval.
 
 The following example shows how to use `FlushInterval`.
 
@@ -80,6 +80,44 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
         connection,
         options => options.FlushInterval = TimeSpan.FromSeconds(5))
     .AddConsoleExporter()
+    .Build();
+```
+
+### SetVerboseDatabaseStatements
+
+StackExchange.Redis by default does not give detailed database statements like
+what key or script was used during an operation. The `SetVerboseDatabaseStatements`
+option can be used to enable gathering this more detailed information.
+
+The following example shows how to use `SetVerboseDatabaseStatements`.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddRedisInstrumentation(
+        connection,
+        options => options.SetVerboseDatabaseStatements = true)
+    .AddConsoleExporter()
+    .Build();
+```
+
+## Enrich
+
+This option allows one to enrich the activity with additional information from the
+raw `IProfiledCommand` object. The `Enrich` action is called only when
+`activity.IsAllDataRequested` is `true`. It contains the activity itself (which can
+be enriched), and the source profiled command object.
+
+The following code snippet shows how to add additional tags using `Enrich`.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddRedisInstrumentation(opt => opt.Enrich = (activity, command) =>
+    {
+        if (command.ElapsedTime < TimeSpan.FromMilliseconds(100))
+        {
+            activity.SetTag("is_fast", true);
+        }
+    })
     .Build();
 ```
 

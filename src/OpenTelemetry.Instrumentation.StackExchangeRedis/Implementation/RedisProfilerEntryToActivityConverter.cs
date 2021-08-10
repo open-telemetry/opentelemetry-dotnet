@@ -13,9 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Reflection;
+using System.Reflection.Emit;
 using OpenTelemetry.Trace;
 using StackExchange.Redis.Profiling;
 
@@ -23,7 +26,51 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToActivityConverter
     {
-        public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command)
+        private static readonly Lazy<Func<object, (string, string)>> MessageDataGetter = new Lazy<Func<object, (string, string)>>(() =>
+        {
+            var redisAssembly = typeof(IProfiledCommand).Assembly;
+            Type profiledCommandType = redisAssembly.GetType("StackExchange.Redis.Profiling.ProfiledCommand");
+            Type messageType = redisAssembly.GetType("StackExchange.Redis.Message");
+            Type scriptMessageType = redisAssembly.GetType("StackExchange.Redis.RedisDatabase+ScriptEvalMessage");
+
+            var messageDelegate = CreateFieldGetter<object>(profiledCommandType, "Message", BindingFlags.NonPublic | BindingFlags.Instance);
+            var scriptDelegate = CreateFieldGetter<string>(scriptMessageType, "script", BindingFlags.NonPublic | BindingFlags.Instance);
+            var commandAndKeyFetcher = new PropertyFetcher<string>("CommandAndKey");
+
+            if (messageDelegate == null)
+            {
+                return new Func<object, (string, string)>(source => (null, null));
+            }
+
+            return new Func<object, (string, string)>(source =>
+            {
+                if (source == null)
+                {
+                    return (null, null);
+                }
+
+                var message = messageDelegate(source);
+                if (message == null)
+                {
+                    return (null, null);
+                }
+
+                string script = null;
+                if (message.GetType() == scriptMessageType)
+                {
+                    script = scriptDelegate.Invoke(message);
+                }
+
+                if (commandAndKeyFetcher.TryFetch(message, out var value))
+                {
+                    return (value, script);
+                }
+
+                return (null, script);
+            });
+        });
+
+        public static Activity ProfilerCommandToActivity(Activity parentActivity, IProfiledCommand command, StackExchangeRedisCallsInstrumentationOptions options)
         {
             var name = command.Command; // Example: SET;
             if (string.IsNullOrEmpty(name))
@@ -42,6 +89,8 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             {
                 return null;
             }
+
+            activity.SetEndTime(command.CommandCreated + command.ElapsedTime);
 
             if (activity.IsAllDataRequested == true)
             {
@@ -62,7 +111,25 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
                 activity.SetTag(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName, command.Flags.ToString());
 
-                if (command.Command != null)
+                if (options.SetVerboseDatabaseStatements)
+                {
+                    var (commandAndKey, script) = MessageDataGetter.Value.Invoke(command);
+
+                    if (!string.IsNullOrEmpty(commandAndKey) && !string.IsNullOrEmpty(script))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, commandAndKey + " " + script);
+                    }
+                    else if (!string.IsNullOrEmpty(commandAndKey))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, commandAndKey);
+                    }
+                    else if (command.Command != null)
+                    {
+                        // Example: "db.statement": SET;
+                        activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
+                    }
+                }
+                else if (command.Command != null)
                 {
                     // Example: "db.statement": SET;
                     activity.SetTag(SemanticConventions.AttributeDbStatement, command.Command);
@@ -100,7 +167,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                 activity.AddEvent(new ActivityEvent("Sent", send));
                 activity.AddEvent(new ActivityEvent("ResponseReceived", response));
 
-                activity.SetEndTime(command.CommandCreated + command.ElapsedTime);
+                options.Enrich?.Invoke(activity, command);
             }
 
             activity.Stop();
@@ -108,12 +175,35 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             return activity;
         }
 
-        public static void DrainSession(Activity parentActivity, IEnumerable<IProfiledCommand> sessionCommands)
+        public static void DrainSession(Activity parentActivity, IEnumerable<IProfiledCommand> sessionCommands, StackExchangeRedisCallsInstrumentationOptions options)
         {
             foreach (var command in sessionCommands)
             {
-                ProfilerCommandToActivity(parentActivity, command);
+                ProfilerCommandToActivity(parentActivity, command, options);
             }
+        }
+
+        /// <summary>
+        /// Creates getter for a field defined in private or internal type
+        /// repesented with classType variable.
+        /// </summary>
+        private static Func<object, TField> CreateFieldGetter<TField>(Type classType, string fieldName, BindingFlags flags)
+        {
+            FieldInfo field = classType.GetField(fieldName, flags);
+            if (field != null)
+            {
+                string methodName = classType.FullName + ".get_" + field.Name;
+                DynamicMethod getterMethod = new DynamicMethod(methodName, typeof(TField), new[] { typeof(object) }, true);
+                ILGenerator generator = getterMethod.GetILGenerator();
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Castclass, classType);
+                generator.Emit(OpCodes.Ldfld, field);
+                generator.Emit(OpCodes.Ret);
+
+                return (Func<object, TField>)getterMethod.CreateDelegate(typeof(Func<object, TField>));
+            }
+
+            return null;
         }
     }
 }
