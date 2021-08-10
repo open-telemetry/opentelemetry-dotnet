@@ -22,11 +22,24 @@ namespace OpenTelemetry.Resources.Tests
 {
     public class OtelEnvResourceDetectorTest : IDisposable
     {
-        private const string OtelEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
-
         public OtelEnvResourceDetectorTest()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
+        }
+
+        public void Dispose()
+        {
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
+        }
+
+        [Fact]
+        public void OtelEnvResource_EnvVarKey()
+        {
+            // Act
+            var resource = new OtelServiceNameEnvVarDetector().Detect();
+
+            // Assert
+            Assert.Equal("OTEL_RESOURCE_ATTRIBUTES", OtelEnvResourceDetector.EnvVarKey);
         }
 
         [Fact]
@@ -44,7 +57,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var envVarValue = "Key1=Val1,Key2=Val2";
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, envVarValue);
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
             var resource = new OtelEnvResourceDetector().Detect();
 
             // Assert
@@ -57,18 +70,13 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var envVarValue = "Key1,Key2=Val2";
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, envVarValue);
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
             var resource = new OtelEnvResourceDetector().Detect();
 
             // Assert
             Assert.NotEqual(Resource.Empty, resource);
             Assert.Single(resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
-        }
-
-        public void Dispose()
-        {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
         }
     }
 }

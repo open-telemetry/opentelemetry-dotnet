@@ -25,15 +25,19 @@ namespace OpenTelemetry.Resources.Tests
     {
         private const string KeyName = "key";
         private const string ValueName = "value";
-        private const string OtelEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
 
         public ResourceTest()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+            ClearEnvVars();
+        }
+
+        public void Dispose()
+        {
+            ClearEnvVars();
         }
 
         [Fact]
-        public static void CreateResource_NullAttributeCollection()
+        public void CreateResource_NullAttributeCollection()
         {
             // Act and Assert
             var resource = new Resource(null);
@@ -421,10 +425,10 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void GetResourceWithDefaultAttributes_WithEnvVar()
+        public void GetResourceWithDefaultAttributes_WithResourceEnvVar()
         {
             // Arrange
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
             var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
 
             // Assert
@@ -436,9 +440,54 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         }
 
-        public void Dispose()
+        [Fact]
+        public void GetResource_WithServiceEnvVar()
         {
-            Environment.SetEnvironmentVariable(OtelEnvVarKey, null);
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "some-service");
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(3, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.name", "some-service"), attributes);
+        }
+
+        [Fact]
+        public void GetResource_WithServiceNameSetWithTwoEnvVars()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddAttributes(this.CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(3, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.name", "from-service-name"), attributes);
+        }
+
+        [Fact]
+        public void GetResource_WithServiceNameSetWithTwoEnvVarsAndCode()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddService("from-code").AddAttributes(this.CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.name", "from-code"), attributes);
+        }
+
+        private static void ClearEnvVars()
+        {
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
         }
 
         private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)

@@ -5,10 +5,10 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Getting started with Logs](#getting-started-with-logging)
-* [Getting started with Traces](#getting-started-with-tracing)
-* [Tracing Configuration](#tracing-configuration)
-  * [ActivitySource](#activity-source)
+* [Getting started with Logging](#getting-started-with-logging)
+* [Getting started with Tracing](#getting-started-with-tracing)
+* [Tracing configuration](#tracing-configuration)
+  * [Activity Source](#activity-source)
   * [Instrumentation](#instrumentation)
   * [Processor](#processor)
   * [Resource](#resource)
@@ -16,6 +16,8 @@
 * [Advanced topics](#advanced-topics)
   * [Propagators](#propagators)
 * [Troubleshooting](#troubleshooting)
+  * [Configuration Parameters](#configuration-parameters)
+  * [Remarks](#remarks)
 * [References](#references)
 
 ## Installation
@@ -242,6 +244,16 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
     .Build();
 ```
+
+It is also possible to configure the `Resource` by using `AddEnvironmentVariableDetector`
+together with following environmental variables:
+
+<!-- markdownlint-disable MD013 -->
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+<!-- markdownlint-enable MD013 -->
 
 ### Sampler
 
