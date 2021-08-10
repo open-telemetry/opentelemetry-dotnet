@@ -123,8 +123,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             Contract.Requires(input != null);
             Contract.Requires((startIndex >= 0) && (startIndex < input.Length));
-            Contract.Ensures((Contract.ValueAtReturn(out length) >= 0) &&
-                (Contract.ValueAtReturn(out length) <= (input.Length - startIndex)));
+            Contract.Ensures((Contract.ValueAtReturn<int>(out _) >= 0) &&
+                (Contract.ValueAtReturn<int>(out _) <= (input.Length - startIndex)));
 
             length = 0;
 
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             Contract.Requires(input != null);
             Contract.Requires((startIndex >= 0) && (startIndex < input.Length));
             Contract.Ensures((Contract.Result<HttpParseResult>() != HttpParseResult.Parsed) ||
-                (Contract.ValueAtReturn<int>(out length) > 0));
+                (Contract.ValueAtReturn<int>(out _) > 0));
 
             length = 0;
 
@@ -216,14 +216,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
             {
                 // Only check whether we have a quoted char, if we have at least 3 characters left to read (i.e.
                 // quoted char + closing char). Otherwise the closing char may be considered part of the quoted char.
-                var quotedPairLength = 0;
                 if ((current + 2 < input.Length) &&
-                    (GetQuotedPairLength(input, current, out quotedPairLength) == HttpParseResult.Parsed))
+                    (GetQuotedPairLength(input, current, out var quotedPairLength) == HttpParseResult.Parsed))
                 {
                     // We ignore invalid quoted-pairs. Invalid quoted-pairs may mean that it looked like a quoted pair,
                     // but we actually have a quoted-string: e.g. '\' followed by a char >127 - quoted-pair only
                     // allows ASCII chars after '\'; qdtext allows both '\' and >127 chars.
-                    current = current + quotedPairLength;
+                    current += quotedPairLength;
                     continue;
                 }
 
@@ -239,8 +238,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                             return HttpParseResult.InvalidFormat;
                         }
 
-                        var nestedLength = 0;
-                        HttpParseResult nestedResult = GetExpressionLength(input, current, openChar, closeChar, supportsNesting, ref nestedCount, out nestedLength);
+                        HttpParseResult nestedResult = GetExpressionLength(input, current, openChar, closeChar, supportsNesting, ref nestedCount, out var nestedLength);
 
                         switch (nestedResult)
                         {
