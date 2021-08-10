@@ -70,7 +70,7 @@ This instrumentation can be configured to change the default behavior by using
 StackExchange.Redis has its own internal profiler. OpenTelemetry converts each
 profiled command from the internal profiler to an Activity for collection. By
 default, this conversion process flushes profiled commands on a 10 second
-interval. The `FlushInterval` option can be used to adjust this internval.
+interval. The `FlushInterval` option can be used to adjust this internal.
 
 The following example shows how to use `FlushInterval`.
 
@@ -120,6 +120,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     })
     .Build();
 ```
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
