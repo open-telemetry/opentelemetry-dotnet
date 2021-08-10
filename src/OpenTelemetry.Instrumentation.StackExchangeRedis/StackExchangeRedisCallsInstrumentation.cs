@@ -120,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
         internal void Flush()
         {
-            RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling());
+            RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling(), this.options);
 
             foreach (var entry in this.Cache)
             {
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                 }
 
                 ProfilingSession session = entry.Value.Session;
-                RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
+                RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling(), this.options);
                 this.Cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
             }
         }
