@@ -62,19 +62,19 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             if (activity == null)
             {
-                AspNetTelemetryCorrelationEventSource.Log.ActvityExtractionError("activity is null");
+                AspNetTelemetryEventSource.Log.ActvityExtractionError("activity is null");
                 return false;
             }
 
             if (activity.ParentId != null)
             {
-                AspNetTelemetryCorrelationEventSource.Log.ActvityExtractionError("ParentId is already set on activity");
+                AspNetTelemetryEventSource.Log.ActvityExtractionError("ParentId is already set on activity");
                 return false;
             }
 
             if (activity.Id != null)
             {
-                AspNetTelemetryCorrelationEventSource.Log.ActvityExtractionError("Activity is already started");
+                AspNetTelemetryEventSource.Log.ActvityExtractionError("Activity is already started");
                 return false;
             }
 
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                             }
                             else
                             {
-                                AspNetTelemetryCorrelationEventSource.Log.HeaderParsingError(CorrelationContextHeaderName, pair);
+                                AspNetTelemetryEventSource.Log.HeaderParsingError(CorrelationContextHeaderName, pair);
                             }
                         }
                     }

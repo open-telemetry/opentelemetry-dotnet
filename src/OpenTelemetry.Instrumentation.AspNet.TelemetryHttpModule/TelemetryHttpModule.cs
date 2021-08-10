@@ -1,4 +1,4 @@
-// <copyright file="TelemetryCorrelationHttpModule.cs" company="OpenTelemetry Authors">
+// <copyright file="TelemetryHttpModule.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Reflection;
 using System.Web;
 
@@ -25,9 +24,9 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// <summary>
     /// Http Module sets ambient state using Activity API from DiagnosticsSource package.
     /// </summary>
-    public class TelemetryCorrelationHttpModule : IHttpModule
+    public class TelemetryHttpModule : IHttpModule
     {
-        private const string BeginCalledFlag = "Microsoft.AspNet.TelemetryCorrelation.BeginCalled";
+        private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
 
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
         private const string URLRewriteRewrittenRequest = "IIS_WasUrlRewritten";
@@ -35,15 +34,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
         // ServerVariable set on every request if URL module is registered in HttpModule pipeline.
         private const string URLRewriteModuleVersion = "IIS_UrlRewriteModule";
 
-        private static MethodInfo onStepMethodInfo = null;
-
-        static TelemetryCorrelationHttpModule()
-        {
-            onStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
-        }
+        private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
         /// <summary>
-        /// Gets or sets a value indicating whether TelemetryCorrelationHttpModule should parse headers to get correlation ids.
+        /// Gets or sets a value indicating whether TelemetryHttpModule should parse headers to get correlation ids.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public bool ParseHeaders { get; set; } = true;
@@ -63,15 +57,15 @@ namespace OpenTelemetry.Instrumentation.AspNet
             // OnExecuteRequestStep is availabile starting with 4.7.1
             // If this is executed in 4.7.1 runtime (regardless of targeted .NET version),
             // we will use it to restore lost activity, otherwise keep PreRequestHandlerExecute
-            if (onStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
+            if (OnStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
             {
                 try
                 {
-                    onStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
+                    OnStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
                 }
                 catch (Exception e)
                 {
-                    AspNetTelemetryCorrelationEventSource.Log.OnExecuteRequestStepInvokationError(e.Message);
+                    AspNetTelemetryEventSource.Log.OnExecuteRequestStepInvokationError(e.Message);
                 }
             }
             else
@@ -105,20 +99,20 @@ namespace OpenTelemetry.Instrumentation.AspNet
         private void Application_BeginRequest(object sender, EventArgs e)
         {
             var context = ((HttpApplication)sender).Context;
-            AspNetTelemetryCorrelationEventSource.Log.TraceCallback("Application_BeginRequest");
+            AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
             ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
             context.Items[BeginCalledFlag] = true;
         }
 
         private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
         {
-            AspNetTelemetryCorrelationEventSource.Log.TraceCallback("Application_PreRequestHandlerExecute");
+            AspNetTelemetryEventSource.Log.TraceCallback("Application_PreRequestHandlerExecute");
             ActivityHelper.RestoreActivityIfNeeded(((HttpApplication)sender).Context.Items);
         }
 
         private void Application_EndRequest(object sender, EventArgs e)
         {
-            AspNetTelemetryCorrelationEventSource.Log.TraceCallback("Application_EndRequest");
+            AspNetTelemetryEventSource.Log.TraceCallback("Application_EndRequest");
             bool trackActivity = true;
 
             var context = ((HttpApplication)sender).Context;
@@ -153,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
         private void Application_Error(object sender, EventArgs e)
         {
-            AspNetTelemetryCorrelationEventSource.Log.TraceCallback("Application_Error");
+            AspNetTelemetryEventSource.Log.TraceCallback("Application_Error");
 
             var context = ((HttpApplication)sender).Context;
 

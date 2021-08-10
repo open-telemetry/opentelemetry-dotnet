@@ -1,4 +1,4 @@
-// <copyright file="AspNetTelemetryCorrelationEventSource.cs" company="OpenTelemetry Authors">
+// <copyright file="AspNetTelemetryEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,19 @@
 
 using System;
 using System.Diagnostics.Tracing;
-#pragma warning disable SA1600 // Elements must be documented
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
     /// <summary>
     /// ETW EventSource tracing class.
     /// </summary>
-    [EventSource(Name = "Microsoft-AspNet-Telemetry-Correlation", Guid = "ace2021e-e82c-5502-d81d-657f27612673")]
-    internal sealed class AspNetTelemetryCorrelationEventSource : EventSource
+    [EventSource(Name = "OpenTelemetry-Instrumentation-AspNet-Telemetry", Guid = "1de158cc-f7ce-4293-bd19-2358c93c8186")]
+    internal sealed class AspNetTelemetryEventSource : EventSource
     {
         /// <summary>
         /// Instance of the PlatformEventSource class.
         /// </summary>
-        public static readonly AspNetTelemetryCorrelationEventSource Log = new AspNetTelemetryCorrelationEventSource();
+        public static readonly AspNetTelemetryEventSource Log = new AspNetTelemetryEventSource();
 
         [NonEvent]
         public void ActivityException(string id, string eventName, Exception ex)
@@ -107,4 +106,3 @@ namespace OpenTelemetry.Instrumentation.AspNet
         }
     }
 }
-#pragma warning restore SA1600 // Elements must be documented

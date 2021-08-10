@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
         public sealed override bool TryParseValue(string value, ref int index, out T parsedValue)
         {
-            parsedValue = default(T);
+            parsedValue = default;
 
             // If multiple values are supported (i.e. list of values), then accept an empty string: The header may
             // be added multiple times to the request/response message. E.g.
@@ -38,8 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 return this.SupportsMultipleValues;
             }
 
-            var separatorFound = false;
-            var current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, index, this.SupportsMultipleValues, out separatorFound);
+            var current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, index, this.SupportsMultipleValues, out var separatorFound);
 
             if (separatorFound && !this.SupportsMultipleValues)
             {
@@ -56,15 +55,14 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 return this.SupportsMultipleValues;
             }
 
-            T result;
-            var length = this.GetParsedValueLength(value, current, out result);
+            var length = this.GetParsedValueLength(value, current, out var result);
 
             if (length == 0)
             {
                 return false;
             }
 
-            current = current + length;
+            current += length;
             current = HeaderUtilities.GetNextNonEmptyOrWhitespaceIndex(value, current, this.SupportsMultipleValues, out separatorFound);
 
             // If we support multiple values and we've not reached the end of the string, then we must have a separator.

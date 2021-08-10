@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var context = HttpContextHelper.GetFakeHttpContext();
             context.Items[ActivityHelper.ActivityKey] = root;
 
-            var module = new TelemetryCorrelationHttpModule();
+            var module = new TelemetryHttpModule();
 
             ActivityHelper.RestoreActivityIfNeeded(context.Items);
 
