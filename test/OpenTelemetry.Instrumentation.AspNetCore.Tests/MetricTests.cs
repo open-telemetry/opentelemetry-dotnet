@@ -76,6 +76,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response.EnsureSuccessStatusCode();
             }
 
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
             // Invokes the TestExporter which will invoke ProcessExport
             processor.PullRequest();
 
