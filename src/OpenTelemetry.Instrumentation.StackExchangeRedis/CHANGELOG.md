@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Adds SetVerboseDatabaseStatements option to allow setting more detailed database
+  statement tag values.
+* Adds Enrich option to allow enriching activities from the source profiled command
+  objects.
 * Removes upper constraint for Microsoft.Extensions.Options
   dependency. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
