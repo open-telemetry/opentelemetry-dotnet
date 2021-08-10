@@ -158,6 +158,55 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Tests
             Assert.Equal(second, third);
         }
 
+        [Trait("CategoryName", "RedisIntegrationTests")]
+        [SkipUnlessEnvVarFoundTheory(RedisEndPointEnvVarName)]
+        [InlineData("value1")]
+        public void CanEnrichActivityFromCommand(string value)
+        {
+            var connectionOptions = new ConfigurationOptions
+            {
+                AbortOnConnectFail = true,
+            };
+            connectionOptions.EndPoints.Add(RedisEndPoint);
+
+            using var connection = ConnectionMultiplexer.Connect(connectionOptions);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var sampler = new TestSampler();
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .SetSampler(sampler)
+                .AddRedisInstrumentation(connection, c => c.Enrich = (activity, command) =>
+                {
+                    if (command.ElapsedTime < TimeSpan.FromMilliseconds(100))
+                    {
+                        activity.AddTag("is_fast", true);
+                    }
+                })
+                .Build())
+            {
+                var db = connection.GetDatabase();
+
+                bool set = db.StringSet("key1", value, TimeSpan.FromSeconds(60));
+
+                Assert.True(set);
+
+                var redisValue = db.StringGet("key1");
+
+                Assert.True(redisValue.HasValue);
+                Assert.Equal(value, redisValue.ToString());
+            }
+
+            // Disposing SDK should flush the Redis profiling session immediately.
+
+            Assert.Equal(7, activityProcessor.Invocations.Count);
+
+            var setActivity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            Assert.Equal(true, setActivity.GetTagValue("is_fast"));
+            var getActivity = (Activity)activityProcessor.Invocations[3].Arguments[0];
+            Assert.Equal(true, getActivity.GetTagValue("is_fast"));
+        }
+
         [Fact]
         public void CheckCacheIsFlushedProperly()
         {

@@ -38,8 +38,12 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         public bool SetVerboseDatabaseStatements { get; set; }
 
         /// <summary>
-        /// Gets or sets.
+        /// Gets or sets an action to enrich an Activity.
         /// </summary>
+        /// <remarks>
+        /// <para><see cref="Activity"/>: the activity being enriched.</para>
+        /// <para><see cref="IProfiledCommand"/>: the profiled redis command from which additional information can be extracted to enrich the activity.</para>
+        /// </remarks>
         public Action<Activity, IProfiledCommand> Enrich { get; set; }
     }
 }
