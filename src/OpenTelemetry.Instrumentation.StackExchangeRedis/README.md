@@ -115,7 +115,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     {
         if (command.ElapsedTime < TimeSpan.FromMilliseconds(100))
         {
-            activity.AddTag("is_fast", true);
+            activity.SetTag("is_fast", true);
         }
     })
     .Build();
