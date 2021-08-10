@@ -29,7 +29,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Listener name.
         /// </summary>
-        public const string AspNetListenerName = "Microsoft.AspNet.TelemetryCorrelation";
+        public const string AspNetListenerName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
 
         /// <summary>
         /// Activity name for http request.
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 contextItems[ActivityKey] = null;
             }
 
-            AspNetTelemetryCorrelationEventSource.Log.ActivityStopped(currentActivity?.Id, currentActivity?.OperationName);
+            AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity?.Id, currentActivity?.OperationName);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 if (StartAspNetActivity(rootActivity))
                 {
                     context.Items[ActivityKey] = rootActivity;
-                    AspNetTelemetryCorrelationEventSource.Log.ActivityStarted(rootActivity.Id);
+                    AspNetTelemetryEventSource.Log.ActivityStarted(rootActivity.Id);
                     return rootActivity;
                 }
             }
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 }
 
                 AspNetListener.Write(aspNetActivity.OperationName + ".Exception", exception);
-                AspNetTelemetryCorrelationEventSource.Log.ActivityException(aspNetActivity.Id, aspNetActivity.OperationName, exception);
+                AspNetTelemetryEventSource.Log.ActivityException(aspNetActivity.Id, aspNetActivity.OperationName, exception);
             }
         }
 

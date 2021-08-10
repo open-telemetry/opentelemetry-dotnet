@@ -23,8 +23,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
     public class WebConfigTransformTest
     {
-        private const string InstallConfigTransformationResourceName = "Microsoft.AspNet.TelemetryCorrelation.Tests.Resources.web.config.install.xdt";
-        private const string UninstallConfigTransformationResourceName = "Microsoft.AspNet.TelemetryCorrelation.Tests.Resources.web.config.uninstall.xdt";
+        private const string InstallConfigTransformationResourceName = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests.Resources.web.config.install.xdt";
+        private const string UninstallConfigTransformationResourceName = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests.Resources.web.config.uninstall.xdt";
 
         [Fact]
         public void VerifyInstallationToBasicWebConfig()
@@ -43,13 +43,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                         <validation validateIntegratedModeConfiguration=""false"" />
                     </system.webServer>
@@ -66,12 +66,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModuleSomeOldName"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModuleSomeOldName"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <add name=""TelemetryCorrelationHttpModuleSomeOldName"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <add name=""TelemetryHttpModuleSomeOldName"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -80,13 +80,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                         <validation validateIntegratedModeConfiguration=""false"" />
                     </system.webServer>
@@ -103,12 +103,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"" preCondition=""managedHandler""/>
+                           <add name=""TelemetryHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -117,14 +117,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"" preCondition=""managedHandler""/>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <add name=""TelemetryHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                         <validation validateIntegratedModeConfiguration=""false"" />
                     </system.webServer>
@@ -141,13 +141,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <validation validateIntegratedModeConfiguration=""false"" />
                         <modules>
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""integratedMode,managedHandler""/>
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""integratedMode,managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -156,14 +156,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <validation validateIntegratedModeConfiguration=""false"" />
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -179,13 +179,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules >
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""integratedMode,managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""integratedMode,managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -211,13 +211,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""integratedMode,managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""integratedMode,managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -244,14 +244,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     <system.web>
                         <httpModules>
                             <add name=""UserModule"" type=""UserNamespace.WebModuleFoo""/>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <modules runAllManagedModulesForAllRequests=""true"">
-                           <remove name=""TelemetryCorrelationHttpModule"" />
+                           <remove name=""TelemetryHttpModule"" />
                            <add name=""UserModule"" type=""UserNamespace.WebModuleFoo""/>
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -296,14 +296,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     <system.web>
                         <httpModules>
                             <add name=""UserModule"" type=""UserNamespace.WebModuleFoo""/>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <modules runAllManagedModulesForAllRequests=""true"">
                            <add name=""UserModule"" type=""UserNamespace.WebModuleFoo""/>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                         <validation validateIntegratedModeConfiguration=""false"" />
                     </system.webServer>
@@ -322,14 +322,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 <configuration>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                     <system.webServer>
                         <validation validateIntegratedModeConfiguration=""false"" />
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                 </configuration>";
@@ -348,13 +348,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     <system.webServer>
                         <validation validateIntegratedModeConfiguration=""false"" />
                         <modules>
-                           <remove name=""TelemetryCorrelationHttpModule"" />
-                           <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" preCondition=""managedHandler""/>
+                           <remove name=""TelemetryHttpModule"" />
+                           <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" preCondition=""managedHandler""/>
                         </modules>
                     </system.webServer>
                     <system.web>
                         <httpModules>
-                            <add name=""TelemetryCorrelationHttpModule"" type=""Microsoft.AspNet.TelemetryCorrelation.TelemetryCorrelationHttpModule, Microsoft.AspNet.TelemetryCorrelation"" />
+                            <add name=""TelemetryHttpModule"" type=""OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule, OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"" />
                         </httpModules>
                     </system.web>
                 </configuration>";

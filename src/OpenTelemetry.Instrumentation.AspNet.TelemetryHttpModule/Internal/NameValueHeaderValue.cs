@@ -99,31 +99,35 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             var name = input.Substring(startIndex, nameLength);
             var current = startIndex + nameLength;
-            current = current + HttpRuleParser.GetWhitespaceLength(input, current);
+            current += HttpRuleParser.GetWhitespaceLength(input, current);
 
             // Parse the separator between name and value
             if ((current == input.Length) || (input[current] != '='))
             {
                 // We only have a name and that's OK. Return.
-                parsedValue = new NameValueHeaderValue();
-                parsedValue.name = name;
-                current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
+                parsedValue = new NameValueHeaderValue
+                {
+                    name = name,
+                };
+                current += HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
                 return current - startIndex;
             }
 
             current++; // skip delimiter.
-            current = current + HttpRuleParser.GetWhitespaceLength(input, current);
+            current += HttpRuleParser.GetWhitespaceLength(input, current);
 
             // Parse the value, i.e. <value> in name/value string "<name>=<value>"
             int valueLength = GetValueLength(input, current);
 
             // Value after the '=' may be empty
             // Use parameterless ctor to avoid double-parsing of name and value, i.e. skip public ctor validation.
-            parsedValue = new NameValueHeaderValue();
-            parsedValue.name = name;
-            parsedValue.value = input.Substring(current, valueLength);
-            current = current + valueLength;
-            current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
+            parsedValue = new NameValueHeaderValue
+            {
+                name = name,
+                value = input.Substring(current, valueLength),
+            };
+            current += valueLength;
+            current += HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
             return current - startIndex;
         }
     }
