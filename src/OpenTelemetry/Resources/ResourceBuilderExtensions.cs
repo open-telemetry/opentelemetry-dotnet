@@ -110,8 +110,8 @@ namespace OpenTelemetry.Resources
         }
 
         /// <summary>
-        /// Adds resource attributes parsed from an environment variable to a
-        /// <see cref="ResourceBuilder"/> following the <a
+        /// Adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
+        /// to a <see cref="ResourceBuilder"/> following the <a
         /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
         /// SDK</a>.
         /// </summary>
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Resources
         /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
         public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
         {
-            return resourceBuilder.AddDetector(new OtelEnvResourceDetector());
+            return resourceBuilder.AddDetector(new OtelEnvResourceDetector()).AddDetector(new OtelServiceNameEnvVarDetector());
         }
 
         private static string GetFileVersion()

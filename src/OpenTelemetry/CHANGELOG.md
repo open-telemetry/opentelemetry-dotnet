@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
+   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+
 * Removes upper constraint for Microsoft.Extensions.Logging
   dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
