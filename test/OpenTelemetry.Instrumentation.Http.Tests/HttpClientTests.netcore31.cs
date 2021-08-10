@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -52,6 +53,23 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
+
+            var metricItems = new List<MetricItem>();
+            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+
+            void ProcessExport(Batch<MetricItem> batch)
+            {
+                foreach (var metricItem in batch)
+                {
+                    metricItems.Add(metricItem);
+                }
+            }
+
+            var metricProcessor = new PullMetricProcessor(metricExporter, true);
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .AddMetricProcessor(metricProcessor)
+                .Build();
 
             using (serverLifeTime)
 
@@ -91,6 +109,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
+            // Invokes the TestExporter which will invoke ProcessExport
+            metricProcessor.PullRequest();
+
+            meterProvider.Dispose();
+
+            var requestMetrics = metricItems
+                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.client.duration"))
+                .ToArray();
+
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
             var activity = (Activity)processor.Invocations[2].Arguments[0];
 
@@ -122,6 +149,30 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             }
+
+            if (tc.ResponseExpected)
+            {
+                Assert.Single(requestMetrics);
+
+                var metric = requestMetrics[0] as IHistogramMetric;
+                Assert.NotNull(metric);
+                Assert.Equal(1L, metric.PopulationCount);
+                Assert.Equal(activity.Duration.TotalMilliseconds, metric.PopulationSum);
+
+                var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
+                var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+                var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+                var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+                Assert.Contains(method, metric.Attributes);
+                Assert.Contains(scheme, metric.Attributes);
+                Assert.Contains(statusCode, metric.Attributes);
+                Assert.Contains(flavor, metric.Attributes);
+                Assert.Equal(4, metric.Attributes.Length);
+            }
+            else
+            {
+                Assert.Empty(requestMetrics);
+            }
         }
 
         [Fact]
@@ -135,6 +186,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""method"": ""GET"",
     ""url"": ""http://{host}:{port}/"",
     ""responseCode"": 399,
+    ""responseExpected"": true,
     ""spanName"": ""HTTP GET"",
     ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
