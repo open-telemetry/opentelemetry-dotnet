@@ -31,7 +31,7 @@ following shows changes required to your `Web.config` when using IIS web server.
 ```xml
 <system.webServer>
     <modules>
-    <add 
+    <add
         name="TelemetryHttpModule"
         type="OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule,
             OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"
