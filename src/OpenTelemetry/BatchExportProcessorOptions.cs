@@ -14,48 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Security;
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry
 {
     public class BatchExportProcessorOptions<T>
         where T : class
     {
-        internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
-
-        internal const string MaxExportBatchSizeEnvVarKey = "OTEL_BSP_MAX_EXPORT_BATCH_SIZE";
-
-        internal const string ExporterTimeoutEnvVarKey = "OTEL_BSP_EXPORT_TIMEOUT";
-
-        internal const string ScheduledDelayEnvVarKey = "OTEL_BSP_SCHEDULE_DELAY";
-
-        public BatchExportProcessorOptions()
-        {
-            int value;
-
-            if (TryLoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
-            {
-                this.ExporterTimeoutMilliseconds = value;
-            }
-
-            if (TryLoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
-            {
-                this.MaxExportBatchSize = value;
-            }
-
-            if (TryLoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
-            {
-                this.MaxQueueSize = value;
-            }
-
-            if (TryLoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
-            {
-                this.ScheduledDelayMilliseconds = value;
-            }
-        }
-
         /// <summary>
         /// Gets or sets the maximum queue size. The queue drops the data if the maximum size is reached. The default value is 2048.
         /// </summary>
@@ -75,37 +38,5 @@ namespace OpenTelemetry
         /// Gets or sets the maximum batch size of every export. It must be smaller or equal to MaxQueueLength. The default value is 512.
         /// </summary>
         public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
-
-        private static bool TryLoadEnvVarInt(string envVarKey, out int result)
-        {
-            result = 0;
-
-            string value;
-            try
-            {
-                value = Environment.GetEnvironmentVariable(envVarKey);
-            }
-            catch (SecurityException ex)
-            {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if (!int.TryParse(value, out var parsedValue))
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToParseEnvironmentVariable(envVarKey, value);
-                return false;
-            }
-
-            result = parsedValue;
-            return true;
-        }
     }
 }
