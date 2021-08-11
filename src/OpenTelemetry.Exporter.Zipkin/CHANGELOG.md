@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* `ZipkinExporterOptions.BatchExportProcessorOptions` is initalized with
+* `ZipkinExporterOptions.BatchExportProcessorOptions` is initialized with
   `BatchSpanExportProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
