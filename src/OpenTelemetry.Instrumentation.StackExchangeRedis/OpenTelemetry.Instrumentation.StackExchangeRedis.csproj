@@ -3,6 +3,7 @@
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Description>StackExchange.Redis instrumentation for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;Redis;StackExchange.Redis</PackageTags>
+    <IncludeDiagnosticSourceInstrumentationHelpers>true</IncludeDiagnosticSourceInstrumentationHelpers>
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>
 

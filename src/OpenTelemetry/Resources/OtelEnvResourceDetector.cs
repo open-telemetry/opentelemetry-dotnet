@@ -16,13 +16,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {
     internal class OtelEnvResourceDetector : IResourceDetector
     {
-        private const string OTelResourceEnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
+        public const string EnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
         private const char AttributeListSplitter = ',';
         private const char AttributeKeyValueSplitter = '=';
 
@@ -32,16 +33,16 @@ namespace OpenTelemetry.Resources
 
             try
             {
-                string envResourceAttributeValue = Environment.GetEnvironmentVariable(OTelResourceEnvVarKey);
+                string envResourceAttributeValue = Environment.GetEnvironmentVariable(EnvVarKey);
                 if (!string.IsNullOrEmpty(envResourceAttributeValue))
                 {
                     var attributes = ParseResourceAttributes(envResourceAttributeValue);
                     resource = new Resource(attributes);
                 }
             }
-            catch (Exception ex)
+            catch (SecurityException ex)
             {
-                OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed("OtelEnvResourceDetector", ex.Message);
+                OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed(nameof(OtelEnvResourceDetector), ex.Message);
             }
 
             return resource;

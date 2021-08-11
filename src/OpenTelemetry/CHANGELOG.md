@@ -9,6 +9,9 @@
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
+   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+
 * Removes upper constraint for Microsoft.Extensions.Logging
   dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
