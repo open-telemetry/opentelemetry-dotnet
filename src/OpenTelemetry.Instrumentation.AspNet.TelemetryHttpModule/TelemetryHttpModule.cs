@@ -16,8 +16,10 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Web;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -26,6 +28,16 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// </summary>
     public class TelemetryHttpModule : IHttpModule
     {
+        /// <summary>
+        /// OpenTelemetry.Instrumentation.AspNet <see cref="ActivitySource"/> name.
+        /// </summary>
+        public const string AspNetSourceName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
+
+        /// <summary>
+        /// <see cref="Activity.OperationName"/> for OpenTelemetry.Instrumentation.AspNet created <see cref="Activity"/> objects.
+        /// </summary>
+        public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
+
         private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
 
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
@@ -36,11 +48,37 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
         private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
+        private TraceContextPropagator traceContextPropagator = new TraceContextPropagator();
+
         /// <summary>
-        /// Gets or sets a value indicating whether TelemetryHttpModule should parse headers to get correlation ids.
+        /// Gets or sets the <see cref="TraceContextPropagator"/> to use to
+        /// extract <see cref="PropagationContext"/> from incoming requests.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool ParseHeaders { get; set; } = true;
+        public TraceContextPropagator TextMapPropagator
+        {
+            get => this.traceContextPropagator;
+            set => this.traceContextPropagator = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        /// <summary>
+        /// Gets or sets a callback action to be fired when a request is started.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Action<Activity, HttpContext> OnRequestStartedCallback { get; set; }
+
+        /// <summary>
+        /// Gets or sets a callback action to be fired when a request is stopped.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Action<Activity, HttpContext> OnRequestStoppedCallback { get; set; }
+
+        /// <summary>
+        /// Gets or sets a callback action to be fired when an unhandled
+        /// exception is thrown processing a request.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Action<Activity, Exception> OnExceptionCallback { get; set; }
 
         /// <inheritdoc />
         public void Dispose()
@@ -100,7 +138,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             var context = ((HttpApplication)sender).Context;
             AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
-            ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+            ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
             context.Items[BeginCalledFlag] = true;
         }
 
@@ -135,13 +173,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 else
                 {
                     // Activity has never been started
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
                 }
             }
 
             if (trackActivity)
             {
-                ActivityHelper.StopAspNetActivity(context.Items);
+                ActivityHelper.StopAspNetActivity(context, this.OnRequestStoppedCallback);
             }
         }
 
@@ -156,10 +194,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
             {
                 if (!context.Items.Contains(BeginCalledFlag))
                 {
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
                 }
 
-                ActivityHelper.WriteActivityException(context.Items, exception);
+                ActivityHelper.WriteActivityException(context.Items, exception, this.OnExceptionCallback);
             }
         }
     }

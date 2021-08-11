@@ -16,8 +16,10 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -27,97 +29,105 @@ namespace OpenTelemetry.Instrumentation.AspNet
     internal static class ActivityHelper
     {
         /// <summary>
-        /// Listener name.
-        /// </summary>
-        public const string AspNetListenerName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
-
-        /// <summary>
-        /// Activity name for http request.
-        /// </summary>
-        public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
-
-        /// <summary>
-        /// Event name for the activity start event.
-        /// </summary>
-        public const string AspNetActivityStartName = "Microsoft.AspNet.HttpReqIn.Start";
-
-        /// <summary>
         /// Key to store the activity in HttpContext.
         /// </summary>
         public const string ActivityKey = "__AspnetActivity__";
 
-        private static readonly DiagnosticListener AspNetListener = new DiagnosticListener(AspNetListenerName);
+        private static readonly ActivitySource AspNetSource = new ActivitySource(TelemetryHttpModule.AspNetSourceName);
+        private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
 
-        private static readonly object EmptyPayload = new object();
+        /// <summary>
+        /// Creates root (first level) activity that describes incoming request.
+        /// </summary>
+        /// <param name="textMapPropagator"><see cref="TextMapPropagator"/>.</param>
+        /// <param name="context">Current HttpContext.</param>
+        /// <param name="onRequestStartedCallback">Callback action.</param>
+        /// <returns>New root activity.</returns>
+        public static Activity StartAspNetActivity(TextMapPropagator textMapPropagator, HttpContext context, Action<Activity, HttpContext> onRequestStartedCallback)
+        {
+            PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
+
+            Activity activity = AspNetSource.CreateActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
+
+            if (activity != null)
+            {
+                context.Items[ActivityKey] = activity;
+
+                if (propagationContext.Baggage != default)
+                {
+                    Baggage.Current = propagationContext.Baggage;
+                }
+
+                try
+                {
+                    onRequestStartedCallback?.Invoke(activity, context);
+                }
+                catch (Exception callbackEx)
+                {
+                    AspNetTelemetryEventSource.Log.CallbackException(activity, "OnStarted", callbackEx);
+                }
+
+                AspNetTelemetryEventSource.Log.ActivityStarted(activity);
+            }
+
+            return activity;
+        }
 
         /// <summary>
         /// Stops the activity and notifies listeners about it.
         /// </summary>
-        /// <param name="contextItems">HttpContext.Items.</param>
-        public static void StopAspNetActivity(IDictionary contextItems)
+        /// <param name="context">Current HttpContext.</param>
+        /// <param name="onRequestStoppedCallback">Callback action.</param>
+        public static void StopAspNetActivity(HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
         {
+            var contextItems = context.Items;
             var currentActivity = Activity.Current;
             Activity aspNetActivity = (Activity)contextItems[ActivityKey];
 
             if (currentActivity != aspNetActivity)
             {
                 Activity.Current = aspNetActivity;
-                currentActivity = aspNetActivity;
             }
 
-            if (currentActivity != null)
+            if (aspNetActivity != null)
             {
-                // stop Activity with Stop event
-                AspNetListener.StopActivity(currentActivity, EmptyPayload);
+                aspNetActivity.Stop();
                 contextItems[ActivityKey] = null;
+
+                try
+                {
+                    onRequestStoppedCallback?.Invoke(aspNetActivity, context);
+                }
+                catch (Exception callbackEx)
+                {
+                    AspNetTelemetryEventSource.Log.CallbackException(aspNetActivity, "OnStopped", callbackEx);
+                }
+
+                AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity);
             }
 
-            AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity?.Id, currentActivity?.OperationName);
-        }
-
-        /// <summary>
-        /// Creates root (first level) activity that describes incoming request.
-        /// </summary>
-        /// <param name="context">Current HttpContext.</param>
-        /// <param name="parseHeaders">Determines if headers should be parsed get correlation ids.</param>
-        /// <returns>New root activity.</returns>
-        public static Activity CreateRootActivity(HttpContext context, bool parseHeaders)
-        {
-            if (AspNetListener.IsEnabled() && AspNetListener.IsEnabled(AspNetActivityName))
+            if (currentActivity != aspNetActivity)
             {
-                var rootActivity = new Activity(AspNetActivityName);
-
-                if (parseHeaders)
-                {
-                    rootActivity.Extract(context.Request.Unvalidated.Headers);
-                }
-
-                AspNetListener.OnActivityImport(rootActivity, null);
-
-                if (StartAspNetActivity(rootActivity))
-                {
-                    context.Items[ActivityKey] = rootActivity;
-                    AspNetTelemetryEventSource.Log.ActivityStarted(rootActivity.Id);
-                    return rootActivity;
-                }
+                Activity.Current = currentActivity;
             }
-
-            return null;
         }
 
-        public static void WriteActivityException(IDictionary contextItems, Exception exception)
+        public static void WriteActivityException(IDictionary contextItems, Exception exception, Action<Activity, Exception> onExceptionCallback)
         {
             Activity aspNetActivity = (Activity)contextItems[ActivityKey];
 
             if (aspNetActivity != null)
             {
-                if (Activity.Current != aspNetActivity)
+                try
                 {
-                    Activity.Current = aspNetActivity;
+                    onExceptionCallback?.Invoke(aspNetActivity, exception);
+                }
+                catch (Exception callbackEx)
+                {
+                    AspNetTelemetryEventSource.Log.CallbackException(aspNetActivity, "OnException", callbackEx);
                 }
 
-                AspNetListener.Write(aspNetActivity.OperationName + ".Exception", exception);
-                AspNetTelemetryEventSource.Log.ActivityException(aspNetActivity.Id, aspNetActivity.OperationName, exception);
+                AspNetTelemetryEventSource.Log.ActivityException(aspNetActivity, exception);
             }
         }
 
@@ -136,27 +146,9 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 if (aspNetActivity != null)
                 {
                     Activity.Current = aspNetActivity;
+                    AspNetTelemetryEventSource.Log.ActivityRestored(aspNetActivity);
                 }
             }
-        }
-
-        private static bool StartAspNetActivity(Activity activity)
-        {
-            if (AspNetListener.IsEnabled(AspNetActivityName, activity, EmptyPayload))
-            {
-                if (AspNetListener.IsEnabled(AspNetActivityStartName))
-                {
-                    AspNetListener.StartActivity(activity, EmptyPayload);
-                }
-                else
-                {
-                    activity.Start();
-                }
-
-                return true;
-            }
-
-            return false;
         }
     }
 }

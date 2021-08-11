@@ -1,9 +1,14 @@
-OpenTelemetry.Instrumentation.AspNet.ActivityExtensions
+const OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.AspNetActivityName = "Microsoft.AspNet.HttpReqIn" -> string
+const OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.AspNetSourceName = "OpenTelemetry.Instrumentation.AspNet.Telemetry" -> string
 OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule
 OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Dispose() -> void
 OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Init(System.Web.HttpApplication context) -> void
-OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.ParseHeaders.get -> bool
-OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.ParseHeaders.set -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnExceptionCallback.get -> System.Action<System.Diagnostics.Activity, System.Exception>
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnExceptionCallback.set -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnRequestStartedCallback.get -> System.Action<System.Diagnostics.Activity, System.Web.HttpContext>
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnRequestStartedCallback.set -> void
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnRequestStoppedCallback.get -> System.Action<System.Diagnostics.Activity, System.Web.HttpContext>
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.OnRequestStoppedCallback.set -> void
 OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.TelemetryHttpModule() -> void
-static OpenTelemetry.Instrumentation.AspNet.ActivityExtensions.Extract(this System.Diagnostics.Activity activity, System.Collections.Specialized.NameValueCollection requestHeaders) -> bool
-static OpenTelemetry.Instrumentation.AspNet.ActivityExtensions.TryParse(this System.Diagnostics.Activity activity, System.Collections.Specialized.NameValueCollection requestHeaders) -> bool
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.TextMapPropagator.get -> OpenTelemetry.Context.Propagation.TraceContextPropagator
+OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.TextMapPropagator.set -> void
