@@ -38,8 +38,6 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// </summary>
         public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
 
-        private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
-
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
         private const string URLRewriteRewrittenRequest = "IIS_WasUrlRewritten";
 
@@ -139,7 +137,6 @@ namespace OpenTelemetry.Instrumentation.AspNet
             var context = ((HttpApplication)sender).Context;
             AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
             ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
-            context.Items[BeginCalledFlag] = true;
         }
 
         private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
@@ -155,9 +152,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             var context = ((HttpApplication)sender).Context;
 
-            // EndRequest does it's best effort to notify that request has ended
-            // BeginRequest has never been called
-            if (!context.Items.Contains(BeginCalledFlag))
+            if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
             {
                 // Rewrite: In case of rewrite, a new request context is created, called the child request, and it goes through the entire IIS/ASP.NET integrated pipeline.
                 // The child request can be mapped to any of the handlers configured in IIS, and it's execution is no different than it would be if it was received via the HTTP stack.
@@ -173,13 +168,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 else
                 {
                     // Activity has never been started
-                    ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
                 }
             }
 
             if (trackActivity)
             {
-                ActivityHelper.StopAspNetActivity(context, this.OnRequestStoppedCallback);
+                ActivityHelper.StopAspNetActivity(aspNetActivity, context, this.OnRequestStoppedCallback);
             }
         }
 
@@ -192,12 +187,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
             var exception = context.Error;
             if (exception != null)
             {
-                if (!context.Items.Contains(BeginCalledFlag))
+                if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
                 {
-                    ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(this.TextMapPropagator, context, this.OnRequestStartedCallback);
                 }
 
-                ActivityHelper.WriteActivityException(context.Items, exception, this.OnExceptionCallback);
+                ActivityHelper.WriteActivityException(aspNetActivity, exception, this.OnExceptionCallback);
             }
         }
     }
