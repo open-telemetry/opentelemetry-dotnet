@@ -118,6 +118,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             if (aspNetActivity == null)
             {
+                // This is the case where a start was called but no activity was
+                // created due to a sampler decision.
                 context.Items[ActivityKey] = null;
                 return;
             }
