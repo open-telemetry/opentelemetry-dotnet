@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.Equal("SET", result.DisplayName);
         }
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(now.DateTime);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.Equal(now, result.StartTimeUtc);
         }
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             var profiledCommand = new Mock<IProfiledCommand>();
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("redis", result.GetTagValue(SemanticConventions.AttributeDbSystem));
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.Command).Returns("SET");
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeDbStatement));
             Assert.Equal("SET", result.GetTagValue(SemanticConventions.AttributeDbStatement));
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
                                 CommandFlags.NoRedirect;
             profiledCommand.Setup(m => m.Flags).Returns(expectedFlags);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName));
             Assert.Equal("PreferMaster, FireAndForget, NoRedirect", result.GetTagValue(StackExchangeRedisCallsInstrumentation.RedisFlagsKeyName));
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(ipLocalEndPoint);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerIp));
             Assert.Equal($"{address}.0.0.0", result.GetTagValue(SemanticConventions.AttributeNetPeerIp));
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(dnsEndPoint);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(SemanticConventions.AttributeNetPeerName));
             Assert.Equal(dnsEndPoint.Host, result.GetTagValue(SemanticConventions.AttributeNetPeerName));
@@ -170,7 +170,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             profiledCommand.Setup(m => m.CommandCreated).Returns(DateTime.UtcNow);
             profiledCommand.Setup(m => m.EndPoint).Returns(unixEndPoint);
 
-            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object);
+            var result = RedisProfilerEntryToActivityConverter.ProfilerCommandToActivity(activity, profiledCommand.Object, new StackExchangeRedisCallsInstrumentationOptions());
 
             Assert.NotNull(result.GetTagValue(SemanticConventions.AttributePeerService));
             Assert.Equal(unixEndPoint.ToString(), result.GetTagValue(SemanticConventions.AttributePeerService));
