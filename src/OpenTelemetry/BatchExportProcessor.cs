@@ -39,8 +39,8 @@ namespace OpenTelemetry
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly ManualResetEventSlim dataExportedNotification = new ManualResetEventSlim(false);
+        private readonly ManualResetEventSlim shutdownTrigger = new ManualResetEventSlim(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
 
@@ -142,7 +142,7 @@ namespace OpenTelemetry
                 return false;
             }
 
-            var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
+            var triggers = new WaitHandle[] { this.dataExportedNotification.WaitHandle, this.shutdownTrigger.WaitHandle };
 
             var sw = Stopwatch.StartNew();
 
@@ -205,7 +205,7 @@ namespace OpenTelemetry
 
         private void ExporterProc()
         {
-            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger.WaitHandle };
 
             while (true)
             {
