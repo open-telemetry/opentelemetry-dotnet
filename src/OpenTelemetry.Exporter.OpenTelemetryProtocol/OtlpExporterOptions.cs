@@ -105,7 +105,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchSpanExportProcessorOptions();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
 
         /// <summary>
         /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.

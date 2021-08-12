@@ -204,10 +204,10 @@ purposes, the SDK provides the following built-in processors:
   the configured exporter.
 
   The following environment variables can be used to override the default
-  values of the `BatchSpanExportProcessorOptions`.
+  values of the `BatchExportActivityProcessorOptions`.
 
   <!-- markdownlint-disable MD013 -->
-  | Environment variable             | `BatchSpanExportProcessorOptions` property |
+  | Environment variable             | `BatchExportActivityProcessorOptions` property |
   | -------------------------------- | ---------------------------------------------- |
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
   | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
