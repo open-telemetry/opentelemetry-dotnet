@@ -441,6 +441,20 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void EnvironmentVariableDetectors_DoNotDuplicateAttributes()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
+            var resource = ResourceBuilder.CreateDefault().AddEnvironmentVariableDetector().AddEnvironmentVariableDetector().Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(3, attributes.Count());
+            Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
+        }
+
+        [Fact]
         public void GetResource_WithServiceEnvVar()
         {
             // Arrange
