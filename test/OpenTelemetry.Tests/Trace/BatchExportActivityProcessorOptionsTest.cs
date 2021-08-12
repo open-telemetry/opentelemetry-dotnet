@@ -1,4 +1,4 @@
-// <copyright file="BatchSpanExportProcessorOptionsTest.cs" company="OpenTelemetry Authors">
+// <copyright file="BatchExportActivityProcessorOptionsTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class BatchSpanExportProcessorOptionsTest : IDisposable
+    public class BatchExportActivityProcessorOptionsTest : IDisposable
     {
-        public BatchSpanExportProcessorOptionsTest()
+        public BatchExportActivityProcessorOptionsTest()
         {
             this.ClearEnvVars();
         }
@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void BatchExportProcessorOptions_Defaults()
         {
-            var options = new BatchSpanExportProcessorOptions();
+            var options = new BatchExportActivityProcessorOptions();
 
             Assert.Equal(30000, options.ExporterTimeoutMilliseconds);
             Assert.Equal(512, options.MaxExportBatchSize);
@@ -45,12 +45,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void BatchExportProcessorOptions_EnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ExporterTimeoutEnvVarKey, "1");
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.MaxExportBatchSizeEnvVarKey, "2");
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.MaxQueueSizeEnvVarKey, "3");
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ScheduledDelayEnvVarKey, "4");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "1");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey, "2");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey, "3");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey, "4");
 
-            var options = new BatchSpanExportProcessorOptions();
+            var options = new BatchExportActivityProcessorOptions();
 
             Assert.Equal(1, options.ExporterTimeoutMilliseconds);
             Assert.Equal(2, options.MaxExportBatchSize);
@@ -61,9 +61,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void BatchExportProcessorOptions_InvalidPortEnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
 
-            var options = new BatchSpanExportProcessorOptions();
+            var options = new BatchExportActivityProcessorOptions();
 
             Assert.Equal(30000, options.ExporterTimeoutMilliseconds); // use default
         }
@@ -71,9 +71,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void BatchExportProcessorOptions_SetterOverridesEnvironmentVariable()
         {
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ExporterTimeoutEnvVarKey, "123");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "123");
 
-            var options = new BatchSpanExportProcessorOptions
+            var options = new BatchExportActivityProcessorOptions
             {
                 ExporterTimeoutMilliseconds = 89000,
             };
@@ -84,18 +84,18 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void BatchExportProcessorOptions_EnvironmentVariableNames()
         {
-            Assert.Equal("OTEL_BSP_EXPORT_TIMEOUT", BatchSpanExportProcessorOptions.ExporterTimeoutEnvVarKey);
-            Assert.Equal("OTEL_BSP_MAX_EXPORT_BATCH_SIZE", BatchSpanExportProcessorOptions.MaxExportBatchSizeEnvVarKey);
-            Assert.Equal("OTEL_BSP_MAX_QUEUE_SIZE", BatchSpanExportProcessorOptions.MaxQueueSizeEnvVarKey);
-            Assert.Equal("OTEL_BSP_SCHEDULE_DELAY", BatchSpanExportProcessorOptions.ScheduledDelayEnvVarKey);
+            Assert.Equal("OTEL_BSP_EXPORT_TIMEOUT", BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey);
+            Assert.Equal("OTEL_BSP_MAX_EXPORT_BATCH_SIZE", BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey);
+            Assert.Equal("OTEL_BSP_MAX_QUEUE_SIZE", BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey);
+            Assert.Equal("OTEL_BSP_SCHEDULE_DELAY", BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey);
         }
 
         private void ClearEnvVars()
         {
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ExporterTimeoutEnvVarKey, null);
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.MaxExportBatchSizeEnvVarKey, null);
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.MaxQueueSizeEnvVarKey, null);
-            Environment.SetEnvironmentVariable(BatchSpanExportProcessorOptions.ScheduledDelayEnvVarKey, null);
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, null);
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey, null);
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey, null);
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey, null);
         }
     }
 }

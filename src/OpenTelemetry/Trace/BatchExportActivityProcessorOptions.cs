@@ -1,4 +1,4 @@
-// <copyright file="BatchSpanExportProcessorOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="BatchExportActivityProcessorOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
-    public class BatchSpanExportProcessorOptions : BatchExportProcessorOptions<Activity>
+    public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
 
@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
 
         internal const string ScheduledDelayEnvVarKey = "OTEL_BSP_SCHEDULE_DELAY";
 
-        public BatchSpanExportProcessorOptions()
+        public BatchExportActivityProcessorOptions()
         {
             int value;
 
