@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -63,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.ActivityException(activity?.Id, ex.ToString());
+                this.ActivityException(activity?.Id, ex.ToInvariantString());
             }
         }
 
@@ -72,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.CallbackException(activity?.Id, eventName, ex.ToString());
+                this.CallbackException(activity?.Id, eventName, ex.ToInvariantString());
             }
         }
 

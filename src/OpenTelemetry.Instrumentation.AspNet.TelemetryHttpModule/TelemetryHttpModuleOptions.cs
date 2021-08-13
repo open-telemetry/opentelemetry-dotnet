@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Web;
 using OpenTelemetry.Context.Propagation;
@@ -37,7 +36,6 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Gets or sets the <see cref=" Context.Propagation.TextMapPropagator"/> to use to
         /// extract <see cref="PropagationContext"/> from incoming requests.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public TextMapPropagator TextMapPropagator
         {
             get => this.textMapPropagator;
@@ -47,20 +45,17 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Gets or sets a callback action to be fired when a request is started.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public Action<Activity, HttpContext> OnRequestStartedCallback { get; set; }
 
         /// <summary>
         /// Gets or sets a callback action to be fired when a request is stopped.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public Action<Activity, HttpContext> OnRequestStoppedCallback { get; set; }
 
         /// <summary>
         /// Gets or sets a callback action to be fired when an unhandled
         /// exception is thrown processing a request.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public Action<Activity, HttpContext, Exception> OnExceptionCallback { get; set; }
     }
 }

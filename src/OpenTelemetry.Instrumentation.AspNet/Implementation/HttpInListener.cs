@@ -66,11 +66,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                var request = context.Request;
-                var requestValues = request.Unvalidated;
-
                 try
                 {
+                    // todo: Ideally we would also check
+                    // Sdk.SuppressInstrumentation here to prevent tagging a
+                    // span that will not be collected but we can't do that
+                    // without an SDK reference. Need the spec to come around on
+                    // this.
+
                     if (this.options.Filter?.Invoke(context) == false)
                     {
                         AspNetInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
@@ -81,11 +84,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetInstrumentationEventSource.Log.RequestFilterException(ex);
+                    AspNetInstrumentationEventSource.Log.RequestFilterException(activity.OperationName, ex);
                     activity.IsAllDataRequested = false;
                     activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
                 }
+
+                var request = context.Request;
+                var requestValues = request.Unvalidated;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
                 var path = requestValues.Path;
@@ -111,7 +117,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetInstrumentationEventSource.Log.EnrichmentException("OnStartActivity", ex);
                 }
             }
         }
@@ -163,7 +169,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetInstrumentationEventSource.Log.EnrichmentException("OnStopActivity", ex);
                 }
             }
         }
@@ -185,7 +191,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetInstrumentationEventSource.Log.EnrichmentException("OnException", ex);
                 }
             }
             else

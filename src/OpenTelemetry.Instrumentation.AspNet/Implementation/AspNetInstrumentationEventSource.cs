@@ -29,11 +29,20 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         public static AspNetInstrumentationEventSource Log = new AspNetInstrumentationEventSource();
 
         [NonEvent]
-        public void RequestFilterException(Exception ex)
+        public void RequestFilterException(string operationName, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.RequestFilterException(ex.ToInvariantString());
+                this.RequestFilterException(operationName, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void EnrichmentException(string eventName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.EnrichmentException(eventName, ex.ToInvariantString());
             }
         }
 
@@ -43,31 +52,22 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             this.WriteEvent(1, handlerName, eventName);
         }
 
-        [Event(2, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
-        public void RequestIsFilteredOut(string eventName)
+        [Event(2, Message = "Request is filtered out and will not be collected. Operation='{0}'", Level = EventLevel.Verbose)]
+        public void RequestIsFilteredOut(string operationName)
         {
-            this.WriteEvent(2, eventName);
+            this.WriteEvent(2, operationName);
         }
 
-        [Event(3, Message = "InstrumentationFilter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
-        public void RequestFilterException(string exception)
+        [Event(3, Message = "InstrumentationFilter threw an exception. Request will not be collected. Operation='{0}': {1}", Level = EventLevel.Error)]
+        public void RequestFilterException(string operationName, string exception)
         {
-            this.WriteEvent(3, exception);
+            this.WriteEvent(3, operationName, exception);
         }
 
-        [NonEvent]
-        public void EnrichmentException(Exception ex)
+        [Event(4, Message = "Enrichment threw an exception. Event='{0}': {1}", Level = EventLevel.Error)]
+        public void EnrichmentException(string eventName, string exception)
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.EnrichmentException(ex.ToInvariantString());
-            }
-        }
-
-        [Event(4, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
-        public void EnrichmentException(string exception)
-        {
-            this.WriteEvent(4, exception);
+            this.WriteEvent(4, eventName, exception);
         }
     }
 }

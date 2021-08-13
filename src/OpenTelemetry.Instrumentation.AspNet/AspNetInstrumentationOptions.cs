@@ -26,11 +26,19 @@ namespace OpenTelemetry.Instrumentation.AspNet
     public class AspNetInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
-        /// The Filter gets the HttpContext, and should return a boolean.
-        /// If Filter returns true, the request is collected.
-        /// If Filter returns false or throw exception, the request is filtered out.
+        /// Gets or sets a filter callback function that determines on a per
+        /// request basis whether or not to collect telemetry.
         /// </summary>
+        /// <remarks>
+        /// The filter callback receives the <see cref="HttpContext"/> for the
+        /// current request and should return a boolean.
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true"/> the request is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false"/> or throws an
+        /// exception the request is filtered out (NOT collected).</item>
+        /// </list>
+        /// </remarks>
         public Func<HttpContext, bool> Filter { get; set; }
 
         /// <summary>
@@ -48,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
+        /// See: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md"/>.
         /// </remarks>
         public bool RecordException { get; set; }
     }
