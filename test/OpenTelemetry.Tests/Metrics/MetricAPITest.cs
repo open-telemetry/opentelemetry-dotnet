@@ -186,7 +186,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         public class TestProcessor : MetricProcessor
         {
-            private Func<bool, MetricItem>? getMetrics;
+            private Func<bool, MetricItem> getMetrics;
 
             public TestProcessor()
                 : base(new TestExporter())
@@ -215,7 +215,6 @@ namespace OpenTelemetry.Metrics.Tests
                     return ExportResult.Success;
                 }
             }
-
         }
     }
 }
