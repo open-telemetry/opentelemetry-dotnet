@@ -85,14 +85,23 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public void Update<T>(T value)
+        public void Update<T>(Instrument instrument, T value)
             where T : struct
         {
+            bool isDeltaTemporality = true;
+
+            Type genType = instrument.GetType().GetGenericTypeDefinition();
+            if (genType == typeof(ObservableCounter<>) ||
+                genType == typeof(ObservableGauge<>))
+            {
+                isDeltaTemporality = false;
+            }
+
             if (typeof(T) == typeof(long))
             {
                 var val = (long)(object)value;
 
-                if (this.IsDeltaTemporality)
+                if (isDeltaTemporality)
                 {
                     this.UpdateDeltaLong(val);
                 }
@@ -105,7 +114,7 @@ namespace OpenTelemetry.Metrics
             {
                 var val = (double)(object)value;
 
-                if (this.IsDeltaTemporality)
+                if (isDeltaTemporality)
                 {
                     this.UpdateDeltaDouble(val);
                 }

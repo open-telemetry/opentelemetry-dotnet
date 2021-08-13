@@ -53,7 +53,7 @@ namespace OpenTelemetry.Metrics
 
         public IDataValue LastValue => this.value;
 
-        public void Update<T>(T value)
+        public void Update<T>(Instrument instrument, T value)
             where T : struct
         {
             lock (this.lockUpdate)

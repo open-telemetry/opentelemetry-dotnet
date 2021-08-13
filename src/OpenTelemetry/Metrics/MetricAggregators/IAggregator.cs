@@ -15,12 +15,13 @@
 // </copyright>
 
 using System;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
     internal interface IAggregator
     {
-        void Update<T>(T value)
+        void Update<T>(Instrument instrument, T value)
             where T : struct;
 
         IMetric Collect(DateTimeOffset dt, bool isDelta);

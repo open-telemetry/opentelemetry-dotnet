@@ -145,7 +145,7 @@ namespace OpenTelemetry.Metrics
             return metrics;
         }
 
-        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             where T : struct
         {
             // TODO: We can isolate the cost of each user-added aggregator in
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var metricAggregator in metricAggregators)
             {
-                metricAggregator.Update(value);
+                metricAggregator.Update(instrument, value);
             }
         }
 

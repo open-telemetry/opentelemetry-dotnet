@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics
 
         public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
-        public void Update<T>(T value)
+        public void Update<T>(Instrument instrument, T value)
             where T : struct
         {
             // TODO: Implement Histogram!

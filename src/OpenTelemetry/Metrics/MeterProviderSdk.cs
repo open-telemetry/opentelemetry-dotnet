@@ -127,7 +127,7 @@ namespace OpenTelemetry.Metrics
 
             // TODO: Replace the following with a built-in MeasurementProcessor
             // that knows how to aggregate and produce Metrics.
-            instrumentState.Update(val, tags);
+            instrumentState.Update(instrument, val, tags);
         }
 
         protected override void Dispose(bool disposing)
