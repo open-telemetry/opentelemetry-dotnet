@@ -43,10 +43,14 @@ namespace OpenTelemetry.Resources
         /// service.name added. See <a
         /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value">resource
         /// semantic conventions</a> for details.
+        /// Additionally it adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
+        /// to a <see cref="ResourceBuilder"/> following the <a
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
+        /// SDK</a>.
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddResource(DefaultResource);
+            => new ResourceBuilder().AddResource(DefaultResource).AddEnvironmentVariableDetector();
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.
