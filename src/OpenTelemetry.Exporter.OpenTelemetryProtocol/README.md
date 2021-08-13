@@ -53,9 +53,8 @@ values of the `OtlpExporterOptions`
 
 ## Special case when using insecure channel
 
-If your application is targeting .NET Core 3.1, and you
-are using an insecure (HTTP) endpoint, the following switch must be set before
-adding `OtlpExporter`.
+If your application is targeting .NET Core 3.1, and you are using an insecure
+(HTTP) endpoint, the following switch must be set before adding `OtlpExporter`.
 
 ```csharp
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport",
