@@ -46,28 +46,22 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
             }
         }
 
-        [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullPayload(string handlerName, string eventName)
-        {
-            this.WriteEvent(1, handlerName, eventName);
-        }
-
-        [Event(2, Message = "Request is filtered out and will not be collected. Operation='{0}'", Level = EventLevel.Verbose)]
+        [Event(1, Message = "Request is filtered out and will not be collected. Operation='{0}'", Level = EventLevel.Verbose)]
         public void RequestIsFilteredOut(string operationName)
         {
-            this.WriteEvent(2, operationName);
+            this.WriteEvent(1, operationName);
         }
 
-        [Event(3, Message = "InstrumentationFilter threw an exception. Request will not be collected. Operation='{0}': {1}", Level = EventLevel.Error)]
+        [Event(2, Message = "Filter callback threw an exception. Request will not be collected. Operation='{0}': {1}", Level = EventLevel.Error)]
         public void RequestFilterException(string operationName, string exception)
         {
-            this.WriteEvent(3, operationName, exception);
+            this.WriteEvent(2, operationName, exception);
         }
 
-        [Event(4, Message = "Enrichment threw an exception. Event='{0}': {1}", Level = EventLevel.Error)]
+        [Event(3, Message = "Enrich callback threw an exception. Event='{0}': {1}", Level = EventLevel.Error)]
         public void EnrichmentException(string eventName, string exception)
         {
-            this.WriteEvent(4, eventName, exception);
+            this.WriteEvent(3, eventName, exception);
         }
     }
 }
