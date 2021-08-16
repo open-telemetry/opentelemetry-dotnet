@@ -47,6 +47,33 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         }
 
         [Fact]
+        public void Has_Started_Returns_Correctly()
+        {
+            var context = HttpContextHelper.GetFakeHttpContext();
+
+            bool result = ActivityHelper.HasStarted(context, out Activity aspNetActivity);
+
+            Assert.False(result);
+            Assert.Null(aspNetActivity);
+
+            context.Items[ActivityHelper.ActivityKey] = ActivityHelper.StartedButNotSampledObj;
+
+            result = ActivityHelper.HasStarted(context, out aspNetActivity);
+
+            Assert.True(result);
+            Assert.Null(aspNetActivity);
+
+            Activity activity = new Activity(TestActivityName);
+            context.Items[ActivityHelper.ActivityKey] = activity;
+
+            result = ActivityHelper.HasStarted(context, out aspNetActivity);
+
+            Assert.True(result);
+            Assert.NotNull(aspNetActivity);
+            Assert.Equal(activity, aspNetActivity);
+        }
+
+        [Fact]
         public void Can_Restore_Activity()
         {
             this.EnableListener();
@@ -229,6 +256,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.Null(rootActivity);
+            Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ActivityKey]);
+
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
+            Assert.Null(context.Items[ActivityHelper.ActivityKey]);
         }
 
         [Fact]
@@ -239,6 +270,10 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.Null(rootActivity);
+            Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ActivityKey]);
+
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
+            Assert.Null(context.Items[ActivityHelper.ActivityKey]);
         }
 
         [Fact]

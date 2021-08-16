@@ -34,10 +34,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// </summary>
         internal const string ActivityKey = "__AspnetActivity__";
 
+        internal static readonly object StartedButNotSampledObj = new object();
         private static readonly Version Version = typeof(ActivityHelper).Assembly.GetName().Version;
         private static readonly ActivitySource AspNetSource = new ActivitySource(TelemetryHttpModule.AspNetSourceName, Version.ToString());
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        private static readonly object StartedButNotSampledObj = new object();
 
         /// <summary>
         /// Try to get the started <see cref="Activity"/> for the running <see
