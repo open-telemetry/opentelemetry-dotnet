@@ -34,7 +34,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// </summary>
         private const string ActivityKey = "__AspnetActivity__";
 
-        private static readonly ActivitySource AspNetSource = new ActivitySource(TelemetryHttpModule.AspNetSourceName);
+        private static readonly Version Version = typeof(ActivityHelper).Assembly.GetName().Version;
+        private static readonly ActivitySource AspNetSource = new ActivitySource(TelemetryHttpModule.AspNetSourceName, Version.ToString());
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private static readonly object StartedButNotSampledObj = new object();
 
@@ -71,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
 
-            Activity activity = AspNetSource.CreateActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
+            Activity activity = AspNetSource.StartActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
 
             if (activity != null)
             {
@@ -147,13 +148,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteActivityException(Activity aspNetActivity, Exception exception, Action<Activity, Exception> onExceptionCallback)
+        public static void WriteActivityException(Activity aspNetActivity, HttpContext context, Exception exception, Action<Activity, HttpContext, Exception> onExceptionCallback)
         {
             if (aspNetActivity != null)
             {
                 try
                 {
-                    onExceptionCallback?.Invoke(aspNetActivity, exception);
+                    onExceptionCallback?.Invoke(aspNetActivity, context, exception);
                 }
                 catch (Exception callbackEx)
                 {
