@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Key to store the activity in HttpContext.
         /// </summary>
-        private const string ActivityKey = "__AspnetActivity__";
+        internal const string ActivityKey = "__AspnetActivity__";
 
         private static readonly Version Version = typeof(ActivityHelper).Assembly.GetName().Version;
         private static readonly ActivitySource AspNetSource = new ActivitySource(TelemetryHttpModule.AspNetSourceName, Version.ToString());
@@ -43,14 +43,16 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Try to get the started <see cref="Activity"/> for the running <see
         /// cref="HttpContext"/>.
         /// </summary>
-        /// <param name="httpContext"><see cref="HttpContext"/>.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
         /// <param name="aspNetActivity">Started <see cref="Activity"/> or <see
         /// langword="null"/> if 1) start has not been called or 2) start was
         /// called but sampling decided not to create an instance.</param>
         /// <returns><see langword="true"/> if start has been called.</returns>
-        public static bool HasStarted(HttpContext httpContext, out Activity aspNetActivity)
+        public static bool HasStarted(HttpContext context, out Activity aspNetActivity)
         {
-            object itemValue = httpContext.Items[ActivityKey];
+            Debug.Assert(context != null, "Context should be non-null.");
+
+            object itemValue = context.Items[ActivityKey];
             if (itemValue is Activity activity)
             {
                 aspNetActivity = activity;
@@ -65,11 +67,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Creates root (first level) activity that describes incoming request.
         /// </summary>
         /// <param name="textMapPropagator"><see cref="TextMapPropagator"/>.</param>
-        /// <param name="context">Current HttpContext.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
         /// <param name="onRequestStartedCallback">Callback action.</param>
         /// <returns>New root activity.</returns>
         public static Activity StartAspNetActivity(TextMapPropagator textMapPropagator, HttpContext context, Action<Activity, HttpContext> onRequestStartedCallback)
         {
+            Debug.Assert(context != null, "Context should be non-null.");
+
             PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
 
             Activity activity = AspNetSource.StartActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
@@ -112,18 +116,24 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Stops the activity and notifies listeners about it.
         /// </summary>
         /// <param name="aspNetActivity"><see cref="Activity"/>.</param>
-        /// <param name="context">Current HttpContext.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
         /// <param name="onRequestStoppedCallback">Callback action.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void StopAspNetActivity(Activity aspNetActivity, HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
         {
+            Debug.Assert(context != null, "Context should be non-null.");
+
             if (aspNetActivity == null)
             {
+                Debug.Assert(context.Items[ActivityKey] == StartedButNotSampledObj, "Context item should be StartedButNotSampledObj.");
+
                 // This is the case where a start was called but no activity was
                 // created due to a sampling decision.
                 context.Items[ActivityKey] = null;
                 return;
             }
+
+            Debug.Assert(context.Items[ActivityKey] is Activity, "Context item should be an Activity instance.");
 
             var currentActivity = Activity.Current;
 
@@ -147,9 +157,19 @@ namespace OpenTelemetry.Instrumentation.AspNet
             }
         }
 
+        /// <summary>
+        /// Notifies listeners about an unhandled exception thrown on the <see cref="HttpContext"/>.
+        /// </summary>
+        /// <param name="aspNetActivity"><see cref="Activity"/>.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        /// <param name="exception"><see cref="Exception"/>.</param>
+        /// <param name="onExceptionCallback">Callback action.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteActivityException(Activity aspNetActivity, HttpContext context, Exception exception, Action<Activity, HttpContext, Exception> onExceptionCallback)
         {
+            Debug.Assert(context != null, "Context should be non-null.");
+            Debug.Assert(exception != null, "Exception should be non-null.");
+
             if (aspNetActivity != null)
             {
                 try
@@ -175,6 +195,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void RestoreActivityIfNeeded(IDictionary contextItems)
         {
+            Debug.Assert(contextItems != null, "Context Items should be non-null.");
+
             if (Activity.Current == null && contextItems[ActivityKey] is Activity aspNetActivity)
             {
                 Activity.Current = aspNetActivity;
