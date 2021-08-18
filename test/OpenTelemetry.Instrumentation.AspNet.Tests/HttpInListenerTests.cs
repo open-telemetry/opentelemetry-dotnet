@@ -51,6 +51,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
         [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
         [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", false, null, false, true)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", false, null, false, true, SamplingDecision.RecordOnly)]
         public void AspNetRequestsAreCollectedSuccessfully(
             string expectedUrl,
             string url,
@@ -59,7 +61,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             string carrierFormat,
             bool setStatusToErrorInEnrich = false,
             string filter = null,
-            bool restoreCurrentActivity = false)
+            bool restoreCurrentActivity = false,
+            bool recordException = false,
+            SamplingDecision samplingDecision = SamplingDecision.RecordAndSample)
         {
             IDisposable openTelemetry = null;
             RouteData routeData;
@@ -132,6 +136,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new TestSampler(samplingDecision))
                 .AddAspNetInstrumentation(
                 (options) =>
                 {
@@ -159,6 +164,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     {
                         options.Enrich = GetEnrichmentAction(default);
                     }
+
+                    options.RecordException = recordException;
                 })
             .AddProcessor(activityProcessor.Object).Build())
             {
@@ -177,6 +184,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 }
 
                 Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
+
+                if (recordException)
+                {
+                    ActivityHelper.WriteActivityException(activity, HttpContext.Current, new InvalidOperationException(), TelemetryHttpModule.Options.OnExceptionCallback);
+                }
+
                 ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
@@ -248,25 +261,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
-            if (setStatusToErrorInEnrich)
-            {
-                // This validates that users can override the
-                // status in Enrich.
-                Assert.Equal(Status.Error, span.GetStatus());
-
-                // Instrumentation is not expected to set status description
-                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
-            }
-            else
-            {
-                Assert.Equal(Status.Unset, span.GetStatus());
-
-                // Instrumentation is not expected to set status description
-                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
-            }
-
             var expectedUri = new Uri(expectedUrl);
             var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
 
@@ -299,6 +293,38 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
             Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
+
+            if (recordException)
+            {
+                var status = span.GetStatus();
+                Assert.Equal(Status.Error.StatusCode, status.StatusCode);
+                if (samplingDecision == SamplingDecision.RecordOnly)
+                {
+                    Assert.True(string.IsNullOrEmpty(status.Description));
+                }
+                else
+                {
+                    Assert.Equal("Operation is not valid due to the current state of the object.", status.Description);
+                }
+            }
+            else if (setStatusToErrorInEnrich)
+            {
+                // This validates that users can override the
+                // status in Enrich.
+                Assert.Equal(Status.Error, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
+            else
+            {
+                Assert.Equal(Status.Unset, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
         }
 
         [Theory]
