@@ -31,20 +31,8 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
-    public class HttpInListenerTests : IDisposable
+    public class HttpInListenerTests
     {
-        private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
-
-        public HttpInListenerTests()
-        {
-            this.fakeAspNetDiagnosticSource = new FakeAspNetDiagnosticSource();
-        }
-
-        public void Dispose()
-        {
-            this.fakeAspNetDiagnosticSource.Dispose();
-        }
-
         [Theory]
         [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext")]
         [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", true)]
@@ -141,12 +129,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     isRemote: true),
                 default));
 
-            var activity = new Activity(HttpInListener.ActivityOperationName);
-            if (carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent")
-            {
-                activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
-            }
-
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
@@ -180,16 +162,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 })
             .AddProcessor(activityProcessor.Object).Build())
             {
-                activity.Start();
+                using var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log);
 
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+
+                if (filter == "{ThrowException}")
                 {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-
-                    if (filter == "{ThrowException}")
-                    {
-                        Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
-                    }
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 2));
                 }
 
                 if (restoreCurrentActivity)
@@ -197,12 +176,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     Activity.Current = activity;
                 }
 
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-
-                // The above line fires DS event which is listened by Instrumentation.
-                // Validate that Current activity is still the one created by Asp.Net
-                Assert.Equal(HttpInListener.ActivityOperationName, Activity.Current.OperationName);
-                activity.Stop();
+                Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
@@ -218,31 +193,23 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Activity span;
             if (carrierFormat == "CustomContextNonmatchParent")
             {
-                Assert.Equal(6, activityProcessor.Invocations.Count); // SetParentProvider/OnStart(framework activity)/OnStart(sibling activity)/OnEnd(sibling activity)/OnShutdown/Dispose called.
+                Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
                 var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-                Assert.Equal(2, startedActivities.Count());
+                Assert.Single(startedActivities);
                 Assert.Single(stoppedActivities);
 
-                // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
                 Assert.Contains(startedActivities, item =>
                 {
                     var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+                    return startedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
                 });
 
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
                 Assert.Contains(stoppedActivities, item =>
                 {
                     var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
+                    return stoppedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
                 });
             }
             else
@@ -252,31 +219,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
                 var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
 
-                // There is no sibling activity created
                 Assert.Single(startedActivities);
                 Assert.Single(stoppedActivities);
 
                 Assert.Contains(startedActivities, item =>
                 {
                     var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
+                    return startedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
                 });
 
-                // Only the sibling activity is sent to Processor.OnEnd
                 Assert.Contains(stoppedActivities, item =>
                 {
                     var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityOperationName;
+                    return stoppedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
                 });
             }
 
             span = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            Assert.Equal(
-                carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent"
-                    ? HttpInListener.ActivityOperationName
-                    : HttpInListener.ActivityNameByHttpInListener,
-                span.OperationName);
+            Assert.Equal(TelemetryHttpModule.AspNetActivityName, span.OperationName);
             Assert.NotEqual(TimeSpan.Zero, span.Duration);
             Assert.Equal(expectedTraceId, span.TraceId);
             Assert.Equal(expectedSpanId, span.ParentSpanId);
@@ -363,10 +324,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .Returns(() =>
                 {
                     isPropagatorCalled = true;
-                    return default(PropagationContext);
+                    return default;
                 });
-
-            var activity = new Activity(HttpInListener.ActivityOperationName);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
@@ -375,15 +334,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation()
                 .AddProcessor(activityProcessor.Object).Build())
             {
-                activity.Start();
-
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
-                {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-                }
-
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-                activity.Stop();
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isPropagatorCalled);
@@ -408,10 +360,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .Returns(() =>
                 {
                     isPropagatorCalled = true;
-                    return default(PropagationContext);
+                    return default;
                 });
-
-            var activity = new Activity(HttpInListener.ActivityOperationName);
 
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
@@ -427,15 +377,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 })
                 .AddProcessor(activityProcessor.Object).Build())
             {
-                activity.Start();
-
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
-                {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-                }
-
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-                activity.Stop();
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isFilterCalled);
@@ -444,9 +387,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         private static Action<Activity, string, object> GetEnrichmentAction(Status statusToBeSet)
         {
-            Action<Activity, string, object> enrichAction;
-
-            enrichAction = (activity, method, obj) =>
+            void EnrichAction(Activity activity, string method, object obj)
             {
                 Assert.True(activity.IsAllDataRequested);
                 switch (method)
@@ -467,34 +408,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     default:
                         break;
                 }
-            };
-
-            return enrichAction;
-        }
-
-        private class FakeAspNetDiagnosticSource : IDisposable
-        {
-            private readonly DiagnosticListener listener;
-
-            public FakeAspNetDiagnosticSource()
-            {
-                this.listener = new DiagnosticListener(AspNetInstrumentation.AspNetDiagnosticListenerName);
             }
 
-            public void Write(string name, object value)
-            {
-                this.listener.Write(name, value);
-            }
-
-            public void Dispose()
-            {
-                this.listener.Dispose();
-            }
+            return EnrichAction;
         }
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {
