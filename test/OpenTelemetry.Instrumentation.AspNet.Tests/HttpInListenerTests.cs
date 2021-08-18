@@ -34,36 +34,29 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
     public class HttpInListenerTests
     {
         [Theory]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", true)]
-        [InlineData("https://localhost/", "https://localhost/", 0, null, "TraceContext")]
-        [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null, "TraceContext")] // Test URL sanitization
-        [InlineData("http://localhost:443/", "http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
-        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
-        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL
-        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://user:password@localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL sanitization
-        [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
-        [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
-        [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
-        [InlineData("https://localhost:1843/subroute/10", "https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
-        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", false, null, false, true)]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", false, null, false, true, SamplingDecision.RecordOnly)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, true)]
+        [InlineData("https://localhost/", "https://localhost/", 0, null)]
+        [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null)] // Test URL sanitization
+        [InlineData("http://localhost:443/", "http://localhost:443/", 0, null)] // Test http over 443
+        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null)] // Test https over 80
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null)] // Test complex URL
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://user:password@localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null)] // Test complex URL sanitization
+        [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}")]
+        [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
+        [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
+        [InlineData("https://localhost:1843/subroute/10", "https://localhost:1843/subroute/10", 4, "subroute/{customerId}")]
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, false, "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/", "http://localhost/", 0, null, false, null, true)] // Test RecordException option
         public void AspNetRequestsAreCollectedSuccessfully(
             string expectedUrl,
             string url,
             int routeType,
             string routeTemplate,
-            string carrierFormat,
             bool setStatusToErrorInEnrich = false,
             string filter = null,
-            bool restoreCurrentActivity = false,
-            bool recordException = false,
-            SamplingDecision samplingDecision = SamplingDecision.RecordAndSample)
+            bool recordException = false)
         {
             IDisposable openTelemetry = null;
             RouteData routeData;
@@ -122,23 +115,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             typeof(HttpRequest).GetField("_wr", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(HttpContext.Current.Request, workerRequest.Object);
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
-                new ActivityContext(
-                    expectedTraceId,
-                    expectedSpanId,
-                    ActivityTraceFlags.Recorded,
-                    isRemote: true),
-                default));
+            List<Activity> exportedItems = new List<Activity>(16);
 
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(new TraceContextPropagator());
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new TestSampler(samplingDecision))
-                .AddAspNetInstrumentation(
-                (options) =>
+                .AddAspNetInstrumentation((options) =>
                 {
                     options.Filter = httpContext =>
                     {
@@ -167,7 +148,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
                     options.RecordException = recordException;
                 })
-            .AddProcessor(activityProcessor.Object).Build())
+                .AddInMemoryExporter(exportedItems)
+                .Build())
             {
                 using var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log);
 
@@ -176,11 +158,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 if (filter == "{ThrowException}")
                 {
                     Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 2));
-                }
-
-                if (restoreCurrentActivity)
-                {
-                    Activity.Current = activity;
                 }
 
                 Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
@@ -195,65 +172,16 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only SetParentProvider/Shutdown/Dispose/OnStart are called because request was filtered.
-                Assert.Equal(4, activityProcessor.Invocations.Count);
+                Assert.Empty(exportedItems);
                 return;
             }
 
-            // Validate that Activity.Current is always the one created by Asp.Net
-            var currentActivity = Activity.Current;
+            Assert.Single(exportedItems);
 
-            Activity span;
-            if (carrierFormat == "CustomContextNonmatchParent")
-            {
-                Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-
-                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
-                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-                Assert.Single(startedActivities);
-                Assert.Single(stoppedActivities);
-
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
-                });
-
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
-                });
-            }
-            else
-            {
-                Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-
-                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
-                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-
-                Assert.Single(startedActivities);
-                Assert.Single(stoppedActivities);
-
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
-                });
-
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == TelemetryHttpModule.AspNetActivityName;
-                });
-            }
-
-            span = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            Activity span = exportedItems[0];
 
             Assert.Equal(TelemetryHttpModule.AspNetActivityName, span.OperationName);
             Assert.NotEqual(TimeSpan.Zero, span.Duration);
-            Assert.Equal(expectedTraceId, span.TraceId);
-            Assert.Equal(expectedSpanId, span.ParentSpanId);
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
@@ -298,14 +226,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 var status = span.GetStatus();
                 Assert.Equal(Status.Error.StatusCode, status.StatusCode);
-                if (samplingDecision == SamplingDecision.RecordOnly)
-                {
-                    Assert.True(string.IsNullOrEmpty(status.Description));
-                }
-                else
-                {
-                    Assert.Equal("Operation is not valid due to the current state of the object.", status.Description);
-                }
+                Assert.Equal("Operation is not valid due to the current state of the object.", status.Description);
             }
             else if (setStatusToErrorInEnrich)
             {
@@ -331,7 +252,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [InlineData(SamplingDecision.Drop)]
         [InlineData(SamplingDecision.RecordOnly)]
         [InlineData(SamplingDecision.RecordAndSample)]
-
         public void ExtractContextIrrespectiveOfSamplingDecision(SamplingDecision samplingDecision)
         {
             HttpContext.Current = new HttpContext(
