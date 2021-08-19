@@ -194,10 +194,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                     AspNetInstrumentationEventSource.Log.EnrichmentException("OnException", ex);
                 }
             }
-            else
-            {
-                activity.SetStatus(Status.Error);
-            }
         }
     }
 }
