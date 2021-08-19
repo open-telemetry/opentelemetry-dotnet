@@ -26,11 +26,15 @@ namespace OpenTelemetry.Metrics
         private double sumDouble = 0;
         private SumMetricDouble sumMetricDouble;
         private DateTimeOffset startTimeExclusive;
+        private bool isDeltaValue;
+        private bool isMonotonicValue;
 
-        internal SumMetricAggregatorDouble(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        internal SumMetricAggregatorDouble(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool isDeltaValue, bool isMonotonicValue)
         {
             this.startTimeExclusive = startTimeExclusive;
             this.sumMetricDouble = new SumMetricDouble(name, description, unit, meter, startTimeExclusive, attributes);
+            this.isDeltaValue = isDeltaValue;
+            this.isMonotonicValue = isMonotonicValue;
         }
 
         public void Update<T>(T value)
@@ -44,14 +48,21 @@ namespace OpenTelemetry.Metrics
                 {
                     // TODO: Confirm this doesn't cause boxing.
                     var val = (double)(object)value;
-                    if (val < 0)
+                    if (val < 0 && this.isMonotonicValue)
                     {
                         // TODO: log?
                         // Also, this validation can be done in earlier stage.
                     }
                     else
                     {
-                        this.sumDouble += val;
+                        if (this.isDeltaValue)
+                        {
+                            this.sumDouble += val;
+                        }
+                        else
+                        {
+                            this.sumDouble = val;
+                        }
                     }
                 }
                 else

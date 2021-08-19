@@ -54,23 +54,38 @@ namespace OpenTelemetry.Metrics
             // TODO: move most of this logic out of hotpath, and to MeterProvider's
             // InstrumentPublished event, which is once per instrument creation.
 
-            if (this.instrument.GetType() == typeof(Counter<long>)
-                || this.instrument.GetType() == typeof(Counter<int>)
-                || this.instrument.GetType() == typeof(Counter<short>)
-                || this.instrument.GetType() == typeof(Counter<byte>))
+            Type instrumentType = this.instrument.GetType();
+            Type genericType = instrumentType.GetGenericTypeDefinition();
+
+            if (instrumentType == typeof(Counter<long>)
+                || instrumentType == typeof(Counter<int>)
+                || instrumentType == typeof(Counter<short>)
+                || instrumentType == typeof(Counter<byte>))
             {
-                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
             }
-            else if (this.instrument.GetType() == typeof(Counter<double>)
-                || this.instrument.GetType() == typeof(Counter<float>))
+            else if (instrumentType == typeof(Counter<double>)
+                || instrumentType == typeof(Counter<float>))
             {
-                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
             }
-            else if (this.instrument.GetType().Name.Contains("Gauge"))
+            else if (instrumentType == typeof(ObservableCounter<long>)
+                || instrumentType == typeof(ObservableCounter<int>)
+                || instrumentType == typeof(ObservableCounter<short>)
+                || instrumentType == typeof(ObservableCounter<byte>))
+            {
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false, true));
+            }
+            else if (instrumentType == typeof(ObservableCounter<double>)
+                || instrumentType == typeof(ObservableCounter<float>))
+            {
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false, true));
+            }
+            else if (genericType == typeof(ObservableGauge<>))
             {
                 aggregators.Add(new GaugeMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
-            else if (this.instrument.GetType().Name.Contains("Histogram"))
+            else if (genericType == typeof(Histogram<>))
             {
                 aggregators.Add(new HistogramMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
