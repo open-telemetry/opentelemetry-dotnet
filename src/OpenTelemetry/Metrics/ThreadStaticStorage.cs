@@ -22,6 +22,8 @@ namespace OpenTelemetry.Metrics
 {
     internal class ThreadStaticStorage
     {
+        internal readonly NameAndTagKeys LocalNameAndTagKeys;
+
         private const int MaxTagCacheSize = 3;
 
         [ThreadStatic]
@@ -35,6 +37,8 @@ namespace OpenTelemetry.Metrics
             {
                 this.tagStorage[i] = new TagStorage(i);
             }
+
+            this.LocalNameAndTagKeys = new NameAndTagKeys();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

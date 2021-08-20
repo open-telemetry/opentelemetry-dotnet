@@ -27,9 +27,11 @@ namespace OpenTelemetry.Metrics
         private readonly Instrument instrument;
         private readonly object lockKeyValue2MetricAggs = new object();
 
-        // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly Dictionary<string[], Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
-            new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
+        // Two-Level lookup. [ NameAndKeys ] x [ [ TagValues ] x [ IAggregator[] ] ]
+        // First Level: Lookup by NameAndKeys (name + TagKeys). Return 2nd Level dictionary
+        // Second Level: Lookup by TagValues. Return Array of IAggregators
+        private readonly Dictionary<NameAndTagKeys, Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
+            new Dictionary<NameAndTagKeys, Dictionary<object[], IAggregator[]>>();
 
         private IAggregator[] tag0Metrics = null;
 
@@ -105,27 +107,34 @@ namespace OpenTelemetry.Metrics
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
+            string name = this.instrument.Name;
             IAggregator[] metrics;
 
             lock (this.lockKeyValue2MetricAggs)
             {
                 string[] seqKey = null;
 
+                var localKey = storage.LocalNameAndTagKeys;
+                localKey.Name = name;
+                localKey.Keys = tagKey;
+
                 // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+                // Get back a Dictionary of [ TagValues x IAggregator[] ].
+                if (!this.keyValue2MetricAggs.TryGetValue(localKey, out var value2metrics))
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
 
                     seqKey = new string[len];
                     tagKey.CopyTo(seqKey, 0);
 
+                    var cloneKey = new NameAndTagKeys(name, seqKey);
+
                     value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
-                    this.keyValue2MetricAggs.Add(seqKey, value2metrics);
+                    this.keyValue2MetricAggs.Add(cloneKey, value2metrics);
                 }
 
                 // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
-                // Get back Metrics[].
+                // Get back IAggregator[].
                 if (!value2metrics.TryGetValue(tagValue, out metrics))
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
