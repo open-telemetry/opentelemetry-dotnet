@@ -6,7 +6,7 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started
+dotnet new console --output getting-started-histogram
 cd getting-started
 dotnet run
 ```
@@ -48,7 +48,7 @@ Value: Sum: 33862 Count: 62
 ```
 <!-- markdownlint-enable MD013 -->
 
-Congratulations! You are now collecting metrics using OpenTelemetry.
+Congratulations! You are now collecting histogram metrics using OpenTelemetry.
 
 What does the above program do?
 
