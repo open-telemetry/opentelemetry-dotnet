@@ -20,6 +20,7 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 
 public class Program
@@ -30,7 +31,10 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddConsoleExporter()
+                .AddConsoleExporter((option) =>
+                {
+                    option.IsDelta = false;
+                })
                 .Build();
 
         var observableCounter = MyMeter.CreateObservableCounter<long>(
