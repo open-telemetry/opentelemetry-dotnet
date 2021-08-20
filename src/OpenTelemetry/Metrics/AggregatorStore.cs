@@ -54,32 +54,14 @@ namespace OpenTelemetry.Metrics
             // TODO: move most of this logic out of hotpath, and to MeterProvider's
             // InstrumentPublished event, which is once per instrument creation.
 
-            Type instrumentType = this.instrument.GetType();
-            Type genericType = instrumentType.GetGenericTypeDefinition();
-
-            if (instrumentType == typeof(Counter<long>)
-                || instrumentType == typeof(Counter<int>)
-                || instrumentType == typeof(Counter<short>)
-                || instrumentType == typeof(Counter<byte>))
+            Type genericType = this.instrument.GetType().GetGenericTypeDefinition();
+            if (genericType == typeof(Counter<>))
             {
-                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
+                aggregators.Add(new SumMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
             }
-            else if (instrumentType == typeof(Counter<double>)
-                || instrumentType == typeof(Counter<float>))
+            else if (genericType == typeof(ObservableCounter<>))
             {
-                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true, true));
-            }
-            else if (instrumentType == typeof(ObservableCounter<long>)
-                || instrumentType == typeof(ObservableCounter<int>)
-                || instrumentType == typeof(ObservableCounter<short>)
-                || instrumentType == typeof(ObservableCounter<byte>))
-            {
-                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false, true));
-            }
-            else if (instrumentType == typeof(ObservableCounter<double>)
-                || instrumentType == typeof(ObservableCounter<float>))
-            {
-                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false, true));
+                aggregators.Add(new SumMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false, true));
             }
             else if (genericType == typeof(ObservableGauge<>))
             {
