@@ -88,7 +88,15 @@ namespace OpenTelemetry.Exporter
                         case MetricType.Histogram:
                             {
                                 var histogramMetric = metric as IHistogramMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
+                                var bucketsBuilder = new StringBuilder();
+                                bucketsBuilder.Append($"Sum: {histogramMetric.PopulationSum} Count: {histogramMetric.PopulationCount} \n");
+                                foreach (var bucket in histogramMetric.Buckets)
+                                {
+                                    bucketsBuilder.Append($"({bucket.LowBoundary} - {bucket.HighBoundary}) : {bucket.Count}");
+                                    bucketsBuilder.AppendLine();
+                                }
+
+                                valueDisplay = bucketsBuilder.ToString();
                                 break;
                             }
 
@@ -102,7 +110,7 @@ namespace OpenTelemetry.Exporter
 
                     string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
 
-                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {metric.MetricType} Value: {valueDisplay}");
+                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {metric.MetricType}");
 
                     if (!string.IsNullOrEmpty(metric.Description))
                     {
@@ -124,6 +132,8 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
+                    msg.AppendLine();
+                    msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);
                 }
             }

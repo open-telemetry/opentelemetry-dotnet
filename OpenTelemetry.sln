@@ -161,6 +161,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
 	ProjectSection(SolutionItems) = preProject
 		docs\metrics\building-your-own-exporter.md = docs\metrics\building-your-own-exporter.md
+		docs\metrics\README.md = docs\metrics\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
@@ -212,6 +213,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule", "src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.csproj", "{F38E511B-1877-4E8A-8051-7879FC7DF8A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests", "test\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests.csproj", "{4D7201BC-7124-4401-AD65-FAB58A053D45}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting-started-histogram", "docs\metrics\getting-started-histogram\getting-started-histogram.csproj", "{92ED77A6-37B4-447D-B4C4-15DB005A589C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -423,6 +426,10 @@ Global
 		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92ED77A6-37B4-447D-B4C4-15DB005A589C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92ED77A6-37B4-447D-B4C4-15DB005A589C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92ED77A6-37B4-447D-B4C4-15DB005A589C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92ED77A6-37B4-447D-B4C4-15DB005A589C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -455,6 +462,7 @@ Global
 		{08D29501-F0A3-468F-B18D-BD1821A72383} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{DFB0AD2F-11BE-4BCD-A77B-1018C3344FA8} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
+		{92ED77A6-37B4-447D-B4C4-15DB005A589C} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
