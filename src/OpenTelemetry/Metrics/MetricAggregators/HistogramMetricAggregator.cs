@@ -20,14 +20,17 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class HistogramMetricAggregator : IHistogramMetric, IAggregator
+    internal class HistogramMetricAggregator : IAggregator
     {
         private static readonly double[] DefaultBoundaries = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
 
         private readonly object lockUpdate = new object();
         private HistogramBucket[] buckets;
-
+        private long populationCount;
+        private double populationSum;
         private double[] boundaries;
+        private DateTimeOffset startTimeExclusive;
+        private HistogramMetric histogramMetric;
 
         internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
             : this(name, description, unit, meter, startTimeExclusive, attributes, DefaultBoundaries)
@@ -36,12 +39,8 @@ namespace OpenTelemetry.Metrics
 
         internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, double[] boundaries)
         {
-            this.Name = name;
-            this.Description = description;
-            this.Unit = unit;
-            this.Meter = meter;
-            this.StartTimeExclusive = startTimeExclusive;
-            this.Attributes = attributes;
+            this.startTimeExclusive = startTimeExclusive;
+            this.histogramMetric = new HistogramMetric(name, description, unit, meter, startTimeExclusive, attributes, boundaries.Length + 1);
 
             if (boundaries.Length == 0)
             {
@@ -50,34 +49,7 @@ namespace OpenTelemetry.Metrics
 
             this.boundaries = boundaries;
             this.buckets = this.InitializeBucket(boundaries);
-            this.MetricType = MetricType.Summary;
         }
-
-        public string Name { get; private set; }
-
-        public string Description { get; private set; }
-
-        public string Unit { get; private set; }
-
-        public Meter Meter { get; private set; }
-
-        public DateTimeOffset StartTimeExclusive { get; private set; }
-
-        public DateTimeOffset EndTimeInclusive { get; private set; }
-
-        public KeyValuePair<string, object>[] Attributes { get; private set; }
-
-        public bool IsDeltaTemporality { get; private set; }
-
-        public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
-
-        public long PopulationCount { get; private set; }
-
-        public double PopulationSum { get; private set; }
-
-        public MetricType MetricType { get; private set; }
-
-        public IEnumerable<HistogramBucket> Buckets => this.buckets;
 
         public void Update<T>(T value)
             where T : struct
@@ -111,37 +83,34 @@ namespace OpenTelemetry.Metrics
 
             lock (this.lockUpdate)
             {
-                this.PopulationCount++;
-                this.PopulationSum += val;
+                this.populationCount++;
+                this.populationSum += val;
                 this.buckets[i].Count++;
             }
         }
 
         public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            if (this.PopulationCount == 0)
+            if (this.populationCount == 0)
             {
                 // TODO: Output stale markers
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes, this.boundaries);
-
             lock (this.lockUpdate)
             {
-                cloneItem.Exemplars = this.Exemplars;
-                cloneItem.EndTimeInclusive = dt;
-                cloneItem.PopulationCount = this.PopulationCount;
-                cloneItem.PopulationSum = this.PopulationSum;
-                cloneItem.boundaries = this.boundaries;
-                this.buckets.CopyTo(cloneItem.buckets, 0);
-                cloneItem.IsDeltaTemporality = isDelta;
+                this.histogramMetric.StartTimeExclusive = this.startTimeExclusive;
+                this.histogramMetric.EndTimeInclusive = dt;
+                this.histogramMetric.PopulationCount = this.populationCount;
+                this.histogramMetric.PopulationSum = this.populationSum;
+                this.buckets.CopyTo(this.histogramMetric.BucketsArray, 0);
+                this.histogramMetric.IsDeltaTemporality = isDelta;
 
                 if (isDelta)
                 {
-                    this.StartTimeExclusive = dt;
-                    this.PopulationCount = 0;
-                    this.PopulationSum = 0;
+                    this.startTimeExclusive = dt;
+                    this.populationCount = 0;
+                    this.populationSum = 0;
                     for (int i = 0; i < this.buckets.Length; i++)
                     {
                         this.buckets[i].Count = 0;
@@ -149,12 +118,13 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            return cloneItem;
-        }
-
-        public string ToDisplayString()
-        {
-            return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+            // TODO: Confirm that this approach of
+            // re-using the same instance is correct.
+            // This avoids allocating a new instance.
+            // It is read only for Exporters,
+            // and also there is no parallel
+            // Collect allowed.
+            return this.histogramMetric;
         }
 
         private HistogramBucket[] InitializeBucket(double[] boundaries)
