@@ -9,13 +9,13 @@ requests using the OpenTelemetry API.
 
 ### Step 1: Install NuGet package
 
-If you are using the traditional "packages.config" reference style, a web.config
+If you are using the traditional `packages.config` reference style, a `web.config`
 transform should run automatically and configure the `TelemetryHttpModule` for
 you. If you are using the more modern PackageReference style, this may be needed
 to be done manually. For more information, see: [Migrate from packages.config to
 PackageReference](https://docs.microsoft.com/en-us/nuget/consume-packages/migrate-packages-config-to-package-reference).
 
-To configure your web.config manually, add this:
+To configure your `web.config` manually, add this:
 
 ```xml
 <system.webServer>
@@ -32,7 +32,7 @@ To configure your web.config manually, add this:
 ### Step 2: Register a listener
 
 `TelemetryHttpModule` registers an
-[ActivitySource](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitysource)
+[ActivitySource](https://docs.microsoft.com/dotnet/api/system.diagnostics.activitysource)
 with the name `OpenTelemetry.Instrumentation.AspNet.Telemetry`. By default, .NET
 `ActivitySource` will not generate any `Activity` objects unless there is a
 registered listener.
