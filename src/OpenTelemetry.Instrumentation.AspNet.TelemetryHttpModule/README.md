@@ -112,11 +112,12 @@ To add support for
 propagation in addition to W3C Trace Context, use:
 
 ```csharp
-TelemetryHttpModuleOptions.TextMapPropagator = new CompositeTextMapPropagator(new TextMapPropagator[]
-{
-    new TraceContextPropagator(),
-    new BaggagePropagator(),
-});
+TelemetryHttpModuleOptions.TextMapPropagator = new CompositeTextMapPropagator(
+    new TextMapPropagator[]
+    {
+        new TraceContextPropagator(),
+        new BaggagePropagator(),
+    });
 ```
 
 Note: When using the `OpenTelemetry.Instrumentation.AspNet`
