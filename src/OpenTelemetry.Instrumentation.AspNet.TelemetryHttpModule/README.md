@@ -9,10 +9,11 @@ requests using the OpenTelemetry API.
 
 ### Step 1: Install NuGet package
 
-If you are using the traditional `packages.config` reference style, a `web.config`
-transform should run automatically and configure the `TelemetryHttpModule` for
-you. If you are using the more modern PackageReference style, this may be needed
-to be done manually. For more information, see: [Migrate from packages.config to
+If you are using the traditional `packages.config` reference style, a
+`web.config` transform should run automatically and configure the
+`TelemetryHttpModule` for you. If you are using the more modern PackageReference
+style, this may be needed to be done manually. For more information, see:
+[Migrate from packages.config to
 PackageReference](https://docs.microsoft.com/en-us/nuget/consume-packages/migrate-packages-config-to-package-reference).
 
 To configure your `web.config` manually, add this:

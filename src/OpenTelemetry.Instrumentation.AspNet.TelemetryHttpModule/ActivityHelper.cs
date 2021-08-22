@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 {
                     // todo: RestoreActivityIfNeeded below compensates for
                     // AsyncLocal Activity.Current being lost. Baggage
-                    // potentially will suffer from the same issue, but we can’t
+                    // potentially will suffer from the same issue, but we can't
                     // simply add it to context.Items because any change results
                     // in a new instance. Probably need to save it at the end of
                     // each OnExecuteRequestStep.
