@@ -43,13 +43,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
-        private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
             : base(name)
         {
-            this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
@@ -81,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
+            if (!(textMapPropagator is TraceContextPropagator))
             {
                 var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
