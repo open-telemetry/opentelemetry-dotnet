@@ -245,6 +245,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     if (routeValues != null)
                     {
                         var route = GetRoute(routeValues);
+
+                        // override the span name that was previously set to the path part of URL.
                         activity.DisplayName = route;
                         activity.SetTag(SemanticConventions.AttributeHttpRoute, route);
                     }
