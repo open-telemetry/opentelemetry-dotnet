@@ -126,7 +126,7 @@ Writing an instrumentation library typically involves 3 steps.
    .NET Framework, which publishes events using `EventSource`. The [SqlClient
    instrumentation
    library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks
+   in this case subscribes to the `EventSource` callbacks.
 
 2. Second step is to emit activities using the [ActivitySource
    API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
@@ -137,6 +137,18 @@ Writing an instrumentation library typically involves 3 steps.
    instrumentation library (eg:
    "OpenTelemetry.Instrumentation.StackExchangeRedis") and *not* the
    instrumented library (eg: "StackExchange.Redis")
+      1. [Context Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
+      If your library initiates out of process requests or
+      accepts them, the library needs to
+      [inject the `PropagationContext`](../../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs)
+      to outgoing requests and
+      [extract the context](../../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
+      and hydrate the Activity/Baggage upon receiving incoming requests.
+      This is only required if you're using your own protocol to
+      communicate over the wire.
+      (i.e. If you're using an already instrumented HttpClient or GrpcClient,
+      this is already provided to you and **do not require**
+      injecting/extracting `PropagationContext` explicitly again.)
 
 3. Third step is an optional step, and involves providing extension methods on
    `TracerProviderBuilder`, to enable the instrumentation. This is optional, and
